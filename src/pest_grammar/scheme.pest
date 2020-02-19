@@ -1,0 +1,39 @@
+// Type names
+upper_camel_name = @{ ('A'..'Z') ~ ('A'..'Z' | 'a'..'z' | '0'..'9')* }
+
+type_constructor_name = { !primitive_type_names ~ upper_camel_name }
+
+primitive_type_names = { 
+    scalar_type
+    | seq_type_constructor_name 
+    | set_type_constructor_name 
+}
+
+// Scalar types
+scalar_type = { integer_type_name | char_type_name }
+integer_type_name = { "Integer" }
+char_type_name = { "Char" }
+
+// Compound types
+compound_type = { seq_type | set_type | product_type | union_type }
+
+seq_type_constructor_name = { "Seq" }
+seq_type = { seq_type_constructor_name ~ "[" ~ type_ ~ "]" }
+
+set_type_constructor_name = { "Set" }
+set_type = { set_type_constructor_name ~ "[" ~ type_ ~ "]" }
+
+product_type = { type_constructor_name ~ anonymous_product_type }
+anonymous_product_type = {
+    "()"  // TODO こいつをUnitの唯一の値としてNULL相当にするかどうか
+    |  "(" ~ type_ ~ (type_ ~ ",")* ~ ")"
+}
+
+union_type = {
+    type_constructor_name ~ (
+        anonymous_product_type ~ ("|"  ~ anonymous_product_type)+
+    )
+}
+
+// Types
+type_ = { scalar_type | compound_type }
