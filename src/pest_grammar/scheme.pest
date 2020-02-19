@@ -17,7 +17,7 @@ integer_type_name = { "Integer" }
 char_type_name = { "Char" }
 
 // Compound types
-compound_type = { seq_type | set_type | product_type | union_type }
+compound_type = { union_type | product_type | seq_type | set_type }
 
 seq_type_constructor_name = { "Seq" }
 seq_type = { seq_type_constructor_name ~ "[" ~ type_ ~ "]" }
@@ -32,9 +32,12 @@ anonymous_product_type = {
 }
 
 union_type = {
-    type_constructor_name ~ WHITESPACE+
-    ~ anonymous_product_type ~ ("|"  ~ anonymous_product_type)+
+    "UNION" ~ WHITESPACE+
 }
+// union_type = {
+//     type_constructor_name ~ WHITESPACE+
+//     ~ anonymous_product_type ~ ("|"  ~ anonymous_product_type)+
+// }
 
 // Types
 type_ = { scalar_type | compound_type }
