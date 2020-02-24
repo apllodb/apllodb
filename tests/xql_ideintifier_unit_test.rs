@@ -5,7 +5,7 @@ extern crate pest_derive;
 use pest::Parser;
 
 #[derive(Parser)]
-#[grammar = "../src/pest_grammar/xql.pest"]
+#[grammar = "pest_grammar/xql.pest"]
 pub struct XqlParser;
 
 struct AcceptedTestParameter<'a>(&'a str);
