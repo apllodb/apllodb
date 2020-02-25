@@ -37,7 +37,7 @@ jobs:
           name: Install & select $rust_version
           command: |
             rustup install << parameters.rust_version >>
-            rustup default << parameters.rust_version >>
+            rustup override set << parameters.rust_version >>
       - run:
           name:
           command: |
