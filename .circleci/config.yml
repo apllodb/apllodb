@@ -26,6 +26,7 @@ jobs:
     parameters:
       rust_version:
         type: string
+        default: ""
     executor:
       name: default
     steps:
@@ -33,11 +34,14 @@ jobs:
       - run:
           name: rustup version
           command: rustup --version
-      - run:
-          name: Install & select $rust_version
-          command: |
-            rustup install << parameters.rust_version >>
-            rustup override set << parameters.rust_version >>
+      - when:
+          condition: << parameters.rust_version >>
+          steps:
+            - run:
+                name: Install & select $rust_version if specified
+                command: |
+                  rustup install << parameters.rust_version >>
+                  rustup override set << parameters.rust_version >>
       - run:
           name:
           command: |
@@ -61,8 +65,7 @@ test_jobs: &test_jobs
       name: MSRV (Minimum Supported Rust Version)
       rust_version: 1.40.0
   - test:
-      name: Latest Rust Version
-      rust_version: 1.41.0
+      name: Rust Version from `rust-toolchain`
 
 workflows:
   version: 2
