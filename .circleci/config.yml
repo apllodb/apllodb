@@ -43,7 +43,7 @@ jobs:
                   rustup install << parameters.rust_version >>
                   rustup override set << parameters.rust_version >>
       - run:
-          name:
+          name: Record build environment to use as cache key
           command: |
             echo $OS_VERSION | tee /tmp/build-dep
             rustc --version | tee /tmp/build-dep
