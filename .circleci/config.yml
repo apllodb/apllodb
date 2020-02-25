@@ -1,13 +1,70 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
-# Use a package of configuration called an orb.
-orbs:
-  # Declare a dependency on the welcome-orb
-  welcome: circleci/welcome-orb@0.4.1
-# Orchestrate or schedule a set of jobs
+
+executors:
+  default:
+    docker:
+      - image: circleci/rust:latest
+    working_directory: ~/app
+
+jobs:
+  lint:
+    executor:
+      name: default
+    steps:
+      - checkout
+      - run:
+          name: rustup component add
+          command: rustup component add clippy rustfmt
+      - run:
+          name: fmt
+          command: cargo fmt --all -- --check
+      - run:
+          name: clippy
+          command: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    parameters:
+      rust_version:
+        type: string
+    executor:
+      name: default
+    steps:
+      - checkout
+      - run:
+          name: rustup version
+          command: rustup --version
+      - run:
+          name: Install & select $rust_version
+          command: |
+            rustup install << parameters.rust_version >>
+            rustup default << parameters.rust_version >>
+      - run:
+          name:
+          command: |
+            echo $OS_VERSION | tee /tmp/build-dep
+            rustc --version | tee /tmp/build-dep
+            cat Cargo.lock >> /tmp/build-dep
+      - restore_cache:
+          key: &cache-key v1-cache-cargo-target-{{ .Environment.CIRCLECI_CACHE_VERSION }}-{{ checksum "/tmp/build-dep" }}
+      - run:
+          name: build & test
+          command: RUST_BACKTRACE=1 cargo test --verbose --all -- --nocapture
+      - save_cache:
+          key: *cache-key
+          paths:
+            - ~/.cargo
+            - target
+
+test_jobs: &test_jobs
+  - lint
+  - test:
+      name: MSRV (Minimum Supported Rust Version)
+      rust_version: 1.40.0
+  - test:
+      name: Latest Rust Version
+      rust_version: 1.41.0
+
 workflows:
-  # Name the workflow "welcome"
-  welcome:
-    # Run the welcome/run job in its own container
-    jobs:
-      - welcome/run
+  version: 2
+  test:
+    jobs: *test_jobs
