@@ -1,3 +1,7 @@
 fn main() {
-    println!("Hello, world!");
+    let x = Some(1u8);
+    match x {
+        Some(y) => println!("{:?}", y),
+        _ => (),
+    }
 }
