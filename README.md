@@ -5,19 +5,19 @@ Immutable Schema （やその他の特徴（feature検討中））を備えたRD
 [![CircleCI](https://circleci.com/gh/darwin-education/apllo-immutable-schema-poc.svg?style=shield&circle-token=81302f3aa41b7c5eb7d6cc8d67d2cc355832e8be)](https://circleci.com/gh/darwin-education/apllo-immutable-schema-poc)
 ![MSRV](https://img.shields.io/badge/rustc-1.40+-lightgray.svg)
 
-### 開発開始までの手順
+## 開発開始までの手順
 
 TBD
 
-### システム設計
+## システム設計
 
-#### コンポーネント図
+### コンポーネント図
 
 ["Architecture of a Database System"](https://dsf.berkeley.edu/papers/fntdb07-architecture.pdf) の Fig. 1.1 をベースに記載。
 
 ![APLLO SQL (仮) コンポーネント図](http://drive.google.com/uc?export=view&id=1hlHuIgVHkGb_n8A8ZBKIyxtRBGqIDgfQ)
 
-#### 諸々ドキュメント
+### 諸々ドキュメント
 
 - [要求分析](https://docs.google.com/document/d/1J6_MWObo0VVo-ATrwALpoNUHBUbSvrxHV8XuBcs_tIM/edit)
 - [要件定義](https://docs.google.com/document/d/1djtGGMope8eCJOMjDXl0DvjpUrwlGjHygUN8n0M-0WI/edit#heading=h.hhevn0icya3z)
