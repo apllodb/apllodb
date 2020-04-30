@@ -15,7 +15,8 @@ TBD
 
 ["Architecture of a Database System"](https://dsf.berkeley.edu/papers/fntdb07-architecture.pdf) の Fig. 1.1 をベースに記載。
 
-![APLLO SQL (仮) コンポーネント図](http://drive.google.com/uc?export=view&id=1hlHuIgVHkGb_n8A8ZBKIyxtRBGqIDgfQ)
+<!-- ![]() 形式だと、GitHubが自前のCDNにキャッシュしようとしてなんか失敗する -->
+<img src="http://drive.google.com/uc?export=view&id=1hlHuIgVHkGb_n8A8ZBKIyxtRBGqIDgfQ" alt="APLLO SQL (仮) コンポーネント図">
 
 ### 諸々ドキュメント
 
