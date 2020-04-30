@@ -1,6 +1,8 @@
 //! Immutable Schema （やその他の特徴（feature検討中））を備えたRDBMSのサーバ実装。
 //!
-//! [![CircleCI](https://circleci.com/gh/darwin-education/apllo-immutable-schema-poc.svg?style=shield&circle-token=81302f3aa41b7c5eb7d6cc8d67d2cc355832e8be)](https://circleci.com/gh/darwin-education/apllo-immutable-schema-poc)
+//! ![badge: test](https://github.com/darwin-education/apllo/workflows/test/badge.svg)
+//! ![badge: sync_readme](https://github.com/darwin-education/apllo/workflows/sync_readme/badge.svg)
+//! ![badge: format_and_lint](https://github.com/darwin-education/apllo/workflows/format_and_lint/badge.svg)
 //! ![MSRV](https://img.shields.io/badge/rustc-1.40+-lightgray.svg)
 //!
 //! # 開発開始までの手順
