@@ -9,7 +9,7 @@ on:
       - synchronize
 
 jobs:
-  format:
+  sync_readme:
     runs-on: ubuntu-latest
     env:
       REPO: https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
