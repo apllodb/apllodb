@@ -78,15 +78,11 @@ rich_utf8_letter = _{
 
 WHITESPACE = _{ " " | "\t" | NEWLINE } // TODO: add `FORM FEED`
 
-XQL_LETTER_OR_DIGIT = _{
-    rich_utf8_letter | DECIMAL_NUMBER
-}
-
 // Beware of substrings.
 //   NG) "A" | "ABSOLUTE"
 // In this case, only "A" matches with query `ABSOLUTE` (eager matching).
 //
-// TODO: Comment-in all. They are commented-out just to make build fast.
+// TODO: Comment-in all. They are commented-out just to make build faster.
 key_word = { 
     "ABSOLUTE"
     // | "ABS"
@@ -744,9 +740,18 @@ identifier = @{
     // does not start with a keyword.
     (
         !key_word ~ (
-            rich_utf8_letter ~ XQL_LETTER_OR_DIGIT*
+            identifier_start ~ identifier_part*
         )
     )
-    // starts with a keyword but followed by XQL letters.
-    | ( key_word ~ XQL_LETTER_OR_DIGIT+ )
- }
+    // starts with a keyword but followed by other letters.
+    | ( key_word ~ identifier_part+ )
+}
+
+identifier_start = _{
+    rich_utf8_letter
+}
+
+identifier_part = _{
+    identifier_start
+    | DECIMAL_NUMBER
+}
