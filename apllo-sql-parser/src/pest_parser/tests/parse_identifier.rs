@@ -71,8 +71,8 @@ accepted_parameterized_tests! {
 
     emoji: AcceptedTestParameter("🥺🥰😡🍣🍺"),
 
-    has_keyword1: AcceptedTestParameter("ABSOLUTE_"),
-    has_keyword2: AcceptedTestParameter("_ABSOLUTE"),
+    has_keyword1: AcceptedTestParameter("SELECT_"),
+    has_keyword2: AcceptedTestParameter("_SELECT"),
 }
 
 partially_accepted_parameterized_tests! {
@@ -119,5 +119,5 @@ rejected_parameterized_tests! {
     starts_with_plus_sign: RejectedTestParameter("+"),
     starts_with_minus_sign: RejectedTestParameter("-"),
 
-    keyword: RejectedTestParameter("ABSOLUTE"),
+    keyword: RejectedTestParameter("SELECT"),
 }
