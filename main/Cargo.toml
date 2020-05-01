@@ -1,0 +1,8 @@
+[package]
+name = "main"
+version = "0.1.0"
+authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+apllo-sql-parser = { path = "../apllo-sql-parser" }
