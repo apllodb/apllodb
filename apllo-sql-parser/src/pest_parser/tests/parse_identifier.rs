@@ -1,4 +1,4 @@
-use super::super::{PestParser, Rule};
+use super::super::{PestParser, PestResult, Rule};
 use pest::Parser;
 
 struct AcceptedTestParameter<'a>(&'a str);
@@ -6,14 +6,18 @@ macro_rules! accepted_parameterized_tests {
     ($($name:ident: $value:expr,)*) => {
         $(
             #[test]
-            fn $name() {
+            fn $name() -> PestResult<()> {
                 let param: AcceptedTestParameter = $value;
 
-                let mut parse_result = PestParser::parse(Rule::identifier, param.0).unwrap();
-                let identifier_pair = parse_result.next().unwrap();
+                let mut parse_result = PestParser::parse(Rule::identifier, param.0)?;
+                if let Some(identifier_pair) = parse_result.next() {
+                    assert_eq!(identifier_pair.as_rule(), Rule::identifier);
+                    assert_eq!(identifier_pair.as_str(), param.0);
+                } else {
+                    panic!("'{}' is expected to be parsed as an identifier.", param.0);
+                }
 
-                assert_eq!(identifier_pair.as_rule(), Rule::identifier);
-                assert_eq!(identifier_pair.as_str(), param.0);
+                Ok(())
             }
         )*
     }
@@ -27,16 +31,20 @@ macro_rules! partially_accepted_parameterized_tests {
     ($($name:ident: $value:expr,)*) => {
         $(
             #[test]
-            fn $name() {
+            fn $name() -> PestResult<()> {
                 let param: PartiallyAcceptedTestParameter = $value;
                 assert!(param.input.starts_with(param.accepted));
                 assert_ne!(param.input, param.accepted);
 
-                let mut parse_result = PestParser::parse(Rule::identifier, param.input).unwrap();
-                let identifier_pair = parse_result.next().unwrap();
+                let mut parse_result = PestParser::parse(Rule::identifier, param.input)?;
+                if let Some(identifier_pair) = parse_result.next() {
+                    assert_eq!(identifier_pair.as_rule(), Rule::identifier);
+                    assert_eq!(identifier_pair.as_str(), param.accepted);
+                } else {
+                    panic!("'{}' is expected to be parsed as an identifier: '{}'.", param.input, param.accepted);
+                }
 
-                assert_eq!(identifier_pair.as_rule(), Rule::identifier);
-                assert_eq!(identifier_pair.as_str(), param.accepted);
+                Ok(())
             }
         )*
     }

@@ -1,5 +1,8 @@
+mod pest_result;
 #[cfg(test)]
 mod tests;
+
+pub(in crate::pest_parser) use pest_result::PestResult;
 
 use pest_derive::Parser;
 
@@ -9,5 +12,3 @@ use pest_derive::Parser;
 #[derive(Parser)]
 #[grammar = "pest_grammar/apllo_sql.pest"]
 pub(crate) struct PestParser;
-
-// DO NOTE ADD CODE HERE to avoid heavy re-compilation.

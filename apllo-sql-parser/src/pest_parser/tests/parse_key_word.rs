@@ -1,8 +1,8 @@
-use super::super::{PestParser, Rule};
+use super::super::{PestParser, PestResult, Rule};
 use pest::Parser;
 
 #[test]
-fn test_parse_key_word_accepted() {
+fn test_parse_key_word_accepted() -> PestResult<()> {
     let keywords = vec![
         // "A",
         // "ABS",
@@ -648,12 +648,16 @@ fn test_parse_key_word_accepted() {
     ];
 
     for keyword in keywords {
-        let mut parse_result = PestParser::parse(Rule::key_word, keyword).unwrap();
-        let identifier_pair = parse_result.next().unwrap();
-
-        assert_eq!(identifier_pair.as_rule(), Rule::key_word);
-        assert_eq!(identifier_pair.as_str(), keyword);
+        let mut parse_result = PestParser::parse(Rule::key_word, keyword)?;
+        if let Some(identifier_pair) = parse_result.next() {
+            assert_eq!(identifier_pair.as_rule(), Rule::key_word);
+            assert_eq!(identifier_pair.as_str(), keyword);
+        } else {
+            panic!("'{}' is expected to be parsed as a key_word.", keyword);
+        }
     }
+
+    Ok(())
 }
 
 #[test]
