@@ -34,7 +34,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
-      - name: rustup override set `cat rust-version`
+      - name: rustup override set `cat rust-toolchain`
         if: matrix.rust == ''
         uses: actions-rs/toolchain@v1
         with:

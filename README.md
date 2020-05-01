@@ -1,4 +1,4 @@
-# apllo
+# main
 
 Immutable Schema （やその他の特徴（feature検討中））を備えたRDBMSのサーバ実装。
 

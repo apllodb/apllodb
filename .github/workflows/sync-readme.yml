@@ -9,7 +9,7 @@ on:
       - synchronize
 
 jobs:
-  format:
+  sync_readme:
     runs-on: ubuntu-latest
     env:
       REPO: https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
@@ -18,7 +18,7 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.ref}}
 
-      - name: rustup override set `cat rust-version`
+      - name: rustup override set `cat rust-toolchain`
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -47,7 +47,12 @@ jobs:
 
       - name: Sync README.md with rustdoc
         run: |
-          cargo readme > README.md
+          crate_dirs=$(find . -name 'Cargo.toml' |grep -v '^./Cargo.toml' |sed -e 's/Cargo.toml$//g') ; \
+          for crate_dir in $crate_dirs ; do \
+            ( cd $crate_dir ; cargo readme > README.md ) ; \
+          done
+
+      - run: mv main/README.md .
 
       # https://qiita.com/HeRo/items/935d5e268208d411ab5a#%E3%83%97%E3%83%AB%E3%83%AA%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%82%92%E3%83%9E%E3%83%BC%E3%82%B8%E3%81%99%E3%82%8B
       - name: commit sync-ed README.md and push
