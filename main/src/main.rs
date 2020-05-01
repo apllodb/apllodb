@@ -26,6 +26,8 @@
 //! - [Immutable Schema で解決したい課題](https://github.com/darwin-education/apllo/wiki/Immutable-Schema-000:-%E8%A7%A3%E6%B1%BA%E3%81%97%E3%81%9F%E3%81%84%E8%AA%B2%E9%A1%8C)
 //! - [Immutable Schema 仕様書一覧](https://github.com/darwin-education/apllo/wiki/Immutable-Schema-100:-%E4%BB%95%E6%A7%98%E6%9B%B8%E4%B8%80%E8%A6%A7)
 
+#[deny(warnings)]
+
 fn main() {
     println!("Hello, world!");
 }

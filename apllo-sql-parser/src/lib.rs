@@ -1,3 +1,4 @@
+#[deny(warnings, missing_docs)]
 #[cfg(test)]
 mod tests {
     #[test]
