@@ -5,11 +5,5 @@
 //!
 //! Will input APLLO SQL and emit AST.
 
-#[deny(warnings, missing_docs)]
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+//#[deny(warnings, missing_docs)]
+pub(crate) mod pest_parser;

@@ -1,12 +1,5 @@
-extern crate pest;
-#[macro_use]
-extern crate pest_derive;
-
+use super::super::{PestParser, Rule};
 use pest::Parser;
-
-#[derive(Parser)]
-#[grammar = "pest_grammar/apllo_sql.pest"]
-pub struct XqlParser;
 
 struct AcceptedTestParameter<'a>(&'a str);
 macro_rules! accepted_parameterized_tests {
@@ -16,7 +9,7 @@ macro_rules! accepted_parameterized_tests {
             fn $name() {
                 let param: AcceptedTestParameter = $value;
 
-                let mut parse_result = XqlParser::parse(Rule::identifier, param.0).unwrap();
+                let mut parse_result = PestParser::parse(Rule::identifier, param.0).unwrap();
                 let identifier_pair = parse_result.next().unwrap();
 
                 assert_eq!(identifier_pair.as_rule(), Rule::identifier);
@@ -39,7 +32,7 @@ macro_rules! partially_accepted_parameterized_tests {
                 assert!(param.input.starts_with(param.accepted));
                 assert_ne!(param.input, param.accepted);
 
-                let mut parse_result = XqlParser::parse(Rule::identifier, param.input).unwrap();
+                let mut parse_result = PestParser::parse(Rule::identifier, param.input).unwrap();
                 let identifier_pair = parse_result.next().unwrap();
 
                 assert_eq!(identifier_pair.as_rule(), Rule::identifier);
@@ -56,7 +49,7 @@ macro_rules! rejected_parameterized_tests {
             #[test]
             fn $name() {
                 let param: RejectedTestParameter = $value;
-                assert!(XqlParser::parse(Rule::identifier, param.0).is_err());
+                assert!(PestParser::parse(Rule::identifier, param.0).is_err());
             }
         )*
     }
@@ -78,8 +71,8 @@ accepted_parameterized_tests! {
 
     emoji: AcceptedTestParameter("🥺🥰😡🍣🍺"),
 
-    has_keyword1: AcceptedTestParameter("schema_"),
-    has_keyword2: AcceptedTestParameter("_schema"),
+    has_keyword1: AcceptedTestParameter("ABSOLUTE_"),
+    has_keyword2: AcceptedTestParameter("_ABSOLUTE"),
 }
 
 partially_accepted_parameterized_tests! {
@@ -126,5 +119,5 @@ rejected_parameterized_tests! {
     starts_with_plus_sign: RejectedTestParameter("+"),
     starts_with_minus_sign: RejectedTestParameter("-"),
 
-    keyword: RejectedTestParameter("schema"),
+    keyword: RejectedTestParameter("ABSOLUTE"),
 }

@@ -1,12 +1,5 @@
-extern crate pest;
-#[macro_use]
-extern crate pest_derive;
-
+use super::super::{PestParser, Rule};
 use pest::Parser;
-
-#[derive(Parser)]
-#[grammar = "pest_grammar/apllo_sql.pest"]
-pub struct XqlParser;
 
 #[test]
 fn test_parse_key_word_accepted() {
@@ -660,7 +653,7 @@ fn test_parse_key_word_accepted() {
     ];
 
     for keyword in keywords {
-        let mut parse_result = XqlParser::parse(Rule::key_word, keyword).unwrap();
+        let mut parse_result = PestParser::parse(Rule::key_word, keyword).unwrap();
         let identifier_pair = parse_result.next().unwrap();
 
         assert_eq!(identifier_pair.as_rule(), Rule::key_word);
@@ -670,5 +663,5 @@ fn test_parse_key_word_accepted() {
 
 #[test]
 fn test_parse_key_word_rejected() {
-    assert!(XqlParser::parse(Rule::key_word, "AAA").is_err());
+    assert!(PestParser::parse(Rule::key_word, "AAA").is_err());
 }
