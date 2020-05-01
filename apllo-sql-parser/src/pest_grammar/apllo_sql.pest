@@ -1,0 +1,78 @@
+WHITESPACE = _{ " " | "\t" | NEWLINE } // TODO FORM FEED も加える
+
+// XQLが identifier 以外のトークンで使い得る文字。
+XQL_RESERVED_LETTER = _{
+    "!"
+    | "\""
+    | "#"
+    | "$"
+    | "%"
+    | "&"
+    | "'"
+    | "("
+    | ")"
+    | "*"
+    | "+"
+    | ","
+    | "-"
+    | "."
+    | "/"
+    | ":"
+    | ";"
+    | "<"
+    | "="
+    | ">"
+    | "?"
+    | "@"
+    | "["
+    | "\\"
+    | "]"
+    | "^"
+    | "`"
+    | "{"
+    | "|"
+    | "}"
+    | "~"
+}
+
+// 参考:
+// pestのビルトイン文字クラス: https://pest.rs/book/grammars/built-ins.html#general-categories
+// UnicodeのGeneral Category: http://www.unicode.org/reports/tr44/#General_Category_Values
+XQL_LETTER = _{
+    !XQL_RESERVED_LETTER ~ (
+        LETTER
+        | MARK
+        | PUNCTUATION
+        | SYMBOL
+        | LETTER_NUMBER
+        | OTHER_NUMBER
+    )
+}
+XQL_LETTER_OR_DIGIT = _{
+    XQL_LETTER | DECIMAL_NUMBER
+}
+
+/*
+ * ----------------------------------------------
+ *   キーワード
+ * ----------------------------------------------
+ */
+
+keywords = @{ "schema" }  // TODO 拡張する
+
+/*
+ * ----------------------------------------------
+ *   識別子
+ * ----------------------------------------------
+ */
+
+identifier = @{
+    // not starts with a keyword.
+    (
+        !keywords ~ (
+            XQL_LETTER ~ XQL_LETTER_OR_DIGIT*
+        )
+    )
+    // starts with a keyword but followed by XQL letters.
+    | keywords ~ XQL_LETTER_OR_DIGIT+
+ }
