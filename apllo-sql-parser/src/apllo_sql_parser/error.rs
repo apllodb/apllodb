@@ -19,8 +19,8 @@ impl std::fmt::Display for AplloSqlParserError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
-            "Failed to parse the following APLLO SQL: {}\
-            Reason: {}\
+            "Failed to parse the following APLLO SQL: {}\n\
+            Reason: {}\n\
             ",
             self.apllo_sql, self.reason
         )

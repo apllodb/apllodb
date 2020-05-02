@@ -1,5 +1,8 @@
 mod generated_parser;
 
+#[cfg(test)]
+mod tests;
+
 use crate::{
     apllo_ast::{
         DropTableStatement, Identifier, SqlExecutableStatement, SqlSchemaManipulationStatement,
