@@ -1,6 +1,6 @@
 /// The AST root of APLLO SQL.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
-pub struct AplloAst(pub SqlExecutableStatement);
+pub struct AplloAst(pub EmbeddedSqlStatement);
 
 // TODO: 以下の定義は、 .pest から自動生成できるはず。
 //   ルールに `|` を含む場合: enum
@@ -47,4 +47,20 @@ pub enum SqlSchemaStatement {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum SqlSchemaManipulationStatement {
     DropTableStatementVariant(DropTableStatement),
+}
+
+/*
+ * ----------------------------------------------
+ * 21.1 <embedded SQL host program>
+ * ----------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct EmbeddedSqlStatement {
+    pub statement_or_declaration: StatementOrDeclaration,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum StatementOrDeclaration {
+    SqlExecutableStatementVariant(SqlExecutableStatement),
 }

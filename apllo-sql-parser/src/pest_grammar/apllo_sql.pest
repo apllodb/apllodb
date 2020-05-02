@@ -4,12 +4,6 @@
  */
 
 /*
- * ==============================================
- * 5 Lexical elements
- * ==============================================
- */
-
-/*
  * ----------------------------------------------
  * 5.1 <SQL terminal character>
  * ----------------------------------------------
@@ -786,4 +780,19 @@ sql_schema_statement = {
 
 sql_schema_manipulation_statement = {
     drop_table_statement
+}
+
+/*
+ * ----------------------------------------------
+ * 21.1 <embedded SQL host program>
+ * ----------------------------------------------
+ */
+
+// ENTRY POINT
+embedded_sql_statement = {
+    WHITESPACE* ~ statement_or_declaration ~ ";"? ~ WHITESPACE*
+}
+
+statement_or_declaration = {
+    sql_executable_statement
 }

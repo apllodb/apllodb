@@ -5,20 +5,27 @@
 //! # Example
 //! ```
 //! use apllo_sql_parser::apllo_ast::{
-//!     DropTableStatement, Identifier, SqlExecutableStatement, SqlSchemaManipulationStatement,
-//!     SqlSchemaStatement,
+//!     DropTableStatement, EmbeddedSqlStatement, Identifier, SqlExecutableStatement,
+//!     SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration,
 //! };
 //! use apllo_sql_parser::{AplloAst, AplloSqlParser};
 //!
 //! let parser = AplloSqlParser::new();
 //! match parser.parse("DROP TABLE people") {
-//!     Ok(AplloAst(SqlExecutableStatement::SqlSchemaStatementVariant(
-//!         SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
-//!             SqlSchemaManipulationStatement::DropTableStatementVariant(DropTableStatement {
-//!                 table_name: Identifier(table_name),
-//!             }),
-//!         ),
-//!     ))) => assert_eq!(table_name, "people"),
+//!     Ok(AplloAst(EmbeddedSqlStatement {
+//!         statement_or_declaration:
+//!             StatementOrDeclaration::SqlExecutableStatementVariant(
+//!                 SqlExecutableStatement::SqlSchemaStatementVariant(
+//!                     SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
+//!                         SqlSchemaManipulationStatement::DropTableStatementVariant(
+//!                             DropTableStatement {
+//!                                 table_name: Identifier(table_name),
+//!                             },
+//!                         ),
+//!                     ),
+//!                 ),
+//!             ),
+//!     })) => assert_eq!(table_name, "people"),
 //!
 //!     Err(e) => panic!("{}", e),
 //! }
