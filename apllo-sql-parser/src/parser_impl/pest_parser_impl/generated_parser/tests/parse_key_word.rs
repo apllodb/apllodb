@@ -1,4 +1,4 @@
-use super::super::{PestParser, PestResult, Rule};
+use super::super::{GeneratedParser, PestResult, Rule};
 use pest::Parser;
 
 #[test]
@@ -648,7 +648,7 @@ fn test_parse_key_word_accepted() -> PestResult<()> {
     ];
 
     for keyword in keywords {
-        let mut parse_result = PestParser::parse(Rule::key_word, keyword)?;
+        let mut parse_result = GeneratedParser::parse(Rule::key_word, keyword)?;
         if let Some(identifier_pair) = parse_result.next() {
             assert_eq!(identifier_pair.as_rule(), Rule::key_word);
             assert_eq!(identifier_pair.as_str(), keyword);
@@ -662,5 +662,5 @@ fn test_parse_key_word_accepted() -> PestResult<()> {
 
 #[test]
 fn test_parse_key_word_rejected() {
-    assert!(PestParser::parse(Rule::key_word, "AA").is_err());
+    assert!(GeneratedParser::parse(Rule::key_word, "AA").is_err());
 }

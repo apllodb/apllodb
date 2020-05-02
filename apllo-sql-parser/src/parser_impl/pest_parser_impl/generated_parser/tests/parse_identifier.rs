@@ -1,4 +1,4 @@
-use super::super::{PestParser, PestResult, Rule};
+use super::super::{GeneratedParser, PestResult, Rule};
 use pest::Parser;
 
 struct AcceptedTestParameter<'a>(&'a str);
@@ -9,7 +9,7 @@ macro_rules! accepted_parameterized_tests {
             fn $name() -> PestResult<()> {
                 let param: AcceptedTestParameter = $value;
 
-                let mut parse_result = PestParser::parse(Rule::identifier, param.0)?;
+                let mut parse_result = GeneratedParser::parse(Rule::identifier, param.0)?;
                 if let Some(identifier_pair) = parse_result.next() {
                     assert_eq!(identifier_pair.as_rule(), Rule::identifier);
                     assert_eq!(identifier_pair.as_str(), param.0);
@@ -36,7 +36,7 @@ macro_rules! partially_accepted_parameterized_tests {
                 assert!(param.input.starts_with(param.accepted));
                 assert_ne!(param.input, param.accepted);
 
-                let mut parse_result = PestParser::parse(Rule::identifier, param.input)?;
+                let mut parse_result = GeneratedParser::parse(Rule::identifier, param.input)?;
                 if let Some(identifier_pair) = parse_result.next() {
                     assert_eq!(identifier_pair.as_rule(), Rule::identifier);
                     assert_eq!(identifier_pair.as_str(), param.accepted);
@@ -57,7 +57,7 @@ macro_rules! rejected_parameterized_tests {
             #[test]
             fn $name() {
                 let param: RejectedTestParameter = $value;
-                assert!(PestParser::parse(Rule::identifier, param.0).is_err());
+                assert!(GeneratedParser::parse(Rule::identifier, param.0).is_err());
             }
         )*
     }
