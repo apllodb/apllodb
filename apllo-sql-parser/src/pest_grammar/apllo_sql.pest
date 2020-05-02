@@ -755,3 +755,35 @@ identifier_part = _{
     identifier_start
     | DECIMAL_NUMBER
 }
+
+table_name = _{
+    identifier
+}
+
+/*
+ * ----------------------------------------------
+ * 11.31 <drop table statement>
+ * ----------------------------------------------
+ */
+
+drop_table_statement = {
+    "DROP" ~ "TABLE" ~ table_name
+}
+
+/*
+ * ----------------------------------------------
+ * 13.4 <SQL procedure statement>
+ * ----------------------------------------------
+ */
+
+sql_executable_statement = {
+    sql_schema_statement
+}
+
+sql_schema_statement = {
+    sql_schema_manipulation_statement
+}
+
+sql_schema_manipulation_statement = {
+    drop_table_statement
+}

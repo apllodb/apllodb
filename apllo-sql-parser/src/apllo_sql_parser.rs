@@ -1,7 +1,7 @@
-mod apllo_ast;
+pub mod apllo_ast;
 mod error;
 
-pub use apllo_ast::AplloAST;
+pub use apllo_ast::AplloAst;
 pub use error::{AplloSqlParserError, AplloSqlParserResult};
 
 use crate::{parser_impl::PestParserImpl, parser_interface::ParserLike};
@@ -24,12 +24,12 @@ impl AplloSqlParser {
     /// use apllo_sql_parser::AplloSqlParser;
     ///
     /// let parser = AplloSqlParser::new();
-    /// match parser.parse("SELECT id, name FROM people") {
+    /// match parser.parse("DROP TABLE people") {
     ///     Ok(ast) => println!("Parsed AST: {:?}", ast),
     ///     Err(e) => panic!("{}", e),
     /// }
     /// ```
-    pub fn parse<S: Into<String>>(&self, apllo_sql: S) -> AplloSqlParserResult<AplloAST> {
+    pub fn parse<S: Into<String>>(&self, apllo_sql: S) -> AplloSqlParserResult<AplloAst> {
         Ok(self.0.parse(apllo_sql)?)
     }
 }

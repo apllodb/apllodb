@@ -1,5 +1,5 @@
-use crate::AplloAST;
+use crate::{apllo_sql_parser::AplloSqlParserResult, AplloAst};
 
 pub(crate) trait ParserLike {
-    fn parse<S: Into<String>, E>(&self, apllo_sql: S) -> Result<AplloAST, E>;
+    fn parse<S: Into<String>>(&self, apllo_sql: S) -> AplloSqlParserResult<AplloAst>;
 }

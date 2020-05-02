@@ -1,4 +1,5 @@
-use super::super::{GeneratedParser, PestResult, Rule};
+use super::super::{GeneratedParser, Rule};
+use super::PestResult;
 use pest::Parser;
 
 #[test]

@@ -1,9 +1,50 @@
-/// The AST of APLLO SQL.
+/// The AST root of APLLO SQL.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
-pub enum AplloAST {
-    /// DROP TABLE ...
-    DropTable {
-        /// Table to DROP
-        table_name: String,
-    },
+pub struct AplloAst(pub SqlExecutableStatement);
+
+// TODO: 以下の定義は、 .pest から自動生成できるはず。
+//   ルールに `|` を含む場合: enum
+//   else: struct
+//
+//   ルールが _{} の場合: そのルールには構造を作らずにskip
+
+/*
+ * ----------------------------------------------
+ * 5.4 Names and identifiers
+ * ----------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct Identifier(pub String);
+
+/*
+ * ----------------------------------------------
+ * 11.31 <drop table statement>
+ * ----------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct DropTableStatement {
+    pub table_name: Identifier,
+}
+
+/*
+ * ----------------------------------------------
+ * 13.4 <SQL procedure statement>
+ * ----------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum SqlExecutableStatement {
+    SqlSchemaStatementVariant(SqlSchemaStatement),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum SqlSchemaStatement {
+    SqlSchemaManipulationStatementVariant(SqlSchemaManipulationStatement),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum SqlSchemaManipulationStatement {
+    DropTableStatementVariant(DropTableStatement),
 }
