@@ -760,6 +760,16 @@ column_name = _{
 
 /*
  * ----------------------------------------------
+ * 6.1 <data type>
+ * ----------------------------------------------
+ */
+
+data_type = {
+    "INT"
+}
+
+/*
+ * ----------------------------------------------
  * 6.3 <value expression primary>
  * ----------------------------------------------
  */
@@ -860,6 +870,42 @@ query_expression = {
 
 /*
  * ----------------------------------------------
+ * 11.3 <table definition>
+ * ----------------------------------------------
+ */
+
+table_definition = {
+    "CREATE" ~ "TABLE" ~ table_name ~ table_contents_source
+}
+
+table_contents_source = {
+    table_element_list
+}
+
+table_element_list = {
+    "(" ~ table_element ~ ("," ~ table_element)* ~ ")"
+}
+
+table_element = {
+    column_definition
+}
+
+/*
+ * ----------------------------------------------
+ * 11.4 <column definition>
+ * ----------------------------------------------
+ */
+
+column_definition = {
+    column_name ~ data_type ~ column_constraint_definition*
+}
+
+column_constraint_definition = {
+    "NOT NULL"
+}
+
+/*
+ * ----------------------------------------------
  * 11.31 <drop table statement>
  * ----------------------------------------------
  */
@@ -879,7 +925,12 @@ sql_executable_statement = {
 }
 
 sql_schema_statement = {
-    sql_schema_manipulation_statement
+    sql_schema_definition_statement
+    | sql_schema_manipulation_statement
+}
+
+sql_schema_definition_statement = {
+    table_definition
 }
 
 sql_schema_manipulation_statement = {
