@@ -916,7 +916,9 @@ simple_table = {
 
 // ENTRY POINT for prepared statement.
 preparable_statement = {
-    preparable_sql_data_statement
+    SOI
+    ~ preparable_sql_data_statement ~ ";"?
+    ~ EOI
 }
 
 preparable_sql_data_statement = {
