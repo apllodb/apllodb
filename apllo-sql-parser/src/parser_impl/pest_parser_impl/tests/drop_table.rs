@@ -48,6 +48,10 @@ fn test_drop_table_accepted() {
                     ),
             })) => assert_eq!(table_name, expected_params.table_name),
 
+            Ok(ast) => panic!(
+                "'{}' should be parsed as DROP TABLE but is parsed like: {:?}",
+                sql, ast
+            ),
             Err(e) => panic!("{}", e),
         }
     }

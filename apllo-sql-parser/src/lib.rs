@@ -27,6 +27,10 @@
 //!             ),
 //!     })) => assert_eq!(table_name, "people"),
 //!
+//!     Ok(ast) => panic!(
+//!         "Should be parsed as DROP TABLE but is parsed like: {:?}",
+//!         ast
+//!     ),
 //!     Err(e) => panic!("{}", e),
 //! }
 //! ```
