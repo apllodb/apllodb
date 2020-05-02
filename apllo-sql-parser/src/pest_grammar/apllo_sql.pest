@@ -914,6 +914,11 @@ simple_table = {
  * ----------------------------------------------
  */
 
+// ENTRY POINT for prepared statement.
+preparable_statement = {
+    preparable_sql_data_statement
+}
+
 preparable_sql_data_statement = {
     dynamic_select_statement
 }

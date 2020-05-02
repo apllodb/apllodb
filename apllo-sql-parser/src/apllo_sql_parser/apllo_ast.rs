@@ -204,6 +204,11 @@ pub enum SimpleTable {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum PreparableStatement {
+    PreparableSqlDataStatementVariant(PreparableSqlDataStatement),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum PreparableSqlDataStatement {
     DynamicSelectStatementVariant(DynamicSelectStatement),
 }
