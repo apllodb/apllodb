@@ -40,18 +40,17 @@ impl ParserLike for PestParserImpl {
             .next()
             .ok_or(AplloSqlParserError::new(&apllo_sql, "Unknown"))?;
 
-        let ast = self.parse_embedded_sql_statement(pair, &apllo_sql)?;
-
-        Ok(AplloAst(ast))
+        let ast = self.parse_root_embedded_sql_statement(pair, &apllo_sql)?;
+        Ok(ast)
     }
 }
 
 impl PestParserImpl {
-    fn parse_embedded_sql_statement(
+    fn parse_root_embedded_sql_statement(
         &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
-    ) -> AplloSqlParserResult<EmbeddedSqlStatement> {
+    ) -> AplloSqlParserResult<AplloAst> {
         match pair.as_rule() {
             Rule::embedded_sql_statement => {
                 let mut pairs: Pairs<Rule> = pair.into_inner();
@@ -59,7 +58,27 @@ impl PestParserImpl {
                     .next()
                     .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
 
-                let inner_ast = self.parse_statement_or_declaration(inner_pair, apllo_sql)?;
+                let inner_ast = self.parse_inner_embedded_sql_statement(inner_pair, apllo_sql)?;
+
+                Ok(AplloAst(inner_ast))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn parse_inner_embedded_sql_statement(
+        &self,
+        pair: Pair<Rule>,
+        apllo_sql: &str,
+    ) -> AplloSqlParserResult<EmbeddedSqlStatement> {
+        match pair.as_rule() {
+            Rule::statement_or_declaration => {
+                let mut pairs: Pairs<Rule> = pair.into_inner();
+                let inner_pair: Pair<Rule> = pairs
+                    .next()
+                    .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
+
+                let inner_ast = self.parse_inner_statement_or_declaration(inner_pair, apllo_sql)?;
 
                 Ok(EmbeddedSqlStatement {
                     statement_or_declaration: inner_ast,
@@ -69,19 +88,19 @@ impl PestParserImpl {
         }
     }
 
-    fn parse_statement_or_declaration(
+    fn parse_inner_statement_or_declaration(
         &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<StatementOrDeclaration> {
         match pair.as_rule() {
-            Rule::statement_or_declaration => {
+            Rule::sql_executable_statement => {
                 let mut pairs: Pairs<Rule> = pair.into_inner();
                 let inner_pair: Pair<Rule> = pairs
                     .next()
                     .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
 
-                let inner_ast = self.parse_sql_executable_statement(inner_pair, apllo_sql)?;
+                let inner_ast = self.parse_inner_sql_executable_statement(inner_pair, apllo_sql)?;
 
                 Ok(StatementOrDeclaration::SqlExecutableStatementVariant(
                     inner_ast,
@@ -91,31 +110,11 @@ impl PestParserImpl {
         }
     }
 
-    fn parse_sql_executable_statement(
+    fn parse_inner_sql_executable_statement(
         &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<SqlExecutableStatement> {
-        match pair.as_rule() {
-            Rule::sql_executable_statement => {
-                let mut pairs: Pairs<Rule> = pair.into_inner();
-                let inner_pair: Pair<Rule> = pairs
-                    .next()
-                    .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
-
-                let inner_ast = self.parse_sql_schema_statement(inner_pair, apllo_sql)?;
-
-                Ok(SqlExecutableStatement::SqlSchemaStatementVariant(inner_ast))
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    fn parse_sql_schema_statement(
-        &self,
-        pair: Pair<Rule>,
-        apllo_sql: &str,
-    ) -> AplloSqlParserResult<SqlSchemaStatement> {
         match pair.as_rule() {
             Rule::sql_schema_statement => {
                 let mut pairs: Pairs<Rule> = pair.into_inner();
@@ -123,8 +122,28 @@ impl PestParserImpl {
                     .next()
                     .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
 
+                let inner_ast = self.parse_inner_sql_schema_statement(inner_pair, apllo_sql)?;
+
+                Ok(SqlExecutableStatement::SqlSchemaStatementVariant(inner_ast))
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn parse_inner_sql_schema_statement(
+        &self,
+        pair: Pair<Rule>,
+        apllo_sql: &str,
+    ) -> AplloSqlParserResult<SqlSchemaStatement> {
+        match pair.as_rule() {
+            Rule::sql_schema_manipulation_statement => {
+                let mut pairs: Pairs<Rule> = pair.into_inner();
+                let inner_pair: Pair<Rule> = pairs
+                    .next()
+                    .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
+
                 let inner_ast =
-                    self.parse_sql_schema_manipulation_statement(inner_pair, apllo_sql)?;
+                    self.parse_inner_sql_schema_manipulation_statement(inner_pair, apllo_sql)?;
 
                 Ok(SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
                     inner_ast,
@@ -134,19 +153,20 @@ impl PestParserImpl {
         }
     }
 
-    fn parse_sql_schema_manipulation_statement(
+    fn parse_inner_sql_schema_manipulation_statement(
         &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<SqlSchemaManipulationStatement> {
         match pair.as_rule() {
-            Rule::sql_schema_manipulation_statement => {
+            Rule::drop_table_statement => {
                 let mut pairs: Pairs<Rule> = pair.into_inner();
+
                 let inner_pair: Pair<Rule> = pairs
                     .next()
                     .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
 
-                let inner_ast = self.parse_drop_table_statement(inner_pair, apllo_sql)?;
+                let inner_ast = self.parse_inner_drop_table_statement(inner_pair, apllo_sql)?;
 
                 Ok(SqlSchemaManipulationStatement::DropTableStatementVariant(
                     inner_ast,
@@ -156,38 +176,17 @@ impl PestParserImpl {
         }
     }
 
-    fn parse_drop_table_statement(
-        &self,
-        pair: Pair<Rule>,
-        apllo_sql: &str,
-    ) -> AplloSqlParserResult<DropTableStatement> {
-        match pair.as_rule() {
-            Rule::drop_table_statement => {
-                let mut pairs: Pairs<Rule> = pair.into_inner();
-
-                let inner_pair: Pair<Rule> = pairs
-                    .next()
-                    .ok_or(AplloSqlParserError::new(apllo_sql, "Unknown"))?;
-
-                let inner_ast = self.parse_identifier(inner_pair, apllo_sql)?;
-
-                Ok(DropTableStatement {
-                    table_name: inner_ast,
-                })
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    fn parse_identifier(
+    fn parse_inner_drop_table_statement(
         &self,
         pair: Pair<Rule>,
         _apllo_sql: &str,
-    ) -> AplloSqlParserResult<Identifier> {
+    ) -> AplloSqlParserResult<DropTableStatement> {
         match pair.as_rule() {
             Rule::identifier => {
                 let s = pair.as_str().to_string();
-                Ok(Identifier(s))
+                Ok(DropTableStatement {
+                    table_name: Identifier(s),
+                })
             }
             _ => unreachable!(),
         }
