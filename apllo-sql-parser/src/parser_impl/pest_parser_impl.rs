@@ -12,7 +12,7 @@ impl PestParserImpl {
 }
 
 impl ParserLike for PestParserImpl {
-    fn parse<S: Into<String>>(&self, _apllo_sql: S) -> AplloAST {
+    fn parse<S: Into<String>, E>(&self, _apllo_sql: S) -> Result<AplloAST, E> {
         todo!()
     }
 }

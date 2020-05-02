@@ -30,6 +30,6 @@ impl AplloSqlParser {
     /// }
     /// ```
     pub fn parse<S: Into<String>>(&self, apllo_sql: S) -> AplloSqlParserResult<AplloAST> {
-        Ok(self.0.parse(apllo_sql))
+        Ok(self.0.parse(apllo_sql)?)
     }
 }
