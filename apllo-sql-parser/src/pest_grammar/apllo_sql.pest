@@ -777,15 +777,6 @@ nonparenthesized_value_expression_primary = {
     column_reference
 }
 
-/*
- * ----------------------------------------------
- * 6.6 <identifier chain>
- * ----------------------------------------------
- */
-
-identifier_chain = {
-    identifier
-}
 
 /*
  * ----------------------------------------------
@@ -794,7 +785,7 @@ identifier_chain = {
  */
 
 column_reference = {
-    identifier_chain
+    identifier
 }
 
 /*
@@ -866,8 +857,6 @@ as_clause = {
 query_expression = {
     query_expression_body
 }
-
-
 
 /*
  * ----------------------------------------------
