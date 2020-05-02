@@ -25,6 +25,17 @@ pub struct Identifier(pub String);
 
 /*
  * ----------------------------------------------
+ * 6.1 <data type>
+ * ----------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum DataType {
+    IntVariant,
+}
+
+/*
+ * ----------------------------------------------
  * 6.3 <value expression primary>
  * ----------------------------------------------
  */
@@ -141,6 +152,52 @@ pub enum QueryExpression {
 
 /*
  * ----------------------------------------------
+ * 11.3 <table definition>
+ * ----------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct TableDefinition {
+    pub table_name: Identifier,
+    pub table_contents_source: TableContentsSource,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum TableContentsSource {
+    TableElementListVariant(TableElementList),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct TableElementList {
+    pub head_table_element: TableElement,
+    pub tail_table_elements: Vec<TableElement>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum TableElement {
+    ColumnDefinitionVariant(ColumnDefinition),
+}
+
+/*
+ * ----------------------------------------------
+ * 11.4 <column definition>
+ * ----------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct ColumnDefinition {
+    pub column_name: Identifier,
+    pub data_type: DataType,
+    pub column_constraint_definitions: Vec<ColumnConstraintDefinition>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum ColumnConstraintDefinition {
+    NotNullVariant,
+}
+
+/*
+ * ----------------------------------------------
  * 11.31 <drop table statement>
  * ----------------------------------------------
  */
@@ -163,7 +220,13 @@ pub enum SqlExecutableStatement {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum SqlSchemaStatement {
+    SqlSchemaDefinitionStatementVariant(SqlSchemaDefinitionStatement),
     SqlSchemaManipulationStatementVariant(SqlSchemaManipulationStatement),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum SqlSchemaDefinitionStatement {
+    TableDefinitionVariant(TableDefinition),
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
