@@ -182,7 +182,7 @@ impl PestParserImpl {
     fn parse_identifier(
         &self,
         pair: Pair<Rule>,
-        apllo_sql: &str,
+        _apllo_sql: &str,
     ) -> AplloSqlParserResult<Identifier> {
         match pair.as_rule() {
             Rule::identifier => {

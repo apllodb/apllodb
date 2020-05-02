@@ -1,3 +1,9 @@
+#![allow(missing_docs)]
+
+//! APLLO SQL's AST.
+//!
+//! This module provides the root node ([AplloAst](AplloAst.html)) and other intermediate nodes.
+
 /// The AST root of APLLO SQL.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct AplloAst(pub EmbeddedSqlStatement);
