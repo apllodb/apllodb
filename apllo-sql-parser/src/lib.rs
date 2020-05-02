@@ -1,4 +1,4 @@
-//#![deny(warnings, missing_docs)]
+//#![deny(warnings, missing_docs, missing_debug_implementations)]
 
 //! APLLO SQL's parser that inputs APLLO SQL and emit APLLO AST.
 //!

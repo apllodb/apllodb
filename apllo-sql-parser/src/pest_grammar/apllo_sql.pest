@@ -790,7 +790,9 @@ sql_schema_manipulation_statement = {
 
 // ENTRY POINT
 embedded_sql_statement = {
-    WHITESPACE* ~ statement_or_declaration ~ ";"? ~ WHITESPACE*
+    SOI
+    ~ statement_or_declaration ~ ";"?
+    ~ EOI
 }
 
 statement_or_declaration = {

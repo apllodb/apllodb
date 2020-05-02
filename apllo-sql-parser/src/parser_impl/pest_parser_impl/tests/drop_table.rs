@@ -58,11 +58,10 @@ fn test_drop_table_rejected() {
     let sqls: Vec<&str> = vec![
         // Keyword is case-sensitive.
         "drop table t",
-        // // Does not accept trailing letter.
-        // "DROP TABLE t x",
-        // // Does not accept 2nd statement.
-        // "DROP TABLE t; DROP TABLE t2;",
-
+        // Does not accept trailing letter.
+        "DROP TABLE t x",
+        // Does not accept 2nd statement.
+        "DROP TABLE t; DROP TABLE t2;",
         // Does not accept heading letter.
         "x DROP TABLE t",
         // Does not accept illegal white space.
