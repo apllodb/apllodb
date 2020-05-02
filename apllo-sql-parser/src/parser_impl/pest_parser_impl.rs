@@ -2,6 +2,7 @@ mod generated_parser;
 
 use crate::{parser_interface::ParserLike, AplloAST};
 
+#[derive(Clone, Hash, Debug)]
 pub(crate) struct PestParserImpl;
 
 impl PestParserImpl {
