@@ -13,6 +13,9 @@ impl PestParserImpl {
 
 impl ParserLike for PestParserImpl {
     fn parse<S: Into<String>, E>(&self, _apllo_sql: S) -> Result<AplloAST, E> {
-        todo!()
+        // TODO: 型合わせではなくちゃんと実装する
+        Ok(AplloAST::DropTable {
+            table_name: "people".into(),
+        })
     }
 }
