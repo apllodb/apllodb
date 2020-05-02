@@ -1,6 +1,6 @@
 mod generated_parser;
 
-use crate::{apllo_ast::AplloAST, parser_interface::ParserLike};
+use crate::{parser_interface::ParserLike, AplloAST};
 
 pub(crate) struct PestParserImpl;
 

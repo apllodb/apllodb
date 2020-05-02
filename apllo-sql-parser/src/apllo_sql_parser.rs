@@ -1,4 +1,8 @@
-use crate::{apllo_ast::AplloAST, parser_impl::PestParserImpl, parser_interface::ParserLike};
+mod apllo_ast;
+
+pub use apllo_ast::AplloAST;
+
+use crate::{parser_impl::PestParserImpl, parser_interface::ParserLike};
 
 /// The parser from APLLO SQL into APLLO AST.
 pub struct AplloSqlParser(PestParserImpl);
