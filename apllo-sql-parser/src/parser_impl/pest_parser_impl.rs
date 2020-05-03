@@ -96,6 +96,10 @@ macro_rules! parse_inner {
 
 macro_rules! parse_identifier {
     ($params: expr, $ret_closure: expr,) => {{
+        if let Rule::identifier = $params.pair.as_rule() {
+        } else {
+            panic!("Expected identifier but actual pair: {}", $params.pair);
+        }
         let s = $params.pair.as_str().to_string();
         Ok($ret_closure(Identifier(s)))
     }};
