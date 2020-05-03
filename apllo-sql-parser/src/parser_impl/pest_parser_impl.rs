@@ -87,6 +87,13 @@ macro_rules! parse_inner {
     }};
 }
 
+macro_rules! parse_identifier {
+    ($params: expr, $ret_closure: expr,) => {{
+        let s = $params.pair.as_str().to_string();
+        Ok($ret_closure(Identifier(s)))
+    }};
+}
+
 impl PestParserImpl {
     fn parse_root_embedded_sql_statement(params: FnParseParams) -> AplloSqlParserResult<AplloAst> {
         parse_inner!(
@@ -167,14 +174,8 @@ impl PestParserImpl {
     fn parse_inner_drop_table_statement(
         params: FnParseParams,
     ) -> AplloSqlParserResult<DropTableStatement> {
-        match params.pair.as_rule() {
-            Rule::identifier => {
-                let s = params.pair.as_str().to_string();
-                Ok(DropTableStatement {
-                    table_name: Identifier(s),
-                })
-            }
-            _ => unreachable!(),
-        }
+        parse_identifier!(params, |inner_ast| DropTableStatement {
+            table_name: inner_ast,
+        },)
     }
 }
