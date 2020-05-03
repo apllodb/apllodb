@@ -49,11 +49,10 @@ macro_rules! parse_self {
                 $child_term: ident,
                 $child_parser: ident,
                 $ret_closure: expr$(,)?
-            ),)+
+            )$(,)?)+
         ]
     ) => {{
-        let mut children_pairs = $params.children_pairs;
-        let child_pair: Pair<Rule> = children_pairs.pop_front()
+        let child_pair: Pair<Rule> = $params.children_pairs.pop_front()
             .ok_or(
                 AplloSqlParserError::new(
                     $params.apllo_sql,
@@ -86,15 +85,18 @@ macro_rules! parse_self {
 }
 
 macro_rules! parse_identifier {
-    ($params: expr, $ret_closure: expr) => {{
-        let mut children_pairs = $params.children_pairs;
-        let child_pair: Pair<Rule> = children_pairs.pop_front().ok_or(AplloSqlParserError::new(
-            $params.apllo_sql,
-            format!(
-                "Expected a rule '{:?}' but it does not appear.",
-                Rule::identifier
-            ),
-        ))?;
+    ($params: expr, $ret_closure: expr$(,)?) => {{
+        let child_pair: Pair<Rule> =
+            $params
+                .children_pairs
+                .pop_front()
+                .ok_or(AplloSqlParserError::new(
+                    $params.apllo_sql,
+                    format!(
+                        "Expected a rule '{:?}' but it does not appear.",
+                        Rule::identifier
+                    ),
+                ))?;
         let child_pair_as_string: String = child_pair.as_str().to_string();
         Ok($ret_closure(Identifier(child_pair_as_string)))
     }};
@@ -110,7 +112,7 @@ impl ParserLike for PestParserImpl {
             AplloSqlParserError::new(&apllo_sql, reason)
         })?;
 
-        let params = FnParseParams {
+        let mut params = FnParseParams {
             apllo_sql: &apllo_sql,
             children_pairs: pairs.collect(),
         };
@@ -127,26 +129,24 @@ impl ParserLike for PestParserImpl {
 }
 
 impl PestParserImpl {
-    fn parse_table_definition(_params: FnParseParams) -> AplloSqlParserResult<TableDefinition> {
-        todo!()
-
-        // let table_name = parse_identifier!(params, |inner_ast| inner_ast,)?;
-        // let table_contents_source = parse_self!(
-        //     params,
-        //     {
-        //         table_contents_source,
-        //         parse_table_contents_source,
-        //         |inner_ast| inner_ast,
-        //     }
-        // )?;
-        // Ok(TableDefinition {
-        //     table_name,
-        //     table_contents_source,
-        // })
+    fn parse_table_definition(mut params: FnParseParams) -> AplloSqlParserResult<TableDefinition> {
+        let table_name = parse_identifier!(params, |inner_ast| inner_ast,)?;
+        let table_contents_source = parse_self!(
+            params,
+            [(
+                table_contents_source,
+                parse_table_contents_source,
+                |inner_ast| inner_ast,
+            ),]
+        )?;
+        Ok(TableDefinition {
+            table_name,
+            table_contents_source,
+        })
     }
 
-    fn _parse_table_contents_source(
-        _params: FnParseParams,
+    fn parse_table_contents_source(
+        mut _params: FnParseParams,
     ) -> AplloSqlParserResult<TableContentsSource> {
         todo!()
 
@@ -164,12 +164,14 @@ impl PestParserImpl {
         // )
     }
 
-    fn _parse_table_element_list(_params: FnParseParams) -> AplloSqlParserResult<TableElementList> {
+    fn _parse_table_element_list(
+        mut _params: FnParseParams,
+    ) -> AplloSqlParserResult<TableElementList> {
         todo!()
     }
 
     fn parse_embedded_sql_statement(
-        params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<EmbeddedSqlStatement> {
         parse_self!(
             params,
@@ -184,7 +186,7 @@ impl PestParserImpl {
     }
 
     fn parse_statement_or_declaration(
-        params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<StatementOrDeclaration> {
         parse_self!(
             params,
@@ -197,7 +199,7 @@ impl PestParserImpl {
     }
 
     fn parse_sql_executable_statement(
-        params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlExecutableStatement> {
         parse_self!(
             params,
@@ -210,7 +212,7 @@ impl PestParserImpl {
     }
 
     fn parse_sql_schema_definition_statement(
-        params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaDefinitionStatement> {
         parse_self!(
             params,
@@ -221,7 +223,7 @@ impl PestParserImpl {
     }
 
     fn parse_sql_schema_statement(
-        params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaStatement> {
         parse_self!(
             params,
@@ -243,7 +245,7 @@ impl PestParserImpl {
     }
 
     fn parse_sql_schema_manipulation_statement(
-        params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaManipulationStatement> {
         parse_self!(
             params,
@@ -256,7 +258,7 @@ impl PestParserImpl {
     }
 
     fn parse_drop_table_statement(
-        params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<DropTableStatement> {
         parse_identifier!(params, |inner_ast| DropTableStatement {
             table_name: inner_ast,
