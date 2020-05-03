@@ -50,6 +50,7 @@ impl ParserLike for PestParserImpl {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 struct FnParseParams<'a> {
     apllo_sql: &'a str,
     pair: Pair<'a, Rule>,
