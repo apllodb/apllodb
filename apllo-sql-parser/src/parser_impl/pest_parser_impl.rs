@@ -40,30 +40,43 @@ impl ParserLike for PestParserImpl {
             .next()
             .ok_or(AplloSqlParserError::new(&apllo_sql, "Unknown"))?;
 
-        let ast = Self::parse_root_embedded_sql_statement(pair, &apllo_sql)?;
+        let params = FnParseParams {
+            apllo_sql: apllo_sql.clone(),
+            pair,
+        };
+
+        let ast = Self::parse_root_embedded_sql_statement(params)?;
         Ok(ast)
     }
+}
+
+struct FnParseParams<'a> {
+    apllo_sql: String,
+    pair: Pair<'a, Rule>,
 }
 
 macro_rules! parse_inner {
     ($(
         {
-            $self_pair: expr,
+            $params: expr,
             $self_term: ident,
             $inner_parser: ident,
-            $apllo_sql: ident,
             $ret_closure: expr,
         }$(,)?
     ),*) => {{
         $(
-            match $self_pair.as_rule() {
+            match $params.pair.as_rule() {
                 Rule::$self_term => {
-                    let mut pairs: Pairs<Rule> = $self_pair.into_inner();
+                    let mut pairs: Pairs<Rule> = $params.pair.into_inner();
                     let inner_pair: Pair<Rule> = pairs
                         .next()
-                        .ok_or(AplloSqlParserError::new($apllo_sql, "Unknown"))?;
+                        .ok_or(AplloSqlParserError::new(&$params.apllo_sql, "Unknown"))?;
 
-                    let inner_ast = Self::$inner_parser(inner_pair, $apllo_sql)?;
+                    let inner_params =  FnParseParams {
+                        apllo_sql: $params.apllo_sql.clone(),
+                        pair: inner_pair,
+                    };
+                    let inner_ast = Self::$inner_parser(inner_params)?;
 
                     Ok($ret_closure(inner_ast))
                 }
@@ -74,103 +87,88 @@ macro_rules! parse_inner {
 }
 
 impl PestParserImpl {
-    fn parse_root_embedded_sql_statement(
-        pair: Pair<Rule>,
-        apllo_sql: &str,
-    ) -> AplloSqlParserResult<AplloAst> {
+    fn parse_root_embedded_sql_statement(params: FnParseParams) -> AplloSqlParserResult<AplloAst> {
         parse_inner!(
             {
-                pair,
+                params,
                 embedded_sql_statement,
                 parse_inner_embedded_sql_statement,
-                apllo_sql,
                 |inner_ast| AplloAst(inner_ast),
             },
         )
     }
 
     fn parse_inner_embedded_sql_statement(
-        pair: Pair<Rule>,
-        apllo_sql: &str,
+        params: FnParseParams,
     ) -> AplloSqlParserResult<EmbeddedSqlStatement> {
         parse_inner!(
             {
-                pair,
+                params,
                 statement_or_declaration,
                 parse_inner_statement_or_declaration,
-                apllo_sql,
                 |inner_ast| EmbeddedSqlStatement { statement_or_declaration: inner_ast },
             },
         )
     }
 
     fn parse_inner_statement_or_declaration(
-        pair: Pair<Rule>,
-        apllo_sql: &str,
+        params: FnParseParams,
     ) -> AplloSqlParserResult<StatementOrDeclaration> {
         parse_inner!(
             {
-                pair,
+                params,
                 sql_executable_statement,
                 parse_inner_sql_executable_statement,
-                apllo_sql,
                 |inner_ast| StatementOrDeclaration::SqlExecutableStatementVariant(inner_ast),
             },
         )
     }
 
     fn parse_inner_sql_executable_statement(
-        pair: Pair<Rule>,
-        apllo_sql: &str,
+        params: FnParseParams,
     ) -> AplloSqlParserResult<SqlExecutableStatement> {
         parse_inner!(
             {
-                pair,
+                params,
                 sql_schema_statement,
                 parse_inner_sql_schema_statement,
-                apllo_sql,
                 |inner_ast| SqlExecutableStatement::SqlSchemaStatementVariant(inner_ast),
             },
         )
     }
 
     fn parse_inner_sql_schema_statement(
-        pair: Pair<Rule>,
-        apllo_sql: &str,
+        params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaStatement> {
         parse_inner!(
             {
-                pair,
+                params,
                 sql_schema_manipulation_statement,
                 parse_inner_sql_schema_manipulation_statement,
-                apllo_sql,
                 |inner_ast| SqlSchemaStatement::SqlSchemaManipulationStatementVariant(inner_ast),
             },
         )
     }
 
     fn parse_inner_sql_schema_manipulation_statement(
-        pair: Pair<Rule>,
-        apllo_sql: &str,
+        params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaManipulationStatement> {
         parse_inner!(
             {
-                pair,
+                params,
                 drop_table_statement,
                 parse_inner_drop_table_statement,
-                apllo_sql,
                 |inner_ast| SqlSchemaManipulationStatement::DropTableStatementVariant(inner_ast),
             },
         )
     }
 
     fn parse_inner_drop_table_statement(
-        pair: Pair<Rule>,
-        _apllo_sql: &str,
+        params: FnParseParams,
     ) -> AplloSqlParserResult<DropTableStatement> {
-        match pair.as_rule() {
+        match params.pair.as_rule() {
             Rule::identifier => {
-                let s = pair.as_str().to_string();
+                let s = params.pair.as_str().to_string();
                 Ok(DropTableStatement {
                     table_name: Identifier(s),
                 })
