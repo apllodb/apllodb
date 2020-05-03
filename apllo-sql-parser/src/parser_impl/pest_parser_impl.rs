@@ -18,6 +18,7 @@ use pest::{
     iterators::{Pair, Pairs},
     Parser,
 };
+use std::collections::VecDeque;
 
 #[derive(Clone, Hash, Debug)]
 pub(crate) struct PestParserImpl;
@@ -31,7 +32,14 @@ impl PestParserImpl {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 struct FnParseParams<'a> {
     apllo_sql: &'a str,
-    children_pairs: Pairs<'a, Rule>,
+
+    // collected from Pairs.
+    //
+    // Pairs itself cannot be used as this struct field:
+    // An AST node who has multiple children can call parse_self!() / parse_identifier!() macro twice or more.
+    // But Pairs::next() takes this field's ownership so it fails in 2nd macro call.
+    // On the other hand, VecDeque::pop_front() just borrows this field and returns ownership of Pair.
+    children_pairs: VecDeque<Pair<'a, Rule>>,
 }
 
 macro_rules! parse_self {
@@ -45,7 +53,7 @@ macro_rules! parse_self {
         ]
     ) => {{
         let mut children_pairs = $params.children_pairs;
-        let child_pair: Pair<Rule> = children_pairs.next()
+        let child_pair: Pair<Rule> = children_pairs.pop_front()
             .ok_or(
                 AplloSqlParserError::new(
                     $params.apllo_sql,
@@ -60,7 +68,7 @@ macro_rules! parse_self {
 
                 let child_params =  FnParseParams {
                     apllo_sql: $params.apllo_sql,
-                    children_pairs: grand_children_pairs,
+                    children_pairs: grand_children_pairs.collect(),
                 };
                 let child_ast = Self::$child_parser(child_params)?;
 
@@ -80,7 +88,7 @@ macro_rules! parse_self {
 macro_rules! parse_identifier {
     ($params: expr, $ret_closure: expr) => {{
         let mut children_pairs = $params.children_pairs;
-        let child_pair: Pair<Rule> = children_pairs.next().ok_or(AplloSqlParserError::new(
+        let child_pair: Pair<Rule> = children_pairs.pop_front().ok_or(AplloSqlParserError::new(
             $params.apllo_sql,
             format!(
                 "Expected a rule '{:?}' but it does not appear.",
@@ -104,7 +112,7 @@ impl ParserLike for PestParserImpl {
 
         let params = FnParseParams {
             apllo_sql: &apllo_sql,
-            children_pairs: pairs,
+            children_pairs: pairs.collect(),
         };
 
         parse_self!(
