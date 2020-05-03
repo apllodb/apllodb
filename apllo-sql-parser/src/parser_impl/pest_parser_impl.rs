@@ -40,7 +40,7 @@ macro_rules! parse_self {
             $self_term: ident,
             $child_parser: ident,
             $ret_closure: expr,
-        }$(,)?
+        }
     ),*) => {{
         $(
         let mut children_pairs = $params.children_pairs;
@@ -76,7 +76,7 @@ macro_rules! parse_self {
 }
 
 macro_rules! parse_identifier {
-    ($params: expr, $ret_closure: expr,) => {{
+    ($params: expr, $ret_closure: expr) => {{
         let mut children_pairs = $params.children_pairs;
         let child_pair: Pair<Rule> = children_pairs.next().ok_or(AplloSqlParserError::new(
             $params.apllo_sql,
@@ -111,7 +111,7 @@ impl ParserLike for PestParserImpl {
                 embedded_sql_statement,
                 parse_embedded_sql_statement,
                 |inner_ast| AplloAst(inner_ast),
-            },
+            }
         )
     }
 }
@@ -161,7 +161,7 @@ impl PestParserImpl {
                 statement_or_declaration,
                 parse_statement_or_declaration,
                 |inner_ast| EmbeddedSqlStatement { statement_or_declaration: inner_ast },
-            },
+            }
         )
     }
 
@@ -174,7 +174,7 @@ impl PestParserImpl {
                 sql_executable_statement,
                 parse_sql_executable_statement,
                 |inner_ast| StatementOrDeclaration::SqlExecutableStatementVariant(inner_ast),
-            },
+            }
         )
     }
 
@@ -187,7 +187,7 @@ impl PestParserImpl {
                 sql_schema_statement,
                 parse_sql_schema_statement,
                 |inner_ast| SqlExecutableStatement::SqlSchemaStatementVariant(inner_ast),
-            },
+            }
         )
     }
 
@@ -200,7 +200,7 @@ impl PestParserImpl {
                 table_definition,
                 _parse_table_definition, // この場合、マクロの中で pairs.next() を2度叩かないと
                 |inner_ast| SqlSchemaDefinitionStatement::TableDefinitionVariant(inner_ast),
-            },
+            }
         )
     }
 
@@ -213,12 +213,12 @@ impl PestParserImpl {
             //     sql_schema_definition_statement,
             //     parse_sql_schema_definition_statement,
             //     |inner_ast| SqlSchemaStatement::SqlSchemaDefinitionStatementVariant(inner_ast),
-            // },
+            // }
             {
                 sql_schema_manipulation_statement,
                 parse_sql_schema_manipulation_statement,
                 |inner_ast| SqlSchemaStatement::SqlSchemaManipulationStatementVariant(inner_ast),
-            },
+            }
         )
     }
 
@@ -231,7 +231,7 @@ impl PestParserImpl {
                 drop_table_statement,
                 parse_drop_table_statement,
                 |inner_ast| SqlSchemaManipulationStatement::DropTableStatementVariant(inner_ast),
-            },
+            }
         )
     }
 
@@ -240,6 +240,6 @@ impl PestParserImpl {
     ) -> AplloSqlParserResult<DropTableStatement> {
         parse_identifier!(params, |inner_ast| DropTableStatement {
             table_name: inner_ast,
-        },)
+        })
     }
 }
