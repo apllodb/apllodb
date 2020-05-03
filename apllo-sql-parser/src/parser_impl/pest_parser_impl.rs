@@ -41,7 +41,7 @@ impl ParserLike for PestParserImpl {
             .ok_or(AplloSqlParserError::new(&apllo_sql, "Unknown"))?;
 
         let params = FnParseParams {
-            apllo_sql: apllo_sql.clone(),
+            apllo_sql: &apllo_sql,
             pair,
         };
 
@@ -51,7 +51,7 @@ impl ParserLike for PestParserImpl {
 }
 
 struct FnParseParams<'a> {
-    apllo_sql: String,
+    apllo_sql: &'a str,
     pair: Pair<'a, Rule>,
 }
 
@@ -70,10 +70,10 @@ macro_rules! parse_inner {
                     let mut pairs: Pairs<Rule> = $params.pair.into_inner();
                     let inner_pair: Pair<Rule> = pairs
                         .next()
-                        .ok_or(AplloSqlParserError::new(&$params.apllo_sql, "Unknown"))?;
+                        .ok_or(AplloSqlParserError::new($params.apllo_sql, "Unknown"))?;
 
                     let inner_params =  FnParseParams {
-                        apllo_sql: $params.apllo_sql.clone(),
+                        apllo_sql: $params.apllo_sql,
                         pair: inner_pair,
                     };
                     let inner_ast = Self::$inner_parser(inner_params)?;
