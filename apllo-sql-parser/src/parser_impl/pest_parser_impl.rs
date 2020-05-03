@@ -40,7 +40,7 @@ impl ParserLike for PestParserImpl {
             .next()
             .ok_or(AplloSqlParserError::new(&apllo_sql, "Unknown"))?;
 
-        let ast = self.parse_root_embedded_sql_statement(pair, &apllo_sql)?;
+        let ast = Self::parse_root_embedded_sql_statement(pair, &apllo_sql)?;
         Ok(ast)
     }
 }
@@ -48,7 +48,6 @@ impl ParserLike for PestParserImpl {
 macro_rules! parse_inner {
     ($(
         {
-            $self: ident,
             $self_pair: expr,
             $self_term: ident,
             $inner_parser: ident,
@@ -64,7 +63,7 @@ macro_rules! parse_inner {
                         .next()
                         .ok_or(AplloSqlParserError::new($apllo_sql, "Unknown"))?;
 
-                    let inner_ast = $self.$inner_parser(inner_pair, $apllo_sql)?;
+                    let inner_ast = Self::$inner_parser(inner_pair, $apllo_sql)?;
 
                     Ok($ret_closure(inner_ast))
                 }
@@ -76,13 +75,11 @@ macro_rules! parse_inner {
 
 impl PestParserImpl {
     fn parse_root_embedded_sql_statement(
-        &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<AplloAst> {
         parse_inner!(
             {
-                self,
                 pair,
                 embedded_sql_statement,
                 parse_inner_embedded_sql_statement,
@@ -93,13 +90,11 @@ impl PestParserImpl {
     }
 
     fn parse_inner_embedded_sql_statement(
-        &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<EmbeddedSqlStatement> {
         parse_inner!(
             {
-                self,
                 pair,
                 statement_or_declaration,
                 parse_inner_statement_or_declaration,
@@ -110,13 +105,11 @@ impl PestParserImpl {
     }
 
     fn parse_inner_statement_or_declaration(
-        &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<StatementOrDeclaration> {
         parse_inner!(
             {
-                self,
                 pair,
                 sql_executable_statement,
                 parse_inner_sql_executable_statement,
@@ -127,13 +120,11 @@ impl PestParserImpl {
     }
 
     fn parse_inner_sql_executable_statement(
-        &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<SqlExecutableStatement> {
         parse_inner!(
             {
-                self,
                 pair,
                 sql_schema_statement,
                 parse_inner_sql_schema_statement,
@@ -144,13 +135,11 @@ impl PestParserImpl {
     }
 
     fn parse_inner_sql_schema_statement(
-        &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<SqlSchemaStatement> {
         parse_inner!(
             {
-                self,
                 pair,
                 sql_schema_manipulation_statement,
                 parse_inner_sql_schema_manipulation_statement,
@@ -161,13 +150,11 @@ impl PestParserImpl {
     }
 
     fn parse_inner_sql_schema_manipulation_statement(
-        &self,
         pair: Pair<Rule>,
         apllo_sql: &str,
     ) -> AplloSqlParserResult<SqlSchemaManipulationStatement> {
         parse_inner!(
             {
-                self,
                 pair,
                 drop_table_statement,
                 parse_inner_drop_table_statement,
@@ -178,7 +165,6 @@ impl PestParserImpl {
     }
 
     fn parse_inner_drop_table_statement(
-        &self,
         pair: Pair<Rule>,
         _apllo_sql: &str,
     ) -> AplloSqlParserResult<DropTableStatement> {
