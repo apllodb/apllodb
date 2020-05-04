@@ -128,28 +128,23 @@ macro_rules! try_parse_self {
     }};
 }
 
-/// Returns:
-/// Result<String>
-macro_rules! _parse_leaf_string {
-    ($params: expr) => {{
-        let child_pair: Pair<Rule> =
-            $params
-                .children_pairs
-                .pop_front()
-                .ok_or(AplloSqlParserError::new(
-                    $params.apllo_sql,
-                    "Expected to parse a leaf string but no term left.",
-                ))?;
-        let s = child_pair.as_str().to_string();
-        Ok(s)
-    }};
+fn parse_leaf_string(params: &mut FnParseParams) -> AplloSqlParserResult<String> {
+    let child_pair = params
+        .children_pairs
+        .pop_front()
+        .ok_or(AplloSqlParserError::new(
+            params.apllo_sql,
+            "Expected to parse a leaf string but no term left.",
+        ))?;
+    let s = child_pair.as_str().to_string();
+    Ok(s)
 }
 
 /// Returns:
 /// Result<Identifier>
 macro_rules! parse_identifier {
     ($params: expr) => {{
-        let s = _parse_leaf_string!($params)?;
+        let s = parse_leaf_string(&mut $params)?;
         Ok(Identifier(s))
     }};
 }
@@ -158,7 +153,7 @@ macro_rules! parse_identifier {
 /// Result<DataType>
 macro_rules! parse_data_type {
     ($params: expr) => {{
-        let s = _parse_leaf_string!($params)?;
+        let s = parse_leaf_string(&mut $params)?;
         match s.as_str() {
             "INT" => Ok(DataType::IntVariant),
             x => {
