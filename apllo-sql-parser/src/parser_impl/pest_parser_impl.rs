@@ -5,9 +5,10 @@ mod tests;
 
 use crate::{
     apllo_ast::{
-        DropTableStatement, EmbeddedSqlStatement, Identifier, SqlExecutableStatement,
-        SqlSchemaDefinitionStatement, SqlSchemaManipulationStatement, SqlSchemaStatement,
-        StatementOrDeclaration, TableContentsSource, TableDefinition, TableElementList,
+        ColumnDefinition, DataType, DropTableStatement, EmbeddedSqlStatement, Identifier,
+        SqlExecutableStatement, SqlSchemaDefinitionStatement, SqlSchemaManipulationStatement,
+        SqlSchemaStatement, StatementOrDeclaration, TableContentsSource, TableDefinition,
+        TableElement, TableElementList,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -36,7 +37,7 @@ struct FnParseParams<'a> {
     // collected from Pairs.
     //
     // Pairs itself cannot be used as this struct field:
-    // An AST node who has multiple children can call parse_self!() / parse_identifier!() macro twice or more.
+    // An AST node who has multiple children can call parse_self!() / parse_leaf_string!() macro twice or more.
     // But Pairs::next() takes this field's ownership so it fails in 2nd macro call.
     // On the other hand, VecDeque::pop_front() just borrows this field and returns ownership of Pair.
     children_pairs: VecDeque<Pair<'a, Rule>>,
@@ -84,21 +85,38 @@ macro_rules! parse_self {
     }};
 }
 
-macro_rules! parse_identifier {
-    ($params: expr, $ret_closure: expr$(,)?) => {{
+macro_rules! _parse_leaf_string {
+    ($params: expr) => {{
         let child_pair: Pair<Rule> =
             $params
                 .children_pairs
                 .pop_front()
                 .ok_or(AplloSqlParserError::new(
                     $params.apllo_sql,
-                    format!(
-                        "Expected a rule '{:?}' but it does not appear.",
-                        Rule::identifier
-                    ),
+                    "Expected to parse a leaf string but no term left.",
                 ))?;
-        let child_pair_as_string: String = child_pair.as_str().to_string();
-        Ok($ret_closure(Identifier(child_pair_as_string)))
+        let s = child_pair.as_str().to_string();
+        Ok(s)
+    }};
+}
+
+macro_rules! parse_identifier {
+    ($params: expr) => {{
+        let s = _parse_leaf_string!($params)?;
+        Ok(Identifier(s))
+    }};
+}
+
+macro_rules! parse_data_type {
+    ($params: expr) => {{
+        let s = _parse_leaf_string!($params)?;
+        match s.as_str() {
+            "INT" => Ok(DataType::IntVariant),
+            x => {
+                eprintln!("Unexpected data type parsed: {}", x);
+                unreachable!();
+            }
+        }
     }};
 }
 
@@ -130,7 +148,7 @@ impl ParserLike for PestParserImpl {
 
 impl PestParserImpl {
     fn parse_table_definition(mut params: FnParseParams) -> AplloSqlParserResult<TableDefinition> {
-        let table_name = parse_identifier!(params, |inner_ast| inner_ast,)?;
+        let table_name = parse_identifier!(params)?;
         let table_contents_source = parse_self!(
             params,
             [(
@@ -146,28 +164,57 @@ impl PestParserImpl {
     }
 
     fn parse_table_contents_source(
-        mut _params: FnParseParams,
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<TableContentsSource> {
-        todo!()
-
-        // parse_self!(
-        //     params,
-        //     [
-        //         {
-        //             (
-        //                 table_element_list
-        //                 _parse_table_element_list,
-        //                 |inner_ast| TableContentsSource::TableElementListVariant(inner_ast),
-        //             ),
-        //         },
-        //     ]
-        // )
+        parse_self!(
+            params,
+            [(table_element_list, parse_table_element_list, |inner_ast| {
+                TableContentsSource::TableElementListVariant(inner_ast)
+            },),]
+        )
     }
 
-    fn _parse_table_element_list(
-        mut _params: FnParseParams,
+    fn parse_table_element_list(
+        mut params: FnParseParams,
     ) -> AplloSqlParserResult<TableElementList> {
-        todo!()
+        let head_table_element = parse_self!(
+            params,
+            [(table_element, parse_table_element, |inner_ast| inner_ast,),]
+        )?;
+        // TODO: これだと2つ以上のフィールドに対応できていない
+        Ok(TableElementList {
+            head_table_element,
+            tail_table_elements: vec![],
+        })
+    }
+
+    fn parse_table_element(mut params: FnParseParams) -> AplloSqlParserResult<TableElement> {
+        parse_self!(
+            params,
+            [(column_definition, parse_column_definition, |inner_ast| {
+                TableElement::ColumnDefinitionVariant(inner_ast)
+            }),]
+        )
+    }
+
+    fn parse_column_definition(
+        mut params: FnParseParams,
+    ) -> AplloSqlParserResult<ColumnDefinition> {
+        let column_name = parse_identifier!(params)?;
+        let data_type = parse_data_type!(params)?;
+        // TODO: これだと制約のあるカラムに対応できていない
+        Ok(ColumnDefinition {
+            column_name,
+            data_type,
+            column_constraint_definitions: vec![],
+        })
+    }
+
+    fn parse_drop_table_statement(
+        mut params: FnParseParams,
+    ) -> AplloSqlParserResult<DropTableStatement> {
+        let table_name = parse_identifier!(params)?;
+        Ok(DropTableStatement { table_name })
     }
 
     fn parse_embedded_sql_statement(
@@ -255,13 +302,5 @@ impl PestParserImpl {
                 |inner_ast| SqlSchemaManipulationStatement::DropTableStatementVariant(inner_ast),
             ),]
         )
-    }
-
-    fn parse_drop_table_statement(
-        mut params: FnParseParams,
-    ) -> AplloSqlParserResult<DropTableStatement> {
-        parse_identifier!(params, |inner_ast| DropTableStatement {
-            table_name: inner_ast,
-        })
     }
 }

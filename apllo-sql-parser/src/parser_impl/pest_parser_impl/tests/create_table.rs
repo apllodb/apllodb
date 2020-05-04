@@ -88,7 +88,7 @@ fn test_create_table_accepted() {
                         TableElement::ColumnDefinitionVariant(cd) => cd,
                     })
                     .collect();
-                assert_eq!(parsed_coldefs, expected_params.column_definitions);
+                assert_eq!(parsed_coldefs, expected_params.column_definitions,);
             }
 
             Ok(ast) => panic!(
