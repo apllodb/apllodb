@@ -43,55 +43,57 @@ struct FnParseParams<'a> {
     children_pairs: VecDeque<Pair<'a, Rule>>,
 }
 
-/// Returns:
-/// Result<T: Return type of $ret_closure>
-macro_rules! parse_self {
-    ($params: expr,
-        [
-            $((  // Possible `Rule`s
-                $child_term: ident,
-                $child_parser: ident,
-                $ret_closure: expr$(,)?
-            )$(,)?)+
-        ]
-    ) => {{
-        let child_pair: Pair<Rule> = $params.children_pairs.pop_front()
-            .ok_or(
-                AplloSqlParserError::new(
-                    $params.apllo_sql,
-                    "Tried to parse a term but nothing left.",
-                )
-            )?;
-
-        match child_pair.as_rule() {
-            $(  // Possible `Rule`s
-            Rule::$child_term => {
-                let grand_children_pairs: Pairs<Rule> = child_pair.into_inner();
-
-                let child_params =  FnParseParams {
-                    apllo_sql: $params.apllo_sql,
-                    children_pairs: grand_children_pairs.collect(),
-                };
-                let child_ast = Self::$child_parser(child_params)?;
-
-                Ok($ret_closure(child_ast))
-            }
-            )+
-            rule => {
-                eprintln!("Hit to unexpected rule: {:?}\n\
-                Pair: {}\n\
-                ", rule, child_pair);
-                unreachable!();
-            }
-        }
-    }};
-}
-
-/// Try to parse the next child term as `child_term` by `child_parser`.
+/// Parse the next child term as `child_term` by `child_parser`.
 ///
-///  Returns Ok(None) when either of the following cases:
+/// Returns Ok(None) when either of the following cases:
 ///  - no child term left.
 ///  - the next child term does not match $child_term.
+///
+/// # Failures
+/// - When no child term left.
+/// - When the next child term does not match $child_term.
+/// - Raises Err from `child_parser` as-is.
+fn parse_self<T, ChildRet>(
+    params: &mut FnParseParams,
+    child_term: Rule,
+    child_parser: impl Fn(FnParseParams) -> AplloSqlParserResult<ChildRet>,
+    ret_closure: impl Fn(ChildRet) -> T,
+) -> AplloSqlParserResult<T> {
+    let child_pair: Pair<Rule> =
+        params
+            .children_pairs
+            .pop_front()
+            .ok_or(AplloSqlParserError::new(
+                params.apllo_sql,
+                "Tried to parse a term but nothing left.",
+            ))?;
+
+    if child_pair.as_rule() == child_term {
+        let grand_children_pairs: Pairs<Rule> = child_pair.into_inner();
+
+        let child_params = FnParseParams {
+            apllo_sql: params.apllo_sql,
+            children_pairs: grand_children_pairs.collect(),
+        };
+        let child_ast = child_parser(child_params)?;
+
+        Ok(ret_closure(child_ast))
+    } else {
+        eprintln!(
+            "Hit to unexpected rule: {:?}\n\
+        Pair: {}\n\
+        ",
+            child_pair.as_rule(),
+            child_pair
+        );
+        unreachable!();
+    }
+}
+/// Try to parse the next child term as `child_term` by `child_parser`.
+///
+/// Returns Ok(None) when either of the following cases:
+/// - no child term left.
+/// - the next child term does not match $child_term.
 ///
 /// # Failures
 /// Raises Err from `child_parser` as-is.
@@ -164,13 +166,11 @@ impl ParserLike for PestParserImpl {
             children_pairs: pairs.collect(),
         };
 
-        parse_self!(
-            params,
-            [(
-                embedded_sql_statement,
-                parse_embedded_sql_statement,
-                |inner_ast| AplloAst(inner_ast)
-            ),]
+        parse_self(
+            &mut params,
+            Rule::embedded_sql_statement,
+            Self::parse_embedded_sql_statement,
+            |inner_ast| AplloAst(inner_ast),
         )
     }
 }
@@ -178,13 +178,11 @@ impl ParserLike for PestParserImpl {
 impl PestParserImpl {
     fn parse_table_definition(mut params: FnParseParams) -> AplloSqlParserResult<TableDefinition> {
         let table_name = parse_identifier(&mut params)?;
-        let table_contents_source = parse_self!(
-            params,
-            [(
-                table_contents_source,
-                parse_table_contents_source,
-                |inner_ast| inner_ast,
-            ),]
+        let table_contents_source = parse_self(
+            &mut params,
+            Rule::table_contents_source,
+            Self::parse_table_contents_source,
+            |inner_ast| inner_ast,
         )?;
         Ok(TableDefinition {
             table_name,
@@ -195,20 +193,22 @@ impl PestParserImpl {
     fn parse_table_contents_source(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<TableContentsSource> {
-        parse_self!(
-            params,
-            [(table_element_list, parse_table_element_list, |inner_ast| {
-                TableContentsSource::TableElementListVariant(inner_ast)
-            },),]
+        parse_self(
+            &mut params,
+            Rule::table_element_list,
+            Self::parse_table_element_list,
+            |inner_ast| TableContentsSource::TableElementListVariant(inner_ast),
         )
     }
 
     fn parse_table_element_list(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<TableElementList> {
-        let head_table_element = parse_self!(
-            params,
-            [(table_element, parse_table_element, |inner_ast| inner_ast,),]
+        let head_table_element = parse_self(
+            &mut params,
+            Rule::table_element,
+            Self::parse_table_element,
+            |inner_ast| inner_ast,
         )?;
 
         let mut tail_table_elements: Vec<TableElement> = vec![];
@@ -228,11 +228,11 @@ impl PestParserImpl {
     }
 
     fn parse_table_element(mut params: FnParseParams) -> AplloSqlParserResult<TableElement> {
-        parse_self!(
-            params,
-            [(column_definition, parse_column_definition, |inner_ast| {
-                TableElement::ColumnDefinitionVariant(inner_ast)
-            }),]
+        parse_self(
+            &mut params,
+            Rule::column_definition,
+            Self::parse_column_definition,
+            |inner_ast| TableElement::ColumnDefinitionVariant(inner_ast),
         )
     }
 
@@ -259,87 +259,78 @@ impl PestParserImpl {
     fn parse_embedded_sql_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<EmbeddedSqlStatement> {
-        parse_self!(
-            params,
-            [(
-                statement_or_declaration,
-                parse_statement_or_declaration,
-                |inner_ast| EmbeddedSqlStatement {
-                    statement_or_declaration: inner_ast
-                },
-            ),]
+        parse_self(
+            &mut params,
+            Rule::statement_or_declaration,
+            Self::parse_statement_or_declaration,
+            |inner_ast| EmbeddedSqlStatement {
+                statement_or_declaration: inner_ast,
+            },
         )
     }
 
     fn parse_statement_or_declaration(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<StatementOrDeclaration> {
-        parse_self!(
-            params,
-            [(
-                sql_executable_statement,
-                parse_sql_executable_statement,
-                |inner_ast| StatementOrDeclaration::SqlExecutableStatementVariant(inner_ast),
-            ),]
+        parse_self(
+            &mut params,
+            Rule::sql_executable_statement,
+            Self::parse_sql_executable_statement,
+            |inner_ast| StatementOrDeclaration::SqlExecutableStatementVariant(inner_ast),
         )
     }
 
     fn parse_sql_executable_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlExecutableStatement> {
-        parse_self!(
-            params,
-            [(
-                sql_schema_statement,
-                parse_sql_schema_statement,
-                |inner_ast| SqlExecutableStatement::SqlSchemaStatementVariant(inner_ast),
-            ),]
+        parse_self(
+            &mut params,
+            Rule::sql_schema_statement,
+            Self::parse_sql_schema_statement,
+            |inner_ast| SqlExecutableStatement::SqlSchemaStatementVariant(inner_ast),
         )
     }
 
     fn parse_sql_schema_definition_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaDefinitionStatement> {
-        parse_self!(
-            params,
-            [(table_definition, parse_table_definition, |inner_ast| {
-                SqlSchemaDefinitionStatement::TableDefinitionVariant(inner_ast)
-            },),]
+        parse_self(
+            &mut params,
+            Rule::table_definition,
+            Self::parse_table_definition,
+            |inner_ast| SqlSchemaDefinitionStatement::TableDefinitionVariant(inner_ast),
         )
     }
 
     fn parse_sql_schema_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaStatement> {
-        parse_self!(
-            params,
-            [
-                (
-                    sql_schema_definition_statement,
-                    parse_sql_schema_definition_statement,
-                    |inner_ast| SqlSchemaStatement::SqlSchemaDefinitionStatementVariant(inner_ast),
-                ),
-                (
-                    sql_schema_manipulation_statement,
-                    parse_sql_schema_manipulation_statement,
-                    |inner_ast| SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
-                        inner_ast
-                    ),
-                ),
-            ]
-        )
+        let a = try_parse_self(
+            &mut params,
+            Rule::sql_schema_definition_statement,
+            Self::parse_sql_schema_definition_statement,
+            |inner_ast| SqlSchemaStatement::SqlSchemaDefinitionStatementVariant(inner_ast),
+        )?;
+        let b = try_parse_self(
+            &mut params,
+            Rule::sql_schema_manipulation_statement,
+            Self::parse_sql_schema_manipulation_statement,
+            |inner_ast| SqlSchemaStatement::SqlSchemaManipulationStatementVariant(inner_ast),
+        )?;
+        a.or(b).ok_or(AplloSqlParserError::new(
+            params.apllo_sql,
+            "Expected to parse a leaf string but no term left.",
+        ))
     }
 
     fn parse_sql_schema_manipulation_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaManipulationStatement> {
-        parse_self!(
-            params,
-            [(
-                drop_table_statement,
-                parse_drop_table_statement,
-                |inner_ast| SqlSchemaManipulationStatement::DropTableStatementVariant(inner_ast),
-            ),]
+        parse_self(
+            &mut params,
+            Rule::drop_table_statement,
+            Self::parse_drop_table_statement,
+            |inner_ast| SqlSchemaManipulationStatement::DropTableStatementVariant(inner_ast),
         )
     }
 }
