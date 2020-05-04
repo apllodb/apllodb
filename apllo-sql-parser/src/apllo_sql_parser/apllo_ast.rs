@@ -31,6 +31,28 @@ pub struct Identifier(pub String);
  * ================================================================================================
  */
 
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct Condition {
+    pub expression: Expression,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum Expression {
+    ColumnReferenceVariant(ColumnReference),
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Column References
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct ColumnReference {
+    pub correlation: Option<Correlation>,
+    pub column_name: ColumnName,
+}
+
 /*
  * ================================================================================================
  * Data Types:
@@ -66,6 +88,7 @@ pub enum Command {
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
     DropTableCommandVariant(DropTableCommand),
+    SelectCommandVariant(SelectCommand),
 }
 
 /*
@@ -129,6 +152,51 @@ pub struct DropTableCommand {
 }
 
 /*
+ * ----------------------------------------------------------------------------
+ * SELECT
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct SelectCommand {
+    pub select_fields: NonEmptyVec<SelectField>,
+    pub from_items: NonEmptyVec<FromItem>,
+    pub where_condition: Option<Condition>,
+    pub grouping_elements: Option<NonEmptyVec<GroupingElement>>,
+    pub having_conditions: Option<NonEmptyVec<Condition>>,
+    pub order_bys: Option<NonEmptyVec<OrderBy>>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct SelectField {
+    pub expression: Expression,
+    pub alias: Option<Alias>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct FromItem {
+    pub table_name: TableName,
+    pub alias: Option<Alias>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum GroupingElement {
+    ExpressionVariant(Expression),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct OrderBy {
+    pub expression: Expression,
+    pub ordering: Option<Ordering>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum Ordering {
+    AscVariant,
+    DescVariant,
+}
+
+/*
  * ================================================================================================
  * Misc:
  * ================================================================================================
@@ -145,6 +213,15 @@ pub struct TableName(pub Identifier);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct ColumnName(pub Identifier);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct Alias(pub Identifier);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum Correlation {
+    TableNameVariant(TableName),
+    AliasVariant(Alias),
+}
 
 /*
  * ----------------------------------------------------------------------------

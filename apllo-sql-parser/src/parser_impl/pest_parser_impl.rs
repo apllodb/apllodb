@@ -6,9 +6,10 @@ mod tests;
 
 use crate::{
     apllo_ast::{
-        types::NonEmptyVec, Action, AddColumn, AlterTableCommand, ColumnConstraint, ColumnName,
-        Command, CreateTableColumnDefinition, CreateTableCommand, DataType, DropColumn,
-        DropTableCommand, Identifier, IntegerType, TableName,
+        types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
+        ColumnName, ColumnReference, Command, Condition, Correlation, CreateTableColumnDefinition,
+        CreateTableCommand, DataType, DropColumn, DropTableCommand, Expression, FromItem,
+        Identifier, IntegerType, SelectCommand, SelectField, TableName,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -71,6 +72,51 @@ impl PestParserImpl {
      * ================================================================================================
      */
 
+    fn parse_condition(mut params: FnParseParams) -> AplloSqlParserResult<Condition> {
+        parse_child(
+            &mut params,
+            Rule::expression,
+            Self::parse_expression,
+            |inner_ast| Condition {
+                expression: inner_ast,
+            },
+        )
+    }
+
+    fn parse_expression(mut params: FnParseParams) -> AplloSqlParserResult<Expression> {
+        parse_child(
+            &mut params,
+            Rule::column_reference,
+            Self::parse_column_reference,
+            Expression::ColumnReferenceVariant,
+        )
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * Column References
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_column_reference(mut params: FnParseParams) -> AplloSqlParserResult<ColumnReference> {
+        let correlation = try_parse_child(
+            &mut params,
+            Rule::correlation,
+            Self::parse_correlation,
+            identity,
+        )?;
+        let column_name = parse_child(
+            &mut params,
+            Rule::column_name,
+            Self::parse_column_name,
+            identity,
+        )?;
+        Ok(ColumnReference {
+            correlation,
+            column_name,
+        })
+    }
+
     /*
      * ================================================================================================
      * Data Types:
@@ -129,6 +175,12 @@ impl PestParserImpl {
             Rule::drop_table_command,
             Self::parse_drop_table_command,
             Command::DropTableCommandVariant,
+        )?)
+        .or(try_parse_child(
+            &mut params,
+            Rule::select_command,
+            Self::parse_select_command,
+            Command::SelectCommandVariant,
         )?)
         .ok_or(AplloSqlParserError::new(
             params.apllo_sql,
@@ -289,6 +341,64 @@ impl PestParserImpl {
     }
 
     /*
+     * ----------------------------------------------------------------------------
+     * SELECT
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_select_command(mut params: FnParseParams) -> AplloSqlParserResult<SelectCommand> {
+        let select_fields = parse_child_seq(
+            &mut params,
+            Rule::select_field,
+            &Self::parse_select_field,
+            &identity,
+        )?;
+        let from_items = parse_child_seq(
+            &mut params,
+            Rule::from_item,
+            &Self::parse_from_item,
+            &identity,
+        )?;
+        let where_condition = try_parse_child(
+            &mut params,
+            Rule::condition,
+            Self::parse_condition,
+            identity,
+        )?;
+        Ok(SelectCommand {
+            select_fields: NonEmptyVec::new(select_fields),
+            from_items: NonEmptyVec::new(from_items),
+            where_condition,
+            // TODO: grouping_elements, having_conditions, order_bys
+            grouping_elements: None,
+            having_conditions: None,
+            order_bys: None,
+        })
+    }
+
+    fn parse_select_field(mut params: FnParseParams) -> AplloSqlParserResult<SelectField> {
+        let expression = parse_child(
+            &mut params,
+            Rule::expression,
+            Self::parse_expression,
+            identity,
+        )?;
+        let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
+        Ok(SelectField { expression, alias })
+    }
+
+    fn parse_from_item(mut params: FnParseParams) -> AplloSqlParserResult<FromItem> {
+        let table_name = parse_child(
+            &mut params,
+            Rule::table_name,
+            Self::parse_table_name,
+            identity,
+        )?;
+        let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
+        Ok(FromItem { table_name, alias })
+    }
+
+    /*
      * ================================================================================================
      * Misc:
      * ================================================================================================
@@ -316,6 +426,29 @@ impl PestParserImpl {
             Self::parse_identifier,
             ColumnName,
         )
+    }
+
+    fn parse_alias(mut params: FnParseParams) -> AplloSqlParserResult<Alias> {
+        parse_child(&mut params, Rule::identifier, Self::parse_identifier, Alias)
+    }
+
+    fn parse_correlation(mut params: FnParseParams) -> AplloSqlParserResult<Correlation> {
+        try_parse_child(
+            &mut params,
+            Rule::table_name,
+            Self::parse_table_name,
+            Correlation::TableNameVariant,
+        )?
+        .or(try_parse_child(
+            &mut params,
+            Rule::alias,
+            Self::parse_alias,
+            Correlation::AliasVariant,
+        )?)
+        .ok_or(AplloSqlParserError::new(
+            params.apllo_sql,
+            "Does not match any child rule of correlation.",
+        ))
     }
 
     /*

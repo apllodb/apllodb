@@ -271,7 +271,7 @@ keyword = {
     // | "G"
     // | "HAS_PASS_THROUGH_COLUMNS"
     // | "HAS_PASS_THRU_COLS"
-    // | "HAVING"
+    | "HAVING"
     // | "HIERARCHY"
     // | "HOLD"
     // | "HOUR"
@@ -775,6 +775,26 @@ identifier_part = _{
  * ================================================================================================
  */
 
+condition = {
+    expression
+}
+
+expression = {
+    column_reference
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Column References
+ * (https://www.postgresql.org/docs/12/sql-expressions.html#SQL-EXPRESSIONS-COLUMN-REFS)
+ * ----------------------------------------------------------------------------
+ */
+
+column_reference = {
+    (correlation ~ ".")? ~ column_name
+}
+
+
 /*
  * ================================================================================================
  * Data Types:
@@ -822,6 +842,7 @@ command = {
         alter_table_command
         | create_table_command
         | drop_table_command
+        | select_command
     )
     ~ ";"?
     ~ EOI
@@ -884,6 +905,42 @@ drop_table_command = {
 }
 
 /*
+ * ----------------------------------------------------------------------------
+ * SELECT (https://www.postgresql.org/docs/12/sql-select.html)
+ * ----------------------------------------------------------------------------
+ */
+
+select_command = {
+    "SELECT"
+    ~ select_field ~ ("," ~ select_field)*
+    ~ "FROM" ~ from_item ~ ("," ~ from_item)*
+    ~ ("WHERE" ~ condition)?
+    ~ ("GROUP" ~ "BY" ~ grouping_element ~ ("," ~ grouping_element)*)?
+    ~ ("HAVING" ~ condition ~ ("," ~ condition)*)?
+    ~ ("ORDER" ~ "BY" ~ order_by ~ ("," ~ order_by)*)?
+}
+
+select_field = {
+    expression ~ ("AS"? ~ alias)?
+}
+
+from_item = {
+    table_name ~ ("AS"? ~ alias)?
+}
+
+grouping_element = {
+    expression
+}
+
+order_by = {
+    expression ~ ordering?
+}
+
+ordering = {
+    "ASC" | "DESC"
+}
+
+/*
  * ================================================================================================
  * Misc:
  * Terms commonly used by multiple commands.
@@ -903,6 +960,15 @@ table_name = {
 
 column_name = {
     identifier
+}
+
+alias = {
+    identifier
+}
+
+correlation = {
+    table_name
+    | alias
 }
 
 /*
