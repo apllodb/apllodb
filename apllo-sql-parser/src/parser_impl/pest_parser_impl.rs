@@ -194,7 +194,7 @@ impl PestParserImpl {
         )?)
         .ok_or(AplloSqlParserError::new(
             params.apllo_sql,
-            "Expected to parse a leaf string but no term left.",
+            "Does not match any child rule of sql_schema_statement.",
         ))
     }
 
