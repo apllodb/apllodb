@@ -63,7 +63,7 @@ keyword = {
     // | "BEGIN"
     // | "BERNOULLI"
     // | "BETWEEN"
-    // | "BIGINT"
+    | "BIGINT"
     // | "BINARY"
     // | "BLOB"
     // | "BOOLEAN"
@@ -548,7 +548,7 @@ keyword = {
     // | "SIN"
     // | "SIZE"
     // | "SKIP"
-    // | "SMALLINT"
+    | "SMALLINT"
     // | "SOME"
     // | "SOURCE"
     // | "SPACE"
@@ -846,10 +846,6 @@ create_table_column_definition = {
     ~ column_constraint*
 }
 
-column_constraint = {
-    "NOT NULL"
-}
-
 /*
  * ----------------------------------------------------------------------------
  * DROP TABLE (https://www.postgresql.org/docs/12/sql-droptable.html)
@@ -881,4 +877,14 @@ table_name = {
 
 column_name = {
     identifier
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Constraints
+ * ----------------------------------------------------------------------------
+ */
+
+column_constraint = {
+    "NOT NULL"
 }
