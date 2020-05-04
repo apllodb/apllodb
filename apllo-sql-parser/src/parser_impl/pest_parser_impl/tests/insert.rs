@@ -1,8 +1,8 @@
 use super::super::PestParserImpl;
 use crate::apllo_ast::NonEmptyVec;
 use crate::apllo_ast::{
-    Alias, ColumnName, Command, Constant, Expression, Identifier, IntegerConstant, InsertCommand, NumericConstant,
-    TableName,
+    Alias, ColumnName, Command, Constant, Expression, Identifier, InsertCommand, IntegerConstant,
+    NumericConstant, TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
