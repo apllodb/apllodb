@@ -1,5 +1,5 @@
 mod parse_identifier;
-mod parse_key_word;
+mod parse_keyword;
 
 use super::Rule;
 use pest::error::Error;

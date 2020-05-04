@@ -180,7 +180,7 @@ impl PestParserImpl {
         Ok(CreateTableColumnDefinition {
             column_name,
             data_type,
-            column_constraints: NonEmptyVec::new(column_constraints),
+            column_constraints,
         })
     }
 

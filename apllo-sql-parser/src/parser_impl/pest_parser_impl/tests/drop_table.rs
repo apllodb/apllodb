@@ -1,53 +1,35 @@
 use super::super::PestParserImpl;
-use crate::apllo_ast::{
-    DropTableStatement, EmbeddedSqlStatement, Identifier, SqlExecutableStatement,
-    SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration, TableName,
-};
+use crate::apllo_ast::{Command, DropTableCommand, Identifier, TableName};
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
 
-struct DropTableParams {
-    table_name: String,
-}
-impl DropTableParams {
-    fn new(table_name: &str) -> Self {
-        Self {
-            table_name: table_name.into(),
+macro_rules! drop_table {
+    ($table_name: expr $(,)?) => {
+        DropTableCommand {
+            table_name: TableName(Identifier($table_name.to_string())),
         }
-    }
+    };
 }
 
 #[test]
 fn test_drop_table_accepted() {
-    let sql_vs_expected_params: Vec<(&str, DropTableParams)> = vec![
-        ("DROP TABLE t", DropTableParams::new("t")),
-        ("DROP TABLE t;", DropTableParams::new("t")),
-        ("  DROP\tTABLE\nt ", DropTableParams::new("t")),
-        ("DROP TABLE 机", DropTableParams::new("机")),
-        ("DROP TABLE 🍙", DropTableParams::new("🍙")),
+    let sql_vs_expected_ast: Vec<(&str, DropTableCommand)> = vec![
+        ("DROP TABLE t", drop_table!("t")),
+        ("DROP TABLE t;", drop_table!("t")),
+        ("  DROP\tTABLE\nt ", drop_table!("t")),
+        ("DROP TABLE 机", drop_table!("机")),
+        ("DROP TABLE 🍙", drop_table!("🍙")),
         // Keyword is case-sensitive.
-        ("DROP TABLE drop", DropTableParams::new("drop")),
+        ("DROP TABLE drop", drop_table!("drop")),
     ];
 
     let parser = PestParserImpl::new();
 
-    for (sql, expected_params) in sql_vs_expected_params {
+    for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
-            Ok(AplloAst(EmbeddedSqlStatement {
-                statement_or_declaration:
-                    StatementOrDeclaration::SqlExecutableStatementVariant(
-                        SqlExecutableStatement::SqlSchemaStatementVariant(
-                            SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
-                                SqlSchemaManipulationStatement::DropTableStatementVariant(
-                                    DropTableStatement {
-                                        table_name: TableName(Identifier(table_name)),
-                                    },
-                                ),
-                            ),
-                        ),
-                    ),
-            })) => assert_eq!(table_name, expected_params.table_name),
-
+            Ok(AplloAst(Command::DropTableCommandVariant(drop_table_command))) => {
+                assert_eq!(drop_table_command, expected_ast);
+            }
             Ok(ast) => panic!(
                 "'{}' should be parsed as DROP TABLE but is parsed like: {:?}",
                 sql, ast

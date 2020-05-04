@@ -4,30 +4,16 @@
 //!
 //! # Example
 //! ```
-//! use apllo_sql_parser::apllo_ast::{
-//!     DropTableStatement, EmbeddedSqlStatement, Identifier, SqlExecutableStatement,
-//!     SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration,
-//!     TableName,
-//! };
+//! use apllo_sql_parser::apllo_ast::{Command, DropTableCommand, Identifier, TableName};
 //! use apllo_sql_parser::{AplloAst, AplloSqlParser};
 //!
 //! let parser = AplloSqlParser::new();
 //! match parser.parse("DROP TABLE people") {
-//!     Ok(AplloAst(EmbeddedSqlStatement {
-//!         statement_or_declaration:
-//!             StatementOrDeclaration::SqlExecutableStatementVariant(
-//!                 SqlExecutableStatement::SqlSchemaStatementVariant(
-//!                     SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
-//!                         SqlSchemaManipulationStatement::DropTableStatementVariant(
-//!                             DropTableStatement {
-//!                                 table_name: TableName(Identifier(table_name)),
-//!                             },
-//!                         ),
-//!                     ),
-//!                 ),
-//!             ),
-//!     })) => assert_eq!(table_name, "people"),
-//!
+//!     Ok(AplloAst(Command::DropTableCommandVariant(DropTableCommand {
+//!         table_name: TableName(Identifier(table_name)),
+//!     }))) => {
+//!         assert_eq!(table_name, "people");
+//!     }
 //!     Ok(ast) => panic!(
 //!         "Should be parsed as DROP TABLE but is parsed like: {:?}",
 //!         ast

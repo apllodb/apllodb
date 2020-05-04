@@ -5,9 +5,10 @@
 //! Intermediate nodes have 1-to-1 relationship with terms defined in [APLLO SQL syntax](https://github.com/darwin-education/apllo/tree/master/apllo-sql-parser/src/pest_grammar/apllo_sql.pest).
 
 #![allow(missing_docs)]
-use types::NonEmptyVec;
 
 pub mod types;
+
+pub use types::NonEmptyVec;
 
 /// The AST root of APLLO SQL.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -82,7 +83,7 @@ pub struct CreateTableCommand {
 pub struct CreateTableColumnDefinition {
     pub column_name: ColumnName,
     pub data_type: DataType,
-    pub column_constraints: NonEmptyVec<ColumnConstraint>,
+    pub column_constraints: Vec<ColumnConstraint>,
 }
 
 /*

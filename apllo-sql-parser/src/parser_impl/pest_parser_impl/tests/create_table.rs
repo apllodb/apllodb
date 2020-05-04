@@ -1,55 +1,60 @@
 use super::super::PestParserImpl;
+use crate::apllo_ast::NonEmptyVec;
 use crate::apllo_ast::{
-    ColumnConstraintDefinition, ColumnDefinition, ColumnName, DataType, EmbeddedSqlStatement,
-    Identifier, SqlExecutableStatement, SqlSchemaDefinitionStatement, SqlSchemaStatement,
-    StatementOrDeclaration, TableContentsSource, TableDefinition, TableElement, TableElementList,
-    TableName,
+    ColumnConstraint, ColumnName, Command, CreateTableColumnDefinition, CreateTableCommand,
+    DataType, Identifier, IntegerType, TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
-struct CreateTableParams {
-    table_name: String,
-    column_definitions: Vec<ColumnDefinition>,
-}
-impl CreateTableParams {
-    fn new(table_name: &str, coldefs: Vec<ColumnDefinition>) -> Self {
-        Self {
-            table_name: table_name.into(),
-            column_definitions: coldefs,
+macro_rules! create_table {
+    ($table_name: expr, $column_definitions: expr $(,)?) => {
+        CreateTableCommand {
+            table_name: TableName(Identifier($table_name.to_string())),
+            create_table_column_definitions: NonEmptyVec::new($column_definitions),
         }
-    }
+    };
 }
 
 macro_rules! coldef {
-    ($column_name: expr, $data_type_variant: expr, $column_constraint_definitions: expr) => {
-        ColumnDefinition {
+    ($column_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {
+        CreateTableColumnDefinition {
             column_name: ColumnName(Identifier($column_name.to_string())),
-            data_type: $data_type_variant,
-            column_constraint_definitions: $column_constraint_definitions,
+            data_type: $data_type,
+            column_constraints: $column_constraints,
         }
     };
 }
 
 #[test]
 fn test_create_table_accepted() {
-    let sql_vs_expected_params: Vec<(&str, CreateTableParams)> = vec![
+    let sql_vs_expected_ast: Vec<(&str, CreateTableCommand)> = vec![
         (
-            "CREATE TABLE t (id INT)",
-            CreateTableParams::new("t", vec![coldef!("id", DataType::IntVariant, vec![])]),
+            "CREATE TABLE t (id INTEGER)",
+            create_table!(
+                "t",
+                vec![coldef!(
+                    "id",
+                    DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
+                    vec![]
+                )]
+            ),
         ),
         (
-            "CREATE TABLE t (id INT NOT NULL, c1 INT)",
-            CreateTableParams::new(
+            "CREATE TABLE t (id INTEGER NOT NULL, c1 INTEGER)",
+            create_table!(
                 "t",
                 vec![
                     coldef!(
                         "id",
-                        DataType::IntVariant,
-                        vec![ColumnConstraintDefinition::NotNullVariant]
+                        DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
+                        vec![ColumnConstraint::NotNullVariant]
                     ),
-                    coldef!("c1", DataType::IntVariant, vec![]),
+                    coldef!(
+                        "c1",
+                        DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
+                        vec![]
+                    ),
                 ],
             ),
         ),
@@ -57,41 +62,11 @@ fn test_create_table_accepted() {
 
     let parser = PestParserImpl::new();
 
-    for (sql, expected_params) in sql_vs_expected_params {
+    for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
-            Ok(AplloAst(EmbeddedSqlStatement {
-                statement_or_declaration:
-                    StatementOrDeclaration::SqlExecutableStatementVariant(
-                        SqlExecutableStatement::SqlSchemaStatementVariant(
-                            SqlSchemaStatement::SqlSchemaDefinitionStatementVariant(
-                                SqlSchemaDefinitionStatement::TableDefinitionVariant(
-                                    TableDefinition {
-                                        table_name: TableName(Identifier(table_name)),
-                                        table_contents_source:
-                                            TableContentsSource::TableElementListVariant(
-                                                TableElementList {
-                                                    head_table_element,
-                                                    tail_table_elements,
-                                                },
-                                            ),
-                                    },
-                                ),
-                            ),
-                        ),
-                    ),
-            })) => {
-                assert_eq!(table_name, expected_params.table_name);
-
-                let parsed_coldefs: Vec<ColumnDefinition> = vec![head_table_element]
-                    .into_iter()
-                    .chain(tail_table_elements.into_iter())
-                    .map(|te| match te {
-                        TableElement::ColumnDefinitionVariant(cd) => cd,
-                    })
-                    .collect();
-                assert_eq!(parsed_coldefs, expected_params.column_definitions,);
+            Ok(AplloAst(Command::CreateTableCommandVariant(create_table_command))) => {
+                assert_eq!(create_table_command, expected_ast);
             }
-
             Ok(ast) => panic!(
                 "'{}' should be parsed as CREATE TABLE but is parsed like: {:?}",
                 sql, ast
@@ -109,9 +84,9 @@ fn test_create_table_rejected() {
         // Lack data-type again.
         "CREATE TABLE t (c1 NOT NULL)",
         // Should be parenthesized.
-        "CREATE TABLE t c1 INT NOT NULL",
+        "CREATE TABLE t c1 INTEGER NOT NULL",
         // `NOT NULL` is a keyword, only a space is allowed.
-        "CREATE TABLE t (c1 INT NOT  NULL)",
+        "CREATE TABLE t (c1 INTEGER NOT  NULL)",
     ];
 
     let parser = PestParserImpl::new();

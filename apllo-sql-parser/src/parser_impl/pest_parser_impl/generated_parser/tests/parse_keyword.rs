@@ -3,7 +3,7 @@ use super::PestResult;
 use pest::Parser;
 
 #[test]
-fn test_parse_key_word_accepted() -> PestResult<()> {
+fn test_parse_keyword_accepted() -> PestResult<()> {
     let keywords = vec![
         // "A",
         // "ABS",
@@ -42,7 +42,7 @@ fn test_parse_key_word_accepted() -> PestResult<()> {
         // "BEGIN_PARTITION",
         // "BERNOULLI",
         // "BETWEEN",
-        // "BIGINT",
+        "BIGINT",
         // "BINARY",
         // "BLOB",
         // "BOOLEAN",
@@ -526,7 +526,7 @@ fn test_parse_key_word_accepted() -> PestResult<()> {
         // "SINH",
         // "SIZE",
         // "SKIP",
-        // "SMALLINT",
+        "SMALLINT",
         // "SOME",
         // "SOURCE",
         // "SPACE",
@@ -649,12 +649,12 @@ fn test_parse_key_word_accepted() -> PestResult<()> {
     ];
 
     for keyword in keywords {
-        let mut parse_result = GeneratedParser::parse(Rule::key_word, keyword)?;
+        let mut parse_result = GeneratedParser::parse(Rule::keyword, keyword)?;
         if let Some(identifier_pair) = parse_result.next() {
-            assert_eq!(identifier_pair.as_rule(), Rule::key_word);
+            assert_eq!(identifier_pair.as_rule(), Rule::keyword);
             assert_eq!(identifier_pair.as_str(), keyword);
         } else {
-            panic!("'{}' is expected to be parsed as a key_word.", keyword);
+            panic!("'{}' is expected to be parsed as a keyword.", keyword);
         }
     }
 
@@ -662,6 +662,6 @@ fn test_parse_key_word_accepted() -> PestResult<()> {
 }
 
 #[test]
-fn test_parse_key_word_rejected() {
-    assert!(GeneratedParser::parse(Rule::key_word, "AA").is_err());
+fn test_parse_keyword_rejected() {
+    assert!(GeneratedParser::parse(Rule::keyword, "AA").is_err());
 }
