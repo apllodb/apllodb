@@ -7,6 +7,7 @@
 //! use apllo_sql_parser::apllo_ast::{
 //!     DropTableStatement, EmbeddedSqlStatement, Identifier, SqlExecutableStatement,
 //!     SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration,
+//!     TableName,
 //! };
 //! use apllo_sql_parser::{AplloAst, AplloSqlParser};
 //!
@@ -19,7 +20,7 @@
 //!                     SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
 //!                         SqlSchemaManipulationStatement::DropTableStatementVariant(
 //!                             DropTableStatement {
-//!                                 table_name: Identifier(table_name),
+//!                                 table_name: TableName(Identifier(table_name)),
 //!                             },
 //!                         ),
 //!                     ),
