@@ -6,8 +6,9 @@ mod tests;
 
 use crate::{
     apllo_ast::{
-        types::NonEmptyVec, ColumnConstraint, ColumnName, Command, CreateTableColumnDefinition,
-        CreateTableCommand, DataType, DropTableCommand, Identifier, IntegerType, TableName,
+        types::NonEmptyVec, Action, AddColumn, AlterTableCommand, ColumnConstraint, ColumnName,
+        Command, CreateTableColumnDefinition, CreateTableCommand, DataType, DropColumn,
+        DropTableCommand, Identifier, IntegerType, TableName,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -113,10 +114,16 @@ impl PestParserImpl {
     fn parse_command(mut params: FnParseParams) -> AplloSqlParserResult<Command> {
         try_parse_child(
             &mut params,
+            Rule::alter_table_command,
+            Self::parse_alter_table_command,
+            Command::AlterTableCommandVariant,
+        )?
+        .or(try_parse_child(
+            &mut params,
             Rule::create_table_command,
             Self::parse_create_table_command,
             Command::CreateTableCommandVariant,
-        )?
+        )?)
         .or(try_parse_child(
             &mut params,
             Rule::drop_table_command,
@@ -127,6 +134,84 @@ impl PestParserImpl {
             params.apllo_sql,
             "Does not match any child rule of command.",
         ))
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * ALTER TABLE
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_alter_table_command(
+        mut params: FnParseParams,
+    ) -> AplloSqlParserResult<AlterTableCommand> {
+        let table_name = parse_child(
+            &mut params,
+            Rule::table_name,
+            Self::parse_table_name,
+            identity,
+        )?;
+        let actions = parse_child_seq(&mut params, Rule::action, &Self::parse_action, &identity)?;
+        Ok(AlterTableCommand {
+            table_name,
+            actions: NonEmptyVec::new(actions),
+        })
+    }
+
+    fn parse_action(mut params: FnParseParams) -> AplloSqlParserResult<Action> {
+        try_parse_child(
+            &mut params,
+            Rule::add_column,
+            Self::parse_add_column,
+            Action::AddColumnVariant,
+        )?
+        .or(try_parse_child(
+            &mut params,
+            Rule::drop_column,
+            Self::parse_drop_column,
+            Action::DropColumnVariant,
+        )?)
+        .ok_or(AplloSqlParserError::new(
+            params.apllo_sql,
+            "Does not match any child rule of action.",
+        ))
+    }
+
+    fn parse_add_column(mut params: FnParseParams) -> AplloSqlParserResult<AddColumn> {
+        let column_name = parse_child(
+            &mut params,
+            Rule::column_name,
+            Self::parse_column_name,
+            identity,
+        )?;
+        let data_type = parse_child(
+            &mut params,
+            Rule::data_type,
+            Self::parse_data_type,
+            identity,
+        )?;
+        let column_constraints = parse_child_seq(
+            &mut params,
+            Rule::column_constraint,
+            &Self::parse_column_constraint,
+            &identity,
+        )?;
+        Ok(AddColumn {
+            column_name,
+            data_type,
+            column_constraints,
+        })
+    }
+
+    fn parse_drop_column(mut params: FnParseParams) -> AplloSqlParserResult<DropColumn> {
+        parse_child(
+            &mut params,
+            Rule::column_name,
+            Self::parse_column_name,
+            |inner_ast| DropColumn {
+                column_name: inner_ast,
+            },
+        )
     }
 
     /*

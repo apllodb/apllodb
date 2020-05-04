@@ -63,8 +63,39 @@ pub enum IntegerType {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Command {
+    AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
     DropTableCommandVariant(DropTableCommand),
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * ALTER TABLE
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct AlterTableCommand {
+    pub table_name: TableName,
+    pub actions: NonEmptyVec<Action>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum Action {
+    AddColumnVariant(AddColumn),
+    DropColumnVariant(DropColumn),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct AddColumn {
+    pub column_name: ColumnName,
+    pub data_type: DataType,
+    pub column_constraints: Vec<ColumnConstraint>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct DropColumn {
+    pub column_name: ColumnName,
 }
 
 /*

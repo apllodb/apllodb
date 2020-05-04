@@ -819,11 +819,37 @@ integer_type = {
 // The entry point of APLLO SQL.
 command = {
     SOI ~ (
-        create_table_command
+        alter_table_command
+        | create_table_command
         | drop_table_command
     )
     ~ ";"?
     ~ EOI
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * ALTER TABLE (https://www.postgresql.org/docs/12/sql-altertable.html)
+ * ----------------------------------------------------------------------------
+ */
+
+alter_table_command = {
+    "ALTER" ~ "TABLE"
+    ~ table_name
+    ~ action ~ ("," ~ action)*
+}
+
+action = {
+    add_column
+    | drop_column
+}
+
+add_column = {
+    "ADD" ~ "COLUMN"? ~ column_name ~ data_type ~ column_constraint*
+}
+
+drop_column = {
+    "DROP" ~ "COLUMN"? ~ column_name
 }
 
 /*
