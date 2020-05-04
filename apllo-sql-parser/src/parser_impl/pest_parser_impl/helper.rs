@@ -100,6 +100,23 @@ pub(super) fn try_parse_child<T, ChildRet>(
     }
 }
 
+/// Parses children sequence by `child_parser` while next child matches `child_term`.
+///
+/// # Failures
+/// Raises Err from `child_parser` as-is.
+pub(super) fn parse_child_seq<T, ChildRet>(
+    params: &mut FnParseParams,
+    child_term: Rule,
+    child_parser: &impl Fn(FnParseParams) -> AplloSqlParserResult<ChildRet>,
+    ret_closure: &impl Fn(ChildRet) -> T,
+) -> AplloSqlParserResult<Vec<T>> {
+    let mut children = Vec::<T>::new();
+    while let Some(child) = try_parse_child(params, child_term, child_parser, ret_closure)? {
+        children.push(child);
+    }
+    Ok(children)
+}
+
 pub(super) fn parse_identifier(params: &mut FnParseParams) -> AplloSqlParserResult<Identifier> {
     let s = parse_leaf_string(params)?;
     Ok(Identifier(s))

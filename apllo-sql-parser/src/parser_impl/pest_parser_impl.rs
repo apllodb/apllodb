@@ -16,7 +16,9 @@ use crate::{
     AplloAst,
 };
 use generated_parser::{GeneratedParser, Rule};
-use helper::{parse_data_type, parse_identifier, parse_child, try_parse_child, FnParseParams};
+use helper::{
+    parse_child, parse_child_seq, parse_data_type, parse_identifier, try_parse_child, FnParseParams,
+};
 use pest::{iterators::Pairs, Parser};
 
 #[derive(Clone, Hash, Debug)]
@@ -87,20 +89,16 @@ impl PestParserImpl {
             Self::parse_table_element,
             |inner_ast| inner_ast,
         )?;
-
-        let mut tail_table_elements: Vec<TableElement> = vec![];
-        while let Some(table_element) = try_parse_child(
+        let tail_table_elements = parse_child_seq(
             &mut params,
             Rule::table_element,
-            Self::parse_table_element,
-            |inner_ast| inner_ast,
-        )? {
-            tail_table_elements.push(table_element);
-        }
+            &Self::parse_table_element,
+            &|inner_ast| inner_ast,
+        )?;
 
         Ok(TableElementList {
             head_table_element,
-            tail_table_elements: vec![],
+            tail_table_elements,
         })
     }
 
