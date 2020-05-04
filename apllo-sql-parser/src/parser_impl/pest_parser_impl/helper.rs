@@ -1,8 +1,5 @@
 use super::generated_parser::Rule;
-use crate::{
-    apllo_ast::{DataType, Identifier},
-    apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
-};
+use crate::apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult};
 use pest::iterators::{Pair, Pairs};
 use std::collections::VecDeque;
 
@@ -117,23 +114,7 @@ pub(super) fn parse_child_seq<T, ChildRet>(
     Ok(children)
 }
 
-pub(super) fn parse_identifier(params: &mut FnParseParams) -> AplloSqlParserResult<Identifier> {
-    let s = parse_leaf_string(params)?;
-    Ok(Identifier(s))
-}
-
-pub(super) fn parse_data_type(params: &mut FnParseParams) -> AplloSqlParserResult<DataType> {
-    let s = parse_leaf_string(params)?;
-    match s.as_str() {
-        "INT" => Ok(DataType::IntVariant),
-        x => {
-            eprintln!("Unexpected data type parsed: {}", x);
-            unreachable!();
-        }
-    }
-}
-
-fn parse_leaf_string(params: &mut FnParseParams) -> AplloSqlParserResult<String> {
+pub(super) fn parse_leaf_string(params: &mut FnParseParams) -> AplloSqlParserResult<String> {
     let child_pair = params
         .children_pairs
         .pop_front()
