@@ -1,83 +1,29 @@
 /*
- * Use similar elements' name and categorization to:
- * https://jakewheat.github.io/sql-overview/sql-2016-foundation-grammar.html
+ * Whole syntax definition of APLLO SQL.
+ *
+ * This file is written in PEG (Parsing expression grammars) and
+ * programmatically parsed by pest (https://github.com/pest-parser/pest).
+ *
+ * This file consists of sections (decorated with `===...`). andsubsections (decoated with `---...`).
+ *
+ * The entry point of APLLO SQL's syntax is `command`.
+ * See `Commands` section.
  */
 
 /*
- * ----------------------------------------------
- * 5.1 <SQL terminal character>
- * ----------------------------------------------
+ * ================================================================================================
+ * Keywords:
+ *
+ * Copied from SQL:2016 specification.
+ * ================================================================================================
  */
-
-sql_language_character = _{
-    rich_utf8_letter
-    | DECIMAL_NUMBER
-}
-
-sql_special_character = _{
-    "!"
-    | "\""
-    | "#"
-    | "$"
-    | "%"
-    | "&"
-    | "'"
-    | "("
-    | ")"
-    | "*"
-    | "+"
-    | ","
-    | "-"
-    | "."
-    | "/"
-    | ":"
-    | ";"
-    | "<"
-    | "="
-    | ">"
-    | "?"
-    | "@"
-    | "["
-    | "\\"
-    | "]"
-    | "^"
-    | "`"
-    | "{"
-    | "|"
-    | "}"
-    | "~"
-}
-
-// Enables intuitive table / column names even for non-native English speakers.
-//
-// See:
-// pest's built-in character classes: https://pest.rs/book/grammars/built-ins.html#general-categories
-// Unicode's General Category: http://www.unicode.org/reports/tr44/#General_Category_Values
-rich_utf8_letter = _{
-    !sql_special_character ~ (
-        LETTER
-        | MARK
-        | PUNCTUATION
-        | SYMBOL
-        | LETTER_NUMBER
-        | OTHER_NUMBER
-    )
-}
-
-/*
- * ----------------------------------------------
- * 5.2 <token> and <separator>
- * ----------------------------------------------
- */
-
-WHITESPACE = _{ " " | "\t" | NEWLINE } // TODO: add `FORM FEED`
 
 // Beware of substrings.
 //   NG) "A" | "ABSOLUTE"
 // In this case, only "A" matches with query `ABSOLUTE` (eager matching).
 //
 // TODO: Comment-in all. They are commented-out just to make build faster.
-key_word = { 
+keyword = { 
     "ABSOLUTE"
     // | "ABS"
     // | "ACOS"
@@ -725,20 +671,90 @@ key_word = {
 }
 
 /*
- * ----------------------------------------------
- * 5.4 Names and identifiers
- * ----------------------------------------------
+ * ================================================================================================
+ * Lexical Structure:
+ *
+ * Defined independently from other SQL syntaxes.
+ * This provides the ability to use UTF-8 characters for objects name like
+ * table names and column names.
+ * ================================================================================================
+ */
+
+WHITESPACE = _{ " " | "\t" | NEWLINE } // TODO: add `FORM FEED`
+
+sql_language_character = _{
+    rich_utf8_letter
+    | DECIMAL_NUMBER
+}
+
+sql_special_character = _{
+    "!"
+    | "\""
+    | "#"
+    | "$"
+    | "%"
+    | "&"
+    | "'"
+    | "("
+    | ")"
+    | "*"
+    | "+"
+    | ","
+    | "-"
+    | "."
+    | "/"
+    | ":"
+    | ";"
+    | "<"
+    | "="
+    | ">"
+    | "?"
+    | "@"
+    | "["
+    | "\\"
+    | "]"
+    | "^"
+    | "`"
+    | "{"
+    | "|"
+    | "}"
+    | "~"
+}
+
+// Enables intuitive table / column names even for non-native English speakers.
+//
+// See:
+// pest's built-in character classes: https://pest.rs/book/grammars/built-ins.html#general-categories
+// Unicode's General Category: http://www.unicode.org/reports/tr44/#General_Category_Values
+rich_utf8_letter = _{
+    !sql_special_character ~ (
+        LETTER
+        | MARK
+        | PUNCTUATION
+        | SYMBOL
+        | LETTER_NUMBER
+        | OTHER_NUMBER
+    )
+}
+
+
+/*
+ * ================================================================================================
+ * Identifier:
+ *
+ * Defined independently from other SQL syntaxes.
+ * ================================================================================================
  */
 
 identifier = @{
     // does not start with a keyword.
     (
-        !key_word ~ (
+        !keyword ~ (
             identifier_start ~ identifier_part*
         )
     )
     // starts with a keyword but followed by other letters.
-    | ( key_word ~ identifier_part+ )
+    | ( keyword ~ identifier_part+ )
 }
 
 identifier_start = _{
@@ -750,249 +766,119 @@ identifier_part = _{
     | DECIMAL_NUMBER
 }
 
+/*
+ * ================================================================================================
+ * Value Expressions:
+ *
+ * Extracted subset of terms and categories from PostgreSQL
+ * (https://www.postgresql.org/docs/12/sql-expressions.html).
+ * ================================================================================================
+ */
+
+/*
+ * ================================================================================================
+ * Data Types:
+ *
+ * Extracted subset of terms and categories from PostgreSQL
+ * (https://www.postgresql.org/docs/12/datatype.html).
+ * ================================================================================================
+ */
+
+data_type = {
+    integer_type
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Integer Types
+ * (https://www.postgresql.org/docs/12/datatype-numeric.html#DATATYPE-INT)
+ * ----------------------------------------------------------------------------
+ */
+
+integer_type = {
+    "SMALLINT"
+    | "INTEGER"
+    | "BIGINT"
+}
+
+/*
+ * ================================================================================================
+ * Commands:
+ *
+ * Basically extracted subset of terms and categories from PostgreSQL
+ * (https://www.postgresql.org/docs/12/sql-commands.html).
+ *
+ * Term names are sometimes modified from PostgreSQL command documents for more commonality.
+ * (e.g. `name` in DROP TABLE -> `table_name`)
+ *
+ * Also, terms are added independently from PostgreSQL when it is helpful for simplicity in syntax.
+ * (e.g. `create_table_column_definition` for repetition)
+ * ================================================================================================
+ */
+
+// The entry point of APLLO SQL.
+command = {
+    SOI ~ (
+        create_table_command
+        | drop_table_command
+    )
+    ~ ";"?
+    ~ EOI
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * CREATE TABLE (https://www.postgresql.org/docs/12/sql-createtable.html)
+ * ----------------------------------------------------------------------------
+ */
+
+create_table_command = {
+    "CREATE" ~ "TABLE"
+    ~ table_name
+    ~ "("
+    ~ create_table_column_definition ~ ("," ~ create_table_column_definition)*
+    ~ ")"
+}
+
+create_table_column_definition = {
+    column_name
+    ~ data_type
+    ~ column_constraint*
+}
+
+column_constraint = {
+    "NOT NULL"
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * DROP TABLE (https://www.postgresql.org/docs/12/sql-droptable.html)
+ * ----------------------------------------------------------------------------
+ */
+
+drop_table_command = {
+    "DROP" ~ "TABLE"
+    ~ table_name
+}
+
+/*
+ * ================================================================================================
+ * Misc:
+ * Terms commonly used by multiple commands.
+ * Defined independently from other SQL syntaxes.
+ * ================================================================================================
+ */
+
+/*
+ * ----------------------------------------------------------------------------
+ * Names
+ * ----------------------------------------------------------------------------
+ */
+
 table_name = {
     identifier
 }
 
 column_name = {
     identifier
-}
-
-/*
- * ----------------------------------------------
- * 6.1 <data type>
- * ----------------------------------------------
- */
-
-data_type = {
-    "INT"
-}
-
-/*
- * ----------------------------------------------
- * 6.3 <value expression primary>
- * ----------------------------------------------
- */
-
-value_expression_primary = {
-    parenthesized_value_expression
-    | nonparenthesized_value_expression_primary
-}
-
-parenthesized_value_expression = {
-    "(" ~ value_expression ~ ")"
-}
-
-nonparenthesized_value_expression_primary = {
-    column_reference
-}
-
-
-/*
- * ----------------------------------------------
- * 6.7 <column reference>
- * ----------------------------------------------
- */
-
-column_reference = {
-    identifier
-}
-
-/*
- * ----------------------------------------------
- * 6.28 <value expression>
- * ----------------------------------------------
- */
-
-value_expression = {
-    common_value_expression
-}
-
-common_value_expression = {
-    reference_value_expression
-}
-
-reference_value_expression = {
-    value_expression_primary
-}
-
-/*
- * ----------------------------------------------
- * 7.4 <table expression>
- * ----------------------------------------------
- */
-
-table_expression = {
-    from_clause
-}
-
-/*
- * ----------------------------------------------
- * 7.5 <from clause>
- * ----------------------------------------------
- */
-
-from_clause = {
-    "FROM" ~ table_name
-}
-
-/*
- * ----------------------------------------------
- * 7.16 <query specification>
- * ----------------------------------------------
- */
-
-query_specification = {
-    "SELECT" ~ select_list ~ table_expression
-}
-
-select_list = {
-    select_sublist ~ ("," ~ select_sublist)*
-}
-
-select_sublist = {
-    value_expression ~ as_clause*
-}
-
-as_clause = {
-    "AS"? ~ column_name
-}
-
-/*
- * ----------------------------------------------
- * 7.17 <query expression>
- * ----------------------------------------------
- */
-
-query_expression = {
-    query_expression_body
-}
-
-/*
- * ----------------------------------------------
- * 11.3 <table definition>
- * ----------------------------------------------
- */
-
-table_definition = {
-    "CREATE" ~ "TABLE" ~ table_name ~ table_contents_source
-}
-
-table_contents_source = {
-    table_element_list
-}
-
-table_element_list = {
-    "(" ~ table_element ~ ("," ~ table_element)* ~ ")"
-}
-
-table_element = {
-    column_definition
-}
-
-/*
- * ----------------------------------------------
- * 11.4 <column definition>
- * ----------------------------------------------
- */
-
-column_definition = {
-    column_name ~ data_type ~ column_constraint_definition*
-}
-
-column_constraint_definition = {
-    "NOT NULL"
-}
-
-/*
- * ----------------------------------------------
- * 11.31 <drop table statement>
- * ----------------------------------------------
- */
-
-drop_table_statement = {
-    "DROP" ~ "TABLE" ~ table_name
-}
-
-/*
- * ----------------------------------------------
- * 13.4 <SQL procedure statement>
- * ----------------------------------------------
- */
-
-sql_executable_statement = {
-    sql_schema_statement
-}
-
-sql_schema_statement = {
-    sql_schema_definition_statement
-    | sql_schema_manipulation_statement
-}
-
-sql_schema_definition_statement = {
-    table_definition
-}
-
-sql_schema_manipulation_statement = {
-    drop_table_statement
-}
-
-/*
- * ----------------------------------------------
- * 14 <with clause> ::=
- * ----------------------------------------------
- */
-
-query_expression_body = {
-    query_term
-}
-
-query_term = {
-    query_primary
-}
-
-query_primary = {
-    simple_table
-}
-
-simple_table = {
-    query_specification
-}
-
-/*
- * ----------------------------------------------
- * 20.7 <prepare statement>
- * ----------------------------------------------
- */
-
-// ENTRY POINT for prepared statement.
-preparable_statement = {
-    SOI
-    ~ preparable_sql_data_statement ~ ";"?
-    ~ EOI
-}
-
-preparable_sql_data_statement = {
-    dynamic_select_statement
-}
-
-dynamic_select_statement = {
-    query_expression
-}
-
-/*
- * ----------------------------------------------
- * 21.1 <embedded SQL host program>
- * ----------------------------------------------
- */
-
-// ENTRY POINT
-embedded_sql_statement = {
-    SOI
-    ~ statement_or_declaration ~ ";"?
-    ~ EOI
-}
-
-statement_or_declaration = {
-    sql_executable_statement
 }
