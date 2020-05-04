@@ -87,45 +87,38 @@ macro_rules! parse_self {
     }};
 }
 
-/// Returns:
-/// Result<Option<T: Return type of $ret_closure>>>
-///   None when either of the following cases:
-///   - no term left.
-///   - the next Pair does not match $child_term.
-macro_rules! try_parse_self {
-    ($params: expr,
-        [
-            $((  // Possible `Rule`s
-                $child_term: ident,
-                $child_parser: ident,
-                $ret_closure: expr$(,)?
-            )$(,)?)+
-        ]
-    ) => {{
-        if let Some(child_pair) = $params.children_pairs.pop_front() {
-            match child_pair.as_rule() {
-                $(  // Possible `Rule`s
-                Rule::$child_term => {
-                    let grand_children_pairs: Pairs<Rule> = child_pair.into_inner();
+/// Try to parse the next child term as `child_term` by `child_parser`.
+///
+///  Returns Ok(None) when either of the following cases:
+///  - no child term left.
+///  - the next child term does not match $child_term.
+///
+/// # Failures
+/// Raises Err from `child_parser` as-is.
+fn try_parse_self<T, ChildRet>(
+    params: &mut FnParseParams,
+    child_term: Rule,
+    child_parser: impl Fn(FnParseParams) -> AplloSqlParserResult<ChildRet>,
+    ret_closure: impl Fn(ChildRet) -> T,
+) -> AplloSqlParserResult<Option<T>> {
+    if let Some(child_pair) = params.children_pairs.pop_front() {
+        if child_pair.as_rule() == child_term {
+            let grand_children_pairs: Pairs<Rule> = child_pair.into_inner();
 
-                    let child_params =  FnParseParams {
-                        apllo_sql: $params.apllo_sql,
-                        children_pairs: grand_children_pairs.collect(),
-                    };
-                    let child_ast = Self::$child_parser(child_params)?;
+            let child_params = FnParseParams {
+                apllo_sql: params.apllo_sql,
+                children_pairs: grand_children_pairs.collect(),
+            };
+            let child_ast = child_parser(child_params)?;
 
-                    Ok(Some($ret_closure(child_ast)))
-                }
-                )+
-                _ => {
-                    $params.children_pairs.push_front(child_pair);
-                    Ok(None)
-                }
-            }
+            Ok(Some(ret_closure(child_ast)))
         } else {
+            params.children_pairs.push_front(child_pair);
             Ok(None)
         }
-    }};
+    } else {
+        Ok(None)
+    }
 }
 
 fn parse_leaf_string(params: &mut FnParseParams) -> AplloSqlParserResult<String> {
@@ -145,19 +138,15 @@ fn parse_identifier(params: &mut FnParseParams) -> AplloSqlParserResult<Identifi
     Ok(Identifier(s))
 }
 
-/// Returns:
-/// Result<DataType>
-macro_rules! parse_data_type {
-    ($params: expr) => {{
-        let s = parse_leaf_string(&mut $params)?;
-        match s.as_str() {
-            "INT" => Ok(DataType::IntVariant),
-            x => {
-                eprintln!("Unexpected data type parsed: {}", x);
-                unreachable!();
-            }
+fn parse_data_type(params: &mut FnParseParams) -> AplloSqlParserResult<DataType> {
+    let s = parse_leaf_string(params)?;
+    match s.as_str() {
+        "INT" => Ok(DataType::IntVariant),
+        x => {
+            eprintln!("Unexpected data type parsed: {}", x);
+            unreachable!();
         }
-    }};
+    }
 }
 
 impl ParserLike for PestParserImpl {
@@ -223,9 +212,11 @@ impl PestParserImpl {
         )?;
 
         let mut tail_table_elements: Vec<TableElement> = vec![];
-        while let Some(table_element) = try_parse_self!(
-            params,
-            [(table_element, parse_table_element, |inner_ast| inner_ast,),]
+        while let Some(table_element) = try_parse_self(
+            &mut params,
+            Rule::table_element,
+            Self::parse_table_element,
+            |inner_ast| inner_ast,
         )? {
             tail_table_elements.push(table_element);
         }
@@ -249,7 +240,7 @@ impl PestParserImpl {
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<ColumnDefinition> {
         let column_name = parse_identifier(&mut params)?;
-        let data_type = parse_data_type!(params)?;
+        let data_type = parse_data_type(&mut params)?;
         // TODO: これだと制約のあるカラムに対応できていない
         Ok(ColumnDefinition {
             column_name,
