@@ -88,6 +88,7 @@ pub enum Command {
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
     DropTableCommandVariant(DropTableCommand),
+    InsertCommandVariant(InsertCommand),
     SelectCommandVariant(SelectCommand),
 }
 
@@ -149,6 +150,20 @@ pub struct CreateTableColumnDefinition {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct DropTableCommand {
     pub table_name: TableName,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * INSERT
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct InsertCommand {
+    pub table_name: TableName,
+    pub alias: Option<Alias>,
+    pub column_names: NonEmptyVec<ColumnName>,
+    pub expressions: NonEmptyVec<Expression>,
 }
 
 /*

@@ -842,6 +842,7 @@ command = {
         alter_table_command
         | create_table_command
         | drop_table_command
+        | insert_command
         | select_command
     )
     ~ ";"?
@@ -902,6 +903,20 @@ create_table_column_definition = {
 drop_table_command = {
     "DROP" ~ "TABLE"
     ~ table_name
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * INSERT (https://www.postgresql.org/docs/12/sql-insert.html)
+ * ----------------------------------------------------------------------------
+ */
+
+insert_command = {
+    "INSERT" ~ "INTO"
+    ~ table_name
+    ~ ("AS" ~ alias)?
+    ~ "(" ~ column_name ~ ("," ~ column_name)* ~ ")"
+    ~ "VALUES" ~ "(" ~ expression ~ ("," ~ expression)* ~ ")"
 }
 
 /*

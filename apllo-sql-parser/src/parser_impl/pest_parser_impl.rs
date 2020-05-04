@@ -9,7 +9,7 @@ use crate::{
         types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
         ColumnName, ColumnReference, Command, Condition, Correlation, CreateTableColumnDefinition,
         CreateTableCommand, DataType, DropColumn, DropTableCommand, Expression, FromItem,
-        Identifier, IntegerType, SelectCommand, SelectField, TableName,
+        Identifier, InsertCommand, IntegerType, SelectCommand, SelectField, TableName,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -178,6 +178,12 @@ impl PestParserImpl {
         )?)
         .or(try_parse_child(
             &mut params,
+            Rule::insert_command,
+            Self::parse_insert_command,
+            Command::InsertCommandVariant,
+        )?)
+        .or(try_parse_child(
+            &mut params,
             Rule::select_command,
             Self::parse_select_command,
             Command::SelectCommandVariant,
@@ -338,6 +344,40 @@ impl PestParserImpl {
                 table_name: inner_ast,
             },
         )
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * INSERT
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_insert_command(mut params: FnParseParams) -> AplloSqlParserResult<InsertCommand> {
+        let table_name = parse_child(
+            &mut params,
+            Rule::table_name,
+            &Self::parse_table_name,
+            &identity,
+        )?;
+        let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
+        let column_names = parse_child_seq(
+            &mut params,
+            Rule::column_name,
+            &Self::parse_column_name,
+            &identity,
+        )?;
+        let expressions = parse_child_seq(
+            &mut params,
+            Rule::expression,
+            &Self::parse_expression,
+            &identity,
+        )?;
+        Ok(InsertCommand {
+            table_name,
+            alias,
+            column_names: NonEmptyVec::new(column_names),
+            expressions: NonEmptyVec::new(expressions),
+        })
     }
 
     /*
