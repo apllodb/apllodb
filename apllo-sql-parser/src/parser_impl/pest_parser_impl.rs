@@ -43,6 +43,8 @@ struct FnParseParams<'a> {
     children_pairs: VecDeque<Pair<'a, Rule>>,
 }
 
+/// Returns:
+/// Result<T: Return type of $ret_closure>
 macro_rules! parse_self {
     ($params: expr,
         [
@@ -57,7 +59,7 @@ macro_rules! parse_self {
             .ok_or(
                 AplloSqlParserError::new(
                     $params.apllo_sql,
-                    "Expected any terms are left unparsed but nothing left.",
+                    "Tried to parse a term but nothing left.",
                 )
             )?;
 
@@ -85,6 +87,49 @@ macro_rules! parse_self {
     }};
 }
 
+/// Returns:
+/// Result<Option<T: Return type of $ret_closure>>>
+///   None when either of the following cases:
+///   - no term left.
+///   - the next Pair does not match $child_term.
+macro_rules! try_parse_self {
+    ($params: expr,
+        [
+            $((  // Possible `Rule`s
+                $child_term: ident,
+                $child_parser: ident,
+                $ret_closure: expr$(,)?
+            )$(,)?)+
+        ]
+    ) => {{
+        if let Some(child_pair) = $params.children_pairs.pop_front() {
+            match child_pair.as_rule() {
+                $(  // Possible `Rule`s
+                Rule::$child_term => {
+                    let grand_children_pairs: Pairs<Rule> = child_pair.into_inner();
+
+                    let child_params =  FnParseParams {
+                        apllo_sql: $params.apllo_sql,
+                        children_pairs: grand_children_pairs.collect(),
+                    };
+                    let child_ast = Self::$child_parser(child_params)?;
+
+                    Ok(Some($ret_closure(child_ast)))
+                }
+                )+
+                _ => {
+                    $params.children_pairs.push_front(child_pair);
+                    Ok(None)
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }};
+}
+
+/// Returns:
+/// Result<String>
 macro_rules! _parse_leaf_string {
     ($params: expr) => {{
         let child_pair: Pair<Rule> =
@@ -100,6 +145,8 @@ macro_rules! _parse_leaf_string {
     }};
 }
 
+/// Returns:
+/// Result<Identifier>
 macro_rules! parse_identifier {
     ($params: expr) => {{
         let s = _parse_leaf_string!($params)?;
@@ -107,6 +154,8 @@ macro_rules! parse_identifier {
     }};
 }
 
+/// Returns:
+/// Result<DataType>
 macro_rules! parse_data_type {
     ($params: expr) => {{
         let s = _parse_leaf_string!($params)?;
@@ -181,7 +230,15 @@ impl PestParserImpl {
             params,
             [(table_element, parse_table_element, |inner_ast| inner_ast,),]
         )?;
-        // TODO: これだと2つ以上のフィールドに対応できていない
+
+        let mut tail_table_elements: Vec<TableElement> = vec![];
+        while let Some(table_element) = try_parse_self!(
+            params,
+            [(table_element, parse_table_element, |inner_ast| inner_ast,),]
+        )? {
+            tail_table_elements.push(table_element);
+        }
+
         Ok(TableElementList {
             head_table_element,
             tail_table_elements: vec![],
