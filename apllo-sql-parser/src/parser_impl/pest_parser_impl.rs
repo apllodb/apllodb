@@ -180,19 +180,19 @@ impl PestParserImpl {
     fn parse_sql_schema_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaStatement> {
-        let a = try_parse_child(
+        try_parse_child(
             &mut params,
             Rule::sql_schema_definition_statement,
             Self::parse_sql_schema_definition_statement,
             |inner_ast| SqlSchemaStatement::SqlSchemaDefinitionStatementVariant(inner_ast),
-        )?;
-        let b = try_parse_child(
+        )?
+        .or(try_parse_child(
             &mut params,
             Rule::sql_schema_manipulation_statement,
             Self::parse_sql_schema_manipulation_statement,
             |inner_ast| SqlSchemaStatement::SqlSchemaManipulationStatementVariant(inner_ast),
-        )?;
-        a.or(b).ok_or(AplloSqlParserError::new(
+        )?)
+        .ok_or(AplloSqlParserError::new(
             params.apllo_sql,
             "Expected to parse a leaf string but no term left.",
         ))
