@@ -82,7 +82,7 @@ pub struct CreateTableCommand {
 pub struct CreateTableColumnDefinition {
     pub column_name: ColumnName,
     pub data_type: DataType,
-    pub column_constraint: NonEmptyVec<ColumnConstraint>,
+    pub column_constraints: NonEmptyVec<ColumnConstraint>,
 }
 
 /*
