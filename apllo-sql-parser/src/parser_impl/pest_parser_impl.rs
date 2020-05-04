@@ -140,13 +140,9 @@ fn parse_leaf_string(params: &mut FnParseParams) -> AplloSqlParserResult<String>
     Ok(s)
 }
 
-/// Returns:
-/// Result<Identifier>
-macro_rules! parse_identifier {
-    ($params: expr) => {{
-        let s = parse_leaf_string(&mut $params)?;
-        Ok(Identifier(s))
-    }};
+fn parse_identifier(params: &mut FnParseParams) -> AplloSqlParserResult<Identifier> {
+    let s = parse_leaf_string(params)?;
+    Ok(Identifier(s))
 }
 
 /// Returns:
@@ -192,7 +188,7 @@ impl ParserLike for PestParserImpl {
 
 impl PestParserImpl {
     fn parse_table_definition(mut params: FnParseParams) -> AplloSqlParserResult<TableDefinition> {
-        let table_name = parse_identifier!(params)?;
+        let table_name = parse_identifier(&mut params)?;
         let table_contents_source = parse_self!(
             params,
             [(
@@ -252,7 +248,7 @@ impl PestParserImpl {
     fn parse_column_definition(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<ColumnDefinition> {
-        let column_name = parse_identifier!(params)?;
+        let column_name = parse_identifier(&mut params)?;
         let data_type = parse_data_type!(params)?;
         // TODO: これだと制約のあるカラムに対応できていない
         Ok(ColumnDefinition {
@@ -265,7 +261,7 @@ impl PestParserImpl {
     fn parse_drop_table_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<DropTableStatement> {
-        let table_name = parse_identifier!(params)?;
+        let table_name = parse_identifier(&mut params)?;
         Ok(DropTableStatement { table_name })
     }
 
