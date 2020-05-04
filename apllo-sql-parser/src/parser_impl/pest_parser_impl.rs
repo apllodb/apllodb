@@ -6,8 +6,8 @@ mod tests;
 
 use crate::{
     apllo_ast::{
-        ColumnDefinition, ColumnName, DataType, DropTableStatement, EmbeddedSqlStatement,
-        Identifier, SqlExecutableStatement, SqlSchemaDefinitionStatement,
+        ColumnConstraintDefinition, ColumnDefinition, ColumnName, DataType, DropTableStatement,
+        EmbeddedSqlStatement, Identifier, SqlExecutableStatement, SqlSchemaDefinitionStatement,
         SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration,
         TableContentsSource, TableDefinition, TableElement, TableElementList, TableName,
     },
@@ -164,12 +164,30 @@ impl PestParserImpl {
             Self::parse_data_type,
             |inner_ast| inner_ast,
         )?;
-        // TODO: これだと制約のあるカラムに対応できていない
+        let column_constraint_definitions = parse_child_seq(
+            &mut params,
+            Rule::column_constraint_definition,
+            &Self::parse_column_constraint_definition,
+            &|inner_ast| inner_ast,
+        )?;
         Ok(ColumnDefinition {
             column_name,
             data_type,
-            column_constraint_definitions: vec![],
+            column_constraint_definitions,
         })
+    }
+
+    fn parse_column_constraint_definition(
+        mut params: FnParseParams,
+    ) -> AplloSqlParserResult<ColumnConstraintDefinition> {
+        let s = self_as_str(&mut params);
+        match s {
+            "NOT NULL" => Ok(ColumnConstraintDefinition::NotNullVariant),
+            x => {
+                eprintln!("Unexpected constraint parsed: {}", x);
+                unreachable!();
+            }
+        }
     }
 
     fn parse_drop_table_statement(
