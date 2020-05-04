@@ -1,7 +1,8 @@
 use super::super::PestParserImpl;
 use crate::apllo_ast::NonEmptyVec;
 use crate::apllo_ast::{
-    Alias, ColumnName, ColumnReference, Command, Expression, Identifier, InsertCommand, TableName,
+    Alias, ColumnName, Command, Constant, Expression, Identifier, IntegerConstant, InsertCommand, NumericConstant,
+    TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
@@ -21,10 +22,9 @@ macro_rules! insert {
                 $expressions
                     .iter()
                     .map(|e| {
-                        Expression::ColumnReferenceVariant(ColumnReference {
-                            correlation: None,
-                            column_name: ColumnName(Identifier(e.to_string())),
-                        })
+                        Expression::ConstantVariant(Constant::NumericConstantVariant(
+                            NumericConstant::IntegerConstantVariant(IntegerConstant(e.to_string())),
+                        ))
                     })
                     .collect(),
             ),

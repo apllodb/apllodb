@@ -7,9 +7,10 @@ mod tests;
 use crate::{
     apllo_ast::{
         types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
-        ColumnName, ColumnReference, Command, Condition, Correlation, CreateTableColumnDefinition,
-        CreateTableCommand, DataType, DropColumn, DropTableCommand, Expression, FromItem,
-        Identifier, InsertCommand, IntegerType, SelectCommand, SelectField, TableName,
+        ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
+        CreateTableColumnDefinition, CreateTableCommand, DataType, DropColumn, DropTableCommand,
+        Expression, FromItem, Identifier, InsertCommand, IntegerConstant, IntegerType,
+        NumericConstant, SelectCommand, SelectField, TableName,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -57,6 +58,41 @@ impl ParserLike for PestParserImpl {
 impl PestParserImpl {
     /*
      * ================================================================================================
+     * Lexical Structure:
+     * ================================================================================================
+     */
+
+    /*
+     * ----------------------------------------------------------------------------
+     * Constants
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_constant(mut params: FnParseParams) -> AplloSqlParserResult<Constant> {
+        parse_child(
+            &mut params,
+            Rule::numeric_constant,
+            Self::parse_numeric_constant,
+            Constant::NumericConstantVariant,
+        )
+    }
+
+    fn parse_numeric_constant(mut params: FnParseParams) -> AplloSqlParserResult<NumericConstant> {
+        parse_child(
+            &mut params,
+            Rule::integer_constant,
+            Self::parse_integer_constant,
+            NumericConstant::IntegerConstantVariant,
+        )
+    }
+
+    fn parse_integer_constant(mut params: FnParseParams) -> AplloSqlParserResult<IntegerConstant> {
+        let s = self_as_str(&mut params);
+        Ok(IntegerConstant(s.into()))
+    }
+
+    /*
+     * ================================================================================================
      * Identifier:
      * ================================================================================================
      */
@@ -84,12 +120,22 @@ impl PestParserImpl {
     }
 
     fn parse_expression(mut params: FnParseParams) -> AplloSqlParserResult<Expression> {
-        parse_child(
+        try_parse_child(
+            &mut params,
+            Rule::constant,
+            Self::parse_constant,
+            Expression::ConstantVariant,
+        )?
+        .or(try_parse_child(
             &mut params,
             Rule::column_reference,
             Self::parse_column_reference,
             Expression::ColumnReferenceVariant,
-        )
+        )?)
+        .ok_or(AplloSqlParserError::new(
+            params.apllo_sql,
+            "Does not match any child rule of expression.",
+        ))
     }
 
     /*

@@ -674,7 +674,7 @@ keyword = {
  * ================================================================================================
  * Lexical Structure:
  *
- * Defined independently from other SQL syntaxes.
+ * Defined almost independently from other SQL syntaxes.
  * This provides the ability to use UTF-8 characters for objects name like
  * table names and column names.
  * ================================================================================================
@@ -737,6 +737,24 @@ rich_utf8_letter = _{
     )
 }
 
+/*
+ * ----------------------------------------------------------------------------
+ * Constants
+ * (https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS)
+ * ----------------------------------------------------------------------------
+ */
+
+constant = {
+    numeric_constant
+}
+
+numeric_constant = {
+    integer_constant
+}
+
+integer_constant = @{
+    DECIMAL_NUMBER+
+}
 
 /*
  * ================================================================================================
@@ -780,7 +798,8 @@ condition = {
 }
 
 expression = {
-    column_reference
+    constant
+    | column_reference
 }
 
 /*

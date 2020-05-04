@@ -18,6 +18,31 @@ pub struct AplloAst(pub Command);
 
 /*
  * ================================================================================================
+ * Lexical Structure:
+ * ================================================================================================
+ */
+
+/*
+ * ----------------------------------------------------------------------------
+ * Constants
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum Constant {
+    NumericConstantVariant(NumericConstant),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum NumericConstant {
+    IntegerConstantVariant(IntegerConstant),
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct IntegerConstant(pub String);
+
+/*
+ * ================================================================================================
  * Identifier:
  * ================================================================================================
  */
@@ -38,6 +63,7 @@ pub struct Condition {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Expression {
+    ConstantVariant(Constant),
     ColumnReferenceVariant(ColumnReference),
 }
 
