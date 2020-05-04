@@ -29,7 +29,7 @@ pub(super) struct FnParseParams<'a> {
 /// - When no child term left.
 /// - When the next child term does not match $child_term.
 /// - Raises Err from `child_parser` as-is.
-pub(super) fn parse_self<T, ChildRet>(
+pub(super) fn parse_child<T, ChildRet>(
     params: &mut FnParseParams,
     child_term: Rule,
     child_parser: impl Fn(FnParseParams) -> AplloSqlParserResult<ChildRet>,
@@ -74,7 +74,7 @@ pub(super) fn parse_self<T, ChildRet>(
 ///
 /// # Failures
 /// Raises Err from `child_parser` as-is.
-pub(super) fn try_parse_self<T, ChildRet>(
+pub(super) fn try_parse_child<T, ChildRet>(
     params: &mut FnParseParams,
     child_term: Rule,
     child_parser: impl Fn(FnParseParams) -> AplloSqlParserResult<ChildRet>,

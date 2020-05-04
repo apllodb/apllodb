@@ -16,7 +16,7 @@ use crate::{
     AplloAst,
 };
 use generated_parser::{GeneratedParser, Rule};
-use helper::{parse_data_type, parse_identifier, parse_self, try_parse_self, FnParseParams};
+use helper::{parse_data_type, parse_identifier, parse_child, try_parse_child, FnParseParams};
 use pest::{iterators::Pairs, Parser};
 
 #[derive(Clone, Hash, Debug)]
@@ -43,7 +43,7 @@ impl ParserLike for PestParserImpl {
             children_pairs: pairs.collect(),
         };
 
-        parse_self(
+        parse_child(
             &mut params,
             Rule::embedded_sql_statement,
             Self::parse_embedded_sql_statement,
@@ -55,7 +55,7 @@ impl ParserLike for PestParserImpl {
 impl PestParserImpl {
     fn parse_table_definition(mut params: FnParseParams) -> AplloSqlParserResult<TableDefinition> {
         let table_name = parse_identifier(&mut params)?;
-        let table_contents_source = parse_self(
+        let table_contents_source = parse_child(
             &mut params,
             Rule::table_contents_source,
             Self::parse_table_contents_source,
@@ -70,7 +70,7 @@ impl PestParserImpl {
     fn parse_table_contents_source(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<TableContentsSource> {
-        parse_self(
+        parse_child(
             &mut params,
             Rule::table_element_list,
             Self::parse_table_element_list,
@@ -81,7 +81,7 @@ impl PestParserImpl {
     fn parse_table_element_list(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<TableElementList> {
-        let head_table_element = parse_self(
+        let head_table_element = parse_child(
             &mut params,
             Rule::table_element,
             Self::parse_table_element,
@@ -89,7 +89,7 @@ impl PestParserImpl {
         )?;
 
         let mut tail_table_elements: Vec<TableElement> = vec![];
-        while let Some(table_element) = try_parse_self(
+        while let Some(table_element) = try_parse_child(
             &mut params,
             Rule::table_element,
             Self::parse_table_element,
@@ -105,7 +105,7 @@ impl PestParserImpl {
     }
 
     fn parse_table_element(mut params: FnParseParams) -> AplloSqlParserResult<TableElement> {
-        parse_self(
+        parse_child(
             &mut params,
             Rule::column_definition,
             Self::parse_column_definition,
@@ -136,7 +136,7 @@ impl PestParserImpl {
     fn parse_embedded_sql_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<EmbeddedSqlStatement> {
-        parse_self(
+        parse_child(
             &mut params,
             Rule::statement_or_declaration,
             Self::parse_statement_or_declaration,
@@ -149,7 +149,7 @@ impl PestParserImpl {
     fn parse_statement_or_declaration(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<StatementOrDeclaration> {
-        parse_self(
+        parse_child(
             &mut params,
             Rule::sql_executable_statement,
             Self::parse_sql_executable_statement,
@@ -160,7 +160,7 @@ impl PestParserImpl {
     fn parse_sql_executable_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlExecutableStatement> {
-        parse_self(
+        parse_child(
             &mut params,
             Rule::sql_schema_statement,
             Self::parse_sql_schema_statement,
@@ -171,7 +171,7 @@ impl PestParserImpl {
     fn parse_sql_schema_definition_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaDefinitionStatement> {
-        parse_self(
+        parse_child(
             &mut params,
             Rule::table_definition,
             Self::parse_table_definition,
@@ -182,13 +182,13 @@ impl PestParserImpl {
     fn parse_sql_schema_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaStatement> {
-        let a = try_parse_self(
+        let a = try_parse_child(
             &mut params,
             Rule::sql_schema_definition_statement,
             Self::parse_sql_schema_definition_statement,
             |inner_ast| SqlSchemaStatement::SqlSchemaDefinitionStatementVariant(inner_ast),
         )?;
-        let b = try_parse_self(
+        let b = try_parse_child(
             &mut params,
             Rule::sql_schema_manipulation_statement,
             Self::parse_sql_schema_manipulation_statement,
@@ -203,7 +203,7 @@ impl PestParserImpl {
     fn parse_sql_schema_manipulation_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<SqlSchemaManipulationStatement> {
-        parse_self(
+        parse_child(
             &mut params,
             Rule::drop_table_statement,
             Self::parse_drop_table_statement,
