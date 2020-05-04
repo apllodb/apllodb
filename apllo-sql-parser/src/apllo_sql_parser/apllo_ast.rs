@@ -8,11 +8,7 @@
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct AplloAst(pub EmbeddedSqlStatement);
 
-// TODO: 以下の定義は、 .pest から自動生成できるはず。
-//   ルールに `|` を含む場合: enum
-//   else: struct
-//
-//   ルールが _{} の場合: そのルールには構造を作らずにskip
+// TODO: Auto generation from .pest file?
 
 /*
  * ----------------------------------------------
