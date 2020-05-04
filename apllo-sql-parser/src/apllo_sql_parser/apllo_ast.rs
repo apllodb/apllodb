@@ -23,6 +23,12 @@ pub struct AplloAst(pub EmbeddedSqlStatement);
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Identifier(pub String);
 
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct TableName(pub Identifier);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct ColumnName(pub Identifier);
+
 /*
  * ----------------------------------------------
  * 6.1 <data type>
@@ -107,7 +113,7 @@ pub struct TableExpression {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct FromClause {
-    pub table_name: Identifier,
+    pub table_name: TableName,
 }
 
 /*
@@ -136,7 +142,7 @@ pub struct SelectSublist {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct AsClause {
-    pub column_name: Identifier,
+    pub column_name: ColumnName,
 }
 
 /*
@@ -158,7 +164,7 @@ pub enum QueryExpression {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct TableDefinition {
-    pub table_name: Identifier,
+    pub table_name: TableName,
     pub table_contents_source: TableContentsSource,
 }
 
@@ -186,7 +192,7 @@ pub enum TableElement {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct ColumnDefinition {
-    pub column_name: Identifier,
+    pub column_name: ColumnName,
     pub data_type: DataType,
     pub column_constraint_definitions: Vec<ColumnConstraintDefinition>,
 }
@@ -204,7 +210,7 @@ pub enum ColumnConstraintDefinition {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct DropTableStatement {
-    pub table_name: Identifier,
+    pub table_name: TableName,
 }
 
 /*

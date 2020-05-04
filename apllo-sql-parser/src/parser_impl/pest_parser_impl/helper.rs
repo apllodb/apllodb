@@ -7,13 +7,16 @@ use std::collections::VecDeque;
 pub(super) struct FnParseParams<'a> {
     pub(super) apllo_sql: &'a str,
 
-    // collected from Pairs.
-    //
-    // Pairs itself cannot be used as this struct field:
-    // An AST node who has multiple children can call parse_self!() / parse_leaf_string!() macro twice or more.
-    // But Pairs::next() takes this field's ownership so it fails in 2nd macro call.
-    // On the other hand, VecDeque::pop_front() just borrows this field and returns ownership of Pair.
+    /// Collected from Pairs.
+    ///
+    /// Pairs itself cannot be used as this struct field:
+    /// An AST node who has multiple children can call parse_self!() / parse_leaf_string!() macro twice or more.
+    /// But Pairs::next() takes this field's ownership so it fails in 2nd macro call.
+    /// On the other hand, VecDeque::pop_front() just borrows this field and returns ownership of Pair.
     pub(super) children_pairs: VecDeque<Pair<'a, Rule>>,
+
+    /// Used for leaves.
+    pub(super) self_string: String,
 }
 
 /// Parse the next child term as `child_term` by `child_parser`.
@@ -42,11 +45,13 @@ pub(super) fn parse_child<T, ChildRet>(
             ))?;
 
     if child_pair.as_rule() == child_term {
+        let child_str = child_pair.as_str();
         let grand_children_pairs: Pairs<Rule> = child_pair.into_inner();
 
         let child_params = FnParseParams {
             apllo_sql: params.apllo_sql,
             children_pairs: grand_children_pairs.collect(),
+            self_string: child_str.to_string(),
         };
         let child_ast = child_parser(child_params)?;
 
@@ -79,11 +84,13 @@ pub(super) fn try_parse_child<T, ChildRet>(
 ) -> AplloSqlParserResult<Option<T>> {
     if let Some(child_pair) = params.children_pairs.pop_front() {
         if child_pair.as_rule() == child_term {
+            let child_str = child_pair.as_str();
             let grand_children_pairs: Pairs<Rule> = child_pair.into_inner();
 
             let child_params = FnParseParams {
                 apllo_sql: params.apllo_sql,
                 children_pairs: grand_children_pairs.collect(),
+                self_string: child_str.to_string(),
             };
             let child_ast = child_parser(child_params)?;
 
@@ -114,14 +121,6 @@ pub(super) fn parse_child_seq<T, ChildRet>(
     Ok(children)
 }
 
-pub(super) fn parse_leaf_string(params: &mut FnParseParams) -> AplloSqlParserResult<String> {
-    let child_pair = params
-        .children_pairs
-        .pop_front()
-        .ok_or(AplloSqlParserError::new(
-            params.apllo_sql,
-            "Expected to parse a leaf string but no term left.",
-        ))?;
-    let s = child_pair.as_str().to_string();
-    Ok(s)
+pub(super) fn self_as_str<'a>(params: &'a mut FnParseParams) -> &'a str {
+    params.self_string.as_str()
 }

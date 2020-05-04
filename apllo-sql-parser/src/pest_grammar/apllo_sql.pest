@@ -750,11 +750,11 @@ identifier_part = _{
     | DECIMAL_NUMBER
 }
 
-table_name = _{
+table_name = {
     identifier
 }
 
-column_name = _{
+column_name = {
     identifier
 }
 

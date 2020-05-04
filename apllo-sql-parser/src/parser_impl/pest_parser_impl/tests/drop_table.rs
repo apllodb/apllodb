@@ -1,7 +1,7 @@
 use super::super::PestParserImpl;
 use crate::apllo_ast::{
     DropTableStatement, EmbeddedSqlStatement, Identifier, SqlExecutableStatement,
-    SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration,
+    SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration, TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
@@ -40,7 +40,7 @@ fn test_drop_table_accepted() {
                             SqlSchemaStatement::SqlSchemaManipulationStatementVariant(
                                 SqlSchemaManipulationStatement::DropTableStatementVariant(
                                     DropTableStatement {
-                                        table_name: Identifier(table_name),
+                                        table_name: TableName(Identifier(table_name)),
                                     },
                                 ),
                             ),

@@ -1,8 +1,9 @@
 use super::super::PestParserImpl;
 use crate::apllo_ast::{
-    ColumnConstraintDefinition, ColumnDefinition, DataType, EmbeddedSqlStatement, Identifier,
-    SqlExecutableStatement, SqlSchemaDefinitionStatement, SqlSchemaStatement,
+    ColumnConstraintDefinition, ColumnDefinition, ColumnName, DataType, EmbeddedSqlStatement,
+    Identifier, SqlExecutableStatement, SqlSchemaDefinitionStatement, SqlSchemaStatement,
     StatementOrDeclaration, TableContentsSource, TableDefinition, TableElement, TableElementList,
+    TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
@@ -24,7 +25,7 @@ impl CreateTableParams {
 macro_rules! coldef {
     ($column_name: expr, $data_type_variant: expr, $column_constraint_definitions: expr) => {
         ColumnDefinition {
-            column_name: Identifier($column_name.to_string()),
+            column_name: ColumnName(Identifier($column_name.to_string())),
             data_type: $data_type_variant,
             column_constraint_definitions: $column_constraint_definitions,
         }
@@ -65,7 +66,7 @@ fn test_create_table_accepted() {
                             SqlSchemaStatement::SqlSchemaDefinitionStatementVariant(
                                 SqlSchemaDefinitionStatement::TableDefinitionVariant(
                                     TableDefinition {
-                                        table_name: Identifier(table_name),
+                                        table_name: TableName(Identifier(table_name)),
                                         table_contents_source:
                                             TableContentsSource::TableElementListVariant(
                                                 TableElementList {

@@ -6,17 +6,17 @@ mod tests;
 
 use crate::{
     apllo_ast::{
-        ColumnDefinition, DataType, DropTableStatement, EmbeddedSqlStatement, Identifier,
-        SqlExecutableStatement, SqlSchemaDefinitionStatement, SqlSchemaManipulationStatement,
-        SqlSchemaStatement, StatementOrDeclaration, TableContentsSource, TableDefinition,
-        TableElement, TableElementList,
+        ColumnDefinition, ColumnName, DataType, DropTableStatement, EmbeddedSqlStatement,
+        Identifier, SqlExecutableStatement, SqlSchemaDefinitionStatement,
+        SqlSchemaManipulationStatement, SqlSchemaStatement, StatementOrDeclaration,
+        TableContentsSource, TableDefinition, TableElement, TableElementList, TableName,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
     AplloAst,
 };
 use generated_parser::{GeneratedParser, Rule};
-use helper::{parse_child, parse_child_seq, parse_leaf_string, try_parse_child, FnParseParams};
+use helper::{parse_child, parse_child_seq, self_as_str, try_parse_child, FnParseParams};
 use pest::{iterators::Pairs, Parser};
 
 #[derive(Clone, Hash, Debug)]
@@ -41,6 +41,7 @@ impl ParserLike for PestParserImpl {
         let mut params = FnParseParams {
             apllo_sql: &apllo_sql,
             children_pairs: pairs.collect(),
+            self_string: apllo_sql.clone(),
         };
 
         parse_child(
@@ -53,14 +54,32 @@ impl ParserLike for PestParserImpl {
 }
 
 impl PestParserImpl {
-    fn parse_identifier(params: &mut FnParseParams) -> AplloSqlParserResult<Identifier> {
-        let s = parse_leaf_string(params)?;
-        Ok(Identifier(s))
+    fn parse_identifier(mut params: FnParseParams) -> AplloSqlParserResult<Identifier> {
+        let s = self_as_str(&mut params);
+        Ok(Identifier(s.into()))
     }
 
-    fn parse_data_type(params: &mut FnParseParams) -> AplloSqlParserResult<DataType> {
-        let s = parse_leaf_string(params)?;
-        match s.as_str() {
+    fn parse_table_name(mut params: FnParseParams) -> AplloSqlParserResult<TableName> {
+        parse_child(
+            &mut params,
+            Rule::identifier,
+            Self::parse_identifier,
+            |inner_ast| TableName(inner_ast),
+        )
+    }
+
+    fn parse_column_name(mut params: FnParseParams) -> AplloSqlParserResult<ColumnName> {
+        parse_child(
+            &mut params,
+            Rule::identifier,
+            Self::parse_identifier,
+            |inner_ast| ColumnName(inner_ast),
+        )
+    }
+
+    fn parse_data_type(mut params: FnParseParams) -> AplloSqlParserResult<DataType> {
+        let s = self_as_str(&mut params);
+        match s {
             "INT" => Ok(DataType::IntVariant),
             x => {
                 eprintln!("Unexpected data type parsed: {}", x);
@@ -70,7 +89,12 @@ impl PestParserImpl {
     }
 
     fn parse_table_definition(mut params: FnParseParams) -> AplloSqlParserResult<TableDefinition> {
-        let table_name = Self::parse_identifier(&mut params)?;
+        let table_name = parse_child(
+            &mut params,
+            Rule::table_name,
+            Self::parse_table_name,
+            |inner_ast| inner_ast,
+        )?;
         let table_contents_source = parse_child(
             &mut params,
             Rule::table_contents_source,
@@ -128,8 +152,18 @@ impl PestParserImpl {
     fn parse_column_definition(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<ColumnDefinition> {
-        let column_name = Self::parse_identifier(&mut params)?;
-        let data_type = Self::parse_data_type(&mut params)?;
+        let column_name = parse_child(
+            &mut params,
+            Rule::column_name,
+            Self::parse_column_name,
+            |inner_ast| inner_ast,
+        )?;
+        let data_type = parse_child(
+            &mut params,
+            Rule::data_type,
+            Self::parse_data_type,
+            |inner_ast| inner_ast,
+        )?;
         // TODO: これだと制約のあるカラムに対応できていない
         Ok(ColumnDefinition {
             column_name,
@@ -141,8 +175,14 @@ impl PestParserImpl {
     fn parse_drop_table_statement(
         mut params: FnParseParams,
     ) -> AplloSqlParserResult<DropTableStatement> {
-        let table_name = Self::parse_identifier(&mut params)?;
-        Ok(DropTableStatement { table_name })
+        parse_child(
+            &mut params,
+            Rule::table_name,
+            Self::parse_table_name,
+            |inner_ast| DropTableStatement {
+                table_name: inner_ast,
+            },
+        )
     }
 
     fn parse_embedded_sql_statement(
