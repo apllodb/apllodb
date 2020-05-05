@@ -10,7 +10,7 @@ use crate::{
         ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
         CreateTableColumnDefinition, CreateTableCommand, DataType, DropColumn, DropTableCommand,
         Expression, FromItem, Identifier, InsertCommand, IntegerConstant, IntegerType,
-        NumericConstant, SelectCommand, SelectField, TableName,
+        NumericConstant, SelectCommand, SelectField, TableName, UpdateCommand,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -233,6 +233,12 @@ impl PestParserImpl {
             Rule::select_command,
             Self::parse_select_command,
             Command::SelectCommandVariant,
+        )?)
+        .or(try_parse_child(
+            &mut params,
+            Rule::update_command,
+            Self::parse_update_command,
+            Command::UpdateCommandVariant,
         )?)
         .ok_or(AplloSqlParserError::new(
             params.apllo_sql,
@@ -482,6 +488,47 @@ impl PestParserImpl {
         )?;
         let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
         Ok(FromItem { table_name, alias })
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * UPDATE
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_update_command(mut params: FnParseParams) -> AplloSqlParserResult<UpdateCommand> {
+        let table_name = parse_child(
+            &mut params,
+            Rule::table_name,
+            &Self::parse_table_name,
+            &identity,
+        )?;
+        let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
+        let column_name = parse_child(
+            &mut params,
+            Rule::column_name,
+            &Self::parse_column_name,
+            &identity,
+        )?;
+        let expression = parse_child(
+            &mut params,
+            Rule::expression,
+            &Self::parse_expression,
+            &identity,
+        )?;
+        let where_condition = try_parse_child(
+            &mut params,
+            Rule::condition,
+            Self::parse_condition,
+            identity,
+        )?;
+        Ok(UpdateCommand {
+            table_name,
+            alias,
+            column_name,
+            expression,
+            where_condition,
+        })
     }
 
     /*

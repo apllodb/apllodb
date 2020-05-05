@@ -116,6 +116,7 @@ pub enum Command {
     DropTableCommandVariant(DropTableCommand),
     InsertCommandVariant(InsertCommand),
     SelectCommandVariant(SelectCommand),
+    UpdateCommandVariant(UpdateCommand),
 }
 
 /*
@@ -235,6 +236,21 @@ pub struct OrderBy {
 pub enum Ordering {
     AscVariant,
     DescVariant,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * SELECT
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct UpdateCommand {
+    pub table_name: TableName,
+    pub alias: Option<Alias>,
+    pub column_name: ColumnName,
+    pub expression: Expression,
+    pub where_condition: Option<Condition>,
 }
 
 /*

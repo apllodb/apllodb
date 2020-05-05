@@ -863,6 +863,7 @@ command = {
         | drop_table_command
         | insert_command
         | select_command
+        | update_command
     )
     ~ ";"?
     ~ EOI
@@ -972,6 +973,21 @@ order_by = {
 
 ordering = {
     "ASC" | "DESC"
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * UPDATE (https://www.postgresql.org/docs/12/sql-update.html)
+ * ----------------------------------------------------------------------------
+ */
+
+update_command = {
+    "UPDATE"
+    ~ table_name
+    ~ ("AS" ~ alias)?
+    ~ "SET"
+    ~ column_name ~ "=" ~ expression
+    ~ ("WHERE" ~ condition)?
 }
 
 /*
