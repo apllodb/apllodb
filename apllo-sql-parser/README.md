@@ -6,14 +6,14 @@ APLLO SQL's parser that inputs APLLO SQL and emit APLLO AST.
 
 ```toml
 [dependencies]
-apllo-sql-parser = "0.1.0"
+apllo-sql-parser = "0.1"
 ```
 
 If you want to serialize `AplloAst`, enable `"serde"` feature flag.
 
 ```toml
 [dependencies]
-apllo-sql-parser = { version = "0.1.0", features = ["serde"] }
+apllo-sql-parser = { version = "0.1", features = ["serde"] }
 ```
 
 ## Example
