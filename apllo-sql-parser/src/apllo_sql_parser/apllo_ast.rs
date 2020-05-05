@@ -113,6 +113,7 @@ pub enum IntegerType {
 pub enum Command {
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
+    DeleteCommandVariant(DeleteCommand),
     DropTableCommandVariant(DropTableCommand),
     InsertCommandVariant(InsertCommand),
     SelectCommandVariant(SelectCommand),
@@ -166,6 +167,19 @@ pub struct CreateTableColumnDefinition {
     pub column_name: ColumnName,
     pub data_type: DataType,
     pub column_constraints: Vec<ColumnConstraint>,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * DELETE
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct DeleteCommand {
+    pub table_name: TableName,
+    pub alias: Option<Alias>,
+    pub where_condition: Option<Condition>,
 }
 
 /*

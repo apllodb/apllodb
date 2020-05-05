@@ -860,6 +860,7 @@ command = {
     SOI ~ (
         alter_table_command
         | create_table_command
+        | delete_command
         | drop_table_command
         | insert_command
         | select_command
@@ -912,6 +913,19 @@ create_table_column_definition = {
     column_name
     ~ data_type
     ~ column_constraint*
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * DELETE (https://www.postgresql.org/docs/12/sql-delete.html)
+ * ----------------------------------------------------------------------------
+ */
+
+delete_command = {
+    "DELETE" ~ "FROM"
+    ~ table_name
+    ~ ("AS" ~ alias)?
+    ~ ("WHERE" ~ condition)?
 }
 
 /*

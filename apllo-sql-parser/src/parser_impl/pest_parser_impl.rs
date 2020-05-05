@@ -8,9 +8,9 @@ use crate::{
     apllo_ast::{
         types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
         ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
-        CreateTableColumnDefinition, CreateTableCommand, DataType, DropColumn, DropTableCommand,
-        Expression, FromItem, Identifier, InsertCommand, IntegerConstant, IntegerType,
-        NumericConstant, SelectCommand, SelectField, TableName, UpdateCommand,
+        CreateTableColumnDefinition, CreateTableCommand, DataType, DeleteCommand, DropColumn,
+        DropTableCommand, Expression, FromItem, Identifier, InsertCommand, IntegerConstant,
+        IntegerType, NumericConstant, SelectCommand, SelectField, TableName, UpdateCommand,
     },
     apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -218,6 +218,12 @@ impl PestParserImpl {
         )?)
         .or(try_parse_child(
             &mut params,
+            Rule::delete_command,
+            Self::parse_delete_command,
+            Command::DeleteCommandVariant,
+        )?)
+        .or(try_parse_child(
+            &mut params,
             Rule::drop_table_command,
             Self::parse_drop_table_command,
             Command::DropTableCommandVariant,
@@ -376,6 +382,33 @@ impl PestParserImpl {
             column_name,
             data_type,
             column_constraints,
+        })
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * DELETE
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_delete_command(mut params: FnParseParams) -> AplloSqlParserResult<DeleteCommand> {
+        let table_name = parse_child(
+            &mut params,
+            Rule::table_name,
+            &Self::parse_table_name,
+            &identity,
+        )?;
+        let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
+        let where_condition = try_parse_child(
+            &mut params,
+            Rule::condition,
+            Self::parse_condition,
+            identity,
+        )?;
+        Ok(DeleteCommand {
+            table_name,
+            alias,
+            where_condition,
         })
     }
 
