@@ -6,6 +6,7 @@
 
 #![allow(missing_docs)]
 
+#[deny(missing_docs)]
 pub mod types;
 
 pub use types::NonEmptyVec;
