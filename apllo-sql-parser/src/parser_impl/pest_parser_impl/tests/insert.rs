@@ -11,7 +11,7 @@ macro_rules! insert {
     ($table_name: expr, $alias: expr, $column_names: expr, $expressions: expr $(,)?) => {
         InsertCommand {
             table_name: TableName(Identifier($table_name.to_string())),
-            alias: $alias.map(|a| Alias(Identifier(a))),
+            alias: $alias.map(|a: &str| Alias(Identifier(a.to_string()))),
             column_names: NonEmptyVec::new(
                 $column_names
                     .iter()
@@ -38,6 +38,15 @@ fn test_insert_accepted() {
         (
             "INSERT INTO t (id, c1) VALUES (1, 123)",
             insert!("t", None, vec!["id", "c1"], vec!["1", "123"]),
+        ),
+        (
+            "INSERT INTO long_table_name AS t (id, c1) VALUES (1, 123)",
+            insert!(
+                "long_table_name",
+                Some("t"),
+                vec!["id", "c1"],
+                vec!["1", "123"]
+            ),
         ),
         (
             // acceptable syntactically though the number of columns and expressions are different.
