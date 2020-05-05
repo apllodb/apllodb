@@ -37,7 +37,12 @@ jobs:
           git config --global user.email "workflow@example.com"
           git config --global user.name "workflow user"
           git add .
-          git commit -m '(auto commit) cargo fmt --all' && git push ${REPO} HEAD:${{github.event.pull_request.head.ref}} || true
+          if git commit -m '(auto commit) cargo readme > README.md' ; then
+            # pull before push not to be rejected by the following error.
+            #   error: failed to push some refs to '***github.com/darwin-education/apllo.git'
+            git pull ${REPO} HEAD:${{github.event.pull_request.head.ref}}
+            git push ${REPO} HEAD:${{github.event.pull_request.head.ref}}
+          fi
 
   lint:
     needs: format
