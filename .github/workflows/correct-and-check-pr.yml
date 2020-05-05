@@ -1,0 +1,212 @@
+name: correct_and_check_pr
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  auto_correct:
+    runs-on: ubuntu-latest
+    env:
+      REPO: https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+
+      - name: rustup override set `cat rust-toolchain`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          components: rustfmt
+
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install cargo-readme
+        run: cargo install cargo-readme
+
+
+      - name: cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all
+
+      - name: Sync README.md with rustdoc
+        run: |
+          crate_dirs=$(find . -name 'Cargo.toml' |grep -v '^./Cargo.toml' |sed -e 's/Cargo.toml$//g') ; \
+          for crate_dir in $crate_dirs ; do \
+            ( cd $crate_dir ; cargo readme > README.md ) ; \
+          done
+
+      - run: mv main/README.md .
+
+      # https://qiita.com/HeRo/items/935d5e268208d411ab5a#%E3%83%97%E3%83%AB%E3%83%AA%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%82%92%E3%83%9E%E3%83%BC%E3%82%B8%E3%81%99%E3%82%8B
+      - name: commit sync-ed README.md and push
+        run: |
+          git config --global user.email "workflow@example.com"
+          git config --global user.name "workflow user"
+          git add .
+          if git commit -m '(auto commit) cargo readme > README.md' ; then
+            git push ${REPO} HEAD:${{github.event.pull_request.head.ref}}
+          fi
+
+  lint:
+    needs: auto_correct
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: rustup override set `cat rust-toolchain`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          components: clippy
+
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-targets --all-features -- -D warnings
+
+  test:
+    needs: auto_correct
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          rust:
+            - ""      # `rust-toolchain`
+            - 1.40.0  # MSRV
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install prerequisites
+        run: |
+          set -xe
+          sudo apt update -y
+          sudo apt install -y libsqlite3-dev
+
+      # https://github.com/actions-rs/meta/blob/master/recipes/matrix.md
+      - name: rustup override set {{ matrix.rust }}
+        if: matrix.rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: rustup override set `cat rust-toolchain`
+        if: matrix.rust == ''
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+
+      # https://github.com/actions/cache/blob/master/examples.md#using-multiple-systems-and-npm-config
+      - name: Get running rustc --version
+        id: rustc_version
+        run: |
+          echo "::set-output name=version::$(rustc --version)"
+        
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ steps.rustc_version.outputs.version }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ steps.rustc_version.outputs.version }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ steps.rustc_version.outputs.version }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release --all-features
+
+  check_rustdoc:
+    needs: auto_correct
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+                
+      - name: rustup override set `cat rust-toolchain`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+        
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+        
+      - name: cargo clean --doc
+        uses: actions-rs/cargo@v1
+        with:
+          command: clean
+          args: --doc
+      - name: cargo doc
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          
+      - run: cargo install cargo-deadlinks
+      - run: cargo deadlinks
