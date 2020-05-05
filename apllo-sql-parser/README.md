@@ -66,3 +66,5 @@ but the main purpose is to describe the APLLO SQL syntax for humans.
 These methods are about SEMANTICS. **apllo-sql-parser crate provides only SYNTAX**.
 
 For details, please check API reference.
+
+License: (TBD)
