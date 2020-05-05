@@ -11,8 +11,12 @@ pub mod types;
 
 pub use types::NonEmptyVec;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// The AST root of APLLO SQL.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AplloAst(pub Command);
 
 // TODO: Auto generation from .pest file?
@@ -30,16 +34,19 @@ pub struct AplloAst(pub Command);
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Constant {
     NumericConstantVariant(NumericConstant),
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum NumericConstant {
     IntegerConstantVariant(IntegerConstant),
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct IntegerConstant(pub String);
 
 /*
@@ -49,6 +56,7 @@ pub struct IntegerConstant(pub String);
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Identifier(pub String);
 
 /*
@@ -58,11 +66,13 @@ pub struct Identifier(pub String);
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Condition {
     pub expression: Expression,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Expression {
     ConstantVariant(Constant),
     ColumnReferenceVariant(ColumnReference),
@@ -75,6 +85,7 @@ pub enum Expression {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ColumnReference {
     pub correlation: Option<Correlation>,
     pub column_name: ColumnName,
@@ -87,6 +98,7 @@ pub struct ColumnReference {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DataType {
     IntegerTypeVariant(IntegerType),
 }
@@ -98,6 +110,7 @@ pub enum DataType {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum IntegerType {
     SmallIntVariant,
     IntegerVariant,
@@ -111,6 +124,7 @@ pub enum IntegerType {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Command {
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
@@ -128,18 +142,21 @@ pub enum Command {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AlterTableCommand {
     pub table_name: TableName,
     pub actions: NonEmptyVec<Action>,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Action {
     AddColumnVariant(AddColumn),
     DropColumnVariant(DropColumn),
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AddColumn {
     pub column_name: ColumnName,
     pub data_type: DataType,
@@ -147,6 +164,7 @@ pub struct AddColumn {
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DropColumn {
     pub column_name: ColumnName,
 }
@@ -158,12 +176,14 @@ pub struct DropColumn {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CreateTableCommand {
     pub table_name: TableName,
     pub create_table_column_definitions: NonEmptyVec<CreateTableColumnDefinition>,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CreateTableColumnDefinition {
     pub column_name: ColumnName,
     pub data_type: DataType,
@@ -177,6 +197,7 @@ pub struct CreateTableColumnDefinition {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DeleteCommand {
     pub table_name: TableName,
     pub alias: Option<Alias>,
@@ -190,6 +211,7 @@ pub struct DeleteCommand {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DropTableCommand {
     pub table_name: TableName,
 }
@@ -201,6 +223,7 @@ pub struct DropTableCommand {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InsertCommand {
     pub table_name: TableName,
     pub alias: Option<Alias>,
@@ -215,6 +238,7 @@ pub struct InsertCommand {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SelectCommand {
     pub select_fields: NonEmptyVec<SelectField>,
     pub from_items: NonEmptyVec<FromItem>,
@@ -225,29 +249,34 @@ pub struct SelectCommand {
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SelectField {
     pub expression: Expression,
     pub alias: Option<Alias>,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct FromItem {
     pub table_name: TableName,
     pub alias: Option<Alias>,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum GroupingElement {
     ExpressionVariant(Expression),
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct OrderBy {
     pub expression: Expression,
     pub ordering: Option<Ordering>,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Ordering {
     AscVariant,
     DescVariant,
@@ -260,6 +289,7 @@ pub enum Ordering {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct UpdateCommand {
     pub table_name: TableName,
     pub alias: Option<Alias>,
@@ -281,15 +311,19 @@ pub struct UpdateCommand {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TableName(pub Identifier);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ColumnName(pub Identifier);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Alias(pub Identifier);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Correlation {
     TableNameVariant(TableName),
     AliasVariant(Alias),
@@ -302,6 +336,7 @@ pub enum Correlation {
  */
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ColumnConstraint {
     NotNullVariant,
 }
