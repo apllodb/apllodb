@@ -18,6 +18,16 @@ impl AplloSqlParser {
 
     /// Parses APLLO SQL into APLLO AST.
     ///
+    /// # Panics
+    ///
+    /// Only when internal implementation encounters a bug.
+    /// Please report to the authors.
+    ///
+    /// # Failures
+    ///
+    /// When failed to parse input str as APLLO SQL.
+    /// The str must include some syntax errors.
+    ///
     /// # Examples
     ///
     /// ```
