@@ -1,5 +1,5 @@
 use super::generated_parser::Rule;
-use crate::apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult};
+use crate::apllo_sql_parser::error::{AplloSqlParserError, AplloSqlParserResult};
 use pest::iterators::{Pair, Pairs};
 use std::collections::VecDeque;
 

@@ -72,5 +72,6 @@ mod parser_impl;
 mod parser_interface;
 
 pub use crate::apllo_sql_parser::apllo_ast;
+pub use crate::apllo_sql_parser::error;
 pub use crate::apllo_sql_parser::AplloAst;
 pub use crate::apllo_sql_parser::AplloSqlParser;

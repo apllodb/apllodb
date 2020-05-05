@@ -1,10 +1,10 @@
 pub mod apllo_ast;
-mod error;
+pub mod error;
 
 pub use apllo_ast::AplloAst;
-pub use error::{AplloSqlParserError, AplloSqlParserResult};
 
 use crate::{parser_impl::PestParserImpl, parser_interface::ParserLike};
+use error::AplloSqlParserResult;
 
 /// The parser from APLLO SQL into APLLO AST.
 #[derive(Clone, Hash, Debug)]

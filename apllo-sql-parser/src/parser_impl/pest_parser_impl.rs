@@ -12,7 +12,7 @@ use crate::{
         DropTableCommand, Expression, FromItem, Identifier, InsertCommand, IntegerConstant,
         IntegerType, NumericConstant, SelectCommand, SelectField, TableName, UpdateCommand,
     },
-    apllo_sql_parser::{AplloSqlParserError, AplloSqlParserResult},
+    apllo_sql_parser::error::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
     AplloAst,
 };

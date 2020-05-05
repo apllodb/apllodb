@@ -1,5 +1,8 @@
-pub type AplloSqlParserResult<T> = std::result::Result<T, AplloSqlParserError>;
+//! Error types.
 
+pub(crate) type AplloSqlParserResult<T> = std::result::Result<T, AplloSqlParserError>;
+
+/// Error during parsing APLLO SQL.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct AplloSqlParserError {
     apllo_sql: String,
