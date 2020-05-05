@@ -158,9 +158,7 @@ pub enum Action {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AddColumn {
-    pub column_name: ColumnName,
-    pub data_type: DataType,
-    pub column_constraints: Vec<ColumnConstraint>,
+    pub column_definition: ColumnDefinition,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -179,15 +177,7 @@ pub struct DropColumn {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CreateTableCommand {
     pub table_name: TableName,
-    pub create_table_column_definitions: NonEmptyVec<CreateTableColumnDefinition>,
-}
-
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct CreateTableColumnDefinition {
-    pub column_name: ColumnName,
-    pub data_type: DataType,
-    pub column_constraints: Vec<ColumnConstraint>,
+    pub column_definitions: NonEmptyVec<ColumnDefinition>,
 }
 
 /*
@@ -339,4 +329,18 @@ pub enum Correlation {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ColumnConstraint {
     NotNullVariant,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Column Definitions
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ColumnDefinition {
+    pub column_name: ColumnName,
+    pub data_type: DataType,
+    pub column_constraints: Vec<ColumnConstraint>,
 }

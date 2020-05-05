@@ -7,10 +7,10 @@ mod tests;
 use crate::{
     apllo_ast::{
         types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
-        ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
-        CreateTableColumnDefinition, CreateTableCommand, DataType, DeleteCommand, DropColumn,
-        DropTableCommand, Expression, FromItem, Identifier, InsertCommand, IntegerConstant,
-        IntegerType, NumericConstant, SelectCommand, SelectField, TableName, UpdateCommand,
+        ColumnDefinition, ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
+        CreateTableCommand, DataType, DeleteCommand, DropColumn, DropTableCommand, Expression,
+        FromItem, Identifier, InsertCommand, IntegerConstant, IntegerType, NumericConstant,
+        SelectCommand, SelectField, TableName, UpdateCommand,
     },
     apllo_sql_parser::error::{AplloSqlParserError, AplloSqlParserResult},
     parser_interface::ParserLike,
@@ -292,29 +292,13 @@ impl PestParserImpl {
     }
 
     fn parse_add_column(mut params: FnParseParams) -> AplloSqlParserResult<AddColumn> {
-        let column_name = parse_child(
+        let column_definition = parse_child(
             &mut params,
-            Rule::column_name,
-            Self::parse_column_name,
+            Rule::column_definition,
+            Self::parse_column_definition,
             identity,
         )?;
-        let data_type = parse_child(
-            &mut params,
-            Rule::data_type,
-            Self::parse_data_type,
-            identity,
-        )?;
-        let column_constraints = parse_child_seq(
-            &mut params,
-            Rule::column_constraint,
-            &Self::parse_column_constraint,
-            &identity,
-        )?;
-        Ok(AddColumn {
-            column_name,
-            data_type,
-            column_constraints,
-        })
+        Ok(AddColumn { column_definition })
     }
 
     fn parse_drop_column(mut params: FnParseParams) -> AplloSqlParserResult<DropColumn> {
@@ -343,43 +327,15 @@ impl PestParserImpl {
             Self::parse_table_name,
             identity,
         )?;
-        let create_table_column_definitions = parse_child_seq(
+        let column_definitions = parse_child_seq(
             &mut params,
-            Rule::create_table_column_definition,
-            &Self::parse_create_table_column_definition,
+            Rule::column_definition,
+            &Self::parse_column_definition,
             &identity,
         )?;
         Ok(CreateTableCommand {
             table_name,
-            create_table_column_definitions: NonEmptyVec::new(create_table_column_definitions),
-        })
-    }
-
-    fn parse_create_table_column_definition(
-        mut params: FnParseParams,
-    ) -> AplloSqlParserResult<CreateTableColumnDefinition> {
-        let column_name = parse_child(
-            &mut params,
-            Rule::column_name,
-            Self::parse_column_name,
-            identity,
-        )?;
-        let data_type = parse_child(
-            &mut params,
-            Rule::data_type,
-            Self::parse_data_type,
-            identity,
-        )?;
-        let column_constraints = parse_child_seq(
-            &mut params,
-            Rule::column_constraint,
-            &Self::parse_column_constraint,
-            &identity,
-        )?;
-        Ok(CreateTableColumnDefinition {
-            column_name,
-            data_type,
-            column_constraints,
+            column_definitions: NonEmptyVec::new(column_definitions),
         })
     }
 
@@ -634,5 +590,39 @@ impl PestParserImpl {
                 unreachable!();
             }
         }
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * Column Definitions
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_column_definition(
+        mut params: FnParseParams,
+    ) -> AplloSqlParserResult<ColumnDefinition> {
+        let column_name = parse_child(
+            &mut params,
+            Rule::column_name,
+            Self::parse_column_name,
+            identity,
+        )?;
+        let data_type = parse_child(
+            &mut params,
+            Rule::data_type,
+            Self::parse_data_type,
+            identity,
+        )?;
+        let column_constraints = parse_child_seq(
+            &mut params,
+            Rule::column_constraint,
+            &Self::parse_column_constraint,
+            &identity,
+        )?;
+        Ok(ColumnDefinition {
+            column_name,
+            data_type,
+            column_constraints,
+        })
     }
 }

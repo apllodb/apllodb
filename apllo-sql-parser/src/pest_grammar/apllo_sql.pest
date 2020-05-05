@@ -849,9 +849,6 @@ integer_type = {
  *
  * Term names are sometimes modified from PostgreSQL command documents for more commonality.
  * (e.g. `name` in DROP TABLE -> `table_name`)
- *
- * Also, terms are added independently from PostgreSQL when it is helpful for simplicity in syntax.
- * (e.g. `create_table_column_definition` for repetition)
  * ================================================================================================
  */
 
@@ -888,7 +885,7 @@ action = {
 }
 
 add_column = {
-    "ADD" ~ "COLUMN"? ~ column_name ~ data_type ~ column_constraint*
+    "ADD" ~ "COLUMN"? ~ column_definition
 }
 
 drop_column = {
@@ -905,14 +902,8 @@ create_table_command = {
     "CREATE" ~ "TABLE"
     ~ table_name
     ~ "("
-    ~ create_table_column_definition ~ ("," ~ create_table_column_definition)*
+    ~ column_definition ~ ("," ~ column_definition)*
     ~ ")"
-}
-
-create_table_column_definition = {
-    column_name
-    ~ data_type
-    ~ column_constraint*
 }
 
 /*
@@ -1043,4 +1034,16 @@ correlation = {
 
 column_constraint = {
     "NOT NULL"
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Column Definitions
+ * ----------------------------------------------------------------------------
+ */
+
+column_definition = {
+    column_name
+    ~ data_type
+    ~ column_constraint*
 }

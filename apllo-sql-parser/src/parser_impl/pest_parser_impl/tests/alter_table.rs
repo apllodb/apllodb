@@ -1,8 +1,8 @@
 use super::super::PestParserImpl;
 use crate::apllo_ast::NonEmptyVec;
 use crate::apllo_ast::{
-    Action, AddColumn, AlterTableCommand, ColumnConstraint, ColumnName, Command, DataType,
-    DropColumn, Identifier, IntegerType, TableName,
+    Action, AddColumn, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName, Command,
+    DataType, DropColumn, Identifier, IntegerType, TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
@@ -19,9 +19,11 @@ macro_rules! alter_table {
 macro_rules! add_column {
     ($column_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {
         Action::AddColumnVariant(AddColumn {
-            column_name: ColumnName(Identifier($column_name.to_string())),
-            data_type: $data_type,
-            column_constraints: $column_constraints,
+            column_definition: ColumnDefinition {
+                column_name: ColumnName(Identifier($column_name.to_string())),
+                data_type: $data_type,
+                column_constraints: $column_constraints,
+            },
         })
     };
 }

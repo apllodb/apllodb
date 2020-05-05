@@ -1,8 +1,8 @@
 use super::super::PestParserImpl;
 use crate::apllo_ast::NonEmptyVec;
 use crate::apllo_ast::{
-    ColumnConstraint, ColumnName, Command, CreateTableColumnDefinition, CreateTableCommand,
-    DataType, Identifier, IntegerType, TableName,
+    ColumnConstraint, ColumnDefinition, ColumnName, Command, CreateTableCommand, DataType,
+    Identifier, IntegerType, TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::AplloAst;
@@ -11,14 +11,14 @@ macro_rules! create_table {
     ($table_name: expr, $column_definitions: expr $(,)?) => {
         CreateTableCommand {
             table_name: TableName(Identifier($table_name.to_string())),
-            create_table_column_definitions: NonEmptyVec::new($column_definitions),
+            column_definitions: NonEmptyVec::new($column_definitions),
         }
     };
 }
 
 macro_rules! coldef {
     ($column_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {
-        CreateTableColumnDefinition {
+        ColumnDefinition {
             column_name: ColumnName(Identifier($column_name.to_string())),
             data_type: $data_type,
             column_constraints: $column_constraints,
