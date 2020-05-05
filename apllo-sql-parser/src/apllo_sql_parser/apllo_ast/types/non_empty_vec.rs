@@ -9,7 +9,7 @@ impl<T> NonEmptyVec<T> {
     }
 
     /// Ref to internal Vec.
-    pub fn get(&self) -> &Vec<T> {
+    pub fn as_vec(&self) -> &Vec<T> {
         &self.0
     }
 
