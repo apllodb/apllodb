@@ -3,6 +3,12 @@ name = "apllo-sql-parser"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
+description = "APLLO SQL's parser that inputs APLLO SQL and emit APLLO AST."
+license = "(TBD)"
+readme = "README.md"
+keywords = ["apllo", "parser", "sql"]
+categories = ["parser-implementations", "database", "database-implementations"]
+repository = "https://github.com/darwin-education/apllo"
 
 [dependencies]
 pest = "2.1.3"
