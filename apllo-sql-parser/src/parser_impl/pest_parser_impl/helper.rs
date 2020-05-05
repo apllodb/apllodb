@@ -35,14 +35,9 @@ pub(super) fn parse_child<T, ChildRet>(
     child_parser: impl Fn(FnParseParams) -> AplloSqlParserResult<ChildRet>,
     ret_closure: impl Fn(ChildRet) -> T,
 ) -> AplloSqlParserResult<T> {
-    let child_pair: Pair<Rule> =
-        params
-            .children_pairs
-            .pop_front()
-            .ok_or(AplloSqlParserError::new(
-                params.apllo_sql,
-                "Tried to parse a term but nothing left.",
-            ))?;
+    let child_pair: Pair<Rule> = params.children_pairs.pop_front().ok_or_else(|| {
+        AplloSqlParserError::new(params.apllo_sql, "Tried to parse a term but nothing left.")
+    })?;
 
     if child_pair.as_rule() == child_term {
         let child_str = child_pair.as_str();

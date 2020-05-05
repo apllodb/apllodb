@@ -46,12 +46,7 @@ impl ParserLike for PestParserImpl {
             self_string: apllo_sql.clone(),
         };
 
-        parse_child(
-            &mut params,
-            Rule::command,
-            Self::parse_command,
-            |inner_ast| AplloAst(inner_ast),
-        )
+        parse_child(&mut params, Rule::command, Self::parse_command, AplloAst)
     }
 }
 
@@ -132,10 +127,12 @@ impl PestParserImpl {
             Self::parse_column_reference,
             Expression::ColumnReferenceVariant,
         )?)
-        .ok_or(AplloSqlParserError::new(
-            params.apllo_sql,
-            "Does not match any child rule of expression.",
-        ))
+        .ok_or_else(|| {
+            AplloSqlParserError::new(
+                params.apllo_sql,
+                "Does not match any child rule of expression.",
+            )
+        })
     }
 
     /*
@@ -246,10 +243,12 @@ impl PestParserImpl {
             Self::parse_update_command,
             Command::UpdateCommandVariant,
         )?)
-        .ok_or(AplloSqlParserError::new(
-            params.apllo_sql,
-            "Does not match any child rule of command.",
-        ))
+        .ok_or_else(|| {
+            AplloSqlParserError::new(
+                params.apllo_sql,
+                "Does not match any child rule of command.",
+            )
+        })
     }
 
     /*
@@ -287,10 +286,9 @@ impl PestParserImpl {
             Self::parse_drop_column,
             Action::DropColumnVariant,
         )?)
-        .ok_or(AplloSqlParserError::new(
-            params.apllo_sql,
-            "Does not match any child rule of action.",
-        ))
+        .ok_or_else(|| {
+            AplloSqlParserError::new(params.apllo_sql, "Does not match any child rule of action.")
+        })
     }
 
     fn parse_add_column(mut params: FnParseParams) -> AplloSqlParserResult<AddColumn> {
@@ -611,10 +609,12 @@ impl PestParserImpl {
             Self::parse_alias,
             Correlation::AliasVariant,
         )?)
-        .ok_or(AplloSqlParserError::new(
-            params.apllo_sql,
-            "Does not match any child rule of correlation.",
-        ))
+        .ok_or_else(|| {
+            AplloSqlParserError::new(
+                params.apllo_sql,
+                "Does not match any child rule of correlation.",
+            )
+        })
     }
 
     /*

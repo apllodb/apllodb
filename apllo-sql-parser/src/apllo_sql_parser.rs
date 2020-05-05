@@ -33,3 +33,9 @@ impl AplloSqlParser {
         Ok(self.0.parse(apllo_sql)?)
     }
 }
+
+impl Default for AplloSqlParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
