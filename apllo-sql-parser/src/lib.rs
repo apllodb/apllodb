@@ -52,7 +52,7 @@
 //!
 //! `AplloAst` has a straight-forward relationship with syntax definition.
 //!
-//! ![AplloAst example](https://user-images.githubusercontent.com/498788/81028439-5f2cf880-8ebc-11ea-8554-deb884438779.png)
+//! ![AplloAst example](https://user-images.githubusercontent.com/498788/81168674-63e3d080-8fd2-11ea-9fd2-151d42fd0ad0.png)
 //!
 //! | PEG syntax      | Rust element                          | Diagram                                    |
 //! | --------------- | ------------------------------------- | ------------------------------------------ |
