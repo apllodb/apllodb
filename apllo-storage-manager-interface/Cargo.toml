@@ -10,8 +10,12 @@ keywords = ["apllo"]
 categories = ["database", "database-implementations"]
 repository = "https://github.com/darwin-education/apllo"
 
+[features]
+default = ["serde"]
+
 [dependencies]
 apllo-sql-parser = { git = "ssh://git@github.com/darwin-education/apllo.git", branch = "syntax-for-0.1.0" }
+serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 version-sync = "0.9"
