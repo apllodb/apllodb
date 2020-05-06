@@ -1,20 +1,16 @@
 [package]
-name = "apllo-storage-manager-interface"
+name = "apllo-shared-components"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
-description = "APLLO's storage manager interface."
+description = "TBD"
 license = "(TBD)"
 readme = "README.md"
 keywords = ["apllo"]
 categories = ["database", "database-implementations"]
 repository = "https://github.com/darwin-education/apllo"
 
-[features]
-default = ["serde"]
-
 [dependencies]
-apllo-shared-components = { path = "../apllo-shared-components" }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
