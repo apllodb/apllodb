@@ -42,10 +42,7 @@
 //! - Implementation of records and record iterators.
 
 mod access_methods;
-mod version;
+mod versions;
 
 pub use crate::access_methods::AccessMethodsDdl;
-pub use crate::version::{
-    marker::{Active, Deactive},
-    Version, VersionSet,
-};
+pub use crate::versions::{marker, Version, VersionSet};
