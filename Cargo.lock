@@ -5,6 +5,10 @@ name = "apllo-sql-parser"
 version = "0.1.0"
 
 [[package]]
+name = "apllo-storage-manager-interface"
+version = "0.1.0"
+
+[[package]]
 name = "main"
 version = "0.1.0"
 dependencies = [

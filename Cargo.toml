@@ -2,5 +2,6 @@
 
 members = [
     "apllo-sql-parser",
+    "apllo-storage-manager-interface",
     "main",
 ]
