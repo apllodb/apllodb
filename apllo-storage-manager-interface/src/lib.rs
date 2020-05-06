@@ -41,10 +41,11 @@
 //! - Ways to materialize version sets and versions.
 //! - Implementation of records and record iterators.
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+mod access_methods;
+mod version;
+
+pub use crate::access_methods::AccessMethodsDdl;
+pub use crate::version::{
+    marker::{Active, Deactive},
+    Version, VersionSet,
+};
