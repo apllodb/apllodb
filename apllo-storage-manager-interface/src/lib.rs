@@ -9,15 +9,6 @@
 //! apllo-storage-manager-interface = "0.1"
 //! ```
 //!
-//! By default, all public structs and enums implement Serde's `Serialize` and `Deserialize`
-//! for storage engines to easily materialize them.
-//! If your storage engine does not need them, use `default-features = false`.
-//!
-//! ```toml
-//! [dependencies]
-//! apllo-storage-manager-interface = { version = "0.1", default-features = false }
-//! ```
-//!
 //! # Boundary of Responsibility with Storage Engine
 //!
 //! A storage engine is an implementation of this interface crate.

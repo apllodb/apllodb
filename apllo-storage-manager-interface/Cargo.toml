@@ -10,12 +10,9 @@ keywords = ["apllo"]
 categories = ["database", "database-implementations"]
 repository = "https://github.com/darwin-education/apllo"
 
-[features]
-default = ["serde"]
-
 [dependencies]
 apllo-shared-components = { path = "../apllo-shared-components" }
-serde = { version = "1.0", optional = true, features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 version-sync = "0.9"
