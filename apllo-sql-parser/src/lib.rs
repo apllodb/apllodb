@@ -18,6 +18,8 @@
 //!
 //! # Example
 //!
+//! ## Pattern matching `AplloAst`
+//!
 //! ```
 //! use apllo_sql_parser::apllo_ast::{Command, DropTableCommand, Identifier, TableName};
 //! use apllo_sql_parser::{AplloAst, AplloSqlParser};
@@ -34,6 +36,22 @@
 //!         ast
 //!     ),
 //!     Err(e) => panic!("{}", e),
+//! }
+//! ```
+//!
+//! ## Error handling
+//!
+//! ```
+//! use apllo_sql_parser::AplloSqlParser;
+//! use std::error::Error;
+//!
+//! let parser = AplloSqlParser::new();
+//! match parser.parse("DROP TABLE FROM people") {
+//!     Err(e) => {
+//!         assert!(e.source().is_none(), "No root cause. Just a syntax error.");
+//!         eprintln!("Error detail: {}", e);
+//!     }
+//!     Ok(ast) => panic!("Syntax error should be reported but parsed as: {:?}", ast),
 //! }
 //! ```
 //!

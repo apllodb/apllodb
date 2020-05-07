@@ -1,8 +1,10 @@
 //! Error types.
 
+use std::error::Error;
+
 pub(crate) type AplloSqlParserResult<T> = std::result::Result<T, AplloSqlParserError>;
 
-/// Error during parsing APLLO SQL.
+/// Error during parsing APLLO SQL. So called syntax error.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct AplloSqlParserError {
     apllo_sql: String,
@@ -17,6 +19,8 @@ impl AplloSqlParserError {
         }
     }
 }
+
+impl Error for AplloSqlParserError {}
 
 impl std::fmt::Display for AplloSqlParserError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
