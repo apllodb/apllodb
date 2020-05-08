@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 /// Column with data type.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub(crate) struct ColumnDataType {
-    column: ColumnName,
+    pub(super) column: ColumnName,
     data_type: DataType,
 }
 

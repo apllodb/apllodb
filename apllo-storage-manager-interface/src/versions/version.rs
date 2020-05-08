@@ -3,6 +3,7 @@ mod column;
 mod constraint;
 
 use action::NextVersionAction;
+use apllo_shared_components::error::{AplloError, AplloErrorKind, AplloResult};
 use apllo_shared_components::{ColumnDefinition, TableConstraint};
 use column::ColumnDataType;
 use constraint::VersionConstraint;
@@ -26,7 +27,7 @@ use std::{cmp::Ordering, fmt::Display};
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct Version {
     number: u64,
-    column_data_type: Vec<ColumnDataType>,
+    column_data_types: Vec<ColumnDataType>,
     constraints: Vec<VersionConstraint>,
 }
 
@@ -56,7 +57,7 @@ impl Version {
     ) -> Self {
         Self {
             number: 1,
-            column_data_type: column_definitions
+            column_data_types: column_definitions
                 .iter()
                 .map(|d| d.clone().into())
                 .collect(),
@@ -66,19 +67,43 @@ impl Version {
     }
 
     /// Create v_(current+1) from v_current.
-    pub(crate) fn _create_next(&self, _action: NextVersionAction) -> Self {
-        // let number = self.number + 1;
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](variant.UndefinedColumn.html)
+    ///   - If column to alter does not exist.
+    pub(crate) fn create_next(&self, action: NextVersionAction) -> AplloResult<Self> {
+        let number = self.number + 1;
 
-        // match action {
-        //     NextVersionAction::DropColumn { column } => {
-        //         // 現バージョンから探して、なければエラー返す
-        //     }
+        match action {
+            NextVersionAction::DropColumn {
+                column: column_to_drop,
+            } => {
+                let next_column_data_types: Vec<ColumnDataType> = self
+                    .column_data_types
+                    .iter()
+                    .filter(|c| c.column != column_to_drop)
+                    .cloned()
+                    .collect();
 
-        //     NextVersionAction::AddColumn {
-        //         column_data_type,
-        //         column_constraints,
-        //     } => {}
-        // }
-        todo!()
+                if next_column_data_types.len() == self.column_data_types.len() {
+                    Err(AplloError::new(AplloErrorKind::UndefinedColumn, None))
+                } else {
+                    // TODO self.constraints のバージョン制約が column_to_drop を含んでいた場合の対処。
+                    // たぶん、errorを返すんだと思う。
+
+                    Ok(Self {
+                        number,
+                        column_data_types: next_column_data_types,
+                        constraints: vec![],
+                    })
+                }
+            }
+
+            NextVersionAction::AddColumn {
+                column_data_type: _,
+                column_constraints: _,
+            } => todo!(),
+        }
     }
 }
