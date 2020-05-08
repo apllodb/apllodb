@@ -9,6 +9,8 @@ pub use kind::AplloErrorKind;
 use sqlstate::SqlState;
 use std::{error::Error, fmt::Display};
 
+pub type AplloResult<T> = Result<T, AplloError>;
+
 /// Subset of SQL standard errors and APLLO specific errors.
 ///
 /// Subset of SQL standard errors, whose SQLSTATE starts from 0-4, are borrowed from PostgreSQL:
