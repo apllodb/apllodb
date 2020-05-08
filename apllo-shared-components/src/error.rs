@@ -1,3 +1,5 @@
+//! Provides Result type and Error type commonly used in apllo workspace.
+
 mod aux;
 mod dummy;
 mod kind;
@@ -9,12 +11,10 @@ pub use kind::AplloErrorKind;
 use sqlstate::SqlState;
 use std::{error::Error, fmt::Display};
 
+/// Result type commonly used in apllo workspace.
 pub type AplloResult<T> = Result<T, AplloError>;
 
-/// Subset of SQL standard errors and APLLO specific errors.
-///
-/// Subset of SQL standard errors, whose SQLSTATE starts from 0-4, are borrowed from PostgreSQL:
-/// https://github.com/postgres/postgres/blob/master/src/backend/utils/errcodes.txt
+/// Error type commonly used in apllo workspace.
 #[derive(Debug)]
 pub struct AplloError {
     kind: AplloErrorKind,
@@ -22,7 +22,7 @@ pub struct AplloError {
     // FIXME: Better to wrap by Option but then I don't know how to return `Option<&(dyn Error + 'static)>`
     // in [source()](method.source.html).
     //
-    // [DummyError](struct.DummyError.html) is being used instead to represent no-root-cause case.
+    // [DummyError](dummy/struct.DummyError.html) is being used instead to represent no-root-cause case.
     source: Box<dyn Error + Sync + Send + 'static>,
 }
 
@@ -74,7 +74,7 @@ impl AplloError {
 
     /// [SQLSTATE](https://www.postgresql.org/docs/12/errcodes-appendix.html).
     ///
-    /// Although [kind()](method.kind.html) is considered to be a better way for error handling,
+    /// Although [kind()](struct.AplloError.html#method.kind) is considered to be a better way for error handling,
     /// this might be helpful for coordinating with some libraries your client depends on.
     pub fn sqlstate(&self) -> SqlState {
         self.aux().sqlstate

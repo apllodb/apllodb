@@ -1,5 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+/// All the possible errors in apllo workspace.
+///
+/// Subset of SQL standard errors, whose SQLSTATE starts from 0-4, are borrowed from PostgreSQL:
+/// https://github.com/postgres/postgres/blob/master/src/backend/utils/errcodes.txt
+#[allow(missing_docs)]
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum AplloErrorKind {
     // Section: Class 02 - No Data (this is also a warning class per the SQL standard)
