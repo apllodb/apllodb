@@ -12,18 +12,18 @@ use std::{error::Error, fmt::Display};
 /// Subset of SQL standard errors, whose SQLSTATE starts from 0-4, are borrowed from PostgreSQL:
 /// https://github.com/postgres/postgres/blob/master/src/backend/utils/errcodes.txt
 #[derive(Debug)]
-pub struct AplloError {
+pub struct AplloError<E: Error + 'static> {
     kind: AplloErrorKind,
-    source: Option<Box<dyn Error + Sync + Send + 'static>>,
+    source: E,
 }
 
-impl Error for AplloError {
+impl<E: Error + 'static> Error for AplloError<E> {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.source.as_ref().map(|b| b.as_ref())
+        Some(&self.source)
     }
 }
 
-impl Display for AplloError {
+impl<E: Error + 'static> Display for AplloError<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -36,7 +36,7 @@ impl Display for AplloError {
     }
 }
 
-impl AplloError {
+impl<E: Error + 'static> AplloError<E> {
     /// Use this for error handling with pattern match.
     pub fn kind(&self) -> &AplloErrorKind {
         &self.kind
