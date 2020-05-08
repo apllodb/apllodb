@@ -57,10 +57,7 @@ impl Version {
     ) -> Self {
         Self {
             number: 1,
-            column_data_types: column_definitions
-                .iter()
-                .map(|d| d.clone().into())
-                .collect(),
+            column_data_types: column_definitions.iter().map(|d| d.into()).collect(),
             // TODO: カラム制約とテーブル制約からつくる
             constraints: vec![],
         }
@@ -87,7 +84,12 @@ impl Version {
                     .collect();
 
                 if next_column_data_types.len() == self.column_data_types.len() {
-                    Err(AplloError::new(AplloErrorKind::UndefinedColumn, None))
+                    Err(AplloError::new(
+                        AplloErrorKind::UndefinedColumn {
+                            column_name: column_to_drop.to_string(),
+                        },
+                        None,
+                    ))
                 } else {
                     // TODO self.constraints のバージョン制約が column_to_drop を含んでいた場合の対処。
                     // たぶん、errorを返すんだと思う。

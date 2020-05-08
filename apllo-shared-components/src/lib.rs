@@ -7,29 +7,44 @@
 pub mod error;
 
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 /// Table name.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct TableName(pub String);
+pub struct TableName(String);
 
 /// Column name.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct ColumnName(pub String);
+pub struct ColumnName(String);
+impl Display for ColumnName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 /// Column definition.
 /// Note that NULLABLE SQL constraint is treated as DataType (not ColumnConstraint).
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct ColumnDefinition {
-    pub column_name: ColumnName,
-    pub data_type: DataType,
-    pub column_constraints: Vec<ColumnConstraint>,
+    column_name: ColumnName,
+    data_type: DataType,
+    column_constraints: Vec<ColumnConstraint>,
+}
+impl ColumnDefinition {
+    pub fn column_name(&self) -> &ColumnName {
+        &self.column_name
+    }
+
+    pub fn data_type(&self) -> &DataType {
+        &self.data_type
+    }
 }
 
 /// Data type.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct DataType {
-    pub kind: DataTypeKind,
-    pub nullable: bool,
+     kind: DataTypeKind,
+     nullable: bool,
 }
 
 /// Data type kind.
@@ -42,8 +57,8 @@ pub enum DataTypeKind {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct ColumnConstraint {
-    pub column_name: ColumnName,
-    pub kind: ColumnConstraintKind,
+     column_name: ColumnName,
+     kind: ColumnConstraintKind,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]

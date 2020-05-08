@@ -8,11 +8,11 @@ pub(crate) struct ColumnDataType {
     data_type: DataType,
 }
 
-impl From<ColumnDefinition> for ColumnDataType {
-    fn from(d: ColumnDefinition) -> Self {
+impl From<&ColumnDefinition> for ColumnDataType {
+    fn from(d: &ColumnDefinition) -> Self {
         Self {
-            column: d.column_name,
-            data_type: d.data_type,
+            column: d.column_name().clone(),
+            data_type: d.data_type().clone(),
         }
     }
 }
