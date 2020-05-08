@@ -21,15 +21,17 @@ pub trait AccessMethodsDdl {
     /// ```
     /// ```
     fn create_table(
-        table_name: &TableName,
-        table_constraints: &[TableConstraint],
-        column_definitions: &[ColumnDefinition],
+        _table_name: &TableName,
+        _table_constraints: &[TableConstraint],
+        _column_definitions: &[ColumnDefinition],
     ) -> AplloResult<()> {
-        let version_set = VersionSet::new(table_name, table_constraints, column_definitions);
-        let version = Version::create_initial(column_definitions, table_constraints)?;
+        // let version_set = VersionSet::new(table_name, table_constraints, column_definitions)?;
+        // let version = Version::create_initial(column_definitions, table_constraints)?;
 
-        Self::materialize_version_set(version_set);
-        Self::materialize_version(version);
+        // Self::materialize_version_set(version_set)?;
+        // Self::materialize_version(version)?;
+
+        todo!()
     }
 
     /// ALTER TABLE command.
