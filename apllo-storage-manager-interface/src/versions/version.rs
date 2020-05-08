@@ -42,7 +42,6 @@ impl PartialOrd for Version {
     }
 }
 
-<<<<<<< HEAD
 impl Display for Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "v{}", self.number)
@@ -80,10 +79,6 @@ impl Version {
         //         column_constraints,
         //     } => {}
         // }
-=======
-impl Version {
-    pub(crate) fn new(_column_definitions: &[ColumnDefinition]) -> Self {
->>>>>>> 180e9bb4eaba089fe4be2ac88a7e3a8b564aa5a3
         todo!()
     }
 }
