@@ -1,8 +1,10 @@
 mod aux;
+mod dummy;
 mod kind;
 mod sqlstate;
 
 use aux::AplloErrorAux;
+use dummy::DummyError;
 pub use kind::AplloErrorKind;
 use sqlstate::SqlState;
 use std::{error::Error, fmt::Display};
@@ -12,18 +14,44 @@ use std::{error::Error, fmt::Display};
 /// Subset of SQL standard errors, whose SQLSTATE starts from 0-4, are borrowed from PostgreSQL:
 /// https://github.com/postgres/postgres/blob/master/src/backend/utils/errcodes.txt
 #[derive(Debug)]
-pub struct AplloError<E: Error + 'static> {
+pub struct AplloError {
     kind: AplloErrorKind,
-    source: E,
+
+    // FIXME: Better to wrap by Option but then I don't know how to return `Option<&(dyn Error + 'static)>`
+    // in [source()](method.source.html).
+    //
+    // [DummyError](struct.DummyError.html) is being used instead to represent no-root-cause case.
+    source: Box<dyn Error + Sync + Send + 'static>,
 }
 
-impl<E: Error + 'static> Error for AplloError<E> {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        Some(&self.source)
+impl AplloError {
+    /// Constructor.
+    ///
+    /// Pass `Some(SourceError)` if you have one.
+    pub fn new(
+        kind: AplloErrorKind,
+        source: Option<Box<dyn Error + Sync + Send + 'static>>,
+    ) -> Self {
+        Self {
+            kind,
+            source: match source {
+                None => Box::new(DummyError),
+                Some(e) => e,
+            },
+        }
     }
 }
 
-impl<E: Error + 'static> Display for AplloError<E> {
+impl Error for AplloError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self.source.downcast_ref::<DummyError>() {
+            Some(_) => None,
+            _ => Some(self.source.as_ref()),
+        }
+    }
+}
+
+impl Display for AplloError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -36,7 +64,7 @@ impl<E: Error + 'static> Display for AplloError<E> {
     }
 }
 
-impl<E: Error + 'static> AplloError<E> {
+impl AplloError {
     /// Use this for error handling with pattern match.
     pub fn kind(&self) -> &AplloErrorKind {
         &self.kind
