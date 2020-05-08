@@ -37,6 +37,7 @@ impl VersionSet {
     ) -> Self {
         todo!()
     }
+<<<<<<< HEAD
 
     /// Name of VersionSet.
     ///
@@ -44,4 +45,6 @@ impl VersionSet {
     pub fn name(&self) -> &str {
         self.name.as_str()
     }
+=======
+>>>>>>> 180e9bb4eaba089fe4be2ac88a7e3a8b564aa5a3
 }
