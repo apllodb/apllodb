@@ -21,7 +21,7 @@ impl ColumnName {
         if name.chars().count() > 64 {
             Err(AplloError::new(
                 AplloErrorKind::NameTooLong,
-                format!("ColumnName `{}` is too long ({} > 64)", name, name.len()),
+                format!("ColumnName `{}` is too long ({} > 64)", name, name.chars().count()),
                 None,
             ))
         } else {
