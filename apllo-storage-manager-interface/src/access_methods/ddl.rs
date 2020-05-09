@@ -1,6 +1,6 @@
 use crate::{Version, VersionSet};
+use apllo_shared_components::data_structure::{ColumnDefinition, TableConstraints, TableName};
 use apllo_shared_components::error::AplloResult;
-use apllo_shared_components::{ColumnDefinition, TableConstraint, TableName};
 
 /// Access methods for DDL.
 ///
@@ -22,7 +22,7 @@ pub trait AccessMethodsDdl {
     /// ```
     fn create_table(
         _table_name: &TableName,
-        _table_constraints: &[TableConstraint],
+        _table_constraints: &TableConstraints,
         _column_definitions: &[ColumnDefinition],
     ) -> AplloResult<()> {
         // let version_set = VersionSet::new(table_name, table_constraints, column_definitions)?;

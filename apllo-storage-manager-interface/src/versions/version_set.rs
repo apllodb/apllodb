@@ -1,6 +1,6 @@
 mod constraint;
 
-use apllo_shared_components::{ColumnDefinition, TableConstraint, TableName};
+use apllo_shared_components::data_structure::{ColumnDefinition, TableConstraints, TableName};
 use constraint::VersionSetConstraint;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -32,7 +32,7 @@ impl PartialOrd for VersionSet {
 impl VersionSet {
     pub(crate) fn new(
         _table_name: &TableName,
-        _table_constraints: &[TableConstraint],
+        _table_constraints: &TableConstraints,
         _column_definitions: &[ColumnDefinition],
     ) -> Self {
         todo!()

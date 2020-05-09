@@ -3,8 +3,8 @@ mod column;
 mod constraint;
 
 use action::NextVersionAction;
+use apllo_shared_components::data_structure::{ColumnDefinition, TableConstraints};
 use apllo_shared_components::error::{AplloError, AplloErrorKind, AplloResult};
-use apllo_shared_components::{ColumnDefinition, TableConstraint};
 use column::ColumnDataType;
 use constraint::VersionConstraint;
 use serde::{Deserialize, Serialize};
@@ -53,7 +53,7 @@ impl Version {
     /// Create v_1.
     pub(crate) fn create_initial(
         column_definitions: &[ColumnDefinition],
-        _table_constraints: &[TableConstraint],
+        _table_constraints: &TableConstraints,
     ) -> Self {
         Self {
             number: 1,
@@ -107,5 +107,16 @@ impl Version {
                 column_constraints: _,
             } => todo!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Version;
+
+    #[test]
+    fn test_create_initial_success() {
+        let column_definitions = vec![ColumnDefinition()];
+        Version::create_initial(column_definitions, &[])
     }
 }
