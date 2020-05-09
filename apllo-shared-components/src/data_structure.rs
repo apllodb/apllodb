@@ -7,6 +7,7 @@ mod data_type_kind;
 mod table_constraint_kind;
 mod table_constraints;
 mod table_name;
+mod validation_helper;
 
 pub use column_constraint_kind::ColumnConstraintKind;
 pub use column_constraints::ColumnConstraints;
