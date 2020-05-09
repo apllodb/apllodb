@@ -18,7 +18,7 @@ impl ColumnName {
     pub fn new<S: Into<String>>(name: S) -> AplloResult<Self> {
         let name = name.into();
 
-        if (name.len() > 64) {
+        if name.chars().count() > 64 {
             Err(AplloError::new(
                 AplloErrorKind::NameTooLong,
                 format!("ColumnName `{}` is too long ({} > 64)", name, name.len()),
@@ -33,5 +33,38 @@ impl ColumnName {
 impl Display for ColumnName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ColumnName;
+    use crate::error::AplloErrorKind;
+
+    #[test]
+    fn test_success() {
+        let names = vec!["a".repeat(64), "あ".repeat(64), "💪".repeat(64)];
+
+        for name in &names {
+            match ColumnName::new(name) {
+                Ok(_) => {}
+                Err(e) => panic!("{} : unexpected error: {:?}", name, e),
+            }
+        }
+    }
+
+    #[test]
+    fn test_failure_too_long_name() {
+        let names = vec!["a".repeat(65), "あ".repeat(65), "💪".repeat(65)];
+
+        for name in &names {
+            match ColumnName::new(name) {
+                Err(e) => match e.kind() {
+                    AplloErrorKind::NameTooLong => {}
+                    x => panic!("{} : unexpected error: {:?}", name, x),
+                },
+                Ok(_) => panic!("{} : should be an error", name),
+            }
+        }
     }
 }
