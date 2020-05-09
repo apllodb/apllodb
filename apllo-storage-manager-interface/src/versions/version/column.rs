@@ -1,4 +1,4 @@
-use apllo_shared_components::{ColumnDefinition, ColumnName, DataType};
+use apllo_shared_components::data_structure::{ColumnDefinition, ColumnName, DataType};
 use serde::{Deserialize, Serialize};
 
 /// Column with data type.

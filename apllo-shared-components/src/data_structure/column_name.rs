@@ -15,7 +15,9 @@ impl ColumnName {
     /// # Failures
     /// - [NameTooLong](error/enum.AplloErrorKind.html#variant.NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
-    pub fn new(name: String) -> AplloResult<Self> {
+    pub fn new<S: Into<String>>(name: S) -> AplloResult<Self> {
+        let name = name.into();
+
         if (name.len() > 64) {
             Err(AplloError::new(
                 AplloErrorKind::NameTooLong,

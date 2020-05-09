@@ -85,9 +85,11 @@ impl Version {
 
                 if next_column_data_types.len() == self.column_data_types.len() {
                     Err(AplloError::new(
-                        AplloErrorKind::UndefinedColumn {
-                            column_name: column_to_drop.to_string(),
-                        },
+                        AplloErrorKind::UndefinedColumn,
+                        format!(
+                            "column `{}` does not exist in current version",
+                            column_to_drop
+                        ),
                         None,
                     ))
                 } else {
@@ -116,7 +118,7 @@ mod tests {
 
     #[test]
     fn test_create_initial_success() {
-        let column_definitions = vec![ColumnDefinition()];
-        Version::create_initial(column_definitions, &[])
+        // let column_definitions = vec![ColumnDefinition()];
+        // Version::create_initial(column_definitions, &[])
     }
 }
