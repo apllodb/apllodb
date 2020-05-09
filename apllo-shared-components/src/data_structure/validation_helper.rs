@@ -1,1 +1,1 @@
-pub(in crate::data_structure) mod names;
+pub(in crate::data_structure) mod collection;

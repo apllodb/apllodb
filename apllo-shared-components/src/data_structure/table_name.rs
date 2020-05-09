@@ -1,4 +1,4 @@
-use super::validation_helper::names::ShortName;
+use super::ShortName;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
