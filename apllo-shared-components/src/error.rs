@@ -19,10 +19,15 @@ pub type AplloResult<T> = Result<T, AplloError>;
 pub struct AplloError {
     kind: AplloErrorKind,
 
-    // FIXME: Better to wrap by Option but then I don't know how to return `Option<&(dyn Error + 'static)>`
-    // in [source()](method.source.html).
-    //
-    // [DummyError](dummy/struct.DummyError.html) is being used instead to represent no-root-cause case.
+    /// Human-readable description of each error instance.
+    desc: String,
+
+    /// Source of this error if any.
+    ///
+    /// FIXME: Better to wrap by Option but then I don't know how to return `Option<&(dyn Error + 'static)>`
+    /// in [source()](method.source.html).
+    ///
+    /// [DummyError](dummy/struct.DummyError.html) is being used instead to represent no-root-cause case.
     source: Box<dyn Error + Sync + Send + 'static>,
 }
 
@@ -30,12 +35,14 @@ impl AplloError {
     /// Constructor.
     ///
     /// Pass `Some(SourceError)` if you have one.
-    pub fn new(
+    pub fn new<S: Into<String>>(
         kind: AplloErrorKind,
+        desc: S,
         source: Option<Box<dyn Error + Sync + Send + 'static>>,
     ) -> Self {
         Self {
             kind,
+            desc: desc.into(),
             source: match source {
                 None => Box::new(DummyError),
                 Some(e) => e,
@@ -57,9 +64,10 @@ impl Display for AplloError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} ({}) caused by: {}",
+            "{} ({}) `{}` ; caused by: `{}`",
             self.errcode(),
             self.sqlstate(),
+            self.desc,
             self.source()
                 .map_or_else(|| "none".to_string(), |e| format!("{}", e))
         )
