@@ -67,6 +67,7 @@ impl TableConstraints {
     }
 }
 
+// TODO テストは書いているが、まだバリデーション条件考えきれてもいないし、いじめ方も足りないので、テストは全体的に見直す
 #[cfg(test)]
 mod tests {
     use super::TableConstraints;
