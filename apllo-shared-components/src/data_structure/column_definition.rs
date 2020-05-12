@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use super::{data_type::DataType, column_name::ColumnName, column_constraints::ColumnConstraints};
+use super::{column_constraints::ColumnConstraints, column_name::ColumnName, data_type::DataType};
 use crate::error::AplloResult;
+use serde::{Deserialize, Serialize};
 
 /// Column definition.
 /// Note that NULLABLE SQL constraint is treated as DataType (not ColumnConstraint).
@@ -32,5 +32,10 @@ impl ColumnDefinition {
     /// Ref to DataType.
     pub fn data_type(&self) -> &DataType {
         &self.data_type
+    }
+
+    /// Ref to ColumnConstraints.
+    pub fn column_constraints(&self) -> &ColumnConstraints {
+        &self.column_constraints
     }
 }

@@ -1,7 +1,11 @@
-mod constraint;
+mod constraint_kind;
+mod constraints;
 
-use apllo_shared_components::data_structure::{ColumnDefinition, TableConstraints, TableName};
-use constraint::VersionSetConstraint;
+use apllo_shared_components::{
+    data_structure::{ColumnDefinition, TableConstraints, TableName},
+    error::AplloResult,
+};
+use constraints::VersionSetConstraints;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -14,7 +18,7 @@ use std::cmp::Ordering;
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct VersionSet {
     name: String,
-    constraints: Vec<VersionSetConstraint>,
+    constraints: VersionSetConstraints,
 }
 
 impl Ord for VersionSet {
@@ -31,11 +35,15 @@ impl PartialOrd for VersionSet {
 
 impl VersionSet {
     pub(crate) fn new(
-        _table_name: &TableName,
-        _table_constraints: &TableConstraints,
-        _column_definitions: &[ColumnDefinition],
-    ) -> Self {
-        todo!()
+        table_name: &TableName,
+        table_constraints: &TableConstraints,
+        column_definitions: &[ColumnDefinition],
+    ) -> AplloResult<Self> {
+        let constraints = VersionSetConstraints::new(table_constraints, column_definitions)?;
+        Ok(Self {
+            name: format!("{}", table_name),
+            constraints,
+        })
     }
 
     /// Name of VersionSet.

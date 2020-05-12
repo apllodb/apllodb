@@ -7,3 +7,9 @@ pub struct DataType {
     kind: DataTypeKind,
     nullable: bool,
 }
+
+impl DataType {
+    pub fn new(kind: DataTypeKind, nullable: bool) -> Self {
+        Self { kind, nullable }
+    }
+}

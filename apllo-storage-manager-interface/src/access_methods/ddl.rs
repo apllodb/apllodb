@@ -21,11 +21,11 @@ pub trait AccessMethodsDdl {
     /// ```
     /// ```
     fn create_table(
-        _table_name: &TableName,
-        _table_constraints: &TableConstraints,
-        _column_definitions: &[ColumnDefinition],
+        table_name: &TableName,
+        table_constraints: &TableConstraints,
+        column_definitions: &[ColumnDefinition],
     ) -> AplloResult<()> {
-        // let version_set = VersionSet::new(table_name, table_constraints, column_definitions)?;
+        let version_set = VersionSet::new(table_name, table_constraints, column_definitions)?;
         // let version = Version::create_initial(column_definitions, table_constraints)?;
 
         // Self::materialize_version_set(version_set)?;
@@ -35,6 +35,8 @@ pub trait AccessMethodsDdl {
     }
 
     /// ALTER TABLE command.
+    ///
+    /// This function does not execute auto-upgrade.
     ///
     /// # Panics
     ///
@@ -46,7 +48,7 @@ pub trait AccessMethodsDdl {
     ///
     /// ```
     /// ```
-    fn alter_table();
+    fn alter_table() -> AplloResult<()>;
 
     /// DROP TABLE command.
     ///
@@ -60,9 +62,9 @@ pub trait AccessMethodsDdl {
     ///
     /// ```
     /// ```
-    fn drop_table();
+    fn drop_table() -> AplloResult<()>;
 
-    fn materialize_version_set(version_set: VersionSet);
+    fn materialize_version_set(version_set: VersionSet) -> AplloResult<()>;
 
-    fn materialize_version(version: Version);
+    fn materialize_version(version: Version) -> AplloResult<()>;
 }

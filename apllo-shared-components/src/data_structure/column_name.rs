@@ -1,6 +1,6 @@
+use super::ShortName;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use super::ShortName;
 
 /// Column name.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
