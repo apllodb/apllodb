@@ -17,7 +17,11 @@ impl ShortName {
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub fn new<S: Into<String>>(name: S) -> AplloResult<Self> {
         let name = name.into();
+        Self::validate_length(&name)?;
+        Ok(Self(name))
+    }
 
+    fn validate_length(name: &str) -> AplloResult<()> {
         if name.chars().count() > 64 {
             Err(AplloError::new(
                 AplloErrorKind::NameTooLong,
@@ -29,7 +33,7 @@ impl ShortName {
                 None,
             ))
         } else {
-            Ok(Self(name))
+            Ok(())
         }
     }
 }

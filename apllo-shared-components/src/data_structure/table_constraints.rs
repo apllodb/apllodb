@@ -24,6 +24,18 @@ impl TableConstraints {
     ///
     /// TODO: Check duplication with ColumnConstraints.
     pub fn new(constraints: Vec<TableConstraintKind>) -> AplloResult<Self> {
+        Self::validate_col_duplication(&constraints)?;
+        Self::validate_multiple_pks(&constraints)?;
+        Self::validate_pk_or_unique_to_same_cols(&constraints)?;
+        Ok(Self { kinds: constraints })
+    }
+
+    fn validate_col_duplication(_constraints: &[TableConstraintKind]) -> AplloResult<()> {
+        // TODO
+        Ok(())
+    }
+
+    fn validate_multiple_pks(constraints: &[TableConstraintKind]) -> AplloResult<()> {
         if constraints
             .iter()
             .filter(|table_constraint_kind| match table_constraint_kind {
@@ -39,30 +51,34 @@ impl TableConstraints {
                 None,
             ))
         } else {
-            let pk_unique_column_sets: Vec<HashSet<&ColumnName>> = constraints
-                .iter()
-                .map(|table_constraint_kind| {
-                    match table_constraint_kind {
-                        TableConstraintKind::PrimaryKey { column_names } => column_names,
-                        TableConstraintKind::Unique { column_names } => column_names,
-                    }
-                    .iter()
-                    .collect()
-                })
-                .collect();
+            Ok(())
+        }
+    }
 
-            if let Some(colset) = find_dup_slow(pk_unique_column_sets.iter()) {
-                Err(AplloError::new(
-                    AplloErrorKind::InvalidTableDefinition,
-                    format!(
-                        "more than 1 PRIMARY KEY / UNIQUE are applied to the same column set: `{:?}`",
-                        colset
-                    ),
-                    None,
-                ))
-            } else {
-                Ok(Self { kinds: constraints })
-            }
+    fn validate_pk_or_unique_to_same_cols(constraints: &[TableConstraintKind]) -> AplloResult<()> {
+        let pk_unique_column_sets: Vec<HashSet<&ColumnName>> = constraints
+            .iter()
+            .map(|table_constraint_kind| {
+                match table_constraint_kind {
+                    TableConstraintKind::PrimaryKey { column_names } => column_names,
+                    TableConstraintKind::Unique { column_names } => column_names,
+                }
+                .iter()
+                .collect()
+            })
+            .collect();
+
+        if let Some(colset) = find_dup_slow(pk_unique_column_sets.iter()) {
+            Err(AplloError::new(
+                AplloErrorKind::InvalidTableDefinition,
+                format!(
+                    "more than 1 PRIMARY KEY / UNIQUE are applied to the same column set: `{:?}`",
+                    colset
+                ),
+                None,
+            ))
+        } else {
+            Ok(())
         }
     }
 
@@ -154,4 +170,3 @@ mod tests {
         }
     }
 }
-
