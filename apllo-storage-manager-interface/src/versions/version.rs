@@ -3,7 +3,7 @@ mod column;
 mod constraint;
 
 use action::NextVersionAction;
-use apllo_shared_components::data_structure::{ColumnDefinition, TableConstraints};
+use apllo_shared_components::data_structure::{ColumnDefinition, ColumnName, TableConstraints};
 use apllo_shared_components::error::{AplloError, AplloErrorKind, AplloResult};
 use column::ColumnDataType;
 use constraint::VersionConstraint;
@@ -76,6 +76,8 @@ impl Version {
             NextVersionAction::DropColumn {
                 column: column_to_drop,
             } => {
+                self.validate_col_existence(&column_to_drop)?;
+
                 let next_column_data_types: Vec<ColumnDataType> = self
                     .column_data_types
                     .iter()
@@ -83,25 +85,14 @@ impl Version {
                     .cloned()
                     .collect();
 
-                if next_column_data_types.len() == self.column_data_types.len() {
-                    Err(AplloError::new(
-                        AplloErrorKind::UndefinedColumn,
-                        format!(
-                            "column `{}` does not exist in current version",
-                            column_to_drop
-                        ),
-                        None,
-                    ))
-                } else {
-                    // TODO self.constraints のバージョン制約が column_to_drop を含んでいた場合の対処。
-                    // たぶん、errorを返すんだと思う。
+                // TODO self.constraints のバージョン制約が column_to_drop を含んでいた場合の対処。
+                // たぶん、errorを返すんだと思う。
 
-                    Ok(Self {
-                        number,
-                        column_data_types: next_column_data_types,
-                        constraints: vec![],
-                    })
-                }
+                Ok(Self {
+                    number,
+                    column_data_types: next_column_data_types,
+                    constraints: vec![],
+                })
             }
 
             NextVersionAction::AddColumn {
@@ -109,6 +100,20 @@ impl Version {
                 column_constraints: _,
             } => todo!(),
         }
+    }
+
+    fn validate_col_existence(&self, column_name: &ColumnName) -> AplloResult<()> {
+        self.column_data_types
+            .iter()
+            .find(|c| &c.column == column_name)
+            .map(|_| ())
+            .ok_or_else(|| {
+                AplloError::new(
+                    AplloErrorKind::UndefinedColumn,
+                    format!("column `{}` does not exist in current version", column_name),
+                    None,
+                )
+            })
     }
 }
 
@@ -120,5 +125,7 @@ mod tests {
     fn test_create_initial_success() {
         // let column_definitions = vec![ColumnDefinition()];
         // Version::create_initial(column_definitions, &[])
+
+        // TODO そろそろfixtureつくる。ColumnDefinitionつくるのだけで一苦労なので...
     }
 }
