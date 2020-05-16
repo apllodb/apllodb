@@ -93,9 +93,7 @@ impl TableConstraints {
 mod tests {
     use super::TableConstraints;
     use crate::{
-        data_structure::{
-            column_name::ColumnName, table_constraint_kind::TableConstraintKind, ShortName,
-        },
+        data_structure::{column_name::ColumnName, table_constraint_kind::TableConstraintKind},
         error::AplloErrorKind,
     };
 
@@ -104,7 +102,7 @@ mod tests {
             TableConstraintKind::PrimaryKey {
                 column_names: vec![
                     $(
-                        ColumnName::from(ShortName::new($col_name).unwrap()),
+                        ColumnName::create($col_name).unwrap(),
                     )*
                 ],
             }
@@ -116,7 +114,7 @@ mod tests {
             TableConstraintKind::Unique {
                 column_names: vec![
                     $(
-                        ColumnName::from(ShortName::new($col_name).unwrap()),
+                        ColumnName::create($col_name).unwrap(),
                     )*
                 ],
             }
