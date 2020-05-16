@@ -64,6 +64,8 @@ impl Version {
 impl Version {
     /// Create v_1.
     ///
+    /// # Failures
+    ///
     /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
     ///   - If `column_definitions` is empty.
     pub(crate) fn create_initial(

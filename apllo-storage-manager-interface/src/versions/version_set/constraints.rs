@@ -16,6 +16,7 @@ impl VersionSetConstraints {
     /// from TableConstraints and ColumnConstraints in each ColumnDefinition.
     ///
     /// # Failures
+    ///
     /// - [InvalidTableDefinition](error/enum.AplloErrorKind.html#variant.InvalidTableDefinition) when:
     ///   - [PrimaryKey](enum.TableConstraintKind.html#variant.PrimaryKey) or
     ///     [Unique](enum.TableConstraintKind.html#variant.Unique) in `table_constraints` and `column_definitions`

@@ -34,6 +34,11 @@ impl PartialOrd for VersionSet {
 }
 
 impl VersionSet {
+    /// Create.
+    ///
+    /// # Failures
+    ///
+    /// - Errors from [VersionSetConstraints::new](foo.html).
     pub(crate) fn new(
         table_name: &TableName,
         table_constraints: &TableConstraints,
