@@ -56,6 +56,9 @@ impl Version {
     }
 
     /// Create v_1.
+    ///
+    /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
+    ///   - If `column_definitions` is empty.
     pub(crate) fn create_initial(
         column_definitions: &[ColumnDefinition],
         _table_constraints: &TableConstraints,
@@ -63,9 +66,14 @@ impl Version {
         // TODO Check table_constraints when  TableConstraints support constraints per record.
         // TODO Validate integrity between column_definitions & table_dconstraints.
 
+        let column_data_types: Vec<ColumnDataType> =
+            column_definitions.iter().map(|d| d.into()).collect();
+
+        Self::validate_at_least_one_column(&column_data_types)?;
+
         Ok(Self {
             number: 1,
-            column_data_types: column_definitions.iter().map(|d| d.into()).collect(),
+            column_data_types,
             // TODO: カラム制約とテーブル制約からつくる
             constraints: vec![],
         })
@@ -98,6 +106,8 @@ impl Version {
                 // TODO self.constraints のバージョン制約が column_to_drop を含んでいた場合の対処。
                 // たぶん、errorを返すんだと思う。
 
+                Self::validate_at_least_one_column(&next_column_data_types)?;
+
                 Ok(Self {
                     number,
                     column_data_types: next_column_data_types,
@@ -109,6 +119,18 @@ impl Version {
                 column_data_type: _,
                 column_constraints: _,
             } => todo!(),
+        }
+    }
+
+    fn validate_at_least_one_column(column_data_types: &[ColumnDataType]) -> AplloResult<()> {
+        if column_data_types.is_empty() {
+            Err(AplloError::new(
+                AplloErrorKind::InvalidTableDefinition,
+                "no column in a table definition.",
+                None,
+            ))
+        } else {
+            Ok(())
         }
     }
 
@@ -134,7 +156,10 @@ mod tests {
         column_constraints, column_definition, column_name, next_version_action_drop_column,
         table_constraints,
     };
-    use apllo_shared_components::{data_structure::ColumnName, error::AplloResult};
+    use apllo_shared_components::{
+        data_structure::ColumnName,
+        error::{AplloErrorKind, AplloResult},
+    };
 
     #[test]
     fn test_create_initial_success() {
@@ -144,6 +169,20 @@ mod tests {
         match Version::create_initial(&column_definitions, &table_constraints) {
             Ok(_) => {}
             Err(e) => panic!("unexpected error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_create_initial_fail_invalid_table_definition() -> AplloResult<()> {
+        let column_definitions = vec![];
+        let table_constraints = table_constraints!();
+
+        match Version::create_initial(&column_definitions, &table_constraints) {
+            Err(e) => match e.kind() {
+                AplloErrorKind::InvalidTableDefinition => Ok(()),
+                _ => panic!("unexpected error kind: {}", e),
+            },
+            Ok(_) => panic!("should be error"),
         }
     }
 
@@ -170,5 +209,37 @@ mod tests {
         assert_eq!(v2_cols, vec![column_name!("c2")]);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_create_next_drop_column_fail_undefined_column() -> AplloResult<()> {
+        let column_definitions = vec![column_definition!("c1", column_constraints!())];
+        let table_constraints = table_constraints!();
+        let v1 = Version::create_initial(&column_definitions, &table_constraints)?;
+
+        let action = next_version_action_drop_column!("c404");
+        match v1.create_next(action) {
+            Err(e) => match e.kind() {
+                AplloErrorKind::UndefinedColumn => Ok(()),
+                _ => panic!("unexpected error kind: {}", e),
+            },
+            Ok(_) => panic!("should be error"),
+        }
+    }
+
+    #[test]
+    fn test_create_next_drop_column_fail_invalid_table_definition() -> AplloResult<()> {
+        let column_definitions = vec![column_definition!("c1", column_constraints!())];
+        let table_constraints = table_constraints!();
+        let v1 = Version::create_initial(&column_definitions, &table_constraints)?;
+
+        let action = next_version_action_drop_column!("c1");
+        match v1.create_next(action) {
+            Err(e) => match e.kind() {
+                AplloErrorKind::InvalidTableDefinition => Ok(()),
+                _ => panic!("unexpected error kind: {}", e),
+            },
+            Ok(_) => panic!("should be error"),
+        }
     }
 }
