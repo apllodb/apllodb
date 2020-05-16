@@ -4,3 +4,6 @@
 
 pub mod data_structure;
 pub mod error;
+
+#[cfg(test)]
+pub(crate) mod test_support;

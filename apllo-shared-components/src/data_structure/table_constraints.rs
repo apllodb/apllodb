@@ -96,30 +96,7 @@ mod tests {
         data_structure::{column_name::ColumnName, table_constraint_kind::TableConstraintKind},
         error::AplloErrorKind,
     };
-
-    macro_rules! pk {
-        ($($col_name: expr $(,)?)*) => {
-            TableConstraintKind::PrimaryKey {
-                column_names: vec![
-                    $(
-                        ColumnName::create($col_name).unwrap(),
-                    )*
-                ],
-            }
-        };
-    }
-
-    macro_rules! unique {
-        ($($col_name: expr $(,)?)*) => {
-            TableConstraintKind::Unique {
-                column_names: vec![
-                    $(
-                        ColumnName::create($col_name).unwrap(),
-                    )*
-                ],
-            }
-        };
-    }
+    use crate::{pk, unique};
 
     #[test]
     fn test_success() {
