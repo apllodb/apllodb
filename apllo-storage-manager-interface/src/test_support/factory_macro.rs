@@ -17,7 +17,9 @@ mod column_definition {
     macro_rules! column_definition {
         ($col_name: expr, $column_constraints: expr $(,)?) => {{
             use crate::column_name;
-            use apllo_shared_components::data_structure::{DataType, DataTypeKind};
+            use apllo_shared_components::data_structure::{
+                ColumnDefinition, DataType, DataTypeKind,
+            };
 
             ColumnDefinition::new(
                 column_name!($col_name),
@@ -89,5 +91,19 @@ mod table_constraints {
             ];
             TableConstraints::new(kinds).unwrap()
         }}
+    }
+}
+
+mod version {
+    #[macro_export]
+    macro_rules! next_version_action_drop_column {
+        ($col_name: expr $(,)?) => {{
+            use crate::column_name;
+            use crate::versions::version::action::NextVersionAction;
+
+            NextVersionAction::DropColumn {
+                column: column_name!($col_name),
+            }
+        }};
     }
 }
