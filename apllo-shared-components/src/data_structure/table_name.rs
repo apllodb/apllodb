@@ -17,3 +17,16 @@ impl Display for TableName {
         write!(f, "{}", self.0)
     }
 }
+
+#[cfg(test)]
+mod factory {
+    use super::TableName;
+    use crate::{data_structure::ShortName, error::AplloResult};
+
+    impl TableName {
+        pub(crate) fn create<S: Into<String>>(name: S) -> AplloResult<Self> {
+            let short_name = ShortName::new(name.into())?;
+            Ok(Self::from(short_name))
+        }
+    }
+}
