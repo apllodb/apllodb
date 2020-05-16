@@ -169,14 +169,14 @@ mod tests {
     };
 
     #[test]
-    fn test_create_initial_success() {
+    fn test_create_initial_success() -> AplloResult<()> {
         let column_definitions = vec![column_definition!("c1", column_constraints!())];
         let table_constraints = table_constraints!();
 
-        match Version::create_initial(&column_definitions, &table_constraints) {
-            Ok(_) => {}
-            Err(e) => panic!("unexpected error: {}", e),
-        }
+        let v = Version::create_initial(&column_definitions, &table_constraints)?;
+        assert_eq!(v.number(), 1);
+
+        Ok(())
     }
 
     #[test]
