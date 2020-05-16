@@ -106,66 +106,11 @@ impl VersionSetConstraints {
 #[cfg(test)]
 mod tests {
     use super::VersionSetConstraints;
+    use crate::{column_constraints, column_definition, t_pk, t_unique, table_constraints};
     use apllo_shared_components::{
-        data_structure::{
-            ColumnConstraintKind, ColumnConstraints, ColumnDefinition, ColumnName, DataType,
-            DataTypeKind, ShortName, TableConstraintKind, TableConstraints,
-        },
+        data_structure::{ColumnDefinition, ShortName, TableConstraints},
         error::AplloErrorKind,
     };
-
-    macro_rules! t_pk {
-        ($($col_name: expr $(,)?)*) => {
-            TableConstraintKind::PrimaryKey {
-                column_names: vec![
-                    $(
-                        ColumnName::from(ShortName::new($col_name).unwrap()),
-                    )*
-                ],
-            }
-        }
-    }
-
-    macro_rules! t_unique {
-        ($($col_name: expr $(,)?)*) => {
-            TableConstraintKind::Unique {
-                column_names: vec![
-                    $(
-                        ColumnName::from(ShortName::new($col_name).unwrap()),
-                    )*
-                ],
-            }
-        }
-    }
-
-    macro_rules! table_constraints {
-        ($($table_constraint_kind: expr $(,)?)*) => {{
-            let kinds: Vec<TableConstraintKind> = vec![
-                $($table_constraint_kind,)*
-            ];
-            TableConstraints::new(kinds).unwrap()
-        }}
-    }
-
-    macro_rules! column_constraints {
-        ($($column_constraint_kind: expr $(,)?)*) => {{
-            let kinds: Vec<ColumnConstraintKind> = vec![
-                $($column_constraint_kind,)*
-            ];
-            ColumnConstraints::new(kinds).unwrap()
-        }}
-    }
-
-    macro_rules! column_definition {
-        ($col_name: expr, $column_constraints: expr $(,)?) => {
-            ColumnDefinition::new(
-                ColumnName::from(ShortName::new($col_name).unwrap()),
-                DataType::new(DataTypeKind::Integer, false),
-                $column_constraints,
-            )
-            .unwrap()
-        };
-    }
 
     #[test]
     fn test_success() {
