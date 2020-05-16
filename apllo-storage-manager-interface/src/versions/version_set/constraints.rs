@@ -108,7 +108,7 @@ mod tests {
     use super::VersionSetConstraints;
     use crate::{column_constraints, column_definition, t_pk, t_unique, table_constraints};
     use apllo_shared_components::{
-        data_structure::{ColumnDefinition, ShortName, TableConstraints},
+        data_structure::{ColumnDefinition, TableConstraints},
         error::AplloErrorKind,
     };
 

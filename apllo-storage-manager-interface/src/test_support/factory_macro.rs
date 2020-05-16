@@ -16,14 +16,26 @@ mod column_definition {
     #[macro_export]
     macro_rules! column_definition {
         ($col_name: expr, $column_constraints: expr $(,)?) => {{
-            use apllo_shared_components::data_structure::{ColumnName, DataType, DataTypeKind};
+            use crate::column_name;
+            use apllo_shared_components::data_structure::{DataType, DataTypeKind};
 
             ColumnDefinition::new(
-                ColumnName::from(ShortName::new($col_name).unwrap()),
+                column_name!($col_name),
                 DataType::new(DataTypeKind::Integer, false),
                 $column_constraints,
             )
             .unwrap()
+        }};
+    }
+}
+
+mod column_name {
+    #[macro_export]
+    macro_rules! column_name {
+        ($col_name: expr) => {{
+            use apllo_shared_components::data_structure::{ColumnName, ShortName};
+
+            ColumnName::from(ShortName::new($col_name).unwrap())
         }};
     }
 }
@@ -33,12 +45,13 @@ mod table_constraint_kind {
     macro_rules! t_pk {
         ($($col_name: expr $(,)?)*) => {
             {
-                use apllo_shared_components::data_structure::{ColumnName, TableConstraintKind};
+                use crate::column_name;
+                use apllo_shared_components::data_structure::TableConstraintKind;
 
                 TableConstraintKind::PrimaryKey {
                     column_names: vec![
                         $(
-                            ColumnName::from(ShortName::new($col_name).unwrap()),
+                            column_name!($col_name),
                         )*
                     ],
                 }
@@ -50,12 +63,13 @@ mod table_constraint_kind {
     macro_rules! t_unique {
         ($($col_name: expr $(,)?)*) => {
             {
-                use apllo_shared_components::data_structure::{ColumnName, TableConstraintKind};
+                use crate::column_name;
+                use apllo_shared_components::data_structure::TableConstraintKind;
 
                 TableConstraintKind::Unique {
                     column_names: vec![
                         $(
-                            ColumnName::from(ShortName::new($col_name).unwrap()),
+                            column_name!($col_name),
                         )*
                     ],
                 }
