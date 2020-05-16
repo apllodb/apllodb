@@ -93,8 +93,7 @@ impl TableConstraints {
 mod tests {
     use super::TableConstraints;
     use crate::{
-        data_structure::{column_name::ColumnName, table_constraint_kind::TableConstraintKind},
-        error::AplloErrorKind,
+        data_structure::table_constraint_kind::TableConstraintKind, error::AplloErrorKind,
     };
     use crate::{pk, unique};
 
