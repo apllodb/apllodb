@@ -50,11 +50,18 @@ impl Display for Version {
 }
 
 impl Version {
+    /// Version number.
+    pub fn number(&self) -> u64 {
+        self.number
+    }
+
     /// Ref to columns and their data types.
     pub fn column_data_types(&self) -> &[ColumnDataType] {
         &self.column_data_types
     }
+}
 
+impl Version {
     /// Create v_1.
     ///
     /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
@@ -199,13 +206,14 @@ mod tests {
 
         let v2 = v1.create_next(action)?;
 
+        assert_eq!(v2.number(), 2);
+
         let v2_cols: Vec<ColumnName> = v2
             .column_data_types()
             .iter()
             .map(|cdt| cdt.column_name())
             .cloned()
             .collect();
-
         assert_eq!(v2_cols, vec![column_name!("c2")]);
 
         Ok(())
