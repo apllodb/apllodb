@@ -1,5 +1,7 @@
 use crate::{Version, VersionSet};
-use apllo_shared_components::data_structure::{ColumnDefinition, TableConstraints, TableName};
+use apllo_shared_components::data_structure::{
+    AlterTableAction, ColumnDefinition, TableConstraints, TableName,
+};
 use apllo_shared_components::error::AplloResult;
 
 /// Access methods for DDL.
@@ -32,19 +34,36 @@ pub trait AccessMethodsDdl {
 
     /// ALTER TABLE command.
     ///
-    /// This function does not execute auto-upgrade.
+    /// This function executes the following steps:
     ///
-    /// # Panics
+    /// 1. Dematerialize `v_current`.
+    /// 1. Create `v_(current+1)`.
+    /// 1. Auto-upgrade.
+    /// 1. Deactivate `v_i` `(i <= current)` if all of `v_i`'s records are DELETEd.
     ///
     /// # Failures
     ///
-    /// # Safety
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// ```
-    fn alter_table() -> AplloResult<()>;
+    fn alter_table(table_name: &TableName, action: &AlterTableAction) -> AplloResult<()> {
+        // TODO transaction (lock)
+
+        let version_set = Self::dematerialize_version_set(table_name)?;
+        let current_version_num = version_set.current_version_number();
+        let current_version = Self::dematerialize_active_version(current_version_num)?;
+
+        let alter_version_set_action = AlterVersionSetAction::from(action);
+        let next_version_action = NextVersionAction::from(action);
+
+        version_set.alter(alter_version_set_action)?;
+        let next_version = current_version.create_next(next_version_action)?;
+
+        // TODO auto-upgrade.
+        // TODO Deactivate old empty versions.
+
+        Self::materialize_version_set(version_set)?;
+        Self::materialize_version(next_version)?;
+
+        Ok(())
+    }
 
     /// DROP TABLE command.
     ///

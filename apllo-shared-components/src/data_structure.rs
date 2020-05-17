@@ -1,3 +1,4 @@
+mod alter_table_action;
 mod column_constraint_kind;
 mod column_constraints;
 mod column_definition;
@@ -10,6 +11,7 @@ mod table_constraints;
 mod table_name;
 mod validation_helper;
 
+pub use alter_table_action::AlterTableAction;
 pub use column_constraint_kind::ColumnConstraintKind;
 pub use column_constraints::ColumnConstraints;
 pub use column_definition::ColumnDefinition;
