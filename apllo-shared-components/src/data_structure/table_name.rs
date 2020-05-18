@@ -17,3 +17,9 @@ impl Display for TableName {
         write!(f, "{}", self.0)
     }
 }
+
+impl TableName {
+    pub fn as_short_name(&self) -> &ShortName {
+        &self.0
+    }
+}

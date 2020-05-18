@@ -1,4 +1,4 @@
-use crate::{Version, VersionSet};
+use crate::{Version, VersionSet, VersionSetName};
 use apllo_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
@@ -46,7 +46,8 @@ pub trait AccessMethodsDdl {
     fn alter_table(table_name: &TableName, action: &AlterTableAction) -> AplloResult<()> {
         // TODO transaction (lock)
 
-        let version_set = Self::dematerialize_version_set(table_name)?;
+        let version_set =
+            Self::dematerialize_version_set(&VersionSetName::from(table_name.clone()))?;
         let current_version_num = version_set.current_version_number();
         let current_version = Self::dematerialize_active_version(current_version_num)?;
 
@@ -82,4 +83,8 @@ pub trait AccessMethodsDdl {
     fn materialize_version_set(version_set: VersionSet) -> AplloResult<()>;
 
     fn materialize_version(version: Version) -> AplloResult<()>;
+
+    fn dematerialize_version_set(name: &VersionSetName) -> AplloResult<VersionSet>;
+
+    fn dematerialize_active_version(version_number: u64) -> AplloResult<Version>;
 }

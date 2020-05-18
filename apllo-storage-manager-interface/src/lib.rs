@@ -36,7 +36,7 @@ mod access_methods;
 mod versions;
 
 pub use crate::access_methods::AccessMethodsDdl;
-pub use crate::versions::{marker, Version, VersionSet};
+pub use crate::versions::{marker, Version, VersionSet, VersionSetName};
 
 #[cfg(test)]
 pub(crate) mod test_support;

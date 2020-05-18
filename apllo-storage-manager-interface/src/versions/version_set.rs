@@ -1,5 +1,8 @@
 mod constraint_kind;
 mod constraints;
+mod name;
+
+pub use name::VersionSetName;
 
 use apllo_shared_components::{
     data_structure::{ColumnDefinition, TableConstraints, TableName},
@@ -17,7 +20,7 @@ use std::cmp::Ordering;
 /// See: https://github.com/darwin-education/apllo/wiki/Immutable-Schema-102:-Immutable-Schema-%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E5%AE%9A%E7%BE%A9%E3%83%BB%E5%AE%9A%E7%90%86
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct VersionSet {
-    name: String,
+    name: VersionSetName,
     constraints: VersionSetConstraints,
 }
 
@@ -46,15 +49,15 @@ impl VersionSet {
     ) -> AplloResult<Self> {
         let constraints = VersionSetConstraints::new(table_constraints, column_definitions)?;
         Ok(Self {
-            name: format!("{}", table_name),
+            name: VersionSetName::from(table_name.clone()),
             constraints,
         })
     }
 
-    /// Name of VersionSet.
+    /// Ref to VersionSetName.
     ///
     /// Same as `T_create_table_command :: ... :: T_table_name`.
-    pub fn name(&self) -> &str {
-        self.name.as_str()
+    pub fn name(&self) -> &VersionSetName {
+        &self.name
     }
 }
