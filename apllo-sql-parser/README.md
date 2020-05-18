@@ -18,6 +18,8 @@ apllo-sql-parser = { version = "0.1", features = ["serde"] }
 
 ## Example
 
+### Pattern matching `AplloAst`
+
 ```rust
 use apllo_sql_parser::apllo_ast::{Command, DropTableCommand, Identifier, TableName};
 use apllo_sql_parser::{AplloAst, AplloSqlParser};
@@ -34,6 +36,22 @@ match parser.parse("DROP TABLE people") {
         ast
     ),
     Err(e) => panic!("{}", e),
+}
+```
+
+### Error handling
+
+```rust
+use apllo_sql_parser::AplloSqlParser;
+use std::error::Error;
+
+let parser = AplloSqlParser::new();
+match parser.parse("DROP TABLE FROM people") {
+    Err(e) => {
+        assert!(e.source().is_none(), "No root cause. Just a syntax error.");
+        eprintln!("Error detail: {}", e);
+    }
+    Ok(ast) => panic!("Syntax error should be reported but parsed as: {:?}", ast),
 }
 ```
 
