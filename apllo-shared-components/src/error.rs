@@ -732,7 +732,7 @@ impl AplloError {
                 sqlstate: SqlState::new("428C9".into()),
                 errcode: "ERRCODE_GENERATED_ALWAYS".into(),
             },
-            AplloErrorKind::UndefinedColumn { .. } => AplloErrorAux {
+            AplloErrorKind::UndefinedColumn => AplloErrorAux {
                 sqlstate: SqlState::new("42703".into()),
                 errcode: "ERRCODE_UNDEFINED_COLUMN".into(),
             },
@@ -740,7 +740,7 @@ impl AplloError {
                 sqlstate: SqlState::new("42883".into()),
                 errcode: "ERRCODE_UNDEFINED_FUNCTION".into(),
             },
-            AplloErrorKind::UndefinedTable { .. } => AplloErrorAux {
+            AplloErrorKind::UndefinedTable => AplloErrorAux {
                 sqlstate: SqlState::new("42P01".into()),
                 errcode: "ERRCODE_UNDEFINED_TABLE".into(),
             },
@@ -752,7 +752,7 @@ impl AplloError {
                 sqlstate: SqlState::new("42704".into()),
                 errcode: "ERRCODE_UNDEFINED_OBJECT".into(),
             },
-            AplloErrorKind::DuplicateColumn { .. } => AplloErrorAux {
+            AplloErrorKind::DuplicateColumn => AplloErrorAux {
                 sqlstate: SqlState::new("42701".into()),
                 errcode: "ERRCODE_DUPLICATE_COLUMN".into(),
             },
@@ -776,11 +776,11 @@ impl AplloError {
                 sqlstate: SqlState::new("42P06".into()),
                 errcode: "ERRCODE_DUPLICATE_SCHEMA".into(),
             },
-            AplloErrorKind::DuplicateTable { .. } => AplloErrorAux {
+            AplloErrorKind::DuplicateTable => AplloErrorAux {
                 sqlstate: SqlState::new("42P07".into()),
                 errcode: "ERRCODE_DUPLICATE_TABLE".into(),
             },
-            AplloErrorKind::DuplicateAlias { .. } => AplloErrorAux {
+            AplloErrorKind::DuplicateAlias => AplloErrorAux {
                 sqlstate: SqlState::new("42712".into()),
                 errcode: "ERRCODE_DUPLICATE_ALIAS".into(),
             },
