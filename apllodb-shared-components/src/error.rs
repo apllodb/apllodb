@@ -1,23 +1,23 @@
-//! Provides Result type and Error type commonly used in apllo workspace.
+//! Provides Result type and Error type commonly used in apllodb workspace.
 
 mod aux;
 mod dummy;
 mod kind;
 mod sqlstate;
 
-use aux::AplloErrorAux;
+use aux::ApllodbErrorAux;
 use dummy::DummyError;
-pub use kind::AplloErrorKind;
+pub use kind::ApllodbErrorKind;
 use sqlstate::SqlState;
 use std::{error::Error, fmt::Display};
 
-/// Result type commonly used in apllo workspace.
-pub type AplloResult<T> = Result<T, AplloError>;
+/// Result type commonly used in apllodb workspace.
+pub type ApllodbResult<T> = Result<T, ApllodbError>;
 
-/// Error type commonly used in apllo workspace.
+/// Error type commonly used in apllodb workspace.
 #[derive(Debug)]
-pub struct AplloError {
-    kind: AplloErrorKind,
+pub struct ApllodbError {
+    kind: ApllodbErrorKind,
 
     /// Human-readable description of each error instance.
     desc: String,
@@ -31,12 +31,12 @@ pub struct AplloError {
     source: Box<dyn Error + Sync + Send + 'static>,
 }
 
-impl AplloError {
+impl ApllodbError {
     /// Constructor.
     ///
     /// Pass `Some(SourceError)` if you have one.
     pub fn new<S: Into<String>>(
-        kind: AplloErrorKind,
+        kind: ApllodbErrorKind,
         desc: S,
         source: Option<Box<dyn Error + Sync + Send + 'static>>,
     ) -> Self {
@@ -51,7 +51,7 @@ impl AplloError {
     }
 }
 
-impl Error for AplloError {
+impl Error for ApllodbError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self.source.downcast_ref::<DummyError>() {
             Some(_) => None,
@@ -60,7 +60,7 @@ impl Error for AplloError {
     }
 }
 
-impl Display for AplloError {
+impl Display for ApllodbError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -74,15 +74,15 @@ impl Display for AplloError {
     }
 }
 
-impl AplloError {
+impl ApllodbError {
     /// Use this for error handling with pattern match.
-    pub fn kind(&self) -> &AplloErrorKind {
+    pub fn kind(&self) -> &ApllodbErrorKind {
         &self.kind
     }
 
     /// [SQLSTATE](https://www.postgresql.org/docs/12/errcodes-appendix.html).
     ///
-    /// Although [kind()](struct.AplloError.html#method.kind) is considered to be a better way for error handling,
+    /// Although [kind()](struct.ApllodbError.html#method.kind) is considered to be a better way for error handling,
     /// this might be helpful for coordinating with some libraries your client depends on.
     pub fn sqlstate(&self) -> SqlState {
         self.aux().sqlstate
@@ -92,755 +92,755 @@ impl AplloError {
         self.aux().errcode
     }
 
-    fn aux(&self) -> AplloErrorAux {
+    fn aux(&self) -> ApllodbErrorAux {
         match self.kind {
             // One-liner:
-            // $ egrep '^[0-4][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]' errcodes.txt |perl -pe 's/(?:^|_)([a-z])/\u\1/g' |awk '{print $4 " => AplloErrorAux { sqlstate: SqlState::new(___" $1 "___.into()), errcode: ___" $3 "___.into()},"}' |perl -pe 's/(^[a-z])/AplloErrorKind::\u\1/g' |perl -pe 's/___/"/g' |grep "^Apllo" |pbcopy
-            AplloErrorKind::NoData => AplloErrorAux {
+            // $ egrep '^[0-4][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]' errcodes.txt |perl -pe 's/(?:^|_)([a-z])/\u\1/g' |awk '{print $4 " => ApllodbErrorAux { sqlstate: SqlState::new(___" $1 "___.into()), errcode: ___" $3 "___.into()},"}' |perl -pe 's/(^[a-z])/ApllodbErrorKind::\u\1/g' |perl -pe 's/___/"/g' |grep "^Apllodb" |pbcopy
+            ApllodbErrorKind::NoData => ApllodbErrorAux {
                 sqlstate: SqlState::new("02000".into()),
                 errcode: "ERRCODE_NO_DATA".into(),
             },
-            AplloErrorKind::NoAdditionalDynamicResultSetsReturned => AplloErrorAux {
+            ApllodbErrorKind::NoAdditionalDynamicResultSetsReturned => ApllodbErrorAux {
                 sqlstate: SqlState::new("02001".into()),
                 errcode: "ERRCODE_NO_ADDITIONAL_DYNAMIC_RESULT_SETS_RETURNED".into(),
             },
-            AplloErrorKind::SqlStatementNotYetComplete => AplloErrorAux {
+            ApllodbErrorKind::SqlStatementNotYetComplete => ApllodbErrorAux {
                 sqlstate: SqlState::new("03000".into()),
                 errcode: "ERRCODE_SQL_STATEMENT_NOT_YET_COMPLETE".into(),
             },
-            AplloErrorKind::ConnectionException => AplloErrorAux {
+            ApllodbErrorKind::ConnectionException => ApllodbErrorAux {
                 sqlstate: SqlState::new("08000".into()),
                 errcode: "ERRCODE_CONNECTION_EXCEPTION".into(),
             },
-            AplloErrorKind::ConnectionDoesNotExist => AplloErrorAux {
+            ApllodbErrorKind::ConnectionDoesNotExist => ApllodbErrorAux {
                 sqlstate: SqlState::new("08003".into()),
                 errcode: "ERRCODE_CONNECTION_DOES_NOT_EXIST".into(),
             },
-            AplloErrorKind::ConnectionFailure => AplloErrorAux {
+            ApllodbErrorKind::ConnectionFailure => ApllodbErrorAux {
                 sqlstate: SqlState::new("08006".into()),
                 errcode: "ERRCODE_CONNECTION_FAILURE".into(),
             },
-            AplloErrorKind::SqlclientUnableToEstablishSqlconnection => AplloErrorAux {
+            ApllodbErrorKind::SqlclientUnableToEstablishSqlconnection => ApllodbErrorAux {
                 sqlstate: SqlState::new("08001".into()),
                 errcode: "ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION".into(),
             },
-            AplloErrorKind::SqlserverRejectedEstablishmentOfSqlconnection => AplloErrorAux {
+            ApllodbErrorKind::SqlserverRejectedEstablishmentOfSqlconnection => ApllodbErrorAux {
                 sqlstate: SqlState::new("08004".into()),
                 errcode: "ERRCODE_SQLSERVER_REJECTED_ESTABLISHMENT_OF_SQLCONNECTION".into(),
             },
-            AplloErrorKind::TransactionResolutionUnknown => AplloErrorAux {
+            ApllodbErrorKind::TransactionResolutionUnknown => ApllodbErrorAux {
                 sqlstate: SqlState::new("08007".into()),
                 errcode: "ERRCODE_TRANSACTION_RESOLUTION_UNKNOWN".into(),
             },
-            AplloErrorKind::ProtocolViolation => AplloErrorAux {
+            ApllodbErrorKind::ProtocolViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("08P01".into()),
                 errcode: "ERRCODE_PROTOCOL_VIOLATION".into(),
             },
-            AplloErrorKind::TriggeredActionException => AplloErrorAux {
+            ApllodbErrorKind::TriggeredActionException => ApllodbErrorAux {
                 sqlstate: SqlState::new("09000".into()),
                 errcode: "ERRCODE_TRIGGERED_ACTION_EXCEPTION".into(),
             },
-            AplloErrorKind::FeatureNotSupported => AplloErrorAux {
+            ApllodbErrorKind::FeatureNotSupported => ApllodbErrorAux {
                 sqlstate: SqlState::new("0A000".into()),
                 errcode: "ERRCODE_FEATURE_NOT_SUPPORTED".into(),
             },
-            AplloErrorKind::InvalidTransactionInitiation => AplloErrorAux {
+            ApllodbErrorKind::InvalidTransactionInitiation => ApllodbErrorAux {
                 sqlstate: SqlState::new("0B000".into()),
                 errcode: "ERRCODE_INVALID_TRANSACTION_INITIATION".into(),
             },
-            AplloErrorKind::LocatorException => AplloErrorAux {
+            ApllodbErrorKind::LocatorException => ApllodbErrorAux {
                 sqlstate: SqlState::new("0F000".into()),
                 errcode: "ERRCODE_LOCATOR_EXCEPTION".into(),
             },
-            AplloErrorKind::InvalidLocatorSpecification => AplloErrorAux {
+            ApllodbErrorKind::InvalidLocatorSpecification => ApllodbErrorAux {
                 sqlstate: SqlState::new("0F001".into()),
                 errcode: "ERRCODE_L_E_INVALID_SPECIFICATION".into(),
             },
-            AplloErrorKind::InvalidGrantor => AplloErrorAux {
+            ApllodbErrorKind::InvalidGrantor => ApllodbErrorAux {
                 sqlstate: SqlState::new("0L000".into()),
                 errcode: "ERRCODE_INVALID_GRANTOR".into(),
             },
-            AplloErrorKind::InvalidGrantOperation => AplloErrorAux {
+            ApllodbErrorKind::InvalidGrantOperation => ApllodbErrorAux {
                 sqlstate: SqlState::new("0LP01".into()),
                 errcode: "ERRCODE_INVALID_GRANT_OPERATION".into(),
             },
-            AplloErrorKind::InvalidRoleSpecification => AplloErrorAux {
+            ApllodbErrorKind::InvalidRoleSpecification => ApllodbErrorAux {
                 sqlstate: SqlState::new("0P000".into()),
                 errcode: "ERRCODE_INVALID_ROLE_SPECIFICATION".into(),
             },
-            AplloErrorKind::DiagnosticsException => AplloErrorAux {
+            ApllodbErrorKind::DiagnosticsException => ApllodbErrorAux {
                 sqlstate: SqlState::new("0Z000".into()),
                 errcode: "ERRCODE_DIAGNOSTICS_EXCEPTION".into(),
             },
-            AplloErrorKind::StackedDiagnosticsAccessedWithoutActiveHandler => AplloErrorAux {
+            ApllodbErrorKind::StackedDiagnosticsAccessedWithoutActiveHandler => ApllodbErrorAux {
                 sqlstate: SqlState::new("0Z002".into()),
                 errcode: "ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER".into(),
             },
-            AplloErrorKind::CaseNotFound => AplloErrorAux {
+            ApllodbErrorKind::CaseNotFound => ApllodbErrorAux {
                 sqlstate: SqlState::new("20000".into()),
                 errcode: "ERRCODE_CASE_NOT_FOUND".into(),
             },
-            AplloErrorKind::CardinalityViolation => AplloErrorAux {
+            ApllodbErrorKind::CardinalityViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("21000".into()),
                 errcode: "ERRCODE_CARDINALITY_VIOLATION".into(),
             },
-            AplloErrorKind::DataException => AplloErrorAux {
+            ApllodbErrorKind::DataException => ApllodbErrorAux {
                 sqlstate: SqlState::new("22000".into()),
                 errcode: "ERRCODE_DATA_EXCEPTION".into(),
             },
-            AplloErrorKind::ArraySubscriptError => AplloErrorAux {
+            ApllodbErrorKind::ArraySubscriptError => ApllodbErrorAux {
                 sqlstate: SqlState::new("2202E".into()),
                 errcode: "ERRCODE_ARRAY_SUBSCRIPT_ERROR".into(),
             },
-            AplloErrorKind::CharacterNotInRepertoire => AplloErrorAux {
+            ApllodbErrorKind::CharacterNotInRepertoire => ApllodbErrorAux {
                 sqlstate: SqlState::new("22021".into()),
                 errcode: "ERRCODE_CHARACTER_NOT_IN_REPERTOIRE".into(),
             },
-            AplloErrorKind::DatetimeFieldOverflow => AplloErrorAux {
+            ApllodbErrorKind::DatetimeFieldOverflow => ApllodbErrorAux {
                 sqlstate: SqlState::new("22008".into()),
                 errcode: "ERRCODE_DATETIME_FIELD_OVERFLOW".into(),
             },
-            AplloErrorKind::DivisionByZero => AplloErrorAux {
+            ApllodbErrorKind::DivisionByZero => ApllodbErrorAux {
                 sqlstate: SqlState::new("22012".into()),
                 errcode: "ERRCODE_DIVISION_BY_ZERO".into(),
             },
-            AplloErrorKind::ErrorInAssignment => AplloErrorAux {
+            ApllodbErrorKind::ErrorInAssignment => ApllodbErrorAux {
                 sqlstate: SqlState::new("22005".into()),
                 errcode: "ERRCODE_ERROR_IN_ASSIGNMENT".into(),
             },
-            AplloErrorKind::EscapeCharacterConflict => AplloErrorAux {
+            ApllodbErrorKind::EscapeCharacterConflict => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200B".into()),
                 errcode: "ERRCODE_ESCAPE_CHARACTER_CONFLICT".into(),
             },
-            AplloErrorKind::IndicatorOverflow => AplloErrorAux {
+            ApllodbErrorKind::IndicatorOverflow => ApllodbErrorAux {
                 sqlstate: SqlState::new("22022".into()),
                 errcode: "ERRCODE_INDICATOR_OVERFLOW".into(),
             },
-            AplloErrorKind::IntervalFieldOverflow => AplloErrorAux {
+            ApllodbErrorKind::IntervalFieldOverflow => ApllodbErrorAux {
                 sqlstate: SqlState::new("22015".into()),
                 errcode: "ERRCODE_INTERVAL_FIELD_OVERFLOW".into(),
             },
-            AplloErrorKind::InvalidArgumentForLogarithm => AplloErrorAux {
+            ApllodbErrorKind::InvalidArgumentForLogarithm => ApllodbErrorAux {
                 sqlstate: SqlState::new("2201E".into()),
                 errcode: "ERRCODE_INVALID_ARGUMENT_FOR_LOG".into(),
             },
-            AplloErrorKind::InvalidArgumentForNtileFunction => AplloErrorAux {
+            ApllodbErrorKind::InvalidArgumentForNtileFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("22014".into()),
                 errcode: "ERRCODE_INVALID_ARGUMENT_FOR_NTILE".into(),
             },
-            AplloErrorKind::InvalidArgumentForNthValueFunction => AplloErrorAux {
+            ApllodbErrorKind::InvalidArgumentForNthValueFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("22016".into()),
                 errcode: "ERRCODE_INVALID_ARGUMENT_FOR_NTH_VALUE".into(),
             },
-            AplloErrorKind::InvalidArgumentForPowerFunction => AplloErrorAux {
+            ApllodbErrorKind::InvalidArgumentForPowerFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("2201F".into()),
                 errcode: "ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION".into(),
             },
-            AplloErrorKind::InvalidArgumentForWidthBucketFunction => AplloErrorAux {
+            ApllodbErrorKind::InvalidArgumentForWidthBucketFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("2201G".into()),
                 errcode: "ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION".into(),
             },
-            AplloErrorKind::InvalidCharacterValueForCast => AplloErrorAux {
+            ApllodbErrorKind::InvalidCharacterValueForCast => ApllodbErrorAux {
                 sqlstate: SqlState::new("22018".into()),
                 errcode: "ERRCODE_INVALID_CHARACTER_VALUE_FOR_CAST".into(),
             },
-            AplloErrorKind::InvalidDatetimeFormat => AplloErrorAux {
+            ApllodbErrorKind::InvalidDatetimeFormat => ApllodbErrorAux {
                 sqlstate: SqlState::new("22007".into()),
                 errcode: "ERRCODE_INVALID_DATETIME_FORMAT".into(),
             },
-            AplloErrorKind::InvalidEscapeCharacter => AplloErrorAux {
+            ApllodbErrorKind::InvalidEscapeCharacter => ApllodbErrorAux {
                 sqlstate: SqlState::new("22019".into()),
                 errcode: "ERRCODE_INVALID_ESCAPE_CHARACTER".into(),
             },
-            AplloErrorKind::InvalidEscapeOctet => AplloErrorAux {
+            ApllodbErrorKind::InvalidEscapeOctet => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200D".into()),
                 errcode: "ERRCODE_INVALID_ESCAPE_OCTET".into(),
             },
-            AplloErrorKind::InvalidEscapeSequence => AplloErrorAux {
+            ApllodbErrorKind::InvalidEscapeSequence => ApllodbErrorAux {
                 sqlstate: SqlState::new("22025".into()),
                 errcode: "ERRCODE_INVALID_ESCAPE_SEQUENCE".into(),
             },
-            AplloErrorKind::NonstandardUseOfEscapeCharacter => AplloErrorAux {
+            ApllodbErrorKind::NonstandardUseOfEscapeCharacter => ApllodbErrorAux {
                 sqlstate: SqlState::new("22P06".into()),
                 errcode: "ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER".into(),
             },
-            AplloErrorKind::InvalidIndicatorParameterValue => AplloErrorAux {
+            ApllodbErrorKind::InvalidIndicatorParameterValue => ApllodbErrorAux {
                 sqlstate: SqlState::new("22010".into()),
                 errcode: "ERRCODE_INVALID_INDICATOR_PARAMETER_VALUE".into(),
             },
-            AplloErrorKind::InvalidParameterValue => AplloErrorAux {
+            ApllodbErrorKind::InvalidParameterValue => ApllodbErrorAux {
                 sqlstate: SqlState::new("22023".into()),
                 errcode: "ERRCODE_INVALID_PARAMETER_VALUE".into(),
             },
-            AplloErrorKind::InvalidPrecedingOrFollowingSize => AplloErrorAux {
+            ApllodbErrorKind::InvalidPrecedingOrFollowingSize => ApllodbErrorAux {
                 sqlstate: SqlState::new("22013".into()),
                 errcode: "ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE".into(),
             },
-            AplloErrorKind::InvalidRegularExpression => AplloErrorAux {
+            ApllodbErrorKind::InvalidRegularExpression => ApllodbErrorAux {
                 sqlstate: SqlState::new("2201B".into()),
                 errcode: "ERRCODE_INVALID_REGULAR_EXPRESSION".into(),
             },
-            AplloErrorKind::InvalidRowCountInLimitClause => AplloErrorAux {
+            ApllodbErrorKind::InvalidRowCountInLimitClause => ApllodbErrorAux {
                 sqlstate: SqlState::new("2201W".into()),
                 errcode: "ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE".into(),
             },
-            AplloErrorKind::InvalidRowCountInResultOffsetClause => AplloErrorAux {
+            ApllodbErrorKind::InvalidRowCountInResultOffsetClause => ApllodbErrorAux {
                 sqlstate: SqlState::new("2201X".into()),
                 errcode: "ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE".into(),
             },
-            AplloErrorKind::InvalidTablesampleArgument => AplloErrorAux {
+            ApllodbErrorKind::InvalidTablesampleArgument => ApllodbErrorAux {
                 sqlstate: SqlState::new("2202H".into()),
                 errcode: "ERRCODE_INVALID_TABLESAMPLE_ARGUMENT".into(),
             },
-            AplloErrorKind::InvalidTablesampleRepeat => AplloErrorAux {
+            ApllodbErrorKind::InvalidTablesampleRepeat => ApllodbErrorAux {
                 sqlstate: SqlState::new("2202G".into()),
                 errcode: "ERRCODE_INVALID_TABLESAMPLE_REPEAT".into(),
             },
-            AplloErrorKind::InvalidTimeZoneDisplacementValue => AplloErrorAux {
+            ApllodbErrorKind::InvalidTimeZoneDisplacementValue => ApllodbErrorAux {
                 sqlstate: SqlState::new("22009".into()),
                 errcode: "ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE".into(),
             },
-            AplloErrorKind::InvalidUseOfEscapeCharacter => AplloErrorAux {
+            ApllodbErrorKind::InvalidUseOfEscapeCharacter => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200C".into()),
                 errcode: "ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER".into(),
             },
-            AplloErrorKind::MostSpecificTypeMismatch => AplloErrorAux {
+            ApllodbErrorKind::MostSpecificTypeMismatch => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200G".into()),
                 errcode: "ERRCODE_MOST_SPECIFIC_TYPE_MISMATCH".into(),
             },
-            AplloErrorKind::NullValueNotAllowed => AplloErrorAux {
+            ApllodbErrorKind::NullValueNotAllowed => ApllodbErrorAux {
                 sqlstate: SqlState::new("22004".into()),
                 errcode: "ERRCODE_NULL_VALUE_NOT_ALLOWED".into(),
             },
-            AplloErrorKind::NullValueNoIndicatorParameter => AplloErrorAux {
+            ApllodbErrorKind::NullValueNoIndicatorParameter => ApllodbErrorAux {
                 sqlstate: SqlState::new("22002".into()),
                 errcode: "ERRCODE_NULL_VALUE_NO_INDICATOR_PARAMETER".into(),
             },
-            AplloErrorKind::NumericValueOutOfRange => AplloErrorAux {
+            ApllodbErrorKind::NumericValueOutOfRange => ApllodbErrorAux {
                 sqlstate: SqlState::new("22003".into()),
                 errcode: "ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE".into(),
             },
-            AplloErrorKind::SequenceGeneratorLimitExceeded => AplloErrorAux {
+            ApllodbErrorKind::SequenceGeneratorLimitExceeded => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200H".into()),
                 errcode: "ERRCODE_SEQUENCE_GENERATOR_LIMIT_EXCEEDED".into(),
             },
-            AplloErrorKind::StringDataLengthMismatch => AplloErrorAux {
+            ApllodbErrorKind::StringDataLengthMismatch => ApllodbErrorAux {
                 sqlstate: SqlState::new("22026".into()),
                 errcode: "ERRCODE_STRING_DATA_LENGTH_MISMATCH".into(),
             },
-            AplloErrorKind::StringDataRightTruncation => AplloErrorAux {
+            ApllodbErrorKind::StringDataRightTruncation => ApllodbErrorAux {
                 sqlstate: SqlState::new("22001".into()),
                 errcode: "ERRCODE_STRING_DATA_RIGHT_TRUNCATION".into(),
             },
-            AplloErrorKind::SubstringError => AplloErrorAux {
+            ApllodbErrorKind::SubstringError => ApllodbErrorAux {
                 sqlstate: SqlState::new("22011".into()),
                 errcode: "ERRCODE_SUBSTRING_ERROR".into(),
             },
-            AplloErrorKind::TrimError => AplloErrorAux {
+            ApllodbErrorKind::TrimError => ApllodbErrorAux {
                 sqlstate: SqlState::new("22027".into()),
                 errcode: "ERRCODE_TRIM_ERROR".into(),
             },
-            AplloErrorKind::UnterminatedCString => AplloErrorAux {
+            ApllodbErrorKind::UnterminatedCString => ApllodbErrorAux {
                 sqlstate: SqlState::new("22024".into()),
                 errcode: "ERRCODE_UNTERMINATED_C_STRING".into(),
             },
-            AplloErrorKind::ZeroLengthCharacterString => AplloErrorAux {
+            ApllodbErrorKind::ZeroLengthCharacterString => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200F".into()),
                 errcode: "ERRCODE_ZERO_LENGTH_CHARACTER_STRING".into(),
             },
-            AplloErrorKind::FloatingPointException => AplloErrorAux {
+            ApllodbErrorKind::FloatingPointException => ApllodbErrorAux {
                 sqlstate: SqlState::new("22P01".into()),
                 errcode: "ERRCODE_FLOATING_POINT_EXCEPTION".into(),
             },
-            AplloErrorKind::InvalidTextRepresentation => AplloErrorAux {
+            ApllodbErrorKind::InvalidTextRepresentation => ApllodbErrorAux {
                 sqlstate: SqlState::new("22P02".into()),
                 errcode: "ERRCODE_INVALID_TEXT_REPRESENTATION".into(),
             },
-            AplloErrorKind::InvalidBinaryRepresentation => AplloErrorAux {
+            ApllodbErrorKind::InvalidBinaryRepresentation => ApllodbErrorAux {
                 sqlstate: SqlState::new("22P03".into()),
                 errcode: "ERRCODE_INVALID_BINARY_REPRESENTATION".into(),
             },
-            AplloErrorKind::BadCopyFileFormat => AplloErrorAux {
+            ApllodbErrorKind::BadCopyFileFormat => ApllodbErrorAux {
                 sqlstate: SqlState::new("22P04".into()),
                 errcode: "ERRCODE_BAD_COPY_FILE_FORMAT".into(),
             },
-            AplloErrorKind::UntranslatableCharacter => AplloErrorAux {
+            ApllodbErrorKind::UntranslatableCharacter => ApllodbErrorAux {
                 sqlstate: SqlState::new("22P05".into()),
                 errcode: "ERRCODE_UNTRANSLATABLE_CHARACTER".into(),
             },
-            AplloErrorKind::NotAnXmlDocument => AplloErrorAux {
+            ApllodbErrorKind::NotAnXmlDocument => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200L".into()),
                 errcode: "ERRCODE_NOT_AN_XML_DOCUMENT".into(),
             },
-            AplloErrorKind::InvalidXmlDocument => AplloErrorAux {
+            ApllodbErrorKind::InvalidXmlDocument => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200M".into()),
                 errcode: "ERRCODE_INVALID_XML_DOCUMENT".into(),
             },
-            AplloErrorKind::InvalidXmlContent => AplloErrorAux {
+            ApllodbErrorKind::InvalidXmlContent => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200N".into()),
                 errcode: "ERRCODE_INVALID_XML_CONTENT".into(),
             },
-            AplloErrorKind::InvalidXmlComment => AplloErrorAux {
+            ApllodbErrorKind::InvalidXmlComment => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200S".into()),
                 errcode: "ERRCODE_INVALID_XML_COMMENT".into(),
             },
-            AplloErrorKind::InvalidXmlProcessingInstruction => AplloErrorAux {
+            ApllodbErrorKind::InvalidXmlProcessingInstruction => ApllodbErrorAux {
                 sqlstate: SqlState::new("2200T".into()),
                 errcode: "ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION".into(),
             },
-            AplloErrorKind::DuplicateJsonObjectKeyValue => AplloErrorAux {
+            ApllodbErrorKind::DuplicateJsonObjectKeyValue => ApllodbErrorAux {
                 sqlstate: SqlState::new("22030".into()),
                 errcode: "ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE".into(),
             },
-            AplloErrorKind::InvalidArgumentForJsonDatetimeFunction => AplloErrorAux {
+            ApllodbErrorKind::InvalidArgumentForJsonDatetimeFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("22031".into()),
                 errcode: "ERRCODE_INVALID_ARGUMENT_FOR_JSON_DATETIME_FUNCTION".into(),
             },
-            AplloErrorKind::InvalidJsonText => AplloErrorAux {
+            ApllodbErrorKind::InvalidJsonText => ApllodbErrorAux {
                 sqlstate: SqlState::new("22032".into()),
                 errcode: "ERRCODE_INVALID_JSON_TEXT".into(),
             },
-            AplloErrorKind::InvalidSqlJsonSubscript => AplloErrorAux {
+            ApllodbErrorKind::InvalidSqlJsonSubscript => ApllodbErrorAux {
                 sqlstate: SqlState::new("22033".into()),
                 errcode: "ERRCODE_INVALID_SQL_JSON_SUBSCRIPT".into(),
             },
-            AplloErrorKind::MoreThanOneSqlJsonItem => AplloErrorAux {
+            ApllodbErrorKind::MoreThanOneSqlJsonItem => ApllodbErrorAux {
                 sqlstate: SqlState::new("22034".into()),
                 errcode: "ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM".into(),
             },
-            AplloErrorKind::NoSqlJsonItem => AplloErrorAux {
+            ApllodbErrorKind::NoSqlJsonItem => ApllodbErrorAux {
                 sqlstate: SqlState::new("22035".into()),
                 errcode: "ERRCODE_NO_SQL_JSON_ITEM".into(),
             },
-            AplloErrorKind::NonNumericSqlJsonItem => AplloErrorAux {
+            ApllodbErrorKind::NonNumericSqlJsonItem => ApllodbErrorAux {
                 sqlstate: SqlState::new("22036".into()),
                 errcode: "ERRCODE_NON_NUMERIC_SQL_JSON_ITEM".into(),
             },
-            AplloErrorKind::NonUniqueKeysInAJsonObject => AplloErrorAux {
+            ApllodbErrorKind::NonUniqueKeysInAJsonObject => ApllodbErrorAux {
                 sqlstate: SqlState::new("22037".into()),
                 errcode: "ERRCODE_NON_UNIQUE_KEYS_IN_A_JSON_OBJECT".into(),
             },
-            AplloErrorKind::SingletonSqlJsonItemRequired => AplloErrorAux {
+            ApllodbErrorKind::SingletonSqlJsonItemRequired => ApllodbErrorAux {
                 sqlstate: SqlState::new("22038".into()),
                 errcode: "ERRCODE_SINGLETON_SQL_JSON_ITEM_REQUIRED".into(),
             },
-            AplloErrorKind::SqlJsonArrayNotFound => AplloErrorAux {
+            ApllodbErrorKind::SqlJsonArrayNotFound => ApllodbErrorAux {
                 sqlstate: SqlState::new("22039".into()),
                 errcode: "ERRCODE_SQL_JSON_ARRAY_NOT_FOUND".into(),
             },
-            AplloErrorKind::SqlJsonMemberNotFound => AplloErrorAux {
+            ApllodbErrorKind::SqlJsonMemberNotFound => ApllodbErrorAux {
                 sqlstate: SqlState::new("2203A".into()),
                 errcode: "ERRCODE_SQL_JSON_MEMBER_NOT_FOUND".into(),
             },
-            AplloErrorKind::SqlJsonNumberNotFound => AplloErrorAux {
+            ApllodbErrorKind::SqlJsonNumberNotFound => ApllodbErrorAux {
                 sqlstate: SqlState::new("2203B".into()),
                 errcode: "ERRCODE_SQL_JSON_NUMBER_NOT_FOUND".into(),
             },
-            AplloErrorKind::SqlJsonObjectNotFound => AplloErrorAux {
+            ApllodbErrorKind::SqlJsonObjectNotFound => ApllodbErrorAux {
                 sqlstate: SqlState::new("2203C".into()),
                 errcode: "ERRCODE_SQL_JSON_OBJECT_NOT_FOUND".into(),
             },
-            AplloErrorKind::TooManyJsonArrayElements => AplloErrorAux {
+            ApllodbErrorKind::TooManyJsonArrayElements => ApllodbErrorAux {
                 sqlstate: SqlState::new("2203D".into()),
                 errcode: "ERRCODE_TOO_MANY_JSON_ARRAY_ELEMENTS".into(),
             },
-            AplloErrorKind::TooManyJsonObjectMembers => AplloErrorAux {
+            ApllodbErrorKind::TooManyJsonObjectMembers => ApllodbErrorAux {
                 sqlstate: SqlState::new("2203E".into()),
                 errcode: "ERRCODE_TOO_MANY_JSON_OBJECT_MEMBERS".into(),
             },
-            AplloErrorKind::SqlJsonScalarRequired => AplloErrorAux {
+            ApllodbErrorKind::SqlJsonScalarRequired => ApllodbErrorAux {
                 sqlstate: SqlState::new("2203F".into()),
                 errcode: "ERRCODE_SQL_JSON_SCALAR_REQUIRED".into(),
             },
-            AplloErrorKind::IntegrityConstraintViolation => AplloErrorAux {
+            ApllodbErrorKind::IntegrityConstraintViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("23000".into()),
                 errcode: "ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION".into(),
             },
-            AplloErrorKind::RestrictViolation => AplloErrorAux {
+            ApllodbErrorKind::RestrictViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("23001".into()),
                 errcode: "ERRCODE_RESTRICT_VIOLATION".into(),
             },
-            AplloErrorKind::NotNullViolation => AplloErrorAux {
+            ApllodbErrorKind::NotNullViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("23502".into()),
                 errcode: "ERRCODE_NOT_NULL_VIOLATION".into(),
             },
-            AplloErrorKind::ForeignKeyViolation => AplloErrorAux {
+            ApllodbErrorKind::ForeignKeyViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("23503".into()),
                 errcode: "ERRCODE_FOREIGN_KEY_VIOLATION".into(),
             },
-            AplloErrorKind::UniqueViolation => AplloErrorAux {
+            ApllodbErrorKind::UniqueViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("23505".into()),
                 errcode: "ERRCODE_UNIQUE_VIOLATION".into(),
             },
-            AplloErrorKind::CheckViolation => AplloErrorAux {
+            ApllodbErrorKind::CheckViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("23514".into()),
                 errcode: "ERRCODE_CHECK_VIOLATION".into(),
             },
-            AplloErrorKind::ExclusionViolation => AplloErrorAux {
+            ApllodbErrorKind::ExclusionViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("23P01".into()),
                 errcode: "ERRCODE_EXCLUSION_VIOLATION".into(),
             },
-            AplloErrorKind::InvalidCursorState => AplloErrorAux {
+            ApllodbErrorKind::InvalidCursorState => ApllodbErrorAux {
                 sqlstate: SqlState::new("24000".into()),
                 errcode: "ERRCODE_INVALID_CURSOR_STATE".into(),
             },
-            AplloErrorKind::InvalidTransactionState => AplloErrorAux {
+            ApllodbErrorKind::InvalidTransactionState => ApllodbErrorAux {
                 sqlstate: SqlState::new("25000".into()),
                 errcode: "ERRCODE_INVALID_TRANSACTION_STATE".into(),
             },
-            AplloErrorKind::ActiveSqlTransaction => AplloErrorAux {
+            ApllodbErrorKind::ActiveSqlTransaction => ApllodbErrorAux {
                 sqlstate: SqlState::new("25001".into()),
                 errcode: "ERRCODE_ACTIVE_SQL_TRANSACTION".into(),
             },
-            AplloErrorKind::BranchTransactionAlreadyActive => AplloErrorAux {
+            ApllodbErrorKind::BranchTransactionAlreadyActive => ApllodbErrorAux {
                 sqlstate: SqlState::new("25002".into()),
                 errcode: "ERRCODE_BRANCH_TRANSACTION_ALREADY_ACTIVE".into(),
             },
-            AplloErrorKind::HeldCursorRequiresSameIsolationLevel => AplloErrorAux {
+            ApllodbErrorKind::HeldCursorRequiresSameIsolationLevel => ApllodbErrorAux {
                 sqlstate: SqlState::new("25008".into()),
                 errcode: "ERRCODE_HELD_CURSOR_REQUIRES_SAME_ISOLATION_LEVEL".into(),
             },
-            AplloErrorKind::InappropriateAccessModeForBranchTransaction => AplloErrorAux {
+            ApllodbErrorKind::InappropriateAccessModeForBranchTransaction => ApllodbErrorAux {
                 sqlstate: SqlState::new("25003".into()),
                 errcode: "ERRCODE_INAPPROPRIATE_ACCESS_MODE_FOR_BRANCH_TRANSACTION".into(),
             },
-            AplloErrorKind::InappropriateIsolationLevelForBranchTransaction => AplloErrorAux {
+            ApllodbErrorKind::InappropriateIsolationLevelForBranchTransaction => ApllodbErrorAux {
                 sqlstate: SqlState::new("25004".into()),
                 errcode: "ERRCODE_INAPPROPRIATE_ISOLATION_LEVEL_FOR_BRANCH_TRANSACTION".into(),
             },
-            AplloErrorKind::NoActiveSqlTransactionForBranchTransaction => AplloErrorAux {
+            ApllodbErrorKind::NoActiveSqlTransactionForBranchTransaction => ApllodbErrorAux {
                 sqlstate: SqlState::new("25005".into()),
                 errcode: "ERRCODE_NO_ACTIVE_SQL_TRANSACTION_FOR_BRANCH_TRANSACTION".into(),
             },
-            AplloErrorKind::ReadOnlySqlTransaction => AplloErrorAux {
+            ApllodbErrorKind::ReadOnlySqlTransaction => ApllodbErrorAux {
                 sqlstate: SqlState::new("25006".into()),
                 errcode: "ERRCODE_READ_ONLY_SQL_TRANSACTION".into(),
             },
-            AplloErrorKind::SchemaAndDataStatementMixingNotSupported => AplloErrorAux {
+            ApllodbErrorKind::SchemaAndDataStatementMixingNotSupported => ApllodbErrorAux {
                 sqlstate: SqlState::new("25007".into()),
                 errcode: "ERRCODE_SCHEMA_AND_DATA_STATEMENT_MIXING_NOT_SUPPORTED".into(),
             },
-            AplloErrorKind::NoActiveSqlTransaction => AplloErrorAux {
+            ApllodbErrorKind::NoActiveSqlTransaction => ApllodbErrorAux {
                 sqlstate: SqlState::new("25P01".into()),
                 errcode: "ERRCODE_NO_ACTIVE_SQL_TRANSACTION".into(),
             },
-            AplloErrorKind::InFailedSqlTransaction => AplloErrorAux {
+            ApllodbErrorKind::InFailedSqlTransaction => ApllodbErrorAux {
                 sqlstate: SqlState::new("25P02".into()),
                 errcode: "ERRCODE_IN_FAILED_SQL_TRANSACTION".into(),
             },
-            AplloErrorKind::IdleInTransactionSessionTimeout => AplloErrorAux {
+            ApllodbErrorKind::IdleInTransactionSessionTimeout => ApllodbErrorAux {
                 sqlstate: SqlState::new("25P03".into()),
                 errcode: "ERRCODE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT".into(),
             },
-            AplloErrorKind::InvalidSqlStatementName => AplloErrorAux {
+            ApllodbErrorKind::InvalidSqlStatementName => ApllodbErrorAux {
                 sqlstate: SqlState::new("26000".into()),
                 errcode: "ERRCODE_INVALID_SQL_STATEMENT_NAME".into(),
             },
-            AplloErrorKind::TriggeredDataChangeViolation => AplloErrorAux {
+            ApllodbErrorKind::TriggeredDataChangeViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("27000".into()),
                 errcode: "ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION".into(),
             },
-            AplloErrorKind::InvalidAuthorizationSpecification => AplloErrorAux {
+            ApllodbErrorKind::InvalidAuthorizationSpecification => ApllodbErrorAux {
                 sqlstate: SqlState::new("28000".into()),
                 errcode: "ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION".into(),
             },
-            AplloErrorKind::InvalidPassword => AplloErrorAux {
+            ApllodbErrorKind::InvalidPassword => ApllodbErrorAux {
                 sqlstate: SqlState::new("28P01".into()),
                 errcode: "ERRCODE_INVALID_PASSWORD".into(),
             },
-            AplloErrorKind::DependentPrivilegeDescriptorsStillExist => AplloErrorAux {
+            ApllodbErrorKind::DependentPrivilegeDescriptorsStillExist => ApllodbErrorAux {
                 sqlstate: SqlState::new("2B000".into()),
                 errcode: "ERRCODE_DEPENDENT_PRIVILEGE_DESCRIPTORS_STILL_EXIST".into(),
             },
-            AplloErrorKind::DependentObjectsStillExist => AplloErrorAux {
+            ApllodbErrorKind::DependentObjectsStillExist => ApllodbErrorAux {
                 sqlstate: SqlState::new("2BP01".into()),
                 errcode: "ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST".into(),
             },
-            AplloErrorKind::InvalidTransactionTermination => AplloErrorAux {
+            ApllodbErrorKind::InvalidTransactionTermination => ApllodbErrorAux {
                 sqlstate: SqlState::new("2D000".into()),
                 errcode: "ERRCODE_INVALID_TRANSACTION_TERMINATION".into(),
             },
-            AplloErrorKind::SqlRoutineException => AplloErrorAux {
+            ApllodbErrorKind::SqlRoutineException => ApllodbErrorAux {
                 sqlstate: SqlState::new("2F000".into()),
                 errcode: "ERRCODE_SQL_ROUTINE_EXCEPTION".into(),
             },
-            AplloErrorKind::SqlFunctionExecutedNoReturnStatement => AplloErrorAux {
+            ApllodbErrorKind::SqlFunctionExecutedNoReturnStatement => ApllodbErrorAux {
                 sqlstate: SqlState::new("2F005".into()),
                 errcode: "ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT".into(),
             },
-            AplloErrorKind::SqlModifyingSqlDataNotPermitted => AplloErrorAux {
+            ApllodbErrorKind::SqlModifyingSqlDataNotPermitted => ApllodbErrorAux {
                 sqlstate: SqlState::new("2F002".into()),
                 errcode: "ERRCODE_S_R_E_MODIFYING_SQL_DATA_NOT_PERMITTED".into(),
             },
-            AplloErrorKind::SqlProhibitedSqlStatementAttempted => AplloErrorAux {
+            ApllodbErrorKind::SqlProhibitedSqlStatementAttempted => ApllodbErrorAux {
                 sqlstate: SqlState::new("2F003".into()),
                 errcode: "ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED".into(),
             },
-            AplloErrorKind::SqlReadingSqlDataNotPermitted => AplloErrorAux {
+            ApllodbErrorKind::SqlReadingSqlDataNotPermitted => ApllodbErrorAux {
                 sqlstate: SqlState::new("2F004".into()),
                 errcode: "ERRCODE_S_R_E_READING_SQL_DATA_NOT_PERMITTED".into(),
             },
-            AplloErrorKind::InvalidCursorName => AplloErrorAux {
+            ApllodbErrorKind::InvalidCursorName => ApllodbErrorAux {
                 sqlstate: SqlState::new("34000".into()),
                 errcode: "ERRCODE_INVALID_CURSOR_NAME".into(),
             },
-            AplloErrorKind::ExternalRoutineException => AplloErrorAux {
+            ApllodbErrorKind::ExternalRoutineException => ApllodbErrorAux {
                 sqlstate: SqlState::new("38000".into()),
                 errcode: "ERRCODE_EXTERNAL_ROUTINE_EXCEPTION".into(),
             },
-            AplloErrorKind::ExternalContainingSqlNotPermitted => AplloErrorAux {
+            ApllodbErrorKind::ExternalContainingSqlNotPermitted => ApllodbErrorAux {
                 sqlstate: SqlState::new("38001".into()),
                 errcode: "ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED".into(),
             },
-            AplloErrorKind::ExternalModifyingSqlDataNotPermitted => AplloErrorAux {
+            ApllodbErrorKind::ExternalModifyingSqlDataNotPermitted => ApllodbErrorAux {
                 sqlstate: SqlState::new("38002".into()),
                 errcode: "ERRCODE_E_R_E_MODIFYING_SQL_DATA_NOT_PERMITTED".into(),
             },
-            AplloErrorKind::ExternalProhibitedSqlStatementAttempted => AplloErrorAux {
+            ApllodbErrorKind::ExternalProhibitedSqlStatementAttempted => ApllodbErrorAux {
                 sqlstate: SqlState::new("38003".into()),
                 errcode: "ERRCODE_E_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED".into(),
             },
-            AplloErrorKind::ExternalReadingSqlDataNotPermitted => AplloErrorAux {
+            ApllodbErrorKind::ExternalReadingSqlDataNotPermitted => ApllodbErrorAux {
                 sqlstate: SqlState::new("38004".into()),
                 errcode: "ERRCODE_E_R_E_READING_SQL_DATA_NOT_PERMITTED".into(),
             },
-            AplloErrorKind::ExternalRoutineInvocationException => AplloErrorAux {
+            ApllodbErrorKind::ExternalRoutineInvocationException => ApllodbErrorAux {
                 sqlstate: SqlState::new("39000".into()),
                 errcode: "ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION".into(),
             },
-            AplloErrorKind::ExternalInvalidSqlstateReturned => AplloErrorAux {
+            ApllodbErrorKind::ExternalInvalidSqlstateReturned => ApllodbErrorAux {
                 sqlstate: SqlState::new("39001".into()),
                 errcode: "ERRCODE_E_R_I_E_INVALID_SQLSTATE_RETURNED".into(),
             },
-            AplloErrorKind::ExternalNullValueNotAllowed => AplloErrorAux {
+            ApllodbErrorKind::ExternalNullValueNotAllowed => ApllodbErrorAux {
                 sqlstate: SqlState::new("39004".into()),
                 errcode: "ERRCODE_E_R_I_E_NULL_VALUE_NOT_ALLOWED".into(),
             },
-            AplloErrorKind::ExternalTriggerProtocolViolated => AplloErrorAux {
+            ApllodbErrorKind::ExternalTriggerProtocolViolated => ApllodbErrorAux {
                 sqlstate: SqlState::new("39P01".into()),
                 errcode: "ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED".into(),
             },
-            AplloErrorKind::ExternalSrfProtocolViolated => AplloErrorAux {
+            ApllodbErrorKind::ExternalSrfProtocolViolated => ApllodbErrorAux {
                 sqlstate: SqlState::new("39P02".into()),
                 errcode: "ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED".into(),
             },
-            AplloErrorKind::ExternalEventTriggerProtocolViolated => AplloErrorAux {
+            ApllodbErrorKind::ExternalEventTriggerProtocolViolated => ApllodbErrorAux {
                 sqlstate: SqlState::new("39P03".into()),
                 errcode: "ERRCODE_E_R_I_E_EVENT_TRIGGER_PROTOCOL_VIOLATED".into(),
             },
-            AplloErrorKind::SavepointException => AplloErrorAux {
+            ApllodbErrorKind::SavepointException => ApllodbErrorAux {
                 sqlstate: SqlState::new("3B000".into()),
                 errcode: "ERRCODE_SAVEPOINT_EXCEPTION".into(),
             },
-            AplloErrorKind::InvalidSavepointSpecification => AplloErrorAux {
+            ApllodbErrorKind::InvalidSavepointSpecification => ApllodbErrorAux {
                 sqlstate: SqlState::new("3B001".into()),
                 errcode: "ERRCODE_S_E_INVALID_SPECIFICATION".into(),
             },
-            AplloErrorKind::InvalidCatalogName => AplloErrorAux {
+            ApllodbErrorKind::InvalidCatalogName => ApllodbErrorAux {
                 sqlstate: SqlState::new("3D000".into()),
                 errcode: "ERRCODE_INVALID_CATALOG_NAME".into(),
             },
-            AplloErrorKind::InvalidSchemaName => AplloErrorAux {
+            ApllodbErrorKind::InvalidSchemaName => ApllodbErrorAux {
                 sqlstate: SqlState::new("3F000".into()),
                 errcode: "ERRCODE_INVALID_SCHEMA_NAME".into(),
             },
-            AplloErrorKind::TransactionRollback => AplloErrorAux {
+            ApllodbErrorKind::TransactionRollback => ApllodbErrorAux {
                 sqlstate: SqlState::new("40000".into()),
                 errcode: "ERRCODE_TRANSACTION_ROLLBACK".into(),
             },
-            AplloErrorKind::TransactionIntegrityConstraintViolation => AplloErrorAux {
+            ApllodbErrorKind::TransactionIntegrityConstraintViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("40002".into()),
                 errcode: "ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION".into(),
             },
-            AplloErrorKind::SerializationFailure => AplloErrorAux {
+            ApllodbErrorKind::SerializationFailure => ApllodbErrorAux {
                 sqlstate: SqlState::new("40001".into()),
                 errcode: "ERRCODE_T_R_SERIALIZATION_FAILURE".into(),
             },
-            AplloErrorKind::StatementCompletionUnknown => AplloErrorAux {
+            ApllodbErrorKind::StatementCompletionUnknown => ApllodbErrorAux {
                 sqlstate: SqlState::new("40003".into()),
                 errcode: "ERRCODE_T_R_STATEMENT_COMPLETION_UNKNOWN".into(),
             },
-            AplloErrorKind::DeadlockDetected => AplloErrorAux {
+            ApllodbErrorKind::DeadlockDetected => ApllodbErrorAux {
                 sqlstate: SqlState::new("40P01".into()),
                 errcode: "ERRCODE_T_R_DEADLOCK_DETECTED".into(),
             },
-            AplloErrorKind::SyntaxErrorOrAccessRuleViolation => AplloErrorAux {
+            ApllodbErrorKind::SyntaxErrorOrAccessRuleViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("42000".into()),
                 errcode: "ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION".into(),
             },
-            AplloErrorKind::SyntaxError => AplloErrorAux {
+            ApllodbErrorKind::SyntaxError => ApllodbErrorAux {
                 sqlstate: SqlState::new("42601".into()),
                 errcode: "ERRCODE_SYNTAX_ERROR".into(),
             },
-            AplloErrorKind::InsufficientPrivilege => AplloErrorAux {
+            ApllodbErrorKind::InsufficientPrivilege => ApllodbErrorAux {
                 sqlstate: SqlState::new("42501".into()),
                 errcode: "ERRCODE_INSUFFICIENT_PRIVILEGE".into(),
             },
-            AplloErrorKind::CannotCoerce => AplloErrorAux {
+            ApllodbErrorKind::CannotCoerce => ApllodbErrorAux {
                 sqlstate: SqlState::new("42846".into()),
                 errcode: "ERRCODE_CANNOT_COERCE".into(),
             },
-            AplloErrorKind::GroupingError => AplloErrorAux {
+            ApllodbErrorKind::GroupingError => ApllodbErrorAux {
                 sqlstate: SqlState::new("42803".into()),
                 errcode: "ERRCODE_GROUPING_ERROR".into(),
             },
-            AplloErrorKind::WindowingError => AplloErrorAux {
+            ApllodbErrorKind::WindowingError => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P20".into()),
                 errcode: "ERRCODE_WINDOWING_ERROR".into(),
             },
-            AplloErrorKind::InvalidRecursion => AplloErrorAux {
+            ApllodbErrorKind::InvalidRecursion => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P19".into()),
                 errcode: "ERRCODE_INVALID_RECURSION".into(),
             },
-            AplloErrorKind::InvalidForeignKey => AplloErrorAux {
+            ApllodbErrorKind::InvalidForeignKey => ApllodbErrorAux {
                 sqlstate: SqlState::new("42830".into()),
                 errcode: "ERRCODE_INVALID_FOREIGN_KEY".into(),
             },
-            AplloErrorKind::InvalidName => AplloErrorAux {
+            ApllodbErrorKind::InvalidName => ApllodbErrorAux {
                 sqlstate: SqlState::new("42602".into()),
                 errcode: "ERRCODE_INVALID_NAME".into(),
             },
-            AplloErrorKind::NameTooLong => AplloErrorAux {
+            ApllodbErrorKind::NameTooLong => ApllodbErrorAux {
                 sqlstate: SqlState::new("42622".into()),
                 errcode: "ERRCODE_NAME_TOO_LONG".into(),
             },
-            AplloErrorKind::ReservedName => AplloErrorAux {
+            ApllodbErrorKind::ReservedName => ApllodbErrorAux {
                 sqlstate: SqlState::new("42939".into()),
                 errcode: "ERRCODE_RESERVED_NAME".into(),
             },
-            AplloErrorKind::DatatypeMismatch => AplloErrorAux {
+            ApllodbErrorKind::DatatypeMismatch => ApllodbErrorAux {
                 sqlstate: SqlState::new("42804".into()),
                 errcode: "ERRCODE_DATATYPE_MISMATCH".into(),
             },
-            AplloErrorKind::IndeterminateDatatype => AplloErrorAux {
+            ApllodbErrorKind::IndeterminateDatatype => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P18".into()),
                 errcode: "ERRCODE_INDETERMINATE_DATATYPE".into(),
             },
-            AplloErrorKind::CollationMismatch => AplloErrorAux {
+            ApllodbErrorKind::CollationMismatch => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P21".into()),
                 errcode: "ERRCODE_COLLATION_MISMATCH".into(),
             },
-            AplloErrorKind::IndeterminateCollation => AplloErrorAux {
+            ApllodbErrorKind::IndeterminateCollation => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P22".into()),
                 errcode: "ERRCODE_INDETERMINATE_COLLATION".into(),
             },
-            AplloErrorKind::WrongObjectType => AplloErrorAux {
+            ApllodbErrorKind::WrongObjectType => ApllodbErrorAux {
                 sqlstate: SqlState::new("42809".into()),
                 errcode: "ERRCODE_WRONG_OBJECT_TYPE".into(),
             },
-            AplloErrorKind::GeneratedAlways => AplloErrorAux {
+            ApllodbErrorKind::GeneratedAlways => ApllodbErrorAux {
                 sqlstate: SqlState::new("428C9".into()),
                 errcode: "ERRCODE_GENERATED_ALWAYS".into(),
             },
-            AplloErrorKind::UndefinedColumn => AplloErrorAux {
+            ApllodbErrorKind::UndefinedColumn => ApllodbErrorAux {
                 sqlstate: SqlState::new("42703".into()),
                 errcode: "ERRCODE_UNDEFINED_COLUMN".into(),
             },
-            AplloErrorKind::UndefinedFunction => AplloErrorAux {
+            ApllodbErrorKind::UndefinedFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("42883".into()),
                 errcode: "ERRCODE_UNDEFINED_FUNCTION".into(),
             },
-            AplloErrorKind::UndefinedTable => AplloErrorAux {
+            ApllodbErrorKind::UndefinedTable => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P01".into()),
                 errcode: "ERRCODE_UNDEFINED_TABLE".into(),
             },
-            AplloErrorKind::UndefinedParameter => AplloErrorAux {
+            ApllodbErrorKind::UndefinedParameter => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P02".into()),
                 errcode: "ERRCODE_UNDEFINED_PARAMETER".into(),
             },
-            AplloErrorKind::UndefinedObject => AplloErrorAux {
+            ApllodbErrorKind::UndefinedObject => ApllodbErrorAux {
                 sqlstate: SqlState::new("42704".into()),
                 errcode: "ERRCODE_UNDEFINED_OBJECT".into(),
             },
-            AplloErrorKind::DuplicateColumn => AplloErrorAux {
+            ApllodbErrorKind::DuplicateColumn => ApllodbErrorAux {
                 sqlstate: SqlState::new("42701".into()),
                 errcode: "ERRCODE_DUPLICATE_COLUMN".into(),
             },
-            AplloErrorKind::DuplicateCursor => AplloErrorAux {
+            ApllodbErrorKind::DuplicateCursor => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P03".into()),
                 errcode: "ERRCODE_DUPLICATE_CURSOR".into(),
             },
-            AplloErrorKind::DuplicateDatabase => AplloErrorAux {
+            ApllodbErrorKind::DuplicateDatabase => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P04".into()),
                 errcode: "ERRCODE_DUPLICATE_DATABASE".into(),
             },
-            AplloErrorKind::DuplicateFunction => AplloErrorAux {
+            ApllodbErrorKind::DuplicateFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("42723".into()),
                 errcode: "ERRCODE_DUPLICATE_FUNCTION".into(),
             },
-            AplloErrorKind::DuplicatePreparedStatement => AplloErrorAux {
+            ApllodbErrorKind::DuplicatePreparedStatement => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P05".into()),
                 errcode: "ERRCODE_DUPLICATE_PSTATEMENT".into(),
             },
-            AplloErrorKind::DuplicateSchema => AplloErrorAux {
+            ApllodbErrorKind::DuplicateSchema => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P06".into()),
                 errcode: "ERRCODE_DUPLICATE_SCHEMA".into(),
             },
-            AplloErrorKind::DuplicateTable => AplloErrorAux {
+            ApllodbErrorKind::DuplicateTable => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P07".into()),
                 errcode: "ERRCODE_DUPLICATE_TABLE".into(),
             },
-            AplloErrorKind::DuplicateAlias => AplloErrorAux {
+            ApllodbErrorKind::DuplicateAlias => ApllodbErrorAux {
                 sqlstate: SqlState::new("42712".into()),
                 errcode: "ERRCODE_DUPLICATE_ALIAS".into(),
             },
-            AplloErrorKind::DuplicateObject => AplloErrorAux {
+            ApllodbErrorKind::DuplicateObject => ApllodbErrorAux {
                 sqlstate: SqlState::new("42710".into()),
                 errcode: "ERRCODE_DUPLICATE_OBJECT".into(),
             },
-            AplloErrorKind::AmbiguousColumn => AplloErrorAux {
+            ApllodbErrorKind::AmbiguousColumn => ApllodbErrorAux {
                 sqlstate: SqlState::new("42702".into()),
                 errcode: "ERRCODE_AMBIGUOUS_COLUMN".into(),
             },
-            AplloErrorKind::AmbiguousFunction => AplloErrorAux {
+            ApllodbErrorKind::AmbiguousFunction => ApllodbErrorAux {
                 sqlstate: SqlState::new("42725".into()),
                 errcode: "ERRCODE_AMBIGUOUS_FUNCTION".into(),
             },
-            AplloErrorKind::AmbiguousParameter => AplloErrorAux {
+            ApllodbErrorKind::AmbiguousParameter => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P08".into()),
                 errcode: "ERRCODE_AMBIGUOUS_PARAMETER".into(),
             },
-            AplloErrorKind::AmbiguousAlias => AplloErrorAux {
+            ApllodbErrorKind::AmbiguousAlias => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P09".into()),
                 errcode: "ERRCODE_AMBIGUOUS_ALIAS".into(),
             },
-            AplloErrorKind::InvalidColumnReference => AplloErrorAux {
+            ApllodbErrorKind::InvalidColumnReference => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P10".into()),
                 errcode: "ERRCODE_INVALID_COLUMN_REFERENCE".into(),
             },
-            AplloErrorKind::InvalidColumnDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidColumnDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42611".into()),
                 errcode: "ERRCODE_INVALID_COLUMN_DEFINITION".into(),
             },
-            AplloErrorKind::InvalidCursorDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidCursorDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P11".into()),
                 errcode: "ERRCODE_INVALID_CURSOR_DEFINITION".into(),
             },
-            AplloErrorKind::InvalidDatabaseDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidDatabaseDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P12".into()),
                 errcode: "ERRCODE_INVALID_DATABASE_DEFINITION".into(),
             },
-            AplloErrorKind::InvalidFunctionDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidFunctionDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P13".into()),
                 errcode: "ERRCODE_INVALID_FUNCTION_DEFINITION".into(),
             },
-            AplloErrorKind::InvalidPreparedStatementDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidPreparedStatementDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P14".into()),
                 errcode: "ERRCODE_INVALID_PSTATEMENT_DEFINITION".into(),
             },
-            AplloErrorKind::InvalidSchemaDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidSchemaDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P15".into()),
                 errcode: "ERRCODE_INVALID_SCHEMA_DEFINITION".into(),
             },
-            AplloErrorKind::InvalidTableDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidTableDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P16".into()),
                 errcode: "ERRCODE_INVALID_TABLE_DEFINITION".into(),
             },
-            AplloErrorKind::InvalidObjectDefinition => AplloErrorAux {
+            ApllodbErrorKind::InvalidObjectDefinition => ApllodbErrorAux {
                 sqlstate: SqlState::new("42P17".into()),
                 errcode: "ERRCODE_INVALID_OBJECT_DEFINITION".into(),
             },
-            AplloErrorKind::WithCheckOptionViolation => AplloErrorAux {
+            ApllodbErrorKind::WithCheckOptionViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("44000".into()),
                 errcode: "ERRCODE_WITH_CHECK_OPTION_VIOLATION".into(),
             },

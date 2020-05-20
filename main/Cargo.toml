@@ -5,4 +5,4 @@ authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-apllo-sql-parser = { path = "../apllo-sql-parser" }
+apllodb-sql-parser = { path = "../apllodb-sql-parser" }
