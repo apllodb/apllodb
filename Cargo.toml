@@ -1,8 +1,8 @@
 [workspace]
 
 members = [
-    "apllo-shared-components",
-    "apllo-sql-parser",
-    "apllo-storage-manager-interface",
+    "apllodb-shared-components",
+    "apllodb-sql-parser",
+    "apllodb-storage-manager-interface",
     "main",
 ]
