@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "apllo-shared-components"
+name = "apllodb-shared-components"
 version = "0.1.0"
 dependencies = [
  "serde",
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "apllo-sql-parser"
+name = "apllodb-sql-parser"
 version = "0.1.0"
 dependencies = [
  "pest",
@@ -126,7 +126,7 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 name = "main"
 version = "0.1.0"
 dependencies = [
- "apllo-sql-parser",
+ "apllodb-sql-parser",
 ]
 
 [[package]]
