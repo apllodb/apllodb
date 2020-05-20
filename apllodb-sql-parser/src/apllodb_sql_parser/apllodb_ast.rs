@@ -2,7 +2,7 @@
 //!
 //! This module provides the root node ([ApllodbAst](struct.ApllodbAst.html)) and other intermediate nodes.
 //!
-//! Intermediate nodes have 1-to-1 relationship with terms defined in [apllodb-SQL syntax](https://github.com/darwin-education/apllo/tree/master/apllodb-sql-parser/src/pest_grammar/apllodb_sql.pest).
+//! Intermediate nodes have 1-to-1 relationship with terms defined in [apllodb-SQL syntax](https://github.com/darwin-education/apllodb/tree/master/apllodb-sql-parser/src/pest_grammar/apllodb_sql.pest).
 
 #![allow(missing_docs)]
 

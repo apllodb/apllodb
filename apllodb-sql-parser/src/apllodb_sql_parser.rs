@@ -6,7 +6,7 @@ pub use apllodb_ast::ApllodbAst;
 use crate::{parser_impl::PestParserImpl, parser_interface::ParserLike};
 use error::ApllodbSqlParserResult;
 
-/// The parser from apllodb-SQL into APLLO AST.
+/// The parser from apllodb-SQL into apllodb-AST.
 #[derive(Clone, Hash, Debug)]
 pub struct ApllodbSqlParser(PestParserImpl);
 
@@ -16,7 +16,7 @@ impl ApllodbSqlParser {
         Self(PestParserImpl::new())
     }
 
-    /// Parses apllodb-SQL into APLLO AST.
+    /// Parses apllodb-SQL into apllodb-AST.
     ///
     /// # Panics
     ///
