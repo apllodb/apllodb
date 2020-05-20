@@ -1,5 +1,5 @@
 [package]
-name = "apllo-sql-parser"
+name = "apllodb-sql-parser"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"

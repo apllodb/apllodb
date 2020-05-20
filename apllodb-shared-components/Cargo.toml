@@ -1,14 +1,14 @@
 [package]
-name = "apllo-shared-components"
+name = "apllodb-shared-components"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
 description = "TBD"
 license = "(TBD)"
 readme = "README.md"
-keywords = ["apllo"]
+keywords = ["apllodb"]
 categories = ["database", "database-implementations"]
-repository = "https://github.com/darwin-education/apllo"
+repository = "https://github.com/darwin-education/apllodb"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
