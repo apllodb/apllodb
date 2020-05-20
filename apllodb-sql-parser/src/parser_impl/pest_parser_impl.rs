@@ -72,7 +72,9 @@ impl PestParserImpl {
         )
     }
 
-    fn parse_numeric_constant(mut params: FnParseParams) -> ApllodbSqlParserResult<NumericConstant> {
+    fn parse_numeric_constant(
+        mut params: FnParseParams,
+    ) -> ApllodbSqlParserResult<NumericConstant> {
         parse_child(
             &mut params,
             Rule::integer_constant,
@@ -81,7 +83,9 @@ impl PestParserImpl {
         )
     }
 
-    fn parse_integer_constant(mut params: FnParseParams) -> ApllodbSqlParserResult<IntegerConstant> {
+    fn parse_integer_constant(
+        mut params: FnParseParams,
+    ) -> ApllodbSqlParserResult<IntegerConstant> {
         let s = self_as_str(&mut params);
         Ok(IntegerConstant(s.into()))
     }
@@ -141,7 +145,9 @@ impl PestParserImpl {
      * ----------------------------------------------------------------------------
      */
 
-    fn parse_column_reference(mut params: FnParseParams) -> ApllodbSqlParserResult<ColumnReference> {
+    fn parse_column_reference(
+        mut params: FnParseParams,
+    ) -> ApllodbSqlParserResult<ColumnReference> {
         let correlation = try_parse_child(
             &mut params,
             Rule::correlation,
@@ -287,7 +293,10 @@ impl PestParserImpl {
             Action::DropColumnVariant,
         )?)
         .ok_or_else(|| {
-            ApllodbSqlParserError::new(params.apllodb_sql, "Does not match any child rule of action.")
+            ApllodbSqlParserError::new(
+                params.apllodb_sql,
+                "Does not match any child rule of action.",
+            )
         })
     }
 
