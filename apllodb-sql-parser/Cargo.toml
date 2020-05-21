@@ -3,5 +3,18 @@ name = "apllodb-sql-parser"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
+description = "apllodb-SQL's parser that inputs apllodb-SQL and emit apllodb-AST."
+license = "(TBD)"
+readme = "README.md"
+keywords = ["apllodb", "parser", "sql"]
+categories = ["parser-implementations", "database", "database-implementations"]
+repository = "https://github.com/darwin-education/apllodb"
 
 [dependencies]
+pest = "2.1.3"
+pest_derive = "2.1.0"
+serde = { version = "1.0", optional = true, features = ["derive"] }
+
+[dev-dependencies]
+version-sync = "0.9"
+
