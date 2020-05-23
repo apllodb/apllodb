@@ -99,7 +99,7 @@ mod version {
     macro_rules! next_version_action_drop_column {
         ($col_name: expr $(,)?) => {{
             use crate::column_name;
-            use crate::versions::version::action::NextVersionAction;
+            use crate::version::action::NextVersionAction;
 
             NextVersionAction::DropColumn {
                 column: column_name!($col_name),

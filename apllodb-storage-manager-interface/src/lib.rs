@@ -33,10 +33,13 @@
 //! - Implementation of records and record iterators.
 
 mod access_methods;
-mod versions;
+mod helper;
+mod table;
+mod version;
 
 pub use crate::access_methods::AccessMethodsDdl;
-pub use crate::versions::{marker, Version, VersionSet, VersionSetName};
+pub use crate::table::Table;
+pub use crate::version::Version;
 
 #[cfg(test)]
 pub(crate) mod test_support;

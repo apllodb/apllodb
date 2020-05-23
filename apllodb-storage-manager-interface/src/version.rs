@@ -12,14 +12,14 @@ use std::{cmp::Ordering, fmt::Display};
 
 /// Version.
 ///
-/// A version belongs to a [VersionSet](struct.VersionSet.html).
-/// A version directly has subset of records in the VersionSet.
+/// A version belongs to a [Table](struct.Table.html).
+/// A version directly has subset of records in the Table.
 ///
 /// - The version `v_1` is created by apllodb CREATE TABLE command.
 /// - Version `v_(current+1)` is created by apllodb ALTER TABLE command.
-/// - Some of `v_1` ~ `v_current` are deactivated by apllodb ALTER TABLE command
+/// - Some of `v_1` ~ `v_current` are inactivated by apllodb ALTER TABLE command
 ///   if all the records in `v_i` can be migrated to `v_(current+1)` (auto upgrade).
-/// - All of `v_1` ~ `v_current` are deactivated by apllodb DROP TABLE command.
+/// - All of `v_1` ~ `v_current` are inactivated by apllodb DROP TABLE command.
 ///
 /// Each version purely immutable.
 ///

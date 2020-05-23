@@ -1,7 +1,7 @@
 use std::{collections::HashSet, hash::Hash};
 
 /// Find a first element that is equal to another element in `s`.
-pub(in crate::versions) fn find_dup<T>(iter: T) -> Option<T::Item>
+pub(crate) fn find_dup<T>(iter: T) -> Option<T::Item>
 where
     T: Iterator,
     T::Item: Eq + Hash + Clone,

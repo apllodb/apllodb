@@ -1,27 +1,31 @@
-use super::constraint_kind::VersionSetConstraintKind;
-use crate::versions::validation_helper::collection::find_dup;
+use super::constraint_kind::TableWideConstraintKind;
+use crate::helper::collection_validation::find_dup;
 use apllodb_shared_components::{
     data_structure::{ColumnDefinition, ColumnName, TableConstraints},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use serde::{Deserialize, Serialize};
 
-/// VersionSet constraints.
+/// Table-wide constraints applied to record set.
+///
+/// Note that "table constraint" used mainly in syntax (`T_tableConstraint`) and "table-wide constraint" are different.
+/// The former is "a constraint applied to the table itself or multiple columns". (e.g. FOREIGN KEY is a table constraint)
+/// The latter is "a constraint applied to set of records". (e.g. FOREIGN KEY is NOT a table-wide constraint but a version constraint)
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub(super) struct VersionSetConstraints {
-    kinds: Vec<VersionSetConstraintKind>,
+pub(super) struct TableWideConstraints {
+    kinds: Vec<TableWideConstraintKind>,
 }
-impl VersionSetConstraints {
-    /// Constructor that extracts VersionSet constraints (set of record must obey)
+impl TableWideConstraints {
+    /// Constructor that extracts Table constraints (set of record must obey)
     /// from TableConstraints and ColumnConstraints in each ColumnDefinition.
     ///
     /// # Failures
     ///
     /// - [InvalidTableDefinition](error/enum.ApllodbErrorKind.html#variant.InvalidTableDefinition) when:
-    ///   - [PrimaryKey](enum.TableConstraintKind.html#variant.PrimaryKey) or
-    ///     [Unique](enum.TableConstraintKind.html#variant.Unique) in `table_constraints` and `column_definitions`
+    ///   - [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey) or
+    ///     [Unique](enum.TableWideConstraintKind.html#variant.Unique) in `table_constraints` and `column_definitions`
     ///     are applied to the same single column.
-    ///   - Both `table_constraints` and `column_definitions` include [PrimaryKey](enum.TableConstraintKind.html#variant.PrimaryKey).
+    ///   - Both `table_constraints` and `column_definitions` include [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey).
     pub(super) fn new(
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
@@ -31,13 +35,13 @@ impl VersionSetConstraints {
         let from_table_constraints = table_constraints
             .kinds()
             .iter()
-            .map(VersionSetConstraintKind::from);
+            .map(TableWideConstraintKind::from);
 
         let from_column_definitions = column_definitions
             .iter()
-            .flat_map(VersionSetConstraintKind::try_from);
+            .flat_map(TableWideConstraintKind::try_from);
 
-        let kinds: Vec<VersionSetConstraintKind> = from_table_constraints
+        let kinds: Vec<TableWideConstraintKind> = from_table_constraints
             .chain(from_column_definitions)
             .collect();
 
@@ -47,11 +51,11 @@ impl VersionSetConstraints {
         Ok(Self { kinds })
     }
 
-    fn validate_pk_duplication(kinds: &[VersionSetConstraintKind]) -> ApllodbResult<()> {
+    fn validate_pk_duplication(kinds: &[TableWideConstraintKind]) -> ApllodbResult<()> {
         if kinds
             .iter()
             .filter(|kind| match kind {
-                VersionSetConstraintKind::PrimaryKey { .. } => true,
+                TableWideConstraintKind::PrimaryKey { .. } => true,
                 _ => false,
             })
             .count()
@@ -68,19 +72,19 @@ impl VersionSetConstraints {
     }
 
     fn validate_pk_or_unique_target_duplication(
-        kinds: &[VersionSetConstraintKind],
+        kinds: &[TableWideConstraintKind],
     ) -> ApllodbResult<()> {
         let single_columns: Vec<&ColumnName> = kinds
             .iter()
             .flat_map(|k| match k {
-                VersionSetConstraintKind::PrimaryKey { column_names } => {
+                TableWideConstraintKind::PrimaryKey { column_names } => {
                     if column_names.len() == 1 {
                         column_names.first()
                     } else {
                         None
                     }
                 }
-                VersionSetConstraintKind::Unique { column_names } => {
+                TableWideConstraintKind::Unique { column_names } => {
                     if column_names.len() == 1 {
                         column_names.first()
                     } else {
@@ -106,7 +110,7 @@ impl VersionSetConstraints {
 
 #[cfg(test)]
 mod tests {
-    use super::VersionSetConstraints;
+    use super::TableWideConstraints;
     use crate::{column_constraints, column_definition, t_pk, t_unique, table_constraints};
     use apllodb_shared_components::{
         data_structure::{ColumnDefinition, TableConstraints},
@@ -144,7 +148,7 @@ mod tests {
         ];
 
         for (table_constraints, column_definitions) in testset {
-            match VersionSetConstraints::new(&table_constraints, &column_definitions) {
+            match TableWideConstraints::new(&table_constraints, &column_definitions) {
                 Ok(_) => {}
                 Err(e) => panic!("unexpected error kind: {}", e),
             }
@@ -178,7 +182,7 @@ mod tests {
         ];
 
         for (table_constraints, column_definitions) in testset {
-            match VersionSetConstraints::new(&table_constraints, &column_definitions) {
+            match TableWideConstraints::new(&table_constraints, &column_definitions) {
                 Err(e) => match e.kind() {
                     ApllodbErrorKind::InvalidTableDefinition => {
                         println!("{}", e);

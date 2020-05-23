@@ -6,7 +6,7 @@ use std::convert::TryFrom;
 
 /// A constraint parameter that set of record (not each record) must satisfy.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub(super) enum VersionSetConstraintKind {
+pub(super) enum TableWideConstraintKind {
     /// PRIMARY KEY ({column_name}, ...)
     PrimaryKey { column_names: Vec<ColumnName> },
 
@@ -14,7 +14,7 @@ pub(super) enum VersionSetConstraintKind {
     Unique { column_names: Vec<ColumnName> },
 }
 
-impl From<&TableConstraintKind> for VersionSetConstraintKind {
+impl From<&TableConstraintKind> for TableWideConstraintKind {
     fn from(tck: &TableConstraintKind) -> Self {
         match tck {
             TableConstraintKind::PrimaryKey { column_names } => Self::PrimaryKey {
@@ -27,7 +27,7 @@ impl From<&TableConstraintKind> for VersionSetConstraintKind {
     }
 }
 
-impl TryFrom<&ColumnDefinition> for VersionSetConstraintKind {
+impl TryFrom<&ColumnDefinition> for TableWideConstraintKind {
     /// Simply means that the ColumnDefinition does not include any version set constraint.
     type Error = ();
     fn try_from(cd: &ColumnDefinition) -> Result<Self, Self::Error> {
