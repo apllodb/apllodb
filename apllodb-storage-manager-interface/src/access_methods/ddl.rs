@@ -1,4 +1,4 @@
-use crate::{Table, Version};
+use crate::{ActiveVersion, Table};
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
@@ -15,7 +15,7 @@ pub trait AccessMethodsDdl {
     /// # Failures
     ///
     /// - Errors from [Table::new](foobar.html).
-    /// - Errors from [Version::create_initial](foobar.html).
+    /// - Errors from [ActiveVersion::create_initial](foobar.html).
     /// - Errors from [materialize_table](method.materialize_table.html).
     /// - Errors from [materialize_version](method.materialize_version.html).
     fn create_table(
@@ -24,7 +24,7 @@ pub trait AccessMethodsDdl {
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let table = Table::new(table_name, table_constraints, column_definitions)?;
-        let version = Version::create_initial(column_definitions, table_constraints)?;
+        let version = ActiveVersion::create_initial(column_definitions, table_constraints)?;
 
         Self::materialize_table(table)?;
         Self::materialize_version(version)?;
@@ -81,9 +81,7 @@ pub trait AccessMethodsDdl {
 
     fn materialize_table(table: Table) -> ApllodbResult<()>;
 
-    fn materialize_version(version: Version) -> ApllodbResult<()>;
+    fn materialize_version(version: ActiveVersion) -> ApllodbResult<()>;
 
     fn dematerialize_table(name: &TableName) -> ApllodbResult<Table>;
-
-    fn dematerialize_active_version(version_number: u64) -> ApllodbResult<Version>;
 }
