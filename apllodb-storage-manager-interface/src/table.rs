@@ -1,6 +1,8 @@
 mod constraint_kind;
 mod constraints;
+mod version_repo;
 
+use crate::ActiveVersion;
 use apllodb_shared_components::{
     data_structure::{ColumnDefinition, TableConstraints, TableName},
     error::ApllodbResult,
@@ -8,6 +10,7 @@ use apllodb_shared_components::{
 use constraints::TableWideConstraints;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use version_repo::VersionRepo;
 
 /// A table, which has set of [Version](struct.Version.html)s.
 ///
@@ -19,6 +22,7 @@ use std::cmp::Ordering;
 pub struct Table {
     name: TableName,
     constraints: TableWideConstraints,
+    version_repo: VersionRepo,
 }
 
 impl Ord for Table {
@@ -39,18 +43,26 @@ impl Table {
     /// # Failures
     ///
     /// - Errors from [TableConstraints::new](foo.html).
-    pub(crate) fn new(
+    pub(crate) fn create(
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<Self> {
         let constraints = TableWideConstraints::new(table_constraints, column_definitions)?;
+        let version = ActiveVersion::create_initial(column_definitions, table_constraints)?;
+
+        let mut version_repo = VersionRepo::default();
+        version_repo.add_active_version(version);
+
         Ok(Self {
             name: TableName::from(table_name.clone()),
             constraints,
+            version_repo,
         })
     }
+}
 
+impl Table {
     /// Ref to TableName.
     ///
     /// Same as `T_create_table_command :: ... :: T_table_name`.

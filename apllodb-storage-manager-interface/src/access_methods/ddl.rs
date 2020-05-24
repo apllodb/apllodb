@@ -17,17 +17,14 @@ pub trait AccessMethodsDdl {
     /// - Errors from [Table::new](foobar.html).
     /// - Errors from [ActiveVersion::create_initial](foobar.html).
     /// - Errors from [materialize_table](method.materialize_table.html).
-    /// - Errors from [materialize_version](method.materialize_version.html).
     fn create_table(
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
-        let table = Table::new(table_name, table_constraints, column_definitions)?;
-        let version = ActiveVersion::create_initial(column_definitions, table_constraints)?;
+        let table = Table::create(table_name, table_constraints, column_definitions)?;
 
         Self::materialize_table(table)?;
-        Self::materialize_version(version)?;
 
         Ok(())
     }
@@ -80,8 +77,6 @@ pub trait AccessMethodsDdl {
     fn drop_table() -> ApllodbResult<()>;
 
     fn materialize_table(table: Table) -> ApllodbResult<()>;
-
-    fn materialize_version(version: ActiveVersion) -> ApllodbResult<()>;
 
     fn dematerialize_table(name: &TableName) -> ApllodbResult<Table>;
 }
