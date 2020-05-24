@@ -21,7 +21,7 @@ use std::{cmp::Ordering, fmt::Display};
 ///   if all the records in `v_i` can be migrated to `v_(current+1)` (auto upgrade).
 /// - All of `v_1` ~ `v_current` are inactivated by apllodb DROP TABLE command.
 ///
-/// Each version purely immutable.
+/// Each version is purely immutable.
 ///
 /// See: https://github.com/darwin-education/apllodb/wiki/Immutable-Schema-102:-Immutable-Schema-%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E5%AE%9A%E7%BE%A9%E3%83%BB%E5%AE%9A%E7%90%86
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
