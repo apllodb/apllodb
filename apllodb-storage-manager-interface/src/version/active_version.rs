@@ -1,6 +1,7 @@
 use super::{column::ColumnDataType, Version};
-use crate::version::action::NextVersionAction;
-use apllodb_shared_components::data_structure::{ColumnDefinition, ColumnName, TableConstraints};
+use apllodb_shared_components::data_structure::{
+    AlterTableAction, ColumnDefinition, ColumnName, TableConstraints,
+};
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use serde::{Deserialize, Serialize};
 
@@ -57,12 +58,12 @@ impl ActiveVersion {
     ///   - If no column would exist after the specified action.
     /// - [UndefinedColumn](variant.UndefinedColumn.html)
     ///   - If column to alter does not exist.
-    pub(crate) fn create_next(&self, action: NextVersionAction) -> ApllodbResult<Self> {
+    pub(crate) fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
         let number = self.0.number + 1;
 
         match action {
-            NextVersionAction::DropColumn {
-                column: column_to_drop,
+            AlterTableAction::DropColumn {
+                column_name: column_to_drop,
             } => {
                 self.validate_col_existence(&column_to_drop)?;
 
@@ -70,7 +71,7 @@ impl ActiveVersion {
                     .0
                     .column_data_types
                     .iter()
-                    .filter(|c| c.column_name() != &column_to_drop)
+                    .filter(|c| c.column_name() != column_to_drop)
                     .cloned()
                     .collect();
 
@@ -85,11 +86,6 @@ impl ActiveVersion {
                     constraints: vec![],
                 }))
             }
-
-            NextVersionAction::AddColumn {
-                column_data_type: _,
-                column_constraints: _,
-            } => todo!(),
         }
     }
 }
@@ -171,7 +167,7 @@ mod tests {
 
         let action = next_version_action_drop_column!("c1");
 
-        let v2 = v1.create_next(action)?;
+        let v2 = v1.create_next(&action)?;
 
         assert_eq!(v2.number(), 2);
 
@@ -193,7 +189,7 @@ mod tests {
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
 
         let action = next_version_action_drop_column!("c404");
-        match v1.create_next(action) {
+        match v1.create_next(&action) {
             Err(e) => match e.kind() {
                 ApllodbErrorKind::UndefinedColumn => Ok(()),
                 _ => panic!("unexpected error kind: {}", e),
@@ -209,7 +205,7 @@ mod tests {
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
 
         let action = next_version_action_drop_column!("c1");
-        match v1.create_next(action) {
+        match v1.create_next(&action) {
             Err(e) => match e.kind() {
                 ApllodbErrorKind::InvalidTableDefinition => Ok(()),
                 _ => panic!("unexpected error kind: {}", e),

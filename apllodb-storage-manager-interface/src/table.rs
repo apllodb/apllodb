@@ -4,7 +4,7 @@ mod version_repo;
 
 use crate::ActiveVersion;
 use apllodb_shared_components::{
-    data_structure::{ColumnDefinition, TableConstraints, TableName},
+    data_structure::{AlterTableAction, ColumnDefinition, TableConstraints, TableName},
     error::ApllodbResult,
 };
 use constraints::TableWideConstraints;
@@ -59,6 +59,17 @@ impl Table {
             constraints,
             version_repo,
         })
+    }
+
+    pub(crate) fn alter(&mut self, action: &AlterTableAction) -> ApllodbResult<()> {
+        let current_version = self.version_repo.current_version()?;
+        let next_version = current_version.create_next(action)?;
+        self.version_repo.add_active_version(next_version);
+
+        // TODO auto-upgrade.
+        // TODO Inactivate old empty versions.
+
+        Ok(())
     }
 }
 

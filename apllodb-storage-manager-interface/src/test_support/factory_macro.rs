@@ -99,10 +99,10 @@ mod version {
     macro_rules! next_version_action_drop_column {
         ($col_name: expr $(,)?) => {{
             use crate::column_name;
-            use crate::version::action::NextVersionAction;
+            use apllodb_shared_components::data_structure::AlterTableAction;
 
-            NextVersionAction::DropColumn {
-                column: column_name!($col_name),
+            AlterTableAction::DropColumn {
+                column_name: column_name!($col_name),
             }
         }};
     }

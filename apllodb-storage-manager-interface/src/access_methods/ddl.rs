@@ -1,4 +1,4 @@
-use crate::{ActiveVersion, Table};
+use crate::Table;
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
@@ -40,26 +40,14 @@ pub trait AccessMethodsDdl {
     ///
     /// # Failures
     ///
-    fn alter_table(_table_name: &TableName, _action: &AlterTableAction) -> ApllodbResult<()> {
-        todo!();
-
+    fn alter_table(table_name: &TableName, action: &AlterTableAction) -> ApllodbResult<()> {
         // TODO transaction (lock)
 
-        // let table = Self::dematerialize_table(&TableName::from(table_name.clone()))?;
-        // let current_version_num = table.current_version_number();
-        // let current_version = Self::dematerialize_active_version(current_version_num)?;
+        let mut table = Self::dematerialize_table(&TableName::from(table_name.clone()))?;
+        table.alter(action)?;
+        Self::materialize_table(table)?;
 
-        // let alter_table_action = AlterTableAction::from(action);
-        // let next_version_action = NextVersionAction::from(action);
-
-        // table.alter(alter_table_action)?;
-        // let next_version = current_version.create_next(next_version_action)?;
-
-        // // TODO auto-upgrade.
-        // // TODO Inactivate old empty versions.
-
-        // Self::materialize_table(table)?;
-        // Self::materialize_version(next_version)?;
+        Ok(())
     }
 
     /// DROP TABLE command.
