@@ -1,4 +1,20 @@
+mod alter_table_action {
+    /// AlterTableAction::DropColumn factory.
+    #[macro_export]
+    macro_rules! alter_table_action_drop_column {
+        ($col_name: expr $(,)?) => {{
+            use crate::column_name;
+            use apllodb_shared_components::data_structure::AlterTableAction;
+
+            AlterTableAction::DropColumn {
+                column_name: column_name!($col_name),
+            }
+        }};
+    }
+}
+
 mod column_constraints {
+    /// ColumnConstraints factory.
     #[macro_export]
     macro_rules! column_constraints {
         ($($column_constraint_kind: expr $(,)?)*) => {{
@@ -13,6 +29,7 @@ mod column_constraints {
 }
 
 mod column_definition {
+    /// ColumnDefinition factory.
     #[macro_export]
     macro_rules! column_definition {
         ($col_name: expr, $column_constraints: expr $(,)?) => {{
@@ -32,6 +49,7 @@ mod column_definition {
 }
 
 mod column_name {
+    /// ColumnName factory.
     #[macro_export]
     macro_rules! column_name {
         ($col_name: expr) => {{
@@ -43,6 +61,7 @@ mod column_name {
 }
 
 mod table_constraint_kind {
+    /// TableConstraintKind::PrimaryKey factory.
     #[macro_export]
     macro_rules! t_pk {
         ($($col_name: expr $(,)?)*) => {
@@ -61,6 +80,7 @@ mod table_constraint_kind {
         }
     }
 
+    /// TableConstraintKind::Unique factory.
     #[macro_export]
     macro_rules! t_unique {
         ($($col_name: expr $(,)?)*) => {
@@ -81,6 +101,7 @@ mod table_constraint_kind {
 }
 
 mod table_constraints {
+    /// TableConstraints factory.
     #[macro_export]
     macro_rules! table_constraints {
         ($($table_constraint_kind: expr $(,)?)*) => {{
@@ -91,19 +112,5 @@ mod table_constraints {
             ];
             TableConstraints::new(kinds).unwrap()
         }}
-    }
-}
-
-mod version {
-    #[macro_export]
-    macro_rules! next_version_action_drop_column {
-        ($col_name: expr $(,)?) => {{
-            use crate::column_name;
-            use apllodb_shared_components::data_structure::AlterTableAction;
-
-            AlterTableAction::DropColumn {
-                column_name: column_name!($col_name),
-            }
-        }};
     }
 }

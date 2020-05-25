@@ -20,16 +20,13 @@ This crate provides:
   - apllodb-DML
   - Transaction
   - Getting catalog
-- Data structures and operations for them commonly used by every storage engine.
-  - Version set
-  - Version
 - Traits of records and record iterators.
 - Catalog data structure with read-only APIs.
 
 And a storage engine MUST provide:
 
 - Access Methods implementation.
-- Ways to materialize version sets and versions.
 - Implementation of records and record iterators.
+- Ways to materialize tables and records.
 
 License: (TBD)

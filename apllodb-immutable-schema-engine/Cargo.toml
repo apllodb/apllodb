@@ -1,9 +1,9 @@
 [package]
-name = "apllodb-storage-manager-interface"
+name = "apllodb-immutable-schema-engine"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
-description = "apllodb's storage manager interface."
+description = "apllodb's original storage engine that provides Immutable Schema feature."
 license = "(TBD)"
 readme = "README.md"
 keywords = ["apllodb"]
@@ -12,6 +12,8 @@ repository = "https://github.com/darwin-education/apllodb"
 
 [dependencies]
 apllodb-shared-components = { path = "../apllodb-shared-components" }
+apllodb-storage-manager-interface = { path = "../apllodb-storage-manager-interface" }
+serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 version-sync = "0.9"

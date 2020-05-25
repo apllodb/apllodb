@@ -123,7 +123,7 @@ impl ActiveVersion {
 mod tests {
     use super::ActiveVersion;
     use crate::{
-        column_constraints, column_definition, column_name, next_version_action_drop_column,
+        alter_table_action_drop_column, column_constraints, column_definition, column_name,
         table_constraints,
     };
     use apllodb_shared_components::{
@@ -165,7 +165,7 @@ mod tests {
         let table_constraints = table_constraints!();
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
 
-        let action = next_version_action_drop_column!("c1");
+        let action = alter_table_action_drop_column!("c1");
 
         let v2 = v1.create_next(&action)?;
 
@@ -188,7 +188,7 @@ mod tests {
         let table_constraints = table_constraints!();
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
 
-        let action = next_version_action_drop_column!("c404");
+        let action = alter_table_action_drop_column!("c404");
         match v1.create_next(&action) {
             Err(e) => match e.kind() {
                 ApllodbErrorKind::UndefinedColumn => Ok(()),
@@ -204,7 +204,7 @@ mod tests {
         let table_constraints = table_constraints!();
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
 
-        let action = next_version_action_drop_column!("c1");
+        let action = alter_table_action_drop_column!("c1");
         match v1.create_next(&action) {
             Err(e) => match e.kind() {
                 ApllodbErrorKind::InvalidTableDefinition => Ok(()),
