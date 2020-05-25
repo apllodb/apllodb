@@ -10,6 +10,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "apllodb-immutable-schema-engine"
+version = "0.1.0"
+dependencies = [
+ "apllodb-shared-components",
+ "apllodb-storage-manager-interface",
+ "serde",
+ "version-sync",
+]
+
+[[package]]
 name = "apllodb-shared-components"
 version = "0.1.0"
 dependencies = [
