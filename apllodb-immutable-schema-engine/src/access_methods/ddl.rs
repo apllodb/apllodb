@@ -47,9 +47,7 @@ impl AccessMethodsDdl<Tx> for AccessMethods {
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
-        // TODO transaction (lock)
-
-        let mut table = tx.read_table(&TableName::from(table_name.clone()))?;
+        let mut table = tx.read_table(table_name)?;
         table.alter(action)?;
         tx.write_table(table)?;
 
