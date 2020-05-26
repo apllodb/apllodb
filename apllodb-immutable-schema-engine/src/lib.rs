@@ -16,6 +16,7 @@
 
 mod access_methods;
 mod helper;
+mod storage;
 mod table;
 mod transaction;
 mod version;
@@ -23,6 +24,10 @@ mod version;
 pub use crate::access_methods::AccessMethods;
 pub use crate::table::Table;
 pub use crate::version::{ActiveVersion, InactiveVersion};
+use storage::SyncAllStorage;
+use transaction::SimpleTx;
+
+type Tx = SimpleTx<SyncAllStorage>;
 
 #[cfg(test)]
 pub(crate) mod test_support;

@@ -1,35 +1,37 @@
 use super::AccessMethods;
-use crate::{transaction::TxCtx, Table};
+use crate::{Table, Tx};
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_manager_interface::AccessMethodsDdl;
 
-impl AccessMethodsDdl<TxCtx> for AccessMethods {
+impl AccessMethodsDdl<Tx> for AccessMethods {
     // TODO async とかつけような
 
     /// CREATE TABLE command.
+    ///
+    /// Transactional.
     ///
     /// # Failures
     ///
     /// - Errors from [Table::new](foobar.html).
     /// - Errors from [ActiveVersion::create_initial](foobar.html).
-    /// - Errors from [materialize_table](method.materialize_table.html).
+    /// - Errors from [Tx::write_table](foobar.html).
     fn create_table(
-        _tx: &mut TxCtx,
+        tx: &mut Tx,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let table = Table::create(table_name, table_constraints, column_definitions)?;
-
-        Self::materialize_table(table)?;
-
+        tx.write_table(table)?;
         Ok(())
     }
 
     /// ALTER TABLE command.
+    ///
+    /// Transactional.
     ///
     /// This function executes the following steps:
     ///
@@ -41,20 +43,22 @@ impl AccessMethodsDdl<TxCtx> for AccessMethods {
     /// # Failures
     ///
     fn alter_table(
-        _tx: &mut TxCtx,
+        tx: &mut Tx,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
         // TODO transaction (lock)
 
-        let mut table = Self::dematerialize_table(&TableName::from(table_name.clone()))?;
+        let mut table = tx.read_table(&TableName::from(table_name.clone()))?;
         table.alter(action)?;
-        Self::materialize_table(table)?;
+        tx.write_table(table)?;
 
         Ok(())
     }
 
     /// DROP TABLE command.
+    ///
+    /// Transactional.
     ///
     /// # Panics
     ///
@@ -66,17 +70,7 @@ impl AccessMethodsDdl<TxCtx> for AccessMethods {
     ///
     /// ```
     /// ```
-    fn drop_table(_tx: &mut TxCtx) -> ApllodbResult<()> {
-        todo!()
-    }
-}
-
-impl AccessMethods {
-    fn materialize_table(_table: Table) -> ApllodbResult<()> {
-        todo!()
-    }
-
-    fn dematerialize_table(_name: &TableName) -> ApllodbResult<Table> {
+    fn drop_table(_tx: &mut Tx) -> ApllodbResult<()> {
         todo!()
     }
 }
