@@ -3,7 +3,7 @@ use apllodb_shared_components::data_structure::TableName;
 use apllodb_shared_components::error::ApllodbResult;
 
 /// Access methods for DML.
-pub trait AccessMethodsDml<Tx: TxCtxLike> {
+pub trait AccessMethodsDml<'st, Tx: TxCtxLike<'st>> {
     /// SELECT command.
     ///
     /// TODO interface

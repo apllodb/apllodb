@@ -1,12 +1,12 @@
 use super::AccessMethods;
-use crate::{Table, Tx};
+use crate::{transaction::SimpleTx, Table};
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_manager_interface::AccessMethodsDdl;
 
-impl AccessMethodsDdl<Tx> for AccessMethods {
+impl<'st> AccessMethodsDdl<'st, SimpleTx<'st>> for AccessMethods {
     // TODO async とかつけような
 
     /// CREATE TABLE command.
@@ -19,7 +19,7 @@ impl AccessMethodsDdl<Tx> for AccessMethods {
     /// - Errors from [ActiveVersion::create_initial](foobar.html).
     /// - Errors from [Tx::write_table](foobar.html).
     fn create_table(
-        tx: &mut Tx,
+        tx: &mut SimpleTx<'st>,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
@@ -43,7 +43,7 @@ impl AccessMethodsDdl<Tx> for AccessMethods {
     /// # Failures
     ///
     fn alter_table(
-        tx: &mut Tx,
+        tx: &mut SimpleTx<'st>,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
@@ -68,7 +68,7 @@ impl AccessMethodsDdl<Tx> for AccessMethods {
     ///
     /// ```
     /// ```
-    fn drop_table(_tx: &mut Tx) -> ApllodbResult<()> {
+    fn drop_table(_tx: &mut SimpleTx<'st>) -> ApllodbResult<()> {
         todo!()
     }
 }
