@@ -3,6 +3,10 @@ use apllodb_shared_components::error::ApllodbResult;
 /// Transaction context interface.
 ///
 /// Not only DML but also DDL are executed under the transaction context (like PostgreSQL).
+///
+/// # Lifetime parameter
+///
+/// - `'st` : Lifetime of reference to a `Self::Storage` instance.
 pub trait TxCtxLike<'st> {
     /// Type of the storage instance from/to which a transaction reads/writes.
     ///
