@@ -5,7 +5,7 @@ use apllodb_shared_components::data_structure::{
 use apllodb_shared_components::error::ApllodbResult;
 
 /// Access methods for DDL.
-pub trait AccessMethodsDdl<'st, Tx: TxCtxLike<'st>> {
+pub trait AccessMethodsDdl<Tx: TxCtxLike> {
     // TODO async とかつけような
 
     /// CREATE TABLE command.

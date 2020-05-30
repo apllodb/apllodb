@@ -16,6 +16,7 @@
 
 mod access_methods;
 mod helper;
+mod latch;
 mod table;
 mod transaction;
 mod version;

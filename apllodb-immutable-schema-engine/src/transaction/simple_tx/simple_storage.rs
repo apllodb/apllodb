@@ -1,16 +1,5 @@
-mod object;
-
-use apllodb_shared_components::{data_structure::TableName, error::ApllodbResult};
-use object::TableObj;
-use parking_lot::ReentrantMutexGuard;
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
-
-/// Token that both readers and writers to a table must acquired before reading/writing.
-#[derive(Hash, Debug)]
-pub(super) struct TableRwToken(TableName);
+use super::{lock_manager::TableRwToken, objects::TableObj};
+use apllodb_shared_components::error::ApllodbResult;
 
 /// Storage for [SimpleTx](foobar.html).
 ///
@@ -100,25 +89,14 @@ pub(super) struct TableRwToken(TableName);
 ///
 /// 6. Automatically release (unlock) [TableRwToken](foobar.html) when you drop response of `try_lock()`.
 #[derive(Debug)]
-pub(crate) struct SimpleStorage {
-    table_rw_token: HashMap<TableName, Arc<Mutex<TableRwToken>>>,
-    loaded_tables: Vec<TableObj>,
-}
+pub(crate) struct SimpleStorage;
 
 impl SimpleStorage {
-    /// Reentrant try_lock to a table.
-    pub(super) fn try_lock(
-        &self,
-        _table_name: &TableName,
-    ) -> Option<ReentrantMutexGuard<TableRwToken>> {
+    pub(super) fn load_table(_token: &TableRwToken) -> ApllodbResult<TableObj> {
         todo!()
     }
 
-    pub(super) fn load_table(&self, _token: &TableRwToken) -> ApllodbResult<&mut TableObj> {
-        todo!()
-    }
-
-    pub(super) fn flush_objects_atomically(&self) -> ApllodbResult<()> {
+    pub(super) fn flush_objects_atomically(_table_objects: Vec<TableObj>) -> ApllodbResult<()> {
         // TODO will use https://github.com/untitaker/rust-atomicwrites
         todo!()
     }

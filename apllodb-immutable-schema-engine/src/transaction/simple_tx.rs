@@ -1,41 +1,71 @@
+mod lock_manager;
+mod objects;
 mod simple_storage;
 
-use crate::Table;
+use crate::{latch::Latch, Table};
 use apllodb_shared_components::{
     data_structure::TableName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::TxCtxLike;
-use parking_lot::ReentrantMutexGuard;
-use simple_storage::{SimpleStorage, TableRwToken};
+use lock_manager::{LockManager, TableRwToken};
+use objects::TableObj;
+use serde::{Deserialize, Serialize};
+use simple_storage::SimpleStorage;
+use std::{cmp::Ordering, sync::Arc};
+
+/// Transaction ID.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+struct SimpleTxId(u64);
 
 /// Simple (Naive) ACID transaction implementation for Serializable isolation level.
 ///
 /// Used with not only DML but also DDL.
 ///
-/// - **Concurrency control** : SSPL (Strong Strict Two Phase Lock).
+/// - **Concurrency control** : SS2PL (Strong Strict Two Phase Lock).
 /// - **Lock target** : table.
 /// - **Dead lock prevention** : No-Wait.
 #[derive(Debug)]
-pub(crate) struct SimpleTx<'st> {
-    storage: &'st SimpleStorage,
+pub(crate) struct SimpleTx {
+    id: SimpleTxId,
+
+    loaded_tables: Vec<TableObj>,
+
+    // Singleton (at most 1 per database) instance of LockManager.
+    // Arc since many SimpleTx instances share the same LockManager instance.
+    // Latch since a SimpleTx instance should exclusively borrow mutable reference to LockManager at a time to lock/unlock.
+    lock_manager: Arc<Latch<LockManager>>,
 }
 
-impl<'st> TxCtxLike<'st> for SimpleTx<'st> {
-    type Storage = SimpleStorage;
+impl PartialEq for SimpleTx {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for SimpleTx {}
 
-    fn begin(storage: &'st Self::Storage) -> ApllodbResult<Self>
-    where
-        Self: Sized,
-    {
-        Ok(Self { storage })
+impl Ord for SimpleTx {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.id.cmp(&other.id)
+    }
+}
+impl PartialOrd for SimpleTx {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl TxCtxLike for SimpleTx {
+    fn begin(&mut self) -> ApllodbResult<()> {
+        // new() で全部終わるからやることないのでは・・・？
+        todo!()
     }
 
     /// # Failures
     ///
     /// - Errors from [Storage::make_durable](foobar.html).
     fn commit(&mut self) -> ApllodbResult<()> {
-        self.storage.flush_objects_atomically()?;
+        SimpleStorage::flush_objects_atomically(self.loaded_tables.drain(..).collect())?;
 
         self.unlock_all();
 
@@ -49,7 +79,7 @@ impl<'st> TxCtxLike<'st> for SimpleTx<'st> {
     }
 }
 
-impl<'st> SimpleTx<'st> {
+impl SimpleTx {
     fn safe_abort(&mut self) {
         self.abort()
             .expect("SimpleTx::abort() is expected to always succeed.")
@@ -63,38 +93,32 @@ impl<'st> SimpleTx<'st> {
     ///
     /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
     ///   - Lock for `table_name` is already acquired by another transaction.
-    fn lock_or_abort(
-        &mut self,
-        table_name: &TableName,
-    ) -> ApllodbResult<ReentrantMutexGuard<TableRwToken>> {
-        match self.storage.try_lock(table_name) {
-            Some(token_in_guard) => Ok(token_in_guard),
-            None => {
+    fn lock_or_abort(&mut self, table_name: &TableName) -> ApllodbResult<TableRwToken> {
+        self.lock_manager
+            .with_lock(|lm| lm.reentrant_try_lock(table_name, self.id))
+            .ok_or_else(|| {
                 self.safe_abort();
-                Err(ApllodbError::new(
+                ApllodbError::new(
                     ApllodbErrorKind::TransactionRollback,
                     format!("failed to try-lock table {}", table_name),
                     None,
-                ))
-            }
-        }
+                )
+            })
     }
 
     fn unlock_all(&mut self) {
-        todo!()
+        self.lock_manager.with_lock(|lm| lm.unlock_all(self.id))
     }
 }
 
-impl<'st> SimpleTx<'st> {
+impl SimpleTx {
     /// # Failures
     ///
     /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
     ///   - Lock for `table_name` is already acquired by another transaction.
     pub(crate) fn read_table(&mut self, table_name: &TableName) -> ApllodbResult<Table> {
-        let storage = self.storage; // freezing technique
-
-        let token_in_guard = self.lock_or_abort(table_name)?;
-        let table_obj = storage.load_table(&*token_in_guard)?;
+        let token = self.lock_or_abort(table_name)?;
+        let table_obj = SimpleStorage::load_table(&token)?;
         Ok(table_obj.as_table().clone())
     }
 
@@ -103,10 +127,8 @@ impl<'st> SimpleTx<'st> {
     /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
     ///   - Lock for `table` is already acquired by another transaction.
     pub(crate) fn write_table(&mut self, table: Table) -> ApllodbResult<()> {
-        let storage = self.storage; // freezing technique
-
-        let token_in_guard = self.lock_or_abort(table.name())?;
-        let table_obj = storage.load_table(&*token_in_guard)?;
+        let token = self.lock_or_abort(table.name())?;
+        let mut table_obj = SimpleStorage::load_table(&token)?;
         table_obj.update_by(table);
         Ok(())
     }
