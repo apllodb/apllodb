@@ -31,6 +31,8 @@
 
 mod access_methods;
 mod transaction;
+mod database;
 
 pub use crate::access_methods::AccessMethodsDdl;
 pub use crate::transaction::TxCtxLike;
+pub use crate::database::DbCtxLike;

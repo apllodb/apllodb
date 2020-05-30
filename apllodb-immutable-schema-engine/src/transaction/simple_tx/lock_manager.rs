@@ -17,6 +17,13 @@ pub(crate) struct LockManager {
 }
 
 impl LockManager {
+    /// Create an instance, which is intended to be used as singleton.
+    pub(crate) fn new() -> Self {
+        Self {
+            lock_table: HashMap::new(),
+        }
+    }
+
     /// Reentrant try_lock to a table.
     pub(super) fn reentrant_try_lock(
         &mut self,

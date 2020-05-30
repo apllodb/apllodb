@@ -1,22 +1,19 @@
-mod lock_manager;
+mod id;
+pub(crate) mod lock_manager;
 mod objects;
 mod simple_storage;
 
-use crate::{latch::Latch, Table};
+use crate::{latch::Latch, Database, Table};
 use apllodb_shared_components::{
     data_structure::TableName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::TxCtxLike;
+use id::SimpleTxId;
 use lock_manager::{LockManager, TableRwToken};
 use objects::TableObj;
-use serde::{Deserialize, Serialize};
 use simple_storage::SimpleStorage;
 use std::{cmp::Ordering, sync::Arc};
-
-/// Transaction ID.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-struct SimpleTxId(u64);
 
 /// Simple (Naive) ACID transaction implementation for Serializable isolation level.
 ///
@@ -56,9 +53,17 @@ impl PartialOrd for SimpleTx {
 }
 
 impl TxCtxLike for SimpleTx {
-    fn begin(&mut self) -> ApllodbResult<()> {
-        // new() で全部終わるからやることないのでは・・・？
-        todo!()
+    type DbCtx = Database;
+
+    fn begin(db: &Self::DbCtx) -> ApllodbResult<Self>
+    where
+        Self: std::marker::Sized,
+    {
+        Ok(Self {
+            id: SimpleTxId::new(),
+            loaded_tables: vec![],
+            lock_manager: db.lock_manager.clone(),
+        })
     }
 
     /// # Failures
@@ -109,9 +114,7 @@ impl SimpleTx {
     fn unlock_all(&mut self) {
         self.lock_manager.with_lock(|lm| lm.unlock_all(self.id))
     }
-}
 
-impl SimpleTx {
     /// # Failures
     ///
     /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
