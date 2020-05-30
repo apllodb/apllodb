@@ -46,6 +46,18 @@ mod column_definition {
             .unwrap()
         }};
     }
+
+    /// Vec<ColumnDefinition> factory.
+    #[macro_export]
+    macro_rules! column_definitions {
+        ($($column_definition: expr $(,)?)*) => {{
+            vec![
+                $(
+                    $column_definition,
+                )*
+            ]
+        }}
+    }
 }
 
 mod column_name {
@@ -112,5 +124,17 @@ mod table_constraints {
             ];
             TableConstraints::new(kinds).unwrap()
         }}
+    }
+}
+
+mod table_name {
+    /// TableName factory.
+    #[macro_export]
+    macro_rules! table_name {
+        ($table_name: expr) => {{
+            use apllodb_shared_components::data_structure::{ShortName, TableName};
+
+            TableName::from(ShortName::new($table_name).unwrap())
+        }};
     }
 }

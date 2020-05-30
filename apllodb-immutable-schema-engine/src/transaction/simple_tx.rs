@@ -136,3 +136,42 @@ impl SimpleTx {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::SimpleTx;
+    use crate::{
+        column_constraints, column_definition, column_definitions, table_constraints, table_name,
+        AccessMethods, Database,
+    };
+    use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
+    use apllodb_storage_manager_interface::{AccessMethodsDdl, TxCtxLike};
+
+    #[test]
+    fn test_no_wait() -> ApllodbResult<()> {
+        let db = Database::new();
+
+        let tn = &table_name!("t");
+        let tc = table_constraints!();
+        let coldefs = column_definitions!(column_definition!("c1", column_constraints!()));
+
+        let mut tx1 = SimpleTx::begin(&db)?;
+        let mut tx2 = SimpleTx::begin(&db)?;
+
+        AccessMethods::create_table(&mut tx1, &tn, &tc, &coldefs)?;
+
+        match AccessMethods::create_table(&mut tx2, &tn, &tc, &coldefs) {
+            Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::TransactionRollback),
+            Ok(_) => panic!("should rollback"),
+        }
+
+        Ok(())
+    }
+
+    // reentrant
+
+    // acid
+    // iは無理。no-waitなので
+    // aはむずいけど試したい
+    // c...?
+}

@@ -6,7 +6,7 @@ use apllodb_shared_components::data_structure::{
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_manager_interface::AccessMethodsDdl;
 
-impl<'st> AccessMethodsDdl<SimpleTx> for AccessMethods {
+impl AccessMethodsDdl<SimpleTx> for AccessMethods {
     // TODO async とかつけような
 
     /// CREATE TABLE command.
