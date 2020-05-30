@@ -15,10 +15,12 @@ impl<T: Debug> Latch<T> {
     where
         F: FnOnce(&mut T) -> R,
     {
-        let mut v = self
-            .0
-            .lock()
-            .expect(format!("a thread panicked who took mutex lock to {:?}", self.0).as_str());
+        let mut v = self.0.lock().unwrap_or_else(|e| {
+            panic!(
+                "a thread panicked who took mutex lock to {:?} : {:?}",
+                self.0, e
+            )
+        });
         f(&mut *v)
     }
 }
