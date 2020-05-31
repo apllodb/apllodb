@@ -256,4 +256,10 @@ pub enum ApllodbErrorKind {
 
     // Section: Class 44 - WITH CHECK OPTION Violation
     WithCheckOptionViolation,
+
+    // Section: Class 58 (non-standard; partially same as PostgreSWL) - System Errors
+    SystemError,
+    IoError,
+    DeserializationError,
+    SerializationError,
 }
