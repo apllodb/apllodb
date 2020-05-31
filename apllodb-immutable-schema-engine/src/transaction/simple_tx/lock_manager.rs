@@ -7,6 +7,11 @@ use std::collections::HashMap;
 /// TODO make it !Send.
 #[derive(Hash, Debug)]
 pub(super) struct TableRwToken(TableName);
+impl TableRwToken {
+    pub(super) fn as_table_name(&self) -> &TableName {
+        &self.0
+    }
+}
 
 /// Provides reentrant try-lock to table (table lock).
 ///

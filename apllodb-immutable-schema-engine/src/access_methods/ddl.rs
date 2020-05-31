@@ -25,7 +25,7 @@ impl AccessMethodsDdl<SimpleTx> for AccessMethods {
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let table = Table::create(table_name, table_constraints, column_definitions)?;
-        tx.write_table(table)?;
+        tx.put_table(table)?;
         Ok(())
     }
 
@@ -47,9 +47,9 @@ impl AccessMethodsDdl<SimpleTx> for AccessMethods {
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
-        let mut table = tx.read_table(table_name)?;
+        let mut table = tx.get_table(table_name)?;
         table.alter(action)?;
-        tx.write_table(table)?;
+        tx.put_table(table)?;
 
         Ok(())
     }

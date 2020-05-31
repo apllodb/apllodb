@@ -13,7 +13,7 @@ use id::SimpleTxId;
 use lock_manager::{LockManager, TableRwToken};
 use objects::TableObj;
 use simple_storage::SimpleStorage;
-use std::{cmp::Ordering, sync::Arc};
+use std::{cmp::Ordering, collections::HashMap, sync::Arc};
 
 /// Simple (Naive) ACID transaction implementation for Serializable isolation level.
 ///
@@ -26,7 +26,7 @@ use std::{cmp::Ordering, sync::Arc};
 pub(crate) struct SimpleTx {
     id: SimpleTxId,
 
-    loaded_tables: Vec<TableObj>,
+    loaded_tables: HashMap<TableName, TableObj>,
 
     // Singleton (at most 1 per database) instance of LockManager.
     // Arc since many SimpleTx instances share the same LockManager instance.
@@ -61,7 +61,7 @@ impl TxCtxLike for SimpleTx {
     {
         Ok(Self {
             id: SimpleTxId::new(),
-            loaded_tables: vec![],
+            loaded_tables: HashMap::new(),
             lock_manager: db.lock_manager.clone(),
         })
     }
@@ -70,7 +70,9 @@ impl TxCtxLike for SimpleTx {
     ///
     /// - Errors from [Storage::make_durable](foobar.html).
     fn commit(&mut self) -> ApllodbResult<()> {
-        SimpleStorage::flush_objects_atomically(self.loaded_tables.drain(..).collect())?;
+        SimpleStorage::flush_objects_atomically(
+            self.loaded_tables.drain().map(|(_, v)| v).collect(),
+        )?;
 
         self.unlock_all();
 
@@ -85,6 +87,39 @@ impl TxCtxLike for SimpleTx {
 }
 
 impl SimpleTx {
+    /// Returns table metadata from buffer the transaction instance owns.
+    /// If the metadata does not reside in the transaction's buffer, the transaction try-locks to the table
+    /// and issues request to load it to `SimpleStorage`.
+    ///
+    /// # Failures
+    ///
+    /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
+    ///   - Lock for `table_name` is already acquired by another transaction.
+    /// - Errors from [SimpleStorage::load_table()](foobar.html)
+    pub(crate) fn get_table(&mut self, table_name: &TableName) -> ApllodbResult<Table> {
+        let token = self.lock_or_abort(table_name)?;
+        Ok(self
+            .get_latest_or_load_table_obj(&token)?
+            .as_table()
+            .clone())
+    }
+
+    /// Updates table metadata in buffer the transaction instance owns.
+    ///
+    /// # Failures
+    ///
+    /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
+    ///   - Lock for `table` is already acquired by another transaction.
+    /// - Errors from [SimpleStorage::load_table()](foobar.html)
+    pub(crate) fn put_table(&mut self, table: Table) -> ApllodbResult<()> {
+        let token = self.lock_or_abort(table.name())?;
+
+        let table_obj = self.get_latest_or_load_table_obj(&token)?;
+        table_obj.update_by(table);
+
+        Ok(())
+    }
+
     fn safe_abort(&mut self) {
         self.abort()
             .expect("SimpleTx::abort() is expected to always succeed.")
@@ -115,25 +150,14 @@ impl SimpleTx {
         self.lock_manager.with_lock(|lm| lm.unlock_all(self.id))
     }
 
-    /// # Failures
-    ///
-    /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
-    ///   - Lock for `table_name` is already acquired by another transaction.
-    pub(crate) fn read_table(&mut self, table_name: &TableName) -> ApllodbResult<Table> {
-        let token = self.lock_or_abort(table_name)?;
-        let table_obj = SimpleStorage::load_table(&token)?;
-        Ok(table_obj.as_table().clone())
-    }
-
-    /// # Failures
-    ///
-    /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
-    ///   - Lock for `table` is already acquired by another transaction.
-    pub(crate) fn write_table(&mut self, table: Table) -> ApllodbResult<()> {
-        let token = self.lock_or_abort(table.name())?;
-        let mut table_obj = SimpleStorage::load_table(&token)?;
-        table_obj.update_by(table);
-        Ok(())
+    fn get_latest_or_load_table_obj(
+        &mut self,
+        token: &TableRwToken,
+    ) -> ApllodbResult<&mut TableObj> {
+        Ok(self
+            .loaded_tables
+            .entry(token.as_table_name().clone())
+            .or_insert(SimpleStorage::load_table(&token)?))
     }
 }
 
@@ -170,8 +194,10 @@ mod tests {
 
     // reentrant
 
+    // 自分自身からは途中状態が見える
+
     // acid
     // iは無理。no-waitなので
     // aはむずいけど試したい
-    // c...?
+    // cは、トランザクション途中では制約満たしてなくても、commit時に満たすのを試したい
 }

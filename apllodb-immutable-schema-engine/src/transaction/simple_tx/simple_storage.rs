@@ -9,89 +9,81 @@ use apllodb_shared_components::error::ApllodbResult;
 ///
 /// Say you are trying to update table "T" in a transaction.
 ///
-/// 1. `try_lock()` "T" and (if no other transaction does not have lock to "T", ) get [TableRwToken](foobar.html).
-///
-/// 2. Show the token to `load_table()` and then get reference to [TableObj](foobar.html) of "T" from disk.
-///    Note that only a transaction who acquires [TableRwToken](foobar.html) for "T" can load [TableObj](foobar.html) of "T".
+/// 1. [SimpleTx::get_table()](foobar.html) transparently returns `Table` instance from disk,
+///    while [SimpleStorage::load_table()](foobar.html) is internally called and `TableObj` gets owned by `SimpleTx` instance.
 ///
 ///     ```text
-///                  &TableObj "T"
+///                    Table "T"
 ///                       ^
+///          .get_table() |
 ///                +------|--------------------------------+
 ///                |      |                                |
 ///                |  TableObj "T"                         |
-///     [memory]   |      ^                                |
-///     ===========|======|================================|=================================
-///      [disk]    |      |                                |
-///                |  (serialized representation of "T")   |
-///                |                                       |
-///                +--- -------- SimpleStorage ------------+
-///     ```
-///
-/// 3. Get [Table](foobar.html) "T" from [TableObj](foobar.html) "T".
-///   Construct another [Table](foobar.html) "T" instance.
-///   
-///
-///     ```text
-///                    Table "T" -> (new) Table "T" -> (new) TableObj "T"
-///                       ^
-///                       |
-///                  &mut TableObj "T"
-///                       ^
+///                |      ^                                |
+///                +------|------- SimpleTx ---------------+
+///     [memory]          |
+///     ==================|==================================================================
+///      [disk]           |
+///         .load_table() |
 ///                +------|--------------------------------+
 ///                |      |                                |
-///                |  TableObj "T"                         |
-///     [memory]   |      ^                                |
-///     ===========|======|================================|=================================
-///      [disk]    |      |                                |
 ///                |  (serialized representation of "T")   |
 ///                |                                       |
-///                +--- -------- SimpleStorage ------------+
+///                +------------ SimpleStorage ------------+
 ///     ```
 ///
-/// 4. Call [TableObj::update()](foobar.html) to overwrite "T" in memory.
+/// 2. Construct another [Table](foobar.html) "T" instance.
+///    [SimpleTx::put_table()](foobar.html) to overwrite "T" in memory.
 ///
 ///     ```text
-///                    Table "T" -> (new) Table "T" -> (new) TableObj "T"
-///                       ^                                     |
-///                       |                                     |
-///                  &mut TableObj "T" <------------------------+
-///                       ^    |
-///                +------|----|---------------------------+
-///                |      |    v                           |
+///                    Table "T" -> (new) Table "T"
+///                       ^                |
+///          .get_table() |                | .put_table()
+///                +------|----------------|---------------+
+///                |      |                v               |
 ///                |  TableObj "T" (dirty)                 |
-///     [memory]   |      ^                                |
-///     ===========|======|================================|=================================
-///      [disk]    |      |                                |
+///                |      ^                                |
+///                +------|------- SimpleTx ---------------+
+///     [memory]          |
+///     ==================|==================================================================
+///      [disk]           |
+///         .load_table() |
+///                +------|--------------------------------+
+///                |      |                                |
 ///                |  (serialized representation of "T")   |
 ///                |                                       |
-///                +--- -------- SimpleStorage ------------+
+///                +------------ SimpleStorage ------------+
 ///     ```
 ///
-/// 5. `flush_objects_atomically()` to make dirty "T" durable.
+/// 3. `SimpleTx::commit()` to make dirty "T" durable.
 ///
 ///     ```text
-///                    Table "T" -> (new) Table "T" -> (new) TableObj "T"
-///                       ^                                     |
-///                       |                                     |
-///                  &mut TableObj "T" <------------------------+
-///                       ^    |
+///                    Table "T" -> (new) Table "T"
+///                       ^                |
+///          .get_table() |                | .put_table()
+///                +------|----------------|---------------+
+///                |      |                v               |
+///                |  TableObj "T" (dropped)               | .commit()
+///                |      ^    |                           |
+///                +------|----|-- SimpleTx ---------------+
+///     [memory]          |    |
+///     ==================|====|=============================================================
+///      [disk]           |    |
+///         .load_table() |    | .flush_objects_atomically()
 ///                +------|----|---------------------------+
 ///                |      |    v                           |
-///                |  TableObj "T" (will be dropped)       |
-///     [memory]   |      ^    |                           |
-///     ===========|======|====|===========================|=================================
-///      [disk]    |      |    v                           |
 ///                |  (serialized representation of "T")   |
 ///                |                                       |
-///                +--- -------- SimpleStorage ------------+
+///                +------------ SimpleStorage ------------+
 ///     ```
-///
-/// 6. Automatically release (unlock) [TableRwToken](foobar.html) when you drop response of `try_lock()`.
 #[derive(Debug)]
 pub(crate) struct SimpleStorage;
 
 impl SimpleStorage {
+    /// # Failures
+    ///
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - Table does not exist in disk.
     pub(super) fn load_table(_token: &TableRwToken) -> ApllodbResult<TableObj> {
         todo!()
     }
