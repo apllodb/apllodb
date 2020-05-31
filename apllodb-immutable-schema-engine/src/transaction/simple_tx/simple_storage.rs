@@ -1,7 +1,12 @@
-use super::{lock_manager::TableRwToken, objects::TableObj};
+mod materializer;
+mod objects;
+
+pub(in crate::transaction::simple_tx) use objects::TableObj;
+
+use super::lock_manager::TableRwToken;
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
-use atomicwrites::{AllowOverwrite, AtomicFile};
-use std::fs::File;
+use apllodb_storage_manager_interface::DbCtxLike;
+use materializer::Materializer;
 
 /// Storage for [SimpleTx](foobar.html).
 ///
@@ -90,33 +95,44 @@ impl SimpleStorage {
     ///   - IO error happens on reading file.
     /// - [DeserializationError](error/enum.ApllodbErrorKind.html#variant.DeserializationError) when:
     ///   - Failed to deserialize table metadata.
-    pub(super) fn load_table(_token: &TableRwToken) -> ApllodbResult<TableObj> {
-        use std::io::Read;
+    pub(super) fn load_table<D: DbCtxLike>(
+        db: &D,
+        token: &TableRwToken,
+    ) -> ApllodbResult<TableObj> {
+        let materializer = Materializer::new(db)?;
+        let contents = materializer.read_db()?;
 
-        let path = Self::table_objects_file_path();
-
-        let mut file = File::open(path.clone())?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
-
-        let deserialized: TableObj = serde_yaml::from_str(&contents).map_err(|e| {
+        let deserialized: Vec<TableObj> = serde_yaml::from_str(&contents).map_err(|e| {
             ApllodbError::new(
                 ApllodbErrorKind::DeserializationError,
-                format!("failed to deserialize `{}`", path),
+                format!("failed to deserialize database `{}`", db.name()),
                 Some(Box::new(e)),
             )
         })?;
-        Ok(deserialized)
+
+        let table_name = token.as_table_name();
+        deserialized
+            .into_iter()
+            .find(|obj| obj.as_table().name() == table_name)
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedTable,
+                    format!("undefined table `{}`", table_name),
+                    None,
+                )
+            })
     }
 
     /// # Failures
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - IO error happens on writing file.
-    pub(super) fn flush_objects_atomically(table_objects: Vec<TableObj>) -> ApllodbResult<()> {
-        use std::io::Write;
+    pub(super) fn flush_objects_atomically<D: DbCtxLike>(
+        db: &D,
+        table_objects: Vec<TableObj>,
+    ) -> ApllodbResult<()> {
+        let materializer = Materializer::new(db)?;
 
-        //let contents: &[u8] = "TODO".as_bytes();
         let contents = serde_yaml::to_string(&table_objects).map_err(|e| {
             ApllodbError::new(
                 ApllodbErrorKind::DeserializationError,
@@ -125,17 +141,6 @@ impl SimpleStorage {
             )
         })?;
 
-        let path = Self::table_objects_file_path();
-        let af = AtomicFile::new(path, AllowOverwrite);
-
-        af.write(|f| f.write_all(contents.as_bytes()))
-            .map_err(std::io::Error::from)?;
-
-        Ok(())
-    }
-
-    fn table_objects_file_path() -> String {
-        // FIXME set from configuration
-        "table_objects.ss".to_string()
+        materializer.write_db_atomically(contents)
     }
 }

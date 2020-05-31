@@ -4,12 +4,12 @@ use apllodb_shared_components::error::ApllodbResult;
 /// Transaction context interface.
 ///
 /// Not only DML but also DDL are executed under the transaction context (like PostgreSQL).
-pub trait TxCtxLike {
+pub trait TxCtxLike<'db> {
     /// Database context shared among many transactions.
     type DbCtx: DbCtxLike;
 
     /// Start a transaction.
-    fn begin(db: &Self::DbCtx) -> ApllodbResult<Self>
+    fn begin(db: &'db Self::DbCtx) -> ApllodbResult<Self>
     where
         Self: std::marker::Sized;
 

@@ -1,19 +1,17 @@
 mod id;
 pub(crate) mod lock_manager;
-mod objects;
 mod simple_storage;
 
-use crate::{latch::Latch, Database, Table};
+use crate::{Database, Table};
 use apllodb_shared_components::{
     data_structure::TableName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::TxCtxLike;
 use id::SimpleTxId;
-use lock_manager::{LockManager, TableRwToken};
-use objects::TableObj;
-use simple_storage::SimpleStorage;
-use std::{cmp::Ordering, collections::HashMap, sync::Arc};
+use lock_manager::TableRwToken;
+use simple_storage::{SimpleStorage, TableObj};
+use std::{cmp::Ordering, collections::HashMap};
 
 /// Simple (Naive) ACID transaction implementation for Serializable isolation level.
 ///
@@ -23,46 +21,43 @@ use std::{cmp::Ordering, collections::HashMap, sync::Arc};
 /// - **Lock target** : table.
 /// - **Dead lock prevention** : No-Wait.
 #[derive(Debug)]
-pub(crate) struct SimpleTx {
+pub(crate) struct SimpleTx<'db> {
     id: SimpleTxId,
 
     loaded_tables: HashMap<TableName, TableObj>,
 
-    // Singleton (at most 1 per database) instance of LockManager.
-    // Arc since many SimpleTx instances share the same LockManager instance.
-    // Latch since a SimpleTx instance should exclusively borrow mutable reference to LockManager at a time to lock/unlock.
-    lock_manager: Arc<Latch<LockManager>>,
+    db: &'db Database,
 }
 
-impl PartialEq for SimpleTx {
+impl<'db> PartialEq for SimpleTx<'db> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
-impl Eq for SimpleTx {}
+impl<'db> Eq for SimpleTx<'db> {}
 
-impl Ord for SimpleTx {
+impl<'db> Ord for SimpleTx<'db> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.id.cmp(&other.id)
     }
 }
-impl PartialOrd for SimpleTx {
+impl<'db> PartialOrd for SimpleTx<'db> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl TxCtxLike for SimpleTx {
+impl<'db> TxCtxLike<'db> for SimpleTx<'db> {
     type DbCtx = Database;
 
-    fn begin(db: &Self::DbCtx) -> ApllodbResult<Self>
+    fn begin(db: &'db Self::DbCtx) -> ApllodbResult<Self>
     where
         Self: std::marker::Sized,
     {
         Ok(Self {
             id: SimpleTxId::new(),
             loaded_tables: HashMap::new(),
-            lock_manager: db.lock_manager.clone(),
+            db,
         })
     }
 
@@ -71,6 +66,7 @@ impl TxCtxLike for SimpleTx {
     /// - Errors from [Storage::make_durable](foobar.html).
     fn commit(&mut self) -> ApllodbResult<()> {
         SimpleStorage::flush_objects_atomically(
+            self.db,
             self.loaded_tables.drain().map(|(_, v)| v).collect(),
         )?;
 
@@ -86,7 +82,7 @@ impl TxCtxLike for SimpleTx {
     }
 }
 
-impl SimpleTx {
+impl<'db> SimpleTx<'db> {
     /// Returns table metadata from buffer the transaction instance owns.
     /// If the metadata does not reside in the transaction's buffer, the transaction try-locks to the table
     /// and issues request to load it to `SimpleStorage`.
@@ -134,7 +130,8 @@ impl SimpleTx {
     /// - [TransactionRollback](error/enum.ApllodbErrorKind.html#variant.TransactionRollback) when:
     ///   - Lock for `table_name` is already acquired by another transaction.
     fn lock_or_abort(&mut self, table_name: &TableName) -> ApllodbResult<TableRwToken> {
-        self.lock_manager
+        self.db
+            .lock_manager
             .with_lock(|lm| lm.reentrant_try_lock(table_name, self.id))
             .ok_or_else(|| {
                 self.safe_abort();
@@ -147,7 +144,7 @@ impl SimpleTx {
     }
 
     fn unlock_all(&mut self) {
-        self.lock_manager.with_lock(|lm| lm.unlock_all(self.id))
+        self.db.lock_manager.with_lock(|lm| lm.unlock_all(self.id))
     }
 
     fn get_latest_or_load_table_obj(
@@ -157,7 +154,7 @@ impl SimpleTx {
         Ok(self
             .loaded_tables
             .entry(token.as_table_name().clone())
-            .or_insert(SimpleStorage::load_table(&token)?))
+            .or_insert(SimpleStorage::load_table(self.db, &token)?))
     }
 }
 
@@ -165,15 +162,15 @@ impl SimpleTx {
 mod tests {
     use super::SimpleTx;
     use crate::{
-        column_constraints, column_definition, column_definitions, table_constraints, table_name,
-        AccessMethods, Database,
+        column_constraints, column_definition, column_definitions, database_name,
+        table_constraints, table_name, AccessMethods, Database,
     };
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_storage_manager_interface::{AccessMethodsDdl, TxCtxLike};
 
     #[test]
     fn test_no_wait() -> ApllodbResult<()> {
-        let db = Database::new();
+        let db = Database::new(database_name!("db_foobar"));
 
         let tn = &table_name!("t");
         let tc = table_constraints!();

@@ -72,6 +72,18 @@ mod column_name {
     }
 }
 
+mod database_name {
+    /// DatabaseName factory.
+    #[macro_export]
+    macro_rules! database_name {
+        ($col_name: expr) => {{
+            use apllodb_shared_components::data_structure::{DatabaseName, ShortName};
+
+            DatabaseName::from(ShortName::new($col_name).unwrap())
+        }};
+    }
+}
+
 mod table_constraint_kind {
     /// TableConstraintKind::PrimaryKey factory.
     #[macro_export]
