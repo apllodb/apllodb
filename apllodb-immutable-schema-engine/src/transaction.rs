@@ -1,3 +1,3 @@
-mod simple_tx;
+mod sqlite_tx;
 
-pub(crate) use simple_tx::{lock_manager::LockManager, SimpleTx};
+pub(crate) use sqlite_tx::SqliteTx;

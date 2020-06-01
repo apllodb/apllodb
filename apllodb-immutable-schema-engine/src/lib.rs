@@ -15,7 +15,6 @@
 //! - ACID transaction (with poor performance) working with SERIALIZABLE isolation level.
 
 mod access_methods;
-mod database;
 mod helper;
 mod latch;
 mod table;
@@ -23,7 +22,6 @@ mod transaction;
 mod version;
 
 pub use crate::access_methods::AccessMethods;
-pub use crate::database::Database;
 pub use crate::table::Table;
 pub use crate::version::{ActiveVersion, InactiveVersion};
 

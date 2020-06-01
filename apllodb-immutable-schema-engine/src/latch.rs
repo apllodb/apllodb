@@ -6,10 +6,12 @@ use std::{fmt::Debug, sync::Mutex};
 pub(crate) struct Latch<T: Debug>(Mutex<T>);
 
 impl<T: Debug> Latch<T> {
+    #[allow(dead_code)]
     pub(crate) fn new(v: T) -> Self {
         Self(Mutex::new(v))
     }
 
+    #[allow(dead_code)]
     /// Mutex blocking RAII lock.
     pub(crate) fn with_lock<F, R>(&self, f: F) -> R
     where
