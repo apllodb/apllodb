@@ -1,4 +1,4 @@
-use super::{column::ColumnDataType, Version};
+use super::{column::ColumnDataType, Version, VersionNumber};
 use serde::{Deserialize, Serialize};
 
 /// Inactive Version.
@@ -7,8 +7,8 @@ pub struct InactiveVersion(Version);
 
 impl InactiveVersion {
     /// Version number.
-    pub fn number(&self) -> u64 {
-        self.0.number
+    pub fn number(&self) -> &VersionNumber {
+        &self.0.number
     }
 
     /// Ref to columns and their data types.

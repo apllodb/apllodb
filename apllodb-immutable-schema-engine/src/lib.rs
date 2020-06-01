@@ -23,7 +23,7 @@ mod version;
 
 pub use crate::access_methods::AccessMethods;
 pub use crate::table::Table;
-pub use crate::version::{ActiveVersion, InactiveVersion};
+pub use crate::version::{ActiveVersion, InactiveVersion, VersionNumber};
 
 #[cfg(test)]
 pub(crate) mod test_support;

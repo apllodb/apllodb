@@ -43,4 +43,12 @@ impl Database {
     pub(in crate::transaction::sqlite_tx) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
         &mut self.sqlite_conn
     }
+
+    fn create_metadata_table_if_not_exist(&mut self) -> ApllodbResult<()> {
+        self.conn.
+    }
+
+    fn metadata_table_name() -> String {
+        "_table_metadata".to_string()
+    }
 }

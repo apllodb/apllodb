@@ -1,5 +1,6 @@
 mod database;
 mod id;
+mod sqlite_table_name;
 
 use crate::Table;
 use apllodb_shared_components::{

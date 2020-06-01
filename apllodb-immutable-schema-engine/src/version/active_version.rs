@@ -1,4 +1,4 @@
-use super::{column::ColumnDataType, Version};
+use super::{column::ColumnDataType, Version, VersionNumber};
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, TableConstraints,
 };
@@ -11,8 +11,8 @@ pub struct ActiveVersion(Version);
 
 impl ActiveVersion {
     /// Version number.
-    pub fn number(&self) -> u64 {
-        self.0.number
+    pub fn number(&self) -> &VersionNumber {
+        &self.0.number
     }
 
     /// Ref to columns and their data types.
@@ -41,7 +41,7 @@ impl ActiveVersion {
         Self::validate_at_least_one_column(&column_data_types)?;
 
         Ok(Self(Version {
-            number: 1,
+            number: VersionNumber::initial(),
             column_data_types,
             // TODO: カラム制約とテーブル制約からつくる
             constraints: vec![],
@@ -59,7 +59,7 @@ impl ActiveVersion {
     /// - [UndefinedColumn](variant.UndefinedColumn.html)
     ///   - If column to alter does not exist.
     pub(crate) fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
-        let number = self.0.number + 1;
+        let number = self.0.number.next();
 
         match action {
             AlterTableAction::DropColumn {
@@ -137,7 +137,7 @@ mod tests {
         let table_constraints = table_constraints!();
 
         let v = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
-        assert_eq!(v.number(), 1);
+        assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
     }
@@ -169,7 +169,7 @@ mod tests {
 
         let v2 = v1.create_next(&action)?;
 
-        assert_eq!(v2.number(), 2);
+        assert_eq!(v2.number().to_u64(), 2);
 
         let v2_cols: Vec<ColumnName> = v2
             .column_data_types()

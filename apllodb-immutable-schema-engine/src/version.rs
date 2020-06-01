@@ -2,9 +2,11 @@ mod active_version;
 mod column;
 mod constraint;
 mod inactive_version;
+mod version_number;
 
 pub use active_version::ActiveVersion;
 pub use inactive_version::InactiveVersion;
+pub use version_number::VersionNumber;
 
 use column::ColumnDataType;
 use constraint::VersionConstraint;
@@ -27,7 +29,7 @@ use std::cmp::Ordering;
 /// See: https://github.com/darwin-education/apllodb/wiki/Immutable-Schema-102:-Immutable-Schema-%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E5%AE%9A%E7%BE%A9%E3%83%BB%E5%AE%9A%E7%90%86
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 struct Version {
-    number: u64,
+    number: VersionNumber,
     column_data_types: Vec<ColumnDataType>,
     constraints: Vec<VersionConstraint>, // TODO make VersionConstraints type and validation like TableConstraints.
 }
@@ -37,7 +39,6 @@ impl Ord for Version {
         self.number.cmp(&other.number)
     }
 }
-
 impl PartialOrd for Version {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
