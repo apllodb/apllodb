@@ -26,7 +26,7 @@ impl Database {
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     pub(in crate::transaction::sqlite_tx) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
-        let path = format!("{}.sqlite3", db_name); // FIXME: path from configuration
+        let path = format!("immutable_schema_{}.sqlite3", db_name); // FIXME: path from configuration
         let conn = rusqlite::Connection::open(path).map_err(|e| {
             ApllodbError::new(
                 ApllodbErrorKind::IoError,

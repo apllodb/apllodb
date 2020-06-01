@@ -38,6 +38,8 @@ impl<'db> Ord for SqliteTx<'db> {
 impl<'db> TxCtxLike for SqliteTx<'db> {
     /// # Failures
     ///
+    /// If any of the following error is returned, transaction has already been aborted.
+    ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     fn commit(self) -> ApllodbResult<()> {
@@ -123,9 +125,10 @@ mod tests {
     };
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_storage_manager_interface::AccessMethodsDdl;
+    use apllodb_storage_manager_interface::TxCtxLike;
 
     #[test]
-    fn test_no_wait() -> ApllodbResult<()> {
+    fn test_wait() -> ApllodbResult<()> {
         let mut db1 = Database::new(database_name!("db_foobar"))?;
         let mut db2 = Database::new(database_name!("db_foobar"))?;
 
@@ -136,12 +139,20 @@ mod tests {
         let mut tx1 = SqliteTx::begin(&mut db1)?;
         let mut tx2 = SqliteTx::begin(&mut db2)?;
 
+        // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
+        // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
+        AccessMethods::create_table(&mut tx2, &tn, &tc, &coldefs)?;
         AccessMethods::create_table(&mut tx1, &tn, &tc, &coldefs)?;
 
-        match AccessMethods::create_table(&mut tx2, &tn, &tc, &coldefs) {
-            Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::TransactionRollback),
+        match tx1.commit() {
+            // blocked and got error
+            Err(e) => {
+                println!("{}", e);
+                assert_eq!(*e.kind(), ApllodbErrorKind::IoError)
+            }
             Ok(_) => panic!("should rollback"),
         }
+        tx2.commit()?;
 
         Ok(())
     }
