@@ -1,3 +1,4 @@
+use super::sqlite_table_name::SqliteTableNameForTable;
 use apllodb_shared_components::{
     data_structure::DatabaseName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -45,10 +46,30 @@ impl Database {
     }
 
     fn create_metadata_table_if_not_exist(&mut self) -> ApllodbResult<()> {
-        self.conn.
-    }
+        let metadata_table = SqliteTableNameForTable::name();
+        let sql = format!(
+            "
+CREATE TABLE IF NOT EXISTS {} (
+  table_name TEXT PRIMARY KEY,
+  table_wide_constraints TEXT
+)
+        ",
+            &metadata_table,
+        );
 
-    fn metadata_table_name() -> String {
-        "_table_metadata".to_string()
+        self.sqlite_conn
+            .execute(sql.as_str(), rusqlite::params![])
+            .map(|_| ())
+            .map_err(|e| {
+                ApllodbError::new(
+                    ApllodbErrorKind::IoError,
+                    format!(
+                        "backend sqlite3 raised an error on creating metadata table `{}`",
+                        metadata_table
+                    ),
+                    Some(Box::new(e)),
+                )
+            })?;
+        Ok(())
     }
 }

@@ -13,7 +13,14 @@ impl VersionNumber {
         Self(self.0 + 1)
     }
 
+    /// Raw version number.
     pub fn to_u64(&self) -> u64 {
         self.0
+    }
+}
+
+impl From<u64> for VersionNumber {
+    fn from(n: u64) -> Self {
+        Self(n)
     }
 }
