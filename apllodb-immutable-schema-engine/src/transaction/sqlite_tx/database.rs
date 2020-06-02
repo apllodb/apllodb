@@ -35,17 +35,19 @@ impl Database {
                 Some(Box::new(e)),
             )
         })?;
-        Ok(Self {
+        let slf = Self {
             name: db_name,
             sqlite_conn: conn,
-        })
+        };
+        slf.create_metadata_table_if_not_exist()?;
+        Ok(slf)
     }
 
     pub(in crate::transaction::sqlite_tx) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
         &mut self.sqlite_conn
     }
 
-    fn create_metadata_table_if_not_exist(&mut self) -> ApllodbResult<()> {
+    fn create_metadata_table_if_not_exist(&self) -> ApllodbResult<()> {
         let metadata_table = SqliteTableNameForTable::name();
         let sql = format!(
             "
