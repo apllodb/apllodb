@@ -48,6 +48,7 @@ impl<'tx> TableDao<'tx> {
                 (":table_wide_constraints", &table_wide_constraints),
             ],
         ) {
+            // TODO SQLite側のエラー処理は、 https://www.sqlite.org/rescode.html#busy をenum variant で引っ掛けられるようになりたい。rusqliteへの改修を画策中
             Err(
                 e
                 @
@@ -71,8 +72,8 @@ impl<'tx> TableDao<'tx> {
                 @
                 rusqlite::Error::SqliteFailure(
                     libsqlite3_sys::Error {
-                        code: libsqlite3_sys::ErrorCode::ConstraintViolation,
-                        extended_code: 1555,
+                        extended_code: 1555, // SQLITE_CONSTRAINT_PRIMARYKEY
+                        ..
                     },
                     _,
                 ),
@@ -92,10 +93,6 @@ impl<'tx> TableDao<'tx> {
                     Some(Box::new(e)),
                 ))
             }
-            // Err(e) => {
-            //     println!("{:?}", e);
-            //     todo!()
-            // }
             Ok(_) => Ok(()),
         }
     }

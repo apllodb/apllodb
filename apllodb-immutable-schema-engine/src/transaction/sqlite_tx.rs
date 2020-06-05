@@ -202,9 +202,9 @@ mod tests {
 
     #[test]
     fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
-        Database::cleanup(database_name!("db_foobar"))?;
+        Database::cleanup(database_name!("db_xy"))?;
 
-        let mut db = Database::new(database_name!("db_foobar"))?;
+        let mut db = Database::new(database_name!("db_xy"))?;
 
         let tn = &table_name!("t");
         let tc = table_constraints!();
