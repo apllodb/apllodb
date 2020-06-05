@@ -25,7 +25,7 @@ impl<'db> AccessMethodsDdl<SqliteTx<'db>> for AccessMethods {
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let table = Table::create(table_name, table_constraints, column_definitions)?;
-        tx.put_table(table)?;
+        tx.create_table(table)?;
         Ok(())
     }
 
@@ -49,7 +49,7 @@ impl<'db> AccessMethodsDdl<SqliteTx<'db>> for AccessMethods {
     ) -> ApllodbResult<()> {
         let mut table = tx.get_table(table_name)?;
         table.alter(action)?;
-        tx.put_table(table)?;
+        tx.alter_table(table)?;
 
         Ok(())
     }

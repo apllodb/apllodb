@@ -106,13 +106,38 @@ impl<'db> SqliteTx<'db> {
         todo!()
     }
 
-    /// Updates table metadata in buffer the transaction instance owns.
+    /// Create a new table with Table and its Version v1 the transaction instance owns.
+    ///
+    /// **This operation does not satisfies atomicity and isolation** because
+    /// SQLite's DDL commands are internally issued.
     ///
     /// # Failures
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    pub(crate) fn put_table(&mut self, _table: Table) -> ApllodbResult<()> {
+    pub(crate) fn create_table(&mut self, _table: Table) -> ApllodbResult<()> {
+        // insert table metadata
+        // create v1
+        todo!()
+    }
+
+    /// Do the following:
+    ///
+    /// - Overwrite Table's metadata.
+    /// - Create new Version.
+    /// - Auto-upgrade.
+    /// - Deactivate Version's.
+    ///
+    /// **This operation does not satisfies atomicity and isolation** because
+    /// SQLite's DDL commands are internally issued.
+    ///
+    /// # Failures
+    ///
+    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    ///   - rusqlite raises an error.
+    pub(crate) fn alter_table(&mut self, _table: Table) -> ApllodbResult<()> {
+        // insert table metadata
+        // create v1
         todo!()
     }
 }
