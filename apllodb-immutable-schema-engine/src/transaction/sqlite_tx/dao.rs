@@ -48,21 +48,37 @@ impl<'tx> TableDao<'tx> {
                 (":table_wide_constraints", &table_wide_constraints),
             ],
         ) {
-            // Err(rusqlite::Error::SqliteFailure(libsqlite3_sys::Error { _, 1555 }, _)) => ApllodbError::new(
-            //     ApllodbErrorKind::DuplicateTable,
-            //     format!(
-            //         "table `{}` already exists",
-            //         table_name
-            //     ),
-            //     Some(Box::new(e)),
-            // )
-            Err(e) => {
-                println!("{}", e);
-                todo!()
-            }
-            Ok(_) => {}
-        };
-
-        Ok(())
+            Err(
+                e
+                @
+                rusqlite::Error::SqliteFailure(
+                    libsqlite3_sys::Error {
+                        code: libsqlite3_sys::ErrorCode::DatabaseBusy,
+                        ..
+                    },
+                    _,
+                ),
+            ) => Err(ApllodbError::new(
+                ApllodbErrorKind::DeadlockDetected,
+                format!(
+                    "table `{}` is exclusively locked by another transaction for too long time",
+                    table_name
+                ),
+                Some(Box::new(e)),
+            )),
+            Err(e) => Err(ApllodbError::new(
+                ApllodbErrorKind::IoError,
+                format!(
+                    "SQLite raised an error creating table `{}`'s metadata",
+                    table_name
+                ),
+                Some(Box::new(e)),
+            )),
+            // Err(e) => {
+            //     println!("{:?}", e);
+            //     todo!()
+            // }
+            Ok(_) => Ok(()),
+        }
     }
 }

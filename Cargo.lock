@@ -16,6 +16,7 @@ dependencies = [
  "apllodb-shared-components",
  "apllodb-storage-manager-interface",
  "chrono",
+ "libsqlite3-sys",
  "rusqlite",
  "serde",
  "serde_yaml",

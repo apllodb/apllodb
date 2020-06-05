@@ -61,7 +61,7 @@ impl<'db> TxCtxLike for SqliteTx<'db> {
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     fn abort(self) -> ApllodbResult<()> {
-        self.sqlite_tx.commit().map_err(|e| {
+        self.sqlite_tx.rollback().map_err(|e| {
             ApllodbError::new(
                 ApllodbErrorKind::IoError,
                 format!("backend sqlite3 raised an error on committing transaction"),
@@ -163,6 +163,8 @@ mod tests {
 
     #[test]
     fn test_wait() -> ApllodbResult<()> {
+        Database::cleanup(database_name!("db_foobar"))?;
+
         let mut db1 = Database::new(database_name!("db_foobar"))?;
         let mut db2 = Database::new(database_name!("db_foobar"))?;
 
@@ -176,16 +178,14 @@ mod tests {
         // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
         // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
         AccessMethods::create_table(&mut tx2, &tn, &tc, &coldefs)?;
-        AccessMethods::create_table(&mut tx1, &tn, &tc, &coldefs)?;
-
-        match tx1.commit() {
-            // blocked and got error
-            Err(e) => {
-                println!("{}", e);
-                assert_eq!(*e.kind(), ApllodbErrorKind::IoError)
-            }
+        match AccessMethods::create_table(&mut tx1, &tn, &tc, &coldefs) {
+            // Internally, new record is trying to be INSERTed but it is made wait by tx2.
+            // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
+            Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DeadlockDetected),
             Ok(_) => panic!("should rollback"),
         }
+
+        tx1.commit()?; // it's ok to commit tx1 although it already aborted by error.
         tx2.commit()?;
 
         Ok(())
