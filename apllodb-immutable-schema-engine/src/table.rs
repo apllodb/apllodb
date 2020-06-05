@@ -21,7 +21,7 @@ use version_repo::VersionRepo;
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct Table {
     name: TableName,
-    constraints: TableWideConstraints,
+    table_wide_constraints: TableWideConstraints,
     version_repo: VersionRepo,
 }
 
@@ -38,6 +38,18 @@ impl PartialOrd for Table {
 }
 
 impl Table {
+    /// Ref to TableName.
+    ///
+    /// Same as `T_create_table_command :: ... :: T_table_name`.
+    pub fn name(&self) -> &TableName {
+        &self.name
+    }
+
+    /// Ref to TableWideConstraints
+    pub(crate) fn table_wide_constraints(&self) -> &TableWideConstraints {
+        &self.table_wide_constraints
+    }
+
     /// Create.
     ///
     /// # Failures
@@ -56,7 +68,7 @@ impl Table {
 
         Ok(Self {
             name: TableName::from(table_name.clone()),
-            constraints,
+            table_wide_constraints: constraints,
             version_repo,
         })
     }
@@ -70,14 +82,5 @@ impl Table {
         // TODO Inactivate old empty versions.
 
         Ok(())
-    }
-}
-
-impl Table {
-    /// Ref to TableName.
-    ///
-    /// Same as `T_create_table_command :: ... :: T_table_name`.
-    pub fn name(&self) -> &TableName {
-        &self.name
     }
 }

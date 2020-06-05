@@ -16,6 +16,7 @@ apllodb-storage-manager-interface = { path = "../apllodb-storage-manager-interfa
 chrono = "0.4"
 rusqlite = "0.23"
 serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
 
 [dev-dependencies]
 version-sync = "0.9"

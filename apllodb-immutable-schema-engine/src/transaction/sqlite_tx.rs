@@ -1,3 +1,4 @@
+mod dao;
 mod database;
 mod id;
 mod sqlite_table_name;
@@ -8,6 +9,7 @@ use apllodb_shared_components::{
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::TxCtxLike;
+use dao::TableDao;
 use database::Database;
 use id::SqliteTxId;
 use std::cmp::Ordering;
@@ -113,12 +115,14 @@ impl<'db> SqliteTx<'db> {
     ///
     /// # Failures
     ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
-    ///   - rusqlite raises an error.
-    pub(crate) fn create_table(&mut self, _table: Table) -> ApllodbResult<()> {
-        // insert table metadata
+    /// - Errors from [TableDao::create()](foobar.html).
+    pub(crate) fn create_table(&mut self, table: Table) -> ApllodbResult<()> {
+        self.table_dao().create(&table)?;
+
         // create v1
-        todo!()
+        // todo!()
+
+        Ok(())
     }
 
     /// Do the following:
@@ -139,6 +143,10 @@ impl<'db> SqliteTx<'db> {
         // insert table metadata
         // create v1
         todo!()
+    }
+
+    fn table_dao(&self) -> TableDao<'_> {
+        TableDao::new(&self.sqlite_tx)
     }
 }
 

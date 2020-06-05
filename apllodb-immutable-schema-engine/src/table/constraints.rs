@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 /// The former is "a constraint applied to the table itself or multiple columns". (e.g. FOREIGN KEY is a table constraint)
 /// The latter is "a constraint applied to set of records". (e.g. FOREIGN KEY is NOT a table-wide constraint but a version constraint)
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub(super) struct TableWideConstraints {
+pub(crate) struct TableWideConstraints {
     kinds: Vec<TableWideConstraintKind>,
 }
 impl TableWideConstraints {
