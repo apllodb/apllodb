@@ -199,4 +199,26 @@ mod tests {
     // iは無理。no-waitなので
     // aはむずいけど試したい
     // cは、トランザクション途中では制約満たしてなくても、commit時に満たすのを試したい
+
+    #[test]
+    fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
+        Database::cleanup(database_name!("db_foobar"))?;
+
+        let mut db = Database::new(database_name!("db_foobar"))?;
+
+        let tn = &table_name!("t");
+        let tc = table_constraints!();
+        let coldefs = column_definitions!(column_definition!("c1", column_constraints!()));
+
+        let mut tx = SqliteTx::begin(&mut db)?;
+
+        AccessMethods::create_table(&mut tx, &tn, &tc, &coldefs)?;
+        match AccessMethods::create_table(&mut tx, &tn, &tc, &coldefs) {
+            // Internally, new record is trying to be INSERTed but it is made wait by tx2.
+            // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
+            Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),
+            Ok(_) => panic!("should rollback"),
+        }
+        Ok(())
+    }
 }

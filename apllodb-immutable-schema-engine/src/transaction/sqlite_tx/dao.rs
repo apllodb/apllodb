@@ -66,14 +66,32 @@ impl<'tx> TableDao<'tx> {
                 ),
                 Some(Box::new(e)),
             )),
-            Err(e) => Err(ApllodbError::new(
-                ApllodbErrorKind::IoError,
-                format!(
-                    "SQLite raised an error creating table `{}`'s metadata",
-                    table_name
+            Err(
+                e
+                @
+                rusqlite::Error::SqliteFailure(
+                    libsqlite3_sys::Error {
+                        code: libsqlite3_sys::ErrorCode::ConstraintViolation,
+                        extended_code: 1555,
+                    },
+                    _,
                 ),
+            ) => Err(ApllodbError::new(
+                ApllodbErrorKind::DuplicateTable,
+                format!("table `{}` is already CREATEd", table_name),
                 Some(Box::new(e)),
             )),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(ApllodbError::new(
+                    ApllodbErrorKind::IoError,
+                    format!(
+                        "SQLite raised an error creating table `{}`'s metadata",
+                        table_name
+                    ),
+                    Some(Box::new(e)),
+                ))
+            }
             // Err(e) => {
             //     println!("{:?}", e);
             //     todo!()
