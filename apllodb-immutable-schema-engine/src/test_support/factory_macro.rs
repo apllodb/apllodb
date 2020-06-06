@@ -32,18 +32,11 @@ mod column_definition {
     /// ColumnDefinition factory.
     #[macro_export]
     macro_rules! column_definition {
-        ($col_name: expr, $column_constraints: expr $(,)?) => {{
+        ($col_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {{
             use crate::column_name;
-            use apllodb_shared_components::data_structure::{
-                ColumnDefinition, DataType, DataTypeKind,
-            };
+            use apllodb_shared_components::data_structure::ColumnDefinition;
 
-            ColumnDefinition::new(
-                column_name!($col_name),
-                DataType::new(DataTypeKind::Integer, false),
-                $column_constraints,
-            )
-            .unwrap()
+            ColumnDefinition::new(column_name!($col_name), $data_type, $column_constraints).unwrap()
         }};
     }
 
@@ -80,6 +73,18 @@ mod database_name {
             use apllodb_shared_components::data_structure::{DatabaseName, ShortName};
 
             DatabaseName::from(ShortName::new($col_name).unwrap())
+        }};
+    }
+}
+
+mod data_type {
+    /// DataType factory.
+    #[macro_export]
+    macro_rules! data_type {
+        ($kind: expr, $nullable: expr $(,)?) => {{
+            use apllodb_shared_components::data_structure::DataType;
+
+            DataType::new($kind, $nullable)
         }};
     }
 }

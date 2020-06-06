@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS {} (
 
 #[cfg(test)]
 impl Database {
-    pub(in crate::transaction::sqlite_tx) fn new_for_test() -> ApllodbResult<Self> {
+    pub(crate) fn new_for_test() -> ApllodbResult<Self> {
         use apllodb_shared_components::data_structure::ShortName;
         use uuid::Uuid;
 

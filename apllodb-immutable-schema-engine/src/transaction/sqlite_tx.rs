@@ -4,6 +4,8 @@ mod id;
 mod sqlite_table_name;
 mod to_sql_string;
 
+pub(crate) use database::Database;
+
 pub(self) use to_sql_string::ToSqlString;
 
 use crate::Table;
@@ -13,7 +15,6 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_manager_interface::TxCtxLike;
 use dao::{TableDao, VersionDao};
-use database::Database;
 use id::SqliteTxId;
 use std::cmp::Ordering;
 
@@ -81,7 +82,7 @@ impl<'db> SqliteTx<'db> {
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(db: &'db mut Database) -> ApllodbResult<Self>
+    pub fn begin(db: &'db mut Database) -> ApllodbResult<Self>
     where
         Self: std::marker::Sized,
     {
@@ -161,10 +162,13 @@ impl<'db> SqliteTx<'db> {
 mod tests {
     use super::{database::Database, SqliteTx};
     use crate::{
-        column_constraints, column_definition, column_definitions, table_constraints, table_name,
-        AccessMethods,
+        column_constraints, column_definition, column_definitions, data_type, table_constraints,
+        table_name, AccessMethods,
     };
-    use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
+    use apllodb_shared_components::{
+        data_structure::DataTypeKind,
+        error::{ApllodbErrorKind, ApllodbResult},
+    };
     use apllodb_storage_manager_interface::AccessMethodsDdl;
     use apllodb_storage_manager_interface::TxCtxLike;
 
@@ -175,7 +179,11 @@ mod tests {
 
         let tn = &table_name!("t");
         let tc = table_constraints!();
-        let coldefs = column_definitions!(column_definition!("c1", column_constraints!()));
+        let coldefs = column_definitions!(column_definition!(
+            "c1",
+            data_type!(DataTypeKind::Integer, false),
+            column_constraints!()
+        ));
 
         let mut tx1 = SqliteTx::begin(&mut db1)?;
         let mut tx2 = SqliteTx::begin(&mut db2)?;
@@ -211,7 +219,11 @@ mod tests {
 
         let tn = &table_name!("t");
         let tc = table_constraints!();
-        let coldefs = column_definitions!(column_definition!("c1", column_constraints!()));
+        let coldefs = column_definitions!(column_definition!(
+            "c1",
+            data_type!(DataTypeKind::Integer, false),
+            column_constraints!()
+        ));
 
         let mut tx = SqliteTx::begin(&mut db)?;
 

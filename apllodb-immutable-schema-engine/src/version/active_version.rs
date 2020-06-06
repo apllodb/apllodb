@@ -45,9 +45,7 @@ impl ActiveVersion {
             constraints: vec![],
         }))
     }
-}
 
-impl ActiveVersion {
     /// Create v_(current+1) from v_current.
     ///
     /// # Failures
@@ -122,16 +120,20 @@ mod tests {
     use super::ActiveVersion;
     use crate::{
         alter_table_action_drop_column, column_constraints, column_definition, column_name,
-        table_constraints,
+        data_type, table_constraints,
     };
     use apllodb_shared_components::{
-        data_structure::ColumnName,
+        data_structure::{ColumnName, DataTypeKind},
         error::{ApllodbErrorKind, ApllodbResult},
     };
 
     #[test]
     fn test_create_initial_success() -> ApllodbResult<()> {
-        let column_definitions = vec![column_definition!("c1", column_constraints!())];
+        let column_definitions = vec![column_definition!(
+            "c1",
+            data_type!(DataTypeKind::Integer, false),
+            column_constraints!()
+        )];
         let table_constraints = table_constraints!();
 
         let v = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
@@ -157,8 +159,16 @@ mod tests {
     #[test]
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
         let column_definitions = vec![
-            column_definition!("c1", column_constraints!()),
-            column_definition!("c2", column_constraints!()),
+            column_definition!(
+                "c1",
+                data_type!(DataTypeKind::Integer, false),
+                column_constraints!()
+            ),
+            column_definition!(
+                "c2",
+                data_type!(DataTypeKind::Integer, false),
+                column_constraints!()
+            ),
         ];
         let table_constraints = table_constraints!();
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
@@ -182,7 +192,11 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
-        let column_definitions = vec![column_definition!("c1", column_constraints!())];
+        let column_definitions = vec![column_definition!(
+            "c1",
+            data_type!(DataTypeKind::Integer, false),
+            column_constraints!()
+        )];
         let table_constraints = table_constraints!();
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
 
@@ -198,7 +212,11 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_fail_invalid_table_definition() -> ApllodbResult<()> {
-        let column_definitions = vec![column_definition!("c1", column_constraints!())];
+        let column_definitions = vec![column_definition!(
+            "c1",
+            data_type!(DataTypeKind::Integer, false),
+            column_constraints!()
+        )];
         let table_constraints = table_constraints!();
         let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
 

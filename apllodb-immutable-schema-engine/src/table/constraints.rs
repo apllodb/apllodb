@@ -111,9 +111,11 @@ impl TableWideConstraints {
 #[cfg(test)]
 mod tests {
     use super::TableWideConstraints;
-    use crate::{column_constraints, column_definition, t_pk, t_unique, table_constraints};
+    use crate::{
+        column_constraints, column_definition, data_type, t_pk, t_unique, table_constraints,
+    };
     use apllodb_shared_components::{
-        data_structure::{ColumnDefinition, TableConstraints},
+        data_structure::{ColumnDefinition, DataTypeKind, TableConstraints},
         error::ApllodbErrorKind,
     };
 
@@ -122,27 +124,55 @@ mod tests {
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
                 table_constraints!(),
-                vec![column_definition!("c1", column_constraints!())],
+                vec![column_definition!(
+                    "c1",
+                    data_type!(DataTypeKind::Integer, false),
+                    column_constraints!()
+                )],
             ),
             (
                 table_constraints!(t_pk!("c1"), t_unique!("c2")),
                 vec![
-                    column_definition!("c1", column_constraints!()),
-                    column_definition!("c2", column_constraints!()),
+                    column_definition!(
+                        "c1",
+                        data_type!(DataTypeKind::Integer, false),
+                        column_constraints!()
+                    ),
+                    column_definition!(
+                        "c2",
+                        data_type!(DataTypeKind::Integer, false),
+                        column_constraints!()
+                    ),
                 ],
             ),
             (
                 table_constraints!(t_pk!("c1")),
                 vec![
-                    column_definition!("c1", column_constraints!()),
-                    column_definition!("c2", column_constraints!(ColumnConstraintKind::Unique)),
+                    column_definition!(
+                        "c1",
+                        data_type!(DataTypeKind::Integer, false),
+                        column_constraints!()
+                    ),
+                    column_definition!(
+                        "c2",
+                        data_type!(DataTypeKind::Integer, false),
+                        column_constraints!(ColumnConstraintKind::Unique)
+                    ),
                 ],
             ),
             (
                 table_constraints!(t_pk!("c2", "c1")),
                 vec![
-                    column_definition!("c1", column_constraints!()),
-                    column_definition!("c2", column_constraints!(ColumnConstraintKind::Unique)),
+                    column_definition!(
+                        "c1",
+                        data_type!(DataTypeKind::Integer, false),
+                        column_constraints!()
+                    ),
+                    column_definition!(
+                        "c2",
+                        data_type!(DataTypeKind::Integer, false),
+                        column_constraints!(ColumnConstraintKind::Unique)
+                    ),
                 ],
             ),
         ];
@@ -162,6 +192,7 @@ mod tests {
                 table_constraints!(t_pk!("c1")),
                 vec![column_definition!(
                     "c1",
+                    data_type!(DataTypeKind::Integer, false),
                     column_constraints!(ColumnConstraintKind::Unique)
                 )],
             ),
@@ -169,6 +200,7 @@ mod tests {
                 table_constraints!(t_unique!("c1")),
                 vec![column_definition!(
                     "c1",
+                    data_type!(DataTypeKind::Integer, false),
                     column_constraints!(ColumnConstraintKind::Unique)
                 )],
             ),
@@ -176,6 +208,7 @@ mod tests {
                 table_constraints!(t_pk!("c1")),
                 vec![column_definition!(
                     "c2",
+                    data_type!(DataTypeKind::Integer, false),
                     column_constraints!(ColumnConstraintKind::PrimaryKey)
                 )],
             ),
