@@ -12,4 +12,12 @@ impl DataType {
     pub fn new(kind: DataTypeKind, nullable: bool) -> Self {
         Self { kind, nullable }
     }
+
+    pub fn kind(&self) -> &DataTypeKind {
+        &self.kind
+    }
+
+    pub fn nullable(&self) -> bool {
+        self.nullable
+    }
 }

@@ -16,12 +16,10 @@ impl ActiveVersion {
     }
 
     /// Ref to columns and their data types.
-    pub fn column_data_types(&self) -> &[ColumnDataType] {
+    pub(crate) fn column_data_types(&self) -> &[ColumnDataType] {
         &self.0.column_data_types
     }
-}
 
-impl ActiveVersion {
     /// Create v_1.
     ///
     /// # Failures

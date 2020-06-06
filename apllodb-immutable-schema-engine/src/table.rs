@@ -50,6 +50,11 @@ impl Table {
         &self.table_wide_constraints
     }
 
+    /// Ref to VersionRepo
+    pub(crate) fn version_repo(&self) -> &VersionRepo {
+        &self.version_repo
+    }
+
     /// Create.
     ///
     /// # Failures

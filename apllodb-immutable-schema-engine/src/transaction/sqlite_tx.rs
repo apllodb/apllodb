@@ -2,6 +2,9 @@ mod dao;
 mod database;
 mod id;
 mod sqlite_table_name;
+mod to_sql_string;
+
+pub(self) use to_sql_string::ToSqlString;
 
 use crate::Table;
 use apllodb_shared_components::{
@@ -9,7 +12,7 @@ use apllodb_shared_components::{
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::TxCtxLike;
-use dao::TableDao;
+use dao::{TableDao, VersionDao};
 use database::Database;
 use id::SqliteTxId;
 use std::cmp::Ordering;
@@ -117,10 +120,10 @@ impl<'db> SqliteTx<'db> {
     ///
     /// - Errors from [TableDao::create()](foobar.html).
     pub(crate) fn create_table(&mut self, table: Table) -> ApllodbResult<()> {
-        self.table_dao().create(&table)?;
+        let v1 = table.version_repo().current_version()?;
 
-        // create v1
-        // todo!()
+        self.table_dao().create(&table)?;
+        self.version_dao(table.name().clone()).create(&v1)?;
 
         Ok(())
     }
@@ -148,6 +151,10 @@ impl<'db> SqliteTx<'db> {
     fn table_dao(&self) -> TableDao<'_> {
         TableDao::new(&self.sqlite_tx)
     }
+
+    fn version_dao(&self, table_name: TableName) -> VersionDao<'_> {
+        VersionDao::new(&self.sqlite_tx, table_name)
+    }
 }
 
 #[cfg(test)]
@@ -162,7 +169,7 @@ mod tests {
     use apllodb_storage_manager_interface::TxCtxLike;
 
     #[test]
-    fn test_wait() -> ApllodbResult<()> {
+    fn test_wait_lock() -> ApllodbResult<()> {
         let mut db1 = Database::new_for_test()?;
         let mut db2 = db1.dup()?;
 

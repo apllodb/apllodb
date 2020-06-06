@@ -1,4 +1,4 @@
-use super::{column::ColumnDataType, Version, VersionNumber};
+use super::{Version, VersionNumber};
 use serde::{Deserialize, Serialize};
 
 /// Inactive Version.
@@ -9,10 +9,5 @@ impl InactiveVersion {
     /// Version number.
     pub fn number(&self) -> &VersionNumber {
         &self.0.number
-    }
-
-    /// Ref to columns and their data types.
-    pub fn column_data_types(&self) -> &[ColumnDataType] {
-        &self.0.column_data_types
     }
 }

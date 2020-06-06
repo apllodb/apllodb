@@ -3,7 +3,7 @@ use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbRe
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub(super) struct VersionRepo {
+pub(crate) struct VersionRepo {
     active_versions: Vec<ActiveVersion>,
     inactive_versions: Vec<InactiveVersion>,
 }
@@ -18,17 +18,11 @@ impl Default for VersionRepo {
 }
 
 impl VersionRepo {
-    pub(super) fn add_active_version(&mut self, version: ActiveVersion) {
-        self.active_versions.push(version);
-    }
-}
-
-impl VersionRepo {
     /// # Failures
     ///
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - No version is active (table must be already DROPped).
-    pub(super) fn current_version(&self) -> ApllodbResult<&ActiveVersion> {
+    pub(crate) fn current_version(&self) -> ApllodbResult<&ActiveVersion> {
         self.active_versions.last().ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedTable,
@@ -36,5 +30,9 @@ impl VersionRepo {
                 None,
             )
         })
+    }
+
+    pub(super) fn add_active_version(&mut self, version: ActiveVersion) {
+        self.active_versions.push(version);
     }
 }

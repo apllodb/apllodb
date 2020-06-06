@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Column with data type.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub struct ColumnDataType {
+pub(crate) struct ColumnDataType {
     column: ColumnName,
     data_type: DataType,
 }
@@ -19,7 +19,12 @@ impl From<&ColumnDefinition> for ColumnDataType {
 
 impl ColumnDataType {
     /// Ref to column name.
-    pub fn column_name(&self) -> &ColumnName {
+    pub(crate) fn column_name(&self) -> &ColumnName {
         &self.column
+    }
+
+    /// Ref to data type.
+    pub(crate) fn data_type(&self) -> &DataType {
+        &self.data_type
     }
 }

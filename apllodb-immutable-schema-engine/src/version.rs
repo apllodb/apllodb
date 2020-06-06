@@ -1,5 +1,5 @@
 mod active_version;
-mod column;
+pub(crate) mod column;
 mod constraint;
 mod inactive_version;
 mod version_number;
@@ -25,8 +25,10 @@ use std::cmp::Ordering;
 /// - All of `v_1` ~ `v_current` are inactivated by apllodb DROP TABLE command.
 ///
 /// Each version is purely immutable.
-///
 /// See: https://github.com/darwin-education/apllodb/wiki/Immutable-Schema-102:-Immutable-Schema-%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E5%AE%9A%E7%BE%A9%E3%83%BB%E5%AE%9A%E7%90%86
+///
+/// Version does not have useful methods because you should access to version via
+/// [ActiveVersion](foobar.html) or [InactiveVersion](foobar.html), both of which have different behavior.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 struct Version {
     number: VersionNumber,
