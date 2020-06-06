@@ -1,6 +1,7 @@
 use crate::TxCtxLike;
-use apllodb_shared_components::data_structure::TableName;
+use apllodb_shared_components::data_structure::{ColumnName, Expression, TableName};
 use apllodb_shared_components::error::ApllodbResult;
+use std::collections::HashMap;
 
 /// Access methods for DML.
 pub trait AccessMethodsDml<Tx: TxCtxLike> {
@@ -10,9 +11,11 @@ pub trait AccessMethodsDml<Tx: TxCtxLike> {
     fn select(tx: &mut Tx, table_name: &TableName) -> ApllodbResult<()>;
 
     /// INSERT command.
-    ///
-    /// TODO interface
-    fn insert(tx: &mut Tx, table_name: &TableName) -> ApllodbResult<()>;
+    fn insert(
+        tx: &mut Tx,
+        table_name: &TableName,
+        column_values: HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()>;
 
     /// UPDATE command.
     ///

@@ -1,4 +1,5 @@
 mod ddl;
+mod dml;
 
 /// AccessMethods implementation.
 #[derive(Clone, Debug)]
@@ -8,15 +9,15 @@ pub struct AccessMethods;
 mod tests {
     use super::AccessMethods;
     use crate::{
-        column_constraints, column_definition, column_definitions, column_name, data_type,
-        table_constraints, table_name,
+        column_constraints, column_definition, column_definitions, column_name, const_expr,
+        data_type, hmap, table_constraints, table_name,
         transaction::{Database, SqliteTx},
     };
     use apllodb_shared_components::{
         data_structure::{AlterTableAction, DataTypeKind},
         error::ApllodbResult,
     };
-    use apllodb_storage_manager_interface::AccessMethodsDdl;
+    use apllodb_storage_manager_interface::{AccessMethodsDdl, AccessMethodsDml};
 
     #[test]
     fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
@@ -40,11 +41,11 @@ mod tests {
 
         AccessMethods::create_table(&mut tx, &tn, &tc, &coldefs)?;
 
-        // AccessMethods::insert(
-        //     &mut tx,
-        //     &tn,
-        //     hmap! { column_name!("id") => 1, column_name!("c") => 1 },
-        // )?;
+        AccessMethods::insert(
+            &mut tx,
+            &tn,
+            hmap! { column_name!("id") => const_expr!(1), column_name!("c") => const_expr!(1) },
+        )?;
 
         AccessMethods::alter_table(
             &mut tx,
@@ -54,7 +55,7 @@ mod tests {
             },
         )?;
 
-        // AccessMethods::insert(&mut tx, &tn, hmap! { column_name!("id") => 2 })?;
+        AccessMethods::insert(&mut tx, &tn, hmap! { column_name!("id") => const_expr!(2) })?;
 
         // // Selects both v1's record (id=1) and v2's record (id=2),
         // // although v2 does not have column "c".

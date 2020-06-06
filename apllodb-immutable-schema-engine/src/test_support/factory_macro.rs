@@ -89,6 +89,18 @@ mod data_type {
     }
 }
 
+mod expression {
+    /// DataType factory.
+    #[macro_export]
+    macro_rules! const_expr {
+        ($constant: expr) => {{
+            use apllodb_shared_components::data_structure::{Constant, Expression};
+
+            Expression::ConstantVariant(Constant::from($constant))
+        }};
+    }
+}
+
 mod table_constraint_kind {
     /// TableConstraintKind::PrimaryKey factory.
     #[macro_export]

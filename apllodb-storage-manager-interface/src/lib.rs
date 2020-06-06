@@ -30,9 +30,9 @@
 //! - Ways to materialize tables and records.
 
 mod access_methods;
-mod transaction;
 mod database;
+mod transaction;
 
-pub use crate::access_methods::AccessMethodsDdl;
-pub use crate::transaction::TxCtxLike;
+pub use crate::access_methods::{AccessMethodsDdl, AccessMethodsDml};
 pub use crate::database::DbCtxLike;
+pub use crate::transaction::TxCtxLike;
