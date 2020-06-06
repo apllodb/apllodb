@@ -61,7 +61,8 @@ impl<'tx> TableDao<'tx> {
                     },
                     _,
                 ),
-            ) => Err(ApllodbError::new(  // TODO TableDao::create() 意外にも現れは汎用的なエラー処理ななんとかする
+            ) => Err(ApllodbError::new(
+                // TODO TableDao::create() 意外にも現れは汎用的なエラー処理ななんとかする
                 ApllodbErrorKind::DeadlockDetected,
                 format!(
                     "table `{}` is exclusively locked by another transaction for too long time",
@@ -74,7 +75,7 @@ impl<'tx> TableDao<'tx> {
                 @
                 rusqlite::Error::SqliteFailure(
                     libsqlite3_sys::Error {
-                        extended_code: 1555, // SQLITE_CONSTRAINT_PRIMARYKEY
+                        extended_code: rusqlite::ffi::SQLITE_CONSTRAINT_PRIMARYKEY,
                         ..
                     },
                     _,
