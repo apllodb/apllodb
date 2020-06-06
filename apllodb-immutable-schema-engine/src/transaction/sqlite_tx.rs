@@ -154,8 +154,8 @@ impl<'db> SqliteTx<'db> {
 mod tests {
     use super::{database::Database, SqliteTx};
     use crate::{
-        column_constraints, column_definition, column_definitions, database_name,
-        table_constraints, table_name, AccessMethods,
+        column_constraints, column_definition, column_definitions, table_constraints, table_name,
+        AccessMethods,
     };
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_storage_manager_interface::AccessMethodsDdl;
@@ -163,10 +163,8 @@ mod tests {
 
     #[test]
     fn test_wait() -> ApllodbResult<()> {
-        Database::cleanup(database_name!("db_foobar"))?;
-
-        let mut db1 = Database::new(database_name!("db_foobar"))?;
-        let mut db2 = Database::new(database_name!("db_foobar"))?;
+        let mut db1 = Database::new_for_test()?;
+        let mut db2 = db1.dup()?;
 
         let tn = &table_name!("t");
         let tc = table_constraints!();
@@ -202,9 +200,7 @@ mod tests {
 
     #[test]
     fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
-        Database::cleanup(database_name!("db_xy"))?;
-
-        let mut db = Database::new(database_name!("db_xy"))?;
+        let mut db = Database::new_for_test()?;
 
         let tn = &table_name!("t");
         let tc = table_constraints!();

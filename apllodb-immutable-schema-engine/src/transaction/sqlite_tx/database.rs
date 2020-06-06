@@ -27,14 +27,7 @@ impl Database {
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     pub(in crate::transaction::sqlite_tx) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
-        let path = Self::sqlite_db_path(&db_name);
-        let conn = rusqlite::Connection::open(path).map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
-                format!("backend sqlite3 raised an error on creating connection"),
-                Some(Box::new(e)),
-            )
-        })?;
+        let conn = Self::connect_sqlite(&db_name)?;
         let slf = Self {
             name: db_name,
             sqlite_conn: conn,
@@ -45,6 +38,18 @@ impl Database {
 
     fn sqlite_db_path(db_name: &DatabaseName) -> String {
         format!("immutable_schema_{}.sqlite3", db_name) // FIXME: path from configuration
+    }
+
+    fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<rusqlite::Connection> {
+        let path = Self::sqlite_db_path(&db_name);
+        let conn = rusqlite::Connection::open(path).map_err(|e| {
+            ApllodbError::new(
+                ApllodbErrorKind::IoError,
+                format!("backend sqlite3 raised an error on creating connection"),
+                Some(Box::new(e)),
+            )
+        })?;
+        Ok(conn)
     }
 
     pub(in crate::transaction::sqlite_tx) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
@@ -82,14 +87,36 @@ CREATE TABLE IF NOT EXISTS {} (
 
 #[cfg(test)]
 impl Database {
-    pub(in crate::transaction::sqlite_tx) fn cleanup(db_name: DatabaseName) -> ApllodbResult<()> {
-        let path = Self::sqlite_db_path(&db_name);
+    pub(in crate::transaction::sqlite_tx) fn new_for_test() -> ApllodbResult<Self> {
+        use apllodb_shared_components::data_structure::ShortName;
+        use uuid::Uuid;
 
-        std::fs::remove_file(&path).or_else(|ioerr| match ioerr.kind() {
-            std::io::ErrorKind::NotFound => Ok(()),
-            _ => Err(ioerr),
-        })?;
+        let db_name = format!("{}", Uuid::new_v4());
+        let db_name = DatabaseName::from(ShortName::new(db_name)?);
 
-        Ok(())
+        Self::new(db_name)
+    }
+
+    /// Creates new connection to SQLite.
+    pub(in crate::transaction::sqlite_tx) fn dup(&self) -> ApllodbResult<Self> {
+        let conn = Self::connect_sqlite(&self.name)?;
+        Ok(Self {
+            name: self.name.clone(),
+            sqlite_conn: conn,
+        })
+    }
+}
+
+#[cfg(test)]
+impl Drop for Database {
+    fn drop(&mut self) {
+        let path = Self::sqlite_db_path(&self.name);
+
+        std::fs::remove_file(&path)
+            .or_else(|ioerr| match ioerr.kind() {
+                std::io::ErrorKind::NotFound => Ok(()),
+                _ => Err(ioerr),
+            })
+            .unwrap();
     }
 }
