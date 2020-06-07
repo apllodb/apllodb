@@ -90,13 +90,23 @@ mod data_type {
 }
 
 mod expression {
-    /// DataType factory.
+    /// Expression factory from constant value.
     #[macro_export]
     macro_rules! const_expr {
         ($constant: expr) => {{
             use apllodb_shared_components::data_structure::{Constant, Expression};
 
             Expression::ConstantVariant(Constant::from($constant))
+        }};
+    }
+
+    /// Expression factory from column name.
+    #[macro_export]
+    macro_rules! column_name_expr {
+        ($col_name: expr) => {{
+            use apllodb_shared_components::data_structure::{ColumnName, Expression};
+
+            Expression::ColumnNameVariant(ColumnName::new($col_name).unwrap())
         }};
     }
 }

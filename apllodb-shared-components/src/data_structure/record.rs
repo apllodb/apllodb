@@ -1,10 +1,11 @@
+mod field_index;
+
+pub use field_index::FieldIndex;
+
 use super::{SqlConvertible, SqlValue};
 use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
-use field_index::FieldIndex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-mod field_index;
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Record {

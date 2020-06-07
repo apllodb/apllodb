@@ -9,13 +9,13 @@ pub struct AccessMethods;
 mod tests {
     use super::AccessMethods;
     use crate::{
-        column_constraints, column_definition, column_definitions, column_name, const_expr,
-        data_type, hmap, table_constraints, table_name,
+        column_constraints, column_definition, column_definitions, column_name, column_name_expr,
+        const_expr, data_type, hmap, table_constraints, table_name,
         transaction::{Database, SqliteTx},
     };
     use apllodb_shared_components::{
-        data_structure::{AlterTableAction, DataTypeKind},
-        error::ApllodbResult,
+        data_structure::{AlterTableAction, DataTypeKind, FieldIndex},
+        error::{ApllodbErrorKind, ApllodbResult},
     };
     use apllodb_storage_manager_interface::{AccessMethodsDdl, AccessMethodsDml};
 
@@ -57,24 +57,28 @@ mod tests {
 
         AccessMethods::insert(&mut tx, &tn, hmap! { column_name!("id") => const_expr!(2) })?;
 
-        // // Selects both v1's record (id=1) and v2's record (id=2),
-        // // although v2 does not have column "c".
-        // let records = AccessMethods::select(&mut tx, &tn, vec![column_name!("id"), column_name!("c")])?;
+        // Selects both v1's record (id=1) and v2's record (id=2),
+        // although v2 does not have column "c".
+        let records = AccessMethods::select(
+            &mut tx,
+            &tn,
+            &vec![column_name_expr!("id"), column_name_expr!("c")],
+        )?;
 
-        // for r in records {
-        //     let id: u64 = r.get("id")?;
-        //     match  id {
-        //         1 => assert_eq!(r.get::<u64>("c"), 1),
-        //         2 => {
-        //             match r.get::<u64>("c") {
-        //                 Err(DataTypeMismatch) => ,
-        //                 _ => panic!("should be DataTypeMismatch"),
-        //             };
-        //             assert_eq!(r.get::<Option<u64>>("c"), None);
-        //         }
-        //         _ => unreachable!(),
-        //     }
-        // }
+        for r in records {
+            let id: i64 = r.get(FieldIndex::from("id"))?;
+            match id {
+                1 => assert_eq!(r.get::<i64>(FieldIndex::from("c"))?, 1),
+                2 => {
+                    match r.get::<i64>(FieldIndex::from("c")) {
+                        Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
+                        _ => unreachable!(),
+                    };
+                    assert_eq!(r.get::<Option<i64>>(FieldIndex::from("c"))?, None);
+                }
+                _ => unreachable!(),
+            }
+        }
 
         Ok(())
     }

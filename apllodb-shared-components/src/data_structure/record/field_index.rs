@@ -5,9 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct FieldIndex(String);
 
 impl<S: Into<String>> From<S> for FieldIndex {
-    fn from(col_name: S) -> Self {
-        Self(col_name.into())
+    fn from(field_name: S) -> Self {
+        Self(field_name.into())
     }
 }
-
-// TODO フィールド番号, alias名 からもつくれるように
