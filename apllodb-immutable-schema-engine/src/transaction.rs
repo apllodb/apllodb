@@ -1,4 +1,4 @@
 mod sqlite_tx;
 
 #[allow(unused_imports)]
-pub(crate) use sqlite_tx::{SqliteTx, Database};
+pub(crate) use sqlite_tx::{Database, SqliteRecordIterator, SqliteTx};

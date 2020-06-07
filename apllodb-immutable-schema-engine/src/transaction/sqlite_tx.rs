@@ -1,10 +1,12 @@
 mod dao;
 mod database;
 mod id;
+mod record_iterator;
 mod sqlite_table_name;
 mod to_sql_string;
 
 pub(crate) use database::Database;
+pub(crate) use record_iterator::SqliteRecordIterator;
 
 pub(self) use to_sql_string::ToSqlString;
 
@@ -19,6 +21,7 @@ use id::SqliteTxId;
 use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
+#[derive(Debug)]
 pub(crate) struct SqliteTx<'db> {
     id: SqliteTxId,
     sqlite_tx: rusqlite::Transaction<'db>,
