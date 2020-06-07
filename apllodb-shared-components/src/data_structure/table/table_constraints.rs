@@ -1,6 +1,5 @@
-use super::{
-    table_constraint_kind::TableConstraintKind, validation_helper::collection::find_dup_slow,
-    ColumnName,
+use crate::data_structure::{
+    validation_helper::collection::find_dup_slow, ColumnName, TableConstraintKind,
 };
 use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use serde::{Deserialize, Serialize};
@@ -55,7 +54,9 @@ impl TableConstraints {
         }
     }
 
-    fn validate_pk_or_unique_to_same_cols(constraints: &[TableConstraintKind]) -> ApllodbResult<()> {
+    fn validate_pk_or_unique_to_same_cols(
+        constraints: &[TableConstraintKind],
+    ) -> ApllodbResult<()> {
         let pk_unique_column_sets: Vec<HashSet<&ColumnName>> = constraints
             .iter()
             .map(|table_constraint_kind| {
@@ -92,9 +93,7 @@ impl TableConstraints {
 #[cfg(test)]
 mod tests {
     use super::TableConstraints;
-    use crate::{
-        data_structure::table_constraint_kind::TableConstraintKind, error::ApllodbErrorKind,
-    };
+    use crate::{data_structure::TableConstraintKind, error::ApllodbErrorKind};
     use crate::{pk, unique};
 
     #[test]

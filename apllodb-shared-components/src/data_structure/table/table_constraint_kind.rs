@@ -1,4 +1,4 @@
-use super::column_name::ColumnName;
+use crate::data_structure::ColumnName;
 use serde::{Deserialize, Serialize};
 
 /// A constraint parameter in a table definition.

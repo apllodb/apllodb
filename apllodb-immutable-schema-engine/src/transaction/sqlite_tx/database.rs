@@ -88,11 +88,10 @@ CREATE TABLE IF NOT EXISTS {} (
 #[cfg(test)]
 impl Database {
     pub(crate) fn new_for_test() -> ApllodbResult<Self> {
-        use apllodb_shared_components::data_structure::ShortName;
         use uuid::Uuid;
 
         let db_name = format!("{}", Uuid::new_v4());
-        let db_name = DatabaseName::from(ShortName::new(db_name)?);
+        let db_name = DatabaseName::new(db_name)?;
 
         Self::new(db_name)
     }

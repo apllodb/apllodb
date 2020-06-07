@@ -2,9 +2,9 @@ mod column_name {
     #[macro_export]
     macro_rules! column_name {
         ($col_name: expr) => {{
-            use crate::data_structure::{ColumnName, ShortName};
+            use crate::data_structure::ColumnName;
 
-            ColumnName::from(ShortName::new($col_name).unwrap())
+            ColumnName::new($col_name).unwrap()
         }};
     }
 }

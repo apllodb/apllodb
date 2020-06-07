@@ -1,30 +1,14 @@
 mod alter_table_action;
-mod column_constraint_kind;
-mod column_constraints;
-mod column_definition;
-mod column_name;
-mod constant;
-mod data_type;
-mod data_type_kind;
-mod database_name;
+mod column;
+mod database;
 mod expression;
-mod short_name;
-mod table_constraint_kind;
-mod table_constraints;
-mod table_name;
+mod table;
 mod validation_helper;
 
 pub use alter_table_action::AlterTableAction;
-pub use column_constraint_kind::ColumnConstraintKind;
-pub use column_constraints::ColumnConstraints;
-pub use column_definition::ColumnDefinition;
-pub use column_name::ColumnName;
-pub use constant::Constant;
-pub use data_type::DataType;
-pub use data_type_kind::DataTypeKind;
-pub use database_name::DatabaseName;
-pub use expression::Expression;
-pub use short_name::ShortName;
-pub use table_constraint_kind::TableConstraintKind;
-pub use table_constraints::TableConstraints;
-pub use table_name::TableName;
+pub use column::{
+    ColumnConstraintKind, ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
+};
+pub use database::DatabaseName;
+pub use expression::{Constant, Expression};
+pub use table::{TableConstraintKind, TableConstraints, TableName};

@@ -1,4 +1,4 @@
-use super::{column_constraints::ColumnConstraints, column_name::ColumnName, data_type::DataType};
+use crate::data_structure::{ColumnConstraints, ColumnName, DataType};
 use crate::error::ApllodbResult;
 use serde::{Deserialize, Serialize};
 

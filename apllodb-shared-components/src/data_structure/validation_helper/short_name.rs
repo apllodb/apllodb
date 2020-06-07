@@ -1,10 +1,9 @@
 use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
 
 /// Short (64 chars in UTF-8 at maximum) object name used for table names, column names, and so on.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct ShortName(String);
+pub(in crate::data_structure) struct ShortName(String);
 
 impl ShortName {
     /// Constructor.
@@ -15,10 +14,14 @@ impl ShortName {
     /// # Failures
     /// - [NameTooLong](error/enum.ApllodbErrorKind.html#variant.NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
-    pub fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
+    pub(in crate::data_structure) fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
         let name = name.into();
         Self::validate_length(&name)?;
         Ok(Self(name))
+    }
+
+    pub(in crate::data_structure) fn as_str(&self) -> &str {
+        self.0.as_str()
     }
 
     fn validate_length(name: &str) -> ApllodbResult<()> {
@@ -35,12 +38,6 @@ impl ShortName {
         } else {
             Ok(())
         }
-    }
-}
-
-impl Display for ShortName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
     }
 }
 

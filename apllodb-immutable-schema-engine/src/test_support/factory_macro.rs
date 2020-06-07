@@ -58,9 +58,9 @@ mod column_name {
     #[macro_export]
     macro_rules! column_name {
         ($col_name: expr) => {{
-            use apllodb_shared_components::data_structure::{ColumnName, ShortName};
+            use apllodb_shared_components::data_structure::ColumnName;
 
-            ColumnName::from(ShortName::new($col_name).unwrap())
+            ColumnName::new($col_name).unwrap()
         }};
     }
 }
@@ -161,9 +161,9 @@ mod table_name {
     #[macro_export]
     macro_rules! table_name {
         ($table_name: expr) => {{
-            use apllodb_shared_components::data_structure::{ShortName, TableName};
+            use apllodb_shared_components::data_structure::TableName;
 
-            TableName::from(ShortName::new($table_name).unwrap())
+            TableName::new($table_name).unwrap()
         }};
     }
 }

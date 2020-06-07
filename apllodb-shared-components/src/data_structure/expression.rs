@@ -1,4 +1,8 @@
-use super::{ColumnName, Constant};
+mod constant;
+
+pub use constant::{Constant, IntegerConstant, NumericConstant};
+
+use super::ColumnName;
 use serde::{Deserialize, Serialize};
 
 /// Expression.

@@ -1,5 +1,5 @@
 use crate::VersionNumber;
-use apllodb_shared_components::data_structure::{ShortName, TableName};
+use apllodb_shared_components::data_structure::TableName;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -53,7 +53,7 @@ impl SqliteTableNameForVersion {
         let parts: Vec<&str> = self.0.split("__").collect();
         assert_eq!(parts.len(), 3);
         (
-            TableName::from(ShortName::new(parts[0]).unwrap()),
+            TableName::new(parts[0]).unwrap(),
             VersionNumber::from(parts[1].parse::<u64>().unwrap()),
             match parts[2] {
                 "active" => true,
