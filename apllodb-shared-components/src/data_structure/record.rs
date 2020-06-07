@@ -1,10 +1,25 @@
-use super::SqlValue;
+use super::{SqlConvertible, SqlValue};
+use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use field_index::FieldIndex;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 mod field_index;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Record {
     fields: HashMap<FieldIndex, SqlValue>,
+}
+
+impl Record {
+    pub fn get<T: SqlConvertible>(&self, index: FieldIndex) -> ApllodbResult<T> {
+        let sql_value = self.fields.get(&index).ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::InvalidName,
+                format!("invalid field reference: `{:?}`", index),
+                None,
+            )
+        })?;
+        Ok(sql_value.unpack()?)
+    }
 }
