@@ -2,12 +2,8 @@ mod sql_convertible;
 
 pub use sql_convertible::SqlConvertible;
 
-use crate::{
-    data_structure::DataTypeKind,
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-};
+use crate::{data_structure::DataTypeKind, error::ApllodbResult};
 use serde::{Deserialize, Serialize};
-use std::any::type_name;
 
 /// SQL-typed value that is efficiently compressed.
 ///
@@ -23,41 +19,18 @@ impl SqlValue {
     where
         T: SqlConvertible,
     {
-        if T::to_sql_types().contains(into_type) {
-            let raw = T::pack(rust_value)?;
-            Ok(Self {
-                ty: into_type.clone(),
-                raw,
-            })
-        } else {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
-                format!(
-                    "cannot convert Rust value `{:?}` into SQL type `{:?}`",
-                    rust_value, into_type
-                ),
-                None,
-            ))
-        }
+        let raw = T::pack(into_type, rust_value)?;
+        Ok(Self {
+            ty: into_type.clone(),
+            raw,
+        })
     }
 
     pub fn unpack<T>(&self) -> ApllodbResult<T>
     where
         T: SqlConvertible,
     {
-        if T::from_sql_types().contains(&self.ty) {
-            T::unpack(&self.raw)
-        } else {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
-                format!(
-                    "cannot convert data from SQL type `{:?}` into Rust type `{}`",
-                    &self.ty,
-                    type_name::<T>()
-                ),
-                None,
-            ))
-        }
+        T::unpack(&self.ty, &self.raw)
     }
 }
 
