@@ -65,7 +65,8 @@ mod tests {
             &vec![column_name_expr!("id"), column_name_expr!("c")],
         )?;
 
-        for r in records {
+        for rec_res in records {
+            let r = rec_res?;
             let id: i64 = r.get(FieldIndex::from("id"))?;
             match id {
                 1 => assert_eq!(r.get::<i64>(FieldIndex::from("c"))?, 1),

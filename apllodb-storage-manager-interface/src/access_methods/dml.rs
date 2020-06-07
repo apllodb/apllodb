@@ -7,7 +7,7 @@ use std::collections::HashMap;
 pub trait AccessMethodsDml<Tx, RecIter>
 where
     Tx: TxCtxLike,
-    RecIter: Iterator<Item = Record>,
+    RecIter: Iterator<Item = ApllodbResult<Record>>,
 {
     /// SELECT command.
     fn select(

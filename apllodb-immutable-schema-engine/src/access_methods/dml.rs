@@ -4,7 +4,7 @@ use apllodb_shared_components::data_structure::{ColumnName, Expression, TableNam
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_manager_interface::AccessMethodsDml;
 
-impl<'db> AccessMethodsDml<SqliteTx<'db>, SqliteRecordIterator> for AccessMethods {
+impl<'stmt, 'db: 'stmt> AccessMethodsDml<SqliteTx<'db>, SqliteRecordIterator<'stmt>> for AccessMethods {
     // TODO async とかつけような
 
     /// SELECT command.
@@ -14,7 +14,7 @@ impl<'db> AccessMethodsDml<SqliteTx<'db>, SqliteRecordIterator> for AccessMethod
 
         // TODO: use SelectField like structure in apllodb-AST to allow alias.
         _fields: &[Expression],
-    ) -> ApllodbResult<SqliteRecordIterator> {
+    ) -> ApllodbResult<SqliteRecordIterator<'stmt>> {
         todo!()
     }
 
