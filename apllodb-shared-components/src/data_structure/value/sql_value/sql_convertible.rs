@@ -1,3 +1,6 @@
+mod int;
+mod option;
+
 use crate::{
     data_structure::{DataType, DataTypeKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -20,8 +23,10 @@ pub trait SqlConvertible: Serialize + DeserializeOwned + std::fmt::Debug {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DatatypeMismatch,
                 format!(
-                    "cannot convert Rust value `{:?}` into SQL type `{:?}`",
-                    rust_value, into_type
+                    "cannot convert Rust value `{:?}: {}` into SQL type `{:?}`",
+                    rust_value,
+                    type_name::<Self>(),
+                    into_type
                 ),
                 None,
             ))
@@ -51,41 +56,16 @@ pub trait SqlConvertible: Serialize + DeserializeOwned + std::fmt::Debug {
         }
     }
 
+    /// SQL types which can hold all values of Self.
     fn to_sql_types() -> HashSet<DataType>;
 
+    /// SQL types all of whose values can be held by Self.
     fn from_sql_types() -> HashSet<DataType>;
 }
 
-impl SqlConvertible for i32 {
-    fn to_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        [Integer, BigInt]
-            .iter()
-            .map(|kind| DataType::new(kind.clone(), false))
-            .collect()
-    }
-
-    fn from_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        [SmallInt, Integer]
-            .iter()
-            .map(|kind| DataType::new(kind.clone(), false))
-            .collect()
-    }
-}
-
-impl<T: SqlConvertible> SqlConvertible for Option<T> {
-    fn to_sql_types() -> HashSet<DataType> {
-        T::to_sql_types()
-            .iter()
-            .map(|dt| DataType::new(dt.kind().clone(), true))
-            .collect()
-    }
-
-    fn from_sql_types() -> HashSet<DataType> {
-        T::from_sql_types()
-            .iter()
-            .map(|dt| DataType::new(dt.kind().clone(), true))
-            .collect()
-    }
+fn not_null_sql_types(kinds: &[DataTypeKind]) -> HashSet<DataType> {
+    kinds
+        .iter()
+        .map(|kind| DataType::new(kind.clone(), false))
+        .collect()
 }
