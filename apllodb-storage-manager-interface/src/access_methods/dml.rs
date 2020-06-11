@@ -1,22 +1,23 @@
-use crate::TxCtxLike;
-use apllodb_shared_components::data_structure::{ColumnName, Expression, Record, TableName};
+use crate::{Row, TxCtxLike};
+use apllodb_shared_components::data_structure::{ColumnName, Expression, TableName};
 use apllodb_shared_components::error::ApllodbResult;
 use std::collections::HashMap;
 
 /// Access methods for DML.
-pub trait AccessMethodsDml<Tx, RecIter>
+pub trait AccessMethodsDml<Tx, RowIter>
 where
     Tx: TxCtxLike,
-    RecIter: Iterator<Item = ApllodbResult<Record>>,
+    RowIter: Iterator<Item = ApllodbResult<Row>>,
 {
     /// SELECT command.
+    ///
+    /// Storage engine's SELECT fields are merely ColumnName.
+    /// Expression's are not allowed. Calculating expressions is job for query processor.
     fn select(
         tx: &mut Tx,
         table_name: &TableName,
-
-        // TODO: use SelectField like structure in apllodb-AST to allow alias.
-        fields: &[Expression],
-    ) -> ApllodbResult<RecIter>;
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<RowIter>;
 
     /// INSERT command.
     fn insert(

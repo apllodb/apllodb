@@ -1,18 +1,20 @@
 mod dao;
 mod database;
+mod from_sqlite_row;
 mod id;
-mod record_iterator;
+mod row_iterator;
 mod sqlite_table_name;
 mod to_sql_string;
 
 pub(crate) use database::Database;
-pub(crate) use record_iterator::SqliteRecordIterator;
+pub(crate) use row_iterator::RowIterator;
 
 pub(self) use to_sql_string::ToSqlString;
 
 use super::ImmutableSchemaTx;
+use crate::version::column::ColumnDataType;
 use apllodb_shared_components::{
-    data_structure::TableName,
+    data_structure::{ColumnDefinition, ColumnName, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::TxCtxLike;
@@ -24,7 +26,7 @@ use std::cmp::Ordering;
 #[derive(Debug)]
 pub(crate) struct SqliteTx<'db> {
     id: SqliteTxId,
-    sqlite_tx: rusqlite::Transaction<'db>,
+    pub(crate) sqlite_tx: rusqlite::Transaction<'db>, // TODO private
 }
 
 impl<'db> PartialEq for SqliteTx<'db> {
@@ -81,6 +83,7 @@ impl<'db> TxCtxLike for SqliteTx<'db> {
 
 impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
     type Tbl = crate::Table<'db, SqliteTx<'db>>;
+    type RowIter = RowIterator<'db>;
 
     /// # Failures
     ///
@@ -117,6 +120,14 @@ impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
     fn alter_table(&self, _table: &Self::Tbl) -> ApllodbResult<()> {
         // insert table metadata
         // create v1
+        todo!()
+    }
+
+    fn full_scan(
+        &self,
+        version: &Self::Ver,
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<Self::RowIter> {
         todo!()
     }
 }

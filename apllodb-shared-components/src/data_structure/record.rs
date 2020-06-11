@@ -7,6 +7,8 @@ use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Record representation used in client and query processor.
+/// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Record {
     fields: HashMap<FieldIndex, SqlValue>,

@@ -2,7 +2,7 @@ use crate::data_structure::{ColumnConstraints, ColumnName, DataType};
 use crate::error::ApllodbResult;
 use serde::{Deserialize, Serialize};
 
-/// Column definition.
+/// Column definition used in DDL.
 /// Note that NULLABLE SQL constraint is treated as DataType (not ColumnConstraint).
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct ColumnDefinition {

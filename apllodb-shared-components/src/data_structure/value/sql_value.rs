@@ -15,6 +15,11 @@ pub struct SqlValue {
 }
 
 impl SqlValue {
+    /// Convert rust_value into `SqlValue`
+    ///
+    /// # Failures
+    ///
+    /// - Errors from `T::pack()`.
     pub fn pack<T>(into_type: &DataType, rust_value: &T) -> ApllodbResult<Self>
     where
         T: SqlConvertible,

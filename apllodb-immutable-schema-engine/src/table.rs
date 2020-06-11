@@ -2,11 +2,16 @@ mod constraint_kind;
 mod constraints;
 mod version_repo;
 
-use crate::{transaction::ImmutableSchemaTx, ActiveVersion};
+use crate::{
+    transaction::{ImmutableSchemaTx, RowIterator},
+    version::column::ColumnDataType,
+    ActiveVersion,
+};
 use apllodb_shared_components::{
-    data_structure::{AlterTableAction, ColumnDefinition, TableConstraints, TableName},
+    data_structure::{AlterTableAction, ColumnDefinition, ColumnName, TableConstraints, TableName},
     error::ApllodbResult,
 };
+use apllodb_storage_manager_interface::TxCtxLike;
 use constraints::TableWideConstraints;
 use serde::Serialize;
 use std::cmp::Ordering;
@@ -69,6 +74,58 @@ impl<'tx, Tx: ImmutableSchemaTx<Tbl = Self>> Table<'tx, Tx> {
         Ok(slf)
     }
 
+    pub(crate) fn alter(&mut self, action: &AlterTableAction) -> ApllodbResult<()> {
+        let current_version = self.version_repo.current_version()?;
+        let next_version = current_version.create_next(action)?;
+        self.version_repo.add_active_version(next_version);
+
+        // TODO auto-upgrade.
+        // TODO Inactivate old empty versions.
+
+        self.tx.alter_table(&self)?;
+
+        Ok(())
+    }
+
+    /// Do the following:
+    ///
+    /// - List all active versions.
+    /// - Resolves each column's ColumnDataType from active versions.
+    ///   Note that all active version should have the same data type if the column exists
+    ///   (`ALTER TABLE ... MODIFY COLUMN data_type` is not allowed in Immutable Schema).
+    /// - Issue SELECT to each active [Version](foobar.html) and get rows.
+    ///   If a version does not have a column (which is included in another version), set NULL for its column value.
+    /// - Return iterator of rows which produces all the rows in active versions.
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - Table `table_name` is not visible to this transaction.
+    /// - [UndefinedColumn](error/enum.ApllodbErrorKind.html#variant.UndefinedColumn) when:
+    ///   - At least one `column_names` are not included any active versions.
+    fn select(&self, column_names: &[ColumnName]) -> ApllodbResult<RowIterator<'tx>> {
+        let column_data_types: Vec<ColumnDataType> = column_names
+            .iter()
+            .map(|column_name| {
+                let coldef: ColumnDefinition = self.resolve_column_definition(column_names)?; // どのactive versionも持たないカラムがあれば UndefinedColumn
+
+                ColumnDataType::from(&coldef)
+            })
+            .collect();
+
+        self.versions_for_select()
+
+        // use crate::transaction::sqlite_tx::from_sqlite_row::FromSqliteRow;
+
+        // let column_data_types: &[ColumnDataType] = todo!(); // TODO カタログから引っ張る
+
+        // let mut stmt = _tx.sqlite_tx.prepare("SELECT * FROM t").unwrap();
+        // let sqlite_rows = stmt.query_map_named(&[], |sqlite_row| {
+        //     Row::from_sqlite_row(sqlite_row, &column_data_types)?
+        // })?;
+        // Ok(SqliteRowIterator::from(sqlite_rows))
+    }
+
     /// Ref to TableName.
     ///
     /// Same as `T_create_table_command :: ... :: T_table_name`.
@@ -84,18 +141,5 @@ impl<'tx, Tx: ImmutableSchemaTx<Tbl = Self>> Table<'tx, Tx> {
     /// Ref to VersionRepo
     pub(crate) fn version_repo(&self) -> &VersionRepo {
         &self.version_repo
-    }
-
-    pub(crate) fn alter(&mut self, action: &AlterTableAction) -> ApllodbResult<()> {
-        let current_version = self.version_repo.current_version()?;
-        let next_version = current_version.create_next(action)?;
-        self.version_repo.add_active_version(next_version);
-
-        // TODO auto-upgrade.
-        // TODO Inactivate old empty versions.
-
-        self.tx.alter_table(&self)?;
-
-        Ok(())
     }
 }

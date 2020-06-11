@@ -31,8 +31,10 @@
 
 mod access_methods;
 mod database;
+mod row;
 mod transaction;
 
 pub use crate::access_methods::{AccessMethodsDdl, AccessMethodsDml};
 pub use crate::database::DbCtxLike;
+pub use crate::row::{Row, RowBuilder};
 pub use crate::transaction::TxCtxLike;

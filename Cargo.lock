@@ -48,6 +48,7 @@ name = "apllodb-storage-manager-interface"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
+ "serde",
  "version-sync",
 ]
 

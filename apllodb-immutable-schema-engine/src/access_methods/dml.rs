@@ -1,21 +1,25 @@
 use super::AccessMethods;
-use crate::transaction::{SqliteRecordIterator, SqliteTx};
-use apllodb_shared_components::data_structure::{ColumnName, Expression, TableName};
+use crate::{
+    transaction::{RowIterator, SqliteTx},
+    version::column::ColumnDataType,
+};
+use apllodb_shared_components::data_structure::{
+    ColumnDefinition, ColumnName, Expression, TableName,
+};
 use apllodb_shared_components::error::ApllodbResult;
-use apllodb_storage_manager_interface::AccessMethodsDml;
+use apllodb_storage_manager_interface::{AccessMethodsDml, Row};
 
-impl<'stmt, 'db: 'stmt> AccessMethodsDml<SqliteTx<'db>, SqliteRecordIterator<'stmt>> for AccessMethods {
+impl<'stmt, 'db: 'stmt> AccessMethodsDml<SqliteTx<'db>, RowIterator<'stmt>> for AccessMethods {
     // TODO async とかつけような
 
     /// SELECT command.
     fn select(
-        _tx: &mut SqliteTx<'db>,
-        _table_name: &TableName,
-
-        // TODO: use SelectField like structure in apllodb-AST to allow alias.
-        _fields: &[Expression],
-    ) -> ApllodbResult<SqliteRecordIterator<'stmt>> {
-        todo!()
+        tx: &mut SqliteTx<'db>,
+        table_name: &TableName,
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<RowIterator<'stmt>> {
+        let table = tx.get_table(table_name)?;
+        table.select(column_names)
     }
 
     fn insert(

@@ -59,23 +59,20 @@ mod tests {
 
         // Selects both v1's record (id=1) and v2's record (id=2),
         // although v2 does not have column "c".
-        let records = AccessMethods::select(
-            &mut tx,
-            &tn,
-            &vec![column_name_expr!("id"), column_name_expr!("c")],
-        )?;
+        let records =
+            AccessMethods::select(&mut tx, &tn, &vec![column_name!("id"), column_name!("c")])?;
 
         for rec_res in records {
             let r = rec_res?;
-            let id: i64 = r.get(FieldIndex::from("id"))?;
+            let id: i64 = r.get(&column_name!("id"))?;
             match id {
-                1 => assert_eq!(r.get::<i64>(FieldIndex::from("c"))?, 1),
+                1 => assert_eq!(r.get::<i64>(&column_name!("c"))?, 1),
                 2 => {
-                    match r.get::<i64>(FieldIndex::from("c")) {
+                    match r.get::<i64>(&column_name!("c")) {
                         Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
                         _ => unreachable!(),
                     };
-                    assert_eq!(r.get::<Option<i64>>(FieldIndex::from("c"))?, None);
+                    assert_eq!(r.get::<Option<i64>>(&column_name!("c"))?, None);
                 }
                 _ => unreachable!(),
             }
