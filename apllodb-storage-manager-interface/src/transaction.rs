@@ -1,9 +1,10 @@
 use apllodb_shared_components::error::ApllodbResult;
+use std::fmt::Debug;
 
 /// Transaction context interface.
 ///
 /// Not only DML but also DDL are executed under the transaction context (like PostgreSQL).
-pub trait TxCtxLike {
+pub trait TxCtxLike: Eq + PartialEq + Debug {
     /// Commit a transaction.
     ///
     /// # Failures

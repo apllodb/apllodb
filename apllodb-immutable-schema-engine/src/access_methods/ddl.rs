@@ -1,5 +1,8 @@
 use super::AccessMethods;
-use crate::{transaction::SqliteTx, Table};
+use crate::{
+    transaction::{ImmutableSchemaTx, SqliteTx},
+    Table,
+};
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
@@ -24,8 +27,7 @@ impl<'db> AccessMethodsDdl<SqliteTx<'db>> for AccessMethods {
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
-        let table = Table::create(table_name, table_constraints, column_definitions)?;
-        tx.create_table(table)?;
+        let _ = Table::create(tx, table_name, table_constraints, column_definitions)?;
         Ok(())
     }
 
@@ -49,8 +51,6 @@ impl<'db> AccessMethodsDdl<SqliteTx<'db>> for AccessMethods {
     ) -> ApllodbResult<()> {
         let mut table = tx.get_table(table_name)?;
         table.alter(action)?;
-        tx.alter_table(table)?;
-
         Ok(())
     }
 

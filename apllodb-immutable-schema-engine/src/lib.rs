@@ -22,8 +22,9 @@ mod transaction;
 mod version;
 
 pub use crate::access_methods::AccessMethods;
-pub use crate::table::Table;
-pub use crate::version::{ActiveVersion, InactiveVersion, VersionNumber};
+
+pub(crate) use crate::table::Table;
+pub(crate) use crate::version::{ActiveVersion, InactiveVersion, VersionNumber};
 
 #[cfg(test)]
 pub(crate) mod test_support;

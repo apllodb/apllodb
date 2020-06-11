@@ -1,5 +1,10 @@
-use crate::{transaction::sqlite_tx::sqlite_table_name::SqliteTableNameForTable, Table};
+use crate::{
+    transaction::{sqlite_tx::sqlite_table_name::SqliteTableNameForTable, SqliteTx},
+    Table,
+};
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+
+type Tbl<'db> = Table<'db, SqliteTx<'db>>;
 
 #[derive(Debug)]
 pub(in crate::transaction::sqlite_tx) struct TableDao<'tx> {
@@ -21,7 +26,7 @@ impl<'tx> TableDao<'tx> {
     ///   - `table` is already created.
     /// - [SerializationError](error/enum.ApllodbErrorKind.html#variant.SerializationError) when:
     ///   - Somehow failed to serialize part of [Table](foobar.html).
-    pub(in crate::transaction::sqlite_tx) fn create(&self, table: &Table) -> ApllodbResult<()> {
+    pub(in crate::transaction::sqlite_tx) fn create(&self, table: &Tbl<'tx>) -> ApllodbResult<()> {
         let metadata_table = SqliteTableNameForTable::name();
         let sql = format!(
             "INSERT INTO {} (table_name, table_wide_constraints) VALUES (:table_name, :table_wide_constraints);",

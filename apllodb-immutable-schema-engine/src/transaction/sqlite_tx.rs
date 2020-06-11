@@ -10,7 +10,7 @@ pub(crate) use record_iterator::SqliteRecordIterator;
 
 pub(self) use to_sql_string::ToSqlString;
 
-use crate::Table;
+use super::ImmutableSchemaTx;
 use apllodb_shared_components::{
     data_structure::TableName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -79,7 +79,49 @@ impl<'db> TxCtxLike for SqliteTx<'db> {
     }
 }
 
-impl<'db> SqliteTx<'db> {
+impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
+    type Tbl = crate::Table<'db, SqliteTx<'db>>;
+
+    /// # Failures
+    ///
+    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    ///   - rusqlite raises an error.
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - Table `table_name` is not visible to this transaction.
+    fn get_table(&self, _table_name: &TableName) -> ApllodbResult<Self::Tbl> {
+        todo!()
+    }
+
+    /// **This operation does not satisfies atomicity and isolation** because
+    /// SQLite's DDL commands are internally issued.
+    ///
+    /// # Failures
+    ///
+    /// - Errors from [TableDao::create()](foobar.html).
+    fn create_table(&self, table: &Self::Tbl) -> ApllodbResult<()> {
+        let v1 = table.version_repo().current_version()?;
+
+        self.table_dao().create(&table)?;
+        self.version_dao(table.name().clone()).create(&v1)?;
+
+        Ok(())
+    }
+
+    /// **This operation does not satisfies atomicity and isolation** because
+    /// SQLite's DDL commands are internally issued.
+    ///
+    /// # Failures
+    ///
+    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    ///   - rusqlite raises an error.
+    fn alter_table(&self, _table: &Self::Tbl) -> ApllodbResult<()> {
+        // insert table metadata
+        // create v1
+        todo!()
+    }
+}
+
+impl<'tx, 'db: 'tx> SqliteTx<'db> {
     #[allow(dead_code)]
     /// # Failures
     ///
@@ -101,55 +143,6 @@ impl<'db> SqliteTx<'db> {
             id: SqliteTxId::new(),
             sqlite_tx: tx,
         })
-    }
-
-    /// Returns table metadata from buffer the transaction instance owns.
-    ///
-    /// # Failures
-    ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
-    ///   - rusqlite raises an error.
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
-    ///   - Table `table_name` is not visible to this transaction.
-    pub(crate) fn get_table(&mut self, _table_name: &TableName) -> ApllodbResult<Table> {
-        todo!()
-    }
-
-    /// Create a new table with Table and its Version v1 the transaction instance owns.
-    ///
-    /// **This operation does not satisfies atomicity and isolation** because
-    /// SQLite's DDL commands are internally issued.
-    ///
-    /// # Failures
-    ///
-    /// - Errors from [TableDao::create()](foobar.html).
-    pub(crate) fn create_table(&mut self, table: Table) -> ApllodbResult<()> {
-        let v1 = table.version_repo().current_version()?;
-
-        self.table_dao().create(&table)?;
-        self.version_dao(table.name().clone()).create(&v1)?;
-
-        Ok(())
-    }
-
-    /// Do the following:
-    ///
-    /// - Overwrite Table's metadata.
-    /// - Create new Version.
-    /// - Auto-upgrade.
-    /// - Deactivate Version's.
-    ///
-    /// **This operation does not satisfies atomicity and isolation** because
-    /// SQLite's DDL commands are internally issued.
-    ///
-    /// # Failures
-    ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
-    ///   - rusqlite raises an error.
-    pub(crate) fn alter_table(&mut self, _table: Table) -> ApllodbResult<()> {
-        // insert table metadata
-        // create v1
-        todo!()
     }
 
     fn table_dao(&self) -> TableDao<'_> {

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct InactiveVersion(Version);
 
 impl InactiveVersion {
+    #[allow(dead_code)]
     /// Version number.
     pub fn number(&self) -> &VersionNumber {
         &self.0.number
