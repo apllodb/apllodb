@@ -1,16 +1,16 @@
 use crate::version::column::ColumnDataType;
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DataTypeKind, SqlConvertible, SqlValue},
+    data_structure::{DataTypeKind, SqlConvertible, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::{Row, RowBuilder};
 
-pub trait FromSqliteRow {
+pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
         sqlite_row: rusqlite::Row,
         column_data_types: &[ColumnDataType],
     ) -> ApllodbResult<Row> {
-        let builder = RowBuilder::default();
+        let mut builder = RowBuilder::default();
 
         for column_data_type in column_data_types {
             let column_name = column_data_type.column_name();
@@ -22,7 +22,7 @@ pub trait FromSqliteRow {
                 }
             };
 
-            builder.add_column(column_name, sql_value)?;
+            builder = builder.add_column(column_name, sql_value)?;
         }
 
         Ok(builder.build())

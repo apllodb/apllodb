@@ -9,12 +9,12 @@ pub struct AccessMethods;
 mod tests {
     use super::AccessMethods;
     use crate::{
-        column_constraints, column_definition, column_definitions, column_name, column_name_expr,
-        const_expr, data_type, hmap, table_constraints, table_name,
+        column_constraints, column_definition, column_definitions, column_name, const_expr,
+        data_type, hmap, table_constraints, table_name,
         transaction::{Database, SqliteTx},
     };
     use apllodb_shared_components::{
-        data_structure::{AlterTableAction, DataTypeKind, FieldIndex},
+        data_structure::{AlterTableAction, DataTypeKind},
         error::{ApllodbErrorKind, ApllodbResult},
     };
     use apllodb_storage_manager_interface::{AccessMethodsDdl, AccessMethodsDml};

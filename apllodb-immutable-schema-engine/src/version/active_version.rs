@@ -20,6 +20,16 @@ impl ActiveVersion {
         &self.0.column_data_types
     }
 
+    /// Returns ColumnDataType of `column_name` if this version has it.
+    pub(crate) fn resolve_column_data_type(
+        &self,
+        column_name: &ColumnName,
+    ) -> Option<&ColumnDataType> {
+        self.column_data_types()
+            .iter()
+            .find(|cdt| cdt.column_name() == column_name)
+    }
+
     /// Create v_1.
     ///
     /// # Failures
@@ -84,9 +94,18 @@ impl ActiveVersion {
             }
         }
     }
-}
 
-impl ActiveVersion {
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](error/enum.ApllodbErrorKind.html#variant.UndefinedColumn) when:
+    ///   - At least one `column_names` are not included this versions.
+    pub(crate) fn select<RowIter>(&self, _column_names: &[ColumnName]) -> ApllodbResult<RowIter>
+    where
+        RowIter: Iterator,
+    {
+        todo!()
+    }
+
     fn validate_at_least_one_column(column_data_types: &[ColumnDataType]) -> ApllodbResult<()> {
         if column_data_types.is_empty() {
             Err(ApllodbError::new(

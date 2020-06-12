@@ -1,15 +1,13 @@
 use super::AccessMethods;
-use crate::{
-    transaction::{RowIterator, SqliteTx},
-    version::column::ColumnDataType,
-};
-use apllodb_shared_components::data_structure::{
-    ColumnDefinition, ColumnName, Expression, TableName,
-};
+use crate::transaction::{SqliteRowIterator, SqliteTx};
+use crate::ImmutableSchemaTx;
+use apllodb_shared_components::data_structure::{ColumnName, Expression, TableName};
 use apllodb_shared_components::error::ApllodbResult;
-use apllodb_storage_manager_interface::{AccessMethodsDml, Row};
+use apllodb_storage_manager_interface::AccessMethodsDml;
 
-impl<'stmt, 'db: 'stmt> AccessMethodsDml<SqliteTx<'db>, RowIterator<'stmt>> for AccessMethods {
+impl<'stmt, 'db: 'stmt> AccessMethodsDml<SqliteTx<'db>, SqliteRowIterator<'stmt>>
+    for AccessMethods
+{
     // TODO async とかつけような
 
     /// SELECT command.
@@ -17,8 +15,8 @@ impl<'stmt, 'db: 'stmt> AccessMethodsDml<SqliteTx<'db>, RowIterator<'stmt>> for 
         tx: &mut SqliteTx<'db>,
         table_name: &TableName,
         column_names: &[ColumnName],
-    ) -> ApllodbResult<RowIterator<'stmt>> {
-        let table = tx.get_table(table_name)?;
+    ) -> ApllodbResult<SqliteRowIterator<'stmt>> {
+        let table = tx.read_table(table_name)?;
         table.select(column_names)
     }
 

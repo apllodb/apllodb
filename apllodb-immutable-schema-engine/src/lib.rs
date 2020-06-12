@@ -17,6 +17,7 @@
 mod access_methods;
 mod helper;
 mod latch;
+mod row;
 mod table;
 mod transaction;
 mod version;
@@ -25,6 +26,7 @@ pub use crate::access_methods::AccessMethods;
 
 pub(crate) use crate::table::Table;
 pub(crate) use crate::version::{ActiveVersion, InactiveVersion, VersionNumber};
+pub(crate) use transaction::ImmutableSchemaTx;
 
 #[cfg(test)]
 pub(crate) mod test_support;

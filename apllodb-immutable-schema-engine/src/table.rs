@@ -2,16 +2,11 @@ mod constraint_kind;
 mod constraints;
 mod version_repo;
 
-use crate::{
-    transaction::{ImmutableSchemaTx, RowIterator},
-    version::column::ColumnDataType,
-    ActiveVersion,
-};
+use crate::{transaction::ImmutableSchemaTx, version::column::ColumnDataType, ActiveVersion};
 use apllodb_shared_components::{
     data_structure::{AlterTableAction, ColumnDefinition, ColumnName, TableConstraints, TableName},
     error::ApllodbResult,
 };
-use apllodb_storage_manager_interface::TxCtxLike;
 use constraints::TableWideConstraints;
 use serde::Serialize;
 use std::cmp::Ordering;
@@ -30,6 +25,8 @@ pub(crate) struct Table<'tx, Tx: ImmutableSchemaTx> {
     name: TableName,
     table_wide_constraints: TableWideConstraints,
     version_repo: VersionRepo,
+
+    // Only Table has reference to transaction. Version and Row do not.
     tx: &'tx Tx,
 }
 
@@ -69,7 +66,10 @@ impl<'tx, Tx: ImmutableSchemaTx<Tbl = Self>> Table<'tx, Tx> {
             tx,
         };
 
+        let v1 = slf.version_repo.current_version()?;
+
         slf.tx.create_table(&slf)?;
+        slf.tx.create_version(&slf, &v1)?;
 
         Ok(slf)
     }
@@ -82,7 +82,7 @@ impl<'tx, Tx: ImmutableSchemaTx<Tbl = Self>> Table<'tx, Tx> {
         // TODO auto-upgrade.
         // TODO Inactivate old empty versions.
 
-        self.tx.alter_table(&self)?;
+        self.tx.update_table(&self)?;
 
         Ok(())
     }
@@ -103,33 +103,38 @@ impl<'tx, Tx: ImmutableSchemaTx<Tbl = Self>> Table<'tx, Tx> {
     ///   - Table `table_name` is not visible to this transaction.
     /// - [UndefinedColumn](error/enum.ApllodbErrorKind.html#variant.UndefinedColumn) when:
     ///   - At least one `column_names` are not included any active versions.
-    fn select(&self, column_names: &[ColumnName]) -> ApllodbResult<RowIterator<'tx>> {
-        let column_data_types: Vec<ColumnDataType> = column_names
+    pub(crate) fn select(&self, column_names: &[ColumnName]) -> ApllodbResult<Tx::RowIter> {
+        let versions = self.versions_for_select();
+
+        // TODO どのバージョンにも含まれないカラム名をチェック
+
+        let _row_iters: Vec<Tx::RowIter> = versions
             .iter()
-            .map(|column_name| {
-                let coldef: ColumnDefinition = self.resolve_column_definition(column_names)?; // どのactive versionも持たないカラムがあれば UndefinedColumn
+            .map(|version| {
+                let column_data_types: Vec<&ColumnDataType> = column_names
+                    .iter()
+                    .flat_map(|column_name| version.resolve_column_data_type(column_name))
+                    .collect();
 
-                ColumnDataType::from(&coldef)
+                let column_names: Vec<ColumnName> = column_data_types
+                    .iter()
+                    .map(|cdt| cdt.column_name())
+                    .cloned()
+                    .collect();
+
+                version.select::<Tx::RowIter>(&column_names)
             })
-            .collect();
+            .collect::<ApllodbResult<Vec<Tx::RowIter>>>()?;
 
-        self.versions_for_select()
+        // Ok(Tx::RowIter::chain(row_iters))
 
-        // use crate::transaction::sqlite_tx::from_sqlite_row::FromSqliteRow;
-
-        // let column_data_types: &[ColumnDataType] = todo!(); // TODO カタログから引っ張る
-
-        // let mut stmt = _tx.sqlite_tx.prepare("SELECT * FROM t").unwrap();
-        // let sqlite_rows = stmt.query_map_named(&[], |sqlite_row| {
-        //     Row::from_sqlite_row(sqlite_row, &column_data_types)?
-        // })?;
-        // Ok(SqliteRowIterator::from(sqlite_rows))
+        todo!()
     }
 
     /// Ref to TableName.
     ///
     /// Same as `T_create_table_command :: ... :: T_table_name`.
-    pub fn name(&self) -> &TableName {
+    pub(crate) fn name(&self) -> &TableName {
         &self.name
     }
 
@@ -138,8 +143,15 @@ impl<'tx, Tx: ImmutableSchemaTx<Tbl = Self>> Table<'tx, Tx> {
         &self.table_wide_constraints
     }
 
-    /// Ref to VersionRepo
-    pub(crate) fn version_repo(&self) -> &VersionRepo {
-        &self.version_repo
+    fn versions_for_select(&self) -> Vec<ActiveVersion> {
+        todo!()
+    }
+
+    #[allow(dead_code)]
+    fn resolve_column_definition(
+        &self,
+        _column_name: &ColumnName,
+    ) -> ApllodbResult<ColumnDefinition> {
+        todo!()
     }
 }

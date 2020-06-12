@@ -49,7 +49,7 @@ impl<'db> AccessMethodsDdl<SqliteTx<'db>> for AccessMethods {
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
-        let mut table = tx.get_table(table_name)?;
+        let mut table = tx.read_table(table_name)?;
         table.alter(action)?;
         Ok(())
     }

@@ -7,14 +7,14 @@ mod sqlite_table_name;
 mod to_sql_string;
 
 pub(crate) use database::Database;
-pub(crate) use row_iterator::RowIterator;
+pub(crate) use row_iterator::SqliteRowIterator;
 
 pub(self) use to_sql_string::ToSqlString;
 
 use super::ImmutableSchemaTx;
-use crate::version::column::ColumnDataType;
+use crate::{table::Table, version::ActiveVersion};
 use apllodb_shared_components::{
-    data_structure::{ColumnDefinition, ColumnName, TableName},
+    data_structure::{ColumnName, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_manager_interface::TxCtxLike;
@@ -82,18 +82,9 @@ impl<'db> TxCtxLike for SqliteTx<'db> {
 }
 
 impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
-    type Tbl = crate::Table<'db, SqliteTx<'db>>;
-    type RowIter = RowIterator<'db>;
+    type Tbl = Table<'db, SqliteTx<'db>>;
 
-    /// # Failures
-    ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
-    ///   - rusqlite raises an error.
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
-    ///   - Table `table_name` is not visible to this transaction.
-    fn get_table(&self, _table_name: &TableName) -> ApllodbResult<Self::Tbl> {
-        todo!()
-    }
+    type RowIter = SqliteRowIterator<'db>;
 
     /// **This operation does not satisfies atomicity and isolation** because
     /// SQLite's DDL commands are internally issued.
@@ -102,12 +93,18 @@ impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
     ///
     /// - Errors from [TableDao::create()](foobar.html).
     fn create_table(&self, table: &Self::Tbl) -> ApllodbResult<()> {
-        let v1 = table.version_repo().current_version()?;
-
         self.table_dao().create(&table)?;
-        self.version_dao(table.name().clone()).create(&v1)?;
-
         Ok(())
+    }
+
+    /// # Failures
+    ///
+    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    ///   - rusqlite raises an error.
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - Table `table_name` is not visible to this transaction.
+    fn read_table(&self, _table_name: &TableName) -> ApllodbResult<Self::Tbl> {
+        todo!()
     }
 
     /// **This operation does not satisfies atomicity and isolation** because
@@ -117,16 +114,29 @@ impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    fn alter_table(&self, _table: &Self::Tbl) -> ApllodbResult<()> {
+    fn update_table(&self, _table: &Self::Tbl) -> ApllodbResult<()> {
         // insert table metadata
         // create v1
         todo!()
     }
 
+    fn create_version(&self, table: &Self::Tbl, version: &ActiveVersion) -> ApllodbResult<()> {
+        self.version_dao(table.name().clone()).create(version)?;
+        Ok(())
+    }
+
+    fn deactivate_version(
+        &self,
+        _table: &Self::Tbl,
+        _version_number: &crate::version::VersionNumber,
+    ) {
+        todo!()
+    }
+
     fn full_scan(
         &self,
-        version: &Self::Ver,
-        column_names: &[ColumnName],
+        _version: &ActiveVersion,
+        _column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter> {
         todo!()
     }

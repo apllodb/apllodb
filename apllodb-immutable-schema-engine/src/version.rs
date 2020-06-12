@@ -30,7 +30,7 @@ use std::cmp::Ordering;
 /// Version does not have useful methods because you should access to version via
 /// [ActiveVersion](foobar.html) or [InactiveVersion](foobar.html), both of which have different behavior.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-struct Version {
+pub(crate) struct Version {
     number: VersionNumber,
     column_data_types: Vec<ColumnDataType>,
     constraints: Vec<VersionConstraint>, // TODO make VersionConstraints type and validation like TableConstraints.

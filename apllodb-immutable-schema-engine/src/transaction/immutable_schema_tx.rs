@@ -1,3 +1,7 @@
+use crate::{
+    row::ImmutableSchemaRowIter,
+    version::{ActiveVersion, VersionNumber},
+};
 use apllodb_shared_components::{
     data_structure::{ColumnName, TableName},
     error::ApllodbResult,
@@ -5,12 +9,15 @@ use apllodb_shared_components::{
 use apllodb_storage_manager_interface::TxCtxLike;
 
 /// Operations a transaction implementation for Immutable Schema must have.
+/// Only has primitive operations.
 pub(crate) trait ImmutableSchemaTx: TxCtxLike {
+    /// Resolve [Table](foobar.html)'s lifetime in concrete implementation.
     type Tbl;
-    type Ver;
-    type RowIter: Iterator;
 
-    /// Create a new table with Table and its Version v1 the transaction instance owns.
+    type RowIter: ImmutableSchemaRowIter;
+
+    /// Create a new table with Table.
+    /// Do nothing for Version.
     ///
     /// # Failures
     ///
@@ -24,20 +31,19 @@ pub(crate) trait ImmutableSchemaTx: TxCtxLike {
     ///
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
-    fn get_table(&self, table_name: &TableName) -> ApllodbResult<Self::Tbl>;
+    fn read_table(&self, table_name: &TableName) -> ApllodbResult<Self::Tbl>;
 
-    /// Do the following:
-    ///
-    /// - Overwrite Table's metadata.
-    /// - Create new Version.
-    /// - Auto-upgrade.
-    /// - Deactivate Version's.
+    /// Overwrite Table's metadata.
     ///
     /// # Failures
     ///
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
-    fn alter_table(&self, table: &Self::Tbl) -> ApllodbResult<()>;
+    fn update_table(&self, table: &Self::Tbl) -> ApllodbResult<()>;
+
+    fn create_version(&self, table: &Self::Tbl, version: &ActiveVersion) -> ApllodbResult<()>;
+
+    fn deactivate_version(&self, table: &Self::Tbl, version_number: &VersionNumber);
 
     /// Scan version.
     ///
@@ -50,7 +56,7 @@ pub(crate) trait ImmutableSchemaTx: TxCtxLike {
     ///   - At least one `column_names` are not included in this `version`.
     fn full_scan(
         &self,
-        version: &Self::Ver,
+        version: &ActiveVersion,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter>;
 }
