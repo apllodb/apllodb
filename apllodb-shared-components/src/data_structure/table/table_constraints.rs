@@ -10,6 +10,13 @@ use std::collections::HashSet;
 pub struct TableConstraints {
     kinds: Vec<TableConstraintKind>,
 }
+
+impl Default for TableConstraints {
+    fn default() -> Self {
+        Self { kinds: vec![] }
+    }
+}
+
 impl TableConstraints {
     /// Constructor.
     ///
