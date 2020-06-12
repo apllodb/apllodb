@@ -1,9 +1,9 @@
 [package]
-name = "apllodb-storage-manager-interface"
+name = "apllodb-storage-engine-interface"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
-description = "apllodb's storage manager interface."
+description = "apllodb's storage engine interface."
 license = "(TBD)"
 readme = "README.md"
 keywords = ["apllodb"]

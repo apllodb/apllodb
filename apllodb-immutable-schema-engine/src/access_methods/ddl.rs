@@ -7,7 +7,6 @@ use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
 use apllodb_shared_components::error::ApllodbResult;
-use apllodb_storage_manager_interface::AccessMethodsDdl;
 
 impl<'db> AccessMethodsDdl<SqliteTx<'db>> for AccessMethods {
     // TODO async とかつけような

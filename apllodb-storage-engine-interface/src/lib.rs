@@ -1,12 +1,12 @@
 #![deny(warnings, missing_docs, missing_debug_implementations)]
 
-//! apllodb's storage manager interface.
+//! apllodb's storage engine interface.
 //!
 //! # Installation
 //!
 //! ```toml
 //! [dependencies]
-//! apllodb-storage-manager-interface = "0.1"
+//! apllodb-storage-engine-interface = "0.1"
 //! ```
 //!
 //! # Boundary of Responsibility with Storage Engine

@@ -7,7 +7,7 @@ pub mod empty_storage_engine {
     pub use tx::EmptyTx;
 
     mod db {
-        use apllodb_storage_manager_interface::DbCtxLike;
+        use apllodb_storage_engine_interface::DbCtxLike;
 
         pub struct EmptyDatabase;
         impl DbCtxLike for EmptyDatabase {
@@ -24,7 +24,7 @@ pub mod empty_storage_engine {
 
     mod row {
         use apllodb_shared_components::error::ApllodbResult;
-        use apllodb_storage_manager_interface::Row;
+        use apllodb_storage_engine_interface::Row;
 
         pub struct EmptyRowIterator;
         impl Iterator for EmptyRowIterator {
@@ -45,7 +45,7 @@ pub mod empty_storage_engine {
             },
             error::ApllodbResult,
         };
-        use apllodb_storage_manager_interface::TxCtxLike;
+        use apllodb_storage_engine_interface::TxCtxLike;
         use std::collections::HashMap;
 
         pub struct EmptyTx;
@@ -115,7 +115,7 @@ pub mod empty_storage_engine {
     mod engine {
         use super::{EmptyDatabase, EmptyTx};
         use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
-        use apllodb_storage_manager_interface::StorageEngine;
+        use apllodb_storage_engine_interface::StorageEngine;
 
         pub struct EmptyStorageEngine;
         impl StorageEngine for EmptyStorageEngine {
@@ -126,7 +126,7 @@ pub mod empty_storage_engine {
             }
 
             fn begin_transaction(db: &mut EmptyDatabase) -> ApllodbResult<Self::Tx> {
-                use apllodb_storage_manager_interface::TxCtxLike;
+                use apllodb_storage_engine_interface::TxCtxLike;
 
                 Self::Tx::begin(db)
             }
@@ -139,7 +139,7 @@ use apllodb_shared_components::error::ApllodbResult;
 #[test]
 fn test_empty_storage_engine() -> ApllodbResult<()> {
     use apllodb_shared_components::data_structure::{DatabaseName, TableConstraints, TableName};
-    use apllodb_storage_manager_interface::{StorageEngine, TxCtxLike};
+    use apllodb_storage_engine_interface::{StorageEngine, TxCtxLike};
 
     // `use` only `EmptyStorageEngine` from `empty_storage_engine`.
     // `EmptyDatabase` and `EmptyTx` are usable without `use`.

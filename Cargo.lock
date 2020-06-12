@@ -14,7 +14,7 @@ name = "apllodb-immutable-schema-engine"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
- "apllodb-storage-manager-interface",
+ "apllodb-storage-engine-interface",
  "chrono",
  "libsqlite3-sys",
  "rusqlite",
@@ -44,7 +44,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "apllodb-storage-manager-interface"
+name = "apllodb-storage-engine-interface"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",

@@ -17,7 +17,6 @@ mod tests {
         data_structure::{AlterTableAction, DataTypeKind},
         error::{ApllodbErrorKind, ApllodbResult},
     };
-    use apllodb_storage_manager_interface::{AccessMethodsDdl, AccessMethodsDml};
 
     #[test]
     fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {

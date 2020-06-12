@@ -12,7 +12,7 @@ repository = "https://github.com/darwin-education/apllodb"
 
 [dependencies]
 apllodb-shared-components = { path = "../apllodb-shared-components" }
-apllodb-storage-manager-interface = { path = "../apllodb-storage-manager-interface" }
+apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
 chrono = "0.4"
 
 rusqlite = { version = "0.23", features = ["bundled"] }
