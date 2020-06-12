@@ -29,12 +29,24 @@
 //! - Implementation of records and record iterators.
 //! - Ways to materialize tables and records.
 
-mod access_methods;
 mod database;
 mod row;
 mod transaction;
 
-pub use crate::access_methods::{AccessMethodsDdl, AccessMethodsDml};
 pub use crate::database::DbCtxLike;
 pub use crate::row::{Row, RowBuilder};
 pub use crate::transaction::TxCtxLike;
+
+use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
+
+/// An storage engine implementation must implement this.
+pub trait StorageEngine {
+    /// Transaction implementation.
+    type Tx: TxCtxLike;
+
+    /// Specify database to use and return database object.
+    fn use_database(database_name: &DatabaseName) -> ApllodbResult<<Self::Tx as TxCtxLike>::Db>; // Want to mark result type as `Self::Tx::Db` but not possible for now: https://github.com/rust-lang/rust/issues/38078
+
+    /// Starts transaction and get transaction object.
+    fn begin_transaction(db: &mut <Self::Tx as TxCtxLike>::Db) -> ApllodbResult<Self::Tx>;
+}
