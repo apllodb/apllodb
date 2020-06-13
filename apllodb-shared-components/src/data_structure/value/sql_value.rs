@@ -1,8 +1,4 @@
-mod sql_convertible;
-
-pub use sql_convertible::SqlConvertible;
-
-use crate::{data_structure::DataType, error::ApllodbResult};
+use crate::{data_structure::DataType, error::ApllodbResult, traits::SqlConvertible};
 use serde::{Deserialize, Serialize};
 
 /// SQL-typed value that is efficiently compressed.

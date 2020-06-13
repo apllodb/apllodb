@@ -2,8 +2,9 @@ mod field_index;
 
 pub use field_index::FieldIndex;
 
-use super::{SqlConvertible, SqlValue};
+use super::SqlValue;
 use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use crate::traits::SqlConvertible;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
