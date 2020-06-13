@@ -23,6 +23,7 @@ impl DatabaseName {
         Ok(Self(sn))
     }
 
+    /// database name
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }

@@ -1,3 +1,5 @@
+//! Data structures used among multiple components such as Query Processor, Storage Engine, and Client.
+
 mod alter_table_action;
 mod column;
 mod database;

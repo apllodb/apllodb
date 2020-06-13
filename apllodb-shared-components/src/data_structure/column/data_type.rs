@@ -9,14 +9,17 @@ pub struct DataType {
 }
 
 impl DataType {
+    /// Constructor
     pub fn new(kind: DataTypeKind, nullable: bool) -> Self {
         Self { kind, nullable }
     }
 
+    /// Ref to DataTypeKind
     pub fn kind(&self) -> &DataTypeKind {
         &self.kind
     }
 
+    /// `false` if the column is `NOT NULL`, otherwise `true`.
     pub fn nullable(&self) -> bool {
         self.nullable
     }

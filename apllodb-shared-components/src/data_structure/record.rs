@@ -15,6 +15,13 @@ pub struct Record {
 }
 
 impl Record {
+    /// Get value from record's field.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](x.html) when:
+    ///   - Specified field does not exist in this record.
+    /// - Errors from [SqlValue::unpack()](x.html).
     pub fn get<T: SqlConvertible>(&self, index: FieldIndex) -> ApllodbResult<T> {
         let sql_value = self.fields.get(&index).ok_or_else(|| {
             ApllodbError::new(

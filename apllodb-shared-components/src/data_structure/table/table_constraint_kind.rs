@@ -5,8 +5,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum TableConstraintKind {
     /// PRIMARY KEY ({column_name}, ...)
-    PrimaryKey { column_names: Vec<ColumnName> },
+    PrimaryKey {
+        /// compound columns
+        column_names: Vec<ColumnName>,
+    },
 
     /// UNIQUE ({column_name}, ...)
-    Unique { column_names: Vec<ColumnName> },
+    Unique {
+        /// compound columns
+        column_names: Vec<ColumnName>,
+    },
 }

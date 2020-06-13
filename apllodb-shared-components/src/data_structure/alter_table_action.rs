@@ -5,5 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum AlterTableAction {
     /// ALTER TABLE {table_name} DROP COLUMN {column_name}
-    DropColumn { column_name: ColumnName },
+    DropColumn {
+        /// Column to drop
+        column_name: ColumnName,
+    },
 }

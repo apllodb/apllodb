@@ -23,6 +23,7 @@ impl ColumnName {
         Ok(Self(sn))
     }
 
+    /// Ref to column name
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
