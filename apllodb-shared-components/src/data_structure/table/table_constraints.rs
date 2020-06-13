@@ -101,18 +101,18 @@ impl TableConstraints {
 mod tests {
     use super::TableConstraints;
     use crate::{data_structure::TableConstraintKind, error::ApllodbErrorKind};
-    use crate::{pk, unique};
+    use crate::{t_pk, t_unique};
 
     #[test]
     fn test_success() {
         let testset: Vec<Vec<TableConstraintKind>> = vec![
             vec![],
-            vec![pk!("c1")],
-            vec![unique!("c1")],
-            vec![pk!("c1", "c2")],
-            vec![unique!("c1", "c2")],
-            vec![pk!("c1"), unique!("c2")],
-            vec![unique!("c1", "c2"), unique!("c2")],
+            vec![t_pk!("c1")],
+            vec![t_unique!("c1")],
+            vec![t_pk!("c1", "c2")],
+            vec![t_unique!("c1", "c2")],
+            vec![t_pk!("c1"), t_unique!("c2")],
+            vec![t_unique!("c1", "c2"), t_unique!("c2")],
         ];
 
         for constraints in testset {
@@ -127,14 +127,14 @@ mod tests {
     fn test_failure_invalid_table_definition() {
         let testset: Vec<Vec<TableConstraintKind>> = vec![
             // duplicate constraints.
-            vec![pk!("c1"), pk!("c1")],
-            vec![unique!("c1"), unique!("c1")],
-            vec![unique!("c1"), unique!("c2"), unique!("c1")],
-            vec![pk!("c1", "c2"), pk!("c1", "c2")],
+            vec![t_pk!("c1"), t_pk!("c1")],
+            vec![t_unique!("c1"), t_unique!("c1")],
+            vec![t_unique!("c1"), t_unique!("c2"), t_unique!("c1")],
+            vec![t_pk!("c1", "c2"), t_pk!("c1", "c2")],
             // PK & UNIQUE are applied to the same column sequence.
-            vec![pk!("c1"), unique!("c1")],
+            vec![t_pk!("c1"), t_unique!("c1")],
             // Multiple PKs.
-            vec![pk!("c1"), pk!("c2")],
+            vec![t_pk!("c1"), t_pk!("c2")],
         ];
 
         for constraints in testset {

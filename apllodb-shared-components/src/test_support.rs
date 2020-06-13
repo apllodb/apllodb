@@ -1,1 +1,1 @@
-pub(crate) mod factory_macro;
+pub mod factory_macro;
