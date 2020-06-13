@@ -1,8 +1,8 @@
-use crate::{Database, Row};
+use crate::Row;
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, Expression, TableConstraints, TableName,
 };
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::{error::ApllodbResult, traits::Database};
 use std::collections::HashMap;
 
 /// Transaction interface.

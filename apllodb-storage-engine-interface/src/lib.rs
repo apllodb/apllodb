@@ -29,11 +29,9 @@
 //! - Implementation of records and record iterators.
 //! - Ways to materialize tables and records.
 
-mod database;
 mod row;
 mod transaction;
 
-pub use crate::database::Database;
 pub use crate::row::{Row, RowBuilder};
 pub use crate::transaction::Transaction;
 

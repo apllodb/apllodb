@@ -7,7 +7,7 @@ pub mod empty_storage_engine {
     pub use tx::EmptyTx;
 
     mod db {
-        use apllodb_storage_engine_interface::Database;
+        use apllodb_shared_components::traits::Database;
 
         pub struct EmptyDatabase;
         impl Database for EmptyDatabase {
