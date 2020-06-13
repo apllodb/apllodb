@@ -65,6 +65,10 @@ pub mod empty_storage_engine {
                 Ok(())
             }
 
+            fn database(&self) -> Self::Db {
+                unimplemented!()
+            }
+
             fn create_table(
                 &mut self,
                 table_name: &TableName,

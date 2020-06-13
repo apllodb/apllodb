@@ -34,6 +34,9 @@ pub trait Transaction {
     /// Abort (rollback) a transaction.
     fn abort(self) -> ApllodbResult<()>;
 
+    /// Ref to database.
+    fn database(&self) -> Self::Db;
+
     /// CREATE TABLE command.
     fn create_table(
         &mut self,
