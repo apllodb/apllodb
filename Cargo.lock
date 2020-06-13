@@ -10,8 +10,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "apllodb-immutable-schema-engine"
+name = "apllodb-immutable-schema-engine-application"
 version = "0.1.0"
+dependencies = [
+ "apllodb-immutable-schema-engine-domain",
+]
+
+[[package]]
+name = "apllodb-immutable-schema-engine-domain"
+version = "0.1.0"
+
+[[package]]
+name = "apllodb-immutable-schema-engine-infra"
+version = "0.1.0"
+dependencies = [
+ "apllodb-immutable-schema-engine-application",
+ "apllodb-immutable-schema-engine-domain",
+ "apllodb-immutable-schema-engine-interface-adapter",
+]
+
+[[package]]
+name = "apllodb-immutable-schema-engine-interface-adapter"
+version = "0.1.0"
+dependencies = [
+ "apllodb-immutable-schema-engine-application",
+ "apllodb-immutable-schema-engine-domain",
+]
 
 [[package]]
 name = "apllodb-shared-components"

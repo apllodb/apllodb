@@ -1,20 +1,20 @@
-use crate::{DbCtxLike, Row};
+use crate::{Database, Row};
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, Expression, TableConstraints, TableName,
 };
 use apllodb_shared_components::error::ApllodbResult;
 use std::collections::HashMap;
 
-/// Transaction context interface.
+/// Transaction interface.
 ///
 /// It has methods to control transaction's lifetime (BEGIN, COMMIT/ABORT)
 /// and storage engine's access methods (like system calls in OS).
 ///
 /// Not only DML but also DDL are executed under the transaction context (like PostgreSQL).
-pub trait TxCtxLike {
+pub trait Transaction {
     /// Database in which this transaction works.
-    type Db: DbCtxLike;
-    
+    type Db: Database;
+
     /// Iterator of [Row](foobar.html)s returned from [select()](foobar.html) method.
     type RowIter: Iterator<Item = ApllodbResult<Row>>;
 

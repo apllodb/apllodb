@@ -7,10 +7,10 @@ pub mod empty_storage_engine {
     pub use tx::EmptyTx;
 
     mod db {
-        use apllodb_storage_engine_interface::DbCtxLike;
+        use apllodb_storage_engine_interface::Database;
 
         pub struct EmptyDatabase;
-        impl DbCtxLike for EmptyDatabase {
+        impl Database for EmptyDatabase {
             fn name(&self) -> &apllodb_shared_components::data_structure::DatabaseName {
                 unimplemented!()
             }
@@ -45,11 +45,11 @@ pub mod empty_storage_engine {
             },
             error::ApllodbResult,
         };
-        use apllodb_storage_engine_interface::TxCtxLike;
+        use apllodb_storage_engine_interface::Transaction;
         use std::collections::HashMap;
 
         pub struct EmptyTx;
-        impl TxCtxLike for EmptyTx {
+        impl Transaction for EmptyTx {
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
 
@@ -126,7 +126,7 @@ pub mod empty_storage_engine {
             }
 
             fn begin_transaction(db: &mut EmptyDatabase) -> ApllodbResult<Self::Tx> {
-                use apllodb_storage_engine_interface::TxCtxLike;
+                use apllodb_storage_engine_interface::Transaction;
 
                 Self::Tx::begin(db)
             }
@@ -139,7 +139,7 @@ use apllodb_shared_components::error::ApllodbResult;
 #[test]
 fn test_empty_storage_engine() -> ApllodbResult<()> {
     use apllodb_shared_components::data_structure::{DatabaseName, TableConstraints, TableName};
-    use apllodb_storage_engine_interface::{StorageEngine, TxCtxLike};
+    use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
     // `use` only `EmptyStorageEngine` from `empty_storage_engine`.
     // `EmptyDatabase` and `EmptyTx` are usable without `use`.
