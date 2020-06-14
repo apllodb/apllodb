@@ -10,5 +10,5 @@ mod vtable;
 
 pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};
 pub use transaction::ImmutableSchemaTx;
-pub use version::{ActiveVersion, InactiveVersion};
+pub use version::{ActiveVersion, InactiveVersion, VersionNumber};
 pub use vtable::VTable;

@@ -2,13 +2,16 @@ mod active_version;
 mod column;
 mod constraint_kind;
 mod constraints;
+mod id;
 mod inactive_version;
 mod version_number;
 
 pub use active_version::ActiveVersion;
+pub use id::VersionId;
 pub use inactive_version::InactiveVersion;
-pub(crate) use version_number::VersionNumber;
+pub use version_number::VersionNumber;
 
+use crate::entity::Entity;
 use column::ColumnDataType;
 use constraints::VersionConstraints;
 use serde::{Deserialize, Serialize};
@@ -32,14 +35,22 @@ use std::cmp::Ordering;
 /// [ActiveVersion](foobar.html) or [InactiveVersion](foobar.html), both of which have different behavior.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub(crate) struct Version {
-    number: VersionNumber,
+    id: VersionId,
     column_data_types: Vec<ColumnDataType>,
     constraints: VersionConstraints,
 }
 
+impl Entity for Version {
+    type Id = VersionId;
+
+    fn id(&self) -> &Self::Id {
+        &self.id
+    }
+}
+
 impl Ord for Version {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.number.cmp(&other.number)
+        self.id.version_number.cmp(&other.id.version_number)
     }
 }
 impl PartialOrd for Version {

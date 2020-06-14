@@ -3,7 +3,9 @@ mod constraints;
 mod id;
 mod version_repo;
 
-use crate::{entity::Entity, ActiveVersion};
+pub use id::VTableId;
+
+use crate::entity::Entity;
 use apllodb_shared_components::{
     data_structure::{
         AlterTableAction, ColumnDefinition, DatabaseName, TableConstraints, TableName,
@@ -11,9 +13,7 @@ use apllodb_shared_components::{
     error::ApllodbResult,
 };
 use constraints::TableWideConstraints;
-use id::VTableId;
 use std::cmp::Ordering;
-use version_repo::VersionRepo;
 
 /// A version table, which has set of [Version](struct.Version.html)s.
 ///
