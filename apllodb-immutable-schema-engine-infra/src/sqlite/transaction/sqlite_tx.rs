@@ -1,53 +1,72 @@
 mod dao;
-mod database;
-mod from_sqlite_row;
 mod id;
-mod row_iterator;
-mod sqlite_table_name;
-mod to_sql_string;
 
-pub(crate) use database::Database;
-pub(crate) use row_iterator::SqliteRowIterator;
-
-pub(self) use to_sql_string::ToSqlString;
-
-use super::ImmutableSchemaTx;
-use crate::{table::Table, version::ActiveVersion};
+use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
+use apllodb_immutable_schema_engine_domain::{
+    ActiveVersion, ImmutableSchemaTx, VTable, VersionNumber,
+};
+use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
 use apllodb_shared_components::{
-    data_structure::{ColumnName, TableName},
+    data_structure::{ColumnName, DatabaseName, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_manager_interface::TxCtxLike;
-use dao::{TableDao, VersionDao};
+use apllodb_storage_engine_interface::Transaction;
+use dao::{VTableDao, VersionDao};
 use id::SqliteTxId;
 use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx<'db> {
+pub struct SqliteTx<'stmt> {
     id: SqliteTxId,
-    pub(crate) sqlite_tx: rusqlite::Transaction<'db>, // TODO private
+    database_name: DatabaseName,
+    pub(in crate::sqlite) sqlite_tx: rusqlite::Transaction<'stmt>, // TODO private
 }
 
-impl<'db> PartialEq for SqliteTx<'db> {
+impl<'stmt> PartialEq for SqliteTx<'stmt> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
-impl<'db> Eq for SqliteTx<'db> {}
+impl<'stmt> Eq for SqliteTx<'stmt> {}
 
-impl<'db> PartialOrd for SqliteTx<'db> {
+impl<'stmt> PartialOrd for SqliteTx<'stmt> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<'db> Ord for SqliteTx<'db> {
+impl<'stmt> Ord for SqliteTx<'stmt> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.id.cmp(&other.id)
     }
 }
 
-impl<'db> TxCtxLike for SqliteTx<'db> {
+impl<'stmt> ImmutableSchemaTx for SqliteTx<'stmt> {
+    type Db = SqliteDatabase;
+    type VerRowIter = SqliteRowIterator<'stmt>;
+
+    /// # Failures
+    ///
+    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    ///   - rusqlite raises an error.
+    fn begin(mut db: Self::Db) -> ApllodbResult<Self> {
+        use apllodb_shared_components::traits::Database;
+
+        let tx = db.sqlite_conn().transaction().map_err(|e| {
+            ApllodbError::new(
+                ApllodbErrorKind::IoError,
+                format!("backend sqlite3 raised an error on beginning transaction"),
+                Some(Box::new(e)),
+            )
+        })?;
+
+        Ok(Self {
+            id: SqliteTxId::new(),
+            database_name: db.name().clone(),
+            sqlite_tx: tx,
+        })
+    }
+
     /// # Failures
     ///
     /// If any of the following error is returned, transaction has already been aborted.
@@ -79,21 +98,21 @@ impl<'db> TxCtxLike for SqliteTx<'db> {
         })?;
         Ok(())
     }
-}
 
-impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
-    type Tbl = Table<'db, SqliteTx<'db>>;
-
-    type RowIter = SqliteRowIterator<'db>;
+    fn database_name(&self) -> &DatabaseName {
+        &self.database_name
+    }
 
     /// **This operation does not satisfies atomicity and isolation** because
     /// SQLite's DDL commands are internally issued.
     ///
     /// # Failures
     ///
+    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
+    ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
-    fn create_table(&self, table: &Self::Tbl) -> ApllodbResult<()> {
-        self.table_dao().create(&table)?;
+    fn create_vtable(&self, table: &VTable) -> ApllodbResult<()> {
+        self.vtable_dao().create(&table)?;
         Ok(())
     }
 
@@ -103,7 +122,7 @@ impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
     ///   - rusqlite raises an error.
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
-    fn read_table(&self, _table_name: &TableName) -> ApllodbResult<Self::Tbl> {
+    fn read_vtable(&self, table_name: &TableName) -> ApllodbResult<VTable> {
         todo!()
     }
 
@@ -112,24 +131,26 @@ impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
     ///
     /// # Failures
     ///
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - Table `table_name` is not visible to this transaction.
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    fn update_table(&self, _table: &Self::Tbl) -> ApllodbResult<()> {
-        // insert table metadata
-        // create v1
+    fn update_vtable(&self, table: &VTable) -> ApllodbResult<()> {
         todo!()
     }
 
-    fn create_version(&self, table: &Self::Tbl, version: &ActiveVersion) -> ApllodbResult<()> {
-        self.version_dao(table.name().clone()).create(version)?;
-        Ok(())
+    fn create_version(&self, version: &ActiveVersion) -> ApllodbResult<()> {
+        // self.version_dao(table.name().clone()).create(version)?;
+        // Ok(())
+
+        todo!()
     }
 
     fn deactivate_version(
         &self,
-        _table: &Self::Tbl,
-        _version_number: &crate::version::VersionNumber,
-    ) {
+        table: &VTable,
+        version_number: &VersionNumber,
+    ) -> ApllodbResult<()> {
         todo!()
     }
 
@@ -137,61 +158,38 @@ impl<'db> ImmutableSchemaTx for SqliteTx<'db> {
         &self,
         _version: &ActiveVersion,
         _column_names: &[ColumnName],
-    ) -> ApllodbResult<Self::RowIter> {
+    ) -> ApllodbResult<Self::VerRowIter> {
         todo!()
     }
 }
 
-impl<'tx, 'db: 'tx> SqliteTx<'db> {
-    #[allow(dead_code)]
-    /// # Failures
-    ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
-    ///   - rusqlite raises an error.
-    pub fn begin(db: &'db mut Database) -> ApllodbResult<Self>
-    where
-        Self: std::marker::Sized,
-    {
-        let tx = db.sqlite_conn().transaction().map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
-                format!("backend sqlite3 raised an error on beginning transaction"),
-                Some(Box::new(e)),
-            )
-        })?;
-
-        Ok(Self {
-            id: SqliteTxId::new(),
-            sqlite_tx: tx,
-        })
+impl<'stmt> SqliteTx<'stmt> {
+    fn vtable_dao(&self) -> VTableDao<'_> {
+        VTableDao::new(&self.sqlite_tx)
     }
 
-    fn table_dao(&self) -> TableDao<'_> {
-        TableDao::new(&self.sqlite_tx)
-    }
-
-    fn version_dao(&self, table_name: TableName) -> VersionDao<'_> {
-        VersionDao::new(&self.sqlite_tx, table_name)
+    fn version_dao(&self) -> VersionDao<'_> {
+        VersionDao::new(&self.sqlite_tx)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{database::Database, SqliteTx};
-    use crate::{
-        column_constraints, column_definition, column_definitions, data_type, table_constraints,
-        table_name, AccessMethods,
-    };
+    use super::SqliteTx;
+    use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
+    use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
+        column_constraints, column_definition, column_definitions,
         data_structure::DataTypeKind,
+        data_type,
         error::{ApllodbErrorKind, ApllodbResult},
+        table_constraints, table_name,
     };
-    use apllodb_storage_manager_interface::AccessMethodsDdl;
-    use apllodb_storage_manager_interface::TxCtxLike;
+    use apllodb_storage_engine_interface::Transaction;
 
     #[test]
     fn test_wait_lock() -> ApllodbResult<()> {
-        let mut db1 = Database::new_for_test()?;
+        let mut db1 = SqliteDatabase::new_for_test()?;
         let mut db2 = db1.dup()?;
 
         let tn = &table_name!("t");
@@ -202,13 +200,13 @@ mod tests {
             column_constraints!()
         ));
 
-        let mut tx1 = SqliteTx::begin(&mut db1)?;
-        let mut tx2 = SqliteTx::begin(&mut db2)?;
+        let mut tx1 = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(db1)?;
+        let mut tx2 = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(db2)?;
 
         // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
         // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
-        AccessMethods::create_table(&mut tx2, &tn, &tc, &coldefs)?;
-        match AccessMethods::create_table(&mut tx1, &tn, &tc, &coldefs) {
+        tx2.create_table(&tn, &tc, &coldefs)?;
+        match tx1.create_table(&tn, &tc, &coldefs) {
             // Internally, new record is trying to be INSERTed but it is made wait by tx2.
             // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
             Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DeadlockDetected),
@@ -232,7 +230,7 @@ mod tests {
 
     #[test]
     fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
-        let mut db = Database::new_for_test()?;
+        let mut db = SqliteDatabase::new_for_test()?;
 
         let tn = &table_name!("t");
         let tc = table_constraints!();
@@ -242,10 +240,10 @@ mod tests {
             column_constraints!()
         ));
 
-        let mut tx = SqliteTx::begin(&mut db)?;
+        let mut tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(db)?;
 
-        AccessMethods::create_table(&mut tx, &tn, &tc, &coldefs)?;
-        match AccessMethods::create_table(&mut tx, &tn, &tc, &coldefs) {
+        tx.create_table(&tn, &tc, &coldefs)?;
+        match tx.create_table(&tn, &tc, &coldefs) {
             // Internally, new record is trying to be INSERTed but it is made wait by tx2.
             // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
             Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),

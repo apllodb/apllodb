@@ -1,10 +1,10 @@
-use crate::row::ImmutableSchemaRowIter;
+use apllodb_immutable_schema_engine_domain::VersionRowIter;
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
-use apllodb_storage_manager_interface::Row;
+use apllodb_storage_engine_interface::Row;
 
 type ToApllodbRow = Box<dyn FnMut(&rusqlite::Row<'_>) -> rusqlite::Result<Row>>;
 
-pub(crate) struct SqliteRowIterator<'stmt>(rusqlite::MappedRows<'stmt, ToApllodbRow>);
+pub struct SqliteRowIterator<'stmt>(rusqlite::MappedRows<'stmt, ToApllodbRow>);
 
 impl Iterator for SqliteRowIterator<'_> {
     type Item = ApllodbResult<Row>;
@@ -21,16 +21,7 @@ impl Iterator for SqliteRowIterator<'_> {
     }
 }
 
-impl ImmutableSchemaRowIter for SqliteRowIterator<'_> {
-    fn chain(_iters: Vec<Self>) -> Self
-    where
-        Self: Sized,
-    {
-        todo!()
-        // これ、PoCだとただのVecDeqだからつなげたけど、無理かなぁ...
-        // PoCみたいに for1VersionのVecDeqにするのは良い方法
-    }
-}
+impl VersionRowIter for SqliteRowIterator<'_> {}
 
 impl<'stmt> From<rusqlite::MappedRows<'stmt, ToApllodbRow>> for SqliteRowIterator<'stmt> {
     fn from(sqlite_rows: rusqlite::MappedRows<'stmt, ToApllodbRow>) -> Self {

@@ -1,9 +1,9 @@
-use crate::version::column::ColumnDataType;
 use apllodb_shared_components::{
-    data_structure::{DataTypeKind, SqlConvertible, SqlValue},
+    data_structure::{ColumnDataType, DataTypeKind, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    traits::SqlConvertible,
 };
-use apllodb_storage_manager_interface::{Row, RowBuilder};
+use apllodb_storage_engine_interface::{Row, RowBuilder};
 
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(

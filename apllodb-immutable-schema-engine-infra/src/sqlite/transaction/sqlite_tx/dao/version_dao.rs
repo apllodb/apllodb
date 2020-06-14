@@ -1,34 +1,25 @@
-use crate::{transaction::sqlite_tx::sqlite_table_name::SqliteTableNameForVersion, ActiveVersion};
+use crate::sqlite::sqlite_table_name::SqliteTableNameForVersion;
+use apllodb_immutable_schema_engine_domain::ActiveVersion;
 use apllodb_shared_components::{
     data_structure::TableName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 
 #[derive(Debug)]
-pub(in crate::transaction::sqlite_tx) struct VersionDao<'tx> {
+pub(in crate::sqlite) struct VersionDao<'tx> {
     sqlite_tx: &'tx rusqlite::Transaction<'tx>,
-    table_name: TableName,
 }
 
 impl<'tx> VersionDao<'tx> {
-    pub(in crate::transaction::sqlite_tx) fn new(
-        sqlite_tx: &'tx rusqlite::Transaction<'tx>,
-        table_name: TableName,
-    ) -> Self {
-        Self {
-            sqlite_tx,
-            table_name,
-        }
+    pub(in crate::sqlite) fn new(sqlite_tx: &'tx rusqlite::Transaction<'tx>) -> Self {
+        Self { sqlite_tx }
     }
 
-    pub(in crate::transaction::sqlite_tx) fn create(
-        &self,
-        version: &ActiveVersion,
-    ) -> ApllodbResult<()> {
-        use crate::transaction::sqlite_tx::ToSqlString;
+    pub(in crate::sqlite) fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
+        use crate::sqlite::to_sql_string::ToSqlString;
+        use apllodb_immutable_schema_engine_domain::Entity;
 
-        let version_table_name =
-            SqliteTableNameForVersion::new(&self.table_name, version.number(), true);
+        let version_table_name = SqliteTableNameForVersion::new(version.id(), true);
 
         let sql = format!(
             "

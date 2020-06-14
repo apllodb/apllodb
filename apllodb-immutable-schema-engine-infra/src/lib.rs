@@ -1,21 +1,27 @@
-#![deny(warnings, missing_docs, missing_debug_implementations)]
+//#![deny(warnings, missing_docs, missing_debug_implementations)]
+
 //! Infrastructure layer of apllodb-immutable-schema-engine.
 
-mod transaction;
+mod sqlite;
 
-pub use transaction::SqliteTx;
-
+use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
+use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
 use apllodb_storage_engine_interface::StorageEngine;
+use sqlite::{SqliteDatabase, SqliteRowIterator, SqliteTx};
+use std::marker::PhantomData;
 
 /// Storage engine implementation.
 #[derive(Hash, Debug)]
-pub struct ApllodbImmutableSchemaEngine;
-impl StorageEngine for ApllodbImmutableSchemaEngine {
-    type Tx = SqliteTx;
-    fn use_database(database_name: &DatabaseName) -> ApllodbResult<apllodb_storage_engine_interface::Transaction::Db> {
+pub struct ApllodbImmutableSchemaEngine<'stmt>(PhantomData<&'stmt ()>);
+
+impl<'stmt> StorageEngine for ApllodbImmutableSchemaEngine<'stmt> {
+    type Tx = TransactionController<SqliteTx<'stmt>, SqliteRowIterator<'stmt>>;
+
+    fn use_database(database_name: &DatabaseName) -> ApllodbResult<SqliteDatabase> {
         todo!()
     }
-    fn begin_transaction(db: &mut apllodb_storage_engine_interface::Transaction::Db) -> ApllodbResult<Self::Tx> {
+
+    fn begin_transaction(db: SqliteDatabase) -> ApllodbResult<Self::Tx> {
         todo!()
     }
 }

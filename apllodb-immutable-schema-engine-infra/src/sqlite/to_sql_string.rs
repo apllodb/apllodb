@@ -1,7 +1,8 @@
-use crate::version::column::ColumnDataType;
-use apllodb_shared_components::data_structure::{ColumnName, DataType, DataTypeKind};
+use apllodb_shared_components::data_structure::{
+    ColumnDataType, ColumnName, DataType, DataTypeKind,
+};
 
-pub(in crate::transaction::sqlite_tx) trait ToSqlString {
+pub(in crate::sqlite) trait ToSqlString {
     fn to_sql_string(&self) -> String;
 }
 

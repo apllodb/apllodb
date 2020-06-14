@@ -15,4 +15,12 @@ impl VersionId {
             version_number: version_number.clone(),
         }
     }
+
+    pub fn vtable_id(&self) -> &VTableId {
+        &self.vtable_id
+    }
+
+    pub fn version_number(&self) -> &VersionNumber {
+        &self.version_number
+    }
 }

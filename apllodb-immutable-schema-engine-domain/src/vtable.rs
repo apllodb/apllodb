@@ -3,6 +3,7 @@ mod constraints;
 mod id;
 mod version_repo;
 
+pub use constraints::TableWideConstraints;
 pub use id::VTableId;
 
 use crate::entity::Entity;
@@ -12,7 +13,6 @@ use apllodb_shared_components::{
     },
     error::ApllodbResult,
 };
-use constraints::TableWideConstraints;
 use std::cmp::Ordering;
 
 /// A version table, which has set of [Version](struct.Version.html)s.
@@ -78,7 +78,7 @@ impl VTable {
     }
 
     /// Ref to TableWideConstraints
-    pub(crate) fn table_wide_constraints(&self) -> &TableWideConstraints {
+    pub fn table_wide_constraints(&self) -> &TableWideConstraints {
         &self.table_wide_constraints
     }
 }

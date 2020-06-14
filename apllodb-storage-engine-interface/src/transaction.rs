@@ -1,6 +1,6 @@
 use crate::Row;
 use apllodb_shared_components::data_structure::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, TableConstraints, TableName,
+    AlterTableAction, ColumnDefinition, ColumnName, Expression, TableConstraints, TableName, DatabaseName,
 };
 use apllodb_shared_components::{error::ApllodbResult, traits::Database};
 use std::collections::HashMap;
@@ -38,8 +38,8 @@ pub trait Transaction {
     /// Abort (rollback) a transaction.
     fn abort(self) -> ApllodbResult<()>;
 
-    /// Ref to database.
-    fn database(&self) -> &Self::Db;
+    /// Ref to database name.
+    fn database_name(&self) -> &DatabaseName;
 
     /// CREATE TABLE command.
     fn create_table(

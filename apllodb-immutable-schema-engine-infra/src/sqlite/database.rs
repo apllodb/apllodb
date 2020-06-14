@@ -1,32 +1,31 @@
-use super::sqlite_table_name::SqliteTableNameForTable;
+use super::sqlite_table_name::SqliteTableNameForVTable;
 use apllodb_shared_components::{
     data_structure::DatabaseName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    traits::Database,
 };
-use apllodb_storage_manager_interface::DbCtxLike;
 
 /// Database context.
 #[derive(Debug)]
-pub struct Database {
-    pub(in crate::transaction::sqlite_tx) sqlite_conn: rusqlite::Connection,
+pub struct SqliteDatabase {
+    pub(in crate::sqlite) sqlite_conn: rusqlite::Connection,
     name: DatabaseName,
 }
 
-impl DbCtxLike for Database {
+impl Database for SqliteDatabase {
     fn name(&self) -> &DatabaseName {
         &self.name
     }
 }
 
-impl Database {
-    #[allow(dead_code)]
+impl SqliteDatabase {
     /// Constructor.
     ///
     /// # Failures
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    pub(in crate::transaction::sqlite_tx) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
+    pub(in crate::sqlite) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
         let conn = Self::connect_sqlite(&db_name)?;
         let slf = Self {
             name: db_name,
@@ -52,16 +51,16 @@ impl Database {
         Ok(conn)
     }
 
-    pub(in crate::transaction::sqlite_tx) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
+    pub(in crate::sqlite) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
         &mut self.sqlite_conn
     }
 
     fn create_metadata_table_if_not_exist(&self) -> ApllodbResult<()> {
-        let metadata_table = SqliteTableNameForTable::name();
+        let metadata_table = SqliteTableNameForVTable::name();
         let sql = format!(
             "
 CREATE TABLE IF NOT EXISTS {} (
-  table_name TEXT PRIMARY KEY,
+  vtable_name TEXT PRIMARY KEY,
   table_wide_constraints TEXT
 )
         ",
@@ -86,7 +85,7 @@ CREATE TABLE IF NOT EXISTS {} (
 }
 
 #[cfg(test)]
-impl Database {
+impl SqliteDatabase {
     pub(crate) fn new_for_test() -> ApllodbResult<Self> {
         use uuid::Uuid;
 
@@ -97,7 +96,7 @@ impl Database {
     }
 
     /// Creates new connection to SQLite.
-    pub(in crate::transaction::sqlite_tx) fn dup(&self) -> ApllodbResult<Self> {
+    pub(in crate::sqlite) fn dup(&self) -> ApllodbResult<Self> {
         let conn = Self::connect_sqlite(&self.name)?;
         Ok(Self {
             name: self.name.clone(),
@@ -107,7 +106,7 @@ impl Database {
 }
 
 #[cfg(test)]
-impl Drop for Database {
+impl Drop for SqliteDatabase {
     fn drop(&mut self) {
         let path = Self::sqlite_db_path(&self.name);
 

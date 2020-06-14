@@ -61,7 +61,7 @@ impl ActiveVersion {
     }
 
     /// Ref to columns and their data types.
-    pub(crate) fn column_data_types(&self) -> &[ColumnDataType] {
+    pub fn column_data_types(&self) -> &[ColumnDataType] {
         &self.0.column_data_types
     }
 
@@ -74,8 +74,6 @@ impl ActiveVersion {
     /// - [UndefinedColumn](variant.UndefinedColumn.html)
     ///   - If column to alter does not exist.
     pub(crate) fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
-        let number = self.number().next();
-
         match action {
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,

@@ -33,6 +33,7 @@ name = "apllodb-immutable-schema-engine-domain"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
+ "rand",
  "serde",
 ]
 
@@ -43,6 +44,7 @@ dependencies = [
  "apllodb-immutable-schema-engine-application",
  "apllodb-immutable-schema-engine-domain",
  "apllodb-immutable-schema-engine-interface-adapter",
+ "apllodb-shared-components",
  "apllodb-storage-engine-interface",
  "chrono",
  "libsqlite3-sys",

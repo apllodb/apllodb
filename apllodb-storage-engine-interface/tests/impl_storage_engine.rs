@@ -40,8 +40,8 @@ pub mod empty_storage_engine {
         use super::{EmptyDatabase, EmptyRowIterator};
         use apllodb_shared_components::{
             data_structure::{
-                AlterTableAction, ColumnDefinition, ColumnName, Expression, TableConstraints,
-                TableName,
+                AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression,
+                TableConstraints, TableName,
             },
             error::ApllodbResult,
         };
@@ -65,7 +65,7 @@ pub mod empty_storage_engine {
                 Ok(())
             }
 
-            fn database(&self) -> &Self::Db {
+            fn database_name(&self) -> &DatabaseName {
                 unimplemented!()
             }
 

@@ -13,6 +13,8 @@ apllodb-immutable-schema-engine-interface-adapter = { path = "../apllodb-immutab
 
 apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
 
+apllodb-shared-components = { path = "../apllodb-shared-components" }
+
 chrono = "0.4"
 
 rusqlite = { version = "0.23", features = ["bundled"] }

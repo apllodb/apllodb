@@ -15,6 +15,14 @@ impl VTableId {
             table_name: table_name.clone(),
         }
     }
+
+    pub fn database_name(&self) -> &DatabaseName {
+        &self.database_name
+    }
+
+    pub fn table_name(&self) -> &TableName {
+        &self.table_name
+    }
 }
 
 #[cfg(test)]
