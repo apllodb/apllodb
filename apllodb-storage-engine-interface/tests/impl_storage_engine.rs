@@ -49,7 +49,7 @@ pub mod empty_storage_engine {
         use std::collections::HashMap;
 
         pub struct EmptyTx;
-        impl Transaction for EmptyTx {
+        impl<'tx> Transaction<'tx> for EmptyTx {
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
 
@@ -65,7 +65,7 @@ pub mod empty_storage_engine {
                 Ok(())
             }
 
-            fn database(&self) -> Self::Db {
+            fn database(&self) -> &Self::Db {
                 unimplemented!()
             }
 
@@ -122,7 +122,7 @@ pub mod empty_storage_engine {
         use apllodb_storage_engine_interface::StorageEngine;
 
         pub struct EmptyStorageEngine;
-        impl StorageEngine for EmptyStorageEngine {
+        impl<'tx> StorageEngine<'tx> for EmptyStorageEngine {
             type Tx = EmptyTx;
 
             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
