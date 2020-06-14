@@ -6,11 +6,10 @@ use apllodb_shared_components::{
     data_structure::{ColumnName, TableName},
     error::ApllodbResult,
 };
-use apllodb_storage_engine_interface::Transaction;
 
 /// Operations a transaction implementation for Immutable Schema must have.
 /// Only has primitive operations.
-pub trait ImmutableSchemaTx: Transaction {
+pub trait ImmutableSchemaTx {
     /// Resolve [VTable](foobar.html)'s lifetime in concrete implementation.
     type VTbl;
 

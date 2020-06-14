@@ -3,7 +3,6 @@ mod version_row_iter;
 pub use version_row_iter::VersionRowIter;
 
 use apllodb_shared_components::error::ApllodbResult;
-use apllodb_storage_engine_interface::Row;
 use std::collections::VecDeque;
 
 /// Row iterator combining VersionRowIter from multiple versions.
@@ -18,7 +17,7 @@ impl<I: VersionRowIter> ImmutableSchemaRowIter<I> {
 }
 
 impl<I: VersionRowIter> Iterator for ImmutableSchemaRowIter<I> {
-    type Item = ApllodbResult<Row>;
+    type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         todo!()
