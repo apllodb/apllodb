@@ -39,11 +39,11 @@ pub trait Transaction<'tx> {
     fn abort(self) -> ApllodbResult<()>;
 
     /// Ref to database.
-    fn database(&self) -> &Self::Db;
+    fn database(&'tx self) -> &Self::Db;
 
     /// CREATE TABLE command.
     fn create_table(
-        &mut self,
+        &'tx mut self,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
@@ -51,27 +51,27 @@ pub trait Transaction<'tx> {
 
     /// ALTER TABLE command.
     fn alter_table(
-        &mut self,
+        &'tx mut self,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()>;
 
     /// DROP TABLE command.
-    fn drop_table(&mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn drop_table(&'tx mut self, table_name: &TableName) -> ApllodbResult<()>;
 
     /// SELECT command.
     ///
     /// Storage engine's SELECT fields are merely ColumnName.
     /// Expression's are not allowed. Calculating expressions is job for query processor.
     fn select(
-        &mut self,
+        &'tx mut self,
         table_name: &TableName,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter>;
 
     /// INSERT command.
     fn insert(
-        &mut self,
+        &'tx mut self,
         table_name: &TableName,
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()>;
@@ -79,10 +79,10 @@ pub trait Transaction<'tx> {
     /// UPDATE command.
     ///
     /// TODO interface
-    fn update(&mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn update(&'tx mut self, table_name: &TableName) -> ApllodbResult<()>;
 
     /// DELETE command.
     ///
     /// TODO interface
-    fn delete(&mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn delete(&'tx mut self, table_name: &TableName) -> ApllodbResult<()>;
 }

@@ -53,7 +53,7 @@ pub mod empty_storage_engine {
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
 
-            fn begin(db: &mut Self::Db) -> ApllodbResult<Self> {
+            fn begin(db: &'tx mut Self::Db) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 
@@ -65,12 +65,12 @@ pub mod empty_storage_engine {
                 Ok(())
             }
 
-            fn database(&self) -> &Self::Db {
+            fn database(&'tx self) -> &Self::Db {
                 unimplemented!()
             }
 
             fn create_table(
-                &mut self,
+                &'tx mut self,
                 table_name: &TableName,
                 table_constraints: &TableConstraints,
                 column_definitions: &[ColumnDefinition],
@@ -79,19 +79,19 @@ pub mod empty_storage_engine {
             }
 
             fn alter_table(
-                &mut self,
+                &'tx mut self,
                 table_name: &TableName,
                 action: &AlterTableAction,
             ) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn drop_table(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn drop_table(&'tx mut self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
             fn select(
-                &mut self,
+                &'tx mut self,
                 table_name: &TableName,
                 column_names: &[ColumnName],
             ) -> ApllodbResult<Self::RowIter> {
@@ -99,18 +99,18 @@ pub mod empty_storage_engine {
             }
 
             fn insert(
-                &mut self,
+                &'tx mut self,
                 table_name: &TableName,
                 column_values: HashMap<ColumnName, Expression>,
             ) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn update(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn update(&'tx mut self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn delete(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn delete(&'tx mut self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
         }
