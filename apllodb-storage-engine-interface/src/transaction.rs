@@ -15,7 +15,7 @@ use std::collections::HashMap;
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
-pub trait Transaction<'tx> {
+pub trait Transaction {
     /// Database in which this transaction works.
     type Db: Database;
 
@@ -24,7 +24,7 @@ pub trait Transaction<'tx> {
 
     /// Begins a transaction.
     /// A database cannot starts multiple transactions at a time (&mut reference enforces it).
-    fn begin(db: &'tx mut Self::Db) -> ApllodbResult<Self>
+    fn begin(db: Self::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 
@@ -39,11 +39,11 @@ pub trait Transaction<'tx> {
     fn abort(self) -> ApllodbResult<()>;
 
     /// Ref to database.
-    fn database(&'tx self) -> &Self::Db;
+    fn database(&self) -> &Self::Db;
 
     /// CREATE TABLE command.
     fn create_table(
-        &'tx mut self,
+        &mut self,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
@@ -51,27 +51,27 @@ pub trait Transaction<'tx> {
 
     /// ALTER TABLE command.
     fn alter_table(
-        &'tx mut self,
+        &mut self,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()>;
 
     /// DROP TABLE command.
-    fn drop_table(&'tx mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn drop_table(&mut self, table_name: &TableName) -> ApllodbResult<()>;
 
     /// SELECT command.
     ///
     /// Storage engine's SELECT fields are merely ColumnName.
     /// Expression's are not allowed. Calculating expressions is job for query processor.
     fn select(
-        &'tx mut self,
+        &mut self,
         table_name: &TableName,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter>;
 
     /// INSERT command.
     fn insert(
-        &'tx mut self,
+        &mut self,
         table_name: &TableName,
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()>;
@@ -79,10 +79,10 @@ pub trait Transaction<'tx> {
     /// UPDATE command.
     ///
     /// TODO interface
-    fn update(&'tx mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn update(&mut self, table_name: &TableName) -> ApllodbResult<()>;
 
     /// DELETE command.
     ///
     /// TODO interface
-    fn delete(&'tx mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn delete(&mut self, table_name: &TableName) -> ApllodbResult<()>;
 }

@@ -49,11 +49,11 @@ pub mod empty_storage_engine {
         use std::collections::HashMap;
 
         pub struct EmptyTx;
-        impl<'tx> Transaction<'tx> for EmptyTx {
+        impl Transaction for EmptyTx {
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
 
-            fn begin(db: &'tx mut Self::Db) -> ApllodbResult<Self> {
+            fn begin(db: Self::Db) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 
@@ -65,12 +65,12 @@ pub mod empty_storage_engine {
                 Ok(())
             }
 
-            fn database(&'tx self) -> &Self::Db {
+            fn database(&self) -> &Self::Db {
                 unimplemented!()
             }
 
             fn create_table(
-                &'tx mut self,
+                &mut self,
                 table_name: &TableName,
                 table_constraints: &TableConstraints,
                 column_definitions: &[ColumnDefinition],
@@ -79,19 +79,19 @@ pub mod empty_storage_engine {
             }
 
             fn alter_table(
-                &'tx mut self,
+                &mut self,
                 table_name: &TableName,
                 action: &AlterTableAction,
             ) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn drop_table(&'tx mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn drop_table(&mut self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
             fn select(
-                &'tx mut self,
+                &mut self,
                 table_name: &TableName,
                 column_names: &[ColumnName],
             ) -> ApllodbResult<Self::RowIter> {
@@ -99,18 +99,18 @@ pub mod empty_storage_engine {
             }
 
             fn insert(
-                &'tx mut self,
+                &mut self,
                 table_name: &TableName,
                 column_values: HashMap<ColumnName, Expression>,
             ) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn update(&'tx mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn update(&mut self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn delete(&'tx mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn delete(&mut self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
         }
@@ -122,14 +122,14 @@ pub mod empty_storage_engine {
         use apllodb_storage_engine_interface::StorageEngine;
 
         pub struct EmptyStorageEngine;
-        impl<'tx> StorageEngine<'tx> for EmptyStorageEngine {
+        impl StorageEngine for EmptyStorageEngine {
             type Tx = EmptyTx;
 
             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
                 Ok(EmptyDatabase::new())
             }
 
-            fn begin_transaction(db: &mut EmptyDatabase) -> ApllodbResult<Self::Tx> {
+            fn begin_transaction(db: EmptyDatabase) -> ApllodbResult<Self::Tx> {
                 use apllodb_storage_engine_interface::Transaction;
 
                 Self::Tx::begin(db)
@@ -149,8 +149,8 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
     // `EmptyDatabase` and `EmptyTx` are usable without `use`.
     use empty_storage_engine::EmptyStorageEngine;
 
-    let mut db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
-    let mut tx = EmptyStorageEngine::begin_transaction(&mut db)?;
+    let db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
+    let mut tx = EmptyStorageEngine::begin_transaction(db)?;
     tx.create_table(&TableName::new("t")?, &TableConstraints::default(), &vec![])?;
     tx.abort()?;
 
