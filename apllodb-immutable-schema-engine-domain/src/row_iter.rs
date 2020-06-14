@@ -6,6 +6,7 @@ use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_engine_interface::Row;
 use std::collections::VecDeque;
 
+/// Row iterator combining VersionRowIter from multiple versions.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct ImmutableSchemaRowIter<I: VersionRowIter>(VecDeque<I>);
 

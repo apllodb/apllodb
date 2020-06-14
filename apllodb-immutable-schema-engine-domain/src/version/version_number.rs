@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// Version number.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub(crate) struct VersionNumber(u64);
+pub struct VersionNumber(u64);
 
 impl VersionNumber {
     pub(crate) fn initial() -> Self {
@@ -14,7 +14,7 @@ impl VersionNumber {
     }
 
     /// Raw version number.
-    pub(crate) fn to_u64(&self) -> u64 {
+    pub fn to_u64(&self) -> u64 {
         self.0
     }
 }

@@ -14,6 +14,7 @@ pub trait ImmutableSchemaTx: Transaction {
     /// Resolve [VTable](foobar.html)'s lifetime in concrete implementation.
     type VTbl;
 
+    /// Row iterator from a single version.
     type VerRowIter: VersionRowIter;
 
     /// Create a new table with VTable.
@@ -41,9 +42,15 @@ pub trait ImmutableSchemaTx: Transaction {
     ///   - Table `table_name` is not visible to this transaction.
     fn update_vtable(&self, table: &Self::VTbl) -> ApllodbResult<()>;
 
-    fn create_version(&self, table: &Self::VTbl, version: &ActiveVersion) -> ApllodbResult<()>;
+    /// Create a version.
+    fn create_version(&self, version: &ActiveVersion) -> ApllodbResult<()>;
 
-    fn deactivate_version(&self, table: &Self::VTbl, version_number: &VersionNumber);
+    /// Deactivate a version.
+    fn deactivate_version(
+        &self,
+        table: &Self::VTbl,
+        version_number: &VersionNumber,
+    ) -> ApllodbResult<()>;
 
     /// Scan version.
     ///
