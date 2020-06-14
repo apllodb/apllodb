@@ -11,7 +11,8 @@ mod value;
 
 pub use alter_table_action::AlterTableAction;
 pub use column::{
-    ColumnConstraintKind, ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
+    ColumnConstraintKind, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
+    DataType, DataTypeKind,
 };
 pub use database::DatabaseName;
 pub use expression::{Constant, Expression};

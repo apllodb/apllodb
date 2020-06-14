@@ -1,11 +1,12 @@
-use super::{
-    column::ColumnDataType, constraints::VersionConstraints, Version, VersionId, VersionNumber,
-};
+use super::{constraints::VersionConstraints, Version, VersionId, VersionNumber};
 use crate::{entity::Entity, vtable::VTableId};
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, TableConstraints,
 };
-use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::ColumnDataType,
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+};
 use serde::{Deserialize, Serialize};
 
 /// Active Version.

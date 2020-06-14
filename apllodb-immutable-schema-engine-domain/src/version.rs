@@ -1,5 +1,4 @@
 mod active_version;
-mod column;
 mod constraint_kind;
 mod constraints;
 mod id;
@@ -12,10 +11,10 @@ pub use inactive_version::InactiveVersion;
 pub use version_number::VersionNumber;
 
 use crate::entity::Entity;
-use column::ColumnDataType;
 use constraints::VersionConstraints;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use apllodb_shared_components::data_structure::ColumnDataType;
 
 /// Version.
 ///

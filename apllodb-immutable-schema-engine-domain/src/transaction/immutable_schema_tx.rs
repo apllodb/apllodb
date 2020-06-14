@@ -3,7 +3,7 @@ use crate::{
     VTable, VersionRowIter,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnName, TableName},
+    data_structure::{ColumnName, DatabaseName, TableName},
     error::ApllodbResult,
     traits::Database,
 };
@@ -30,7 +30,7 @@ pub trait ImmutableSchemaTx: Debug {
     where
         Self: Sized;
 
-    fn database(&self) -> &Self::Db;
+    fn database_name(&self) -> &DatabaseName;
 
     /// Create a new table with VTable.
     /// Do nothing for Version.

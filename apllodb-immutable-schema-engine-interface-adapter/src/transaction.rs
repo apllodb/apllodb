@@ -7,7 +7,8 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{
     data_structure::{
-        AlterTableAction, ColumnDefinition, ColumnName, Expression, TableConstraints, TableName,
+        AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
+        TableName,
     },
     error::ApllodbResult,
     traits::Database,
@@ -48,8 +49,8 @@ impl<Tx: ImmutableSchemaTx, It: VersionRowIter<Item = ApllodbResult<Row>>> Trans
         self.tx.abort()
     }
 
-    fn database(&self) -> &Self::Db {
-        self.tx.database()
+    fn database_name(&self) -> &DatabaseName {
+        self.tx.database_name()
     }
 
     fn create_table(
@@ -58,7 +59,7 @@ impl<Tx: ImmutableSchemaTx, It: VersionRowIter<Item = ApllodbResult<Row>>> Trans
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
-        let database_name = { self.database().name().clone() };
+        let database_name = { self.database_name().clone() };
         let input = CreateTableUseCaseInput {
             tx: &mut self.tx,
             database_name: &database_name,

@@ -1,9 +1,9 @@
-use apllodb_shared_components::data_structure::{ColumnDefinition, ColumnName, DataType};
+use crate::data_structure::{ColumnDefinition, ColumnName, DataType};
 use serde::{Deserialize, Serialize};
 
 /// Column with data type.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub(crate) struct ColumnDataType {
+pub struct ColumnDataType {
     column: ColumnName,
     data_type: DataType,
 }
@@ -19,12 +19,12 @@ impl From<&ColumnDefinition> for ColumnDataType {
 
 impl ColumnDataType {
     /// Ref to column name.
-    pub(crate) fn column_name(&self) -> &ColumnName {
+    pub fn column_name(&self) -> &ColumnName {
         &self.column
     }
 
     /// Ref to data type.
-    pub(crate) fn data_type(&self) -> &DataType {
+    pub fn data_type(&self) -> &DataType {
         &self.data_type
     }
 }
