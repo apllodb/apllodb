@@ -51,25 +51,20 @@ impl VTable {
     /// # Failures
     ///
     /// - Errors from [TableConstraints::new](foo.html).
-    pub(crate) fn new(
+    pub fn new(
         database_name: &DatabaseName,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<Self> {
         let constraints = TableWideConstraints::new(table_constraints, column_definitions)?;
-        let version = ActiveVersion::create_initial(column_definitions, table_constraints)?;
-
-        let mut version_repo = VersionRepo::default();
-        version_repo.add_active_version(version);
-
         Ok(Self {
             id: VTableId::new(database_name, table_name),
             table_wide_constraints: constraints,
         })
     }
 
-    pub(crate) fn alter(&mut self, _action: &AlterTableAction) -> ApllodbResult<()> {
+    pub fn alter(&mut self, _action: &AlterTableAction) -> ApllodbResult<()> {
         // TODO TableWideConstraints に影響のある操作だった場合に、自分自身を変更する
 
         Ok(())
@@ -78,7 +73,7 @@ impl VTable {
     /// Ref to TableName.
     ///
     /// Same as `T_create_table_command :: ... :: T_table_name`.
-    pub(crate) fn table_name(&self) -> &TableName {
+    pub fn table_name(&self) -> &TableName {
         &self.id.table_name
     }
 

@@ -1,20 +1,36 @@
 use crate::{
     version::{ActiveVersion, VersionNumber},
-    VersionRowIter,
+    VTable, VersionRowIter,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, TableName},
     error::ApllodbResult,
+    traits::Database,
 };
+use std::fmt::Debug;
 
 /// Operations a transaction implementation for Immutable Schema must have.
-/// Only has primitive operations.
-pub trait ImmutableSchemaTx {
-    /// Resolve [VTable](foobar.html)'s lifetime in concrete implementation.
-    type VTbl;
+///
+/// Meant to be called from implementations of [Transaction](foo.html) (logical transaction interface) internally as physical transaction.
+pub trait ImmutableSchemaTx: Debug {
+    type Db: Database;
 
     /// Row iterator from a single version.
     type VerRowIter: VersionRowIter;
+
+    fn begin(db: Self::Db) -> ApllodbResult<Self>
+    where
+        Self: Sized;
+
+    fn commit(self) -> ApllodbResult<()>
+    where
+        Self: Sized;
+
+    fn abort(self) -> ApllodbResult<()>
+    where
+        Self: Sized;
+
+    fn database(&self) -> &Self::Db;
 
     /// Create a new table with VTable.
     /// Do nothing for Version.
@@ -23,7 +39,7 @@ pub trait ImmutableSchemaTx {
     ///
     /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
-    fn create_vtable(&self, table: &Self::VTbl) -> ApllodbResult<()>;
+    fn create_vtable(&self, table: &VTable) -> ApllodbResult<()>;
 
     /// Returns table metadata from buffer the transaction instance owns.
     ///
@@ -31,7 +47,7 @@ pub trait ImmutableSchemaTx {
     ///
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
-    fn read_vtable(&self, table_name: &TableName) -> ApllodbResult<Self::VTbl>;
+    fn read_vtable(&self, table_name: &TableName) -> ApllodbResult<VTable>;
 
     /// Overwrite Table's metadata.
     ///
@@ -39,7 +55,7 @@ pub trait ImmutableSchemaTx {
     ///
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
-    fn update_vtable(&self, table: &Self::VTbl) -> ApllodbResult<()>;
+    fn update_vtable(&self, table: &VTable) -> ApllodbResult<()>;
 
     /// Create a version.
     fn create_version(&self, version: &ActiveVersion) -> ApllodbResult<()>;
@@ -47,7 +63,7 @@ pub trait ImmutableSchemaTx {
     /// Deactivate a version.
     fn deactivate_version(
         &self,
-        table: &Self::VTbl,
+        table: &VTable,
         version_number: &VersionNumber,
     ) -> ApllodbResult<()>;
 

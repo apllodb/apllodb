@@ -1,5 +1,5 @@
 [package]
-name = "apllodb-immutable-schema-engine-application"
+name = "apllodb-immutable-schema-engine"
 version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
@@ -7,9 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-apllodb-immutable-schema-engine-domain = { path = "../apllodb-immutable-schema-engine-domain" }
-
+apllodb-immutable-schema-engine-infra = { path = "../apllodb-immutable-schema-engine-infra" }
 apllodb-shared-components = { path = "../apllodb-shared-components" }
-
-env_logger = "0.7"
-log = "0.4"
+apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }

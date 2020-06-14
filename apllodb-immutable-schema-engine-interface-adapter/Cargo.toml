@@ -9,3 +9,7 @@ edition = "2018"
 [dependencies]
 apllodb-immutable-schema-engine-domain = { path = "../apllodb-immutable-schema-engine-domain" }
 apllodb-immutable-schema-engine-application = { path = "../apllodb-immutable-schema-engine-application" }
+
+apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
+
+apllodb-shared-components = { path = "../apllodb-shared-components" }

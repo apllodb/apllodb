@@ -15,28 +15,13 @@ impl ActiveVersion {
         &self.0.number
     }
 
-    /// Ref to columns and their data types.
-    pub(crate) fn column_data_types(&self) -> &[ColumnDataType] {
-        &self.0.column_data_types
-    }
-
-    /// Returns ColumnDataType of `column_name` if this version has it.
-    pub(crate) fn resolve_column_data_type(
-        &self,
-        column_name: &ColumnName,
-    ) -> Option<&ColumnDataType> {
-        self.column_data_types()
-            .iter()
-            .find(|cdt| cdt.column_name() == column_name)
-    }
-
     /// Create v_1.
     ///
     /// # Failures
     ///
     /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
     ///   - If `column_definitions` is empty.
-    pub(crate) fn create_initial(
+    pub fn initial(
         column_definitions: &[ColumnDefinition],
         _table_constraints: &TableConstraints,
     ) -> ApllodbResult<Self> {
@@ -54,6 +39,11 @@ impl ActiveVersion {
             // TODO: カラム制約とテーブル制約からつくる
             constraints: VersionConstraints::default(),
         }))
+    }
+
+    /// Ref to columns and their data types.
+    pub(crate) fn column_data_types(&self) -> &[ColumnDataType] {
+        &self.0.column_data_types
     }
 
     /// Create v_(current+1) from v_current.
@@ -95,15 +85,11 @@ impl ActiveVersion {
         }
     }
 
-    /// # Failures
-    ///
-    /// - [UndefinedColumn](error/enum.ApllodbErrorKind.html#variant.UndefinedColumn) when:
-    ///   - At least one `column_names` are not included this versions.
-    pub(crate) fn select<RowIter>(&self, _column_names: &[ColumnName]) -> ApllodbResult<RowIter>
-    where
-        RowIter: Iterator,
-    {
-        todo!()
+    /// Returns ColumnDataType of `column_name` if this version has it.
+    fn resolve_column_data_type(&self, column_name: &ColumnName) -> Option<&ColumnDataType> {
+        self.column_data_types()
+            .iter()
+            .find(|cdt| cdt.column_name() == column_name)
     }
 
     fn validate_at_least_one_column(column_data_types: &[ColumnDataType]) -> ApllodbResult<()> {
@@ -145,7 +131,7 @@ mod tests {
     };
 
     #[test]
-    fn test_create_initial_success() -> ApllodbResult<()> {
+    fn test_initial_success() -> ApllodbResult<()> {
         let column_definitions = vec![column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
@@ -153,18 +139,18 @@ mod tests {
         )];
         let table_constraints = table_constraints!();
 
-        let v = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
+        let v = ActiveVersion::initial(&column_definitions, &table_constraints)?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
     }
 
     #[test]
-    fn test_create_initial_fail_invalid_table_definition() -> ApllodbResult<()> {
+    fn test_initial_fail_invalid_table_definition() -> ApllodbResult<()> {
         let column_definitions = vec![];
         let table_constraints = table_constraints!();
 
-        match ActiveVersion::create_initial(&column_definitions, &table_constraints) {
+        match ActiveVersion::initial(&column_definitions, &table_constraints) {
             Err(e) => match e.kind() {
                 ApllodbErrorKind::InvalidTableDefinition => Ok(()),
                 _ => panic!("unexpected error kind: {}", e),
@@ -188,7 +174,7 @@ mod tests {
             ),
         ];
         let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
+        let v1 = ActiveVersion::initial(&column_definitions, &table_constraints)?;
 
         let action = alter_table_action_drop_column!("c1");
 
@@ -215,7 +201,7 @@ mod tests {
             column_constraints!()
         )];
         let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
+        let v1 = ActiveVersion::initial(&column_definitions, &table_constraints)?;
 
         let action = alter_table_action_drop_column!("c404");
         match v1.create_next(&action) {
@@ -235,7 +221,7 @@ mod tests {
             column_constraints!()
         )];
         let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::create_initial(&column_definitions, &table_constraints)?;
+        let v1 = ActiveVersion::initial(&column_definitions, &table_constraints)?;
 
         let action = alter_table_action_drop_column!("c1");
         match v1.create_next(&action) {
