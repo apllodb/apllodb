@@ -28,6 +28,8 @@ impl<'a, Tx: ImmutableSchemaTx> UseCase for CreateTableUseCase<'a, Tx> {
     type Out = CreateTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+        use apllodb_immutable_schema_engine_domain::Entity;
+
         let vtable = VTable::new(
             input.database_name,
             input.table_name,
@@ -35,7 +37,11 @@ impl<'a, Tx: ImmutableSchemaTx> UseCase for CreateTableUseCase<'a, Tx> {
             input.column_definitions,
         )?;
 
-        let v1 = ActiveVersion::initial(input.column_definitions, input.table_constraints)?;
+        let v1 = ActiveVersion::initial(
+            vtable.id(),
+            input.column_definitions,
+            input.table_constraints,
+        )?;
 
         input.tx.create_vtable(&vtable)?;
         input.tx.create_version(&v1)?;
