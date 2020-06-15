@@ -23,7 +23,7 @@ impl<'tx> VTableDao<'tx> {
     pub(in crate::sqlite) fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
         let metadata_table = SqliteTableNameForVTable::name();
         let sql = format!(
-            "INSERT INTO {} (table_name, table_wide_constraints) VALUES (:table_name, :table_wide_constraints);",
+            "INSERT INTO {} (vtable_name, table_wide_constraints) VALUES (:table_name, :table_wide_constraints);",
             &metadata_table,
         );
 
