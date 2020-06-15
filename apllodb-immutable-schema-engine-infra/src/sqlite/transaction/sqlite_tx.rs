@@ -181,11 +181,11 @@ mod tests {
     use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
-        column_constraints, column_definition, column_definitions,
-        data_structure::DataTypeKind,
+        column_constraints, column_definition, column_definitions, column_name, const_expr,
+        data_structure::{AlterTableAction, DataTypeKind},
         data_type,
         error::{ApllodbErrorKind, ApllodbResult},
-        table_constraints, table_name,
+        hmap, table_constraints, table_name,
     };
     use apllodb_storage_engine_interface::Transaction;
 
@@ -253,6 +253,65 @@ mod tests {
             Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),
             Ok(_) => panic!("should rollback"),
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
+        let mut db = SqliteDatabase::new_for_test()?;
+        let mut tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
+
+        let tn = &table_name!("t");
+        let tc = table_constraints!();
+        let coldefs = column_definitions!(
+            column_definition!(
+                "id",
+                data_type!(DataTypeKind::Integer, false),
+                column_constraints!()
+            ),
+            column_definition!(
+                "c",
+                data_type!(DataTypeKind::Integer, false),
+                column_constraints!()
+            ),
+        );
+
+        tx.create_table(&tn, &tc, &coldefs)?;
+
+        tx.insert(
+            &tn,
+            hmap! { column_name!("id") => const_expr!(1), column_name!("c") => const_expr!(1) },
+        )?;
+
+        tx.alter_table(
+            &tn,
+            &AlterTableAction::DropColumn {
+                column_name: column_name!("c"),
+            },
+        )?;
+
+        tx.insert(&tn, hmap! { column_name!("id") => const_expr!(2) })?;
+
+        // Selects both v1's record (id=1) and v2's record (id=2),
+        // although v2 does not have column "c".
+        let records = tx.select(&tn, &vec![column_name!("id"), column_name!("c")])?;
+
+        for rec_res in records {
+            let r = rec_res?;
+            let id: i64 = r.get(&column_name!("id"))?;
+            match id {
+                1 => assert_eq!(r.get::<i64>(&column_name!("c"))?, 1),
+                2 => {
+                    match r.get::<i64>(&column_name!("c")) {
+                        Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
+                        _ => unreachable!(),
+                    };
+                    assert_eq!(r.get::<Option<i64>>(&column_name!("c"))?, None);
+                }
+                _ => unreachable!(),
+            }
+        }
+
         Ok(())
     }
 }
