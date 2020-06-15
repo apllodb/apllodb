@@ -40,14 +40,17 @@ use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResu
 /// An storage engine implementation must implement this.
 pub trait StorageEngine<'db> {
     /// Transaction implementation.
-    type Tx: Transaction;
+    type Tx: Transaction<'db>;
 
     /// Specify database to use and return database object.
-    fn use_database(database_name: &DatabaseName) -> ApllodbResult<<Self::Tx as Transaction>::Db>; // Want to mark result type as `Self::Tx::Db` but not possible for now: https://github.com/rust-lang/rust/issues/38078
+    fn use_database(
+        database_name: &DatabaseName,
+    ) -> ApllodbResult<<Self::Tx as Transaction<'db>>::Db>; // Want to mark result type as `Self::Tx::Db` but not possible for now: https://github.com/rust-lang/rust/issues/38078
 
     /// Starts transaction and get transaction object.
-    fn begin_transaction(db: &'db mut <Self::Tx as Transaction>::Db) -> ApllodbResult<Self::Tx> {
+    fn begin_transaction(
+        db: &'db mut <Self::Tx as Transaction<'db>>::Db,
+    ) -> ApllodbResult<Self::Tx> {
         Self::Tx::begin(db)
     }
 }
-

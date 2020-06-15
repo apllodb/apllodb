@@ -49,11 +49,11 @@ pub mod empty_storage_engine {
         use std::collections::HashMap;
 
         pub struct EmptyTx;
-        impl Transaction for EmptyTx {
+        impl<'db> Transaction<'db> for EmptyTx {
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
 
-            fn begin(db: &mut Self::Db) -> ApllodbResult<Self> {
+            fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 

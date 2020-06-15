@@ -16,16 +16,16 @@ use std::collections::HashMap;
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
-pub trait Transaction {
+pub trait Transaction<'db> {
     /// Database in which this transaction works.
-    type Db: Database;
+    type Db: Database + 'db;
 
     /// Iterator of [Row](foobar.html)s returned from [select()](foobar.html) method.
     type RowIter: Iterator<Item = ApllodbResult<Row>>;
 
     /// Begins a transaction.
     /// A database cannot starts multiple transactions at a time (&mut reference enforces it).
-    fn begin(db: &mut Self::Db) -> ApllodbResult<Self>
+    fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 
