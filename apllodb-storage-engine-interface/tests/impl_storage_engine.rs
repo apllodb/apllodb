@@ -53,7 +53,7 @@ pub mod empty_storage_engine {
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
 
-            fn begin(db: Self::Db) -> ApllodbResult<Self> {
+            fn begin(db: &mut Self::Db) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 
@@ -122,17 +122,11 @@ pub mod empty_storage_engine {
         use apllodb_storage_engine_interface::StorageEngine;
 
         pub struct EmptyStorageEngine;
-        impl StorageEngine for EmptyStorageEngine {
+        impl<'db> StorageEngine<'db> for EmptyStorageEngine {
             type Tx = EmptyTx;
 
             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
                 Ok(EmptyDatabase::new())
-            }
-
-            fn begin_transaction(db: EmptyDatabase) -> ApllodbResult<Self::Tx> {
-                use apllodb_storage_engine_interface::Transaction;
-
-                Self::Tx::begin(db)
             }
         }
     }
@@ -149,8 +143,8 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
     // `EmptyDatabase` and `EmptyTx` are usable without `use`.
     use empty_storage_engine::EmptyStorageEngine;
 
-    let db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
-    let mut tx = EmptyStorageEngine::begin_transaction(db)?;
+    let mut db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
+    let mut tx = EmptyStorageEngine::begin_transaction(&mut db)?;
     tx.create_table(&TableName::new("t")?, &TableConstraints::default(), &vec![])?;
     tx.abort()?;
 

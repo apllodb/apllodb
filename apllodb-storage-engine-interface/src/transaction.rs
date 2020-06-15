@@ -1,6 +1,7 @@
 use crate::Row;
 use apllodb_shared_components::data_structure::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, TableConstraints, TableName, DatabaseName,
+    AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
+    TableName,
 };
 use apllodb_shared_components::{error::ApllodbResult, traits::Database};
 use std::collections::HashMap;
@@ -24,7 +25,7 @@ pub trait Transaction {
 
     /// Begins a transaction.
     /// A database cannot starts multiple transactions at a time (&mut reference enforces it).
-    fn begin(db: Self::Db) -> ApllodbResult<Self>
+    fn begin(db: &mut Self::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 
