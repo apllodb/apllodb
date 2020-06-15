@@ -7,24 +7,47 @@ use apllodb_shared_components::{
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug)]
-pub struct CreateTableUseCaseInput<'a, Tx: ImmutableSchemaTx> {
+pub struct CreateTableUseCaseInput<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> {
     pub tx: &'a mut Tx,
     pub database_name: &'a DatabaseName,
     pub table_name: &'a TableName,
     pub table_constraints: &'a TableConstraints,
     pub column_definitions: &'a [ColumnDefinition],
+
+    _marker: PhantomData<&'db ()>,
 }
-impl<'a, Tx: ImmutableSchemaTx> UseCaseInput for CreateTableUseCaseInput<'a, Tx> {}
+impl<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> UseCaseInput
+    for CreateTableUseCaseInput<'a, 'db, Tx>
+{
+}
+impl<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> CreateTableUseCaseInput<'a, 'db, Tx> {
+    pub fn new(
+        tx: &'a mut Tx,
+        database_name: &'a DatabaseName,
+        table_name: &'a TableName,
+        table_constraints: &'a TableConstraints,
+        column_definitions: &'a [ColumnDefinition],
+    ) -> Self {
+        Self {
+            tx,
+            database_name,
+            table_name,
+            table_constraints,
+            column_definitions,
+            _marker: PhantomData,
+        }
+    }
+}
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct CreateTableUseCaseOutput;
 impl UseCaseOutput for CreateTableUseCaseOutput {}
 
-pub struct CreateTableUseCase<'a, Tx: ImmutableSchemaTx> {
-    _marker: PhantomData<&'a Tx>,
+pub struct CreateTableUseCase<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> {
+    _marker: PhantomData<&'a &'db Tx>,
 }
-impl<'a, Tx: ImmutableSchemaTx> UseCase for CreateTableUseCase<'a, Tx> {
-    type In = CreateTableUseCaseInput<'a, Tx>;
+impl<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> UseCase for CreateTableUseCase<'a, 'db, Tx> {
+    type In = CreateTableUseCaseInput<'a, 'db, Tx>;
     type Out = CreateTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {

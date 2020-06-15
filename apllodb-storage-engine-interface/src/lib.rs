@@ -40,7 +40,7 @@ use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResu
 /// An storage engine implementation must implement this.
 pub trait StorageEngine<'db> {
     /// Transaction implementation.
-    type Tx: Transaction<'db>;
+    type Tx: Transaction<'db> + 'db;
 
     /// Specify database to use and return database object.
     fn use_database(

@@ -17,40 +17,42 @@ use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx<'stmt> {
+pub struct SqliteTx<'conn> {
     id: SqliteTxId,
     database_name: DatabaseName,
-    pub(in crate::sqlite) sqlite_tx: rusqlite::Transaction<'stmt>, // TODO private
+    pub(in crate::sqlite) sqlite_tx: rusqlite::Transaction<'conn>, // TODO private
 }
 
-impl<'stmt> PartialEq for SqliteTx<'stmt> {
+impl PartialEq for SqliteTx<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
-impl<'stmt> Eq for SqliteTx<'stmt> {}
+impl Eq for SqliteTx<'_> {}
 
-impl<'stmt> PartialOrd for SqliteTx<'stmt> {
+impl PartialOrd for SqliteTx<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<'stmt> Ord for SqliteTx<'stmt> {
+impl Ord for SqliteTx<'_> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.id.cmp(&other.id)
     }
 }
 
-impl<'stmt> ImmutableSchemaTx for SqliteTx<'stmt> {
+impl<'conn> ImmutableSchemaTx<'conn> for SqliteTx<'conn> {
     type Db = SqliteDatabase;
-    type VerRowIter = SqliteRowIterator<'stmt>;
+    type VerRowIter = SqliteRowIterator<'conn>;
 
     /// # Failures
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(mut db: Self::Db) -> ApllodbResult<Self> {
+    fn begin(db: &'conn mut Self::Db) -> ApllodbResult<Self> {
         use apllodb_shared_components::traits::Database;
+
+        let database_name = { db.name().clone() };
 
         let tx = db.sqlite_conn().transaction().map_err(|e| {
             ApllodbError::new(
@@ -62,7 +64,7 @@ impl<'stmt> ImmutableSchemaTx for SqliteTx<'stmt> {
 
         Ok(Self {
             id: SqliteTxId::new(),
-            database_name: db.name().clone(),
+            database_name: database_name,
             sqlite_tx: tx,
         })
     }
@@ -163,7 +165,7 @@ impl<'stmt> ImmutableSchemaTx for SqliteTx<'stmt> {
     }
 }
 
-impl<'stmt> SqliteTx<'stmt> {
+impl<'conn> SqliteTx<'conn> {
     fn vtable_dao(&self) -> VTableDao<'_> {
         VTableDao::new(&self.sqlite_tx)
     }
@@ -200,8 +202,10 @@ mod tests {
             column_constraints!()
         ));
 
-        let mut tx1 = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(db1)?;
-        let mut tx2 = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(db2)?;
+        let mut tx1 =
+            TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db1)?;
+        let mut tx2 =
+            TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db2)?;
 
         // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
         // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
@@ -240,7 +244,7 @@ mod tests {
             column_constraints!()
         ));
 
-        let mut tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(db)?;
+        let mut tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
 
         tx.create_table(&tn, &tc, &coldefs)?;
         match tx.create_table(&tn, &tc, &coldefs) {

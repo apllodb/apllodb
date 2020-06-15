@@ -17,28 +17,29 @@ use apllodb_storage_engine_interface::{Row, Transaction};
 use std::marker::PhantomData;
 
 pub struct TransactionController<
-    Tx: ImmutableSchemaTx,
+    'db,
+    Tx: ImmutableSchemaTx<'db> + 'db,
     It: VersionRowIter<Item = ApllodbResult<Row>>,
 > {
     tx: Tx,
 
-    _marker: (PhantomData<Tx>, PhantomData<It>),
+    _marker: (PhantomData<&'db ()>, PhantomData<Tx>, PhantomData<It>),
 }
 
-impl<Tx: ImmutableSchemaTx, It: VersionRowIter<Item = ApllodbResult<Row>>> Transaction
-    for TransactionController<Tx, It>
+impl<'db, Tx: ImmutableSchemaTx<'db> + 'db, It: VersionRowIter<Item = ApllodbResult<Row>>>
+    Transaction<'db> for TransactionController<'db, Tx, It>
 {
     type Db = Tx::Db;
     type RowIter = ImmutableSchemaRowIter<It>;
 
-    fn begin(db: Self::Db) -> ApllodbResult<Self>
+    fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self>
     where
         Self: Sized,
     {
         let tx = Tx::begin(db)?;
         Ok(Self {
             tx,
-            _marker: (PhantomData, PhantomData),
+            _marker: (PhantomData, PhantomData, PhantomData),
         })
     }
 
@@ -60,13 +61,13 @@ impl<Tx: ImmutableSchemaTx, It: VersionRowIter<Item = ApllodbResult<Row>>> Trans
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let database_name = { self.database_name().clone() };
-        let input = CreateTableUseCaseInput {
-            tx: &mut self.tx,
-            database_name: &database_name,
+        let input = CreateTableUseCaseInput::new(
+            &mut self.tx,
+            &database_name,
             table_name,
             table_constraints,
             column_definitions,
-        };
+        );
         let _ = CreateTableUseCase::run(input)?;
 
         Ok(())

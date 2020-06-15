@@ -12,13 +12,13 @@ use std::fmt::Debug;
 /// Operations a transaction implementation for Immutable Schema must have.
 ///
 /// Meant to be called from implementations of [Transaction](foo.html) (logical transaction interface) internally as physical transaction.
-pub trait ImmutableSchemaTx: Debug {
-    type Db: Database;
+pub trait ImmutableSchemaTx<'db>: Debug {
+    type Db: Database + 'db;
 
     /// Row iterator from a single version.
     type VerRowIter: VersionRowIter;
 
-    fn begin(db: Self::Db) -> ApllodbResult<Self>
+    fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 

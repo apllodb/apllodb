@@ -8,7 +8,7 @@ use apllodb_shared_components::{
 /// Database context.
 #[derive(Debug)]
 pub struct SqliteDatabase {
-    pub(in crate::sqlite) sqlite_conn: rusqlite::Connection,
+    sqlite_conn: rusqlite::Connection,
     name: DatabaseName,
 }
 

@@ -12,16 +12,12 @@ use std::marker::PhantomData;
 
 /// Storage engine implementation.
 #[derive(Hash, Debug)]
-pub struct ApllodbImmutableSchemaEngine<'stmt>(PhantomData<&'stmt ()>);
+pub struct ApllodbImmutableSchemaEngine;
 
-impl<'stmt> StorageEngine for ApllodbImmutableSchemaEngine<'stmt> {
-    type Tx = TransactionController<SqliteTx<'stmt>, SqliteRowIterator<'stmt>>;
+impl<'db> StorageEngine<'db> for ApllodbImmutableSchemaEngine {
+    type Tx = TransactionController<'db, SqliteTx<'db>, SqliteRowIterator<'db>>;
 
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<SqliteDatabase> {
-        todo!()
-    }
-
-    fn begin_transaction(db: SqliteDatabase) -> ApllodbResult<Self::Tx> {
         todo!()
     }
 }
