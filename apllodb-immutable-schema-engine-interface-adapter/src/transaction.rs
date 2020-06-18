@@ -11,7 +11,6 @@ use apllodb_shared_components::{
         TableName,
     },
     error::ApllodbResult,
-    traits::Database,
 };
 use apllodb_storage_engine_interface::{Row, Transaction};
 use std::marker::PhantomData;

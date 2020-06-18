@@ -5,12 +5,10 @@ use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
 use apllodb_immutable_schema_engine_domain::{
     ActiveVersion, ImmutableSchemaTx, VTable, VersionNumber,
 };
-use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::Transaction;
 use dao::{VTableDao, VersionDao};
 use id::SqliteTxId;
 use std::cmp::Ordering;

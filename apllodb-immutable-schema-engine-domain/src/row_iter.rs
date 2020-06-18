@@ -2,7 +2,6 @@ mod version_row_iter;
 
 pub use version_row_iter::VersionRowIter;
 
-use apllodb_shared_components::error::ApllodbResult;
 use std::collections::VecDeque;
 
 /// Row iterator combining VersionRowIter from multiple versions.

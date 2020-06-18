@@ -1,5 +1,5 @@
 use chrono::prelude::*;
-use std::{fmt::Display, thread::ThreadId};
+use std::fmt::Display;
 
 /// Transaction ID.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
