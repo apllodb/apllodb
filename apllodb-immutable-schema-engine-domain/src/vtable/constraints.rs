@@ -218,7 +218,7 @@ mod tests {
             match TableWideConstraints::new(&table_constraints, &column_definitions) {
                 Err(e) => match e.kind() {
                     ApllodbErrorKind::InvalidTableDefinition => {
-                        println!("{}", e);
+                        println!("{:?}", e);
                     }
                     _ => panic!("unexpected error kind: {}", e),
                 },

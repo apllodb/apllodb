@@ -33,6 +33,8 @@ name = "apllodb-immutable-schema-engine-domain"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
+ "env_logger",
+ "log",
  "rand",
  "serde",
 ]

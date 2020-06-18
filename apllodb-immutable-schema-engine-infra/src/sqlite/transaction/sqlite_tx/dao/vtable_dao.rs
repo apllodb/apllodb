@@ -1,5 +1,6 @@
 use apllodb_immutable_schema_engine_domain::VTable;
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use log::error;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao<'tx> {
@@ -121,7 +122,7 @@ CREATE TABLE IF NOT EXISTS {} (
                 Some(Box::new(e)),
             )),
             Err(e) => {
-                println!("{:?}", e);
+                error!("unexpected SQLite error: {:?}", e);
                 Err(ApllodbError::new(
                     ApllodbErrorKind::IoError,
                     format!(

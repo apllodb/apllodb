@@ -141,7 +141,7 @@ mod tests {
             match TableConstraints::new(constraints) {
                 Err(e) => match e.kind() {
                     ApllodbErrorKind::InvalidTableDefinition => {
-                        println!("{}", e);
+                        println!("{:?}", e);
                     }
                     _ => panic!("unexpected error kind: {}", e),
                 },
