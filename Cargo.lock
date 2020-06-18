@@ -24,6 +24,7 @@ version = "0.1.0"
 dependencies = [
  "apllodb-immutable-schema-engine-domain",
  "apllodb-shared-components",
+ "derive-new",
  "env_logger",
  "log",
 ]
@@ -184,6 +185,17 @@ dependencies = [
  "num-integer",
  "num-traits",
  "time",
+]
+
+[[package]]
+name = "derive-new"
+version = "0.5.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71f31892cd5c62e414316f2963c5689242c43d8e7bbcaaeca97e5e28c95d91d9"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

@@ -6,7 +6,7 @@ use apllodb_shared_components::{
 };
 use std::{fmt::Debug, marker::PhantomData};
 
-#[derive(Eq, PartialEq, Hash, Debug)]
+#[derive(Eq, PartialEq, Hash, Debug, new)]
 pub struct CreateTableUseCaseInput<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> {
     pub tx: &'a mut Tx,
     pub database_name: &'a DatabaseName,
@@ -14,29 +14,12 @@ pub struct CreateTableUseCaseInput<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> {
     pub table_constraints: &'a TableConstraints,
     pub column_definitions: &'a [ColumnDefinition],
 
+    #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
 impl<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> UseCaseInput
     for CreateTableUseCaseInput<'a, 'db, Tx>
 {
-}
-impl<'a, 'db: 'a, Tx: ImmutableSchemaTx<'db>> CreateTableUseCaseInput<'a, 'db, Tx> {
-    pub fn new(
-        tx: &'a mut Tx,
-        database_name: &'a DatabaseName,
-        table_name: &'a TableName,
-        table_constraints: &'a TableConstraints,
-        column_definitions: &'a [ColumnDefinition],
-    ) -> Self {
-        Self {
-            tx,
-            database_name,
-            table_name,
-            table_constraints,
-            column_definitions,
-            _marker: PhantomData,
-        }
-    }
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
