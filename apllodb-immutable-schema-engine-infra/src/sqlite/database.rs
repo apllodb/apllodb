@@ -25,7 +25,7 @@ impl SqliteDatabase {
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    pub(in crate::sqlite) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
+    pub(crate) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
         let conn = Self::connect_sqlite(&db_name)?;
         let slf = Self {
             name: db_name,

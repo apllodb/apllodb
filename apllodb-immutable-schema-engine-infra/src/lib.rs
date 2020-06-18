@@ -16,7 +16,8 @@ pub struct ApllodbImmutableSchemaEngine;
 impl<'db> StorageEngine<'db> for ApllodbImmutableSchemaEngine {
     type Tx = TransactionController<'db, SqliteTx<'db>, SqliteRowIterator<'db>>;
 
+    // TODO UndefinedDatabase error.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<SqliteDatabase> {
-        todo!()
+        SqliteDatabase::new(database_name.clone())
     }
 }

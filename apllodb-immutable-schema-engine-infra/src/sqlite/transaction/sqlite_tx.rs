@@ -140,10 +140,8 @@ impl<'conn> ImmutableSchemaTx<'conn> for SqliteTx<'conn> {
     }
 
     fn create_version(&self, version: &ActiveVersion) -> ApllodbResult<()> {
-        // self.version_dao(table.name().clone()).create(version)?;
-        // Ok(())
-
-        todo!()
+        self.version_dao().create(version)?;
+        Ok(())
     }
 
     fn deactivate_version(
