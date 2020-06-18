@@ -1,4 +1,4 @@
-use super::sqlite_table_name::SqliteTableNameForVTable;
+use super::transaction::VTableDao;
 use apllodb_shared_components::{
     data_structure::DatabaseName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -27,12 +27,13 @@ impl SqliteDatabase {
     ///   - rusqlite raises an error.
     pub(crate) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
         let conn = Self::connect_sqlite(&db_name)?;
-        let slf = Self {
+
+        VTableDao::create_table_if_not_exist(&conn)?;
+
+        Ok(Self {
             name: db_name,
             sqlite_conn: conn,
-        };
-        slf.create_metadata_table_if_not_exist()?;
-        Ok(slf)
+        })
     }
 
     fn sqlite_db_path(db_name: &DatabaseName) -> String {
@@ -53,34 +54,6 @@ impl SqliteDatabase {
 
     pub(in crate::sqlite) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
         &mut self.sqlite_conn
-    }
-
-    fn create_metadata_table_if_not_exist(&self) -> ApllodbResult<()> {
-        let metadata_table = SqliteTableNameForVTable::name();
-        let sql = format!(
-            "
-CREATE TABLE IF NOT EXISTS {} (
-  vtable_name TEXT PRIMARY KEY,
-  table_wide_constraints TEXT
-)
-        ",
-            &metadata_table,
-        );
-
-        self.sqlite_conn
-            .execute(sql.as_str(), rusqlite::params![])
-            .map(|_| ())
-            .map_err(|e| {
-                ApllodbError::new(
-                    ApllodbErrorKind::IoError,
-                    format!(
-                        "backend sqlite3 raised an error on creating metadata table `{}`",
-                        metadata_table
-                    ),
-                    Some(Box::new(e)),
-                )
-            })?;
-        Ok(())
     }
 }
 

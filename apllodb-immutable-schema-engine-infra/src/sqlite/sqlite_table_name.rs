@@ -3,14 +3,6 @@ use apllodb_shared_components::data_structure::TableName;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub(in crate::sqlite) struct SqliteTableNameForVTable;
-impl SqliteTableNameForVTable {
-    pub(in crate::sqlite) fn name() -> String {
-        "_vtable_metadata".to_string()
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub(in crate::sqlite) struct SqliteTableNameForVersion(String);
 
 impl<S: Into<String>> From<S> for SqliteTableNameForVersion {

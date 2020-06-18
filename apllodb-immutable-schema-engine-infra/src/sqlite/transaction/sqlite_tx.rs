@@ -1,6 +1,8 @@
 mod dao;
 mod id;
 
+pub(in crate::sqlite) use dao::VTableDao;
+
 use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
 use apllodb_immutable_schema_engine_domain::{
     ActiveVersion, ImmutableSchemaTx, VTable, VersionNumber,
@@ -9,7 +11,7 @@ use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use dao::{VTableDao, VersionDao};
+use dao::VersionDao;
 use id::SqliteTxId;
 use std::cmp::Ordering;
 
