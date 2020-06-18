@@ -1,6 +1,8 @@
-use crate::sqlite::sqlite_table_name::SqliteTableNameForVersion;
+mod sqlite_table_name_for_version;
+
 use apllodb_immutable_schema_engine_domain::ActiveVersion;
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao<'tx> {
