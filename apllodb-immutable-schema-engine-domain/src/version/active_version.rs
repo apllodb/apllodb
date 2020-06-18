@@ -73,7 +73,7 @@ impl ActiveVersion {
     ///   - If no column would exist after the specified action.
     /// - [UndefinedColumn](variant.UndefinedColumn.html)
     ///   - If column to alter does not exist.
-    pub(crate) fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
+    pub fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
         match action {
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,

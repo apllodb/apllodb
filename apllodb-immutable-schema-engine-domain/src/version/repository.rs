@@ -1,4 +1,4 @@
-use crate::{ActiveVersion, ImmutableSchemaTx, VersionId, VersionRowIter};
+use crate::{ActiveVersion, ImmutableSchemaTx, VTableId, VersionId, VersionRowIter};
 use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
 
 pub trait VersionRepository<'tx, 'db: 'tx> {
@@ -29,4 +29,6 @@ pub trait VersionRepository<'tx, 'db: 'tx> {
         version: &VersionId,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter>;
+
+    fn current_version(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersion>;
 }

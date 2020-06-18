@@ -1,5 +1,5 @@
 use crate::sqlite::{transaction::sqlite_tx::dao::VersionDao, SqliteRowIterator, SqliteTx};
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId, VersionRepository};
+use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId, VersionRepository, VTableId};
 use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
 
 #[derive(Debug)]
@@ -34,6 +34,10 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         version: &VersionId,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter> {
+        todo!()
+    }
+
+    fn current_version(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersion> {
         todo!()
     }
 }

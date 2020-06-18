@@ -12,7 +12,7 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     let mut db = ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new(
         "db_test_use_apllodb_immutable_schema_engine",
     )?)?;
-    let mut tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db)?;
+    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db)?;
     tx.create_table(
         &TableName::new("t")?,
         &TableConstraints::default(),

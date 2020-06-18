@@ -9,7 +9,7 @@ pub struct VersionId {
 }
 
 impl VersionId {
-    pub(in crate::version) fn new(vtable_id: &VTableId, version_number: &VersionNumber) -> Self {
+    pub fn new(vtable_id: &VTableId, version_number: &VersionNumber) -> Self {
         Self {
             vtable_id: vtable_id.clone(),
             version_number: version_number.clone(),

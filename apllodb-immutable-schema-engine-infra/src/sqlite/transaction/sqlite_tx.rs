@@ -144,9 +144,9 @@ mod tests {
             column_constraints!()
         ));
 
-        let mut tx1 =
+        let tx1 =
             TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db1)?;
-        let mut tx2 =
+        let tx2 =
             TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db2)?;
 
         // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
@@ -186,7 +186,7 @@ mod tests {
             column_constraints!()
         ));
 
-        let mut tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
+        let tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
 
         tx.create_table(&tn, &tc, &coldefs)?;
         match tx.create_table(&tn, &tc, &coldefs) {
@@ -201,7 +201,7 @@ mod tests {
     #[test]
     fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
         let mut db = SqliteDatabase::new_for_test()?;
-        let mut tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
+        let tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
 
         let tn = &table_name!("t");
         let tc = table_constraints!();

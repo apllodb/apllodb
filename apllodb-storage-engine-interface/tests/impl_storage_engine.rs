@@ -144,7 +144,7 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
     use empty_storage_engine::EmptyStorageEngine;
 
     let mut db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
-    let mut tx = EmptyStorageEngine::begin_transaction(&mut db)?;
+    let tx = EmptyStorageEngine::begin_transaction(&mut db)?;
     tx.create_table(&TableName::new("t")?, &TableConstraints::default(), &vec![])?;
     tx.abort()?;
 

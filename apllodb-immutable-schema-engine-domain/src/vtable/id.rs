@@ -9,7 +9,7 @@ pub struct VTableId {
 }
 
 impl VTableId {
-    pub(in crate::vtable) fn new(database_name: &DatabaseName, table_name: &TableName) -> Self {
+    pub fn new(database_name: &DatabaseName, table_name: &TableName) -> Self {
         Self {
             database_name: database_name.clone(),
             table_name: table_name.clone(),
