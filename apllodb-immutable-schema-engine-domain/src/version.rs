@@ -1,3 +1,4 @@
+mod repository;
 mod active_version;
 mod constraint_kind;
 mod constraints;
@@ -9,6 +10,7 @@ pub use active_version::ActiveVersion;
 pub use id::VersionId;
 pub use inactive_version::InactiveVersion;
 pub use version_number::VersionNumber;
+pub use repository::VersionRepository;
 
 use crate::entity::Entity;
 use constraints::VersionConstraints;

@@ -13,8 +13,8 @@ use sqlite::{SqliteDatabase, SqliteRowIterator, SqliteTx};
 #[derive(Hash, Debug)]
 pub struct ApllodbImmutableSchemaEngine;
 
-impl<'db> StorageEngine<'db> for ApllodbImmutableSchemaEngine {
-    type Tx = TransactionController<'db, SqliteTx<'db>, SqliteRowIterator<'db>>;
+impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for ApllodbImmutableSchemaEngine {
+    type Tx = TransactionController<'tx, 'db, SqliteTx<'db>, SqliteRowIterator<'db>>;
 
     // TODO UndefinedDatabase error.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<SqliteDatabase> {

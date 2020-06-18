@@ -16,7 +16,7 @@ use std::collections::HashMap;
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
-pub trait Transaction<'db> {
+pub trait Transaction<'tx, 'db: 'tx> {
     /// Database in which this transaction works.
     type Db: Database + 'db;
 
@@ -44,7 +44,7 @@ pub trait Transaction<'db> {
 
     /// CREATE TABLE command.
     fn create_table(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
@@ -52,27 +52,27 @@ pub trait Transaction<'db> {
 
     /// ALTER TABLE command.
     fn alter_table(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()>;
 
     /// DROP TABLE command.
-    fn drop_table(&mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn drop_table(&'tx self, table_name: &TableName) -> ApllodbResult<()>;
 
     /// SELECT command.
     ///
     /// Storage engine's SELECT fields are merely ColumnName.
     /// Expression's are not allowed. Calculating expressions is job for query processor.
     fn select(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter>;
 
     /// INSERT command.
     fn insert(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()>;
@@ -80,10 +80,10 @@ pub trait Transaction<'db> {
     /// UPDATE command.
     ///
     /// TODO interface
-    fn update(&mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn update(&'tx self, table_name: &TableName) -> ApllodbResult<()>;
 
     /// DELETE command.
     ///
     /// TODO interface
-    fn delete(&mut self, table_name: &TableName) -> ApllodbResult<()>;
+    fn delete(&'tx self, table_name: &TableName) -> ApllodbResult<()>;
 }

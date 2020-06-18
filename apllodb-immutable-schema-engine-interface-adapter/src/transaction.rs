@@ -16,17 +16,22 @@ use apllodb_storage_engine_interface::{Row, Transaction};
 use std::marker::PhantomData;
 
 pub struct TransactionController<
-    'db,
-    Tx: ImmutableSchemaTx<'db> + 'db,
+    'tx,
+    'db: 'tx,
+    Tx: ImmutableSchemaTx<'tx, 'db> + 'db,
     It: VersionRowIter<Item = ApllodbResult<Row>>,
 > {
     tx: Tx,
 
-    _marker: (PhantomData<&'db ()>, PhantomData<Tx>, PhantomData<It>),
+    _marker: (PhantomData<&'tx &'db ()>, PhantomData<Tx>, PhantomData<It>),
 }
 
-impl<'db, Tx: ImmutableSchemaTx<'db> + 'db, It: VersionRowIter<Item = ApllodbResult<Row>>>
-    Transaction<'db> for TransactionController<'db, Tx, It>
+impl<
+        'tx,
+        'db: 'tx,
+        Tx: ImmutableSchemaTx<'tx, 'db> + 'db,
+        It: VersionRowIter<Item = ApllodbResult<Row>>,
+    > Transaction<'tx, 'db> for TransactionController<'tx, 'db, Tx, It>
 {
     type Db = Tx::Db;
     type RowIter = ImmutableSchemaRowIter<It>;
@@ -54,14 +59,14 @@ impl<'db, Tx: ImmutableSchemaTx<'db> + 'db, It: VersionRowIter<Item = ApllodbRes
     }
 
     fn create_table(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let database_name = { self.database_name().clone() };
         let input = CreateTableUseCaseInput::new(
-            &mut self.tx,
+            &self.tx,
             &database_name,
             table_name,
             table_constraints,
@@ -73,33 +78,33 @@ impl<'db, Tx: ImmutableSchemaTx<'db> + 'db, It: VersionRowIter<Item = ApllodbRes
     }
 
     fn alter_table(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
         todo!()
     }
-    fn drop_table(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+    fn drop_table(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
     fn select(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter> {
         todo!()
     }
     fn insert(
-        &mut self,
+        &'tx self,
         table_name: &TableName,
         column_values: std::collections::HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         todo!()
     }
-    fn update(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+    fn update(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
-    fn delete(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+    fn delete(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
 }

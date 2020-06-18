@@ -1,0 +1,52 @@
+use crate::sqlite::{transaction::VTableDao, SqliteTx};
+use apllodb_immutable_schema_engine_domain::{VTable, VTableId, VTableRepository};
+use apllodb_shared_components::error::ApllodbResult;
+
+#[derive(Debug)]
+pub struct VTableRepositoryImpl<'tx, 'db: 'tx> {
+    tx: &'tx SqliteTx<'db>,
+}
+
+impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db> {
+    type Tx = SqliteTx<'db>;
+
+    fn new(tx: &'tx Self::Tx) -> Self {
+        Self { tx }
+    }
+
+    /// # Failures
+    ///
+    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
+    ///   - Table `table_name` is already visible to this transaction.
+    /// - Errors from [TableDao::create()](foobar.html).
+    fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
+        self.vtable_dao().create(&vtable)?;
+        Ok(())
+    }
+
+    /// # Failures
+    ///
+    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    ///   - rusqlite raises an error.
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - Table `table_name` is not visible to this transaction.
+    fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
+        todo!()
+    }
+
+    /// # Failures
+    ///
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - Table `table_name` is not visible to this transaction.
+    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    ///   - rusqlite raises an error.
+    fn update(&self, vtable: &VTable) -> ApllodbResult<()> {
+        todo!()
+    }
+}
+
+impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
+    fn vtable_dao(&self) -> VTableDao<'_> {
+        VTableDao::new(&self.tx.sqlite_tx)
+    }
+}

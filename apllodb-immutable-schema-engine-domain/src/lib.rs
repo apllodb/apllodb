@@ -2,6 +2,9 @@
 
 //! Domain layer of apllodb-immutable-schema-engine.
 
+#[macro_use]
+extern crate derive_new;
+
 mod entity;
 mod row_iter;
 mod transaction;
@@ -11,5 +14,5 @@ mod vtable;
 pub use entity::Entity;
 pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};
 pub use transaction::ImmutableSchemaTx;
-pub use version::{ActiveVersion, InactiveVersion, VersionId, VersionNumber};
-pub use vtable::{TableWideConstraints, VTable, VTableId};
+pub use version::{ActiveVersion, InactiveVersion, VersionId, VersionNumber, VersionRepository};
+pub use vtable::{TableWideConstraints, VTable, VTableId, VTableRepository};

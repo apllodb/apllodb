@@ -49,7 +49,7 @@ pub mod empty_storage_engine {
         use std::collections::HashMap;
 
         pub struct EmptyTx;
-        impl<'db> Transaction<'db> for EmptyTx {
+        impl<'tx, 'db: 'tx> Transaction<'tx, 'db> for EmptyTx {
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
 
@@ -70,7 +70,7 @@ pub mod empty_storage_engine {
             }
 
             fn create_table(
-                &mut self,
+                &self,
                 table_name: &TableName,
                 table_constraints: &TableConstraints,
                 column_definitions: &[ColumnDefinition],
@@ -79,19 +79,19 @@ pub mod empty_storage_engine {
             }
 
             fn alter_table(
-                &mut self,
+                &self,
                 table_name: &TableName,
                 action: &AlterTableAction,
             ) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn drop_table(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
             fn select(
-                &mut self,
+                &self,
                 table_name: &TableName,
                 column_names: &[ColumnName],
             ) -> ApllodbResult<Self::RowIter> {
@@ -99,18 +99,18 @@ pub mod empty_storage_engine {
             }
 
             fn insert(
-                &mut self,
+                &self,
                 table_name: &TableName,
                 column_values: HashMap<ColumnName, Expression>,
             ) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn update(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn update(&self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
-            fn delete(&mut self, table_name: &TableName) -> ApllodbResult<()> {
+            fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
                 unimplemented!()
             }
         }
@@ -122,7 +122,7 @@ pub mod empty_storage_engine {
         use apllodb_storage_engine_interface::StorageEngine;
 
         pub struct EmptyStorageEngine;
-        impl<'db> StorageEngine<'db> for EmptyStorageEngine {
+        impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for EmptyStorageEngine {
             type Tx = EmptyTx;
 
             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {

@@ -1,26 +1,25 @@
 mod dao;
 mod id;
+mod repository;
 
 pub(in crate::sqlite) use dao::VTableDao;
 
-use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
-use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ImmutableSchemaTx, VTable, VersionNumber,
-};
+use crate::sqlite::SqliteDatabase;
+use apllodb_immutable_schema_engine_domain::ImmutableSchemaTx;
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DatabaseName, TableName},
+    data_structure::DatabaseName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use dao::VersionDao;
 use id::SqliteTxId;
+use repository::{VTableRepositoryImpl, VersionRepositoryImpl};
 use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx<'conn> {
+pub struct SqliteTx<'db> {
     id: SqliteTxId,
     database_name: DatabaseName,
-    pub(in crate::sqlite) sqlite_tx: rusqlite::Transaction<'conn>, // TODO private
+    pub(in crate::sqlite) sqlite_tx: rusqlite::Transaction<'db>, // TODO private
 }
 
 impl PartialEq for SqliteTx<'_> {
@@ -41,15 +40,17 @@ impl Ord for SqliteTx<'_> {
     }
 }
 
-impl<'conn> ImmutableSchemaTx<'conn> for SqliteTx<'conn> {
+impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     type Db = SqliteDatabase;
-    type VerRowIter = SqliteRowIterator<'conn>;
+
+    type VTRepo = VTableRepositoryImpl<'tx, 'db>;
+    type VRepo = VersionRepositoryImpl<'tx, 'db>;
 
     /// # Failures
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(db: &'conn mut Self::Db) -> ApllodbResult<Self> {
+    fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self> {
         use apllodb_shared_components::traits::Database;
 
         let database_name = { db.name().clone() };
@@ -105,71 +106,14 @@ impl<'conn> ImmutableSchemaTx<'conn> for SqliteTx<'conn> {
         &self.database_name
     }
 
-    /// **This operation does not satisfies atomicity and isolation** because
-    /// SQLite's DDL commands are internally issued.
-    ///
-    /// # Failures
-    ///
-    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
-    ///   - Table `table_name` is already visible to this transaction.
-    /// - Errors from [TableDao::create()](foobar.html).
-    fn create_vtable(&self, table: &VTable) -> ApllodbResult<()> {
-        self.vtable_dao().create(&table)?;
-        Ok(())
+    fn vtable_repo(&'tx self) -> Self::VTRepo {
+        use apllodb_immutable_schema_engine_domain::VTableRepository;
+        VTableRepositoryImpl::new(&self)
     }
 
-    /// # Failures
-    ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
-    ///   - rusqlite raises an error.
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
-    ///   - Table `table_name` is not visible to this transaction.
-    fn read_vtable(&self, table_name: &TableName) -> ApllodbResult<VTable> {
-        todo!()
-    }
-
-    /// **This operation does not satisfies atomicity and isolation** because
-    /// SQLite's DDL commands are internally issued.
-    ///
-    /// # Failures
-    ///
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
-    ///   - Table `table_name` is not visible to this transaction.
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
-    ///   - rusqlite raises an error.
-    fn update_vtable(&self, table: &VTable) -> ApllodbResult<()> {
-        todo!()
-    }
-
-    fn create_version(&self, version: &ActiveVersion) -> ApllodbResult<()> {
-        self.version_dao().create(version)?;
-        Ok(())
-    }
-
-    fn deactivate_version(
-        &self,
-        table: &VTable,
-        version_number: &VersionNumber,
-    ) -> ApllodbResult<()> {
-        todo!()
-    }
-
-    fn full_scan(
-        &self,
-        _version: &ActiveVersion,
-        _column_names: &[ColumnName],
-    ) -> ApllodbResult<Self::VerRowIter> {
-        todo!()
-    }
-}
-
-impl<'conn> SqliteTx<'conn> {
-    fn vtable_dao(&self) -> VTableDao<'_> {
-        VTableDao::new(&self.sqlite_tx)
-    }
-
-    fn version_dao(&self) -> VersionDao<'_> {
-        VersionDao::new(&self.sqlite_tx)
+    fn version_repo(&'tx self) -> Self::VRepo {
+        use apllodb_immutable_schema_engine_domain::VersionRepository;
+        VersionRepositoryImpl::new(&self)
     }
 }
 

@@ -1,10 +1,11 @@
 mod constraint_kind;
 mod constraints;
 mod id;
-mod version_repo;
+mod repository;
 
 pub use constraints::TableWideConstraints;
 pub use id::VTableId;
+pub use repository::VTableRepository;
 
 use crate::entity::Entity;
 use apllodb_shared_components::{

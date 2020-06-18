@@ -1,0 +1,45 @@
+use crate::sqlite::{transaction::sqlite_tx::dao::VersionDao, SqliteRowIterator, SqliteTx};
+use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId, VersionRepository};
+use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+
+#[derive(Debug)]
+pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
+    tx: &'tx SqliteTx<'db>,
+}
+
+impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, 'db> {
+    type Tx = SqliteTx<'db>;
+    type VerRowIter = SqliteRowIterator<'db>;
+
+    fn new(tx: &'tx Self::Tx) -> Self {
+        Self { tx }
+    }
+
+    /// # Failures
+    ///
+    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
+    ///   - Table `table_name` is already visible to this transaction.
+    /// - Errors from [TableDao::create()](foobar.html).
+    fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
+        self.version_dao().create(&version)?;
+        Ok(())
+    }
+
+    fn deactivate(&self, version_id: &VersionId) -> ApllodbResult<()> {
+        todo!()
+    }
+
+    fn full_scan(
+        &self,
+        version: &VersionId,
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<Self::VerRowIter> {
+        todo!()
+    }
+}
+
+impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
+    fn version_dao(&self) -> VersionDao<'_> {
+        VersionDao::new(&self.tx.sqlite_tx)
+    }
+}

@@ -9,6 +9,8 @@ edition = "2018"
 [dependencies]
 apllodb-shared-components = { path = "../apllodb-shared-components" }
 
+derive-new = "0.5"
+
 env_logger = "0.7"
 log = "0.4"
 
