@@ -41,7 +41,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
         use apllodb_immutable_schema_engine_domain::Entity;
 
-        let vtable = VTable::new(
+        let vtable = VTable::create(
             input.database_name,
             input.table_name,
             input.table_constraints,

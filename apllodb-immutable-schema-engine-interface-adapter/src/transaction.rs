@@ -1,5 +1,8 @@
 use apllodb_immutable_schema_engine_application::use_case::{
-    transaction::create_table::{CreateTableUseCase, CreateTableUseCaseInput},
+    transaction::{
+        alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
+        create_table::{CreateTableUseCase, CreateTableUseCaseInput},
+    },
     UseCase,
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -64,7 +67,7 @@ impl<
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
-        let database_name = { self.database_name().clone() };
+        let database_name = self.database_name().clone();
         let input = CreateTableUseCaseInput::new(
             &self.tx,
             &database_name,
@@ -82,8 +85,13 @@ impl<
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
-        todo!()
+        let database_name = self.database_name().clone();
+        let input = AlterTableUseCaseInput::new(&self.tx, &database_name, table_name, action);
+        let _ = AlterTableUseCase::run(input)?;
+
+        Ok(())
     }
+
     fn drop_table(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }

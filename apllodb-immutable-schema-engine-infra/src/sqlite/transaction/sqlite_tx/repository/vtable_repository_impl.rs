@@ -31,7 +31,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
     fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
-        todo!()
+        self.vtable_dao().read(&vtable_id)
     }
 
     /// # Failures

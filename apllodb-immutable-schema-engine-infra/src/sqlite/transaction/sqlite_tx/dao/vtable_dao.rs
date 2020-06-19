@@ -1,4 +1,4 @@
-use apllodb_immutable_schema_engine_domain::VTable;
+use apllodb_immutable_schema_engine_domain::{TableWideConstraints, VTable, VTableId};
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use log::error;
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS {} (
     /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
     ///   - `table` is already created.
     /// - [SerializationError](error/enum.ApllodbErrorKind.html#variant.SerializationError) when:
-    ///   - Somehow failed to serialize part of [Table](foobar.html).
+    ///   - Somehow failed to serialize part of [VTable](foobar.html).
     pub(in crate::sqlite::transaction::sqlite_tx) fn create(
         &self,
         vtable: &VTable,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS {} (
         let table_name = format!("{}", vtable.table_name());
 
         let table_wide_constraints = vtable.table_wide_constraints();
-        let table_wide_constraints =
+        let table_wide_constraints_str =
             serde_yaml::to_string(table_wide_constraints).map_err(|e| {
                 ApllodbError::new(
                     ApllodbErrorKind::SerializationError,
@@ -83,10 +83,9 @@ CREATE TABLE IF NOT EXISTS {} (
             &sql,
             &[
                 (":table_name", &table_name),
-                (":table_wide_constraints", &table_wide_constraints),
+                (":table_wide_constraints", &table_wide_constraints_str),
             ],
         ) {
-            // TODO SQLite側のエラー処理は、 https://www.sqlite.org/rescode.html#busy をenum variant で引っ掛けられるようになりたい。rusqliteへの改修を画策中
             Err(
                 e
                 @
@@ -134,5 +133,95 @@ CREATE TABLE IF NOT EXISTS {} (
             }
             Ok(_) => Ok(()),
         }
+    }
+
+    /// # Failures
+    ///
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - `table` is not visible from this transaction.
+    /// - [DeserializationError](error/enum.ApllodbErrorKind.html#variant.DeserializationError) when:
+    ///   - Somehow failed to deserialize part of [VTable](foobar.html).
+    pub(in crate::sqlite::transaction::sqlite_tx) fn read(
+        &self,
+        vtable_id: &VTableId,
+    ) -> ApllodbResult<VTable> {
+        let sql = format!(
+            "SELECT {}, {} FROM {} WHERE {} = :table_name;",
+            CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS, TABLE_NAME, CNAME_TABLE_NAME
+        );
+
+        let table_name = format!("{}", vtable_id.table_name());
+
+        let mut stmt = self.sqlite_tx.prepare(&sql).or_else(|e| {
+            error!("unexpected SQLite error: {:?}", e);
+            Err(ApllodbError::new(
+                ApllodbErrorKind::IoError,
+                format!(
+                    "SQLite raised an error while preparing for selecting table `{}`'s metadata",
+                    table_name
+                ),
+                Some(Box::new(e)),
+            ))
+        })?;
+        let mut rows = stmt
+            .query_named(&[(":table_name", &table_name)])
+            .or_else(|e| {
+                Err(ApllodbError::new(
+                    ApllodbErrorKind::IoError,
+                    format!(
+                        "SQLite raised an error while selecting table `{}`'s metadata",
+                        table_name
+                    ),
+                    Some(Box::new(e)),
+                ))
+            })?;
+        let row = rows
+            .next()
+            .or_else(|e| {
+                Err(ApllodbError::new(
+                    ApllodbErrorKind::IoError,
+                    format!(
+                        "SQLite raised an error while fetching row of table `{}`'s metadata",
+                        table_name
+                    ),
+                    Some(Box::new(e)),
+                ))
+            })?
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedTable,
+                    format!(
+                        "table `{}`'s metadata is not visible from this transaction",
+                        table_name
+                    ),
+                    None,
+                )
+            })?;
+
+        let table_wide_constraints_str: String =
+            row.get(CNAME_TABLE_WIDE_CONSTRAINTS).or_else(|e| {
+                Err(ApllodbError::new(
+                    ApllodbErrorKind::IoError,
+                    format!(
+                        "table `{}`'s metadata row not have column `{}`",
+                        table_name, CNAME_TABLE_WIDE_CONSTRAINTS
+                    ),
+                    Some(Box::new(e)),
+                ))
+            })?;
+        let table_wide_constraints: TableWideConstraints =
+            serde_yaml::from_str(&table_wide_constraints_str).or_else(|e| {
+                Err(ApllodbError::new(
+                    ApllodbErrorKind::DeserializationError,
+                    format!(
+                        "failed to deserialize table `{}`'s metadata: `{}`",
+                        table_name, table_wide_constraints_str
+                    ),
+                    Some(Box::new(e)),
+                ))
+            })?;
+
+        let vtable = VTable::new(vtable_id.clone(), table_wide_constraints);
+        Ok(vtable)
     }
 }

@@ -2,20 +2,18 @@ use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
 use apllodb_immutable_schema_engine_domain::{VTableRepository, VersionRepository};
 use apllodb_shared_components::{
-    data_structure::{
-        AlterTableAction, DatabaseName, TableName,
-    },
+    data_structure::{AlterTableAction, DatabaseName, TableName},
     error::ApllodbResult,
 };
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
 pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    pub tx: &'tx Tx,
+    tx: &'tx Tx,
 
-    pub database_name: &'a DatabaseName,
-    pub table_name: &'a TableName,
-    pub action: &'a AlterTableAction,
+    database_name: &'a DatabaseName,
+    table_name: &'a TableName,
+    action: &'a AlterTableAction,
 
     #[new(default)]
     _marker: PhantomData<&'db ()>,
