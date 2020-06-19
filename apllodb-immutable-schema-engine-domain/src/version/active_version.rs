@@ -40,6 +40,26 @@ impl ActiveVersion {
     pub fn initial(
         vtable_id: &VTableId,
         column_definitions: &[ColumnDefinition],
+        table_constraints: &TableConstraints,
+    ) -> ApllodbResult<Self> {
+        Self::new(
+            vtable_id,
+            &VersionNumber::initial(),
+            column_definitions,
+            table_constraints,
+        )
+    }
+
+    /// Constructor.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
+    ///   - If `column_definitions` is empty.
+    pub fn new(
+        vtable_id: &VTableId,
+        version_number: &VersionNumber,
+        column_definitions: &[ColumnDefinition],
         _table_constraints: &TableConstraints,
     ) -> ApllodbResult<Self> {
         // TODO Check table_constraints when  TableConstraints support constraints per record.
@@ -50,7 +70,7 @@ impl ActiveVersion {
 
         Self::validate_at_least_one_column(&column_data_types)?;
 
-        let id = VersionId::new(vtable_id, &VersionNumber::initial());
+        let id = VersionId::new(vtable_id, version_number);
 
         Ok(Self(Version {
             id,
@@ -142,7 +162,7 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::vtable::VTableId;
+    use crate::{vtable::VTableId, vtable_id};
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_shared_components::{
         alter_table_action_drop_column, column_constraints, column_definition, column_name,
@@ -159,7 +179,7 @@ mod tests {
         )];
         let table_constraints = table_constraints!();
 
-        let v = ActiveVersion::initial(&VTableId::gen(), &column_definitions, &table_constraints)?;
+        let v = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
@@ -170,7 +190,7 @@ mod tests {
         let column_definitions = vec![];
         let table_constraints = table_constraints!();
 
-        match ActiveVersion::initial(&VTableId::gen(), &column_definitions, &table_constraints) {
+        match ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints) {
             Err(e) => match e.kind() {
                 ApllodbErrorKind::InvalidTableDefinition => Ok(()),
                 _ => panic!("unexpected error kind: {}", e),
@@ -194,7 +214,7 @@ mod tests {
             ),
         ];
         let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::initial(&VTableId::gen(), &column_definitions, &table_constraints)?;
+        let v1 = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
 
         let action = alter_table_action_drop_column!("c1");
 
@@ -221,7 +241,7 @@ mod tests {
             column_constraints!()
         )];
         let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::initial(&VTableId::gen(), &column_definitions, &table_constraints)?;
+        let v1 = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
 
         let action = alter_table_action_drop_column!("c404");
         match v1.create_next(&action) {
@@ -241,7 +261,7 @@ mod tests {
             column_constraints!()
         )];
         let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::initial(&VTableId::gen(), &column_definitions, &table_constraints)?;
+        let v1 = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
 
         let action = alter_table_action_drop_column!("c1");
         match v1.create_next(&action) {

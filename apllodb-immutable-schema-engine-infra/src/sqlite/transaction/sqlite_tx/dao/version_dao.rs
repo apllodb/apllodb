@@ -1,7 +1,9 @@
+mod create_table_sql_for_version;
 mod sqlite_table_name_for_version;
 
-use apllodb_immutable_schema_engine_domain::ActiveVersion;
+use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId};
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use create_table_sql_for_version::CreateTableSqlForVersion;
 use sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
@@ -14,26 +16,13 @@ impl<'tx> VersionDao<'tx> {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite) fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
-        use crate::sqlite::to_sql_string::ToSqlString;
+    pub(in crate::sqlite::transaction::sqlite_tx) fn create(
+        &self,
+        version: &ActiveVersion,
+    ) -> ApllodbResult<()> {
         use apllodb_immutable_schema_engine_domain::Entity;
 
-        let version_table_name = SqliteTableNameForVersion::new(version.id(), true);
-
-        let sql = format!(
-            "
-CREATE TABLE {} (
-  {}
-)
-        ",
-            version_table_name.as_str(),
-            version
-                .column_data_types()
-                .iter()
-                .map(|cdt| cdt.to_sql_string())
-                .collect::<Vec<String>>()
-                .join(",\n  ")
-        );
+        let sql = CreateTableSqlForVersion::from(version);
 
         self.sqlite_tx
             .execute_named(sql.as_str(), &[])
@@ -42,11 +31,22 @@ CREATE TABLE {} (
                 ApllodbError::new(
                     ApllodbErrorKind::IoError,
                     format!(
-                        "SQLite raised an error creating table `{}`",
-                        version_table_name.as_str()
+                        "SQLite raised an error creating table for version `{:?}`",
+                        version.id()
                     ),
                     Some(Box::new(e)),
                 )
             })
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_versions(
+        &self,
+        vtable_id: &VTableId,
+    ) -> ApllodbResult<Vec<ActiveVersion>> {
+        //         let sql = format!("
+        // SELECT
+        //         ");
+
+        todo!()
     }
 }

@@ -5,8 +5,10 @@ mod constraints;
 mod id;
 mod inactive_version;
 mod version_number;
+mod active_versions;
 
 pub use active_version::ActiveVersion;
+pub use active_versions::ActiveVersions;
 pub use id::VersionId;
 pub use inactive_version::InactiveVersion;
 pub use version_number::VersionNumber;

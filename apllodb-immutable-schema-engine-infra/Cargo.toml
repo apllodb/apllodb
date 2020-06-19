@@ -15,6 +15,9 @@ apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface
 
 apllodb-shared-components = { path = "../apllodb-shared-components" }
 
+# Only SqliteTx uses this to deserialize ActiveVersion from SQLite's sqlite_master table.
+apllodb-sql-parser = { path = "../apllodb-sql-parser" }
+
 chrono = "0.4"
 
 env_logger = "0.7"
@@ -28,4 +31,5 @@ serde_yaml = "0.8"
 
 [dev-dependencies]
 uuid = { version = "0.8", features = ["v4"] }
+rand = "0.7"
 version-sync = "0.9"

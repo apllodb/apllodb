@@ -24,29 +24,3 @@ impl VTableId {
         &self.table_name
     }
 }
-
-#[cfg(test)]
-impl VTableId {
-    pub(crate) fn gen() -> Self {
-        use rand::distributions::Alphanumeric;
-        use rand::Rng;
-
-        let database_name = DatabaseName::new(
-            rand::thread_rng()
-                .sample_iter(&Alphanumeric)
-                .take(10)
-                .collect::<String>(),
-        )
-        .unwrap();
-
-        let table_name = TableName::new(
-            rand::thread_rng()
-                .sample_iter(&Alphanumeric)
-                .take(10)
-                .collect::<String>(),
-        )
-        .unwrap();
-
-        Self::new(&database_name, &table_name)
-    }
-}
