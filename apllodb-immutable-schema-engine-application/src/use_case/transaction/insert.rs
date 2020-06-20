@@ -1,6 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
-use apllodb_immutable_schema_engine_domain::{VTableRepository, VersionId, VersionRepository};
+use apllodb_immutable_schema_engine_domain::{VersionId, VersionRepository};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},

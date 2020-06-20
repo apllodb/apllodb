@@ -2,10 +2,17 @@ use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::VersionRowIter;
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_engine_interface::Row;
+use std::fmt::Debug;
 
 type ToApllodbRow = Box<dyn FnMut(&rusqlite::Row<'_>) -> rusqlite::Result<Row>>;
 
 pub struct SqliteRowIterator<'stmt>(rusqlite::MappedRows<'stmt, ToApllodbRow>);
+
+impl Debug for SqliteRowIterator<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "SqliteRowIterator(...)")
+    }
+}
 
 impl Iterator for SqliteRowIterator<'_> {
     type Item = ApllodbResult<Row>;

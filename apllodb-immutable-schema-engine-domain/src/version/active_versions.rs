@@ -38,6 +38,11 @@ impl ActiveVersions {
         })
     }
 
+    /// Returns the versions to select from.
+    pub fn versions_to_select(&self) -> ApllodbResult<&[ActiveVersion]> {
+        Ok(&self.0)
+    }
+
     /// Returns the biggest version that can accept `column_values`.
     ///
     /// # Failures

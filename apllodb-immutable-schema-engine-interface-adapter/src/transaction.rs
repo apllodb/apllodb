@@ -3,11 +3,12 @@ use apllodb_immutable_schema_engine_application::use_case::{
         alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
         create_table::{CreateTableUseCase, CreateTableUseCaseInput},
         insert::{InsertUseCase, InsertUseCaseInput},
+        select::{SelectUseCase, SelectUseCaseInput},
     },
     UseCase,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ImmutableSchemaRowIter, ImmutableSchemaTx, VersionRowIter,
+    ImmutableSchemaRowIter, ImmutableSchemaTx, VersionRepository,
 };
 use apllodb_shared_components::{
     data_structure::{
@@ -16,29 +17,22 @@ use apllodb_shared_components::{
     },
     error::ApllodbResult,
 };
-use apllodb_storage_engine_interface::{Row, Transaction};
+use apllodb_storage_engine_interface::Transaction;
 use std::{collections::HashMap, marker::PhantomData};
 
-pub struct TransactionController<
-    'tx,
-    'db: 'tx,
-    Tx: ImmutableSchemaTx<'tx, 'db> + 'db,
-    It: VersionRowIter<Item = ApllodbResult<Row>>,
-> {
+pub struct TransactionController<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> {
     tx: Tx,
 
-    _marker: (PhantomData<&'tx &'db ()>, PhantomData<Tx>, PhantomData<It>),
+    _marker: (PhantomData<&'tx &'db ()>, PhantomData<Tx>),
 }
 
-impl<
-        'tx,
-        'db: 'tx,
-        Tx: ImmutableSchemaTx<'tx, 'db> + 'db,
-        It: VersionRowIter<Item = ApllodbResult<Row>>,
-    > Transaction<'tx, 'db> for TransactionController<'tx, 'db, Tx, It>
+impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
+    for TransactionController<'tx, 'db, Tx>
 {
     type Db = Tx::Db;
-    type RowIter = ImmutableSchemaRowIter<It>;
+    type RowIter = ImmutableSchemaRowIter<
+        <<Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
+    >;
 
     fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self>
     where
@@ -47,7 +41,7 @@ impl<
         let tx = Tx::begin(db)?;
         Ok(Self {
             tx,
-            _marker: (PhantomData, PhantomData, PhantomData),
+            _marker: (PhantomData, PhantomData),
         })
     }
 
@@ -96,12 +90,17 @@ impl<
     fn drop_table(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
+
     fn select(
         &'tx self,
         table_name: &TableName,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter> {
-        todo!()
+        let database_name = self.database_name().clone();
+        let input = SelectUseCaseInput::new(&self.tx, &database_name, table_name, &column_names);
+        let output = SelectUseCase::run(input)?;
+
+        Ok(output.row_iter)
     }
 
     fn insert(

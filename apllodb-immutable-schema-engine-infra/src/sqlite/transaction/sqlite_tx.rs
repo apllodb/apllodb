@@ -111,7 +111,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
 #[cfg(test)]
 mod tests {
     use super::SqliteTx;
-    use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
+    use crate::sqlite::{SqliteDatabase};
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
         column_constraints, column_definition, column_definitions, column_name, const_expr,
@@ -135,8 +135,8 @@ mod tests {
             column_constraints!()
         ));
 
-        let tx1 = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db1)?;
-        let tx2 = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db2)?;
+        let tx1 = TransactionController::<SqliteTx<'_>>::begin(&mut db1)?;
+        let tx2 = TransactionController::<SqliteTx<'_>>::begin(&mut db2)?;
 
         // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
         // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
@@ -166,7 +166,7 @@ mod tests {
             column_constraints!()
         ));
 
-        let tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
+        let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
 
         tx.create_table(&tn, &tc, &coldefs)?;
         match tx.create_table(&tn, &tc, &coldefs) {
@@ -181,7 +181,7 @@ mod tests {
     #[test]
     fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
         let mut db = SqliteDatabase::new_for_test()?;
-        let tx = TransactionController::<SqliteTx<'_>, SqliteRowIterator<'_>>::begin(&mut db)?;
+        let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
 
         let tn = &table_name!("t");
         let tc = table_constraints!();
@@ -216,23 +216,23 @@ mod tests {
 
         // Selects both v1's record (id=1) and v2's record (id=2),
         // although v2 does not have column "c".
-        // let records = tx.select(&tn, &vec![column_name!("id"), column_name!("c")])?;
+        let records = tx.select(&tn, &vec![column_name!("id"), column_name!("c")])?;
 
-        // for rec_res in records {
-        //     let r = rec_res?;
-        //     let id: i64 = r.get(&column_name!("id"))?;
-        //     match id {
-        //         1 => assert_eq!(r.get::<i64>(&column_name!("c"))?, 1),
-        //         2 => {
-        //             match r.get::<i64>(&column_name!("c")) {
-        //                 Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
-        //                 _ => unreachable!(),
-        //             };
-        //             assert_eq!(r.get::<Option<i64>>(&column_name!("c"))?, None);
-        //         }
-        //         _ => unreachable!(),
-        //     }
-        // }
+        for rec_res in records {
+            let r = rec_res?;
+            let id: i64 = r.get(&column_name!("id"))?;
+            match id {
+                1 => assert_eq!(r.get::<i64>(&column_name!("c"))?, 1),
+                2 => {
+                    match r.get::<i64>(&column_name!("c")) {
+                        Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
+                        _ => unreachable!(),
+                    };
+                    assert_eq!(r.get::<Option<i64>>(&column_name!("c"))?, None);
+                }
+                _ => unreachable!(),
+            }
+        }
 
         tx.commit()?;
 
