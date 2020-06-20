@@ -47,9 +47,8 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let mut vtable = vtable_repo.read(&vtable_id)?;
         vtable.alter(input.action)?;
 
-        let current_version = version_repo
-            .active_versions(&vtable_id)?
-            .current_version()?;
+        let active_versions = version_repo.active_versions(&vtable_id)?;
+        let current_version = active_versions.current_version()?;
         let next_version = current_version.create_next(input.action)?;
 
         vtable_repo.update(&vtable)?;

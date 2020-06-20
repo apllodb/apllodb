@@ -28,17 +28,14 @@ impl ActiveVersions {
     ///
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - No version is active (table must be already DROPped).
-    pub fn current_version(&self) -> ApllodbResult<ActiveVersion> {
-        self.0
-            .first()
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::UndefinedTable,
-                    "no active version found",
-                    None,
-                )
-            })
-            .map(|v| v.clone())
+    pub fn current_version(&self) -> ApllodbResult<&ActiveVersion> {
+        self.0.first().ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::UndefinedTable,
+                "no active version found",
+                None,
+            )
+        })
     }
 
     /// Returns the biggest version that can accept `column_values`.
@@ -52,14 +49,14 @@ impl ActiveVersions {
     pub fn version_to_insert(
         &self,
         column_values: &HashMap<ColumnName, Expression>,
-    ) -> ApllodbResult<ActiveVersion> {
+    ) -> ApllodbResult<&ActiveVersion> {
         // FIXME use `map_while` after it is stabilized: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map_while
         let mut errors_per_versions: Vec<(&ActiveVersion, ApllodbError)> = Vec::new();
         for version in &self.0 {
             if let Err(e) = version.check_version_constraint(column_values) {
                 errors_per_versions.push((version, e));
             } else {
-                return Ok(version.clone());
+                return Ok(version);
             }
         }
 
