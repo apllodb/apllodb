@@ -11,6 +11,9 @@ pub(in crate::sqlite) struct VersionDao<'tx> {
     sqlite_tx: &'tx rusqlite::Transaction<'tx>,
 }
 
+const TABLE_NAME_SQLITE_MASTER: &str = "sqlite_master";
+const CNAME_SQLITE_MASTER_SQL: &str = "sql";
+
 impl<'tx> VersionDao<'tx> {
     pub(in crate::sqlite) fn new(sqlite_tx: &'tx rusqlite::Transaction<'tx>) -> Self {
         Self { sqlite_tx }
@@ -43,10 +46,56 @@ impl<'tx> VersionDao<'tx> {
         &self,
         vtable_id: &VTableId,
     ) -> ApllodbResult<Vec<ActiveVersion>> {
-        //         let sql = format!("
-        // SELECT
-        //         ");
+        let sql = format!(
+            r#"
+            SELECT {} FROM {} WHERE type = "table" AND name LIKE "{}__%"
+            "#,
+            CNAME_SQLITE_MASTER_SQL,
+            TABLE_NAME_SQLITE_MASTER,
+            vtable_id.table_name().as_str()
+        );
 
-        todo!()
+        let mut stmt = self.sqlite_tx.prepare(&sql).map_err(|e| {
+            ApllodbError::new(
+                ApllodbErrorKind::IoError,
+                format!(
+                    "SQLite raised an error while preparing for selecting table `{}`",
+                    TABLE_NAME_SQLITE_MASTER
+                ),
+                Some(Box::new(e)),
+            )
+        })?;
+
+        let create_table_sqls: Vec<String> = stmt
+            .query_map(rusqlite::NO_PARAMS, |row| row.get(CNAME_SQLITE_MASTER_SQL))
+            .map_err(|e| {
+                ApllodbError::new(
+                    ApllodbErrorKind::IoError,
+                    format!(
+                        "SQLite raised an error while fetching `{}` column value from table `{}`",
+                        CNAME_SQLITE_MASTER_SQL, TABLE_NAME_SQLITE_MASTER
+                    ),
+                    Some(Box::new(e)),
+                )
+            })?
+            .collect::<rusqlite::Result<Vec<String>>>()
+            .map_err(|e| {
+                ApllodbError::new(
+                    ApllodbErrorKind::IoError,
+                    format!(
+                        "SQLite raised an error while selecting table `{}`",
+                        TABLE_NAME_SQLITE_MASTER
+                    ),
+                    Some(Box::new(e)),
+                )
+            })?;
+
+        create_table_sqls
+            .iter()
+            .map(|create_table_sql| {
+                let create_table_sql = CreateTableSqlForVersion::new(create_table_sql);
+                create_table_sql.into_active_version(vtable_id.database_name())
+            })
+            .collect::<ApllodbResult<Vec<ActiveVersion>>>()
     }
 }
