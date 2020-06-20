@@ -243,6 +243,8 @@ mod tests {
         //     }
         // }
 
+        tx.commit()?;
+
         Ok(())
     }
 }

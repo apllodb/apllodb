@@ -41,7 +41,8 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     fn update(&self, vtable: &VTable) -> ApllodbResult<()> {
-        todo!()
+        // TODO update VTable on TableWideConstraints change.
+        Ok(())
     }
 }
 
