@@ -4,12 +4,9 @@ mod repository;
 
 pub(in crate::sqlite) use dao::VTableDao;
 
-use crate::sqlite::SqliteDatabase;
+use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteDatabase};
 use apllodb_immutable_schema_engine_domain::ImmutableSchemaTx;
-use apllodb_shared_components::{
-    data_structure::DatabaseName,
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-};
+use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
 use id::SqliteTxId;
 use repository::{VTableRepositoryImpl, VersionRepositoryImpl};
 use std::cmp::Ordering;
@@ -56,10 +53,9 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
         let database_name = { db.name().clone() };
 
         let tx = db.sqlite_conn().transaction().map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
+            map_sqlite_err(
+                e,
                 format!("backend sqlite3 raised an error on beginning transaction"),
-                Some(Box::new(e)),
             )
         })?;
 
@@ -78,10 +74,9 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     ///   - rusqlite raises an error.
     fn commit(self) -> ApllodbResult<()> {
         self.sqlite_tx.commit().map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
-                format!("backend sqlite3 raised an error on committing transaction"),
-                Some(Box::new(e)),
+            map_sqlite_err(
+                e,
+                "backend sqlite3 raised an error on committing transaction",
             )
         })?;
         Ok(())
@@ -93,11 +88,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     ///   - rusqlite raises an error.
     fn abort(self) -> ApllodbResult<()> {
         self.sqlite_tx.rollback().map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
-                format!("backend sqlite3 raised an error on committing transaction"),
-                Some(Box::new(e)),
-            )
+            map_sqlite_err(e, "backend sqlite3 raised an error on aborting transaction")
         })?;
         Ok(())
     }
@@ -123,11 +114,11 @@ mod tests {
     use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
-        column_constraints, column_definition, column_definitions, column_name, const_expr,
+        column_constraints, column_definition, column_definitions, column_name,
         data_structure::{AlterTableAction, DataTypeKind},
         data_type,
         error::{ApllodbErrorKind, ApllodbResult},
-        hmap, table_constraints, table_name,
+        table_constraints, table_name,
     };
     use apllodb_storage_engine_interface::Transaction;
 

@@ -5,6 +5,9 @@ pub mod factory_macro;
 /// # Examples
 ///
 /// ```
+/// use apllodb_shared_components::hmap;
+/// use std::collections::HashMap;
+///
 /// let h = hmap! { "k" => "v" };
 ///
 /// let mut h2: HashMap<&str, &str> = HashMap::new();
@@ -16,7 +19,7 @@ pub mod factory_macro;
 macro_rules! hmap(
     { $($key:expr => $value:expr),+ } => {
         {
-            let mut m = ::std::collections::HashMap::new();
+            let mut m = std::collections::HashMap::new();
             $(
                 m.insert($key, $value);
             )+

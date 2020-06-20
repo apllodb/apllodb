@@ -1,10 +1,10 @@
 mod create_table_sql_for_version;
 mod sqlite_table_name_for_version;
 
+use crate::sqlite::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId};
-use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::error::ApllodbResult;
 use create_table_sql_for_version::CreateTableSqlForVersion;
-use sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao<'tx> {
@@ -31,13 +31,12 @@ impl<'tx> VersionDao<'tx> {
             .execute_named(sql.as_str(), &[])
             .map(|_| ())
             .map_err(|e| {
-                ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+                map_sqlite_err(
+                    e,
                     format!(
                         "SQLite raised an error creating table for version `{:?}`",
                         version.id()
                     ),
-                    Some(Box::new(e)),
                 )
             })
     }
@@ -56,37 +55,34 @@ impl<'tx> VersionDao<'tx> {
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql).map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
+            map_sqlite_err(
+                e,
                 format!(
                     "SQLite raised an error while preparing for selecting table `{}`",
                     TABLE_NAME_SQLITE_MASTER
                 ),
-                Some(Box::new(e)),
             )
         })?;
 
         let create_table_sqls: Vec<String> = stmt
             .query_map(rusqlite::NO_PARAMS, |row| row.get(CNAME_SQLITE_MASTER_SQL))
             .map_err(|e| {
-                ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+                map_sqlite_err(
+                    e,
                     format!(
                         "SQLite raised an error while fetching `{}` column value from table `{}`",
                         CNAME_SQLITE_MASTER_SQL, TABLE_NAME_SQLITE_MASTER
                     ),
-                    Some(Box::new(e)),
                 )
             })?
             .collect::<rusqlite::Result<Vec<String>>>()
             .map_err(|e| {
-                ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+                map_sqlite_err(
+                    e,
                     format!(
                         "SQLite raised an error while selecting table `{}`",
                         TABLE_NAME_SQLITE_MASTER
                     ),
-                    Some(Box::new(e)),
                 )
             })?;
 

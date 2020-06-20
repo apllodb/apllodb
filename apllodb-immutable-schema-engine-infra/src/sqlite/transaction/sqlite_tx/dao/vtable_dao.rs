@@ -1,3 +1,4 @@
+use crate::sqlite::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{TableWideConstraints, VTable, VTableId};
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use log::error;
@@ -29,13 +30,12 @@ CREATE TABLE IF NOT EXISTS {} (
             .execute(sql.as_str(), rusqlite::params![])
             .map(|_| ())
             .map_err(|e| {
-                ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+                map_sqlite_err(
+                    e,
                     format!(
                         "backend sqlite3 raised an error on creating metadata table `{}`",
                         TABLE_NAME
                     ),
-                    Some(Box::new(e)),
                 )
             })?;
         Ok(())
@@ -122,13 +122,12 @@ CREATE TABLE IF NOT EXISTS {} (
             )),
             Err(e) => {
                 error!("unexpected SQLite error: {:?}", e);
-                Err(ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+                Err(map_sqlite_err(
+                    e,
                     format!(
                         "SQLite raised an error creating table `{}`'s metadata",
                         table_name
                     ),
-                    Some(Box::new(e)),
                 ))
             }
             Ok(_) => Ok(()),
@@ -152,40 +151,37 @@ CREATE TABLE IF NOT EXISTS {} (
 
         let table_name = format!("{}", vtable_id.table_name());
 
-        let mut stmt = self.sqlite_tx.prepare(&sql).or_else(|e| {
+        let mut stmt = self.sqlite_tx.prepare(&sql).map_err(|e| {
             error!("unexpected SQLite error: {:?}", e);
-            Err(ApllodbError::new(
-                ApllodbErrorKind::IoError,
+            map_sqlite_err(
+                e,
                 format!(
                     "SQLite raised an error while preparing for selecting table `{}`'s metadata",
                     table_name
                 ),
-                Some(Box::new(e)),
-            ))
+            )
         })?;
         let mut rows = stmt
             .query_named(&[(":table_name", &table_name)])
-            .or_else(|e| {
-                Err(ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+            .map_err(|e| {
+                map_sqlite_err(
+                    e,
                     format!(
                         "SQLite raised an error while selecting table `{}`'s metadata",
                         table_name
                     ),
-                    Some(Box::new(e)),
-                ))
+                )
             })?;
         let row = rows
             .next()
-            .or_else(|e| {
-                Err(ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+            .map_err(|e| {
+                map_sqlite_err(
+                    e,
                     format!(
                         "SQLite raised an error while fetching row of table `{}`'s metadata",
                         table_name
                     ),
-                    Some(Box::new(e)),
-                ))
+                )
             })?
             .ok_or_else(|| {
                 ApllodbError::new(

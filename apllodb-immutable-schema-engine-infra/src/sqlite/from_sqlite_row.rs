@@ -39,10 +39,9 @@ pub(crate) trait FromSqliteRow {
         let data_type = column_data_type.data_type();
 
         let err_conv = |e: rusqlite::Error| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
+            map_sqlite_err(
+                e,
                 format!("failed to get column `{}`'s value from SQLite", column_name),
-                Some(Box::new(e)),
             )
         };
 

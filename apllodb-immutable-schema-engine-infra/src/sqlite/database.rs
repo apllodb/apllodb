@@ -1,7 +1,7 @@
-use super::transaction::VTableDao;
+use super::{sqlite_error::map_sqlite_err, transaction::VTableDao};
 use apllodb_shared_components::{
     data_structure::DatabaseName,
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    error::{ApllodbResult},
     traits::Database,
 };
 
@@ -43,11 +43,7 @@ impl SqliteDatabase {
     fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<rusqlite::Connection> {
         let path = Self::sqlite_db_path(&db_name);
         let conn = rusqlite::Connection::open(path).map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::IoError,
-                format!("backend sqlite3 raised an error on creating connection"),
-                Some(Box::new(e)),
-            )
+            map_sqlite_err(e, "backend sqlite3 raised an error on creating connection")
         })?;
         Ok(conn)
     }
