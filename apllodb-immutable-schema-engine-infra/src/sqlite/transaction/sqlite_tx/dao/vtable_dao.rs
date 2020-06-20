@@ -97,7 +97,6 @@ CREATE TABLE IF NOT EXISTS {} (
                     _,
                 ),
             ) => Err(ApllodbError::new(
-                // TODO TableDao::create() 意外にも現れは汎用的なエラー処理ななんとかする
                 ApllodbErrorKind::DeadlockDetected,
                 format!(
                     "table `{}` is exclusively locked by another transaction for too long time",
@@ -195,26 +194,26 @@ CREATE TABLE IF NOT EXISTS {} (
             })?;
 
         let table_wide_constraints_str: String =
-            row.get(CNAME_TABLE_WIDE_CONSTRAINTS).or_else(|e| {
-                Err(ApllodbError::new(
+            row.get(CNAME_TABLE_WIDE_CONSTRAINTS).map_err(|e| {
+                ApllodbError::new(
                     ApllodbErrorKind::IoError,
                     format!(
                         "table `{}`'s metadata row not have column `{}`",
                         table_name, CNAME_TABLE_WIDE_CONSTRAINTS
                     ),
                     Some(Box::new(e)),
-                ))
+                )
             })?;
         let table_wide_constraints: TableWideConstraints =
-            serde_yaml::from_str(&table_wide_constraints_str).or_else(|e| {
-                Err(ApllodbError::new(
+            serde_yaml::from_str(&table_wide_constraints_str).map_err(|e| {
+                ApllodbError::new(
                     ApllodbErrorKind::DeserializationError,
                     format!(
                         "failed to deserialize table `{}`'s metadata: `{}`",
                         table_name, table_wide_constraints_str
                     ),
                     Some(Box::new(e)),
-                ))
+                )
             })?;
 
         let vtable = VTable::new(vtable_id.clone(), table_wide_constraints);
