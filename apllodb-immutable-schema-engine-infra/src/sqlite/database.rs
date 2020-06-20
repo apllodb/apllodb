@@ -1,9 +1,8 @@
 use super::{sqlite_error::map_sqlite_err, transaction::VTableDao};
 use apllodb_shared_components::{
-    data_structure::DatabaseName,
-    error::{ApllodbResult},
-    traits::Database,
+    data_structure::DatabaseName, error::ApllodbResult, traits::Database,
 };
+use std::time::Duration;
 
 /// Database context.
 #[derive(Debug)]
@@ -45,6 +44,10 @@ impl SqliteDatabase {
         let conn = rusqlite::Connection::open(path).map_err(|e| {
             map_sqlite_err(e, "backend sqlite3 raised an error on creating connection")
         })?;
+
+        conn.busy_timeout(Duration::from_secs(1))
+            .map_err(|e| map_sqlite_err(e, "failed to set busy timeout to SQLite"))?;
+
         Ok(conn)
     }
 
