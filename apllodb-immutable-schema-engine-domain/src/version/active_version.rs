@@ -4,10 +4,11 @@ use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, TableConstraints,
 };
 use apllodb_shared_components::{
-    data_structure::ColumnDataType,
+    data_structure::{ColumnDataType, Expression},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Active Version.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -122,6 +123,65 @@ impl ActiveVersion {
                 }))
             }
         }
+    }
+
+    /// Returns the biggest version that can accept `column_values`.
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](a.html) when:
+    ///   - This version doesn't have such column.
+    /// - [NotNullViolation](error/enum.ApllodbErrorKind.html#variant.NotNullViolation) when:
+    ///   - Not inserting into a NOT NULL column.
+    ///   - Inserting NULL to column with NOT NULL constraint.
+    /// - [CheckViolation](error/enum.ApllodbErrorKind.html#variant.CheckViolation) when:
+    ///   - Column value does not satisfy CHECK constraint.
+    pub(in crate::version) fn check_version_constraint(
+        &self,
+        column_values: &HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()> {
+        let column_data_types = self.column_data_types();
+
+        // Check if any column not to be inserted is NOT NULL.
+        let not_null_columns = column_data_types
+            .iter()
+            .filter(|cdt| !cdt.data_type().nullable());
+        for not_null_column_name in not_null_columns.map(|cdt| cdt.column_name()) {
+            if !column_values.contains_key(not_null_column_name) {
+                return Err(ApllodbError::new(
+                    ApllodbErrorKind::NotNullViolation,
+                    format!(
+                        "column `{}` (NOT NULL) must be included in INSERT command",
+                        not_null_column_name,
+                    ),
+                    None,
+                ));
+            }
+        }
+
+        // Check column value to insert.
+        for (column_name, _expr) in column_values {
+            let _column_data_type = column_data_types
+                .iter()
+                .find(|cdt| cdt.column_name() == column_name)
+                .ok_or_else(|| {
+                    ApllodbError::new(
+                        ApllodbErrorKind::UndefinedColumn,
+                        format!(
+                            "column `{}` does not exist in `{:?}`",
+                            column_name,
+                            self.id()
+                        ),
+                        None,
+                    )
+                })?;
+
+            // TODO implement NullViolation error detection after Expression can hold NULL.
+
+            // TODO implement CheckViolation error detection
+        }
+
+        Ok(())
     }
 
     /// Returns ColumnDataType of `column_name` if this version has it.

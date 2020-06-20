@@ -16,7 +16,7 @@ pub enum NumericConstant {
 
 /// Integer constant.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct IntegerConstant(u64); // TODO re-think about data size
+pub struct IntegerConstant(pub u64); // TODO re-think about data size
 
 impl From<u64> for Constant {
     fn from(v: u64) -> Self {

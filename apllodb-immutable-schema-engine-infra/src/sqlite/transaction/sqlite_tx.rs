@@ -114,11 +114,11 @@ mod tests {
     use crate::sqlite::{SqliteDatabase, SqliteRowIterator};
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
-        column_constraints, column_definition, column_definitions, column_name,
+        column_constraints, column_definition, column_definitions, column_name, const_expr,
         data_structure::{AlterTableAction, DataTypeKind},
         data_type,
         error::{ApllodbErrorKind, ApllodbResult},
-        table_constraints, table_name,
+        hmap, table_constraints, table_name,
     };
     use apllodb_storage_engine_interface::Transaction;
 
@@ -200,10 +200,10 @@ mod tests {
 
         tx.create_table(&tn, &tc, &coldefs)?;
 
-        // tx.insert(
-        //     &tn,
-        //     hmap! { column_name!("id") => const_expr!(1), column_name!("c") => const_expr!(1) },
-        // )?;
+        tx.insert(
+            &tn,
+            hmap! { column_name!("id") => const_expr!(1), column_name!("c") => const_expr!(1) },
+        )?;
 
         tx.alter_table(
             &tn,
@@ -212,7 +212,7 @@ mod tests {
             },
         )?;
 
-        // tx.insert(&tn, hmap! { column_name!("id") => const_expr!(2) })?;
+        tx.insert(&tn, hmap! { column_name!("id") => const_expr!(2) })?;
 
         // Selects both v1's record (id=1) and v2's record (id=2),
         // although v2 does not have column "c".

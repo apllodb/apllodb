@@ -21,6 +21,9 @@ pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 
 impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
     for AlterTableUseCaseInput<'a, 'tx, 'db, Tx>
 {
+    fn validate(&self) -> ApllodbResult<()> {
+        Ok(())
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
@@ -44,7 +47,9 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let mut vtable = vtable_repo.read(&vtable_id)?;
         vtable.alter(input.action)?;
 
-        let current_version = version_repo.current_version(&vtable_id)?;
+        let current_version = version_repo
+            .active_versions(&vtable_id)?
+            .current_version()?;
         let next_version = current_version.create_next(input.action)?;
 
         vtable_repo.update(&vtable)?;

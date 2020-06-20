@@ -1,6 +1,12 @@
 use crate::sqlite::{transaction::sqlite_tx::dao::VersionDao, SqliteRowIterator, SqliteTx};
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId, VersionRepository, VTableId, ActiveVersions};
-use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+use apllodb_immutable_schema_engine_domain::{
+    ActiveVersion, ActiveVersions, VTableId, VersionId, VersionRepository,
+};
+use apllodb_shared_components::{
+    data_structure::{ColumnName, Expression},
+    error::ApllodbResult,
+};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
@@ -35,6 +41,15 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter> {
         todo!()
+    }
+
+    fn insert(
+        &self,
+        version_id: &VersionId,
+        column_values: &HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()> {
+        self.version_dao().insert(&version_id, &column_values)?;
+        Ok(())
     }
 
     fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions> {

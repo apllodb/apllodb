@@ -1,9 +1,7 @@
 use super::ActiveVersions;
 use crate::{ActiveVersion, ImmutableSchemaTx, VTableId, VersionId, VersionRowIter};
-use apllodb_shared_components::{
-    data_structure::ColumnName,
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-};
+use apllodb_shared_components::{data_structure::{Expression, ColumnName}, error::ApllodbResult};
+use std::collections::HashMap;
 
 pub trait VersionRepository<'tx, 'db: 'tx> {
     type Tx: ImmutableSchemaTx<'tx, 'db>;
@@ -30,27 +28,15 @@ pub trait VersionRepository<'tx, 'db: 'tx> {
     ///   - At least one `column_names` are not included in this `version`.
     fn full_scan(
         &self,
-        version: &VersionId,
+        version_id: &VersionId,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter>;
 
-    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions>;
+    fn insert(
+        &self,
+        version_id: &VersionId,
+        column_values: &HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()>;
 
-    /// # Failures
-    ///
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
-    ///   - No version is active (table must be already DROPped).
-    fn current_version(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersion> {
-        self.active_versions(vtable_id)?
-            .as_sorted_slice()
-            .first()
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::UndefinedTable,
-                    "no active version found",
-                    None,
-                )
-            })
-            .map(|v| v.clone())
-    }
+    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions>;
 }

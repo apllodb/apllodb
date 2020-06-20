@@ -2,6 +2,7 @@ use apllodb_immutable_schema_engine_application::use_case::{
     transaction::{
         alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
         create_table::{CreateTableUseCase, CreateTableUseCaseInput},
+        insert::{InsertUseCase, InsertUseCaseInput},
     },
     UseCase,
 };
@@ -16,7 +17,7 @@ use apllodb_shared_components::{
     error::ApllodbResult,
 };
 use apllodb_storage_engine_interface::{Row, Transaction};
-use std::marker::PhantomData;
+use std::{collections::HashMap, marker::PhantomData};
 
 pub struct TransactionController<
     'tx,
@@ -102,13 +103,19 @@ impl<
     ) -> ApllodbResult<Self::RowIter> {
         todo!()
     }
+
     fn insert(
         &'tx self,
         table_name: &TableName,
-        column_values: std::collections::HashMap<ColumnName, Expression>,
+        column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
-        todo!()
+        let database_name = self.database_name().clone();
+        let input = InsertUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
+        let _ = InsertUseCase::run(input)?;
+
+        Ok(())
     }
+
     fn update(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }

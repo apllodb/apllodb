@@ -1,4 +1,9 @@
 use crate::ActiveVersion;
+use apllodb_shared_components::{
+    data_structure::{ColumnName, Expression},
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+};
+use std::collections::HashMap;
 
 /// Collection of [ActiveVersion](x.html) sorted from latest to oldest.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -17,5 +22,74 @@ impl<I: IntoIterator<Item = ActiveVersion>> From<I> for ActiveVersions {
 impl ActiveVersions {
     pub fn as_sorted_slice(&self) -> &[ActiveVersion] {
         &self.0
+    }
+
+    /// # Failures
+    ///
+    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    ///   - No version is active (table must be already DROPped).
+    pub fn current_version(&self) -> ApllodbResult<ActiveVersion> {
+        self.0
+            .first()
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedTable,
+                    "no active version found",
+                    None,
+                )
+            })
+            .map(|v| v.clone())
+    }
+
+    /// Returns the biggest version that can accept `column_values`.
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](a.html) when:
+    ///   - No active version has such column.
+    /// - [IntegrityConstraintViolation](error/enum.ApllodbErrorKind.html#variant.IntegrityConstraintViolation) when:
+    ///   - No active version can accept the column value.
+    pub fn version_to_insert(
+        &self,
+        column_values: &HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<ActiveVersion> {
+        // FIXME use `map_while` after it is stabilized: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map_while
+        let mut errors_per_versions: Vec<(&ActiveVersion, ApllodbError)> = Vec::new();
+        for version in &self.0 {
+            if let Err(e) = version.check_version_constraint(column_values) {
+                errors_per_versions.push((version, e));
+            } else {
+                return Ok(version.clone());
+            }
+        }
+
+        // summarize errors
+
+        // none version has a specified column.
+        if errors_per_versions.iter().map(|(_, e)| e.kind()).all(|k| {
+            if let ApllodbErrorKind::UndefinedColumn = k {
+                true
+            } else {
+                false
+            }
+        }) {
+            Err(ApllodbError::new(
+                ApllodbErrorKind::UndefinedColumn,
+                format!(
+                    "at least 1 column does not exist any version: {:?}",
+                    errors_per_versions,
+                ),
+                None,
+            ))
+        } else {
+            Err(ApllodbError::new(
+                ApllodbErrorKind::IntegrityConstraintViolation,
+                format!(
+                    "all versions reject to INSERT {:?}: {:?}",
+                    column_values, errors_per_versions,
+                ),
+                None,
+            ))
+        }
     }
 }

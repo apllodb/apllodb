@@ -23,6 +23,9 @@ pub struct CreateTableUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx,
 impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
     for CreateTableUseCaseInput<'a, 'tx, 'db, Tx>
 {
+    fn validate(&self) -> ApllodbResult<()> {
+        Ok(())
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]

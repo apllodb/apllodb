@@ -2,9 +2,14 @@ mod create_table_sql_for_version;
 mod sqlite_table_name_for_version;
 
 use crate::sqlite::sqlite_error::map_sqlite_err;
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId};
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId, VersionId};
+use apllodb_shared_components::{
+    data_structure::{ColumnName, Expression},
+    error::ApllodbResult,
+};
 use create_table_sql_for_version::CreateTableSqlForVersion;
+use sqlite_table_name_for_version::SqliteTableNameForVersion;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao<'tx> {
@@ -39,6 +44,48 @@ impl<'tx> VersionDao<'tx> {
                     ),
                 )
             })
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
+        &self,
+        version_id: &VersionId,
+        column_values: &HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()> {
+        use crate::sqlite::to_sql_string::ToSqlString;
+
+        let sqlite_table_name = SqliteTableNameForVersion::new(version_id, true);
+        let sql = format!(
+            "
+        INSERT INTO {}
+          ({})
+          VALUES ({})
+        ", // FIXME might lead to SQL injection.
+            sqlite_table_name.as_str(),
+            column_values
+                .keys()
+                .map(|cn| cn.as_str())
+                .collect::<Vec<&str>>()
+                .join(", "),
+            column_values
+                .values()
+                .map(|expr| expr.to_sql_string())
+                .collect::<Vec<String>>()
+                .join(", "),
+        );
+
+        self.sqlite_tx
+            .execute(&sql, rusqlite::NO_PARAMS)
+            .map_err(|e| {
+                map_sqlite_err(
+                    e,
+                    format!(
+                        "failed to insert a record into SQLite with this command: {}",
+                        sql
+                    ),
+                )
+            })?;
+
+        Ok(())
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_versions(
