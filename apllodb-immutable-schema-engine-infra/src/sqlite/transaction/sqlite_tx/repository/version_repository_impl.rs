@@ -37,10 +37,11 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
 
     fn full_scan(
         &self,
-        version: &VersionId,
+        version_id: &VersionId,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter> {
-        todo!()
+        let version_row_iter = self.version_dao().full_scan(&version_id, &column_names)?;
+        Ok(version_row_iter)
     }
 
     fn insert(
@@ -59,7 +60,7 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
 }
 
 impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
-    fn version_dao(&self) -> VersionDao<'_> {
+    fn version_dao(&self) -> VersionDao<'tx, 'db> {
         VersionDao::new(&self.tx.sqlite_tx)
     }
 }

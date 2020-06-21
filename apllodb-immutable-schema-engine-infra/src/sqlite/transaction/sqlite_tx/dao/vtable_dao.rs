@@ -4,15 +4,15 @@ use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbRe
 use log::error;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VTableDao<'tx> {
-    sqlite_tx: &'tx rusqlite::Transaction<'tx>,
+pub(in crate::sqlite) struct VTableDao<'tx, 'db: 'tx> {
+    sqlite_tx: &'tx rusqlite::Transaction<'db>,
 }
 
 const TABLE_NAME: &str = "_vtable_metadata";
 const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
-impl<'tx> VTableDao<'tx> {
+impl<'tx, 'db: 'tx> VTableDao<'tx, 'db> {
     pub(in crate::sqlite) fn create_table_if_not_exist(
         sqlite_conn: &rusqlite::Connection,
     ) -> ApllodbResult<()> {
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS {} (
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn new(
-        sqlite_tx: &'tx rusqlite::Transaction<'tx>,
+        sqlite_tx: &'tx rusqlite::Transaction<'db>,
     ) -> Self {
         Self { sqlite_tx }
     }

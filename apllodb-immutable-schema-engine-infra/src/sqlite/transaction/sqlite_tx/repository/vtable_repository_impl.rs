@@ -47,7 +47,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 }
 
 impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
-    fn vtable_dao(&self) -> VTableDao<'_> {
+    fn vtable_dao(&self) -> VTableDao<'tx, 'db> {
         VTableDao::new(&self.tx.sqlite_tx)
     }
 }

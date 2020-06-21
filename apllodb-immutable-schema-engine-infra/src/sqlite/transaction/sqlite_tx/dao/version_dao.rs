@@ -1,7 +1,7 @@
 mod create_table_sql_for_version;
 mod sqlite_table_name_for_version;
 
-use crate::sqlite::sqlite_error::map_sqlite_err;
+use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteRowIterator};
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId, VersionId};
 use apllodb_shared_components::{
     data_structure::{ColumnName, Expression},
@@ -12,15 +12,15 @@ use sqlite_table_name_for_version::SqliteTableNameForVersion;
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VersionDao<'tx> {
-    sqlite_tx: &'tx rusqlite::Transaction<'tx>,
+pub(in crate::sqlite) struct VersionDao<'tx, 'db: 'tx> {
+    sqlite_tx: &'tx rusqlite::Transaction<'db>,
 }
 
 const TABLE_NAME_SQLITE_MASTER: &str = "sqlite_master";
 const CNAME_SQLITE_MASTER_SQL: &str = "sql";
 
-impl<'tx> VersionDao<'tx> {
-    pub(in crate::sqlite) fn new(sqlite_tx: &'tx rusqlite::Transaction<'tx>) -> Self {
+impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
+    pub(in crate::sqlite) fn new(sqlite_tx: &'tx rusqlite::Transaction<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -44,6 +44,14 @@ impl<'tx> VersionDao<'tx> {
                     ),
                 )
             })
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan(
+        &self,
+        version_id: &VersionId,
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<SqliteRowIterator<'db>> {
+        todo!()
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
