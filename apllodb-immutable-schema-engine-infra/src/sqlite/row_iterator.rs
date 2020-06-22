@@ -1,32 +1,51 @@
 use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::VersionRowIter;
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::{data_structure::ColumnDataType, error::ApllodbResult};
 use apllodb_storage_engine_interface::Row;
-use std::fmt::Debug;
+use std::{collections::VecDeque, fmt::Debug};
 
-type ToApllodbRow = Box<dyn FnMut(&rusqlite::Row<'_>) -> rusqlite::Result<Row>>;
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct SqliteRowIterator(
+    // Better to hold rusqlite::Rows or rusqlite::MappedRows (which implements Iterator) inside
+    // to reduce memory consumption but I found it's impossible.
+    //
+    // rusqlite::Row<'stmt> requires rusqlite::Statement has the same or longer lifetime to it.
+    // It seems impossible to have such lifetime and return rusqlite::Row<'stmt> to a caller who makes it.
+    //
+    // rusqlite::MappedRows<'stmt, F> has the same difficulty with rusqlite::Row.
+    // Besides, converting rusqlite::MappedRows into crate::Row requires `&[crate::ColumnDataType]`
+    // so this conversion has to be a closure capturing `&[crate::ColumnDataType]` and an instance
+    // of type `F: FnMut(&rusqlite::Row) -> rusqlite::Result<T>` can be determined only where
+    // the closure is written with `&[crate::ColumnDataType]`.
+    // So type parameter F cannot be passed to a caller who cannot resolve F with the closure instance.
+    VecDeque<Row>,
+);
 
-pub struct SqliteRowIterator<'stmt>(rusqlite::MappedRows<'stmt, ToApllodbRow>);
-
-impl Debug for SqliteRowIterator<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SqliteRowIterator(...)")
-    }
-}
-
-impl Iterator for SqliteRowIterator<'_> {
+impl Iterator for SqliteRowIterator {
     type Item = ApllodbResult<Row>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let rec_res: rusqlite::Result<Row> = self.0.next()?;
-        Some(rec_res.map_err(|e| map_sqlite_err(e, "SQLite raised error while iterating next row")))
+        self.0.pop_front().map(Ok)
     }
 }
 
-impl VersionRowIter for SqliteRowIterator<'_> {}
+impl VersionRowIter for SqliteRowIterator {}
 
-impl<'stmt> From<rusqlite::MappedRows<'stmt, ToApllodbRow>> for SqliteRowIterator<'stmt> {
-    fn from(sqlite_rows: rusqlite::MappedRows<'stmt, ToApllodbRow>) -> Self {
-        Self(sqlite_rows)
+impl SqliteRowIterator {
+    pub(in crate::sqlite) fn new(
+        sqlite_rows: &mut rusqlite::Rows<'_>,
+        column_data_types: &[&ColumnDataType],
+    ) -> ApllodbResult<Self> {
+        use crate::sqlite::from_sqlite_row::FromSqliteRow;
+
+        let mut rows: VecDeque<Row> = VecDeque::new();
+        while let Some(sqlite_row) = sqlite_rows
+            .next()
+            .map_err(|e| map_sqlite_err(e, "failed to get next rusqlite::Row"))?
+        {
+            let row = Row::from_sqlite_row(sqlite_row, column_data_types)?;
+            rows.push_back(row);
+        }
+        Ok(Self(rows))
     }
 }

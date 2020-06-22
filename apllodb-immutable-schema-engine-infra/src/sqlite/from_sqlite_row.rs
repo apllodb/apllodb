@@ -1,14 +1,15 @@
+use super::sqlite_error::map_sqlite_err;
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, DataTypeKind, SqlValue},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    error::ApllodbResult,
     traits::SqlConvertible,
 };
 use apllodb_storage_engine_interface::{Row, RowBuilder};
 
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
-        sqlite_row: rusqlite::Row,
-        column_data_types: &[ColumnDataType],
+        sqlite_row: &rusqlite::Row<'_>,
+        column_data_types: &[&ColumnDataType],
     ) -> ApllodbResult<Row> {
         let mut builder = RowBuilder::default();
 
@@ -17,8 +18,14 @@ pub(crate) trait FromSqliteRow {
             let data_type = column_data_type.data_type();
 
             let sql_value = match data_type.kind() {
-                DataTypeKind::SmallInt | DataTypeKind::Integer | DataTypeKind::BigInt => {
-                    Self::_sqlite_row_value::<i64>(&sqlite_row, column_data_type)?
+                DataTypeKind::SmallInt => {
+                    Self::_sqlite_row_value::<i16>(&sqlite_row, &column_data_type)?
+                }
+                DataTypeKind::Integer => {
+                    Self::_sqlite_row_value::<i32>(&sqlite_row, &column_data_type)?
+                }
+                DataTypeKind::BigInt => {
+                    Self::_sqlite_row_value::<i64>(&sqlite_row, &column_data_type)?
                 }
             };
 
@@ -29,7 +36,7 @@ pub(crate) trait FromSqliteRow {
     }
 
     fn _sqlite_row_value<T>(
-        sqlite_row: &rusqlite::Row,
+        sqlite_row: &rusqlite::Row<'_>,
         column_data_type: &ColumnDataType,
     ) -> ApllodbResult<SqlValue>
     where

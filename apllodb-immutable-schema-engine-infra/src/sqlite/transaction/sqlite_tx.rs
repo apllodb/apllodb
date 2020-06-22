@@ -111,7 +111,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
 #[cfg(test)]
 mod tests {
     use super::SqliteTx;
-    use crate::sqlite::{SqliteDatabase};
+    use crate::sqlite::SqliteDatabase;
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
         column_constraints, column_definition, column_definitions, column_name, const_expr,
@@ -220,15 +220,16 @@ mod tests {
 
         for rec_res in records {
             let r = rec_res?;
-            let id: i64 = r.get(&column_name!("id"))?;
+            let id: i32 = r.get(&column_name!("id"))?;
             match id {
-                1 => assert_eq!(r.get::<i64>(&column_name!("c"))?, 1),
+                1 => assert_eq!(r.get::<i32>(&column_name!("c"))?, 1),
                 2 => {
-                    match r.get::<i64>(&column_name!("c")) {
-                        Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
+                    // Cannot fetch column `c` from v2. Note that v2's `c` is different from NULL,
+                    // although it is treated similarly to NULL in GROUP BY, ORDER BY operations.
+                    match r.get::<i32>(&column_name!("c")) {
+                        Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::UndefinedColumn),
                         _ => unreachable!(),
                     };
-                    assert_eq!(r.get::<Option<i64>>(&column_name!("c"))?, None);
                 }
                 _ => unreachable!(),
             }

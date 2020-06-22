@@ -15,7 +15,7 @@ pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
 
 impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, 'db> {
     type Tx = SqliteTx<'db>;
-    type VerRowIter = SqliteRowIterator<'db>;
+    type VerRowIter = SqliteRowIterator;
 
     fn new(tx: &'tx Self::Tx) -> Self {
         Self { tx }

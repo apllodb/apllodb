@@ -195,13 +195,12 @@ CREATE TABLE IF NOT EXISTS {} (
 
         let table_wide_constraints_str: String =
             row.get(CNAME_TABLE_WIDE_CONSTRAINTS).map_err(|e| {
-                ApllodbError::new(
-                    ApllodbErrorKind::IoError,
+                map_sqlite_err(
+                    e,
                     format!(
                         "table `{}`'s metadata row not have column `{}`",
                         table_name, CNAME_TABLE_WIDE_CONSTRAINTS
                     ),
-                    Some(Box::new(e)),
                 )
             })?;
         let table_wide_constraints: TableWideConstraints =

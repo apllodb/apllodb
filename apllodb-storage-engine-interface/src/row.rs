@@ -2,13 +2,13 @@ mod builder;
 
 pub use builder::RowBuilder;
 
+use apllodb_shared_components::traits::SqlConvertible;
 use apllodb_shared_components::{
     data_structure::{ColumnName, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use apllodb_shared_components::traits::SqlConvertible;
 
 /// Row representation used in storage engine.
 /// Row, unlike `Record`, does not deal with `Expression`s.
