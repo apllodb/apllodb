@@ -19,6 +19,13 @@ impl<I: VersionRowIter> Iterator for ImmutableSchemaRowIter<I> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        todo!()
+        let ver_row_iter = self.0.front_mut()?;
+        ver_row_iter.next().or_else(|| {
+            let _ = self
+                .0
+                .remove(0)
+                .expect("ver_row_iter exists so self.0 has first element");
+            self.next()
+        })
     }
 }
