@@ -118,7 +118,7 @@ mod tests {
         data_structure::{AlterTableAction, DataTypeKind},
         data_type,
         error::{ApllodbErrorKind, ApllodbResult},
-        hmap, table_constraints, table_name,
+        hmap, t_pk, table_constraints, table_name,
     };
     use apllodb_storage_engine_interface::Transaction;
 
@@ -128,12 +128,12 @@ mod tests {
         let mut db2 = db1.dup()?;
 
         let tn = &table_name!("t");
-        let tc = table_constraints!();
         let coldefs = column_definitions!(column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
             column_constraints!()
         ));
+        let tc = table_constraints!(t_pk!("c1"));
 
         let tx1 = TransactionController::<SqliteTx<'_>>::begin(&mut db1)?;
         let tx2 = TransactionController::<SqliteTx<'_>>::begin(&mut db2)?;
@@ -159,12 +159,12 @@ mod tests {
         let mut db = SqliteDatabase::new_for_test()?;
 
         let tn = &table_name!("t");
-        let tc = table_constraints!();
         let coldefs = column_definitions!(column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
             column_constraints!()
         ));
+        let tc = table_constraints!(t_pk!("c1"));
 
         let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
 
@@ -184,7 +184,6 @@ mod tests {
         let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
 
         let tn = &table_name!("t");
-        let tc = table_constraints!();
         let coldefs = column_definitions!(
             column_definition!(
                 "id",
@@ -197,6 +196,7 @@ mod tests {
                 column_constraints!()
             ),
         );
+        let tc = table_constraints!(t_pk!("id"));
 
         tx.create_table(&tn, &tc, &coldefs)?;
 

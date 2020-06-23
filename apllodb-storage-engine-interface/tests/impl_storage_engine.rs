@@ -132,7 +132,7 @@ pub mod empty_storage_engine {
     }
 }
 
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::{data_structure::{ColumnName, TableConstraintKind}, error::ApllodbResult};
 
 #[test]
 fn test_empty_storage_engine() -> ApllodbResult<()> {
@@ -145,7 +145,13 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
 
     let mut db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
     let tx = EmptyStorageEngine::begin_transaction(&mut db)?;
-    tx.create_table(&TableName::new("t")?, &TableConstraints::default(), &vec![])?;
+    tx.create_table(
+        &TableName::new("t")?,
+        &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+            column_names: vec![ColumnName::new("c1")?],
+        }])?,
+        &vec![],
+    )?;
     tx.abort()?;
 
     Ok(())

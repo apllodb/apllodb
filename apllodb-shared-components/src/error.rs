@@ -861,6 +861,10 @@ impl ApllodbError {
                 sqlstate: SqlState::new("58110".into()),
                 errcode: "ERRCODE_SERIALIZATION_ERROR".into(),
             },
+            ApllodbErrorKind::UndefinedPrimaryKey => ApllodbErrorAux {
+                sqlstate: SqlState::new("58200".into()),
+                errcode: "ERRCODE_UNDEFINED_PRIMARY_KEY_ERROR".into(),
+            },
         }
     }
 }

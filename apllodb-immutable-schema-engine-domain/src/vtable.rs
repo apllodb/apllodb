@@ -51,6 +51,8 @@ impl VTable {
     ///
     /// # Failures
     ///
+    /// - TODO [UndefinedPrimaryKey](a.html) when:
+    ///   - PRIMARY KEY is not defined.
     /// - Errors from [TableConstraints::new](foo.html).
     pub fn create(
         database_name: &DatabaseName,
