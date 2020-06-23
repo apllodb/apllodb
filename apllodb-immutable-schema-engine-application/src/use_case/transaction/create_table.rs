@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},
     error::ApllodbResult,
 };
-use apllodb_storage_engine_interface::TransactionId;
+
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]

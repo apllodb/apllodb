@@ -7,7 +7,6 @@ use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, Expression},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::Row;
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use sqlite_table_name_for_version::SqliteTableNameForVersion;
 use std::collections::HashMap;

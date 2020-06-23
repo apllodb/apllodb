@@ -1,7 +1,7 @@
 use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{ImmutableRow, VersionRowIter};
 use apllodb_shared_components::{data_structure::ColumnDataType, error::ApllodbResult};
-use apllodb_storage_engine_interface::Row;
+
 use std::{collections::VecDeque, fmt::Debug};
 
 #[derive(Clone, Eq, PartialEq, Debug)]

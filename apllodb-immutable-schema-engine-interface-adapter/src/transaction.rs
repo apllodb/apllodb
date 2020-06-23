@@ -17,7 +17,7 @@ use apllodb_shared_components::{
     },
     error::ApllodbResult,
 };
-use apllodb_storage_engine_interface::{Transaction, TransactionId};
+use apllodb_storage_engine_interface::Transaction;
 use std::{collections::HashMap, marker::PhantomData};
 
 pub struct TransactionController<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> {

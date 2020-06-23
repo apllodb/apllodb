@@ -9,4 +9,4 @@ pub use database::SqliteDatabase;
 pub use row_iterator::SqliteRowIterator;
 pub use transaction::SqliteTx;
 
-pub(crate) use from_sqlite_row::FromSqliteRow;
+
