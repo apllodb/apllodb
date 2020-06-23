@@ -20,10 +20,11 @@ impl ImmutableRowBuilder {
     /// - [DuplicateColumn](error/enum.ApllodbErrorKind.html#variant.DuplicateColumn) when:
     ///   - Same `ColumnName` added twice.
     pub fn add_pk(
+        // TODO このシグネチャだと複合PKに対応できてない
         mut self,
         column_name: &ColumnName,
         value: SqlValue,
-        revision: Revision,
+        revision: Revision, // TODO 使う
     ) -> ApllodbResult<Self> {
         if let Some(_) = self.columns.insert(column_name.clone(), value) {
             Err(ApllodbError::new(

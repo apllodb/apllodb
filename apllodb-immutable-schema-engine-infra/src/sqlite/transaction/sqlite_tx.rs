@@ -258,4 +258,36 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_compound_pk() -> ApllodbResult<()> {
+        let mut db = SqliteDatabase::new_for_test()?;
+        let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
+
+        let tn = &table_name!("address");
+        let coldefs = column_definitions!(
+            column_definition!(
+                "country_code",
+                data_type!(DataTypeKind::SmallInt, false),
+                column_constraints!()
+            ),
+            column_definition!(
+                "postal_code",
+                data_type!(DataTypeKind::Integer, false),
+                column_constraints!()
+            ),
+        );
+        let tc = table_constraints!(t_pk!("country_code", "postal_code"));
+
+        tx.create_table(&tn, &tc, &coldefs)?;
+
+        tx.insert(
+            &tn,
+            hmap! { column_name!("country_code") => const_expr!(100i16), column_name!("postal_code") => const_expr!(1000001i32) },
+        )?;
+
+        tx.commit()?;
+
+        Ok(())
+    }
 }

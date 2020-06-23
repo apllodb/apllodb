@@ -16,10 +16,20 @@ pub enum NumericConstant {
 
 /// Integer constant.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct IntegerConstant(pub u64); // TODO re-think about data size
+pub struct IntegerConstant(pub i64); // TODO re-think about data size
 
-impl From<u64> for Constant {
-    fn from(v: u64) -> Self {
+impl From<i64> for Constant {
+    fn from(v: i64) -> Self {
         Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(v)))
+    }
+}
+impl From<i32> for Constant {
+    fn from(v: i32) -> Self {
+        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(v as i64)))
+    }
+}
+impl From<i16> for Constant {
+    fn from(v: i16) -> Self {
+        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(v as i64)))
     }
 }
