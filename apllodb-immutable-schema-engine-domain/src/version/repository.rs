@@ -1,10 +1,15 @@
 use super::ActiveVersions;
 use crate::{ActiveVersion, ImmutableSchemaTx, VTableId, VersionId, VersionRowIter};
-use apllodb_shared_components::{data_structure::{Expression, ColumnName}, error::ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::{ColumnName, Expression},
+    error::ApllodbResult,
+};
+use apllodb_storage_engine_interface::TransactionId;
 use std::collections::HashMap;
 
 pub trait VersionRepository<'tx, 'db: 'tx> {
     type Tx: ImmutableSchemaTx<'tx, 'db>;
+    type TID: TransactionId;
 
     /// Row iterator from a single version.
     type VerRowIter: VersionRowIter;

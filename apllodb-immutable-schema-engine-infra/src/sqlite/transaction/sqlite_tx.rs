@@ -197,6 +197,8 @@ mod tests {
 
     #[test]
     fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
+        use apllodb_storage_engine_interface::Row;
+
         let mut db = SqliteDatabase::new_for_test()?;
         let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
 

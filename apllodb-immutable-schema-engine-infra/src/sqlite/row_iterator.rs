@@ -1,5 +1,5 @@
 use super::sqlite_error::map_sqlite_err;
-use apllodb_immutable_schema_engine_domain::VersionRowIter;
+use apllodb_immutable_schema_engine_domain::{ImmutableRow, VersionRowIter};
 use apllodb_shared_components::{data_structure::ColumnDataType, error::ApllodbResult};
 use apllodb_storage_engine_interface::Row;
 use std::{collections::VecDeque, fmt::Debug};
@@ -18,11 +18,11 @@ pub struct SqliteRowIterator(
     // of type `F: FnMut(&rusqlite::Row) -> rusqlite::Result<T>` can be determined only where
     // the closure is written with `&[crate::ColumnDataType]`.
     // So type parameter F cannot be passed to a caller who cannot resolve F with the closure instance.
-    VecDeque<Row>,
+    VecDeque<ImmutableRow>,
 );
 
 impl Iterator for SqliteRowIterator {
-    type Item = ApllodbResult<Row>;
+    type Item = ApllodbResult<ImmutableRow>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.pop_front().map(Ok)
@@ -38,12 +38,12 @@ impl SqliteRowIterator {
     ) -> ApllodbResult<Self> {
         use crate::sqlite::from_sqlite_row::FromSqliteRow;
 
-        let mut rows: VecDeque<Row> = VecDeque::new();
+        let mut rows: VecDeque<ImmutableRow> = VecDeque::new();
         while let Some(sqlite_row) = sqlite_rows
             .next()
             .map_err(|e| map_sqlite_err(e, "failed to get next rusqlite::Row"))?
         {
-            let row = Row::from_sqlite_row(sqlite_row, column_data_types)?;
+            let row = ImmutableRow::from_sqlite_row(sqlite_row, column_data_types)?;
             rows.push_back(row);
         }
         Ok(Self(rows))

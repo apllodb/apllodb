@@ -13,6 +13,7 @@ mod version;
 mod vtable;
 
 pub use entity::Entity;
+pub use row::{ApparentPrimaryKey, FullPrimaryKey, ImmutableRow, ImmutableRowBuilder};
 pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};
 pub use transaction::ImmutableSchemaTx;
 pub use version::{

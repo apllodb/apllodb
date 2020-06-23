@@ -1,32 +1,33 @@
-mod builder;
+mod pk;
 
-pub use builder::RowBuilder;
+pub use pk::PrimaryKey;
 
 use apllodb_shared_components::traits::SqlConvertible;
 use apllodb_shared_components::{
     data_structure::{ColumnName, SqlValue},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    error::ApllodbResult,
 };
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Row representation used in storage engine.
 /// Row, unlike `Record`, does not deal with `Expression`s.
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Row {  //<- いやー、traiででよさそう
-    columns: HashMap<ColumnName, SqlValue>,
-}
+pub trait Row {
+    /// Primary Key.
+    type PK: PrimaryKey;
 
-impl Row {
+    /// Primary Key.
+    fn pk(&self) -> &Self::PK;
+
+    #[doc(hidden)]
+    fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<SqlValue>;
+
     /// Get value from column.
-    pub fn get<T: SqlConvertible>(&self, column_name: &ColumnName) -> ApllodbResult<T> {
-        let sql_value = self.columns.get(column_name).ok_or_else(|| {
-            ApllodbError::new(
-                ApllodbErrorKind::UndefinedColumn,
-                format!("undefined column name: `{:?}`", column_name),
-                None,
-            )
-        })?;
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](a.html) when:
+    ///   - `column_name` is not in this Row.
+    fn get<T: SqlConvertible>(&self, column_name: &ColumnName) -> ApllodbResult<T> {
+        let sql_value = self.get_core(column_name)?;
         Ok(sql_value.unpack()?)
     }
 }

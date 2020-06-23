@@ -1,4 +1,7 @@
-use crate::sqlite::{transaction::sqlite_tx::dao::VersionDao, SqliteRowIterator, SqliteTx};
+use crate::sqlite::{
+    transaction::{sqlite_tx::dao::VersionDao, TxId},
+    SqliteRowIterator, SqliteTx,
+};
 use apllodb_immutable_schema_engine_domain::{
     ActiveVersion, ActiveVersions, VTableId, VersionId, VersionRepository,
 };
@@ -15,6 +18,7 @@ pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
 
 impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, 'db> {
     type Tx = SqliteTx<'db>;
+    type TID = TxId;
     type VerRowIter = SqliteRowIterator;
 
     fn new(tx: &'tx Self::Tx) -> Self {

@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_application::use_case::{
     UseCase,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ImmutableSchemaRowIter, ImmutableSchemaTx, VersionRepository,
+    ImmutableRow, ImmutableSchemaRowIter, ImmutableSchemaTx, VersionRepository,
 };
 use apllodb_shared_components::{
     data_structure::{
@@ -17,7 +17,7 @@ use apllodb_shared_components::{
     },
     error::ApllodbResult,
 };
-use apllodb_storage_engine_interface::Transaction;
+use apllodb_storage_engine_interface::{Transaction, TransactionId};
 use std::{collections::HashMap, marker::PhantomData};
 
 pub struct TransactionController<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> {
@@ -31,6 +31,7 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
 {
     type TID = Tx::TID;
     type Db = Tx::Db;
+    type R = ImmutableRow;
     type RowIter = ImmutableSchemaRowIter<
         <<Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
     >;

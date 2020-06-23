@@ -1,17 +1,17 @@
 use super::sqlite_error::map_sqlite_err;
+use apllodb_immutable_schema_engine_domain::{ImmutableRow, ImmutableRowBuilder};
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, DataTypeKind, SqlValue},
     error::ApllodbResult,
     traits::SqlConvertible,
 };
-use apllodb_storage_engine_interface::{Row, RowBuilder};
 
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
         sqlite_row: &rusqlite::Row<'_>,
         column_data_types: &[&ColumnDataType],
-    ) -> ApllodbResult<Row> {
-        let mut builder = RowBuilder::default();
+    ) -> ApllodbResult<ImmutableRow> {
+        let mut builder = ImmutableRowBuilder::default();
 
         for column_data_type in column_data_types {
             let column_name = column_data_type.column_name();
@@ -32,7 +32,8 @@ pub(crate) trait FromSqliteRow {
             builder = builder.add_column(column_name, sql_value)?;
         }
 
-        Ok(builder.build())
+        let row = builder.build()?;
+        Ok(row)
     }
 
     fn _sqlite_row_value<T>(
@@ -64,4 +65,4 @@ pub(crate) trait FromSqliteRow {
     }
 }
 
-impl FromSqliteRow for Row {}
+impl FromSqliteRow for ImmutableRow {}

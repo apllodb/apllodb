@@ -23,12 +23,39 @@ pub mod empty_storage_engine {
     }
 
     mod row {
-        use apllodb_shared_components::error::ApllodbResult;
-        use apllodb_storage_engine_interface::Row;
+        use apllodb_shared_components::{
+            data_structure::{ColumnName, SqlValue},
+            error::ApllodbResult,
+        };
+        use apllodb_storage_engine_interface::{PrimaryKey, Row};
+        use serde::{Deserialize, Serialize};
+
+        #[derive(
+            Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize,
+        )]
+        pub struct EmptyPrimaryKey;
+        impl PrimaryKey for EmptyPrimaryKey {
+            fn column_name(&self) -> &ColumnName {
+                unimplemented!()
+            }
+        }
+
+        pub struct EmptyRow;
+        impl Row for EmptyRow {
+            type PK = EmptyPrimaryKey;
+
+            fn pk(&self) -> &Self::PK {
+                unimplemented!()
+            }
+
+            fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<SqlValue> {
+                unimplemented!()
+            }
+        }
 
         pub struct EmptyRowIterator;
         impl Iterator for EmptyRowIterator {
-            type Item = ApllodbResult<Row>;
+            type Item = ApllodbResult<EmptyRow>;
 
             fn next(&mut self) -> Option<Self::Item> {
                 unimplemented!()
@@ -37,7 +64,7 @@ pub mod empty_storage_engine {
     }
 
     mod tx {
-        use super::{EmptyDatabase, EmptyRowIterator};
+        use super::{row::EmptyRow, EmptyDatabase, EmptyRowIterator};
         use apllodb_shared_components::{
             data_structure::{
                 AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression,
@@ -56,6 +83,7 @@ pub mod empty_storage_engine {
         impl<'tx, 'db: 'tx> Transaction<'tx, 'db> for EmptyTx {
             type TID = EmptyTransactionId;
             type Db = EmptyDatabase;
+            type R = EmptyRow;
             type RowIter = EmptyRowIterator;
 
             fn id(&self) -> &Self::TID {

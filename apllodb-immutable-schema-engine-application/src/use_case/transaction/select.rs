@@ -5,8 +5,9 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
-    error::{ApllodbResult},
+    error::ApllodbResult,
 };
+use apllodb_storage_engine_interface::TransactionId;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]

@@ -27,10 +27,13 @@ pub trait Transaction<'tx, 'db: 'tx> {
     /// Database in which this transaction works.
     type Db: Database + 'db;
 
-    /// Iterator of [Row](foobar.html)s returned from [select()](foobar.html) method.
-    type RowIter: Iterator<Item = ApllodbResult<Row>>;
+    /// Row.
+    type R: Row;
 
-    /// Transaction ID.
+    /// Iterator of `Self::R`s returned from [select()](foobar.html) method.
+    type RowIter: Iterator<Item = ApllodbResult<Self::R>>;
+
+    /// Transaction ID
     fn id(&self) -> &Self::TID;
 
     /// Begins a transaction.

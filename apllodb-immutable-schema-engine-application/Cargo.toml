@@ -9,9 +9,9 @@ edition = "2018"
 [dependencies]
 apllodb-immutable-schema-engine-domain = { path = "../apllodb-immutable-schema-engine-domain" }
 
-apllodb-shared-components = { path = "../apllodb-shared-components" }
-
 apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
+
+apllodb-shared-components = { path = "../apllodb-shared-components" }
 
 derive-new = "0.5"
 
