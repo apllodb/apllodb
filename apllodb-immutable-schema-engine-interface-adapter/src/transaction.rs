@@ -29,10 +29,15 @@ pub struct TransactionController<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> 
 impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
     for TransactionController<'tx, 'db, Tx>
 {
+    type TID = Tx::TID;
     type Db = Tx::Db;
     type RowIter = ImmutableSchemaRowIter<
         <<Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
     >;
+
+    fn id(&self) -> &Self::TID {
+        self.tx.id()
+    }
 
     fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self>
     where

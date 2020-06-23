@@ -1,3 +1,7 @@
+mod transaction_id;
+
+pub use transaction_id::TransactionId;
+
 use crate::Row;
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
@@ -17,11 +21,17 @@ use std::collections::HashMap;
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
 pub trait Transaction<'tx, 'db: 'tx> {
+    /// Transaction ID.
+    type TID: TransactionId;
+
     /// Database in which this transaction works.
     type Db: Database + 'db;
 
     /// Iterator of [Row](foobar.html)s returned from [select()](foobar.html) method.
     type RowIter: Iterator<Item = ApllodbResult<Row>>;
+
+    /// Transaction ID.
+    fn id(&self) -> &Self::TID;
 
     /// Begins a transaction.
     /// A database cannot starts multiple transactions at a time (&mut reference enforces it).

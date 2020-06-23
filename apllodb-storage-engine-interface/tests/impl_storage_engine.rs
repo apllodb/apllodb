@@ -45,13 +45,22 @@ pub mod empty_storage_engine {
             },
             error::ApllodbResult,
         };
-        use apllodb_storage_engine_interface::Transaction;
+        use apllodb_storage_engine_interface::{Transaction, TransactionId};
         use std::collections::HashMap;
+
+        #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+        pub struct EmptyTransactionId;
+        impl TransactionId for EmptyTransactionId {}
 
         pub struct EmptyTx;
         impl<'tx, 'db: 'tx> Transaction<'tx, 'db> for EmptyTx {
+            type TID = EmptyTransactionId;
             type Db = EmptyDatabase;
             type RowIter = EmptyRowIterator;
+
+            fn id(&self) -> &Self::TID {
+                unimplemented!()
+            }
 
             fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self> {
                 Ok(Self)
@@ -132,7 +141,10 @@ pub mod empty_storage_engine {
     }
 }
 
-use apllodb_shared_components::{data_structure::{ColumnName, TableConstraintKind}, error::ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::{ColumnName, TableConstraintKind},
+    error::ApllodbResult,
+};
 
 #[test]
 fn test_empty_storage_engine() -> ApllodbResult<()> {

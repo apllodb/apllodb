@@ -1,20 +1,19 @@
 mod dao;
-mod id;
 mod repository;
 
 pub(in crate::sqlite) use dao::VTableDao;
 
+use super::TxId;
 use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteDatabase};
 use apllodb_immutable_schema_engine_domain::ImmutableSchemaTx;
 use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
-use id::SqliteTxId;
 use repository::{VTableRepositoryImpl, VersionRepositoryImpl};
 use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
 pub struct SqliteTx<'db> {
-    id: SqliteTxId,
+    id: TxId,
     database_name: DatabaseName,
     pub(in crate::sqlite) sqlite_tx: rusqlite::Transaction<'db>, // TODO private
 }
@@ -39,9 +38,14 @@ impl Ord for SqliteTx<'_> {
 
 impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     type Db = SqliteDatabase;
+    type TID = TxId;
 
     type VTRepo = VTableRepositoryImpl<'tx, 'db>;
     type VRepo = VersionRepositoryImpl<'tx, 'db>;
+
+    fn id(&self) -> &Self::TID {
+        &self.id
+    }
 
     /// # Failures
     ///
@@ -60,7 +64,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
         })?;
 
         Ok(Self {
-            id: SqliteTxId::new(),
+            id: TxId::new(),
             database_name: database_name,
             sqlite_tx: tx,
         })
@@ -150,6 +154,19 @@ mod tests {
 
         tx1.commit()?; // it's ok to commit tx1 although it already aborted by error.
         tx2.commit()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_tx_id_order() -> ApllodbResult<()> {
+        let mut db1 = SqliteDatabase::new_for_test()?;
+        let mut db2 = db1.dup()?;
+
+        let tx1 = TransactionController::<SqliteTx<'_>>::begin(&mut db1)?;
+        let tx2 = TransactionController::<SqliteTx<'_>>::begin(&mut db2)?;
+
+        assert!(tx1.id() < tx2.id());
 
         Ok(())
     }

@@ -2,6 +2,7 @@ use crate::{VTableRepository, VersionRepository};
 use apllodb_shared_components::{
     data_structure::DatabaseName, error::ApllodbResult, traits::Database,
 };
+use apllodb_storage_engine_interface::TransactionId;
 use std::fmt::Debug;
 
 /// Operations a transaction implementation for Immutable Schema must have.
@@ -9,9 +10,12 @@ use std::fmt::Debug;
 /// Meant to be called from implementations of [Transaction](foo.html) (logical transaction interface) internally as physical transaction.
 pub trait ImmutableSchemaTx<'tx, 'db: 'tx>: Debug + Sized {
     type Db: Database + 'db;
+    type TID: TransactionId;
 
     type VTRepo: VTableRepository<'tx, 'db, Tx = Self>;
     type VRepo: VersionRepository<'tx, 'db, Tx = Self>;
+
+    fn id(&self) -> &Self::TID;
 
     fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self>
     where

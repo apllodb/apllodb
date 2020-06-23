@@ -1,14 +1,17 @@
+use apllodb_storage_engine_interface::TransactionId;
 use chrono::prelude::*;
 use std::fmt::Display;
 
 /// Transaction ID.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub(in crate::sqlite) struct SqliteTxId {
+pub struct TxId {
     timestamp: DateTime<Utc>,
     thread_id: u64,
 }
 
-impl SqliteTxId {
+impl TransactionId for TxId {}
+
+impl TxId {
     pub(in crate::sqlite) fn new() -> Self {
         let now = Utc::now();
 
@@ -25,11 +28,11 @@ impl SqliteTxId {
     }
 }
 
-impl Display for SqliteTxId {
+impl Display for TxId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "SqliteTxId {{ timestamp: {:?}, thread_id: {} }}",
+            "TxId {{ timestamp: {:?}, thread_id: {} }}",
             self.timestamp, self.thread_id
         )
     }

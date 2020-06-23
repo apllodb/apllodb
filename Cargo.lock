@@ -24,6 +24,7 @@ version = "0.1.0"
 dependencies = [
  "apllodb-immutable-schema-engine-domain",
  "apllodb-shared-components",
+ "apllodb-storage-engine-interface",
  "derive-new",
  "env_logger",
  "log",

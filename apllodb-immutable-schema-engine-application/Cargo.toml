@@ -11,6 +11,8 @@ apllodb-immutable-schema-engine-domain = { path = "../apllodb-immutable-schema-e
 
 apllodb-shared-components = { path = "../apllodb-shared-components" }
 
+apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
+
 derive-new = "0.5"
 
 env_logger = "0.7"
