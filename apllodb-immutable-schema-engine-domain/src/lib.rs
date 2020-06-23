@@ -10,6 +10,7 @@ mod row_iter;
 mod transaction;
 mod version;
 mod vtable;
+mod row;
 
 pub use entity::Entity;
 pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};

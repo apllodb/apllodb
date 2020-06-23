@@ -13,7 +13,7 @@ use std::collections::HashMap;
 /// Row representation used in storage engine.
 /// Row, unlike `Record`, does not deal with `Expression`s.
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Row {
+pub struct Row {  //<- いやー、traiででよさそう
     columns: HashMap<ColumnName, SqlValue>,
 }
 
