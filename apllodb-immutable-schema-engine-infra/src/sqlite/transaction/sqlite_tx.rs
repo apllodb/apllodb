@@ -116,14 +116,16 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
 mod tests {
     use super::SqliteTx;
     use crate::sqlite::SqliteDatabase;
+    use apllodb_immutable_schema_engine_domain::{apparent_pk, ApparentPrimaryKey};
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
         column_constraints, column_definition, column_definitions, column_name, const_expr,
-        data_structure::{AlterTableAction, DataTypeKind},
+        data_structure::{AlterTableAction, DataType, DataTypeKind},
         data_type,
         error::{ApllodbErrorKind, ApllodbResult},
         hmap, t_pk, table_constraints, table_name,
     };
+    use apllodb_storage_engine_interface::Row;
     use apllodb_storage_engine_interface::Transaction;
 
     #[test]
@@ -235,17 +237,17 @@ mod tests {
 
         // Selects both v1's record (id=1) and v2's record (id=2),
         // although v2 does not have column "c".
-        let records = tx.select(&tn, &vec![column_name!("id"), column_name!("c")])?;
+        let rows = tx.select(&tn, &vec![column_name!("id"), column_name!("c")])?;
 
-        for rec_res in records {
-            let r = rec_res?;
-            let id: i32 = r.get(&column_name!("id"))?;
+        for row_res in rows {
+            let row = row_res?;
+            let id: i32 = row.get(&column_name!("id"))?;
             match id {
-                1 => assert_eq!(r.get::<i32>(&column_name!("c"))?, 1),
+                1 => assert_eq!(row.get::<i32>(&column_name!("c"))?, 1),
                 2 => {
                     // Cannot fetch column `c` from v2. Note that v2's `c` is different from NULL,
                     // although it is treated similarly to NULL in GROUP BY, ORDER BY operations.
-                    match r.get::<i32>(&column_name!("c")) {
+                    match row.get::<i32>(&column_name!("c")) {
                         Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::UndefinedColumn),
                         _ => unreachable!(),
                     };
@@ -285,6 +287,22 @@ mod tests {
             &tn,
             hmap! { column_name!("country_code") => const_expr!(100i16), column_name!("postal_code") => const_expr!(1000001i32) },
         )?;
+
+        let row_iter = tx.select(&tn, &vec![column_name!("postal_code")])?;
+        for row_res in row_iter {
+            let row = row_res?;
+            assert_eq!(row.pk(), &apparent_pk![
+                (
+                    column_name!("country_code"),
+                    SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false) , &100i16)?,
+                ),
+                (
+                    column_name!("postal_code"),
+                    SqlValue::pack(&DataType::new(DataTypeKind::Integer, false) , &1000001i32)?,
+                ),
+            ]
+            , "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
+        }
 
         tx.commit()?;
 
