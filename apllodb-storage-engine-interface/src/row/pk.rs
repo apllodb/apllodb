@@ -4,6 +4,6 @@ use std::{fmt::Debug, hash::Hash};
 
 /// Primary Key.
 pub trait PrimaryKey: Eq + PartialEq + Hash + Debug + Serialize + DeserializeOwned {
-    /// PK's column name.
-    fn column_name(&self) -> &ColumnName;
+    /// PK's column names (more than 1 columns for compound PK).
+    fn column_names(&self) -> &[ColumnName];
 }

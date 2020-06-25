@@ -18,7 +18,7 @@ pub trait Row {
     fn pk(&self) -> &Self::PK;
 
     #[doc(hidden)]
-    fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<SqlValue>;
+    fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue>;
 
     /// Get value from column.
     ///
