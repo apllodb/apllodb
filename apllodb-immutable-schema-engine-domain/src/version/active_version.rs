@@ -184,13 +184,6 @@ impl ActiveVersion {
         Ok(())
     }
 
-    /// Returns ColumnDataType of `column_name` if this version has it.
-    fn resolve_column_data_type(&self, column_name: &ColumnName) -> Option<&ColumnDataType> {
-        self.column_data_types()
-            .iter()
-            .find(|cdt| cdt.column_name() == column_name)
-    }
-
     fn validate_at_least_one_column(column_data_types: &[ColumnDataType]) -> ApllodbResult<()> {
         if column_data_types.is_empty() {
             Err(ApllodbError::new(

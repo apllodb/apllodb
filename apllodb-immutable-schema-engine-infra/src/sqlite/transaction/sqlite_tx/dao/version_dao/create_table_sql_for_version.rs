@@ -6,10 +6,6 @@ use crate::sqlite::transaction::sqlite_tx::dao::sqlite_table_name_for_version::S
 pub(super) struct CreateTableSqlForVersion(String);
 
 impl CreateTableSqlForVersion {
-    pub(super) fn new<S: Into<String>>(sql: S) -> Self {
-        Self(sql.into())
-    }
-
     pub(super) fn as_str(&self) -> &str {
         &self.0
     }

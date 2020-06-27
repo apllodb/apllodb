@@ -41,7 +41,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     ///   - Table `table_name` is not visible to this transaction.
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    fn update(&self, vtable: &VTable) -> ApllodbResult<()> {
+    fn update(&self, _vtable: &VTable) -> ApllodbResult<()> {
         // TODO update VTable on TableWideConstraints change.
         Ok(())
     }

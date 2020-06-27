@@ -33,9 +33,6 @@ impl SqliteTableNameForVersion {
     ) -> VersionNumber {
         self.split().1
     }
-    pub(in crate::sqlite::transaction::sqlite_tx::dao) fn is_active(&self) -> bool {
-        self.split().2
-    }
 
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn as_str(&self) -> &str {
         self.0.as_str()

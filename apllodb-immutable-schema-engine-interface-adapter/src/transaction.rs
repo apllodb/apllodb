@@ -93,7 +93,7 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         Ok(())
     }
 
-    fn drop_table(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
+    fn drop_table(&'tx self, _table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
 
@@ -121,10 +121,10 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         Ok(())
     }
 
-    fn update(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
+    fn update(&'tx self, _table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
-    fn delete(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
+    fn delete(&'tx self, _table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
 }

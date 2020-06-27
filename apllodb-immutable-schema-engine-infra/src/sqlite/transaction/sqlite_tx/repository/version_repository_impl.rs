@@ -35,7 +35,7 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         Ok(())
     }
 
-    fn deactivate(&self, version_id: &VersionId) -> ApllodbResult<()> {
+    fn deactivate(&self, _version_id: &VersionId) -> ApllodbResult<()> {
         todo!()
     }
 
