@@ -1,15 +1,4 @@
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTable, VTableId};
-use apllodb_shared_components::{
-    data_structure::{
-        ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind, DatabaseName,
-        TableConstraints,
-    },
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-};
-use apllodb_sql_parser::{
-    apllodb_ast::{self, Command, CreateTableCommand},
-    ApllodbAst, ApllodbSqlParser,
-};
+use apllodb_immutable_schema_engine_domain::VTable;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
