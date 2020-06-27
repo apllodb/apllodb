@@ -1,6 +1,6 @@
+use crate::sqlite::transaction::sqlite_tx::dao::sqlite_table_name_for_version::SqliteTableNameForVersion;
 use apllodb_immutable_schema_engine_domain::ActiveVersion;
 use serde::{Deserialize, Serialize};
-use crate::sqlite::transaction::sqlite_tx::dao::sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct CreateTableSqlForVersion(String);
@@ -21,11 +21,12 @@ impl From<&ActiveVersion> for CreateTableSqlForVersion {
         let sql = format!(
             "
 CREATE TABLE {} (
-    _navi_rowid INTEGER NOT NULL,
+    {} INTEGER NOT NULL,
     {}
 )
         ",
             version_table_name.as_str(),
+            super::CNAME_NAVI_ROWID,
             version
                 .column_data_types()
                 .iter()
