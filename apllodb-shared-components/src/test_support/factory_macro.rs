@@ -1,11 +1,8 @@
 #[macro_export]
 macro_rules! alter_table_action_drop_column {
     ($col_name: expr $(,)?) => {{
-        use $crate::column_name;
-        use $crate::data_structure::AlterTableAction;
-
-        AlterTableAction::DropColumn {
-            column_name: column_name!($col_name),
+        $crate::data_structure::AlterTableAction::DropColumn {
+            column_name: $crate::column_name!($col_name),
         }
     }};
 }
@@ -13,22 +10,22 @@ macro_rules! alter_table_action_drop_column {
 #[macro_export]
 macro_rules! column_constraints {
     ($($column_constraint_kind: expr $(,)?)*) => {{
-        use $crate::data_structure::{ColumnConstraints, ColumnConstraintKind};
-
-        let kinds: Vec<ColumnConstraintKind> = vec![
+        let kinds: Vec<$crate::data_structure::ColumnConstraintKind> = vec![
             $($column_constraint_kind,)*
         ];
-        ColumnConstraints::new(kinds).unwrap()
+        $crate::data_structure::ColumnConstraints::new(kinds).unwrap()
     }}
 }
 
 #[macro_export]
 macro_rules! column_definition {
     ($col_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {{
-        use $crate::column_name;
-        use $crate::data_structure::ColumnDefinition;
-
-        ColumnDefinition::new(column_name!($col_name), $data_type, $column_constraints).unwrap()
+        $crate::data_structure::ColumnDefinition::new(
+            $crate::column_name!($col_name),
+            $data_type,
+            $column_constraints,
+        )
+        .unwrap()
     }};
 }
 
@@ -46,36 +43,32 @@ macro_rules! column_definitions {
 #[macro_export]
 macro_rules! column_name {
     ($col_name: expr) => {{
-        use $crate::data_structure::ColumnName;
-
-        ColumnName::new($col_name).unwrap()
+        $crate::data_structure::ColumnName::new($col_name).unwrap()
     }};
 }
 
 #[macro_export]
 macro_rules! database_name {
     ($col_name: expr) => {{
-        use $crate::data_structure::{DatabaseName, ShortName};
-
-        DatabaseName::from(ShortName::new($col_name).unwrap())
+        $crate::data_structure::DatabaseName::from(
+            $crate::data_structure::ShortName::new($col_name).unwrap(),
+        )
     }};
 }
 
 #[macro_export]
 macro_rules! data_type {
     ($kind: expr, $nullable: expr $(,)?) => {{
-        use $crate::data_structure::DataType;
-
-        DataType::new($kind, $nullable)
+        $crate::data_structure::DataType::new($kind, $nullable)
     }};
 }
 
 #[macro_export]
 macro_rules! const_expr {
     ($constant: expr) => {{
-        use $crate::data_structure::{Constant, Expression};
-
-        Expression::ConstantVariant(Constant::from($constant))
+        $crate::data_structure::Expression::ConstantVariant($crate::data_structure::Constant::from(
+            $constant,
+        ))
     }};
 }
 
@@ -83,38 +76,38 @@ macro_rules! const_expr {
 #[macro_export]
 macro_rules! column_name_expr {
     ($col_name: expr) => {{
-        use $crate::data_structure::{ColumnName, Expression};
-
-        Expression::ColumnNameVariant(ColumnName::new($col_name).unwrap())
+        $crate::data_structure::Expression::ColumnNameVariant(
+            $crate::data_structure::ColumnName::new($col_name).unwrap(),
+        )
     }};
 }
 
 #[macro_export]
 macro_rules! t_pk {
     ($($col_name: expr $(,)?)*) => {{
-        use $crate::column_name;
-        use $crate::data_structure::TableConstraintKind;
-
-        TableConstraintKind::PrimaryKey {
-            column_names: vec![
+        $crate::data_structure::TableConstraintKind::PrimaryKey {
+            column_data_types: vec![
                 $(
-                    column_name!($col_name),
+                    $crate::data_structure::ColumnDataType::from(
+                        &$crate::column_definition!(
+                            $col_name,
+                            $crate::data_structure::DataType::new($crate::data_structure::DataTypeKind::Integer, false),
+                            $crate::column_constraints!()
+                        )
+                    ),
                 )*
             ],
         }
-    }}
+    }};
 }
 
 #[macro_export]
 macro_rules! t_unique {
     ($($col_name: expr $(,)?)*) => {{
-        use $crate::column_name;
-        use $crate::data_structure::TableConstraintKind;
-
-        TableConstraintKind::Unique {
+        $crate::data_structure::TableConstraintKind::Unique {
             column_names: vec![
                 $(
-                    column_name!($col_name),
+                    $crate::column_name!($col_name),
                 )*
             ],
         }
@@ -124,20 +117,16 @@ macro_rules! t_unique {
 #[macro_export]
 macro_rules! table_constraints {
     ($($table_constraint_kind: expr $(,)?)*) => {{
-        use $crate::data_structure::{TableConstraintKind, TableConstraints};
-
-        let kinds: Vec<TableConstraintKind> = vec![
+        let kinds: Vec<$crate::data_structure::TableConstraintKind> = vec![
             $($table_constraint_kind,)*
         ];
-        TableConstraints::new(kinds).unwrap()
+        $crate::data_structure::TableConstraints::new(kinds).unwrap()
     }}
 }
 
 #[macro_export]
 macro_rules! table_name {
     ($table_name: expr) => {{
-        use $crate::data_structure::TableName;
-
-        TableName::new($table_name).unwrap()
+        $crate::data_structure::TableName::new($table_name).unwrap()
     }};
 }

@@ -1,3 +1,4 @@
+use super::ColumnDataType;
 use crate::data_structure::{ColumnConstraints, ColumnName, DataType};
 use crate::error::ApllodbResult;
 use serde::{Deserialize, Serialize};
@@ -37,5 +38,10 @@ impl ColumnDefinition {
     /// Ref to ColumnConstraints.
     pub fn column_constraints(&self) -> &ColumnConstraints {
         &self.column_constraints
+    }
+
+    /// Ref to ColumnDataType
+    pub fn column_data_type(&self) -> ColumnDataType {
+        ColumnDataType::new(self.column_name.clone(), self.data_type.clone())
     }
 }

@@ -1,5 +1,5 @@
 use apllodb_shared_components::data_structure::{
-    ColumnConstraintKind, ColumnDefinition, ColumnName, TableConstraintKind,
+    ColumnConstraintKind, ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -8,17 +8,20 @@ use std::convert::TryFrom;
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub(super) enum TableWideConstraintKind {
     /// PRIMARY KEY ({column_name}, ...)
-    PrimaryKey { column_names: Vec<ColumnName> },
+    PrimaryKey {
+        column_data_types: Vec<ColumnDataType>,
+    },
 
     /// UNIQUE ({column_name}, ...)
+    /// It does not hold data type because data type info are held by Version.
     Unique { column_names: Vec<ColumnName> },
 }
 
 impl From<&TableConstraintKind> for TableWideConstraintKind {
     fn from(tck: &TableConstraintKind) -> Self {
         match tck {
-            TableConstraintKind::PrimaryKey { column_names } => Self::PrimaryKey {
-                column_names: column_names.clone(),
+            TableConstraintKind::PrimaryKey { column_data_types } => Self::PrimaryKey {
+                column_data_types: column_data_types.clone(),
             },
             TableConstraintKind::Unique { column_names } => Self::Unique {
                 column_names: column_names.clone(),
@@ -38,7 +41,7 @@ impl TryFrom<&ColumnDefinition> for TableWideConstraintKind {
             match kind {
                 ColumnConstraintKind::PrimaryKey => {
                     return Ok(Self::PrimaryKey {
-                        column_names: vec![column_name.clone()],
+                        column_data_types: vec![cd.column_data_type().clone()],
                     })
                 }
                 ColumnConstraintKind::Unique => {

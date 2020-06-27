@@ -64,15 +64,20 @@ impl TableConstraints {
     fn validate_pk_or_unique_to_same_cols(
         constraints: &[TableConstraintKind],
     ) -> ApllodbResult<()> {
-        let pk_unique_column_sets: Vec<HashSet<&ColumnName>> = constraints
+        let pk_unique_column_sets: Vec<HashSet<ColumnName>> = constraints
             .iter()
             .map(|table_constraint_kind| {
-                match table_constraint_kind {
-                    TableConstraintKind::PrimaryKey { column_names } => column_names,
-                    TableConstraintKind::Unique { column_names } => column_names,
-                }
-                .iter()
-                .collect()
+                let h: HashSet<ColumnName> = match table_constraint_kind {
+                    TableConstraintKind::PrimaryKey { column_data_types } => column_data_types
+                        .iter()
+                        .map(|cdt| cdt.column_name())
+                        .cloned()
+                        .collect(),
+                    TableConstraintKind::Unique { column_names } => {
+                        column_names.iter().cloned().collect()
+                    }
+                };
+                h
             })
             .collect();
 

@@ -47,11 +47,18 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
     }
 
     /// Fetches only existing columns from SQLite.
+    ///
+    /// TODO シグネチャが根本的に間違っている。
+    /// 特定バージョンから全レコードを取る操作はしない。同一バージョン内に、同一APK同士の古いrevisionも含まれる可能性があり、そのレコードを取得するのは無駄なので。
     pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan(
         &self,
         version_id: &VersionId,
         column_names: &[ColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
+        // TODO
+        // ここで navi テーブルを参照して、APKごとに最大のRevisionを特定する。
+        // 最大のRevisionを書くバージョンに対して取りに行く
+
         let version: ActiveVersion = self.select_active_version(&version_id)?;
 
         let column_data_types = version.column_data_types();
@@ -63,6 +70,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
             .collect();
 
         let sqlite_table_name = SqliteTableNameForVersion::new(version_id, true);
+
         let sql = format!(
             "
 SELECT {} FROM {}
@@ -87,6 +95,8 @@ SELECT {} FROM {}
         let mut rows: rusqlite::Rows = stmt.query_named(
             &[],
         ).map_err(|e| map_sqlite_err(e, "failed to query_map_named (source error type ToSqlConversionFailure does not have any good meaning)"))?;
+
+        // TODO SqliteRowIteratorには、PKを含むRoをを作って貰う必要があるので、PKの情報も渡す必要あり
 
         let iter = SqliteRowIterator::new(&mut rows, &column_data_types)?;
         Ok(iter)
@@ -140,7 +150,7 @@ SELECT {} FROM {}
     ) -> ApllodbResult<Vec<ActiveVersion>> {
         let sql = format!(
             r#"
-            SELECT {} FROM {} WHERE type = "table" AND name LIKE "{}__%"
+            SELECT {} FROM {} WHERE type = "table" AND name LIKE "{}__v%"
             "#,
             CNAME_SQLITE_MASTER_SQL,
             TABLE_NAME_SQLITE_MASTER,

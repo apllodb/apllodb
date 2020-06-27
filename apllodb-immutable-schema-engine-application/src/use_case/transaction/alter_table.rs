@@ -49,8 +49,9 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
 
         let active_versions = version_repo.active_versions(&vtable_id)?;
         let current_version = active_versions.current_version()?;
-        let next_version = current_version.create_next(input.action)?;
+        let next_version = current_version.create_next(input.action)?; // TODO こいつの中で、PKの一部のカラムをDROPさせることは一旦UnsupportedErrorにする（他のDBMSは対応していた）
 
+        // TODO naviテーブルに、これからinactivateされるVersionNumberが書かれていることの対処を考える
         vtable_repo.update(&vtable)?;
         version_repo.create(&next_version)?;
 

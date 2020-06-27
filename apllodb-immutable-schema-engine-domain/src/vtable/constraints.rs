@@ -1,6 +1,6 @@
 use super::constraint_kind::TableWideConstraintKind;
 use apllodb_shared_components::{
-    data_structure::{ColumnDefinition, ColumnName, TableConstraints},
+    data_structure::{ColumnDataType, ColumnDefinition, ColumnName, TableConstraints},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
     helper::collection_validation::find_dup,
 };
@@ -16,6 +16,20 @@ pub struct TableWideConstraints {
     kinds: Vec<TableWideConstraintKind>,
 }
 impl TableWideConstraints {
+    /// Extract ApparentPrimaryKey columns
+    pub fn apparent_pk_column_data_types(&self) -> &[ColumnDataType] {
+        &self.kinds
+            .iter()
+            .find_map(|k| {
+                if let TableWideConstraintKind::PrimaryKey { column_data_types } = k {
+                    Some(column_data_types)
+                } else {
+                    None
+                }
+            })
+            .expect("every table must have a primary key")
+    }
+
     /// Constructor that extracts Table constraints (set of record must obey)
     /// from TableConstraints and ColumnConstraints in each ColumnDefinition.
     ///
@@ -77,9 +91,9 @@ impl TableWideConstraints {
         let single_columns: Vec<&ColumnName> = kinds
             .iter()
             .flat_map(|k| match k {
-                TableWideConstraintKind::PrimaryKey { column_names } => {
-                    if column_names.len() == 1 {
-                        column_names.first()
+                TableWideConstraintKind::PrimaryKey { column_data_types } => {
+                    if column_data_types.len() == 1 {
+                        column_data_types.first().map(|cdt| cdt.column_name())
                     } else {
                         None
                     }
@@ -113,7 +127,7 @@ mod tests {
     use super::TableWideConstraints;
     use apllodb_shared_components::{
         column_constraints, column_definition,
-        data_structure::{ColumnDefinition, DataTypeKind, TableConstraints},
+        data_structure::{ColumnConstraintKind, ColumnDefinition, DataTypeKind, TableConstraints},
         data_type,
         error::ApllodbErrorKind,
         t_pk, t_unique, table_constraints,

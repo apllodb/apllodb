@@ -58,8 +58,8 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
             input.table_constraints,
         )?;
 
-        input.tx.vtable_repo().create(&vtable)?;
-        input.tx.version_repo().create(&v1)?;
+        input.tx.vtable_repo().create(&vtable)?;  // TODO この中で、追加でnaviテーブルも作ることになる
+        input.tx.version_repo().create(&v1)?;  // TODO こいつは、サロゲートIDを持つしPKは含まない形でversion tableを作るようになる
 
         Ok(CreateTableUseCaseOutput)
     }

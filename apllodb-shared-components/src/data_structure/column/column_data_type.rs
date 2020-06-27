@@ -18,6 +18,10 @@ impl From<&ColumnDefinition> for ColumnDataType {
 }
 
 impl ColumnDataType {
+    pub fn new(column: ColumnName, data_type: DataType) -> Self {
+        Self { column, data_type }
+    }
+
     /// Ref to column name.
     pub fn column_name(&self) -> &ColumnName {
         &self.column

@@ -71,6 +71,8 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let version_to_insert = active_versions.version_to_insert(input.column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
+        // TODO 同一APKの最新revision + 1 でぶちこむ
+
         version_repo.insert(&version_id, input.column_values)?;
 
         Ok(InsertUseCaseOutput)

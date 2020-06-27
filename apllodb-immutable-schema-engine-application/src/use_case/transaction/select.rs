@@ -57,6 +57,12 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let version_repo = input.tx.version_repo();
 
         let vtable_id = VTableId::new(input.database_name, input.table_name);
+
+        // TODO このあたりの処理は見直す必要がある。
+        // ActiveVersionだからといって、全てのレコードがほしいのではない。最新revisionだけほしい。
+        // naviテーブルをなめて、各APK最新revisionの (VersionNumber, SurrogateId) を特定し、各バージョンに対してselectを投げる。
+        // そう考えると、VersionDao::selectは、フルスキャンのインターフェイスは不要で、必ずSurrogateId列でselectionする。
+        
         let active_versions = version_repo.active_versions(&vtable_id)?;
         let versions_to_select = active_versions.versions_to_select()?;
 

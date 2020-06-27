@@ -1,4 +1,4 @@
-use crate::data_structure::ColumnName;
+use crate::data_structure::{ColumnDataType, ColumnName};
 use serde::{Deserialize, Serialize};
 
 /// A constraint parameter in a table definition.
@@ -7,12 +7,15 @@ pub enum TableConstraintKind {
     /// PRIMARY KEY ({column_name}, ...)
     PrimaryKey {
         /// compound columns
-        column_names: Vec<ColumnName>,
+        column_data_types: Vec<ColumnDataType>,
     },
 
     /// UNIQUE ({column_name}, ...)
     Unique {
-        /// compound columns
+        /// Compound columns.
+        ///
+        /// Since multiple unique keys can be applied to the same column,
+        /// column data type master is not held here.
         column_names: Vec<ColumnName>,
     },
 }

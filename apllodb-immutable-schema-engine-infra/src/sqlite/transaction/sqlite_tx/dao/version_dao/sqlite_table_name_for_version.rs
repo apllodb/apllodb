@@ -14,7 +14,7 @@ impl<S: Into<String>> From<S> for SqliteTableNameForVersion {
 impl SqliteTableNameForVersion {
     pub(super) fn new(version_id: &VersionId, is_active: bool) -> Self {
         let s = format!(
-            "{}__{}__{}",
+            "{}__v{}__{}",
             version_id.vtable_id().table_name(),
             version_id.version_number().to_u64(),
             if is_active { "active" } else { "inactive" }
@@ -41,7 +41,7 @@ impl SqliteTableNameForVersion {
         assert_eq!(parts.len(), 3);
         (
             TableName::new(parts[0]).unwrap(),
-            VersionNumber::from(parts[1].parse::<u64>().unwrap()),
+            VersionNumber::from(parts[1][1..].parse::<u64>().unwrap()),
             match parts[2] {
                 "active" => true,
                 "inactive" => false,
