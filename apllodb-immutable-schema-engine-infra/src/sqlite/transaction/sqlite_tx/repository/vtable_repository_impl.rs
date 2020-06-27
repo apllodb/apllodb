@@ -1,4 +1,4 @@
-use crate::sqlite::{transaction::VTableDao, SqliteTx};
+use crate::sqlite::{transaction::{sqlite_tx::dao::NaviDao, VTableDao}, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{VTable, VTableId, VTableRepository};
 use apllodb_shared_components::error::ApllodbResult;
 
@@ -20,7 +20,8 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.vtable_dao().create(&vtable)?;
+        self.vtable_dao().insert(&vtable)?;
+        self.navi_dao().create_table(&vtable)?;
         Ok(())
     }
 
@@ -31,7 +32,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
     fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
-        self.vtable_dao().read(&vtable_id)
+        self.vtable_dao().select(&vtable_id)
     }
 
     /// # Failures
@@ -49,5 +50,9 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
     fn vtable_dao(&self) -> VTableDao<'tx, 'db> {
         VTableDao::new(&self.tx.sqlite_tx)
+    }
+
+    fn navi_dao(&self) -> NaviDao<'tx, 'db> {
+        NaviDao::new(&self.tx.sqlite_tx)
     }
 }

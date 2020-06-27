@@ -87,7 +87,7 @@ impl ActiveVersions {
             Err(ApllodbError::new(
                 ApllodbErrorKind::IntegrityConstraintViolation,
                 format!(
-                    "all versions reject to INSERT {:?}: {:?}",
+                    "all versions reject INSERTing {:?}: {:?}",
                     column_values, errors_per_versions,
                 ),
                 None,

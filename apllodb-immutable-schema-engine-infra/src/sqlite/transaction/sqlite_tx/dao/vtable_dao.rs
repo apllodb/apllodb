@@ -1,9 +1,6 @@
-mod create_table_sql_for_navi;
-
 use crate::sqlite::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{TableWideConstraints, VTable, VTableId};
 use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
-use create_table_sql_for_navi::CreateTableSqlForNavi;
 use log::error;
 
 #[derive(Debug)]
@@ -11,7 +8,7 @@ pub(in crate::sqlite) struct VTableDao<'tx, 'db: 'tx> {
     sqlite_tx: &'tx rusqlite::Transaction<'db>,
 }
 
-const TNAME_VTABLE_METADATA: &str = "_vtable_metadata";
+const TNAME: &str = "_vtable_metadata";
 const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
@@ -26,7 +23,7 @@ CREATE TABLE IF NOT EXISTS {} (
   {} TEXT
 )
         ",
-            TNAME_VTABLE_METADATA, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
+            TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
         );
 
         sqlite_conn
@@ -37,7 +34,7 @@ CREATE TABLE IF NOT EXISTS {} (
                     e,
                     format!(
                         "backend sqlite3 raised an error on creating metadata table `{}`",
-                        TNAME_VTABLE_METADATA
+                        TNAME
                     ),
                 )
             })?;
@@ -50,21 +47,14 @@ CREATE TABLE IF NOT EXISTS {} (
         Self { sqlite_tx }
     }
 
-    /// Do the following:
-    ///
-    /// - INSERT INTO TNAME_VTABLE_METADATA
-    /// - CREATE TABLE <tableName>_navi
-    ///
     /// # Failures
     ///
     /// - Errors from insert_into_vtable_metadata()
-    pub(in crate::sqlite::transaction::sqlite_tx) fn create(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         self.insert_into_vtable_metadata(vtable)?;
-        self.create_navi_table(vtable)?;
-
         Ok(())
     }
 
@@ -74,13 +64,13 @@ CREATE TABLE IF NOT EXISTS {} (
     ///   - `table` is not visible from this transaction.
     /// - [DeserializationError](error/enum.ApllodbErrorKind.html#variant.DeserializationError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
-    pub(in crate::sqlite::transaction::sqlite_tx) fn read(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn select(
         &self,
         vtable_id: &VTableId,
     ) -> ApllodbResult<VTable> {
         let sql = format!(
             "SELECT {}, {} FROM {} WHERE {} = :table_name;",
-            CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS, TNAME_VTABLE_METADATA, CNAME_TABLE_NAME
+            CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS, TNAME, CNAME_TABLE_NAME
         );
 
         let table_name = format!("{}", vtable_id.table_name());
@@ -165,7 +155,7 @@ CREATE TABLE IF NOT EXISTS {} (
     fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let sql = format!(
             "INSERT INTO {} ({}, {}) VALUES (:table_name, :table_wide_constraints);",
-            TNAME_VTABLE_METADATA, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
+            TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
         );
 
         let table_name = format!("{}", vtable.table_name());
@@ -235,23 +225,5 @@ CREATE TABLE IF NOT EXISTS {} (
             }
             Ok(_) => Ok(()),
         }
-    }
-
-    fn create_navi_table(&self, vtable: &VTable) -> ApllodbResult<()> {
-        let sql = CreateTableSqlForNavi::from(vtable);
-
-        self.sqlite_tx
-            .execute(sql.as_str(), rusqlite::params![])
-            .map(|_| ())
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "backend sqlite3 raised an error on creating navi table for `{}`",
-                        vtable.table_name()
-                    ),
-                )
-            })?;
-        Ok(())
     }
 }

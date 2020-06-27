@@ -222,7 +222,7 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{vtable::VTableId, vtable_id};
+    use crate::vtable_id;
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_shared_components::{
         alter_table_action_drop_column, column_constraints, column_definition, column_name,

@@ -16,20 +16,23 @@ impl From<&VTable> for CreateTableSqlForNavi {
 
         let sql = format!(
             "
-CREATE TABLE {}__navi (
+CREATE TABLE {}__{} (
     {},
-    revision INTEGER NOT NULL,
-    version_number INTEGER NOT NULL
+    {} INTEGER NOT NULL,
+    {} INTEGER NOT NULL
 )
         ",
             vtable.table_name(),
+            super::TNAME_SUFFIX,
             vtable
                 .table_wide_constraints()
                 .apparent_pk_column_data_types()
                 .iter()
                 .map(|cdt| cdt.to_sql_string())
                 .collect::<Vec<String>>()
-                .join(",\n  ")
+                .join(",\n  "),
+            super::CNAME_REVISION,
+            super::CNAME_VERSION_NUMBER
         );
 
         Self(sql)

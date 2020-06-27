@@ -1,5 +1,5 @@
 use crate::sqlite::{
-    transaction::{sqlite_tx::dao::VersionDao, TxId},
+    transaction::{sqlite_tx::dao::{SqliteMasterDao, VersionDao}, TxId},
     SqliteRowIterator, SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -31,7 +31,7 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
-        self.version_dao().create(&version)?;
+        self.version_dao().create_table(&version)?;
         Ok(())
     }
 
@@ -44,7 +44,8 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         version_id: &VersionId,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter> {
-        let version_row_iter = self.version_dao().full_scan(&version_id, &column_names)?;
+        let version = self.sqlite_master_dao().select_active_version(&version_id)?;
+        let version_row_iter = self.version_dao().full_scan(&version, &column_names)?;
         Ok(version_row_iter)
     }
 
@@ -58,7 +59,7 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
     }
 
     fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions> {
-        let active_versions = self.version_dao().select_active_versions(vtable_id)?;
+        let active_versions = self.sqlite_master_dao().select_active_versions(vtable_id)?;
         Ok(ActiveVersions::from(active_versions))
     }
 }
@@ -66,5 +67,9 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
 impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
     fn version_dao(&self) -> VersionDao<'tx, 'db> {
         VersionDao::new(&self.tx.sqlite_tx)
+    }
+
+    fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {
+        SqliteMasterDao::new(&self.tx.sqlite_tx)
     }
 }
