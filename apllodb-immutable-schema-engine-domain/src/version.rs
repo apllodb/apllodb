@@ -1,24 +1,24 @@
-mod repository;
 mod active_version;
+mod active_versions;
 mod constraint_kind;
 mod constraints;
 mod id;
 mod inactive_version;
+mod repository;
 mod version_number;
-mod active_versions;
 
 pub use active_version::ActiveVersion;
 pub use active_versions::ActiveVersions;
 pub use id::VersionId;
 pub use inactive_version::InactiveVersion;
-pub use version_number::VersionNumber;
 pub use repository::VersionRepository;
+pub use version_number::VersionNumber;
 
 use crate::entity::Entity;
+use apllodb_shared_components::data_structure::ColumnDataType;
 use constraints::VersionConstraints;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use apllodb_shared_components::data_structure::ColumnDataType;
 
 /// Version.
 ///
@@ -39,7 +39,10 @@ use apllodb_shared_components::data_structure::ColumnDataType;
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub(crate) struct Version {
     id: VersionId,
+
+    /// Doesn't include Apparent Primary Key
     column_data_types: Vec<ColumnDataType>,
+
     constraints: VersionConstraints,
 }
 

@@ -170,7 +170,7 @@ pub mod empty_storage_engine {
 }
 
 use apllodb_shared_components::{
-    data_structure::{ColumnName, TableConstraintKind},
+    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind, TableConstraintKind},
     error::ApllodbResult,
 };
 
@@ -188,7 +188,10 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
     tx.create_table(
         &TableName::new("t")?,
         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-            column_names: vec![ColumnName::new("c1")?],
+            column_data_types: vec![ColumnDataType::new(
+                ColumnName::new("c1")?,
+                DataType::new(DataTypeKind::Integer, false),
+            )],
         }])?,
         &vec![],
     )?;

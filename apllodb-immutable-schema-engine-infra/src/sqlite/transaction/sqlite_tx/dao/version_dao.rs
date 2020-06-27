@@ -150,7 +150,7 @@ SELECT {} FROM {}
     ) -> ApllodbResult<Vec<ActiveVersion>> {
         let sql = format!(
             r#"
-            SELECT {} FROM {} WHERE type = "table" AND name LIKE "{}__%"
+            SELECT {} FROM {} WHERE type = "table" AND name LIKE "{}__v%"
             "#,
             CNAME_SQLITE_MASTER_SQL,
             TABLE_NAME_SQLITE_MASTER,

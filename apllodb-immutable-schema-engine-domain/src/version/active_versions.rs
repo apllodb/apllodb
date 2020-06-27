@@ -78,7 +78,7 @@ impl ActiveVersions {
             Err(ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
                 format!(
-                    "at least 1 column does not exist any version: {:?}",
+                    "at least 1 column does not exist in any version: {:?}",
                     errors_per_versions,
                 ),
                 None,

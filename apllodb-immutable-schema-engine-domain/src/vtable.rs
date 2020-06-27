@@ -10,7 +10,8 @@ pub use repository::VTableRepository;
 use crate::entity::Entity;
 use apllodb_shared_components::{
     data_structure::{
-        AlterTableAction, ColumnDefinition, DatabaseName, TableConstraints, TableName,
+        AlterTableAction, ColumnDataType, ColumnDefinition, DatabaseName, TableConstraints,
+        TableName,
     },
     error::ApllodbResult,
 };
