@@ -13,14 +13,12 @@ use std::collections::HashMap;
 #[cfg(test)]
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
 
-
-
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao<'tx, 'db: 'tx> {
     sqlite_tx: &'tx rusqlite::Transaction<'db>,
 }
 
-const CNAME_NAVI_ROWID: &str = "_navi_rowid";
+pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
 
 impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
     pub(in crate::sqlite) fn new(sqlite_tx: &'tx rusqlite::Transaction<'db>) -> Self {

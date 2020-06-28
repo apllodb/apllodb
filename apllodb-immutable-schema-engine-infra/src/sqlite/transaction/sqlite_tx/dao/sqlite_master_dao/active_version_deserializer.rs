@@ -8,7 +8,7 @@ use apllodb_sql_parser::{
     ApllodbAst, ApllodbSqlParser,
 };
 use serde::{Deserialize, Serialize};
-use crate::sqlite::transaction::sqlite_tx::dao::sqlite_table_name_for_version::SqliteTableNameForVersion;
+use crate::sqlite::transaction::sqlite_tx::dao::{version_dao, sqlite_table_name_for_version::SqliteTableNameForVersion};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct ActiveVersionDeserializer(String);
@@ -50,6 +50,9 @@ impl ActiveVersionDeserializer {
                 let column_definitions: Vec<ColumnDefinition> = column_definitions
                 .as_vec()
                 .iter()
+                .filter(|cd| {
+                    !Self::is_control_column(cd)
+                })
                 .map(|cd| {
                     let column_name_res = {
                         let id = &cd.column_name.0;
@@ -82,6 +85,12 @@ impl ActiveVersionDeserializer {
                 &self.0
             )),
         }
+
+    }
+
+    fn is_control_column(column_definition: &apllodb_ast::ColumnDefinition) -> bool {
+        let id = &column_definition.column_name.0;
+        id.0.as_str() == version_dao::CNAME_NAVI_ROWID
 
     }
 }
