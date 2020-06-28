@@ -18,6 +18,7 @@ impl From<&ActiveVersion> for CreateTableSqlForVersion {
 
         let version_table_name = SqliteTableNameForVersion::new(version.id(), true);
 
+        // TODO Make CNAME_NAVI_ROWID primary key for performance.
         let sql = format!(
             "
 CREATE TABLE {} (
@@ -32,7 +33,7 @@ CREATE TABLE {} (
                 .iter()
                 .map(|cdt| cdt.to_sql_string())
                 .collect::<Vec<String>>()
-                .join(",\n  ")
+                .join(",\n  "),
         );
 
         // TODO materialize Version::constraints

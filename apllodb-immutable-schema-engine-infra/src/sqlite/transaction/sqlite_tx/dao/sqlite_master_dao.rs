@@ -1,6 +1,5 @@
 mod active_version_deserializer;
 
-use super::sqlite_table_name_for_version::SqliteTableNameForVersion;
 use crate::sqlite::sqlite_error::map_sqlite_err;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId, VersionId};
@@ -74,59 +73,17 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
         &self,
         version_id: &VersionId,
     ) -> ApllodbResult<ActiveVersion> {
-        let sqlite_table_name = SqliteTableNameForVersion::new(version_id, true);
-
-        let sql = format!(
-            r#"
-            SELECT {} FROM {} WHERE type = "table" AND name = "{}"
-            "#,
-            CNAME_CREATE_TABLE_SQL,
-            TNAME,
-            sqlite_table_name.as_str()
-        );
-
-        let mut stmt = self.sqlite_tx.prepare(&sql).map_err(|e| {
-            map_sqlite_err(
-                e,
-                format!(
-                    "SQLite raised an error while preparing for selecting table `{}`",
-                    TNAME
-                ),
-            )
-        })?;
-
-        let rows = stmt
-            .query_map(rusqlite::NO_PARAMS, |row| row.get(CNAME_CREATE_TABLE_SQL))
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "SQLite raised an error while fetching `{}` column value from table `{}`",
-                        CNAME_CREATE_TABLE_SQL, TNAME
-                    ),
-                )
-            })?
-            .collect::<rusqlite::Result<Vec<String>>>()
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!("SQLite raised an error while selecting table `{}`", TNAME),
-                )
-            })?;
-        let create_table_sql: &str = rows.first().ok_or_else(|| {
+        let vtable_id = version_id.vtable_id();
+        let mut versions = self.select_active_versions(&vtable_id)?;
+        versions.pop().ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedTable,
                 format!(
-                    "SQLite table `{}` does not exist",
-                    sqlite_table_name.as_str()
+                    "table `{}` not found (or every version is inactive)",
+                    vtable_id.table_name()
                 ),
                 None,
             )
-        })?;
-
-        let deserializer = ActiveVersionDeserializer::new(create_table_sql);
-        let active_version =
-            deserializer.into_active_version(version_id.vtable_id().database_name())?;
-        Ok(active_version)
+        })
     }
 }
