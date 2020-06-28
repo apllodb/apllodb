@@ -32,7 +32,7 @@
 mod row;
 mod transaction;
 
-pub use crate::row::{Row, PrimaryKey};
+pub use crate::row::{PrimaryKey, Row};
 pub use crate::transaction::{Transaction, TransactionId};
 
 use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};

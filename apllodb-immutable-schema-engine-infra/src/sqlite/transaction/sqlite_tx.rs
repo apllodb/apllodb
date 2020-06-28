@@ -206,7 +206,7 @@ impl<'db> SqliteTx<'db> {
 #[cfg(test)]
 mod tests {
     use super::SqliteTx;
-    use crate::sqlite::SqliteDatabase;
+    use crate::{sqlite::SqliteDatabase, test_support::setup};
 
     use apllodb_immutable_schema_engine_domain::apparent_pk;
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
@@ -221,6 +221,8 @@ mod tests {
 
     #[test]
     fn test_wait_lock() -> ApllodbResult<()> {
+        setup();
+
         let mut db1 = SqliteDatabase::new_for_test()?;
         let mut db2 = db1.dup()?;
 
@@ -253,6 +255,8 @@ mod tests {
 
     #[test]
     fn test_tx_id_order() -> ApllodbResult<()> {
+        setup();
+
         let mut db1 = SqliteDatabase::new_for_test()?;
         let mut db2 = db1.dup()?;
 
@@ -266,6 +270,8 @@ mod tests {
 
     #[test]
     fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
+        setup();
+
         let mut db = SqliteDatabase::new_for_test()?;
 
         let tn = &table_name!("t");
@@ -290,6 +296,8 @@ mod tests {
 
     #[test]
     fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
+        setup();
+
         use apllodb_storage_engine_interface::Row;
 
         let mut db = SqliteDatabase::new_for_test()?;
@@ -354,6 +362,8 @@ mod tests {
 
     #[test]
     fn test_compound_pk() -> ApllodbResult<()> {
+        setup();
+
         use apllodb_storage_engine_interface::Row;
 
         let mut db = SqliteDatabase::new_for_test()?;
