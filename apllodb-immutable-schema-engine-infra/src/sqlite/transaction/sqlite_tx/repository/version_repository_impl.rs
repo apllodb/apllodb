@@ -92,14 +92,14 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
 
 impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
     fn version_dao(&self) -> VersionDao<'tx, 'db> {
-        VersionDao::new(&self.tx.sqlite_tx)
+        VersionDao::new(&self.tx.rusqlite_tx)
     }
 
     fn navi_dao(&self) -> NaviDao<'tx, 'db> {
-        NaviDao::new(&self.tx.sqlite_tx)
+        NaviDao::new(&self.tx.rusqlite_tx)
     }
 
     fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {
-        SqliteMasterDao::new(&self.tx.sqlite_tx)
+        SqliteMasterDao::new(&self.tx.rusqlite_tx)
     }
 }

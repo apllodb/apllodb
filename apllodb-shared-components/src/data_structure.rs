@@ -16,8 +16,8 @@ pub use column::{
 };
 pub use database::DatabaseName;
 pub use expression::{
-    BooleanExpression, ComparisonFunction, Constant, Expression, IntegerConstant, LogicalFunction,
-    NumericConstant,
+    BooleanExpression, CharacterConstant, ComparisonFunction, Constant, Expression,
+    IntegerConstant, LogicalFunction, NumericConstant, TextConstant,
 };
 pub use record::{FieldIndex, Record};
 pub use table::{TableConstraintKind, TableConstraints, TableName};

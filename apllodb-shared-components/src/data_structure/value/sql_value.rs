@@ -1,5 +1,8 @@
 use crate::{
-    data_structure::{Constant, DataType, DataTypeKind, Expression, NumericConstant},
+    data_structure::{
+        CharacterConstant, Constant, DataType, DataTypeKind, Expression, IntegerConstant,
+        NumericConstant, TextConstant,
+    },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
     traits::SqlConvertible,
 };
@@ -46,19 +49,42 @@ impl SqlValue {
         match expr {
             Expression::ConstantVariant(v) => match v {
                 Constant::NumericConstantVariant(v) => match v {
-                    NumericConstant::IntegerConstantVariant(integer_const) => {
+                    NumericConstant::IntegerConstantVariant(IntegerConstant(i)) => {
                         match data_type.kind() {
                             DataTypeKind::SmallInt => {
-                                let v = integer_const.0 as i16;
+                                let v = *i as i16;
                                 SqlValue::pack(&data_type, &v)
                             }
                             DataTypeKind::Integer => {
-                                let v = integer_const.0 as i32;
+                                let v = *i as i32;
                                 SqlValue::pack(&data_type, &v)
                             }
                             DataTypeKind::BigInt => {
-                                let v = integer_const.0;
+                                let v = *i;
                                 SqlValue::pack(&data_type, &v)
+                            }
+                            data_type_kind  => {
+                                Err(ApllodbError::new(
+                                    ApllodbErrorKind::DatatypeMismatch,
+                                    format!("expression `{:?}` is integer constant but requested to interpret as {:?}", v, data_type_kind),
+                                    None
+                                ))
+                            }
+                        }
+                    }
+                },
+                Constant::CharacterConstantVariant(c) => match c {
+                    CharacterConstant::TextConstantVariant(TextConstant(s)) => {
+                        match data_type.kind() {
+                            DataTypeKind::Text => {
+                                SqlValue::pack(&data_type, s)
+                            }
+                            data_type_kind  => {
+                                Err(ApllodbError::new(
+                                    ApllodbErrorKind::DatatypeMismatch,
+                                    format!("expression `{:?}` is character constant but requested to interpret as {:?}", v, data_type_kind),
+                                    None
+                                ))
                             }
                         }
                     }

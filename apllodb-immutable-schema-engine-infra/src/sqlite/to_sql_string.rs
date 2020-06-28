@@ -1,11 +1,18 @@
 use apllodb_immutable_schema_engine_domain::{Revision, VersionNumber};
 use apllodb_shared_components::data_structure::{
-    BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Constant, DataType,
-    DataTypeKind, Expression, IntegerConstant, LogicalFunction, NumericConstant, SqlValue,
+    BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
+    DataType, DataTypeKind, Expression, IntegerConstant, LogicalFunction, NumericConstant,
+    SqlValue, TableName, TextConstant,
 };
 
 pub(in crate::sqlite) trait ToSqlString {
     fn to_sql_string(&self) -> String;
+}
+
+impl ToSqlString for TableName {
+    fn to_sql_string(&self) -> String {
+        format!("{}", self)
+    }
 }
 
 impl ToSqlString for ColumnName {
@@ -20,6 +27,7 @@ impl ToSqlString for DataTypeKind {
 
         match self {
             SmallInt | Integer | BigInt => "INTEGER",
+            Text => "TEXT",
         }
         .to_string()
     }
@@ -57,6 +65,9 @@ impl ToSqlString for Constant {
         match self {
             Constant::NumericConstantVariant(n) => match n {
                 NumericConstant::IntegerConstantVariant(IntegerConstant(i)) => format!("{}", i),
+            },
+            Constant::CharacterConstantVariant(c) => match c {
+                CharacterConstant::TextConstantVariant(TextConstant(s)) => s.clone(),
             },
         }
     }

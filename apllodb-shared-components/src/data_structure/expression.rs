@@ -2,7 +2,7 @@ mod boolean_expression;
 mod constant;
 
 pub use boolean_expression::{BooleanExpression, ComparisonFunction, LogicalFunction};
-pub use constant::{Constant, IntegerConstant, NumericConstant};
+pub use constant::{CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant};
 
 use super::ColumnName;
 use serde::{Deserialize, Serialize};

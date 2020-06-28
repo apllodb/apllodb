@@ -1,11 +1,14 @@
-use crate::sqlite::sqlite_error::map_sqlite_err;
+use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{TableWideConstraints, VTable, VTableId};
-use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+};
 use log::error;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx rusqlite::Transaction<'db>,
+    sqlite_tx: &'tx SqliteTx<'db>,
 }
 
 const TNAME: &str = "_vtable_metadata";
@@ -41,9 +44,7 @@ CREATE TABLE IF NOT EXISTS {} (
         Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(
-        sqlite_tx: &'tx rusqlite::Transaction<'db>,
-    ) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -68,73 +69,40 @@ CREATE TABLE IF NOT EXISTS {} (
         &self,
         vtable_id: &VTableId,
     ) -> ApllodbResult<VTable> {
+        use apllodb_storage_engine_interface::Row;
+
         let sql = format!(
             "SELECT {}, {} FROM {} WHERE {} = :table_name;",
             CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS, TNAME, CNAME_TABLE_NAME
         );
 
-        let table_name = format!("{}", vtable_id.table_name());
-
-        let mut stmt = self.sqlite_tx.prepare(&sql).map_err(|e| {
-            error!("unexpected SQLite error: {:?}", e);
-            map_sqlite_err(
-                e,
+        let mut stmt = self.sqlite_tx.prepare(&sql)?;
+        let mut row_iter = stmt.query_named(
+            &[(":table_name", vtable_id.table_name())],
+            &vec![&self.cdt_table_wide_constraints()],
+        )?;
+        let row = row_iter.next().ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::UndefinedTable,
                 format!(
-                    "SQLite raised an error while preparing for selecting table `{}`'s metadata",
-                    table_name
+                    "table `{}`'s metadata is not visible from this transaction",
+                    vtable_id.table_name()
                 ),
+                None,
             )
-        })?;
-        let mut rows = stmt
-            .query_named(&[(":table_name", &table_name)])
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "SQLite raised an error while selecting table `{}`'s metadata",
-                        table_name
-                    ),
-                )
-            })?;
-        let row = rows
-            .next()
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "SQLite raised an error while fetching row of table `{}`'s metadata",
-                        table_name
-                    ),
-                )
-            })?
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::UndefinedTable,
-                    format!(
-                        "table `{}`'s metadata is not visible from this transaction",
-                        table_name
-                    ),
-                    None,
-                )
-            })?;
+        })??;
 
         let table_wide_constraints_str: String =
-            row.get(CNAME_TABLE_WIDE_CONSTRAINTS).map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "table `{}`'s metadata row not have column `{}`",
-                        table_name, CNAME_TABLE_WIDE_CONSTRAINTS
-                    ),
-                )
-            })?;
+            row.get(&ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?)?;
+
         let table_wide_constraints: TableWideConstraints =
             serde_yaml::from_str(&table_wide_constraints_str).map_err(|e| {
                 ApllodbError::new(
                     ApllodbErrorKind::DeserializationError,
                     format!(
                         "failed to deserialize table `{}`'s metadata: `{}`",
-                        table_name, table_wide_constraints_str
+                        vtable_id.table_name(),
+                        table_wide_constraints_str
                     ),
                     Some(Box::new(e)),
                 )
@@ -173,7 +141,7 @@ CREATE TABLE IF NOT EXISTS {} (
                 )
             })?;
 
-        match self.sqlite_tx.execute_named(
+        match self.sqlite_tx.rusqlite_tx.execute_named(
             &sql,
             &[
                 (":table_name", &table_name),
@@ -226,5 +194,12 @@ CREATE TABLE IF NOT EXISTS {} (
             }
             Ok(_) => Ok(()),
         }
+    }
+
+    fn cdt_table_wide_constraints(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
+            DataType::new(DataTypeKind::Text, false),
+        )
     }
 }

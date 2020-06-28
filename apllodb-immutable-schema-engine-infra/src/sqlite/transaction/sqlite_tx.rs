@@ -1,7 +1,9 @@
 mod dao;
 mod repository;
+mod sqlite_statement;
 
 pub(in crate::sqlite) use dao::VTableDao;
+pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use super::TxId;
 use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteDatabase};
@@ -15,7 +17,7 @@ use std::cmp::Ordering;
 pub struct SqliteTx<'db> {
     id: TxId,
     database_name: DatabaseName,
-    pub(in crate::sqlite) sqlite_tx: rusqlite::Transaction<'db>, // TODO private
+    pub rusqlite_tx: rusqlite::Transaction<'db>,
 }
 
 impl PartialEq for SqliteTx<'_> {
@@ -66,7 +68,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
         Ok(Self {
             id: TxId::new(),
             database_name: database_name,
-            sqlite_tx: tx,
+            rusqlite_tx: tx,
         })
     }
 
@@ -77,7 +79,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     fn commit(self) -> ApllodbResult<()> {
-        self.sqlite_tx.commit().map_err(|e| {
+        self.rusqlite_tx.commit().map_err(|e| {
             map_sqlite_err(
                 e,
                 "backend sqlite3 raised an error on committing transaction",
@@ -91,7 +93,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     fn abort(self) -> ApllodbResult<()> {
-        self.sqlite_tx.rollback().map_err(|e| {
+        self.rusqlite_tx.rollback().map_err(|e| {
             map_sqlite_err(e, "backend sqlite3 raised an error on aborting transaction")
         })?;
         Ok(())
@@ -109,6 +111,19 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     fn version_repo(&'tx self) -> Self::VRepo {
         use apllodb_immutable_schema_engine_domain::VersionRepository;
         VersionRepositoryImpl::new(&self)
+    }
+}
+
+impl<'db> SqliteTx<'db> {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: Into<String>>(
+        &self,
+        sql: S,
+    ) -> ApllodbResult<SqliteStatement<'_, '_>> {
+        let raw_stmt = self
+            .rusqlite_tx
+            .prepare(&sql.into())
+            .map_err(|e| map_sqlite_err(e, "SQLite raised an error on prepare"))?;
+        Ok(SqliteStatement::new(&self, raw_stmt))
     }
 }
 

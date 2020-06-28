@@ -11,4 +11,7 @@ pub enum DataTypeKind {
 
     /// 8-byte signed integer.
     BigInt,
+
+    /// Arbitrary length text (UTF-8).
+    Text,
 }

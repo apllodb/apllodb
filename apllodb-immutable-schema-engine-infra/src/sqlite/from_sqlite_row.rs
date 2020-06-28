@@ -27,6 +27,9 @@ pub(crate) trait FromSqliteRow {
                 DataTypeKind::BigInt => {
                     Self::_sqlite_row_value::<i64>(&sqlite_row, &column_data_type)?
                 }
+                DataTypeKind::Text => {
+                    Self::_sqlite_row_value::<String>(&sqlite_row, &column_data_type)?
+                }
             };
 
             builder = builder.add_column(column_name, sql_value)?;
