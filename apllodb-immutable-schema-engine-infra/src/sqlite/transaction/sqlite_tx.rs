@@ -6,9 +6,13 @@ pub(in crate::sqlite) use dao::VTableDao;
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use super::TxId;
-use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteDatabase};
+use crate::sqlite::{sqlite_error::map_sqlite_err, to_sql_string::ToSqlString, SqliteDatabase};
 use apllodb_immutable_schema_engine_domain::ImmutableSchemaTx;
-use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::DatabaseName,
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+};
+use log::debug;
 use repository::{VTableRepositoryImpl, VersionRepositoryImpl};
 use std::cmp::Ordering;
 
@@ -17,7 +21,7 @@ use std::cmp::Ordering;
 pub struct SqliteTx<'db> {
     id: TxId,
     database_name: DatabaseName,
-    pub rusqlite_tx: rusqlite::Transaction<'db>,
+    rusqlite_tx: rusqlite::Transaction<'db>,
 }
 
 impl PartialEq for SqliteTx<'_> {
@@ -119,11 +123,76 @@ impl<'db> SqliteTx<'db> {
         &self,
         sql: S,
     ) -> ApllodbResult<SqliteStatement<'_, '_>> {
+        let sql = sql.into();
+        debug!("SqliteTx::prepare(): {}", sql);
+
         let raw_stmt = self
             .rusqlite_tx
-            .prepare(&sql.into())
+            .prepare(&sql)
             .map_err(|e| map_sqlite_err(e, "SQLite raised an error on prepare"))?;
         Ok(SqliteStatement::new(&self, raw_stmt))
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx) fn execute_named<S: Into<String>>(
+        &self,
+        sql: S,
+        params: &[(&str, &dyn ToSqlString)],
+    ) -> ApllodbResult<()> {
+        // TODO return ChangedRows(usize)
+
+        let sql = sql.into();
+        debug!("SqliteTx::execute_named(): {}", sql);
+
+        let params = params
+            .into_iter()
+            .map(|(pname, v)| (*pname, v.to_sql_string()))
+            .collect::<Vec<(&str, String)>>();
+
+        let msg = |prefix: &str| {
+            format!(
+                "{} while execute_named() with the following command: {}",
+                prefix, sql
+            )
+        };
+
+        self.rusqlite_tx
+            .execute_named(
+                &sql,
+                params
+                    .iter()
+                    .map(|(pname, s)| (*pname, s as &dyn rusqlite::ToSql))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            )
+            .map_err(|e| match e {
+                rusqlite::Error::SqliteFailure(
+                    libsqlite3_sys::Error {
+                        code: libsqlite3_sys::ErrorCode::DatabaseBusy,
+                        ..
+                    },
+                    _,
+                ) => ApllodbError::new(
+                    ApllodbErrorKind::DeadlockDetected,
+                    msg("deadlock detected"),
+                    Some(Box::new(e)),
+                ),
+
+                rusqlite::Error::SqliteFailure(
+                    libsqlite3_sys::Error {
+                        extended_code: rusqlite::ffi::SQLITE_CONSTRAINT_PRIMARYKEY,
+                        ..
+                    },
+                    _,
+                ) => ApllodbError::new(
+                    ApllodbErrorKind::UniqueViolation,
+                    msg("duplicate value on primary key"),
+                    Some(Box::new(e)),
+                ),
+
+                _ => map_sqlite_err(e, msg("unexpected error")),
+            })?;
+
+        Ok(())
     }
 }
 

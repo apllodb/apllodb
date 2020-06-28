@@ -4,7 +4,6 @@ use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use log::error;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao<'tx, 'db: 'tx> {
@@ -126,8 +125,6 @@ CREATE TABLE IF NOT EXISTS {} (
             TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
         );
 
-        let table_name = format!("{}", vtable.table_name());
-
         let table_wide_constraints = vtable.table_wide_constraints();
         let table_wide_constraints_str =
             serde_yaml::to_string(table_wide_constraints).map_err(|e| {
@@ -135,65 +132,31 @@ CREATE TABLE IF NOT EXISTS {} (
                     ApllodbErrorKind::SerializationError,
                     format!(
                         "failed to serialize `{}`'s table wide constraints: `{:?}`",
-                        table_name, table_wide_constraints
+                        vtable.table_name(),
+                        table_wide_constraints
                     ),
                     Some(Box::new(e)),
                 )
             })?;
 
-        match self.sqlite_tx.rusqlite_tx.execute_named(
-            &sql,
-            &[
-                (":table_name", &table_name),
-                (":table_wide_constraints", &table_wide_constraints_str),
-            ],
-        ) {
-            // TODO DatabaseBusy -> DeadlockDetected for all INSERT in codes.
-            Err(
-                e
-                @
-                rusqlite::Error::SqliteFailure(
-                    libsqlite3_sys::Error {
-                        code: libsqlite3_sys::ErrorCode::DatabaseBusy,
-                        ..
-                    },
-                    _,
+        self.sqlite_tx
+            .execute_named(
+                &sql,
+                &[
+                    (":table_name", vtable.table_name()),
+                    (":table_wide_constraints", &table_wide_constraints_str),
+                ],
+            )
+            .map_err(|e| match e.kind() {
+                ApllodbErrorKind::UniqueViolation => ApllodbError::new(
+                    ApllodbErrorKind::DuplicateTable,
+                    format!("table `{}` is already created", vtable.table_name()),
+                    Some(Box::new(e)),
                 ),
-            ) => Err(ApllodbError::new(
-                ApllodbErrorKind::DeadlockDetected,
-                format!(
-                    "table `{}` is exclusively locked by another transaction for too long time",
-                    table_name
-                ),
-                Some(Box::new(e)),
-            )),
-            Err(
-                e
-                @
-                rusqlite::Error::SqliteFailure(
-                    libsqlite3_sys::Error {
-                        extended_code: rusqlite::ffi::SQLITE_CONSTRAINT_PRIMARYKEY,
-                        ..
-                    },
-                    _,
-                ),
-            ) => Err(ApllodbError::new(
-                ApllodbErrorKind::DuplicateTable,
-                format!("table `{}` is already CREATEd", table_name),
-                Some(Box::new(e)),
-            )),
-            Err(e) => {
-                error!("unexpected SQLite error: {:?}", e);
-                Err(map_sqlite_err(
-                    e,
-                    format!(
-                        "SQLite raised an error creating table `{}`'s metadata",
-                        table_name
-                    ),
-                ))
-            }
-            Ok(_) => Ok(()),
-        }
+                _ => e,
+            })?;
+
+        Ok(())
     }
 
     fn cdt_table_wide_constraints(&self) -> ColumnDataType {

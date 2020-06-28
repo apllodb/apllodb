@@ -3,7 +3,7 @@ mod navi;
 
 pub(in crate::sqlite) use navi::Navi;
 
-use crate::sqlite::{sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid};
+use crate::sqlite::{sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
     ApparentPrimaryKey, Revision, VTable, VTableId, VersionId, VersionNumber,
 };
@@ -13,7 +13,7 @@ use log::error;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct NaviDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx rusqlite::Transaction<'db>,
+    sqlite_tx: &'tx SqliteTx<'db>,
 }
 
 const TNAME_SUFFIX: &str = "navi";
@@ -22,9 +22,7 @@ const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
 impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(
-        sqlite_tx: &'tx rusqlite::Transaction<'db>,
-    ) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -33,19 +31,7 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForNavi::from(vtable);
-
-        self.sqlite_tx
-            .execute(sql.as_str(), rusqlite::params![])
-            .map(|_| ())
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "backend sqlite3 raised an error on creating navi table for `{}`",
-                        vtable.table_name()
-                    ),
-                )
-            })?;
+        self.sqlite_tx.execute_named(sql.as_str(), &vec![])?;
         Ok(())
     }
 
@@ -81,18 +67,8 @@ SELECT {}, {}
             CNAME_REVISION
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql).map_err(|e| {
-            error!("unexpected SQLite error: {:?}", e);
-            map_sqlite_err(
-                e,
-                format!(
-                    "SQLite raised an error while preparing for selecting table `{}`'s navi table",
-                    vtable_id.table_name()
-                ),
-            )
-        })?;
-
-        let mut rows = stmt.query_named(&[]).map_err(|e| {
+        let mut stmt = self.sqlite_tx.prepare(&sql)?;
+        let mut row_iter = stmt.query_named(&[], &vec![], apk.column_data_types()).map_err(|e| {
             map_sqlite_err(
                 e,
                 format!(
@@ -101,7 +77,7 @@ SELECT {}, {}
                 ),
             )
         })?;
-        let opt_row = rows.next().map_err(|e| {
+        let opt_row = row_iter.next().map_err(|e| {
             map_sqlite_err(
                 e,
                 format!(

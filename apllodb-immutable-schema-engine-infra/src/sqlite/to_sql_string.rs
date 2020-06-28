@@ -9,6 +9,12 @@ pub(in crate::sqlite) trait ToSqlString {
     fn to_sql_string(&self) -> String;
 }
 
+impl ToSqlString for String {
+    fn to_sql_string(&self) -> String {
+        format!("{}", self)
+    }
+}
+
 impl ToSqlString for TableName {
     fn to_sql_string(&self) -> String {
         format!("{}", self)
