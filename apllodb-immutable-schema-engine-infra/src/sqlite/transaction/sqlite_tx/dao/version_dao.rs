@@ -1,7 +1,7 @@
 mod create_table_sql_for_version;
 
 use super::sqlite_table_name_for_version::SqliteTableNameForVersion;
-use crate::sqlite::{sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid, SqliteRowIterator};
+use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId};
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, Expression},
@@ -15,13 +15,13 @@ pub(in crate::sqlite::transaction::sqlite_tx::dao) use create_table_sql_for_vers
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx rusqlite::Transaction<'db>,
+    sqlite_tx: &'tx SqliteTx<'db>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
 
 impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
-    pub(in crate::sqlite) fn new(sqlite_tx: &'tx rusqlite::Transaction<'db>) -> Self {
+    pub(in crate::sqlite) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -29,22 +29,9 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         &self,
         version: &ActiveVersion,
     ) -> ApllodbResult<()> {
-        use apllodb_immutable_schema_engine_domain::Entity;
-
         let sql = CreateTableSqlForVersion::from(version);
-
-        self.sqlite_tx
-            .execute_named(sql.as_str(), &[])
-            .map(|_| ())
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "SQLite raised an error creating table for version `{:?}`",
-                        version.id()
-                    ),
-                )
-            })
+        self.sqlite_tx.execute_named(sql.as_str(), &[])?;
+        Ok(())
     }
 
     /// Fetches only existing columns from SQLite.
@@ -84,23 +71,11 @@ SELECT {} FROM {}
             sqlite_table_name.as_str(),
         );
 
-        let mut stmt: rusqlite::Statement = self.sqlite_tx.prepare(&sql).map_err(|e| {
-            map_sqlite_err(
-                e,
-                format!(
-                    "SQLite raised an error while selecting (prepare) rows: {}",
-                    sql
-                ),
-            )
-        })?;
-        let mut rows: rusqlite::Rows = stmt.query_named(
-            &[],
-        ).map_err(|e| map_sqlite_err(e, "failed to query_map_named (source error type ToSqlConversionFailure does not have any good meaning)"))?;
+        let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
         // TODO SqliteRowIteratorには、PKを含むRoをを作って貰う必要があるので、PKの情報も渡す必要あり
-
-        let iter = SqliteRowIterator::new(&mut rows, &column_data_types)?;
-        Ok(iter)
+        let row_iter = stmt.query_named(&[], &column_data_types)?;
+        Ok(row_iter)
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
@@ -133,17 +108,7 @@ SELECT {} FROM {}
                 .join(", "),
         );
 
-        self.sqlite_tx
-            .execute(&sql, rusqlite::NO_PARAMS)
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "failed to insert a record into SQLite with this command: {}",
-                        sql
-                    ),
-                )
-            })?;
+        self.sqlite_tx.execute_named(&sql, &vec![])?;
 
         Ok(())
     }

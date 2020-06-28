@@ -92,7 +92,7 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
 
 impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
     fn version_dao(&self) -> VersionDao<'tx, 'db> {
-        VersionDao::new(&self.tx.rusqlite_tx)
+        VersionDao::new(&self.tx)
     }
 
     fn navi_dao(&self) -> NaviDao<'tx, 'db> {
