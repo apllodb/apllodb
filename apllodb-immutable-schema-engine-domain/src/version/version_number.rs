@@ -24,3 +24,8 @@ impl From<u64> for VersionNumber {
         Self(n)
     }
 }
+impl From<i64> for VersionNumber {
+    fn from(n: i64) -> Self {
+        Self(n as u64)
+    }
+}

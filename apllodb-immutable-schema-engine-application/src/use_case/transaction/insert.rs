@@ -1,8 +1,10 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
+use apllodb_immutable_schema_engine_domain::{
+    ApparentPrimaryKey, VTableRepository, VersionId, VersionRepository,
+};
 use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
-use apllodb_immutable_schema_engine_domain::{VersionId, VersionRepository};
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DatabaseName, Expression, TableName},
+    data_structure::{ColumnName, DatabaseName, Expression, SqlValue, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 
@@ -32,9 +34,9 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> InsertUseCaseInput<'a, 
         for (column_name, expr) in self.column_values {
             match expr {
                 Expression::ConstantVariant(_) => {}
-                Expression::ColumnNameVariant(_) => {
+                Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
                     return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
-                        format!("trying to insert `{:?}={:?}` while expr of `INSERT INTO ... VALUES (expr ...)` can only be a constant", 
+                        format!("trying to insert `{:?}={:?}` while expr of `INSERT INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
                         column_name, expr
                     ),
                     None
@@ -64,16 +66,45 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
     /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+        let vtable_repo = input.tx.vtable_repo();
         let version_repo = input.tx.version_repo();
 
+        // Construct ApparentPrimaryKey
         let vtable_id = VTableId::new(input.database_name, input.table_name);
+        let vtable = vtable_repo.read(&vtable_id)?;
+        let apk_cdts = vtable
+            .table_wide_constraints()
+            .apparent_pk_column_data_types();
+        let column_names = apk_cdts
+            .iter()
+            .map(|cdt| cdt.column_name())
+            .cloned()
+            .collect::<Vec<ColumnName>>();
+        let sql_values = apk_cdts
+            .iter()
+            .map(|cdt| {
+                let expr = input.column_values.get(cdt.column_name()).ok_or_else(|| {
+                    ApllodbError::new(
+                        ApllodbErrorKind::NotNullViolation,
+                        format!(
+                            "column `{}` must be specified when INSERTing into table `{}`",
+                            cdt.column_name(),
+                            vtable.table_name()
+                        ),
+                        None,
+                    )
+                })?;
+                SqlValue::try_from(expr, cdt.data_type())
+            })
+            .collect::<ApllodbResult<Vec<SqlValue>>>()?;
+        let apk = ApparentPrimaryKey::new(column_names, sql_values);
+
+        // Determine version to insert
         let active_versions = version_repo.active_versions(&vtable_id)?;
         let version_to_insert = active_versions.version_to_insert(input.column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-        // TODO 同一APKの最新revision + 1 でぶちこむ
-
-        version_repo.insert(&version_id, input.column_values)?;
+        version_repo.insert(&version_id, apk, input.column_values)?;
 
         Ok(InsertUseCaseOutput)
     }

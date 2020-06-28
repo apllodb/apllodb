@@ -59,7 +59,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         )?;
 
         input.tx.vtable_repo().create(&vtable)?;
-        input.tx.version_repo().create(&v1)?;  // TODO こいつは、サロゲートIDを持つしPKは含まない形でversion tableを作るようになる
+        input.tx.version_repo().create(&v1)?;
 
         Ok(CreateTableUseCaseOutput)
     }

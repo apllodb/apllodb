@@ -20,7 +20,7 @@ impl<'tx, 'db: 'tx> VTableDao<'tx, 'db> {
             "
 CREATE TABLE IF NOT EXISTS {} (
   {} TEXT PRIMARY KEY,
-  {} TEXT
+  {} TEXT NOT NULL
 )
         ",
             TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
@@ -180,6 +180,7 @@ CREATE TABLE IF NOT EXISTS {} (
                 (":table_wide_constraints", &table_wide_constraints_str),
             ],
         ) {
+            // TODO DatabaseBusy -> DeadlockDetected for all INSERT in codes.
             Err(
                 e
                 @

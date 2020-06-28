@@ -15,7 +15,10 @@ pub use column::{
     DataType, DataTypeKind,
 };
 pub use database::DatabaseName;
-pub use expression::{Constant, Expression, IntegerConstant, NumericConstant};
+pub use expression::{
+    BooleanExpression, ComparisonFunction, Constant, Expression, IntegerConstant, LogicalFunction,
+    NumericConstant,
+};
 pub use record::{FieldIndex, Record};
 pub use table::{TableConstraintKind, TableConstraints, TableName};
 pub use value::SqlValue;

@@ -1,7 +1,7 @@
 mod create_table_sql_for_version;
 
 use super::sqlite_table_name_for_version::SqliteTableNameForVersion;
-use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteRowIterator};
+use crate::sqlite::{sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid, SqliteRowIterator};
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId};
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, Expression},
@@ -106,6 +106,7 @@ SELECT {} FROM {}
     pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
         &self,
         version_id: &VersionId,
+        navi_rowid: SqliteRowid,
         column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         use crate::sqlite::to_sql_string::ToSqlString;
@@ -114,15 +115,17 @@ SELECT {} FROM {}
         let sql = format!(
             "
         INSERT INTO {}
-          ({})
-          VALUES ({})
+          ({}, {})
+          VALUES ({}, {})
         ", // FIXME might lead to SQL injection.
             sqlite_table_name.as_str(),
+            CNAME_NAVI_ROWID,
             column_values
                 .keys()
                 .map(|cn| cn.as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
+            navi_rowid.0,
             column_values
                 .values()
                 .map(|expr| expr.to_sql_string())

@@ -1,5 +1,7 @@
+mod boolean_expression;
 mod constant;
 
+pub use boolean_expression::{BooleanExpression, ComparisonFunction, LogicalFunction};
 pub use constant::{Constant, IntegerConstant, NumericConstant};
 
 use super::ColumnName;
@@ -13,4 +15,7 @@ pub enum Expression {
 
     /// Reference to column value
     ColumnNameVariant(ColumnName),
+
+    /// Boolean expression
+    BooleanExpressionVariant(BooleanExpression),
 }

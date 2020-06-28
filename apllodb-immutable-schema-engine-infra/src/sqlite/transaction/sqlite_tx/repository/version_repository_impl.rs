@@ -1,13 +1,17 @@
 use crate::sqlite::{
-    transaction::{sqlite_tx::dao::{SqliteMasterDao, VersionDao}, TxId},
+    transaction::{
+        sqlite_tx::dao::{Navi, NaviDao, SqliteMasterDao, VersionDao},
+        TxId,
+    },
     SqliteRowIterator, SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ActiveVersions, VTableId, VersionId, VersionRepository,
+    ActiveVersion, ActiveVersions, ApparentPrimaryKey, Revision, VTableId, VersionId,
+    VersionRepository,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, Expression},
-    error::ApllodbResult,
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use std::collections::HashMap;
 
@@ -44,7 +48,9 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         version_id: &VersionId,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter> {
-        let version = self.sqlite_master_dao().select_active_version(&version_id)?;
+        let version = self
+            .sqlite_master_dao()
+            .select_active_version(&version_id)?;
         let version_row_iter = self.version_dao().full_scan(&version, &column_names)?;
         Ok(version_row_iter)
     }
@@ -52,9 +58,29 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
     fn insert(
         &self,
         version_id: &VersionId,
+        apparent_pk: ApparentPrimaryKey,
         column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
-        self.version_dao().insert(&version_id, &column_values)?;
+        let revision = match self
+            .navi_dao()
+            .probe(version_id.vtable_id(), &apparent_pk)?
+        {
+            Navi::Exist { .. } => Err(ApllodbError::new(
+                ApllodbErrorKind::UniqueViolation,
+                format!(
+                    "record with the same primary key already exists: {:?}",
+                    apparent_pk
+                ),
+                None,
+            )),
+            Navi::NotExist => Ok(Revision::initial()),
+            Navi::Deleted { revision, .. } => Ok(revision.next()),
+        }?;
+
+        let rowid = self.navi_dao().insert(apparent_pk, revision, &version_id)?;
+
+        self.version_dao()
+            .insert(&version_id, rowid, &column_values)?;
         Ok(())
     }
 
@@ -67,6 +93,10 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
 impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
     fn version_dao(&self) -> VersionDao<'tx, 'db> {
         VersionDao::new(&self.tx.sqlite_tx)
+    }
+
+    fn navi_dao(&self) -> NaviDao<'tx, 'db> {
+        NaviDao::new(&self.tx.sqlite_tx)
     }
 
     fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {

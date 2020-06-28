@@ -117,16 +117,16 @@ mod tests {
     use super::SqliteTx;
     use crate::sqlite::SqliteDatabase;
 
+    use apllodb_immutable_schema_engine_domain::apparent_pk;
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
         column_constraints, column_definition, column_definitions, column_name, const_expr,
-        data_structure::{AlterTableAction, DataTypeKind, SqlValue, DataType},
+        data_structure::{AlterTableAction, DataType, DataTypeKind, SqlValue},
         data_type,
         error::{ApllodbErrorKind, ApllodbResult},
         hmap, t_pk, table_constraints, table_name,
     };
     use apllodb_storage_engine_interface::Transaction;
-    use apllodb_immutable_schema_engine_domain::apparent_pk;
 
     #[test]
     fn test_wait_lock() -> ApllodbResult<()> {

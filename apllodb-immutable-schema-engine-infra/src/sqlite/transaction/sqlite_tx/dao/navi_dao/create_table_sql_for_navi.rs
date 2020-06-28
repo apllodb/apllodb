@@ -19,7 +19,7 @@ impl From<&VTable> for CreateTableSqlForNavi {
 CREATE TABLE {}__{} (
     {},
     {} INTEGER NOT NULL,
-    {} INTEGER NOT NULL
+    {} INTEGER
 )
         ",
             vtable.table_name(),

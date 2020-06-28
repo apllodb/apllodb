@@ -1,5 +1,5 @@
 use super::ActiveVersions;
-use crate::{ActiveVersion, ImmutableSchemaTx, VTableId, VersionId, VersionRowIter};
+use crate::{ActiveVersion, ImmutableSchemaTx, VTableId, VersionId, VersionRowIter, ApparentPrimaryKey};
 use apllodb_shared_components::{
     data_structure::{ColumnName, Expression},
     error::ApllodbResult,
@@ -37,9 +37,14 @@ pub trait VersionRepository<'tx, 'db: 'tx> {
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::VerRowIter>;
 
+    /// # Failures
+    ///
+    /// - [UniqueViolation](error/enum.ApllodbErrorKind.html#variant.UniqueViolation) when:
+    ///   - record with the same `apparent_pk` already exists.
     fn insert(
         &self,
         version_id: &VersionId,
+        apparent_pk: ApparentPrimaryKey,
         column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()>;
 
