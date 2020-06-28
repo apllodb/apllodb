@@ -53,6 +53,6 @@ impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
     }
 
     fn navi_dao(&self) -> NaviDao<'tx, 'db> {
-        NaviDao::new(&self.tx.rusqlite_tx)
+        NaviDao::new(&self.tx)
     }
 }

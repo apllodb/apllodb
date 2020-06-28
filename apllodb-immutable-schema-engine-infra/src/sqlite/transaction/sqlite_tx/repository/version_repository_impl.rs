@@ -96,7 +96,7 @@ impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
     }
 
     fn navi_dao(&self) -> NaviDao<'tx, 'db> {
-        NaviDao::new(&self.tx.rusqlite_tx)
+        NaviDao::new(&self.tx)
     }
 
     fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {

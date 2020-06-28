@@ -3,13 +3,15 @@ mod navi;
 
 pub(in crate::sqlite) use navi::Navi;
 
-use crate::sqlite::{sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid, SqliteTx};
+use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
     ApparentPrimaryKey, Revision, VTable, VTableId, VersionId, VersionNumber,
 };
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::{
+    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
+    error::ApllodbResult,
+};
 use create_table_sql_for_navi::CreateTableSqlForNavi;
-use log::error;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct NaviDao<'tx, 'db: 'tx> {
@@ -41,7 +43,7 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
         apk: &ApparentPrimaryKey,
     ) -> ApllodbResult<Navi> {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_storage_engine_interface::PrimaryKey;
+        use apllodb_storage_engine_interface::{PrimaryKey, Row};
 
         let apk_column_names_sql = apk
             .column_names()
@@ -68,60 +70,28 @@ SELECT {}, {}
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
-        let mut row_iter = stmt.query_named(&[], &vec![], apk.column_data_types()).map_err(|e| {
-            map_sqlite_err(
-                e,
-                format!(
-                    "SQLite raised an error while selecting table `{}`'s navi table",
-                    vtable_id.table_name()
-                ),
-            )
-        })?;
-        let opt_row = row_iter.next().map_err(|e| {
-            map_sqlite_err(
-                e,
-                format!(
-                    "SQLite raised an error while fetching row of table `{}`'s navi table",
-                    vtable_id.table_name()
-                ),
-            )
-        })?;
+
+        let cdt_rowid = self.cdt_rowid();
+        let mut column_data_types = vec![&cdt_rowid];
+        let apk_column_data_types = apk.column_data_types();
+        column_data_types.append(
+            &mut apk_column_data_types
+                .iter()
+                .map(|acdt| acdt)
+                .collect::<Vec<&ColumnDataType>>(),
+        );
+
+        let mut row_iter = stmt.query_named(&[], &column_data_types)?;
+        let opt_row = row_iter.next();
 
         let navi = match opt_row {
             None => Navi::NotExist,
             Some(r) => {
-                let rowid = SqliteRowid(r.get::<_, i64>(CNAME_ROWID).map_err(|e| {
-                    map_sqlite_err(
-                        e,
-                        format!(
-                            "failed to get `{}.{}` from SQLite",
-                            vtable_id.table_name(),
-                            CNAME_ROWID
-                        ),
-                    )
-                })?);
-                let revision = Revision::from(r.get::<_, i64>(CNAME_REVISION).map_err(|e| {
-                    map_sqlite_err(
-                        e,
-                        format!(
-                            "failed to get `{}.{}` from SQLite",
-                            vtable_id.table_name(),
-                            CNAME_REVISION
-                        ),
-                    )
-                })?);
+                let r = r?;
+                let rowid = SqliteRowid(r.get::<i64>(&ColumnName::new(CNAME_ROWID)?)?);
+                let revision = Revision::from(r.get::<i64>(&ColumnName::new(CNAME_REVISION)?)?);
                 let opt_version_number = r
-                    .get::<_, Option<i64>>(CNAME_VERSION_NUMBER)
-                    .map_err(|e| {
-                        map_sqlite_err(
-                            e,
-                            format!(
-                                "failed to get `{}.{}` from SQLite",
-                                vtable_id.table_name(),
-                                CNAME_VERSION_NUMBER
-                            ),
-                        )
-                    })?
+                    .get::<Option<i64>>(&ColumnName::new(CNAME_VERSION_NUMBER)?)?
                     .map(VersionNumber::from);
                 match opt_version_number {
                     None => Navi::Deleted { rowid, revision },
@@ -166,30 +136,21 @@ SELECT {}, {}
                 .join(", "),
         );
 
-        let _ = self
-            .sqlite_tx
-            .execute_named(
-                &sql,
-                &[
-                    (":revision", &revision.to_sql_string()),
-                    (
-                        ":version_number",
-                        &version_id.version_number().to_sql_string(),
-                    ),
-                ],
-            )
-            .map_err(|e| {
-                error!("unexpected SQLite error: {:?}", e);
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "SQLite raised an error inserting into table navi table of `{}`",
-                        vtable_id.table_name()
-                    ),
-                )
-            })?;
+        let _ = self.sqlite_tx.execute_named(
+            &sql,
+            &[
+                (":revision", &revision),
+                (":version_number", version_id.version_number()),
+            ],
+        )?;
 
-        let rowid = self.sqlite_tx.last_insert_rowid();
-        Ok(SqliteRowid(rowid))
+        Ok(self.sqlite_tx.last_insert_rowid())
+    }
+
+    fn cdt_rowid(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_ROWID).unwrap(),
+            DataType::new(DataTypeKind::BigInt, false),
+        )
     }
 }

@@ -6,7 +6,10 @@ pub(in crate::sqlite) use dao::VTableDao;
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use super::TxId;
-use crate::sqlite::{sqlite_error::map_sqlite_err, to_sql_string::ToSqlString, SqliteDatabase};
+use crate::sqlite::{
+    sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString,
+    SqliteDatabase,
+};
 use apllodb_immutable_schema_engine_domain::ImmutableSchemaTx;
 use apllodb_shared_components::{
     data_structure::DatabaseName,
@@ -193,6 +196,10 @@ impl<'db> SqliteTx<'db> {
             })?;
 
         Ok(())
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx) fn last_insert_rowid(&self) -> SqliteRowid {
+        SqliteRowid(self.rusqlite_tx.last_insert_rowid())
     }
 }
 

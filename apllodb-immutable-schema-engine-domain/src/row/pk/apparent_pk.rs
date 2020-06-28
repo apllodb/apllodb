@@ -1,7 +1,7 @@
 use apllodb_shared_components::{
     data_structure::{
-        BooleanExpression, ColumnName, ComparisonFunction, Constant, Expression, LogicalFunction,
-        SqlValue,
+        BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Constant, Expression,
+        LogicalFunction, SqlValue,
     },
     error::ApllodbResult,
 };
@@ -31,6 +31,15 @@ impl ApparentPrimaryKey {
 
     pub fn zipped(&self) -> Vec<(&ColumnName, &SqlValue)> {
         self.column_names.iter().zip(&self.sql_values).collect()
+    }
+
+    pub fn column_data_types(&self) -> Vec<ColumnDataType> {
+        self.zipped()
+            .into_iter()
+            .map(|(cname, sql_value)| {
+                ColumnDataType::new(cname.clone(), sql_value.data_type().clone())
+            })
+            .collect()
     }
 
     pub fn to_condition_expression(&self) -> ApllodbResult<BooleanExpression> {
