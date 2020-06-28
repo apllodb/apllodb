@@ -100,6 +100,6 @@ impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
     }
 
     fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {
-        SqliteMasterDao::new(&self.tx.rusqlite_tx)
+        SqliteMasterDao::new(&self.tx)
     }
 }

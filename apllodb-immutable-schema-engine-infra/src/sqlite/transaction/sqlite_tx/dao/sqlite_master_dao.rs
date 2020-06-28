@@ -1,20 +1,23 @@
 mod active_version_deserializer;
 
-use crate::sqlite::sqlite_error::map_sqlite_err;
+use crate::sqlite::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId, VersionId};
-use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+};
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct SqliteMasterDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx rusqlite::Transaction<'db>,
+    sqlite_tx: &'tx SqliteTx<'db>,
 }
 
 const TNAME: &str = "sqlite_master";
 const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
 impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
-    pub(in crate::sqlite) fn new(sqlite_tx: &'tx rusqlite::Transaction<'db>) -> Self {
+    pub(in crate::sqlite) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -22,6 +25,8 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
         &self,
         vtable_id: &VTableId,
     ) -> ApllodbResult<Vec<ActiveVersion>> {
+        use apllodb_storage_engine_interface::Row;
+
         let sql = format!(
             r#"
             SELECT {} FROM {} WHERE type = "table" AND name LIKE "{}__v%"
@@ -31,34 +36,15 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
             vtable_id.table_name().as_str()
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql).map_err(|e| {
-            map_sqlite_err(
-                e,
-                format!(
-                    "SQLite raised an error while preparing for selecting table `{}`",
-                    TNAME
-                ),
-            )
-        })?;
-
+        let mut stmt = self.sqlite_tx.prepare(&sql)?;
         let create_table_sqls: Vec<String> = stmt
-            .query_map(rusqlite::NO_PARAMS, |row| row.get(CNAME_CREATE_TABLE_SQL))
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "SQLite raised an error while fetching `{}` column value from table `{}`",
-                        CNAME_CREATE_TABLE_SQL, TNAME
-                    ),
-                )
-            })?
-            .collect::<rusqlite::Result<Vec<String>>>()
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!("SQLite raised an error while selecting table `{}`", TNAME),
-                )
-            })?;
+            .query_named(&vec![], &vec![&self.cdt_create_table_sql()])?
+            .map(|row| {
+                let row = row?;
+                let s = row.get::<String>(&ColumnName::new(CNAME_CREATE_TABLE_SQL)?)?;
+                Ok(s)
+            })
+            .collect::<ApllodbResult<Vec<String>>>()?;
 
         create_table_sqls
             .iter()
@@ -85,5 +71,12 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
                 None,
             )
         })
+    }
+
+    fn cdt_create_table_sql(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
+            DataType::new(DataTypeKind::Text, false),
+        )
     }
 }
