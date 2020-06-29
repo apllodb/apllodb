@@ -2,8 +2,8 @@ use apllodb_immutable_schema_engine_application::use_case::{
     transaction::{
         alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
         create_table::{CreateTableUseCase, CreateTableUseCaseInput},
+        full_scan::{FullScanUseCase, FullScanUseCaseInput},
         insert::{InsertUseCase, InsertUseCaseInput},
-        select::{SelectUseCase, SelectUseCaseInput},
     },
     UseCase,
 };
@@ -103,8 +103,8 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter> {
         let database_name = self.database_name().clone();
-        let input = SelectUseCaseInput::new(&self.tx, &database_name, table_name, &column_names);
-        let output = SelectUseCase::run(input)?;
+        let input = FullScanUseCaseInput::new(&self.tx, &database_name, table_name, &column_names);
+        let output = FullScanUseCase::run(input)?;
 
         Ok(output.row_iter)
     }

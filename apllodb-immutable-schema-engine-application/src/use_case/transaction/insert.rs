@@ -87,7 +87,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
                     ApllodbError::new(
                         ApllodbErrorKind::NotNullViolation,
                         format!(
-                            "column `{}` must be specified when INSERTing into table `{}`",
+                            "primary key column `{}` must be specified when INSERTing into table `{}`",
                             cdt.column_name(),
                             vtable.table_name()
                         ),

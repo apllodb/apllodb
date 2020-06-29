@@ -11,7 +11,7 @@ use apllodb_shared_components::{
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct SelectUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
+pub struct FullScanUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
     tx: &'tx Tx,
 
     database_name: &'a DatabaseName,
@@ -22,7 +22,7 @@ pub struct SelectUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>
     _marker: PhantomData<&'db ()>,
 }
 impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
-    for SelectUseCaseInput<'a, 'tx, 'db, Tx>
+    for FullScanUseCaseInput<'a, 'tx, 'db, Tx>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -30,24 +30,24 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
 }
 
 #[derive(Debug)]
-pub struct SelectUseCaseOutput<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
+pub struct FullScanUseCaseOutput<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
     pub row_iter: ImmutableSchemaRowIter<
         <<Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
     >,
 }
 impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseOutput
-    for SelectUseCaseOutput<'tx, 'db, Tx>
+    for FullScanUseCaseOutput<'tx, 'db, Tx>
 {
 }
 
-pub struct SelectUseCase<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
+pub struct FullScanUseCase<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
     _marker: PhantomData<&'a &'tx &'db Tx>,
 }
 impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
-    for SelectUseCase<'a, 'tx, 'db, Tx>
+    for FullScanUseCase<'a, 'tx, 'db, Tx>
 {
-    type In = SelectUseCaseInput<'a, 'tx, 'db, Tx>;
-    type Out = SelectUseCaseOutput<'tx, 'db, Tx>;
+    type In = FullScanUseCaseInput<'a, 'tx, 'db, Tx>;
+    type Out = FullScanUseCaseOutput<'tx, 'db, Tx>;
 
     /// # Failures
     ///
@@ -75,6 +75,6 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
             .collect::<ApllodbResult<Vec<_>>>()?;
 
         let row_iter = ImmutableSchemaRowIter::chain(version_row_iters);
-        Ok(SelectUseCaseOutput { row_iter })
+        Ok(FullScanUseCaseOutput { row_iter })
     }
 }
