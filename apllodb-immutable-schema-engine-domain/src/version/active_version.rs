@@ -215,7 +215,7 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::vtable_id;
+    use crate::{test_support::setup, vtable_id};
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_shared_components::{
         alter_table_action_drop_column, column_constraints, column_definition, column_name,
@@ -225,6 +225,8 @@ mod tests {
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {
+        setup();
+
         let column_definitions = vec![column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
@@ -240,6 +242,8 @@ mod tests {
 
     #[test]
     fn test_initial_fail_invalid_table_definition() -> ApllodbResult<()> {
+        setup();
+
         let column_definitions = vec![];
         let table_constraints = table_constraints!();
 
@@ -254,6 +258,8 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
+        setup();
+
         let column_definitions = vec![
             column_definition!(
                 "c1",
@@ -288,6 +294,8 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
+        setup();
+
         let column_definitions = vec![column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
@@ -308,6 +316,8 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_fail_invalid_table_definition() -> ApllodbResult<()> {
+        setup();
+
         let column_definitions = vec![column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),

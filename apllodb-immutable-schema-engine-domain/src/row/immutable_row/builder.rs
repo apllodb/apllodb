@@ -93,7 +93,7 @@ impl ImmutableRowBuilder {
 #[cfg(test)]
 mod tests {
     use super::ImmutableRowBuilder;
-    use crate::row::pk::Revision;
+    use crate::{row::pk::Revision, test_support::setup};
     use apllodb_shared_components::{
         data_structure::{ColumnName, DataType, DataTypeKind, SqlValue},
         error::ApllodbResult,
@@ -102,6 +102,8 @@ mod tests {
 
     #[test]
     fn test_success() -> ApllodbResult<()> {
+        setup();
+
         let row1 = ImmutableRowBuilder::default()
             .add_column(
                 &ColumnName::new("c1")?,
@@ -133,6 +135,8 @@ mod tests {
 
     #[test]
     fn test_diff_revision_has_same_apparent_pk() -> ApllodbResult<()> {
+        setup();
+
         let row1 = ImmutableRowBuilder::default()
             .add_column(
                 &ColumnName::new("c1")?,
@@ -155,6 +159,8 @@ mod tests {
 
     #[test]
     fn test_compound_pk() -> ApllodbResult<()> {
+        setup();
+
         let row1 = ImmutableRowBuilder::default()
             .add_column(
                 &ColumnName::new("c1")?,

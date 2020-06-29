@@ -104,10 +104,12 @@ mod tests {
         error::ApllodbResult, table_constraints,
     };
     use apllodb_immutable_schema_engine_domain::Entity;
-    use crate::sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper;
+    use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]
     fn test_from_into() -> ApllodbResult<()> {
+        setup();
+
         let testset: Vec<ActiveVersion> = vec![ActiveVersion::initial(
             &vtable_id!(),
             &vec![column_definition!(

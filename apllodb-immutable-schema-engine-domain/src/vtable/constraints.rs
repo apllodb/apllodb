@@ -18,7 +18,8 @@ pub struct TableWideConstraints {
 impl TableWideConstraints {
     /// Extract ApparentPrimaryKey columns
     pub fn apparent_pk_column_data_types(&self) -> &[ColumnDataType] {
-        &self.kinds
+        &self
+            .kinds
             .iter()
             .find_map(|k| {
                 if let TableWideConstraintKind::PrimaryKey { column_data_types } = k {
@@ -125,6 +126,7 @@ impl TableWideConstraints {
 #[cfg(test)]
 mod tests {
     use super::TableWideConstraints;
+    use crate::test_support::setup;
     use apllodb_shared_components::{
         column_constraints, column_definition,
         data_structure::{ColumnConstraintKind, ColumnDefinition, DataTypeKind, TableConstraints},
@@ -135,6 +137,8 @@ mod tests {
 
     #[test]
     fn test_success() {
+        setup();
+
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
                 table_constraints!(),
@@ -201,6 +205,8 @@ mod tests {
 
     #[test]
     fn test_failure_invalid_table_definition() {
+        setup();
+
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
                 table_constraints!(t_pk!("c1")),

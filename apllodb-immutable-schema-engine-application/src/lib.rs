@@ -6,3 +6,6 @@
 extern crate derive_new;
 
 pub mod use_case;
+
+#[cfg(test)]
+mod test_support;
