@@ -1,5 +1,6 @@
-use super::ActiveVersions;
-use crate::{ActiveVersion, ImmutableSchemaTx, VTableId, VersionId, VersionRowIter, ApparentPrimaryKey};
+use crate::{
+    ActiveVersion, ApparentPrimaryKey, ImmutableSchemaTx, VersionId, VersionRowIter,
+};
 use apllodb_shared_components::{
     data_structure::{ColumnName, Expression},
     error::ApllodbResult,
@@ -47,6 +48,4 @@ pub trait VersionRepository<'tx, 'db: 'tx> {
         apparent_pk: ApparentPrimaryKey,
         column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()>;
-
-    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions>;
 }

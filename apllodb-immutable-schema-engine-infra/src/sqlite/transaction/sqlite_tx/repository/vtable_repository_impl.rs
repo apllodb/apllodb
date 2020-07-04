@@ -1,5 +1,8 @@
-use crate::sqlite::{transaction::{sqlite_tx::dao::NaviDao, VTableDao}, SqliteTx};
-use apllodb_immutable_schema_engine_domain::{VTable, VTableId, VTableRepository};
+use crate::sqlite::{
+    transaction::{sqlite_tx::dao::{SqliteMasterDao, NaviDao}, VTableDao},
+    SqliteTx,
+};
+use apllodb_immutable_schema_engine_domain::{VTable, VTableId, VTableRepository, ActiveVersions};
 use apllodb_shared_components::error::ApllodbResult;
 
 #[derive(Debug)]
@@ -45,6 +48,11 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         // TODO update VTable on TableWideConstraints change.
         Ok(())
     }
+
+    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions> {
+        let active_versions = self.sqlite_master_dao().select_active_versions(vtable_id)?;
+        Ok(ActiveVersions::from(active_versions))
+    }
 }
 
 impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
@@ -54,5 +62,9 @@ impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
 
     fn navi_dao(&self) -> NaviDao<'tx, 'db> {
         NaviDao::new(&self.tx)
+    }
+
+    fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {
+        SqliteMasterDao::new(&self.tx)
     }
 }

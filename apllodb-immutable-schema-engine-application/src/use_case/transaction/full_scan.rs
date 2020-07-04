@@ -1,6 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ImmutableSchemaRowIter, VersionId, VersionRepository,
+    ImmutableSchemaRowIter, VTableRepository, VersionId, VersionRepository,
 };
 use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
 use apllodb_shared_components::{
@@ -54,6 +54,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
     /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+        let vtable_repo = input.tx.vtable_repo();
         let version_repo = input.tx.version_repo();
 
         let vtable_id = VTableId::new(input.database_name, input.table_name);
@@ -62,8 +63,8 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         // ActiveVersionだからといって、全てのレコードがほしいのではない。最新revisionだけほしい。
         // naviテーブルをなめて、各APK最新revisionの (VersionNumber, SurrogateId) を特定し、各バージョンに対してselectを投げる。
         // そう考えると、VersionDao::selectは、フルスキャンのインターフェイスは不要で、必ずSurrogateId列でselectionする。
-        
-        let active_versions = version_repo.active_versions(&vtable_id)?;
+
+        let active_versions = vtable_repo.active_versions(&vtable_id)?;
         let versions_to_select = active_versions.versions_to_select()?;
 
         let version_row_iters = versions_to_select

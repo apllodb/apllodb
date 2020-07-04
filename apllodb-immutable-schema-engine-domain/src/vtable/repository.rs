@@ -1,4 +1,4 @@
-use crate::{ImmutableSchemaTx, VTable, VTableId};
+use crate::{ImmutableSchemaTx, VTable, VTableId, ActiveVersions};
 use apllodb_shared_components::error::ApllodbResult;
 
 pub trait VTableRepository<'tx, 'db: 'tx> {
@@ -30,4 +30,6 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table specified by `vtable.id` is not visible to this transaction.
     fn update(&self, vtable: &VTable) -> ApllodbResult<()>;
+
+    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions>;
 }

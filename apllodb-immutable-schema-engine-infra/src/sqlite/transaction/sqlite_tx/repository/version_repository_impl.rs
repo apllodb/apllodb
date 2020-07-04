@@ -6,8 +6,7 @@ use crate::sqlite::{
     SqliteRowIterator, SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ActiveVersions, ApparentPrimaryKey, Revision, VTableId, VersionId,
-    VersionRepository,
+    ActiveVersion, ApparentPrimaryKey, Revision, VersionId, VersionRepository,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, Expression},
@@ -82,11 +81,6 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         self.version_dao()
             .insert(&version_id, rowid, &column_values)?;
         Ok(())
-    }
-
-    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions> {
-        let active_versions = self.sqlite_master_dao().select_active_versions(vtable_id)?;
-        Ok(ActiveVersions::from(active_versions))
     }
 }
 
