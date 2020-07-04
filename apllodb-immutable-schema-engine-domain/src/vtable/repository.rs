@@ -1,5 +1,7 @@
-use crate::{ImmutableSchemaTx, VTable, VTableId, ActiveVersions};
-use apllodb_shared_components::error::ApllodbResult;
+use crate::{
+    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, VTable, VTableId, VersionRepository,
+};
+use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
 
 pub trait VTableRepository<'tx, 'db: 'tx> {
     type Tx: ImmutableSchemaTx<'tx, 'db>;
@@ -30,6 +32,16 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
     /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
     ///   - Table specified by `vtable.id` is not visible to this transaction.
     fn update(&self, vtable: &VTable) -> ApllodbResult<()>;
+
+    fn full_scan(
+        &self,
+        vtable_id: &VTableId,
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<
+        ImmutableSchemaRowIter<
+            <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
+        >,
+    >;
 
     fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions>;
 }

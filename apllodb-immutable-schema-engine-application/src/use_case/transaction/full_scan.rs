@@ -1,6 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ImmutableSchemaRowIter, VTableRepository, VersionId, VersionRepository,
+    ImmutableSchemaRowIter, VTableRepository, VersionRepository,
 };
 use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
 use apllodb_shared_components::{
@@ -55,27 +55,8 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
     ///   - any column_values' Expression is not a ConstantVariant.
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
         let vtable_repo = input.tx.vtable_repo();
-        let version_repo = input.tx.version_repo();
-
         let vtable_id = VTableId::new(input.database_name, input.table_name);
-
-        // TODO このあたりの処理は見直す必要がある。
-        // ActiveVersionだからといって、全てのレコードがほしいのではない。最新revisionだけほしい。
-        // naviテーブルをなめて、各APK最新revisionの (VersionNumber, SurrogateId) を特定し、各バージョンに対してselectを投げる。
-        // そう考えると、VersionDao::selectは、フルスキャンのインターフェイスは不要で、必ずSurrogateId列でselectionする。
-
-        let active_versions = vtable_repo.active_versions(&vtable_id)?;
-        let versions_to_select = active_versions.versions_to_select()?;
-
-        let version_row_iters = versions_to_select
-            .iter()
-            .map(|v| {
-                let version_id = VersionId::new(&vtable_id, v.number());
-                version_repo.full_scan(&version_id, input.column_names)
-            })
-            .collect::<ApllodbResult<Vec<_>>>()?;
-
-        let row_iter = ImmutableSchemaRowIter::chain(version_row_iters);
+        let row_iter = vtable_repo.full_scan(&vtable_id, input.column_names)?;
         Ok(FullScanUseCaseOutput { row_iter })
     }
 }

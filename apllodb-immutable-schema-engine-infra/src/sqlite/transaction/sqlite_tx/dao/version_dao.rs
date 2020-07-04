@@ -34,6 +34,15 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         Ok(())
     }
 
+    pub(in crate::sqlite::transaction::sqlite_tx) fn join_with_navi(
+        &self,
+        version_id: &ActiveVersion,
+        navi_rowids: &[SqliteRowid],
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<SqliteRowIterator> {
+        todo!()
+    }
+
     /// Fetches only existing columns from SQLite.
     ///
     /// TODO シグネチャが根本的に間違っている。

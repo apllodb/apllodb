@@ -1,7 +1,9 @@
 mod create_table_sql_for_navi;
 mod navi;
+mod navi_collection;
 
-pub(in crate::sqlite) use navi::Navi;
+pub(in crate::sqlite::transaction::sqlite_tx) use navi::Navi;
+pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollection;
 
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
@@ -37,7 +39,14 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
         Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn probe(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
+        &self,
+        vtable_id: &VTableId,
+    ) -> ApllodbResult<NaviCollection> {
+        todo!()
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx) fn probe_latest_revision(
         &self,
         vtable_id: &VTableId,
         apk: &ApparentPrimaryKey,

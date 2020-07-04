@@ -62,7 +62,7 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
     ) -> ApllodbResult<()> {
         let revision = match self
             .navi_dao()
-            .probe(version_id.vtable_id(), &apparent_pk)?
+            .probe_latest_revision(version_id.vtable_id(), &apparent_pk)?
         {
             Navi::Exist { .. } => Err(ApllodbError::new(
                 ApllodbErrorKind::UniqueViolation,

@@ -14,6 +14,8 @@ impl From<&VTable> for CreateTableSqlForNavi {
     fn from(vtable: &VTable) -> Self {
         use crate::sqlite::to_sql_string::ToSqlString;
 
+        // TODO Set primary key for performance.
+
         let sql = format!(
             "
 CREATE TABLE {}__{} (

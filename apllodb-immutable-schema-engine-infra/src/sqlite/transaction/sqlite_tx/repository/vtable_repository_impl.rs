@@ -1,9 +1,17 @@
 use crate::sqlite::{
-    transaction::{sqlite_tx::dao::{SqliteMasterDao, NaviDao}, VTableDao},
+    sqlite_rowid::SqliteRowid,
+    transaction::{
+        sqlite_tx::dao::{NaviDao, SqliteMasterDao, VersionDao},
+        VTableDao,
+    },
     SqliteTx,
 };
-use apllodb_immutable_schema_engine_domain::{VTable, VTableId, VTableRepository, ActiveVersions};
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_immutable_schema_engine_domain::{
+    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, VTable, VTableId, VTableRepository,
+    VersionId, VersionRepository,
+};
+use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+use std::collections::VecDeque;
 
 #[derive(Debug)]
 pub struct VTableRepositoryImpl<'tx, 'db: 'tx> {
@@ -49,6 +57,38 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         Ok(())
     }
 
+    fn full_scan(
+        &self,
+        vtable_id: &VTableId,
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<
+        ImmutableSchemaRowIter<
+            <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
+        >,
+>{
+        let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
+
+        let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable_id)?;
+
+        for (version_number, navi_collection) in navi_collection.group_by_version_number() {
+            let version_id = VersionId::new(&vtable_id, &version_number);
+            let version = self
+                .sqlite_master_dao()
+                .select_active_version(&version_id)?;
+
+            let ver_row_iter = self.version_dao().join_with_navi(
+                &version,
+                &navi_collection
+                    .map(|navi| navi.rowid().map(|rid| rid.clone()))
+                    .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
+                column_names,
+            )?;
+            ver_row_iters.push_back(ver_row_iter);
+        }
+
+        Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
+    }
+
     fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions> {
         let active_versions = self.sqlite_master_dao().select_active_versions(vtable_id)?;
         Ok(ActiveVersions::from(active_versions))
@@ -58,6 +98,10 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
     fn vtable_dao(&self) -> VTableDao<'tx, 'db> {
         VTableDao::new(&self.tx)
+    }
+
+    fn version_dao(&self) -> VersionDao<'tx, 'db> {
+        VersionDao::new(&self.tx)
     }
 
     fn navi_dao(&self) -> NaviDao<'tx, 'db> {
