@@ -1,4 +1,4 @@
-use crate::sqlite::transaction::sqlite_tx::dao::sqlite_table_name_for_version::SqliteTableNameForVersion;
+use super::VersionDao;
 use apllodb_immutable_schema_engine_domain::ActiveVersion;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +16,7 @@ impl From<&ActiveVersion> for CreateTableSqlForVersion {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::Entity;
 
-        let version_table_name = SqliteTableNameForVersion::new(version.id(), true);
+        let version_table_name = VersionDao::table_name(version.id(), true);
 
         // TODO Make CNAME_NAVI_ROWID primary key for performance.
         let sql = format!(

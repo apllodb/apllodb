@@ -4,7 +4,7 @@ use super::sqlite_table_name_for_version::SqliteTableNameForVersion;
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId};
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, Expression},
+    data_structure::{ColumnDataType, ColumnName, Expression, TableName},
     error::ApllodbResult,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
@@ -20,8 +20,14 @@ pub(in crate::sqlite) struct VersionDao<'tx, 'db: 'tx> {
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
 
+impl VersionDao<'_, '_> {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn table_name(version_id: &VersionId, is_active: bool) -> TableName {
+        SqliteTableNameForVersion::new(version_id, is_active).to_table_name()
+    }
+}
+
 impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
-    pub(in crate::sqlite) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -66,7 +72,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
             .filter(|cdt| column_names.contains(cdt.column_name()))
             .collect();
 
-        let sqlite_table_name = SqliteTableNameForVersion::new(version.id(), true);
+        let sqlite_table_name = Self::table_name(version.id(), true);
 
         let sql = format!(
             "
@@ -95,7 +101,7 @@ SELECT {} FROM {}
     ) -> ApllodbResult<()> {
         use crate::sqlite::to_sql_string::ToSqlString;
 
-        let sqlite_table_name = SqliteTableNameForVersion::new(version_id, true);
+        let sqlite_table_name = Self::table_name(version_id, true);
         let sql = format!(
             "
         INSERT INTO {}

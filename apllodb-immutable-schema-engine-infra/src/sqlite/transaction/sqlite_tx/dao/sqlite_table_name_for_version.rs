@@ -34,10 +34,6 @@ impl SqliteTableNameForVersion {
         self.split().1
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::dao) fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-
     fn split(&self) -> (TableName, VersionNumber, bool) {
         let parts: Vec<&str> = self.0.split("__").collect();
         assert_eq!(parts.len(), 3);
