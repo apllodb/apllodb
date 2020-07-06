@@ -55,6 +55,14 @@ impl ActiveVersions {
         &self,
         column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<&ActiveVersion> {
+        if self.0.is_empty() {
+            return Err(ApllodbError::new(
+                ApllodbErrorKind::UndefinedTable,
+                "no active version found",
+                None,
+            ));
+        }
+
         // FIXME use `map_while` after it is stabilized: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map_while
         let mut errors_per_versions: Vec<(&ActiveVersion, ApllodbError)> = Vec::new();
         for version in &self.0 {

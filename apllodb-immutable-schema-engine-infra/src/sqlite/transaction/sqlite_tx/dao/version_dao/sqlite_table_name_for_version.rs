@@ -25,6 +25,12 @@ impl SqliteTableNameForVersion {
         Self(s.into())
     }
 
+    pub(in crate::sqlite::transaction::sqlite_tx::dao::version_dao) fn to_full_table_name(
+        &self,
+    ) -> TableName {
+        TableName::new(self.0.clone()).unwrap()
+    }
+
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn to_table_name(&self) -> TableName {
         self.split().0
     }

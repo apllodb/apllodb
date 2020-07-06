@@ -30,7 +30,7 @@ impl VersionDao<'_, '_> {
         version_id: &VersionId,
         is_active: bool,
     ) -> TableName {
-        SqliteTableNameForVersion::new(version_id, is_active).to_table_name()
+        SqliteTableNameForVersion::new(version_id, is_active).to_full_table_name()
     }
 }
 
