@@ -1,15 +1,39 @@
-use apllodb_immutable_schema_engine_domain::{Revision, VersionNumber};
+use apllodb_immutable_schema_engine_domain::{
+    ApparentPrimaryKeyColumnNames, Revision, VersionNumber,
+};
 use apllodb_shared_components::data_structure::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
     DataType, DataTypeKind, Expression, IntegerConstant, LogicalFunction, NumericConstant,
     SqlValue, TableName, TextConstant,
 };
+use super::sqlite_rowid::SqliteRowid;
 
 pub(in crate::sqlite) trait ToSqlString {
     fn to_sql_string(&self) -> String;
 }
 
+impl<T: ToSqlString + ?Sized> ToSqlString for &T {
+    fn to_sql_string(&self) -> String {
+        (*self).to_sql_string()
+    }
+}
+
+impl<T: ToSqlString> ToSqlString for [T] {
+    fn to_sql_string(&self) -> String {
+        self.iter()
+            .map(|t| t.to_sql_string())
+            .collect::<Vec<String>>()
+            .join(", ")
+    }
+}
+
 impl ToSqlString for String {
+    fn to_sql_string(&self) -> String {
+        format!("{}", self)
+    }
+}
+
+impl ToSqlString for str {
     fn to_sql_string(&self) -> String {
         format!("{}", self)
     }
@@ -24,6 +48,16 @@ impl ToSqlString for TableName {
 impl ToSqlString for ColumnName {
     fn to_sql_string(&self) -> String {
         format!("{}", self)
+    }
+}
+
+impl ToSqlString for ApparentPrimaryKeyColumnNames {
+    fn to_sql_string(&self) -> String {
+        self.column_names()
+            .iter()
+            .map(|cn| cn.to_sql_string())
+            .collect::<Vec<String>>()
+            .join(", ")
     }
 }
 
@@ -124,5 +158,11 @@ impl ToSqlString for Revision {
 impl ToSqlString for VersionNumber {
     fn to_sql_string(&self) -> String {
         format!("{}", self.to_u64())
+    }
+}
+
+impl ToSqlString for SqliteRowid {
+    fn to_sql_string(&self) -> String {
+        format!("{}", self.0)
     }
 }

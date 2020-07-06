@@ -2,7 +2,7 @@ use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     ApparentPrimaryKey, VTableRepository, VersionId, VersionRepository,
 };
-use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
+use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId, ApparentPrimaryKeyColumnNames};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, SqlValue, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -97,7 +97,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
                 SqlValue::try_from(expr, cdt.data_type())
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
-        let apk = ApparentPrimaryKey::new(column_names, sql_values);
+        let apk = ApparentPrimaryKey::new(ApparentPrimaryKeyColumnNames::new(column_names), sql_values);
 
         // Determine version to insert
         let active_versions = vtable_repo.active_versions(&vtable_id)?;

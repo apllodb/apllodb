@@ -68,6 +68,9 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 >{
         let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
 
+        let vtable = self.vtable_dao().select(vtable_id)?;
+        let apk_column_names = vtable.apk_column_names();
+
         let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable_id)?;
 
         for (version_number, navi_collection) in navi_collection.group_by_version_number() {
@@ -81,6 +84,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
                 &navi_collection
                     .map(|navi| navi.rowid().map(|rid| rid.clone()))
                     .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
+                    &apk_column_names,
                 column_names,
             )?;
             ver_row_iters.push_back(ver_row_iter);

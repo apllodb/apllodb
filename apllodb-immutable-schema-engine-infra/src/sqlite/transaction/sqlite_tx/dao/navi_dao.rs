@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     ApparentPrimaryKey, Revision, VTable, VTableId, VersionId, VersionNumber,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
+    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind, TableName},
     error::ApllodbResult,
 };
 use create_table_sql_for_navi::CreateTableSqlForNavi;
@@ -20,12 +20,19 @@ pub(in crate::sqlite) struct NaviDao<'tx, 'db: 'tx> {
     sqlite_tx: &'tx SqliteTx<'db>,
 }
 
+pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_ROWID: &str = "_rowid_";
 const TNAME_SUFFIX: &str = "navi";
-const CNAME_ROWID: &str = "_rowid_";
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
 impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
+    pub(in crate::sqlite::transaction::sqlite_tx::dao) fn table_name(
+        vtable_id: &VTableId,
+    ) -> ApllodbResult<TableName> {
+        let s = format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX);
+        Ok(TableName::new(s)?)
+    }
+
     pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
@@ -41,7 +48,7 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
         &self,
-        vtable_id: &VTableId,
+        _vtable_id: &VTableId,
     ) -> ApllodbResult<NaviCollection> {
         todo!()
     }

@@ -3,8 +3,11 @@ mod sqlite_table_name_for_version;
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_version::SqliteTableNameForVersion;
 
+use super::{navi_dao, NaviDao};
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId};
+use apllodb_immutable_schema_engine_domain::{
+    ActiveVersion, ApparentPrimaryKeyColumnNames, VersionId,
+};
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, Expression, TableName},
     error::ApllodbResult,
@@ -45,29 +48,16 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         Ok(())
     }
 
+    /// Fetches only existing columns from SQLite, joining ApparentPrimaryKey from navi table.
     pub(in crate::sqlite::transaction::sqlite_tx) fn join_with_navi(
         &self,
-        version_id: &ActiveVersion,
-        navi_rowids: &[SqliteRowid],
-        column_names: &[ColumnName],
-    ) -> ApllodbResult<SqliteRowIterator> {
-        todo!()
-    }
-
-    /// Fetches only existing columns from SQLite.
-    ///
-    /// TODO シグネチャが根本的に間違っている。
-    /// 特定バージョンから全レコードを取る操作はしない。同一バージョン内に、同一APK同士の古いrevisionも含まれる可能性があり、そのレコードを取得するのは無駄なので。
-    pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan(
-        &self,
         version: &ActiveVersion,
+        navi_rowids: &[SqliteRowid],
+        apk_column_names: &ApparentPrimaryKeyColumnNames,
         column_names: &[ColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
+        use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::Entity;
-
-        // TODO
-        // ここで navi テーブルを参照して、APKごとに最大のRevisionを特定する。
-        // 最大のRevisionを書くバージョンに対して取りに行く
 
         let column_data_types = version.column_data_types();
 
@@ -81,20 +71,32 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
 
         let sql = format!(
             "
-SELECT {} FROM {}
-  ", // FIXME prevent SQL injection
+SELECT {}, {} FROM :version_table
+  INNER JOIN :navi_table
+    ON :version_table.:version_navi_rowid = :navi_table.:navi_rowid
+  WHERE :version_table.:version_navi_rowid IN (:navi_rowids)
+", // FIXME prevent SQL injection
+            apk_column_names.to_sql_string(),
             column_data_types
                 .iter()
                 .map(|cdt| cdt.column_name().as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
-            sqlite_table_name.as_str(),
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
         // TODO SqliteRowIteratorには、PKを含むRoをを作って貰う必要があるので、PKの情報も渡す必要あり
-        let row_iter = stmt.query_named(&[], &column_data_types)?;
+        let row_iter = stmt.query_named(
+            &[
+                ("version_table", &sqlite_table_name),
+                ("navi_table", &NaviDao::table_name(version.vtable_id())?),
+                ("version_navi_rowid", &CNAME_NAVI_ROWID),
+                ("navi_rowid", &navi_dao::CNAME_ROWID),
+                ("navi_rowids", &navi_rowids),
+            ],
+            &column_data_types,
+        )?;
         Ok(row_iter)
     }
 

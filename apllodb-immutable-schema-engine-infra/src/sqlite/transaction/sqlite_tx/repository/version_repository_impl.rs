@@ -1,6 +1,6 @@
 use crate::sqlite::{
     transaction::{
-        sqlite_tx::dao::{Navi, NaviDao, SqliteMasterDao, VersionDao},
+        sqlite_tx::dao::{Navi, NaviDao, VersionDao},
         TxId,
     },
     SqliteRowIterator, SqliteTx,
@@ -42,18 +42,6 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         todo!()
     }
 
-    fn full_scan(
-        &self,
-        version_id: &VersionId,
-        column_names: &[ColumnName],
-    ) -> ApllodbResult<Self::VerRowIter> {
-        let version = self
-            .sqlite_master_dao()
-            .select_active_version(&version_id)?;
-        let version_row_iter = self.version_dao().full_scan(&version, &column_names)?;
-        Ok(version_row_iter)
-    }
-
     fn insert(
         &self,
         version_id: &VersionId,
@@ -91,9 +79,5 @@ impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
 
     fn navi_dao(&self) -> NaviDao<'tx, 'db> {
         NaviDao::new(&self.tx)
-    }
-
-    fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {
-        SqliteMasterDao::new(&self.tx)
     }
 }

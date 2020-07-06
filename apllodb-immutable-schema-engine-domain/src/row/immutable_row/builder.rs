@@ -1,4 +1,7 @@
-use crate::{row::pk::Revision, ApparentPrimaryKey, FullPrimaryKey, ImmutableRow};
+use crate::{
+    row::{pk::Revision, ApparentPrimaryKeyColumnNames},
+    ApparentPrimaryKey, FullPrimaryKey, ImmutableRow,
+};
 use apllodb_shared_components::{
     data_structure::{ColumnName, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -19,7 +22,10 @@ struct PKBuilder {
 }
 impl PKBuilder {
     fn to_full_pk(self, sql_values: Vec<SqlValue>) -> FullPrimaryKey {
-        let apparent_pk = ApparentPrimaryKey::new(self.column_names, sql_values);
+        let apparent_pk = ApparentPrimaryKey::new(
+            ApparentPrimaryKeyColumnNames::new(self.column_names),
+            sql_values,
+        );
         FullPrimaryKey::new(apparent_pk, self.revision)
     }
 }

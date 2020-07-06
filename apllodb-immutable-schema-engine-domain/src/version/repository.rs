@@ -23,21 +23,6 @@ pub trait VersionRepository<'tx, 'db: 'tx> {
     /// Deactivate a version.
     fn deactivate(&self, version_id: &VersionId) -> ApllodbResult<()>;
 
-    /// Scan version.
-    ///
-    /// - Resolves each column's ColumnDataType from active versions.
-    /// - Issue SELECT to `version` and get rows.
-    ///
-    /// # Failures
-    ///
-    /// - [UndefinedColumn](error/enum.ApllodbErrorKind.html#variant.UndefinedColumn) when:
-    ///   - At least one `column_names` are not included in this `version`.
-    fn full_scan(
-        &self,
-        version_id: &VersionId,
-        column_names: &[ColumnName],
-    ) -> ApllodbResult<Self::VerRowIter>;
-
     /// # Failures
     ///
     /// - [UniqueViolation](error/enum.ApllodbErrorKind.html#variant.UniqueViolation) when:
