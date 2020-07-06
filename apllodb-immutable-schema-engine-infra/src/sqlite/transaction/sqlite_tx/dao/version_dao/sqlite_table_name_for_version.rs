@@ -12,7 +12,7 @@ impl<S: Into<String>> From<S> for SqliteTableNameForVersion {
 }
 
 impl SqliteTableNameForVersion {
-    pub(in crate::sqlite::transaction::sqlite_tx::dao) fn new(
+    pub(in crate::sqlite::transaction::sqlite_tx::dao::version_dao) fn new(
         version_id: &VersionId,
         is_active: bool,
     ) -> Self {
@@ -28,6 +28,7 @@ impl SqliteTableNameForVersion {
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn to_table_name(&self) -> TableName {
         self.split().0
     }
+
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn to_version_number(
         &self,
     ) -> VersionNumber {

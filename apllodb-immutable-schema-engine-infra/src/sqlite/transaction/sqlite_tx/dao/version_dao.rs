@@ -1,6 +1,8 @@
 mod create_table_sql_for_version;
+mod sqlite_table_name_for_version;
 
-use super::sqlite_table_name_for_version::SqliteTableNameForVersion;
+pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_version::SqliteTableNameForVersion;
+
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{ActiveVersion, VersionId};
 use apllodb_shared_components::{
@@ -21,7 +23,10 @@ pub(in crate::sqlite) struct VersionDao<'tx, 'db: 'tx> {
 pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
 
 impl VersionDao<'_, '_> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn table_name(version_id: &VersionId, is_active: bool) -> TableName {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn table_name(
+        version_id: &VersionId,
+        is_active: bool,
+    ) -> TableName {
         SqliteTableNameForVersion::new(version_id, is_active).to_table_name()
     }
 }

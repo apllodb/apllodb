@@ -8,7 +8,9 @@ use apllodb_sql_parser::{
     ApllodbAst, ApllodbSqlParser,
 };
 use serde::{Deserialize, Serialize};
-use crate::sqlite::transaction::sqlite_tx::dao::{version_dao, sqlite_table_name_for_version::SqliteTableNameForVersion};
+use crate::sqlite::transaction::sqlite_tx::dao::version_dao;
+use version_dao::SqliteTableNameForVersion;
+
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct ActiveVersionDeserializer(String);

@@ -1,6 +1,5 @@
 mod navi_dao;
 mod sqlite_master_dao;
-mod sqlite_table_name_for_version;
 mod version_dao;
 mod vtable_dao;
 
