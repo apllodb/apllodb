@@ -2,7 +2,7 @@ mod create_table_sql_for_navi;
 mod navi;
 mod navi_collection;
 
-pub(in crate::sqlite::transaction::sqlite_tx) use navi::Navi;
+pub(in crate::sqlite::transaction::sqlite_tx) use navi::{ExistingNavi, Navi};
 pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollection;
 
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteTx};
@@ -61,13 +61,6 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_storage_engine_interface::{PrimaryKey, Row};
 
-        let apk_column_names_sql = apk
-            .column_names()
-            .iter()
-            .map(|cn| cn.as_str())
-            .collect::<Vec<&str>>()
-            .join(", ");
-
         let sql = format!(
             "
 SELECT {}, {}
@@ -78,7 +71,7 @@ SELECT {}, {}
   LIMIT 1;
 ",
             CNAME_ROWID,
-            apk_column_names_sql,
+            apk.column_names().to_sql_string(),
             vtable_id.table_name(),
             TNAME_SUFFIX,
             apk.to_condition_expression()?.to_sql_string(),
@@ -111,11 +104,11 @@ SELECT {}, {}
                     .map(VersionNumber::from);
                 match opt_version_number {
                     None => Navi::Deleted { rowid, revision },
-                    Some(version_number) => Navi::Exist {
+                    Some(version_number) => Navi::Exist(ExistingNavi {
                         rowid,
                         revision,
                         version_number,
-                    },
+                    }),
                 }
             }
         };
