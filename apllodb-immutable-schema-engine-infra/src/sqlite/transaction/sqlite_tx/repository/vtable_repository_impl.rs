@@ -71,7 +71,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         let vtable = self.vtable_dao().select(vtable_id)?;
         let apk_column_names = vtable.apk_column_names();
 
-        let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable_id)?;
+        let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable_id, &apk_column_names)?;
 
         for (version_number, navi_collection) in navi_collection.group_by_version_number()? {
             let version_id = VersionId::new(&vtable_id, &version_number);

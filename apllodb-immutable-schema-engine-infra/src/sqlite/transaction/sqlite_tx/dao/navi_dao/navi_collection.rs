@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine_domain::{ImmutableRow, VersionNumber};
 use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
 use std::collections::{HashMap, VecDeque};
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, new)]
 pub(in crate::sqlite::transaction::sqlite_tx) struct NaviCollection {
     row_iter: SqliteRowIterator,
 }

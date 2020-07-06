@@ -71,32 +71,27 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
 
         let sql = format!(
             "
-SELECT {}, {} FROM :version_table
-  INNER JOIN :navi_table
-    ON :version_table.:version_navi_rowid = :navi_table.:navi_rowid
-  WHERE :version_table.:version_navi_rowid IN (:navi_rowids)
+SELECT {apk_column_names}, {column_names} FROM {version_table}
+  INNER JOIN {navi_table}
+    ON {version_table}.{version_navi_rowid} = {navi_table}.{navi_rowid}
+  WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
-            apk_column_names.to_sql_string(),
-            column_data_types
+            apk_column_names = apk_column_names.to_sql_string(),
+            column_names = column_data_types
                 .iter()
                 .map(|cdt| cdt.column_name().as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
+            version_table = sqlite_table_name.to_sql_string(),
+            navi_table = NaviDao::table_name(version.vtable_id())?.to_sql_string(),
+            version_navi_rowid = CNAME_NAVI_ROWID,
+            navi_rowid = navi_dao::CNAME_ROWID,
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
         // TODO SqliteRowIteratorには、PKを含むRoをを作って貰う必要があるので、PKの情報も渡す必要あり
-        let row_iter = stmt.query_named(
-            &[
-                ("version_table", &sqlite_table_name),
-                ("navi_table", &NaviDao::table_name(version.vtable_id())?),
-                ("version_navi_rowid", &CNAME_NAVI_ROWID),
-                ("navi_rowid", &navi_dao::CNAME_ROWID),
-                ("navi_rowids", &navi_rowids),
-            ],
-            &column_data_types,
-        )?;
+        let row_iter = stmt.query_named(&[("navi_rowids", &navi_rowids)], &column_data_types)?;
         Ok(row_iter)
     }
 

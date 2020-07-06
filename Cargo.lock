@@ -54,6 +54,7 @@ dependencies = [
  "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
  "chrono",
+ "derive-new",
  "env_logger",
  "libsqlite3-sys",
  "log",

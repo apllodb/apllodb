@@ -20,6 +20,8 @@ apllodb-sql-parser = { path = "../apllodb-sql-parser" }
 
 chrono = "0.4"
 
+derive-new = "0.5"
+
 env_logger = "0.7"
 log = "0.4"
 
