@@ -49,3 +49,9 @@ impl SqliteRowIterator {
         Ok(Self(rows))
     }
 }
+
+impl From<VecDeque<ImmutableRow>> for SqliteRowIterator {
+    fn from(rows: VecDeque<ImmutableRow>) -> Self {
+        Self(rows)
+    }
+}

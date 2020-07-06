@@ -73,7 +73,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 
         let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable_id)?;
 
-        for (version_number, navi_collection) in navi_collection.group_by_version_number() {
+        for (version_number, navi_collection) in navi_collection.group_by_version_number()? {
             let version_id = VersionId::new(&vtable_id, &version_number);
             let version = self
                 .sqlite_master_dao()
@@ -82,9 +82,9 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
             let ver_row_iter = self.version_dao().join_with_navi(
                 &version,
                 &navi_collection
-                    .map(|navi| navi.rowid().map(|rid| rid.clone()))
+                    .map(|navi| navi.map(|n| n.rowid))
                     .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
-                    &apk_column_names,
+                &apk_column_names,
                 column_names,
             )?;
             ver_row_iters.push_back(ver_row_iter);

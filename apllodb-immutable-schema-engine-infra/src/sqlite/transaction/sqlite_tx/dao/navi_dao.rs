@@ -7,7 +7,7 @@ pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollectio
 
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKey, Revision, VTable, VTableId, VersionId, VersionNumber,
+    ApparentPrimaryKey, Revision, VTable, VTableId, VersionId,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind, TableName},
@@ -59,7 +59,8 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
         apk: &ApparentPrimaryKey,
     ) -> ApllodbResult<Navi> {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_storage_engine_interface::{PrimaryKey, Row};
+        use apllodb_storage_engine_interface::PrimaryKey;
+        use std::convert::TryFrom;
 
         let sql = format!(
             "
@@ -97,19 +98,7 @@ SELECT {}, {}
             None => Navi::NotExist,
             Some(r) => {
                 let r = r?;
-                let rowid = SqliteRowid(r.get::<i64>(&ColumnName::new(CNAME_ROWID)?)?);
-                let revision = Revision::from(r.get::<i64>(&ColumnName::new(CNAME_REVISION)?)?);
-                let opt_version_number = r
-                    .get::<Option<i64>>(&ColumnName::new(CNAME_VERSION_NUMBER)?)?
-                    .map(VersionNumber::from);
-                match opt_version_number {
-                    None => Navi::Deleted { rowid, revision },
-                    Some(version_number) => Navi::Exist(ExistingNavi {
-                        rowid,
-                        revision,
-                        version_number,
-                    }),
-                }
+                Navi::try_from(r)?
             }
         };
         Ok(navi)

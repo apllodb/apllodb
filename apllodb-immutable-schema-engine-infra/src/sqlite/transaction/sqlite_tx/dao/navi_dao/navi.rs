@@ -1,6 +1,11 @@
+use super::{CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
 use crate::sqlite::sqlite_rowid::SqliteRowid;
-use apllodb_immutable_schema_engine_domain::{Revision, VersionNumber};
-use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_immutable_schema_engine_domain::{ImmutableRow, Revision, VersionNumber};
+use apllodb_shared_components::{
+    data_structure::ColumnName,
+    error::{ApllodbError, ApllodbResult},
+};
+use std::convert::TryFrom;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx) enum Navi {
@@ -22,15 +27,24 @@ pub(in crate::sqlite::transaction::sqlite_tx) struct ExistingNavi {
     pub(in crate::sqlite::transaction::sqlite_tx) version_number: VersionNumber,
 }
 
-impl Navi {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn rowid(&self) -> ApllodbResult<&SqliteRowid> {
-        match self {
-            Navi::Exist(ExistingNavi { rowid, .. }) | Navi::Deleted { rowid, .. } => Ok(rowid),
-            Navi::NotExist => Err(ApllodbError::new(
-                ApllodbErrorKind::DataException,
-                "reference to rowid for NotExist navi record",
-                None,
-            )),
+impl TryFrom<ImmutableRow> for Navi {
+    type Error = ApllodbError;
+
+    fn try_from(r: ImmutableRow) -> ApllodbResult<Self> {
+        use apllodb_storage_engine_interface::Row;
+
+        let rowid = SqliteRowid(r.get::<i64>(&ColumnName::new(CNAME_ROWID)?)?);
+        let revision = Revision::from(r.get::<i64>(&ColumnName::new(CNAME_REVISION)?)?);
+        let opt_version_number = r
+            .get::<Option<i64>>(&ColumnName::new(CNAME_VERSION_NUMBER)?)?
+            .map(VersionNumber::from);
+        match opt_version_number {
+            None => Ok(Navi::Deleted { rowid, revision }),
+            Some(version_number) => Ok(Navi::Exist(ExistingNavi {
+                rowid,
+                revision,
+                version_number,
+            })),
         }
     }
 }
