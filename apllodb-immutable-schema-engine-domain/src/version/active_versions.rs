@@ -47,8 +47,6 @@ impl ActiveVersions {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](a.html) when:
-    ///   - No active version has such column.
     /// - [IntegrityConstraintViolation](error/enum.ApllodbErrorKind.html#variant.IntegrityConstraintViolation) when:
     ///   - No active version can accept the column value.
     pub fn version_to_insert(

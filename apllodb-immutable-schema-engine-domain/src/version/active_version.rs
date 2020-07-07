@@ -127,8 +127,6 @@ impl ActiveVersion {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](a.html) when:
-    ///   - This version doesn't have such column.
     /// - [NotNullViolation](error/enum.ApllodbErrorKind.html#variant.NotNullViolation) when:
     ///   - Not inserting into a NOT NULL column.
     ///   - Inserting NULL to column with NOT NULL constraint.
@@ -158,21 +156,7 @@ impl ActiveVersion {
         }
 
         // Check column value to insert.
-        for (column_name, _expr) in column_values {
-            let _column_data_type = column_data_types
-                .iter()
-                .find(|cdt| cdt.column_name() == column_name)
-                .ok_or_else(|| {
-                    ApllodbError::new(
-                        ApllodbErrorKind::UndefinedColumn,
-                        format!(
-                            "column `{}` does not exist in `{:?}`",
-                            column_name,
-                            self.id()
-                        ),
-                        None,
-                    )
-                })?;
+        for (_column_name, _expr) in column_values {
 
             // TODO implement NullViolation error detection after Expression can hold NULL.
 
