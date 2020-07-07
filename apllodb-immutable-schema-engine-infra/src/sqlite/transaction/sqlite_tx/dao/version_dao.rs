@@ -85,12 +85,13 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
 
         let sql = format!(
             "
-SELECT {apk_column_names}, {column_names} FROM {version_table}
+SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM {version_table}
   INNER JOIN {navi_table}
     ON {version_table}.{version_navi_rowid} = {navi_table}.{navi_rowid}
   WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
             apk_column_names = apk_column_names.to_sql_string(),
+            comma_if_column_names_is_not_empty = if column_names.is_empty() {""} else {", "},
             column_names = column_data_types
                 .iter()
                 .map(|cdt| cdt.column_name().as_str())
