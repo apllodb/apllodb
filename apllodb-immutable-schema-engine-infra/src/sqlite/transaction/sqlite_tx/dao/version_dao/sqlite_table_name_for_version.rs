@@ -31,10 +31,6 @@ impl SqliteTableNameForVersion {
         TableName::new(self.0.clone()).unwrap()
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::dao) fn to_table_name(&self) -> TableName {
-        self.split().0
-    }
-
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn to_version_number(
         &self,
     ) -> VersionNumber {

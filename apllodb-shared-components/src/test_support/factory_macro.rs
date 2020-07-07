@@ -49,10 +49,8 @@ macro_rules! column_name {
 
 #[macro_export]
 macro_rules! database_name {
-    ($col_name: expr) => {{
-        $crate::data_structure::DatabaseName::from(
-            $crate::data_structure::ShortName::new($col_name).unwrap(),
-        )
+    ($db_name: expr) => {{
+        $crate::data_structure::DatabaseName::new($db_name).unwrap()
     }};
 }
 

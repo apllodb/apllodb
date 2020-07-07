@@ -1,4 +1,17 @@
 #[macro_export]
+macro_rules! apk_column_names {
+    [ $( $column_name: expr $(,)? )* ] => {{
+        let mut column_names: Vec<apllodb_shared_components::data_structure::ColumnName> = vec![];
+
+        $(
+            column_names.push(apllodb_shared_components::data_structure::ColumnName::new($column_name).unwrap());
+        )*
+
+        $crate::ApparentPrimaryKeyColumnNames::new(column_names)
+    }};
+}
+
+#[macro_export]
 macro_rules! apparent_pk {
     [ $( ( $column_name: expr, $sql_value: expr $(,)? ), )* ] => {{
         let mut column_names: Vec<apllodb_shared_components::data_structure::ColumnName> = vec![];

@@ -54,8 +54,8 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
 
         let v1 = ActiveVersion::initial(
             vtable.id(),
+            &vtable.apk_column_names(),
             input.column_definitions,
-            input.table_constraints,
         )?;
 
         input.tx.vtable_repo().create(&vtable)?;

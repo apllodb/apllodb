@@ -1,7 +1,7 @@
 use super::{constraints::VersionConstraints, Version, VersionId, VersionNumber};
-use crate::{entity::Entity, vtable::VTableId};
+use crate::{entity::Entity, vtable::VTableId,  ApparentPrimaryKeyColumnNames};
 use apllodb_shared_components::data_structure::{
-    AlterTableAction, ColumnDefinition, ColumnName, TableConstraints,
+    AlterTableAction, ColumnDefinition, ColumnName,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, Expression},
@@ -40,36 +40,36 @@ impl ActiveVersion {
     ///   - If `column_definitions` is empty.
     pub fn initial(
         vtable_id: &VTableId,
+        apk_column_names: &ApparentPrimaryKeyColumnNames,
         column_definitions: &[ColumnDefinition],
-        table_constraints: &TableConstraints,
+        // TODO constraints from TableConstraints
     ) -> ApllodbResult<Self> {
         Self::new(
             vtable_id,
             &VersionNumber::initial(),
+            apk_column_names,
             column_definitions,
-            table_constraints,
         )
     }
 
     /// Constructor.
     ///
-    /// # Failures
-    ///
-    /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
-    ///   - If `column_definitions` is empty.
+    /// Columns from column_definitions are filtered-out if they are included in apk_column_names.
     pub fn new(
         vtable_id: &VTableId,
         version_number: &VersionNumber,
+        apk_column_names: &ApparentPrimaryKeyColumnNames,
         column_definitions: &[ColumnDefinition],
-        _table_constraints: &TableConstraints,
+        // TODO constraints from TableConstraints
     ) -> ApllodbResult<Self> {
-        // TODO Check table_constraints when  TableConstraints support constraints per record.
-        // TODO Validate integrity between column_definitions & table_dconstraints.
+        let apk_column_names = apk_column_names.column_names();
 
-        let column_data_types: Vec<ColumnDataType> =
-            column_definitions.iter().map(|d| d.into()).collect();
-
-        Self::validate_at_least_one_column(&column_data_types)?;
+        let column_data_types: Vec<ColumnDataType> = column_definitions
+            .iter()
+            .map(ColumnDataType::from)
+            // Filter-out primary key columns.
+            .filter(|cdt| !apk_column_names.contains(cdt.column_name()))
+            .collect();
 
         let id = VersionId::new(vtable_id, version_number);
 
@@ -111,8 +111,6 @@ impl ActiveVersion {
 
                 // TODO self.constraints のバージョン制約が column_to_drop を含んでいた場合の対処。
                 // たぶん、errorを返すんだと思う。
-
-                Self::validate_at_least_one_column(&next_column_data_types)?;
 
                 let id = VersionId::new(self.vtable_id(), &self.number().next());
 
@@ -184,18 +182,6 @@ impl ActiveVersion {
         Ok(())
     }
 
-    fn validate_at_least_one_column(column_data_types: &[ColumnDataType]) -> ApllodbResult<()> {
-        if column_data_types.is_empty() {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTableDefinition,
-                "no column in a table definition.",
-                None,
-            ))
-        } else {
-            Ok(())
-        }
-    }
-
     fn validate_col_existence(&self, column_name: &ColumnName) -> ApllodbResult<()> {
         self.0
             .column_data_types
@@ -215,51 +201,36 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{test_support::setup, vtable_id};
+    use crate::{test_support::setup, vtable_id, apk_column_names};
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_shared_components::{
         alter_table_action_drop_column, column_constraints, column_definition, column_name,
         data_structure::{ColumnName, DataTypeKind},
-        data_type, table_constraints,
+        data_type, 
     };
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {
         setup();
 
+        let apk_column_names = apk_column_names!("c1");
         let column_definitions = vec![column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
             column_constraints!()
         )];
-        let table_constraints = table_constraints!();
 
-        let v = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
+        let v = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
     }
 
     #[test]
-    fn test_initial_fail_invalid_table_definition() -> ApllodbResult<()> {
-        setup();
-
-        let column_definitions = vec![];
-        let table_constraints = table_constraints!();
-
-        match ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints) {
-            Err(e) => match e.kind() {
-                ApllodbErrorKind::InvalidTableDefinition => Ok(()),
-                _ => panic!("unexpected error kind: {}", e),
-            },
-            Ok(_) => panic!("should be error"),
-        }
-    }
-
-    #[test]
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
         setup();
 
+        let apk_column_names = apk_column_names!("id");
         let column_definitions = vec![
             column_definition!(
                 "c1",
@@ -272,8 +243,8 @@ mod tests {
                 column_constraints!()
             ),
         ];
-        let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
+
+        let v1 = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
 
         let action = alter_table_action_drop_column!("c1");
 
@@ -296,13 +267,13 @@ mod tests {
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
         setup();
 
+        let apk_column_names = apk_column_names!("id");
         let column_definitions = vec![column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
             column_constraints!()
         )];
-        let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
+        let v1 = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
 
         let action = alter_table_action_drop_column!("c404");
         match v1.create_next(&action) {
@@ -318,13 +289,14 @@ mod tests {
     fn test_create_next_drop_column_fail_invalid_table_definition() -> ApllodbResult<()> {
         setup();
 
+        let apk_column_names = apk_column_names!("id");
         let column_definitions = vec![column_definition!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
             column_constraints!()
         )];
-        let table_constraints = table_constraints!();
-        let v1 = ActiveVersion::initial(&vtable_id!(), &column_definitions, &table_constraints)?;
+
+        let v1 = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
 
         let action = alter_table_action_drop_column!("c1");
         match v1.create_next(&action) {

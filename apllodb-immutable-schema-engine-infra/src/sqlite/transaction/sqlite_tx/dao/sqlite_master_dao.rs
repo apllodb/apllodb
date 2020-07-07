@@ -2,7 +2,7 @@ mod active_version_deserializer;
 
 use crate::sqlite::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTableId, VersionId};
+use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTable, VersionId};
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -23,7 +23,7 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_versions(
         &self,
-        vtable_id: &VTableId,
+        vtable: &VTable,
     ) -> ApllodbResult<Vec<ActiveVersion>> {
         use apllodb_storage_engine_interface::Row;
 
@@ -33,7 +33,7 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
             "#,
             CNAME_CREATE_TABLE_SQL,
             TNAME,
-            vtable_id.table_name().as_str()
+            vtable.table_name().as_str()
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
@@ -50,27 +50,32 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
             .iter()
             .map(|create_table_sql| {
                 let deserializer = ActiveVersionDeserializer::new(create_table_sql);
-                deserializer.into_active_version(vtable_id.database_name())
+                deserializer.into_active_version(vtable)
             })
             .collect::<ApllodbResult<Vec<ActiveVersion>>>()
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_version(
         &self,
+        vtable: &VTable,
         version_id: &VersionId,
     ) -> ApllodbResult<ActiveVersion> {
-        let vtable_id = version_id.vtable_id();
-        let mut versions = self.select_active_versions(&vtable_id)?;
-        versions.pop().ok_or_else(|| {
-            ApllodbError::new(
-                ApllodbErrorKind::UndefinedTable,
-                format!(
-                    "table `{}` not found (or every version is inactive)",
-                    vtable_id.table_name()
-                ),
-                None,
-            )
-        })
+        use apllodb_immutable_schema_engine_domain::Entity;
+
+        let versions = self.select_active_versions(vtable)?;
+        versions
+            .into_iter()
+            .find(|v| v.id() == version_id)
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedTable,
+                    format!(
+                        "table `{}` not found (or every version is inactive)",
+                        vtable.table_name()
+                    ),
+                    None,
+                )
+            })
     }
 
     fn cdt_create_table_sql(&self) -> ColumnDataType {

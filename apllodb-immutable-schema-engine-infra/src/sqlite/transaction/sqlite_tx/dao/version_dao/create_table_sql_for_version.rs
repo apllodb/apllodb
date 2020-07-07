@@ -21,14 +21,19 @@ impl From<&ActiveVersion> for CreateTableSqlForVersion {
         // TODO Make CNAME_NAVI_ROWID primary key for performance.
         let sql = format!(
             "
-CREATE TABLE {} (
-    {} INTEGER NOT NULL,
-    {}
+CREATE TABLE {table_name} (
+    {navi_rowid} INTEGER NOT NULL{comma_if_non_pk_columns}
+    {non_pk_columns}
 )
         ",
-            version_table_name.as_str(),
-            super::CNAME_NAVI_ROWID,
-            version
+            table_name = version_table_name.as_str(),
+            navi_rowid = super::CNAME_NAVI_ROWID,
+            comma_if_non_pk_columns = if version.column_data_types().is_empty() {
+                ""
+            } else {
+                ","
+            },
+            non_pk_columns = version
                 .column_data_types()
                 .iter()
                 .map(|cdt| cdt.to_sql_string())

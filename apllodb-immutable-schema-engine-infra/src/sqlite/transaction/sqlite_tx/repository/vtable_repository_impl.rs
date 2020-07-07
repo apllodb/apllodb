@@ -87,7 +87,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
             let version_id = VersionId::new(&vtable_id, &version_number);
             let version = self
                 .sqlite_master_dao()
-                .select_active_version(&version_id)?;
+                .select_active_version(&vtable, &version_id)?;
 
             let ver_row_iter = self.version_dao().join_with_navi(
                 &version,
@@ -103,8 +103,8 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
     }
 
-    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions> {
-        let active_versions = self.sqlite_master_dao().select_active_versions(vtable_id)?;
+    fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
+        let active_versions = self.sqlite_master_dao().select_active_versions(vtable)?;
         Ok(ActiveVersions::from(active_versions))
     }
 }

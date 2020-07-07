@@ -52,7 +52,7 @@ impl TableWideConstraints {
     ///     [Unique](enum.TableWideConstraintKind.html#variant.Unique) in `table_constraints` and `column_definitions`
     ///     are applied to the same single column.
     ///   - Both `table_constraints` and `column_definitions` include [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey).
-    pub(super) fn new(
+    pub(crate) fn new(
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<Self> {

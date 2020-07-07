@@ -43,5 +43,5 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
         >,
     >;
 
-    fn active_versions(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersions>;
+    fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions>;
 }

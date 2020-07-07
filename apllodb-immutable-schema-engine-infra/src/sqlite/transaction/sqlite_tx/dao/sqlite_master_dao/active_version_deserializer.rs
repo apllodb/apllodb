@@ -1,6 +1,6 @@
-use apllodb_immutable_schema_engine_domain::{VTableId, ActiveVersion};
+use apllodb_immutable_schema_engine_domain::{ ActiveVersion, VTable};
 use apllodb_shared_components::{
-    data_structure::{DatabaseName,  ColumnName, ColumnDefinition, DataType, DataTypeKind, ColumnConstraints, TableConstraints},
+    data_structure::{ColumnName, ColumnDefinition, DataType, DataTypeKind, ColumnConstraints},
     error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
 };
 use apllodb_sql_parser::{
@@ -13,25 +13,27 @@ use version_dao::SqliteTableNameForVersion;
 
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
-pub(super) struct ActiveVersionDeserializer(String);
-
-impl ActiveVersionDeserializer {
-    pub(super) fn new<S: Into<String>>(sql: S) -> Self {
-        Self(sql.into())
-    }
+pub(super) struct ActiveVersionDeserializer{
+    create_version_table_sql: String,
 }
 
 impl ActiveVersionDeserializer {
+    pub(super) fn new<S: Into<String>>(create_version_table_sql: S) -> Self {
+        Self{create_version_table_sql: create_version_table_sql.into()}
+    }
+
     /// # Failures
     ///
     /// - [UndefinedTable](a.html) when:
     ///   - Version defined in this CreateTableSqlForVersion is deactivated.
-    pub(super) fn into_active_version(&self, database_name: &DatabaseName) -> ApllodbResult<ActiveVersion> {
+    pub(super) fn into_active_version(&self, vtable: &VTable) -> ApllodbResult<ActiveVersion> {
+        use apllodb_immutable_schema_engine_domain::Entity;
+
         let parser = ApllodbSqlParser::new();
-        let ast = parser.parse(&self.0).map_err(|e| 
+        let ast = parser.parse(&self.create_version_table_sql).map_err(|e| 
             ApllodbError::new(
                 ApllodbErrorKind::IoError,
-                format!("SQLite's `{}` table somehow hold string that apllodb-sql-parser cannot parse: {}", super::TNAME, &self.0),
+                format!("SQLite's `{}` table somehow hold string that apllodb-sql-parser cannot parse: {}", super::TNAME, &self.create_version_table_sql),
                 Some(Box::new(e))
             )
         )?;
@@ -45,9 +47,7 @@ impl ActiveVersionDeserializer {
                     let id = table_name.0;
                     SqliteTableNameForVersion::from(id.0)
                 };
-                let table_name = sqlite_table_name.to_table_name();
                 let version_number = sqlite_table_name.to_version_number();
-                let vtable_id = VTableId::new(database_name, &table_name);
          
                 let column_definitions: Vec<ColumnDefinition> = column_definitions
                 .as_vec()
@@ -76,15 +76,12 @@ impl ActiveVersionDeserializer {
                 })
                 .collect::<ApllodbResult<Vec<ColumnDefinition>>>()?;
 
-                // TODO TableConstraints
-                let table_constraints = TableConstraints::default();
-                
-                ActiveVersion::new(&vtable_id, &version_number, &column_definitions, &table_constraints)
+                ActiveVersion::new(vtable.id(), &version_number, &vtable.apk_column_names(), &column_definitions)
             }
             _ => unreachable!(format!(
                 "SQLite's `{}` table somehow hold wrong non CREATE TABLE statement: {}",
                 super::TNAME,
-                &self.0
+                &self.create_version_table_sql
             )),
         }
 
@@ -100,38 +97,42 @@ impl ActiveVersionDeserializer {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersionDeserializer;
-    use apllodb_immutable_schema_engine_domain::{vtable_id, ActiveVersion};
+    use apllodb_immutable_schema_engine_domain::{ ActiveVersion};
     use apllodb_shared_components::{
-        column_constraints, column_definition, data_structure::DataTypeKind, data_type,
-        error::ApllodbResult, table_constraints,
+        column_constraints, column_definition, data_structure::{TableConstraints, DataTypeKind, ColumnDefinition}, data_type,
+        error::ApllodbResult, table_constraints, t_pk, table_name, database_name,
     };
-    use apllodb_immutable_schema_engine_domain::Entity;
+    use apllodb_immutable_schema_engine_domain::{VTable, Entity};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]
     fn test_from_into() -> ApllodbResult<()> {
         setup();
 
-        let testset: Vec<ActiveVersion> = vec![ActiveVersion::initial(
-            &vtable_id!(),
-            &vec![column_definition!(
+        let testset: Vec<(Vec<ColumnDefinition>, TableConstraints)> = vec![
+            (
+            vec![column_definition!(
                 "c1",
                 data_type!(DataTypeKind::Integer, false),
                 column_constraints!()
             )],
-            &table_constraints!(),
-        )?
+            table_constraints!(t_pk!("c1")),
+        )
+        
         // TODO more samples
         ];
 
-        for version in testset {
+        for t in testset {
+            let database_name = database_name!("db");
+            let table_name = table_name!("tbl");
+            let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
+            let version = ActiveVersion::initial(vtable.id(), &vtable.apk_column_names(), &t.0)?;
+
             let sql = CreateTableSqlForVersionTestWrapper::from(&version);
             let sql = sql.as_str();
             let deser = ActiveVersionDeserializer::new(sql);
 
-            let database_name = version.id().vtable_id().database_name();
-
-            assert_eq!(deser.into_active_version(database_name)?, version);
+            assert_eq!(deser.into_active_version(&vtable)?, version);
         }
 
         Ok(())

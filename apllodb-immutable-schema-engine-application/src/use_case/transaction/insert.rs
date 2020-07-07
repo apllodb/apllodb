@@ -100,7 +100,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let apk = ApparentPrimaryKey::new(ApparentPrimaryKeyColumnNames::new(column_names), sql_values);
 
         // Determine version to insert
-        let active_versions = vtable_repo.active_versions(&vtable_id)?;
+        let active_versions = vtable_repo.active_versions(&vtable)?;
         let version_to_insert = active_versions.version_to_insert(input.column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
