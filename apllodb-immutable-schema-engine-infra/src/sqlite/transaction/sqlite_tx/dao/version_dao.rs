@@ -13,7 +13,7 @@ use apllodb_shared_components::{
     error::ApllodbResult,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[cfg(test)]
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
@@ -49,6 +49,10 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
     }
 
     /// Fetches only existing columns from SQLite, joining ApparentPrimaryKey from navi table.
+    ///
+    /// # Panics
+    ///
+    /// When apk_column_names and column_names have the duplicate column(s).
     pub(in crate::sqlite::transaction::sqlite_tx) fn join_with_navi(
         &self,
         version: &ActiveVersion,
@@ -60,6 +64,16 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         use apllodb_immutable_schema_engine_domain::Entity;
 
         let column_data_types = version.column_data_types();
+
+        // Validation: apk_column_names & column_names must not have the same column
+        {
+            let column_names_set: HashSet<&ColumnName> = column_names.iter().collect();
+            for apk_colname in apk_column_names.column_names() {
+                if column_names_set.contains(apk_colname) {
+                    panic!("validation error: apk_column_names and column_names have duplicate entry: apk_column_names={:?}, column_names={:?}", apk_column_names.column_names(), column_names);
+                }
+            }
+        }
 
         // Filter existing and requested columns.
         let column_data_types: Vec<&ColumnDataType> = column_data_types

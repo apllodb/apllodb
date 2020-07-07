@@ -70,8 +70,18 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 
         let vtable = self.vtable_dao().select(vtable_id)?;
         let apk_column_names = vtable.apk_column_names();
+        let column_names: Vec<ColumnName> = {
+            let apk_colnames = apk_column_names.column_names();
+            column_names
+                .iter()
+                .filter(|column_name| !apk_colnames.contains(column_name))
+                .cloned()
+                .collect()
+        };
 
-        let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable_id, &apk_column_names)?;
+        let navi_collection = self
+            .navi_dao()
+            .full_scan_latest_revision(&vtable_id, &apk_column_names)?;
 
         for (version_number, navi_collection) in navi_collection.group_by_version_number()? {
             let version_id = VersionId::new(&vtable_id, &version_number);
@@ -85,7 +95,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
                     .map(|navi| navi.map(|n| n.rowid))
                     .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
                 &apk_column_names,
-                column_names,
+                &column_names,
             )?;
             ver_row_iters.push_back(ver_row_iter);
         }
