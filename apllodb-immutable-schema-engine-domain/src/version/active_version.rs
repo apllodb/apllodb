@@ -268,27 +268,4 @@ mod tests {
             Ok(_) => panic!("should be error"),
         }
     }
-
-    #[test]
-    fn test_create_next_drop_column_fail_invalid_table_definition() -> ApllodbResult<()> {
-        setup();
-
-        let apk_column_names = apk_column_names!("id");
-        let column_definitions = vec![column_definition!(
-            "c1",
-            data_type!(DataTypeKind::Integer, false),
-            column_constraints!()
-        )];
-
-        let v1 = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
-
-        let action = alter_table_action_drop_column!("c1");
-        match v1.create_next(&action) {
-            Err(e) => match e.kind() {
-                ApllodbErrorKind::InvalidTableDefinition => Ok(()),
-                _ => panic!("unexpected error kind: {}", e),
-            },
-            Ok(_) => panic!("should be error"),
-        }
-    }
 }
