@@ -105,7 +105,6 @@ SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        // TODO SqliteRowIteratorには、PKを含むRoをを作って貰う必要があるので、PKの情報も渡す必要あり
         let row_iter = stmt.query_named(&[(":navi_rowids", &navi_rowids)], &column_data_types)?;
         Ok(row_iter)
     }
