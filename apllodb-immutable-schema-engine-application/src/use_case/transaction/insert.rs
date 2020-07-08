@@ -1,13 +1,13 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKey, VTableRepository, VersionId, VersionRepository,
+    ApparentPrimaryKey, ApparentPrimaryKeyColumnNames, ImmutableSchemaTx, NonPKColumnName,
+    VTableId, VTableRepository, VersionId, VersionRepository,
 };
-use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId, ApparentPrimaryKeyColumnNames};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, SqlValue, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-
+use apllodb_storage_engine_interface::PrimaryKey;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
@@ -75,12 +75,12 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let apk_cdts = vtable
             .table_wide_constraints()
             .apparent_pk_column_data_types();
-        let column_names = apk_cdts
+        let apk_column_names = apk_cdts
             .iter()
             .map(|cdt| cdt.column_name())
             .cloned()
             .collect::<Vec<ColumnName>>();
-        let sql_values = apk_cdts
+        let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
                 let expr = input.column_values.get(cdt.column_name()).ok_or_else(|| {
@@ -97,14 +97,31 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
                 SqlValue::try_from(expr, cdt.data_type())
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
-        let apk = ApparentPrimaryKey::new(ApparentPrimaryKeyColumnNames::new(column_names), sql_values);
+        let apk = ApparentPrimaryKey::new(
+            ApparentPrimaryKeyColumnNames::new(apk_column_names),
+            apk_sql_values,
+        );
+
+        // Filter Non-PK columns
+        let non_pk_column_values: HashMap<NonPKColumnName, Expression> = input
+            .column_values
+            .clone()
+            .into_iter()
+            .filter_map(|(column_name, expr)| {
+                if apk.column_names().contains(&column_name) {
+                    None
+                } else {
+                    Some((NonPKColumnName::new(column_name), expr))
+                }
+            })
+            .collect();
 
         // Determine version to insert
         let active_versions = vtable_repo.active_versions(&vtable)?;
         let version_to_insert = active_versions.version_to_insert(input.column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-        version_repo.insert(&version_id, apk, input.column_values)?;
+        version_repo.insert(&version_id, apk, &non_pk_column_values)?;
 
         Ok(InsertUseCaseOutput)
     }

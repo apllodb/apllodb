@@ -6,7 +6,7 @@ pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_ver
 use super::{navi_dao, NaviDao};
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ApparentPrimaryKeyColumnNames, VersionId,
+    ActiveVersion, ApparentPrimaryKeyColumnNames, NonPKColumnName, VersionId,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, Expression, TableName},
@@ -91,7 +91,7 @@ SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM
   WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
             apk_column_names = apk_column_names.to_sql_string(),
-            comma_if_column_names_is_not_empty = if column_names.is_empty() {""} else {", "},
+            comma_if_column_names_is_not_empty = if column_names.is_empty() { "" } else { ", " },
             column_names = column_data_types
                 .iter()
                 .map(|cdt| cdt.column_name().as_str())
@@ -106,7 +106,7 @@ SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
         // TODO SqliteRowIteratorには、PKを含むRoをを作って貰う必要があるので、PKの情報も渡す必要あり
-        let row_iter = stmt.query_named(&[("navi_rowids", &navi_rowids)], &column_data_types)?;
+        let row_iter = stmt.query_named(&[(":navi_rowids", &navi_rowids)], &column_data_types)?;
         Ok(row_iter)
     }
 
@@ -114,26 +114,27 @@ SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM
         &self,
         version_id: &VersionId,
         navi_rowid: SqliteRowid,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<NonPKColumnName, Expression>,
     ) -> ApllodbResult<()> {
         use crate::sqlite::to_sql_string::ToSqlString;
 
         let sqlite_table_name = Self::table_name(version_id, true);
         let sql = format!(
             "
-        INSERT INTO {}
-          ({}, {})
-          VALUES ({}, {})
+        INSERT INTO {tname}
+          ({navi_rowid}{comma_if_non_pk_column_names}{non_pk_column_names})
+          VALUES ({navi_rowid_val}{comma_if_non_pk_column_names}{non_pk_column_values})
         ", // FIXME might lead to SQL injection.
-            sqlite_table_name.as_str(),
-            CNAME_NAVI_ROWID,
-            column_values
+            tname = sqlite_table_name.as_str(),
+            navi_rowid = CNAME_NAVI_ROWID,
+            navi_rowid_val = navi_rowid.0,
+            comma_if_non_pk_column_names = if column_values.is_empty() { "" } else { ", " },
+            non_pk_column_names = column_values
                 .keys()
                 .map(|cn| cn.as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
-            navi_rowid.0,
-            column_values
+            non_pk_column_values = column_values
                 .values()
                 .map(|expr| expr.to_sql_string())
                 .collect::<Vec<String>>()

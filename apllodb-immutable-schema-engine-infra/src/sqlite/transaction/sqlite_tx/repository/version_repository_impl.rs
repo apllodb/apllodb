@@ -6,10 +6,10 @@ use crate::sqlite::{
     SqliteRowIterator, SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ApparentPrimaryKey, Revision, VersionId, VersionRepository,
+    ActiveVersion, ApparentPrimaryKey, NonPKColumnName, Revision, VersionId, VersionRepository,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnName, Expression},
+    data_structure::Expression,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use std::collections::HashMap;
@@ -46,7 +46,7 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
         &self,
         version_id: &VersionId,
         apparent_pk: ApparentPrimaryKey,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<NonPKColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let revision = match self
             .navi_dao()

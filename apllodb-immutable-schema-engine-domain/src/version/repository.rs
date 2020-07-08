@@ -1,8 +1,6 @@
-use crate::{
-    ActiveVersion, ApparentPrimaryKey, ImmutableSchemaTx, VersionId, VersionRowIter,
-};
+use crate::{ActiveVersion, ApparentPrimaryKey, ImmutableSchemaTx, VersionId, VersionRowIter, row::NonPKColumnName};
 use apllodb_shared_components::{
-    data_structure::{ColumnName, Expression},
+    data_structure::{Expression},
     error::ApllodbResult,
 };
 use apllodb_storage_engine_interface::TransactionId;
@@ -31,6 +29,6 @@ pub trait VersionRepository<'tx, 'db: 'tx> {
         &self,
         version_id: &VersionId,
         apparent_pk: ApparentPrimaryKey,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<NonPKColumnName, Expression>,
     ) -> ApllodbResult<()>;
 }
