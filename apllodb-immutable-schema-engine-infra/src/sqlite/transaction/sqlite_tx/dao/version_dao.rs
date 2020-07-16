@@ -82,7 +82,7 @@ SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FRO
   WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
             apk_column_names = apk_column_names.to_sql_string(),
-            comma_if_non_pk_column_names = if non_pk_column_names.is_empty() {
+            comma_if_non_pk_column_names = if non_pk_column_data_types.is_empty() {
                 ""
             } else {
                 ", "
