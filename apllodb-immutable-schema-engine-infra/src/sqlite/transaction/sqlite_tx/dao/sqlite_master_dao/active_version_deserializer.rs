@@ -1,6 +1,6 @@
-use apllodb_immutable_schema_engine_domain::{ ActiveVersion, VTable};
+use apllodb_immutable_schema_engine_domain::{ ActiveVersion, VTable,  NonPKColumnDataType};
 use apllodb_shared_components::{
-    data_structure::{ColumnName, ColumnDefinition, DataType, DataTypeKind, ColumnConstraints},
+    data_structure::{ColumnName,  DataType, DataTypeKind, ColumnDataType},
     error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
 };
 use apllodb_sql_parser::{
@@ -49,7 +49,7 @@ impl ActiveVersionDeserializer {
                 };
                 let version_number = sqlite_table_name.to_version_number();
          
-                let column_definitions: Vec<ColumnDefinition> = column_definitions
+                let non_pk_column_data_types: Vec<NonPKColumnDataType> = column_definitions
                 .as_vec()
                 .iter()
                 .filter(|cd| {
@@ -69,14 +69,16 @@ impl ActiveVersionDeserializer {
                         };
                         DataType::new(data_type_kind, !not_null)
                     };
-                    // TODO Support ColumnConstraint other than NotNullVariant.
-                    let column_constraints = ColumnConstraints::default();
 
-                    column_name_res.and_then(|column_name| ColumnDefinition::new(column_name, data_type, column_constraints))
+                    column_name_res.map(|column_name| {
+                        let cdt = ColumnDataType::new(column_name, data_type);
+                        NonPKColumnDataType(cdt)
+                    }
+                )
                 })
-                .collect::<ApllodbResult<Vec<ColumnDefinition>>>()?;
+                .collect::<ApllodbResult<Vec<NonPKColumnDataType>>>()?;
 
-                ActiveVersion::new(vtable.id(), &version_number, &vtable.apk_column_names(), &column_definitions)
+                ActiveVersion::new(vtable.id(), &version_number, &non_pk_column_data_types)
             }
             _ => unreachable!(format!(
                 "SQLite's `{}` table somehow hold wrong non CREATE TABLE statement: {}",
@@ -102,7 +104,7 @@ mod tests {
         column_constraints, column_definition, data_structure::{TableConstraints, DataTypeKind, ColumnDefinition}, data_type,
         error::ApllodbResult, table_constraints, t_pk, table_name, database_name,
     };
-    use apllodb_immutable_schema_engine_domain::{VTable, Entity};
+    use apllodb_immutable_schema_engine_domain::{VTable, Entity, NonPKColumnDataType};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]
@@ -126,7 +128,11 @@ mod tests {
             let database_name = database_name!("db");
             let table_name = table_name!("tbl");
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
-            let version = ActiveVersion::initial(vtable.id(), &vtable.apk_column_names(), &t.0)?;
+            let non_pk_column_data_types: Vec<NonPKColumnDataType> = t.0.iter().map(|cd| {
+                let cdt = cd.column_data_type();
+                NonPKColumnDataType(cdt)
+            }).collect();
+            let version = ActiveVersion::initial(vtable.id(), &non_pk_column_data_types)?;
 
             let sql = CreateTableSqlForVersionTestWrapper::from(&version);
             let sql = sql.as_str();

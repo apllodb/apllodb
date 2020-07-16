@@ -14,8 +14,7 @@ pub use inactive_version::InactiveVersion;
 pub use repository::VersionRepository;
 pub use version_number::VersionNumber;
 
-use crate::entity::Entity;
-use apllodb_shared_components::data_structure::ColumnDataType;
+use crate::{entity::Entity, NonPKColumnDataType};
 use constraints::VersionConstraints;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -41,10 +40,7 @@ use std::cmp::Ordering;
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub(crate) struct Version {
     id: VersionId,
-
-    /// Doesn't include Apparent Primary Key
-    column_data_types: Vec<ColumnDataType>,
-
+    column_data_types: Vec<NonPKColumnDataType>,
     constraints: VersionConstraints,
 }
 

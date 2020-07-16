@@ -13,7 +13,11 @@ mod version;
 mod vtable;
 
 pub use entity::Entity;
-pub use row::{ApparentPrimaryKey, ApparentPrimaryKeyColumnNames, FullPrimaryKey, ImmutableRow, ImmutableRowBuilder, Revision, NonPKColumnName};
+pub use row::{
+    filter_non_pk_column_names, ApparentPrimaryKey, ApparentPrimaryKeyColumnNames, FullPrimaryKey,
+    ImmutableRow, ImmutableRowBuilder, NonPKColumnDataType, NonPKColumnDefinition, NonPKColumnName,
+    Revision,
+};
 pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};
 pub use transaction::ImmutableSchemaTx;
 pub use version::{

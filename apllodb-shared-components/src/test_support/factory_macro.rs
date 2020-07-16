@@ -18,6 +18,16 @@ macro_rules! column_constraints {
 }
 
 #[macro_export]
+macro_rules! column_data_type {
+    ($col_name: expr, $data_type: expr $(,)?) => {{
+        $crate::data_structure::ColumnDataType::new(
+            $crate::column_name!($col_name),
+            $data_type,
+        )
+    }};
+}
+
+#[macro_export]
 macro_rules! column_definition {
     ($col_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {{
         $crate::data_structure::ColumnDefinition::new(

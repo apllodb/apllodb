@@ -118,7 +118,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
 
         // Determine version to insert
         let active_versions = vtable_repo.active_versions(&vtable)?;
-        let version_to_insert = active_versions.version_to_insert(input.column_values)?;
+        let version_to_insert = active_versions.version_to_insert(&non_pk_column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
         version_repo.insert(&version_id, apk, &non_pk_column_values)?;

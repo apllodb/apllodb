@@ -1,12 +1,12 @@
+use super::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKeyColumnNames, Revision, VersionNumber,
+    ApparentPrimaryKeyColumnNames, NonPKColumnDataType, NonPKColumnName, Revision, VersionNumber,
 };
 use apllodb_shared_components::data_structure::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
     DataType, DataTypeKind, Expression, IntegerConstant, LogicalFunction, NumericConstant,
     SqlValue, TableName, TextConstant,
 };
-use super::sqlite_rowid::SqliteRowid;
 
 pub(in crate::sqlite) trait ToSqlString {
     fn to_sql_string(&self) -> String;
@@ -90,6 +90,17 @@ impl ToSqlString for ColumnDataType {
             self.column_name().to_sql_string(),
             self.data_type().to_sql_string(),
         )
+    }
+}
+
+impl ToSqlString for NonPKColumnDataType {
+    fn to_sql_string(&self) -> String {
+        self.0.to_sql_string()
+    }
+}
+impl ToSqlString for NonPKColumnName {
+    fn to_sql_string(&self) -> String {
+        self.0.to_sql_string()
     }
 }
 

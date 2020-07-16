@@ -4,4 +4,4 @@ mod pk;
 
 pub use immutable_row::{ImmutableRow, ImmutableRowBuilder};
 pub use pk::{ApparentPrimaryKey, ApparentPrimaryKeyColumnNames, FullPrimaryKey, Revision};
-pub use non_pk::NonPKColumnName;
+pub use non_pk::{NonPKColumnName, NonPKColumnDataType, NonPKColumnDefinition, filter_non_pk_column_names};

@@ -1,6 +1,6 @@
-use crate::ActiveVersion;
+use crate::{ActiveVersion, NonPKColumnName};
 use apllodb_shared_components::{
-    data_structure::{ColumnName, Expression},
+    data_structure::Expression,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use std::collections::HashMap;
@@ -51,7 +51,7 @@ impl ActiveVersions {
     ///   - No active version can accept the column value.
     pub fn version_to_insert(
         &self,
-        column_values: &HashMap<ColumnName, Expression>,
+        non_pk_column_values: &HashMap<NonPKColumnName, Expression>,
     ) -> ApllodbResult<&ActiveVersion> {
         if self.0.is_empty() {
             return Err(ApllodbError::new(
@@ -64,7 +64,7 @@ impl ActiveVersions {
         // FIXME use `map_while` after it is stabilized: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map_while
         let mut errors_per_versions: Vec<(&ActiveVersion, ApllodbError)> = Vec::new();
         for version in &self.0 {
-            if let Err(e) = version.check_version_constraint(column_values) {
+            if let Err(e) = version.check_version_constraint(non_pk_column_values) {
                 errors_per_versions.push((version, e));
             } else {
                 return Ok(version);
@@ -94,7 +94,7 @@ impl ActiveVersions {
                 ApllodbErrorKind::IntegrityConstraintViolation,
                 format!(
                     "all versions reject INSERTing {:?}: {:?}",
-                    column_values, errors_per_versions,
+                    non_pk_column_values, errors_per_versions,
                 ),
                 None,
             ))

@@ -1,7 +1,8 @@
 use crate::{
-    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, VTable, VTableId, VersionRepository,
+    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, NonPKColumnName, VTable, VTableId,
+    VersionRepository,
 };
-use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+use apllodb_shared_components::error::ApllodbResult;
 
 pub trait VTableRepository<'tx, 'db: 'tx> {
     type Tx: ImmutableSchemaTx<'tx, 'db>;
@@ -36,7 +37,7 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
     fn full_scan(
         &self,
         vtable_id: &VTableId,
-        column_names: &[ColumnName],
+        non_pk_column_names: &[NonPKColumnName],
     ) -> ApllodbResult<
         ImmutableSchemaRowIter<
             <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,

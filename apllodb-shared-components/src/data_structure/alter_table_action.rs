@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub enum AlterTableAction {
     /// ALTER TABLE {table_name} DROP COLUMN {column_name}
     DropColumn {
-        /// Column to drop
+        /// Column to drop. Currently PK column cannot be droppe.
         column_name: ColumnName,
     },
 }

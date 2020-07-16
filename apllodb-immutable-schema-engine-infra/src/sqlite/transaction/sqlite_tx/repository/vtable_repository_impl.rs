@@ -7,10 +7,10 @@ use crate::sqlite::{
     SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, VTable, VTableId, VTableRepository,
-    VersionId, VersionRepository,
+    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, NonPKColumnName, VTable, VTableId,
+    VTableRepository, VersionId, VersionRepository,
 };
-use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+use apllodb_shared_components::error::ApllodbResult;
 use std::collections::VecDeque;
 
 #[derive(Debug)]
@@ -60,7 +60,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     fn full_scan(
         &self,
         vtable_id: &VTableId,
-        column_names: &[ColumnName],
+        non_pk_column_names: &[NonPKColumnName],
     ) -> ApllodbResult<
         ImmutableSchemaRowIter<
             <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
@@ -70,14 +70,6 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 
         let vtable = self.vtable_dao().select(vtable_id)?;
         let apk_column_names = vtable.apk_column_names();
-        let column_names: Vec<ColumnName> = {
-            let apk_colnames = apk_column_names.column_names();
-            column_names
-                .iter()
-                .filter(|column_name| !apk_colnames.contains(column_name))
-                .cloned()
-                .collect()
-        };
 
         let navi_collection = self
             .navi_dao()
@@ -95,7 +87,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
                     .map(|navi| navi.map(|n| n.rowid))
                     .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
                 &apk_column_names,
-                &column_names,
+                non_pk_column_names,
             )?;
             ver_row_iters.push_back(ver_row_iter);
         }

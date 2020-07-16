@@ -6,14 +6,14 @@ pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_ver
 use super::{navi_dao, NaviDao};
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ApparentPrimaryKeyColumnNames, NonPKColumnName, VersionId,
+    ActiveVersion, ApparentPrimaryKeyColumnNames, NonPKColumnDataType, NonPKColumnName, VersionId,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, Expression, TableName},
     error::ApllodbResult,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[cfg(test)]
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
@@ -49,53 +49,52 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
     }
 
     /// Fetches only existing columns from SQLite, joining ApparentPrimaryKey from navi table.
-    ///
-    /// # Panics
-    ///
-    /// When apk_column_names and column_names have the duplicate column(s).
     pub(in crate::sqlite::transaction::sqlite_tx) fn join_with_navi(
         &self,
         version: &ActiveVersion,
         navi_rowids: &[SqliteRowid],
         apk_column_names: &ApparentPrimaryKeyColumnNames,
-        column_names: &[ColumnName],
+        non_pk_column_names: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::Entity;
 
-        let column_data_types = version.column_data_types();
+        let non_pk_column_names: Vec<ColumnName> =
+            non_pk_column_names.iter().map(|cn| cn.0.clone()).collect();
 
-        // Validation: apk_column_names & column_names must not have the same column
-        {
-            let column_names_set: HashSet<&ColumnName> = column_names.iter().collect();
-            for apk_colname in apk_column_names.column_names() {
-                if column_names_set.contains(apk_colname) {
-                    panic!("validation error: apk_column_names and column_names have duplicate entry: apk_column_names={:?}, column_names={:?}", apk_column_names.column_names(), column_names);
-                }
-            }
-        }
-
+        let non_pk_column_data_types = version.column_data_types();
         // Filter existing and requested columns.
-        let column_data_types: Vec<&ColumnDataType> = column_data_types
+        let non_pk_column_data_types: Vec<&NonPKColumnDataType> = non_pk_column_data_types
             .iter()
-            .filter(|cdt| column_names.contains(cdt.column_name()))
+            .filter(|non_pk_cdt| {
+                let cdt = &non_pk_cdt.0;
+                non_pk_column_names.contains(cdt.column_name())
+            })
             .collect();
 
         let sqlite_table_name = Self::table_name(version.id(), true);
 
         let sql = format!(
             "
-SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM {version_table}
+SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM {version_table}
   INNER JOIN {navi_table}
     ON {version_table}.{version_navi_rowid} = {navi_table}.{navi_rowid}
   WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
             apk_column_names = apk_column_names.to_sql_string(),
-            comma_if_column_names_is_not_empty = if column_names.is_empty() { "" } else { ", " },
-            column_names = column_data_types
+            comma_if_non_pk_column_names = if non_pk_column_names.is_empty() {
+                ""
+            } else {
+                ", "
+            },
+            non_pk_column_names = non_pk_column_data_types
                 .iter()
-                .map(|cdt| cdt.column_name().as_str())
-                .collect::<Vec<&str>>()
+                .map(|non_pk_cdt| {
+                    let non_pk_cn = non_pk_cdt.column_name();
+                    let cn = non_pk_cn.0;
+                    cn.as_str().into()
+                })
+                .collect::<Vec<String>>()
                 .join(", "),
             version_table = sqlite_table_name.to_sql_string(),
             navi_table = NaviDao::table_name(version.vtable_id())?.to_sql_string(),
@@ -105,7 +104,19 @@ SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let row_iter = stmt.query_named(&[(":navi_rowids", &navi_rowids)], &column_data_types)?;
+        // TODO APKのCDTも
+        let column_data_types: Vec<ColumnDataType> = non_pk_column_data_types
+            .iter()
+            .map(|non_pk_cdt| non_pk_cdt.0.clone())
+            .collect();
+
+        let row_iter = stmt.query_named(
+            &[(":navi_rowids", &navi_rowids)],
+            &column_data_types
+                .iter()
+                .map(|cdt| cdt)
+                .collect::<Vec<&ColumnDataType>>(),
+        )?;
         Ok(row_iter)
     }
 
@@ -130,7 +141,7 @@ SELECT {apk_column_names}{comma_if_column_names_is_not_empty}{column_names} FROM
             comma_if_non_pk_column_names = if column_values.is_empty() { "" } else { ", " },
             non_pk_column_names = column_values
                 .keys()
-                .map(|cn| cn.as_str())
+                .map(|cn| cn.0.as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
             non_pk_column_values = column_values

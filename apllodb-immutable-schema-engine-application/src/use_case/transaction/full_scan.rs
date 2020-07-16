@@ -1,8 +1,10 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
+    filter_non_pk_column_names, ImmutableSchemaTx, VTableId,
+};
+use apllodb_immutable_schema_engine_domain::{
     ImmutableSchemaRowIter, VTableRepository, VersionRepository,
 };
-use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
     error::ApllodbResult,
@@ -55,8 +57,13 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
     ///   - any column_values' Expression is not a ConstantVariant.
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
         let vtable_repo = input.tx.vtable_repo();
+
         let vtable_id = VTableId::new(input.database_name, input.table_name);
-        let row_iter = vtable_repo.full_scan(&vtable_id, input.column_names)?;
+        let vtable = vtable_repo.read(&vtable_id)?;
+        let non_pk_column_names =
+            filter_non_pk_column_names(input.column_names, &vtable.apk_column_names());
+
+        let row_iter = vtable_repo.full_scan(&vtable_id, &non_pk_column_names)?;
         Ok(FullScanUseCaseOutput { row_iter })
     }
 }

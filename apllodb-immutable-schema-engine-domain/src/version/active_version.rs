@@ -1,10 +1,10 @@
 use super::{constraints::VersionConstraints, Version, VersionId, VersionNumber};
-use crate::{entity::Entity, vtable::VTableId,  ApparentPrimaryKeyColumnNames};
+use crate::{entity::Entity, vtable::VTableId, NonPKColumnDataType, NonPKColumnName};
 use apllodb_shared_components::data_structure::{
-    AlterTableAction, ColumnDefinition, ColumnName,
+    AlterTableAction,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, Expression},
+    data_structure::{Expression, ColumnName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use serde::{Deserialize, Serialize};
@@ -33,56 +33,37 @@ impl ActiveVersion {
     }
 
     /// Create v_1.
-    ///
-    /// # Failures
-    ///
-    /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
-    ///   - If `column_definitions` is empty.
     pub fn initial(
         vtable_id: &VTableId,
-        apk_column_names: &ApparentPrimaryKeyColumnNames,
-        column_definitions: &[ColumnDefinition],
+        non_pk_column_data_types: &[NonPKColumnDataType],
         // TODO constraints from TableConstraints
     ) -> ApllodbResult<Self> {
         Self::new(
             vtable_id,
             &VersionNumber::initial(),
-            apk_column_names,
-            column_definitions,
+            non_pk_column_data_types,
         )
     }
 
     /// Constructor.
-    ///
-    /// Columns from column_definitions are filtered-out if they are included in apk_column_names.
     pub fn new(
         vtable_id: &VTableId,
         version_number: &VersionNumber,
-        apk_column_names: &ApparentPrimaryKeyColumnNames,
-        column_definitions: &[ColumnDefinition],
+        non_pk_column_data_types: &[NonPKColumnDataType],
         // TODO constraints from TableConstraints
     ) -> ApllodbResult<Self> {
-        let apk_column_names = apk_column_names.column_names();
-
-        let column_data_types: Vec<ColumnDataType> = column_definitions
-            .iter()
-            .map(ColumnDataType::from)
-            // Filter-out primary key columns.
-            .filter(|cdt| !apk_column_names.contains(cdt.column_name()))
-            .collect();
-
         let id = VersionId::new(vtable_id, version_number);
 
         Ok(Self(Version {
             id,
-            column_data_types,
+            column_data_types: non_pk_column_data_types.iter().cloned().collect(),
             // TODO: カラム制約とテーブル制約からつくる
             constraints: VersionConstraints::default(),
         }))
     }
 
     /// Ref to columns and their data types.
-    pub fn column_data_types(&self) -> &[ColumnDataType] {
+    pub fn column_data_types(&self) -> &[NonPKColumnDataType] {
         &self.0.column_data_types
     }
 
@@ -101,11 +82,11 @@ impl ActiveVersion {
             } => {
                 self.validate_col_existence(&column_to_drop)?;
 
-                let next_column_data_types: Vec<ColumnDataType> = self
+                let next_column_data_types: Vec<NonPKColumnDataType> = self
                     .0
                     .column_data_types
                     .iter()
-                    .filter(|c| c.column_name() != column_to_drop)
+                    .filter(|c| c.0.column_name() != column_to_drop)
                     .cloned()
                     .collect();
 
@@ -134,21 +115,21 @@ impl ActiveVersion {
     ///   - Column value does not satisfy CHECK constraint.
     pub(in crate::version) fn check_version_constraint(
         &self,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<NonPKColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let column_data_types = self.column_data_types();
 
         // Check if any column not to be inserted is NOT NULL.
         let not_null_columns = column_data_types
             .iter()
-            .filter(|cdt| !cdt.data_type().nullable());
+            .filter(|cdt| !cdt.0.data_type().nullable());
         for not_null_column_name in not_null_columns.map(|cdt| cdt.column_name()) {
-            if !column_values.contains_key(not_null_column_name) {
+            if !column_values.contains_key(&not_null_column_name) {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::NotNullViolation,
                     format!(
                         "column `{}` (NOT NULL) must be included in INSERT command",
-                        not_null_column_name,
+                        not_null_column_name.0,
                     ),
                     None,
                 ));
@@ -170,7 +151,7 @@ impl ActiveVersion {
         self.0
             .column_data_types
             .iter()
-            .find(|c| c.column_name() == column_name)
+            .find(|c| c.0.column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
                 ApllodbError::new(
@@ -185,11 +166,11 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{test_support::setup, vtable_id, apk_column_names};
+    use crate::{test_support::setup, vtable_id, NonPKColumnName, non_pk_column_name, non_pk_column_data_type};
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_shared_components::{
-        alter_table_action_drop_column, column_constraints, column_definition, column_name,
-        data_structure::{ColumnName, DataTypeKind},
+        alter_table_action_drop_column, 
+        data_structure::{DataTypeKind},
         data_type, 
     };
 
@@ -197,14 +178,13 @@ mod tests {
     fn test_initial_success() -> ApllodbResult<()> {
         setup();
 
-        let apk_column_names = apk_column_names!("c1");
-        let column_definitions = vec![column_definition!(
+        let column_data_types = vec![non_pk_column_data_type!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
-            column_constraints!()
+            
         )];
 
-        let v = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
+        let v = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
@@ -214,21 +194,18 @@ mod tests {
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
         setup();
 
-        let apk_column_names = apk_column_names!("id");
-        let column_definitions = vec![
-            column_definition!(
+        let column_data_types = vec![
+            non_pk_column_data_type!(
                 "c1",
                 data_type!(DataTypeKind::Integer, false),
-                column_constraints!()
             ),
-            column_definition!(
+            non_pk_column_data_type!(
                 "c2",
                 data_type!(DataTypeKind::Integer, false),
-                column_constraints!()
             ),
         ];
 
-        let v1 = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
+        let v1 = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
 
         let action = alter_table_action_drop_column!("c1");
 
@@ -236,13 +213,12 @@ mod tests {
 
         assert_eq!(v2.number().to_u64(), 2);
 
-        let v2_cols: Vec<ColumnName> = v2
+        let v2_cols: Vec<NonPKColumnName> = v2
             .column_data_types()
             .iter()
             .map(|cdt| cdt.column_name())
-            .cloned()
             .collect();
-        assert_eq!(v2_cols, vec![column_name!("c2")]);
+        assert_eq!(v2_cols, vec![non_pk_column_name!("c2")]);
 
         Ok(())
     }
@@ -251,13 +227,11 @@ mod tests {
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
         setup();
 
-        let apk_column_names = apk_column_names!("id");
-        let column_definitions = vec![column_definition!(
+        let column_data_types = vec![non_pk_column_data_type!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
-            column_constraints!()
         )];
-        let v1 = ActiveVersion::initial(&vtable_id!(), &apk_column_names, &column_definitions)?;
+        let v1 = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
 
         let action = alter_table_action_drop_column!("c404");
         match v1.create_next(&action) {
