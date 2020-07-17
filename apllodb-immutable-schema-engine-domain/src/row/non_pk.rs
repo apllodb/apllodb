@@ -40,3 +40,21 @@ impl NonPKColumnDataType {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct NonPKColumnDefinition(pub ColumnDefinition);
+
+pub fn filter_non_pk_column_definitions(
+    column_definitions: &[ColumnDefinition],
+    apk_column_names: &ApparentPrimaryKeyColumnNames,
+) -> Vec<NonPKColumnDefinition> {
+    let apk_column_names = apk_column_names.column_names();
+
+    column_definitions
+        .iter()
+        .filter_map(|cd| {
+            if apk_column_names.contains(cd.column_name()) {
+                None
+            } else {
+                Some(NonPKColumnDefinition(cd.clone()))
+            }
+        })
+        .collect()
+}

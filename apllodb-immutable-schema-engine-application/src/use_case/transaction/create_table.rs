@@ -1,10 +1,10 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ImmutableSchemaTx, NonPKColumnDataType, VTable, VTableRepository,
-    VersionRepository,
+    filter_non_pk_column_definitions, ActiveVersion, ImmutableSchemaTx, NonPKColumnDataType,
+    VTable, VTableRepository, VersionRepository,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnDefinition, DatabaseName, TableConstraints, TableName},
+    data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},
     error::ApllodbResult,
 };
 
@@ -54,20 +54,11 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         )?;
 
         let apk_column_names = vtable.apk_column_names();
-        let apk_column_names = apk_column_names.column_names();
-        let column_data_types: Vec<NonPKColumnDataType> = input
-            .column_definitions
-            .iter()
-            .filter_map(|cd| {
-                // Filter-out primary key columns.
-                if apk_column_names.contains(cd.column_name()) {
-                    None
-                } else {
-                    let cdt = ColumnDataType::from(cd);
-                    Some(NonPKColumnDataType(cdt))
-                }
-            })
-            .collect();
+        let column_data_types: Vec<NonPKColumnDataType> =
+            filter_non_pk_column_definitions(input.column_definitions, &apk_column_names)
+                .iter()
+                .map(|coldef| coldef.into())
+                .collect();
 
         let v1 = ActiveVersion::initial(vtable.id(), &column_data_types)?;
 
