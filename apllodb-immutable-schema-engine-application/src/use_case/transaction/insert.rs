@@ -1,6 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKey, ApparentPrimaryKeyColumnNames, ImmutableSchemaTx, NonPKColumnName,
+    ApparentPrimaryKey, PKColumnNames, ImmutableSchemaTx, NonPKColumnName,
     VTableId, VTableRepository, VersionId, VersionRepository,
 };
 use apllodb_shared_components::{
@@ -98,7 +98,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
         let apk = ApparentPrimaryKey::new(
-            ApparentPrimaryKeyColumnNames::new(apk_column_names),
+            PKColumnNames::new(apk_column_names),
             apk_sql_values,
         );
 

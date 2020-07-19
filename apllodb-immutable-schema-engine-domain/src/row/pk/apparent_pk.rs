@@ -12,7 +12,7 @@ use std::collections::VecDeque;
 /// Primary key which other components than Storage Engine observes.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ApparentPrimaryKey {
-    column_names: ApparentPrimaryKeyColumnNames,
+    column_names: PKColumnNames,
 
     // real "key" of a record.
     sql_values: Vec<SqlValue>,
@@ -20,8 +20,8 @@ pub struct ApparentPrimaryKey {
 
 /// ApparentPrimaryKey without values.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
-pub struct ApparentPrimaryKeyColumnNames(Vec<ColumnName>);
-impl ApparentPrimaryKeyColumnNames {
+pub struct PKColumnNames(Vec<ColumnName>);
+impl PKColumnNames {
     pub fn column_names(&self) -> &[ColumnName] {
         &self.0
     }

@@ -22,7 +22,7 @@ macro_rules! apparent_pk {
             sql_values.push($sql_value);
         )*
 
-        $crate::ApparentPrimaryKey::new($crate::ApparentPrimaryKeyColumnNames::new(column_names), sql_values)
+        $crate::ApparentPrimaryKey::new($crate::PKColumnNames::new(column_names), sql_values)
     }};
 }
 

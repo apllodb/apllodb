@@ -1,5 +1,5 @@
 use super::constraint_kind::TableWideConstraintKind;
-use crate::ApparentPrimaryKeyColumnNames;
+use crate::PKColumnNames;
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnDefinition, ColumnName, TableConstraints},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -33,13 +33,13 @@ impl TableWideConstraints {
     }
 
     /// Extract ApparentPrimaryKeyColumnNames
-    pub fn apparent_pk_column_names(&self) -> ApparentPrimaryKeyColumnNames {
+    pub fn apparent_pk_column_names(&self) -> PKColumnNames {
         let column_names: Vec<ColumnName> = self
             .apparent_pk_column_data_types()
             .iter()
             .map(|cdt| cdt.column_name().clone())
             .collect();
-        ApparentPrimaryKeyColumnNames::new(column_names)
+        PKColumnNames::new(column_names)
     }
 
     /// Constructor that extracts Table constraints (set of record must obey)

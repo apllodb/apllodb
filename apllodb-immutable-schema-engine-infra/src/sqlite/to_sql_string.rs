@@ -1,6 +1,6 @@
 use super::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKeyColumnNames, NonPKColumnDataType, NonPKColumnName, Revision, VersionNumber,
+    PKColumnNames, NonPKColumnDataType, NonPKColumnName, Revision, VersionNumber,
 };
 use apllodb_shared_components::data_structure::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
@@ -51,7 +51,7 @@ impl ToSqlString for ColumnName {
     }
 }
 
-impl ToSqlString for ApparentPrimaryKeyColumnNames {
+impl ToSqlString for PKColumnNames {
     fn to_sql_string(&self) -> String {
         self.column_names()
             .iter()

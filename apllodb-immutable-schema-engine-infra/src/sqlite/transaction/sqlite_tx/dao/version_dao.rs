@@ -6,7 +6,7 @@ pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_ver
 use super::{navi_dao, NaviDao};
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ApparentPrimaryKeyColumnNames, NonPKColumnDataType, NonPKColumnName, VersionId,
+    ActiveVersion, PKColumnNames, NonPKColumnDataType, NonPKColumnName, VersionId,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, Expression, TableName},
@@ -53,7 +53,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         &self,
         version: &ActiveVersion,
         navi_rowids: &[SqliteRowid],
-        apk_column_names: &ApparentPrimaryKeyColumnNames,
+        apk_column_names: &PKColumnNames,
         non_pk_column_names: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;

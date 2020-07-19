@@ -7,7 +7,7 @@ pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollectio
 
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKey, ApparentPrimaryKeyColumnNames, Revision, VTable, VTableId, VersionId,
+    ApparentPrimaryKey, PKColumnNames, Revision, VTable, VTableId, VersionId,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind, TableName},
@@ -49,7 +49,7 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
         &self,
         vtable_id: &VTableId,
-        apk_column_names: &ApparentPrimaryKeyColumnNames,
+        apk_column_names: &PKColumnNames,
     ) -> ApllodbResult<NaviCollection> {
         use crate::sqlite::to_sql_string::ToSqlString;
 

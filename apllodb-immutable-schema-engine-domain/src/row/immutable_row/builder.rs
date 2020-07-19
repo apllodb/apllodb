@@ -1,5 +1,5 @@
 use crate::{
-    row::{pk::Revision, ApparentPrimaryKeyColumnNames},
+    row::{pk::Revision, PKColumnNames},
     ApparentPrimaryKey, FullPrimaryKey, ImmutableRow,
 };
 use apllodb_shared_components::{
@@ -23,7 +23,7 @@ struct PKBuilder {
 impl PKBuilder {
     fn to_full_pk(self, sql_values: Vec<SqlValue>) -> FullPrimaryKey {
         let apparent_pk = ApparentPrimaryKey::new(
-            ApparentPrimaryKeyColumnNames::new(self.column_names),
+            PKColumnNames::new(self.column_names),
             sql_values,
         );
         FullPrimaryKey::new(apparent_pk, self.revision)

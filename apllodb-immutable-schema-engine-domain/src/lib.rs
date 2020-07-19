@@ -15,7 +15,7 @@ mod vtable;
 pub use entity::Entity;
 pub use row::{
     filter_non_pk_column_definitions, filter_non_pk_column_names, ApparentPrimaryKey,
-    ApparentPrimaryKeyColumnNames, FullPrimaryKey, ImmutableRow, ImmutableRowBuilder,
+    PKColumnNames, FullPrimaryKey, ImmutableRow, ImmutableRowBuilder,
     NonPKColumnDataType, NonPKColumnDefinition, NonPKColumnName, Revision,
 };
 pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};
