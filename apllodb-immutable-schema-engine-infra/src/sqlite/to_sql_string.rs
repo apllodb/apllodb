@@ -98,7 +98,7 @@ impl ToSqlString for NonPKColumnDataType {
 }
 impl ToSqlString for NonPKColumnName {
     fn to_sql_string(&self) -> String {
-        self.0.to_sql_string()
+        self.as_str().to_string()
     }
 }
 

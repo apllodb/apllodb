@@ -21,7 +21,7 @@ pub fn filter_non_pk_column_names(
             if apk_column_names.contains(cn) {
                 None
             } else {
-                Some(NonPKColumnName(cn.clone()))
+                Some(NonPKColumnName::from(cn.clone()))
             }
         })
         .collect()

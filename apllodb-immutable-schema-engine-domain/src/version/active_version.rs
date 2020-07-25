@@ -131,7 +131,7 @@ impl ActiveVersion {
                     ApllodbErrorKind::NotNullViolation,
                     format!(
                         "column `{}` (NOT NULL) must be included in INSERT command",
-                        not_null_column_name.0,
+                        not_null_column_name
                     ),
                     None,
                 ));

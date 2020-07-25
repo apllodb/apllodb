@@ -109,7 +109,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
                 if apk.column_names().contains(&column_name) {
                     None
                 } else {
-                    Some((NonPKColumnName::new(column_name), expr))
+                    Some((NonPKColumnName::from(column_name), expr))
                 }
             })
             .collect();

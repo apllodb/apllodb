@@ -50,7 +50,7 @@ macro_rules! non_pk_column_definition {
 macro_rules! non_pk_column_name {
     ($col_name: expr) => {{
         let column_name = apllodb_shared_components::column_name!($col_name);
-        $crate::row::column::non_pk_column::NonPKColumnName(column_name)
+        $crate::row::column::non_pk_column::NonPKColumnName::from(column_name)
     }};
 }
 

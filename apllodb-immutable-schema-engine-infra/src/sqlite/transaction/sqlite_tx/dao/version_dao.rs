@@ -5,9 +5,12 @@ pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_ver
 
 use super::{navi_dao, NaviDao};
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, PKColumnNames, VersionId, row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName}};
+use apllodb_immutable_schema_engine_domain::{
+    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
+    ActiveVersion, PKColumnNames, VersionId,
+};
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, Expression, TableName},
+    data_structure::{ColumnDataType, Expression, TableName},
     error::ApllodbResult,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
@@ -57,8 +60,10 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::Entity;
 
-        let non_pk_column_names: Vec<ColumnName> =
-            non_pk_column_names.iter().map(|cn| cn.0.clone()).collect();
+        let projection: Vec<String> = non_pk_column_names
+            .iter()
+            .map(|cn| cn.as_str().to_string())
+            .collect();
 
         let non_pk_column_data_types = version.column_data_types();
         // Filter existing and requested columns.
@@ -66,7 +71,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
             .iter()
             .filter(|non_pk_cdt| {
                 let cdt = &non_pk_cdt.0;
-                non_pk_column_names.contains(cdt.column_name())
+                projection.contains(&cdt.column_name().as_str().to_string())
             })
             .collect();
 
@@ -89,8 +94,7 @@ SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FRO
                 .iter()
                 .map(|non_pk_cdt| {
                     let non_pk_cn = non_pk_cdt.column_name();
-                    let cn = non_pk_cn.0;
-                    cn.as_str().into()
+                    non_pk_cn.as_str().into()
                 })
                 .collect::<Vec<String>>()
                 .join(", "),
@@ -139,7 +143,7 @@ SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FRO
             comma_if_non_pk_column_names = if column_values.is_empty() { "" } else { ", " },
             non_pk_column_names = column_values
                 .keys()
-                .map(|cn| cn.0.as_str())
+                .map(|cn| cn.as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
             non_pk_column_values = column_values

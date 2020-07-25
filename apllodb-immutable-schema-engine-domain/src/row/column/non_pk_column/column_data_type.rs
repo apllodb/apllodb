@@ -13,6 +13,6 @@ impl From<&NonPKColumnDefinition> for NonPKColumnDataType {
 impl NonPKColumnDataType {
     /// Ref to column name.
     pub fn column_name(&self) -> NonPKColumnName {
-        NonPKColumnName(self.0.column_name().clone())
+        NonPKColumnName::from(self.0.column_name().clone())
     }
 }
