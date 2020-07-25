@@ -72,7 +72,7 @@ impl ActiveVersionDeserializer {
 
                     column_name_res.map(|column_name| {
                         let cdt = ColumnDataType::new(column_name, data_type);
-                        NonPKColumnDataType(cdt)
+                        NonPKColumnDataType::from(cdt)
                     }
                 )
                 })
@@ -130,7 +130,7 @@ mod tests {
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
             let non_pk_column_data_types: Vec<NonPKColumnDataType> = t.0.iter().map(|cd| {
                 let cdt = cd.column_data_type();
-                NonPKColumnDataType(cdt)
+                NonPKColumnDataType::from(cdt)
             }).collect();
             let version = ActiveVersion::initial(vtable.id(), &non_pk_column_data_types)?;
 

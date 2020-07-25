@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     ActiveVersion, PKColumnNames, VersionId,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, Expression, TableName},
+    data_structure::{ColumnDataType, ColumnName, Expression, TableName},
     error::ApllodbResult,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
@@ -70,8 +70,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         let non_pk_column_data_types: Vec<&NonPKColumnDataType> = non_pk_column_data_types
             .iter()
             .filter(|non_pk_cdt| {
-                let cdt = &non_pk_cdt.0;
-                projection.contains(&cdt.column_name().as_str().to_string())
+                projection.contains(&non_pk_cdt.column_name().as_str().to_string())
             })
             .collect();
 
@@ -109,7 +108,11 @@ SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FRO
         // TODO APKのCDTも
         let column_data_types: Vec<ColumnDataType> = non_pk_column_data_types
             .iter()
-            .map(|non_pk_cdt| non_pk_cdt.0.clone())
+            .map(|non_pk_cdt| {
+                let cn = ColumnName::new(non_pk_cdt.column_name().as_str())
+                    .expect("already passed validation");
+                ColumnDataType::new(cn, non_pk_cdt.data_type().clone())
+            })
             .collect();
 
         let row_iter = stmt.query_named(

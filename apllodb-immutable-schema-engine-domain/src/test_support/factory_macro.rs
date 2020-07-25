@@ -30,7 +30,7 @@ macro_rules! apparent_pk {
 macro_rules! non_pk_column_data_type {
     ($col_name: expr, $data_type: expr $(,)?) => {{
         let column_data_type = apllodb_shared_components::column_data_type!($col_name, $data_type);
-        $crate::row::column::non_pk_column::NonPKColumnDataType(column_data_type)
+        $crate::row::column::non_pk_column::NonPKColumnDataType::from(column_data_type)
     }};
 }
 

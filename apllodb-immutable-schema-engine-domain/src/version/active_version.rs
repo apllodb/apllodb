@@ -6,7 +6,7 @@ use crate::{
 };
 use apllodb_shared_components::data_structure::AlterTableAction;
 use apllodb_shared_components::{
-    data_structure::{ColumnName, Expression},
+    data_structure::Expression,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use serde::{Deserialize, Serialize};
@@ -82,13 +82,14 @@ impl ActiveVersion {
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,
             } => {
+                let column_to_drop = NonPKColumnName::from(column_to_drop.clone());
                 self.validate_col_existence(&column_to_drop)?;
 
                 let next_column_data_types: Vec<NonPKColumnDataType> = self
                     .0
                     .column_data_types
                     .iter()
-                    .filter(|c| c.0.column_name() != column_to_drop)
+                    .filter(|c| c.column_name().as_str() != column_to_drop.as_str())
                     .cloned()
                     .collect();
 
@@ -124,7 +125,7 @@ impl ActiveVersion {
         // Check if any column not to be inserted is NOT NULL.
         let not_null_columns = column_data_types
             .iter()
-            .filter(|cdt| !cdt.0.data_type().nullable());
+            .filter(|cdt| !cdt.data_type().nullable());
         for not_null_column_name in not_null_columns.map(|cdt| cdt.column_name()) {
             if !column_values.contains_key(&not_null_column_name) {
                 return Err(ApllodbError::new(
@@ -149,11 +150,11 @@ impl ActiveVersion {
         Ok(())
     }
 
-    fn validate_col_existence(&self, column_name: &ColumnName) -> ApllodbResult<()> {
+    fn validate_col_existence(&self, column_name: &NonPKColumnName) -> ApllodbResult<()> {
         self.0
             .column_data_types
             .iter()
-            .find(|c| c.0.column_name() == column_name)
+            .find(|c| &c.column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
                 ApllodbError::new(

@@ -1,5 +1,8 @@
 use super::sqlite_rowid::SqliteRowid;
-use apllodb_immutable_schema_engine_domain::{PKColumnNames, Revision, VersionNumber, row::column::non_pk_column::{NonPKColumnName, NonPKColumnDataType}};
+use apllodb_immutable_schema_engine_domain::{
+    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
+    PKColumnNames, Revision, VersionNumber,
+};
 use apllodb_shared_components::data_structure::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
     DataType, DataTypeKind, Expression, IntegerConstant, LogicalFunction, NumericConstant,
@@ -93,7 +96,11 @@ impl ToSqlString for ColumnDataType {
 
 impl ToSqlString for NonPKColumnDataType {
     fn to_sql_string(&self) -> String {
-        self.0.to_sql_string()
+        format!(
+            "{} {}",
+            self.column_name().to_sql_string(),
+            self.data_type().to_sql_string(),
+        )
     }
 }
 impl ToSqlString for NonPKColumnName {
