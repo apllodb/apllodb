@@ -1,7 +1,8 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKey, PKColumnNames, ImmutableSchemaTx, NonPKColumnName,
-    VTableId, VTableRepository, VersionId, VersionRepository,
+    ApparentPrimaryKey, ImmutableSchemaTx, PKColumnNames, VTableId, VTableRepository, VersionId,
+    VersionRepository,
+    row::column::non_pk_column::NonPKColumnName
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, SqlValue, TableName},
@@ -97,10 +98,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
                 SqlValue::try_from(expr, cdt.data_type())
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
-        let apk = ApparentPrimaryKey::new(
-            PKColumnNames::new(apk_column_names),
-            apk_sql_values,
-        );
+        let apk = ApparentPrimaryKey::new(PKColumnNames::new(apk_column_names), apk_sql_values);
 
         // Filter Non-PK columns
         let non_pk_column_values: HashMap<NonPKColumnName, Expression> = input

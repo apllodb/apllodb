@@ -6,7 +6,7 @@ use crate::sqlite::{
     SqliteRowIterator, SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ApparentPrimaryKey, NonPKColumnName, Revision, VersionId, VersionRepository,
+    ActiveVersion, ApparentPrimaryKey, Revision, VersionId, VersionRepository, row::column::non_pk_column::NonPKColumnName,
 };
 use apllodb_shared_components::{
     data_structure::Expression,

@@ -1,7 +1,5 @@
 use super::sqlite_rowid::SqliteRowid;
-use apllodb_immutable_schema_engine_domain::{
-    PKColumnNames, NonPKColumnDataType, NonPKColumnName, Revision, VersionNumber,
-};
+use apllodb_immutable_schema_engine_domain::{PKColumnNames, Revision, VersionNumber, row::column::non_pk_column::{NonPKColumnName, NonPKColumnDataType}};
 use apllodb_shared_components::data_structure::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
     DataType, DataTypeKind, Expression, IntegerConstant, LogicalFunction, NumericConstant,

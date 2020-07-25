@@ -1,6 +1,6 @@
 use crate::{
-    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, NonPKColumnName, VTable, VTableId,
-    VersionRepository,
+    row::column::non_pk_column::NonPKColumnName, ActiveVersions, ImmutableSchemaRowIter,
+    ImmutableSchemaTx, VTable, VTableId, VersionRepository,
 };
 use apllodb_shared_components::error::ApllodbResult;
 

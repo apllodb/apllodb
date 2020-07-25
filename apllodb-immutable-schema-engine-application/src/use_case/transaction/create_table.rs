@@ -1,7 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    filter_non_pk_column_definitions, ActiveVersion, ImmutableSchemaTx, NonPKColumnDataType,
-    VTable, VTableRepository, VersionRepository,
+    ActiveVersion, ImmutableSchemaTx, VTable, VTableRepository, VersionRepository, row::column::non_pk_column::{filter_non_pk_column_definitions, NonPKColumnDataType},
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},

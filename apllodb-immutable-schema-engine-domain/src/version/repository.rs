@@ -1,8 +1,8 @@
-use crate::{ActiveVersion, ApparentPrimaryKey, ImmutableSchemaTx, VersionId, VersionRowIter, row::NonPKColumnName};
-use apllodb_shared_components::{
-    data_structure::{Expression},
-    error::ApllodbResult,
+use crate::{
+    row::column::non_pk_column::NonPKColumnName, ActiveVersion, ApparentPrimaryKey,
+    ImmutableSchemaTx, VersionId, VersionRowIter,
 };
+use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
 use apllodb_storage_engine_interface::TransactionId;
 use std::collections::HashMap;
 

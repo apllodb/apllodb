@@ -1,10 +1,8 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    filter_non_pk_column_names, ImmutableSchemaTx, VTableId,
-};
-use apllodb_immutable_schema_engine_domain::{
     ImmutableSchemaRowIter, VTableRepository, VersionRepository,
 };
+use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId, row::column::non_pk_column::filter_non_pk_column_names};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
     error::ApllodbResult,

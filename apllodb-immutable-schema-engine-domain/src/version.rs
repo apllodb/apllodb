@@ -14,7 +14,7 @@ pub use inactive_version::InactiveVersion;
 pub use repository::VersionRepository;
 pub use version_number::VersionNumber;
 
-use crate::{entity::Entity, NonPKColumnDataType};
+use crate::{entity::Entity, row::column::non_pk_column::NonPKColumnDataType};
 use constraints::VersionConstraints;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;

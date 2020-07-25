@@ -7,8 +7,8 @@ use crate::sqlite::{
     SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, NonPKColumnName, VTable, VTableId,
-    VTableRepository, VersionId, VersionRepository,
+    ActiveVersions, ImmutableSchemaRowIter, ImmutableSchemaTx, VTable, VTableId, VTableRepository,
+    VersionId, VersionRepository, row::column::non_pk_column::NonPKColumnName,
 };
 use apllodb_shared_components::error::ApllodbResult;
 use std::collections::VecDeque;

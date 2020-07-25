@@ -1,4 +1,4 @@
-use apllodb_immutable_schema_engine_domain::{ ActiveVersion, VTable,  NonPKColumnDataType};
+use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTable, row::column::non_pk_column::NonPKColumnDataType};
 use apllodb_shared_components::{
     data_structure::{ColumnName,  DataType, DataTypeKind, ColumnDataType},
     error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
@@ -104,7 +104,7 @@ mod tests {
         column_constraints, column_definition, data_structure::{TableConstraints, DataTypeKind, ColumnDefinition}, data_type,
         error::ApllodbResult, table_constraints, t_pk, table_name, database_name,
     };
-    use apllodb_immutable_schema_engine_domain::{VTable, Entity, NonPKColumnDataType};
+    use apllodb_immutable_schema_engine_domain::{VTable, Entity, row::column::non_pk_column::NonPKColumnDataType};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]
