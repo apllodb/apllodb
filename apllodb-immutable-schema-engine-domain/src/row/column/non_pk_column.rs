@@ -1,9 +1,13 @@
-use crate::PKColumnNames;
-use apllodb_shared_components::data_structure::{ColumnDataType, ColumnDefinition, ColumnName};
-use serde::{Deserialize, Serialize};
+mod column_data_type;
+mod column_definition;
+mod column_name;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
-pub struct NonPKColumnName(pub ColumnName);
+pub use column_data_type::NonPKColumnDataType;
+pub use column_definition::NonPKColumnDefinition;
+pub use column_name::NonPKColumnName;
+
+use crate::PKColumnNames;
+use apllodb_shared_components::data_structure::{ColumnDefinition, ColumnName};
 
 pub fn filter_non_pk_column_names(
     column_names: &[ColumnName],
@@ -22,24 +26,6 @@ pub fn filter_non_pk_column_names(
         })
         .collect()
 }
-
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub struct NonPKColumnDataType(pub ColumnDataType);
-impl From<&NonPKColumnDefinition> for NonPKColumnDataType {
-    fn from(non_pk_column_definition: &NonPKColumnDefinition) -> Self {
-        let cdt = ColumnDataType::from(&non_pk_column_definition.0);
-        Self(cdt)
-    }
-}
-impl NonPKColumnDataType {
-    /// Ref to column name.
-    pub fn column_name(&self) -> NonPKColumnName {
-        NonPKColumnName(self.0.column_name().clone())
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub struct NonPKColumnDefinition(pub ColumnDefinition);
 
 pub fn filter_non_pk_column_definitions(
     column_definitions: &[ColumnDefinition],
