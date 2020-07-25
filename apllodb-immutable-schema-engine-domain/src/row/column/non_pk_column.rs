@@ -39,7 +39,7 @@ pub fn filter_non_pk_column_definitions(
             if apk_column_names.contains(cd.column_name()) {
                 None
             } else {
-                Some(NonPKColumnDefinition(cd.clone()))
+                Some(NonPKColumnDefinition::from(cd.clone()))
             }
         })
         .collect()

@@ -7,7 +7,11 @@ pub struct NonPKColumnDataType(ColumnDataType);
 
 impl From<&NonPKColumnDefinition> for NonPKColumnDataType {
     fn from(non_pk_column_definition: &NonPKColumnDefinition) -> Self {
-        let cdt = ColumnDataType::from(&non_pk_column_definition.0);
+        let cdt = ColumnDataType::new(
+            ColumnName::new(non_pk_column_definition.column_name().as_str())
+                .expect("already validated"),
+            non_pk_column_definition.data_type().clone(),
+        );
         Self(cdt)
     }
 }
@@ -35,5 +39,5 @@ impl NonPKColumnDataType {
     /// Ref to data type.
     pub fn data_type(&self) -> &DataType {
         &self.0.data_type()
-    }    
+    }
 }
