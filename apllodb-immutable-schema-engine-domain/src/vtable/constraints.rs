@@ -1,7 +1,7 @@
 use super::constraint_kind::TableWideConstraintKind;
-use crate::PKColumnNames;
+use crate::row::column::pk_column::{PKColumnDataType, PKColumnName};
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnDefinition, ColumnName, TableConstraints},
+    data_structure::{ColumnDefinition, ColumnName, TableConstraints},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
     helper::collection_validation::find_dup,
 };
@@ -18,7 +18,7 @@ pub struct TableWideConstraints {
 }
 impl TableWideConstraints {
     /// Extract ApparentPrimaryKey column data types
-    pub fn apparent_pk_column_data_types(&self) -> &[ColumnDataType] {
+    pub fn apk_column_data_types(&self) -> &[PKColumnDataType] {
         &self
             .kinds
             .iter()
@@ -33,13 +33,11 @@ impl TableWideConstraints {
     }
 
     /// Extract ApparentPrimaryKeyColumnNames
-    pub fn apparent_pk_column_names(&self) -> PKColumnNames {
-        let column_names: Vec<ColumnName> = self
-            .apparent_pk_column_data_types()
+    pub fn apk_column_names(&self) -> Vec<PKColumnName> {
+        self.apk_column_data_types()
             .iter()
             .map(|cdt| cdt.column_name().clone())
-            .collect();
-        PKColumnNames::new(column_names)
+            .collect()
     }
 
     /// Constructor that extracts Table constraints (set of record must obey)
@@ -100,19 +98,21 @@ impl TableWideConstraints {
     fn validate_pk_or_unique_target_duplication(
         kinds: &[TableWideConstraintKind],
     ) -> ApllodbResult<()> {
-        let single_columns: Vec<&ColumnName> = kinds
+        let single_columns: Vec<ColumnName> = kinds
             .iter()
             .flat_map(|k| match k {
                 TableWideConstraintKind::PrimaryKey { column_data_types } => {
                     if column_data_types.len() == 1 {
-                        column_data_types.first().map(|cdt| cdt.column_name())
+                        column_data_types
+                            .first()
+                            .map(|cdt| cdt.column_name().as_column_name().clone())
                     } else {
                         None
                     }
                 }
                 TableWideConstraintKind::Unique { column_names } => {
                     if column_names.len() == 1 {
-                        column_names.first()
+                        column_names.first().map(|cn| cn.clone())
                     } else {
                         None
                     }

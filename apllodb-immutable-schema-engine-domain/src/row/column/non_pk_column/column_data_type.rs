@@ -31,6 +31,10 @@ impl NonPKColumnDataType {
         Self(cdt)
     }
 
+    pub fn column_data_type(&self) -> &ColumnDataType {
+        &self.0
+    }
+
     /// Ref to column name.
     pub fn column_name(&self) -> NonPKColumnName {
         NonPKColumnName::from(self.0.column_name().clone())

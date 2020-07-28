@@ -1,7 +1,10 @@
 use super::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
-    PKColumnNames, Revision, VersionNumber,
+    row::column::{
+        non_pk_column::{NonPKColumnDataType, NonPKColumnName},
+        pk_column::{PKColumnDataType, PKColumnName},
+    },
+    Revision, VersionNumber,
 };
 use apllodb_shared_components::data_structure::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
@@ -52,16 +55,6 @@ impl ToSqlString for ColumnName {
     }
 }
 
-impl ToSqlString for PKColumnNames {
-    fn to_sql_string(&self) -> String {
-        self.column_names()
-            .iter()
-            .map(|cn| cn.to_sql_string())
-            .collect::<Vec<String>>()
-            .join(", ")
-    }
-}
-
 impl ToSqlString for DataTypeKind {
     fn to_sql_string(&self) -> String {
         use DataTypeKind::*;
@@ -104,6 +97,21 @@ impl ToSqlString for NonPKColumnDataType {
     }
 }
 impl ToSqlString for NonPKColumnName {
+    fn to_sql_string(&self) -> String {
+        self.as_str().to_string()
+    }
+}
+
+impl ToSqlString for PKColumnDataType {
+    fn to_sql_string(&self) -> String {
+        format!(
+            "{} {}",
+            self.column_name().to_sql_string(),
+            self.data_type().to_sql_string(),
+        )
+    }
+}
+impl ToSqlString for PKColumnName {
     fn to_sql_string(&self) -> String {
         self.as_str().to_string()
     }

@@ -1,14 +1,13 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKey, ImmutableSchemaTx, PKColumnNames, VTableId, VTableRepository, VersionId,
+    row::column::{non_pk_column::NonPKColumnName, pk_column::PKColumnName},
+    ApparentPrimaryKey, ImmutableSchemaTx, VTableId, VTableRepository, VersionId,
     VersionRepository,
-    row::column::non_pk_column::NonPKColumnName
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, SqlValue, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::PrimaryKey;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
@@ -73,18 +72,15 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         // Construct ApparentPrimaryKey
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
-        let apk_cdts = vtable
-            .table_wide_constraints()
-            .apparent_pk_column_data_types();
+        let apk_cdts = vtable.table_wide_constraints().apk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
             .map(|cdt| cdt.column_name())
-            .cloned()
-            .collect::<Vec<ColumnName>>();
+            .collect::<Vec<PKColumnName>>();
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let expr = input.column_values.get(cdt.column_name()).ok_or_else(|| {
+                let expr = input.column_values.get(cdt.column_name().as_column_name()).ok_or_else(|| {
                     ApllodbError::new(
                         ApllodbErrorKind::NotNullViolation,
                         format!(
@@ -98,7 +94,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
                 SqlValue::try_from(expr, cdt.data_type())
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
-        let apk = ApparentPrimaryKey::new(PKColumnNames::new(apk_column_names), apk_sql_values);
+        let apk = ApparentPrimaryKey::new(apk_column_names, apk_sql_values);
 
         // Filter Non-PK columns
         let non_pk_column_values: HashMap<NonPKColumnName, Expression> = input
@@ -106,7 +102,11 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
             .clone()
             .into_iter()
             .filter_map(|(column_name, expr)| {
-                if apk.column_names().contains(&column_name) {
+                if apk
+                    .column_names()
+                    .iter()
+                    .any(|pk_cn| pk_cn.as_str() == column_name.as_str())
+                {
                     None
                 } else {
                     Some((NonPKColumnName::from(column_name), expr))

@@ -208,7 +208,7 @@ mod tests {
     use super::SqliteTx;
     use crate::{sqlite::SqliteDatabase, test_support::setup};
 
-    use apllodb_immutable_schema_engine_domain::apparent_pk;
+    use apllodb_immutable_schema_engine_domain::{apparent_pk, pk_column_name};
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
         column_constraints, column_definition, column_definitions, column_name, const_expr,
@@ -396,11 +396,11 @@ mod tests {
             let row = row_res?;
             assert_eq!(row.pk(), &apparent_pk![
                 (
-                    column_name!("country_code"),
+                    pk_column_name!("country_code"),
                     SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false) , &100i16)?,
                 ),
                 (
-                    column_name!("postal_code"),
+                    pk_column_name!("postal_code"),
                     SqlValue::pack(&DataType::new(DataTypeKind::Integer, false) , &1000001i32)?,
                 ),
             ]

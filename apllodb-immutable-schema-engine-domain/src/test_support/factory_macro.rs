@@ -14,15 +14,15 @@ macro_rules! apk_column_names {
 #[macro_export]
 macro_rules! apparent_pk {
     [ $( ( $column_name: expr, $sql_value: expr $(,)? ), )* ] => {{
-        let mut column_names: Vec<apllodb_shared_components::data_structure::ColumnName> = vec![];
+        let mut pk_column_names: Vec<$crate::row::column::pk_column::PKColumnName> = vec![];
         let mut sql_values: Vec<apllodb_shared_components::data_structure::SqlValue> = vec![];
 
         $(
-            column_names.push($column_name);
+            pk_column_names.push($column_name);
             sql_values.push($sql_value);
         )*
 
-        $crate::ApparentPrimaryKey::new($crate::PKColumnNames::new(column_names), sql_values)
+        $crate::ApparentPrimaryKey::new(pk_column_names, sql_values)
     }};
 }
 
@@ -51,6 +51,34 @@ macro_rules! non_pk_column_name {
     ($col_name: expr) => {{
         let column_name = apllodb_shared_components::column_name!($col_name);
         $crate::row::column::non_pk_column::NonPKColumnName::from(column_name)
+    }};
+}
+
+#[macro_export]
+macro_rules! pk_column_data_type {
+    ($col_name: expr, $data_type: expr $(,)?) => {{
+        let column_data_type = apllodb_shared_components::column_data_type!($col_name, $data_type);
+        $crate::row::column::pk_column::PKColumnDataType::from(column_data_type)
+    }};
+}
+
+#[macro_export]
+macro_rules! pk_column_definition {
+    ($col_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {{
+        let column_definition = apllodb_shared_components::column_definition!(
+            $col_name,
+            $data_type,
+            $column_constraints
+        );
+        $crate::row::column::pk_column::PKColumnDefinition(column_definition)
+    }};
+}
+
+#[macro_export]
+macro_rules! pk_column_name {
+    ($col_name: expr) => {{
+        let column_name = apllodb_shared_components::column_name!($col_name);
+        $crate::row::column::pk_column::PKColumnName::from(column_name)
     }};
 }
 

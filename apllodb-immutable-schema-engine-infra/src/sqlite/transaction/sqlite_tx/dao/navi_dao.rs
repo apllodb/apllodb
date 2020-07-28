@@ -7,10 +7,14 @@ pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollectio
 
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    ApparentPrimaryKey, PKColumnNames, Revision, VTable, VTableId, VersionId,
+    row::column::{
+        non_pk_column::{NonPKColumnDataType, NonPKColumnName},
+        pk_column::PKColumnName,
+    },
+    ApparentPrimaryKey, Revision, VTable, VTableId, VersionId,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind, TableName},
+    data_structure::{DataType, DataTypeKind, TableName},
     error::ApllodbResult,
 };
 use create_table_sql_for_navi::CreateTableSqlForNavi;
@@ -49,7 +53,7 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
         &self,
         vtable_id: &VTableId,
-        apk_column_names: &PKColumnNames,
+        pk_column_names: &[PKColumnName],
     ) -> ApllodbResult<NaviCollection> {
         use crate::sqlite::to_sql_string::ToSqlString;
 
@@ -57,7 +61,7 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
             "
 SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
   FROM {tname}
-  GROUP BY {apk_column_names}
+  GROUP BY {pk_column_names}
   HAVING
     {cname_revision} = MAX({cname_revision}) AND
     {cname_version_number} IS NOT NULL
@@ -66,7 +70,7 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
             cname_revision = CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
             tname = Self::table_name(vtable_id)?,
-            apk_column_names = apk_column_names.to_sql_string(),
+            pk_column_names = pk_column_names.to_sql_string(),
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
@@ -76,7 +80,7 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
         let cdt_version_number = self.cdt_version_number();
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let row_iter = stmt.query_named(&[], &column_data_types)?;
+        let row_iter = stmt.query_named(&[], &[], &column_data_types)?;
 
         Ok(NaviCollection::new(row_iter))
     }
@@ -87,12 +91,11 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
         apk: &ApparentPrimaryKey,
     ) -> ApllodbResult<Navi> {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_storage_engine_interface::PrimaryKey;
         use std::convert::TryFrom;
 
         let sql = format!(
             "
-SELECT {cname_rowid}, {apk_column_names}
+SELECT {cname_rowid}
   FROM {tname}
   WHERE 
     {apk_condition}
@@ -100,7 +103,6 @@ SELECT {cname_rowid}, {apk_column_names}
   LIMIT 1;
 ", // FIXME SQL-i
             cname_rowid = CNAME_ROWID,
-            apk_column_names = apk.column_names().to_sql_string(),
             tname = Self::table_name(vtable_id)?,
             apk_condition = apk.to_condition_expression()?.to_sql_string(),
             cname_revision = CNAME_REVISION
@@ -109,16 +111,9 @@ SELECT {cname_rowid}, {apk_column_names}
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
         let cdt_rowid = self.cdt_rowid();
-        let mut column_data_types = vec![&cdt_rowid];
-        let apk_column_data_types = apk.column_data_types();
-        column_data_types.append(
-            &mut apk_column_data_types
-                .iter()
-                .map(|acdt| acdt)
-                .collect::<Vec<&ColumnDataType>>(),
-        );
+        let column_data_types = vec![&cdt_rowid];
 
-        let mut row_iter = stmt.query_named(&[], &column_data_types)?;
+        let mut row_iter = stmt.query_named(&[], &[], &column_data_types)?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {
@@ -139,7 +134,6 @@ SELECT {cname_rowid}, {apk_column_names}
         version_id: &VersionId,
     ) -> ApllodbResult<SqliteRowid> {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_storage_engine_interface::PrimaryKey;
 
         let vtable_id = version_id.vtable_id();
 
@@ -172,21 +166,21 @@ SELECT {cname_rowid}, {apk_column_names}
         Ok(self.sqlite_tx.last_insert_rowid())
     }
 
-    fn cdt_rowid(&self) -> ColumnDataType {
-        ColumnDataType::new(
-            ColumnName::new(CNAME_ROWID).unwrap(),
+    fn cdt_rowid(&self) -> NonPKColumnDataType {
+        NonPKColumnDataType::new(
+            NonPKColumnName::new(CNAME_ROWID).unwrap(),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_revision(&self) -> ColumnDataType {
-        ColumnDataType::new(
-            ColumnName::new(CNAME_REVISION).unwrap(),
+    fn cdt_revision(&self) -> NonPKColumnDataType {
+        NonPKColumnDataType::new(
+            NonPKColumnName::new(CNAME_REVISION).unwrap(),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_version_number(&self) -> ColumnDataType {
-        ColumnDataType::new(
-            ColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
+    fn cdt_version_number(&self) -> NonPKColumnDataType {
+        NonPKColumnDataType::new(
+            NonPKColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
             DataType::new(DataTypeKind::BigInt, true),
         )
     }

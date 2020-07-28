@@ -7,7 +7,7 @@ pub use constraints::TableWideConstraints;
 pub use id::VTableId;
 pub use repository::VTableRepository;
 
-use crate::{PKColumnNames, entity::Entity};
+use crate::{row::column::pk_column::PKColumnName, entity::Entity};
 use apllodb_shared_components::{
     data_structure::{
         AlterTableAction, ColumnDefinition, DatabaseName, TableConstraints, TableName,
@@ -80,9 +80,8 @@ impl VTable {
         &self.id.table_name
     }
 
-    /// Ref to ApparentPrimaryKeyColumnNames
-    pub fn apk_column_names(&self) -> PKColumnNames {
-        self.table_wide_constraints.apparent_pk_column_names()
+    pub fn apk_column_names(&self) -> Vec<PKColumnName> {
+        self.table_wide_constraints.apk_column_names()
     }
 
     /// Ref to TableWideConstraints

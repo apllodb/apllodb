@@ -1,7 +1,10 @@
 use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteTx};
-use apllodb_immutable_schema_engine_domain::{TableWideConstraints, VTable, VTableId};
+use apllodb_immutable_schema_engine_domain::{
+    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
+    TableWideConstraints, VTable, VTableId,
+};
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
+    data_structure::{ColumnName, DataType, DataTypeKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 
@@ -78,6 +81,7 @@ CREATE TABLE IF NOT EXISTS {} (
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
         let mut row_iter = stmt.query_named(
             &[(":table_name", vtable_id.table_name())],
+            &[],
             &vec![&self.cdt_table_wide_constraints()],
         )?;
         let row = row_iter.next().ok_or_else(|| {
@@ -159,9 +163,9 @@ CREATE TABLE IF NOT EXISTS {} (
         Ok(())
     }
 
-    fn cdt_table_wide_constraints(&self) -> ColumnDataType {
-        ColumnDataType::new(
-            ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
+    fn cdt_table_wide_constraints(&self) -> NonPKColumnDataType {
+        NonPKColumnDataType::new(
+            NonPKColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
             DataType::new(DataTypeKind::Text, false),
         )
     }
