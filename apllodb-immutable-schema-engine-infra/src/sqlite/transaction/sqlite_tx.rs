@@ -219,31 +219,6 @@ mod tests {
     };
     use apllodb_storage_engine_interface::Transaction;
 
-    #[test]
-    fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
-        setup();
-
-        let mut db = SqliteDatabase::new_for_test()?;
-
-        let tn = &table_name!("t");
-        let coldefs = column_definitions!(column_definition!(
-            "c1",
-            data_type!(DataTypeKind::Integer, false),
-            column_constraints!()
-        ));
-        let tc = table_constraints!(t_pk!("c1"));
-
-        let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
-
-        tx.create_table(&tn, &tc, &coldefs)?;
-        match tx.create_table(&tn, &tc, &coldefs) {
-            // Internally, new record is trying to be INSERTed but it is made wait by tx2.
-            // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
-            Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),
-            Ok(_) => panic!("should rollback"),
-        }
-        Ok(())
-    }
 
     #[test]
     fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
