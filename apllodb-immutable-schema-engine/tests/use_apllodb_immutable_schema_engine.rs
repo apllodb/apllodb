@@ -10,6 +10,34 @@ fn setup() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
 
+/// Creates HashMap.
+///
+/// # Examples
+///
+/// ```
+/// use apllodb_shared_components::hmap;
+/// use std::collections::HashMap;
+///
+/// let h = hmap! { "k" => "v" };
+///
+/// let mut h2: HashMap<&str, &str> = HashMap::new();
+/// h2.insert("k", "v");
+///
+/// assert_eq!(h, h2);
+/// ```
+#[macro_export]
+macro_rules! hmap(
+    { $($key:expr => $value:expr),+ } => {
+        {
+            let mut m = std::collections::HashMap::new();
+            $(
+                m.insert($key, $value);
+            )+
+            m
+        }
+     };
+);
+
 #[test]
 fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
@@ -42,7 +70,9 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 // -------------------    #[test]
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::data_structure::{DatabaseName, TableConstraints, TableName};
+use apllodb_shared_components::data_structure::{
+    AlterTableAction, Constant, DatabaseName, Expression, TableConstraints, TableName,
+};
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
 #[test]
@@ -66,18 +96,17 @@ fn test_tx_id_order() -> ApllodbResult<()> {
 fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
     setup();
 
-    let mut db =
-        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("db_test_tx_id_order")?)?;
+    let mut db = ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new(
+        "test_create_table_failure_duplicate_table",
+    )?)?;
 
     let t_name = &TableName::new("t")?;
 
-    let c1_name = ColumnName::new("c1")?;
     let c1_def = ColumnDefinition::new(
-        c1_name,
+        ColumnName::new("c1")?,
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
     )?;
-
     let coldefs = vec![c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
@@ -93,5 +122,85 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
         Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),
         Ok(_) => panic!("should rollback"),
     }
+    Ok(())
+}
+
+#[test]
+fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
+    setup();
+
+    use apllodb_storage_engine_interface::Row;
+
+    let mut db = ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new(
+        "test_success_select_all_from_2_versions",
+    )?)?;
+    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db)?;
+
+    let t_name = &TableName::new("t")?;
+
+    let c_id_def = ColumnDefinition::new(
+        ColumnName::new("id")?,
+        DataType::new(DataTypeKind::Integer, false),
+        ColumnConstraints::new(vec![])?,
+    )?;
+    let c1_def = ColumnDefinition::new(
+        ColumnName::new("c1")?,
+        DataType::new(DataTypeKind::Integer, false),
+        ColumnConstraints::new(vec![])?,
+    )?;
+    let coldefs = vec![c_id_def.clone(), c1_def.clone()];
+
+    let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+        column_data_types: vec![ColumnDataType::from(&c_id_def)],
+    }])?;
+
+    tx.create_table(&t_name, &tc, &coldefs)?;
+
+    tx.insert(
+        &t_name,
+        hmap! {
+         c_id_def.column_name().clone() => Expression::ConstantVariant(Constant::from(1)),
+         c1_def.column_name().clone() => Expression::ConstantVariant(Constant::from(1))
+        },
+    )?;
+
+    tx.alter_table(
+        &t_name,
+        &AlterTableAction::DropColumn {
+            column_name: c1_def.column_name().clone(),
+        },
+    )?;
+
+    tx.insert(
+        &t_name,
+        hmap! { c_id_def.column_name().clone() => Expression::ConstantVariant(Constant::from(2)) },
+    )?;
+
+    // Selects both v1's record (id=1) and v2's record (id=2),
+    // although v2 does not have column "c".
+    let rows = tx.select(
+        &t_name,
+        &vec![c_id_def.column_name().clone(), c1_def.column_name().clone()],
+    )?;
+
+    for row_res in rows {
+        let row = row_res?;
+        let id: i32 = row.get(c_id_def.column_name())?;
+        match id {
+            1 => assert_eq!(row.get::<i32>(c1_def.column_name())?, 1),
+            2 => {
+                // Cannot fetch column `c` from v2. Note that v2's `c` is different from NULL,
+                // although it is treated similarly to NULL in GROUP BY, ORDER BY operations.
+                match row.get::<i32>(c1_def.column_name()) {
+                    Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::UndefinedColumn),
+                    _ => unreachable!(),
+                };
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    tx.commit()?;
+
     Ok(())
 }

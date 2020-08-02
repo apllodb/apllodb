@@ -212,79 +212,12 @@ mod tests {
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
     use apllodb_shared_components::{
         column_constraints, column_definition, column_definitions, column_name, const_expr,
-        data_structure::{AlterTableAction, DataType, DataTypeKind, SqlValue},
+        data_structure::{DataType, DataTypeKind, SqlValue},
         data_type,
-        error::{ApllodbErrorKind, ApllodbResult},
+        error::ApllodbResult,
         hmap, t_pk, table_constraints, table_name,
     };
     use apllodb_storage_engine_interface::Transaction;
-
-
-    #[test]
-    fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
-        setup();
-
-        use apllodb_storage_engine_interface::Row;
-
-        let mut db = SqliteDatabase::new_for_test()?;
-        let tx = TransactionController::<SqliteTx<'_>>::begin(&mut db)?;
-
-        let tn = &table_name!("t");
-        let coldefs = column_definitions!(
-            column_definition!(
-                "id",
-                data_type!(DataTypeKind::Integer, false),
-                column_constraints!()
-            ),
-            column_definition!(
-                "c",
-                data_type!(DataTypeKind::Integer, false),
-                column_constraints!()
-            ),
-        );
-        let tc = table_constraints!(t_pk!("id"));
-
-        tx.create_table(&tn, &tc, &coldefs)?;
-
-        tx.insert(
-            &tn,
-            hmap! { column_name!("id") => const_expr!(1), column_name!("c") => const_expr!(1) },
-        )?;
-
-        tx.alter_table(
-            &tn,
-            &AlterTableAction::DropColumn {
-                column_name: column_name!("c"),
-            },
-        )?;
-
-        tx.insert(&tn, hmap! { column_name!("id") => const_expr!(2) })?;
-
-        // Selects both v1's record (id=1) and v2's record (id=2),
-        // although v2 does not have column "c".
-        let rows = tx.select(&tn, &vec![column_name!("id"), column_name!("c")])?;
-
-        for row_res in rows {
-            let row = row_res?;
-            let id: i32 = row.get(&column_name!("id"))?;
-            match id {
-                1 => assert_eq!(row.get::<i32>(&column_name!("c"))?, 1),
-                2 => {
-                    // Cannot fetch column `c` from v2. Note that v2's `c` is different from NULL,
-                    // although it is treated similarly to NULL in GROUP BY, ORDER BY operations.
-                    match row.get::<i32>(&column_name!("c")) {
-                        Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::UndefinedColumn),
-                        _ => unreachable!(),
-                    };
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        tx.commit()?;
-
-        Ok(())
-    }
 
     #[test]
     fn test_compound_pk() -> ApllodbResult<()> {
