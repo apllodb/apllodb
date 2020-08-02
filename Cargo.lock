@@ -16,6 +16,8 @@ dependencies = [
  "apllodb-immutable-schema-engine-infra",
  "apllodb-shared-components",
  "apllodb-storage-engine-interface",
+ "env_logger",
+ "log",
 ]
 
 [[package]]

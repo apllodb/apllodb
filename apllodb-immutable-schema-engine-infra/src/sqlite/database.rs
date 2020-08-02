@@ -66,15 +66,6 @@ impl SqliteDatabase {
 
         Self::new(db_name)
     }
-
-    /// Creates new connection to SQLite.
-    pub(in crate::sqlite) fn dup(&self) -> ApllodbResult<Self> {
-        let conn = Self::connect_sqlite(&self.name)?;
-        Ok(Self {
-            name: self.name.clone(),
-            sqlite_conn: conn,
-        })
-    }
 }
 
 #[cfg(test)]

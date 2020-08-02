@@ -220,55 +220,6 @@ mod tests {
     use apllodb_storage_engine_interface::Transaction;
 
     #[test]
-    fn test_wait_lock() -> ApllodbResult<()> {
-        setup();
-
-        let mut db1 = SqliteDatabase::new_for_test()?;
-        let mut db2 = db1.dup()?;
-
-        let tn = &table_name!("t");
-        let coldefs = column_definitions!(column_definition!(
-            "c1",
-            data_type!(DataTypeKind::Integer, false),
-            column_constraints!()
-        ));
-        let tc = table_constraints!(t_pk!("c1"));
-
-        let tx1 = TransactionController::<SqliteTx<'_>>::begin(&mut db1)?;
-        let tx2 = TransactionController::<SqliteTx<'_>>::begin(&mut db2)?;
-
-        // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
-        // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
-        tx2.create_table(&tn, &tc, &coldefs)?;
-        match tx1.create_table(&tn, &tc, &coldefs) {
-            // Internally, new record is trying to be INSERTed but it is made wait by tx2.
-            // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
-            Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DeadlockDetected),
-            Ok(_) => panic!("should rollback"),
-        }
-
-        tx1.commit()?; // it's ok to commit tx1 although it already aborted by error.
-        tx2.commit()?;
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_tx_id_order() -> ApllodbResult<()> {
-        setup();
-
-        let mut db1 = SqliteDatabase::new_for_test()?;
-        let mut db2 = db1.dup()?;
-
-        let tx1 = TransactionController::<SqliteTx<'_>>::begin(&mut db1)?;
-        let tx2 = TransactionController::<SqliteTx<'_>>::begin(&mut db2)?;
-
-        assert!(tx1.id() < tx2.id());
-
-        Ok(())
-    }
-
-    #[test]
     fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
         setup();
 
