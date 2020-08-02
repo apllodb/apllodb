@@ -1,5 +1,5 @@
 use super::{ExistingNavi, Navi, CNAME_VERSION_NUMBER};
-use crate::sqlite::SqliteRowIterator;
+use crate::sqlite::row_iterator::SqliteRowIterator;
 use apllodb_immutable_schema_engine_domain::{ImmutableRow, VersionNumber};
 use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
 use std::collections::{HashMap, VecDeque};

@@ -5,10 +5,10 @@ mod sqlite_statement;
 pub(in crate::sqlite) use dao::VTableDao;
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
-use super::TxId;
+use super::tx_id::TxId;
 use crate::sqlite::{
-    sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString,
-    SqliteDatabase,
+    database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
+    to_sql_string::ToSqlString,
 };
 use apllodb_immutable_schema_engine_domain::ImmutableSchemaTx;
 use apllodb_shared_components::{
@@ -206,7 +206,7 @@ impl<'db> SqliteTx<'db> {
 #[cfg(test)]
 mod tests {
     use super::SqliteTx;
-    use crate::{sqlite::SqliteDatabase, test_support::setup};
+    use crate::{sqlite::database::SqliteDatabase, test_support::setup};
 
     use apllodb_immutable_schema_engine_domain::{apparent_pk, pk_column_name};
     use apllodb_immutable_schema_engine_interface_adapter::TransactionController;

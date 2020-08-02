@@ -1,6 +1,6 @@
 mod active_version_deserializer;
 
-use crate::sqlite::SqliteTx;
+use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
     row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},

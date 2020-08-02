@@ -1,12 +1,14 @@
 use super::SqliteTx;
-use crate::sqlite::{sqlite_error::map_sqlite_err, to_sql_string::ToSqlString, SqliteRowIterator};
+use crate::sqlite::{
+    row_iterator::SqliteRowIterator, sqlite_error::map_sqlite_err, to_sql_string::ToSqlString,
+};
 use apllodb_immutable_schema_engine_domain::row::column::{
     non_pk_column::NonPKColumnDataType, pk_column::PKColumnDataType,
 };
 use apllodb_shared_components::error::ApllodbResult;
 
 #[derive(Debug)]
-pub struct SqliteStatement<'tx, 'db: 'tx> {
+pub(in crate::sqlite::transaction) struct SqliteStatement<'tx, 'db: 'tx> {
     sqlite_tx: &'tx SqliteTx<'db>,
     sqlite_stmt: rusqlite::Statement<'db>,
 }

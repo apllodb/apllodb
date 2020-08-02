@@ -1,7 +1,4 @@
-mod sqlite_tx;
-mod tx_id;
-
-pub use sqlite_tx::SqliteTx;
-pub use tx_id::TxId;
+pub mod sqlite_tx;
+pub mod tx_id;
 
 pub(in crate::sqlite) use sqlite_tx::VTableDao;

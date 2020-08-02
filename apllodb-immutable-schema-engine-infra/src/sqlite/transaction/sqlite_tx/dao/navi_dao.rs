@@ -5,7 +5,7 @@ mod navi_collection;
 pub(in crate::sqlite::transaction::sqlite_tx) use navi::{ExistingNavi, Navi};
 pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollection;
 
-use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteTx};
+use crate::sqlite::{sqlite_rowid::SqliteRowid, transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
     row::column::{
         non_pk_column::{NonPKColumnDataType, NonPKColumnName},

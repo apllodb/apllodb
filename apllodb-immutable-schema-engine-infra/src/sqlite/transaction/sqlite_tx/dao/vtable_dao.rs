@@ -1,4 +1,4 @@
-use crate::sqlite::{sqlite_error::map_sqlite_err, SqliteTx};
+use crate::sqlite::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
     row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
     TableWideConstraints, VTable, VTableId,

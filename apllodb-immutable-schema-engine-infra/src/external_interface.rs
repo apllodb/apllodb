@@ -1,4 +1,4 @@
-use crate::sqlite::{SqliteDatabase, SqliteTx};
+use crate::sqlite::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_interface_adapter::TransactionController;
 use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
 use apllodb_storage_engine_interface::StorageEngine;
