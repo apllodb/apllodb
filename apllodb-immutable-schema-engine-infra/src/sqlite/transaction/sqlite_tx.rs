@@ -10,7 +10,7 @@ use crate::sqlite::{
     database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
     to_sql_string::ToSqlString,
 };
-use apllodb_immutable_schema_engine_domain::ImmutableSchemaTx;
+use apllodb_immutable_schema_engine_domain::transaction::ImmutableSchemaTx;
 use apllodb_shared_components::{
     data_structure::DatabaseName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -111,12 +111,12 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     }
 
     fn vtable_repo(&'tx self) -> Self::VTRepo {
-        use apllodb_immutable_schema_engine_domain::VTableRepository;
+        use apllodb_immutable_schema_engine_domain::traits::VTableRepository;
         VTableRepositoryImpl::new(&self)
     }
 
     fn version_repo(&'tx self) -> Self::VRepo {
-        use apllodb_immutable_schema_engine_domain::VersionRepository;
+        use apllodb_immutable_schema_engine_domain::traits::VersionRepository;
         VersionRepositoryImpl::new(&self)
     }
 }

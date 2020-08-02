@@ -1,4 +1,5 @@
-use crate::{row::column::non_pk_column::NonPKColumnName, ActiveVersion};
+use super::active_version::ActiveVersion;
+use crate::row::column::non_pk_column::column_name::NonPKColumnName;
 use apllodb_shared_components::{
     data_structure::Expression,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},

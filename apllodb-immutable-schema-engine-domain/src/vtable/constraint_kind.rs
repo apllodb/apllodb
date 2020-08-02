@@ -1,4 +1,4 @@
-use crate::row::column::pk_column::PKColumnDataType;
+use crate::row::column::pk_column::column_data_type::PKColumnDataType;
 use apllodb_shared_components::data_structure::{
     ColumnConstraintKind, ColumnDefinition, ColumnName, TableConstraintKind,
 };

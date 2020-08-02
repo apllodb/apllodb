@@ -1,21 +1,16 @@
-mod active_version;
-mod active_versions;
-mod constraint_kind;
-mod constraints;
-mod id;
-mod inactive_version;
-mod repository;
-mod version_number;
+pub mod active_version;
+pub mod active_versions;
+pub mod constraint_kind;
+pub mod constraints;
+pub mod id;
+pub mod inactive_version;
+pub mod version_number;
 
-pub use active_version::ActiveVersion;
-pub use active_versions::ActiveVersions;
-pub use id::VersionId;
-pub use inactive_version::InactiveVersion;
-pub use repository::VersionRepository;
-pub use version_number::VersionNumber;
+pub(crate) mod repository;
 
-use crate::{entity::Entity, row::column::non_pk_column::NonPKColumnDataType};
+use crate::{entity::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType};
 use constraints::VersionConstraints;
+use id::VersionId;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 

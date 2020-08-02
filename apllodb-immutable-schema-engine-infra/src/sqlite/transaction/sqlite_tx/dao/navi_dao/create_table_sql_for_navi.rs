@@ -1,5 +1,5 @@
-use apllodb_immutable_schema_engine_domain::VTable;
 use serde::{Deserialize, Serialize};
+use apllodb_immutable_schema_engine_domain::vtable::VTable;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct CreateTableSqlForNavi(String);

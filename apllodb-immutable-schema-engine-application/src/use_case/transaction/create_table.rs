@@ -1,6 +1,12 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, ImmutableSchemaTx, VTable, VTableRepository, VersionRepository, row::column::non_pk_column::{filter_non_pk_column_definitions, NonPKColumnDataType},
+    row::column::non_pk_column::{
+        column_data_type::NonPKColumnDataType, filter_non_pk_column_definitions,
+    },
+    traits::{VTableRepository, VersionRepository},
+    transaction::ImmutableSchemaTx,
+    version::active_version::ActiveVersion,
+    vtable::VTable,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},
@@ -43,7 +49,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
     type Out = CreateTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
-        use apllodb_immutable_schema_engine_domain::Entity;
+        use apllodb_immutable_schema_engine_domain::traits::Entity;
 
         let vtable = VTable::create(
             input.database_name,

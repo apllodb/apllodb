@@ -1,5 +1,7 @@
 use super::constraint_kind::TableWideConstraintKind;
-use crate::row::column::pk_column::{PKColumnDataType, PKColumnName};
+use crate::row::column::pk_column::{
+    column_data_type::PKColumnDataType, column_name::PKColumnName,
+};
 use apllodb_shared_components::{
     data_structure::{ColumnDefinition, ColumnName, TableConstraints},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},

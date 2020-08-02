@@ -8,7 +8,8 @@ use apllodb_immutable_schema_engine_application::use_case::{
     UseCase,
 };
 use apllodb_immutable_schema_engine_domain::{
-    ImmutableRow, ImmutableSchemaRowIter, ImmutableSchemaTx, VersionRepository,
+    row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIter, traits::VersionRepository,
+    transaction::ImmutableSchemaTx,
 };
 use apllodb_shared_components::{
     data_structure::{

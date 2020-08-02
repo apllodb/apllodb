@@ -1,6 +1,9 @@
 use super::{CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
 use crate::sqlite::sqlite_rowid::SqliteRowid;
-use apllodb_immutable_schema_engine_domain::{ImmutableRow, Revision, VersionNumber};
+use apllodb_immutable_schema_engine_domain::{
+    row::{immutable_row::ImmutableRow, pk::full_pk::revision::Revision},
+    version::version_number::VersionNumber,
+};
 use apllodb_shared_components::{
     data_structure::ColumnName,
     error::{ApllodbError, ApllodbResult},

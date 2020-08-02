@@ -1,9 +1,9 @@
-mod builder;
+pub mod builder;
 
-pub use builder::ImmutableRowBuilder;
-
-use super::column::non_pk_column::NonPKColumnName;
-use crate::{ApparentPrimaryKey, FullPrimaryKey};
+use super::{
+    column::non_pk_column::column_name::NonPKColumnName,
+    pk::{apparent_pk::ApparentPrimaryKey, full_pk::FullPrimaryKey},
+};
 use apllodb_shared_components::{
     data_structure::{ColumnName, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -28,13 +28,16 @@ impl Row for ImmutableRow {
 
     fn get_core(&self, non_pk_column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
         let non_pk_column_name = NonPKColumnName::from(non_pk_column_name.clone());
-        let sql_value = self.non_pk_columns.get(&non_pk_column_name).ok_or_else(|| {
-            ApllodbError::new(
-                ApllodbErrorKind::UndefinedColumn,
-                format!("undefined column name: `{}`", non_pk_column_name),
-                None,
-            )
-        })?;
+        let sql_value = self
+            .non_pk_columns
+            .get(&non_pk_column_name)
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedColumn,
+                    format!("undefined column name: `{}`", non_pk_column_name),
+                    None,
+                )
+            })?;
         Ok(sql_value)
     }
 }

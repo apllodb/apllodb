@@ -1,4 +1,6 @@
-use apllodb_immutable_schema_engine_domain::{VersionId, VersionNumber};
+use apllodb_immutable_schema_engine_domain::version::{
+    id::VersionId, version_number::VersionNumber,
+};
 use apllodb_shared_components::data_structure::TableName;
 use serde::{Deserialize, Serialize};
 

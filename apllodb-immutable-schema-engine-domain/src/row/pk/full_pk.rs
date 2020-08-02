@@ -1,9 +1,8 @@
-mod revision;
+pub mod revision;
 
-pub use revision::Revision;
-
-use super::ApparentPrimaryKey;
-use crate::row::column::pk_column::PKColumnName;
+use super::apparent_pk::ApparentPrimaryKey;
+use crate::row::column::pk_column::column_name::PKColumnName;
+use revision::Revision;
 use serde::{Deserialize, Serialize};
 
 /// Primary key with revision.

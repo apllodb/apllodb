@@ -1,7 +1,10 @@
 use super::sqlite_error::map_sqlite_err;
-use apllodb_immutable_schema_engine_domain::{
-    row::column::{non_pk_column::NonPKColumnDataType, pk_column::PKColumnDataType},
-    ImmutableRow, ImmutableRowBuilder,
+use apllodb_immutable_schema_engine_domain::row::{
+    column::{
+        non_pk_column::column_data_type::NonPKColumnDataType,
+        pk_column::column_data_type::PKColumnDataType,
+    },
+    immutable_row::{builder::ImmutableRowBuilder, ImmutableRow},
 };
 use apllodb_shared_components::{
     data_structure::{ColumnDataType, DataTypeKind, SqlValue},

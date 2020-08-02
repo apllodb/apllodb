@@ -1,13 +1,11 @@
-mod column_data_type;
-mod column_definition;
-mod column_name;
+pub mod column_data_type;
+pub mod column_definition;
+pub mod column_name;
 
-pub use column_data_type::NonPKColumnDataType;
-pub use column_definition::NonPKColumnDefinition;
-pub use column_name::NonPKColumnName;
-
-use super::pk_column::PKColumnName;
 use apllodb_shared_components::data_structure::{ColumnDefinition, ColumnName};
+use column_definition::NonPKColumnDefinition;
+use column_name::NonPKColumnName;
+use super::pk_column::column_name::PKColumnName;
 
 pub fn filter_non_pk_column_names(
     column_names: &[ColumnName],

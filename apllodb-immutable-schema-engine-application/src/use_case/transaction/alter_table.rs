@@ -1,6 +1,9 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::{ImmutableSchemaTx, VTableId};
-use apllodb_immutable_schema_engine_domain::{VTableRepository, VersionRepository};
+use apllodb_immutable_schema_engine_domain::{
+    traits::{VTableRepository, VersionRepository},
+    transaction::ImmutableSchemaTx,
+    vtable::id::VTableId,
+};
 use apllodb_shared_components::{
     data_structure::{AlterTableAction, DatabaseName, TableName},
     error::ApllodbResult,

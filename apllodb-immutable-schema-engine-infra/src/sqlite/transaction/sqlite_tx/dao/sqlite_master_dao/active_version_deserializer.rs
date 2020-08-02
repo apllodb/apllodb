@@ -1,4 +1,4 @@
-use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTable, row::column::non_pk_column::NonPKColumnDataType};
+use apllodb_immutable_schema_engine_domain::{row::column::non_pk_column::column_data_type::NonPKColumnDataType, version::active_version::ActiveVersion, vtable::VTable};
 use apllodb_shared_components::{
     data_structure::{ColumnName,  DataType, DataTypeKind, ColumnDataType},
     error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
@@ -27,7 +27,7 @@ impl ActiveVersionDeserializer {
     /// - [UndefinedTable](a.html) when:
     ///   - Version defined in this CreateTableSqlForVersion is deactivated.
     pub(super) fn into_active_version(&self, vtable: &VTable) -> ApllodbResult<ActiveVersion> {
-        use apllodb_immutable_schema_engine_domain::Entity;
+        use apllodb_immutable_schema_engine_domain::traits::Entity;
 
         let parser = ApllodbSqlParser::new();
         let ast = parser.parse(&self.create_version_table_sql).map_err(|e| 
@@ -99,12 +99,11 @@ impl ActiveVersionDeserializer {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersionDeserializer;
-    use apllodb_immutable_schema_engine_domain::{ ActiveVersion};
     use apllodb_shared_components::{
         column_constraints, column_definition, data_structure::{TableConstraints, DataTypeKind, ColumnDefinition}, data_type,
         error::ApllodbResult, table_constraints, t_pk, table_name, database_name,
     };
-    use apllodb_immutable_schema_engine_domain::{VTable, Entity, row::column::non_pk_column::NonPKColumnDataType};
+    use apllodb_immutable_schema_engine_domain::{traits::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType, version::active_version::ActiveVersion, vtable::VTable};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]

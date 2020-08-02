@@ -9,8 +9,12 @@ use crate::sqlite::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::NonPKColumnName, ActiveVersion, ApparentPrimaryKey, Revision,
-    VersionId, VersionRepository,
+    row::{
+        column::non_pk_column::column_name::NonPKColumnName,
+        pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
+    },
+    traits::VersionRepository,
+    version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
     data_structure::Expression,

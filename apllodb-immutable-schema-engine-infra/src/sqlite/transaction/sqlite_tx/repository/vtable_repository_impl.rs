@@ -9,8 +9,11 @@ use crate::sqlite::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::NonPKColumnName, ActiveVersions, ImmutableSchemaRowIter,
-    ImmutableSchemaTx, VTable, VTableId, VTableRepository, VersionId, VersionRepository,
+    row_iter::ImmutableSchemaRowIter,
+    traits::{VTableRepository, VersionRepository},
+    transaction::ImmutableSchemaTx,
+    version::{active_versions::ActiveVersions, id::VersionId},
+    vtable::{id::VTableId, VTable}, row::column::non_pk_column::column_name::NonPKColumnName,
 };
 use apllodb_shared_components::error::ApllodbResult;
 use std::collections::VecDeque;

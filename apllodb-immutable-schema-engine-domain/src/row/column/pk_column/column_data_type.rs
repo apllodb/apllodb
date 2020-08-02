@@ -1,4 +1,4 @@
-use super::PKColumnName;
+use super::column_name::PKColumnName;
 use apllodb_shared_components::data_structure::{ColumnDataType, ColumnName, DataType};
 use serde::{Deserialize, Serialize};
 

@@ -1,8 +1,7 @@
-mod version_row_iter;
-
-pub use version_row_iter::VersionRowIter;
+pub(crate) mod version_row_iter;
 
 use std::collections::VecDeque;
+use version_row_iter::VersionRowIter;
 
 /// Row iterator combining VersionRowIter from multiple versions.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]

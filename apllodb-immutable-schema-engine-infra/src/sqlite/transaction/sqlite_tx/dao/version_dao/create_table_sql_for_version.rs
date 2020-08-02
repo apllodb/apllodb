@@ -1,6 +1,6 @@
 use super::VersionDao;
-use apllodb_immutable_schema_engine_domain::ActiveVersion;
 use serde::{Deserialize, Serialize};
+use apllodb_immutable_schema_engine_domain::version::active_version::ActiveVersion;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct CreateTableSqlForVersion(String);
@@ -14,7 +14,7 @@ impl CreateTableSqlForVersion {
 impl From<&ActiveVersion> for CreateTableSqlForVersion {
     fn from(version: &ActiveVersion) -> Self {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_immutable_schema_engine_domain::Entity;
+        use apllodb_immutable_schema_engine_domain::traits::Entity;
 
         let version_table_name = VersionDao::table_name(version.id(), true);
 
@@ -50,7 +50,7 @@ CREATE TABLE {table_name} (
 #[cfg(test)]
 pub(in crate::sqlite::transaction::sqlite_tx::dao) mod test_wrapper {
     use super::CreateTableSqlForVersion;
-    use apllodb_immutable_schema_engine_domain::ActiveVersion;
+    use apllodb_immutable_schema_engine_domain::version::active_version::ActiveVersion;
 
     /// Provides access to other dao for unit tests.
     pub(in crate::sqlite::transaction::sqlite_tx::dao) struct CreateTableSqlForVersionTestWrapper(

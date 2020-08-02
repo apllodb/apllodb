@@ -1,6 +1,4 @@
 pub mod column;
-mod immutable_row;
-mod pk;
+pub mod pk;
 
-pub use immutable_row::{ImmutableRow, ImmutableRowBuilder};
-pub use pk::{ApparentPrimaryKey, FullPrimaryKey, Revision};
+pub mod immutable_row;

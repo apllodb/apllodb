@@ -1,8 +1,10 @@
-use super::{constraints::VersionConstraints, Version, VersionId, VersionNumber};
+use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
 use crate::{
     entity::Entity,
-    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
-    vtable::VTableId,
+    row::column::non_pk_column::{
+        column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
+    },
+    vtable::id::VTableId,
 };
 use apllodb_shared_components::data_structure::AlterTableAction;
 use apllodb_shared_components::{
@@ -169,10 +171,7 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{
-        non_pk_column_data_type, non_pk_column_name, row::column::non_pk_column::NonPKColumnName,
-        test_support::setup, vtable_id,
-    };
+    use crate::{non_pk_column_data_type, non_pk_column_name, test_support::setup, vtable_id, row::column::non_pk_column::column_name::NonPKColumnName};
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_shared_components::{
         alter_table_action_drop_column, data_structure::DataTypeKind, data_type,

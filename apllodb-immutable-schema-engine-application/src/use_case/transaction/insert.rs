@@ -1,8 +1,15 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    row::column::{non_pk_column::NonPKColumnName, pk_column::PKColumnName},
-    ApparentPrimaryKey, ImmutableSchemaTx, VTableId, VTableRepository, VersionId,
-    VersionRepository,
+    row::{
+        column::{
+            non_pk_column::column_name::NonPKColumnName, pk_column::column_name::PKColumnName,
+        },
+        pk::apparent_pk::ApparentPrimaryKey,
+    },
+    traits::{VTableRepository, VersionRepository},
+    transaction::ImmutableSchemaTx,
+    version::id::VersionId,
+    vtable::id::VTableId,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, SqlValue, TableName},

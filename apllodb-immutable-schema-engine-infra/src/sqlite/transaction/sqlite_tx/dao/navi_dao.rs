@@ -7,11 +7,14 @@ pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollectio
 
 use crate::sqlite::{sqlite_rowid::SqliteRowid, transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    row::column::{
-        non_pk_column::{NonPKColumnDataType, NonPKColumnName},
-        pk_column::PKColumnName,
+    row::{
+        column::{pk_column::column_name::PKColumnName, non_pk_column::{
+            column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
+        }},
+        pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     },
-    ApparentPrimaryKey, Revision, VTable, VTableId, VersionId,
+    version::id::VersionId,
+    vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
     data_structure::{DataType, DataTypeKind, TableName},

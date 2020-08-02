@@ -1,19 +1,18 @@
-mod constraint_kind;
-mod constraints;
-mod id;
-mod repository;
+pub mod constraint_kind;
+pub mod constraints;
+pub mod id;
 
-pub use constraints::TableWideConstraints;
-pub use id::VTableId;
-pub use repository::VTableRepository;
+pub(crate) mod repository;
 
-use crate::{row::column::pk_column::PKColumnName, entity::Entity};
+use crate::{entity::Entity, row::column::pk_column::column_name::PKColumnName};
 use apllodb_shared_components::{
     data_structure::{
         AlterTableAction, ColumnDefinition, DatabaseName, TableConstraints, TableName,
     },
     error::ApllodbResult,
 };
+use constraints::TableWideConstraints;
+use id::VTableId;
 use std::cmp::Ordering;
 
 /// A version table, which has set of [Version](struct.Version.html)s.

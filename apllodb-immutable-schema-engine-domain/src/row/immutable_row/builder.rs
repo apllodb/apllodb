@@ -1,9 +1,10 @@
-use crate::{
-    row::{
-        column::{non_pk_column::NonPKColumnName, pk_column::PKColumnName},
-        pk::Revision,
+use super::ImmutableRow;
+use crate::row::{
+    column::{non_pk_column::column_name::NonPKColumnName, pk_column::column_name::PKColumnName},
+    pk::{
+        apparent_pk::ApparentPrimaryKey,
+        full_pk::{revision::Revision, FullPrimaryKey},
     },
-    ApparentPrimaryKey, FullPrimaryKey, ImmutableRow,
 };
 use apllodb_shared_components::{
     data_structure::SqlValue,
@@ -24,7 +25,11 @@ struct PKBuilder {
     revision: Revision,
 }
 impl PKBuilder {
-    fn add_pk_column(mut self, pk_column_name: &PKColumnName, value: SqlValue) -> ApllodbResult<Self> {
+    fn add_pk_column(
+        mut self,
+        pk_column_name: &PKColumnName,
+        value: SqlValue,
+    ) -> ApllodbResult<Self> {
         if let Some(_) = self.pk_columns.insert(pk_column_name.clone(), value) {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
@@ -120,7 +125,9 @@ impl ImmutableRowBuilder {
 mod tests {
     use super::ImmutableRowBuilder;
     use crate::{
-        row::column::{non_pk_column::NonPKColumnName, pk_column::PKColumnName},
+        row::column::{
+            non_pk_column::column_name::NonPKColumnName, pk_column::column_name::PKColumnName,
+        },
         test_support::setup,
     };
     use apllodb_shared_components::{

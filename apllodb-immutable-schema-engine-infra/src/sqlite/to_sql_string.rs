@@ -1,10 +1,13 @@
 use super::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
-    row::column::{
-        non_pk_column::{NonPKColumnDataType, NonPKColumnName},
-        pk_column::{PKColumnDataType, PKColumnName},
+    row::{
+        column::{
+            non_pk_column::{column_data_type::NonPKColumnDataType, column_name::NonPKColumnName},
+            pk_column::{column_data_type::PKColumnDataType, column_name::PKColumnName},
+        },
+        pk::full_pk::revision::Revision,
     },
-    Revision, VersionNumber,
+    version::version_number::VersionNumber,
 };
 use apllodb_shared_components::data_structure::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,

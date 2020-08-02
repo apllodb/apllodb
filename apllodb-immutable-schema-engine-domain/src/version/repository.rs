@@ -1,6 +1,10 @@
+use super::{active_version::ActiveVersion, id::VersionId};
 use crate::{
-    row::column::non_pk_column::NonPKColumnName, ActiveVersion, ApparentPrimaryKey,
-    ImmutableSchemaTx, VersionId, VersionRowIter,
+    row::{
+        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
+    },
+    row_iter::version_row_iter::VersionRowIter,
+    transaction::ImmutableSchemaTx,
 };
 use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
 use apllodb_storage_engine_interface::TransactionId;

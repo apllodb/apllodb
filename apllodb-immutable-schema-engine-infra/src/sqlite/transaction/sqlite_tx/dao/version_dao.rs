@@ -9,10 +9,10 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     row::column::{
-        non_pk_column::{NonPKColumnDataType, NonPKColumnName},
-        pk_column::PKColumnName,
+        non_pk_column::{column_data_type::NonPKColumnDataType, column_name::NonPKColumnName},
+        pk_column::column_name::PKColumnName,
     },
-    ActiveVersion, VersionId,
+    version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
     data_structure::{Expression, TableName},
@@ -63,7 +63,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         non_pk_column_names: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_immutable_schema_engine_domain::Entity;
+        use apllodb_immutable_schema_engine_domain::traits::Entity;
 
         let projection: Vec<String> = non_pk_column_names
             .iter()

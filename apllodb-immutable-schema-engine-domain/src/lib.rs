@@ -6,20 +6,12 @@
 extern crate derive_new;
 
 pub mod row;
+pub mod row_iter;
+pub mod traits;
+pub mod transaction;
+pub mod version;
+pub mod vtable;
 
 mod entity;
-mod row_iter;
-mod transaction;
-mod version;
-mod vtable;
-
-pub use entity::Entity;
-pub use row::{ApparentPrimaryKey, FullPrimaryKey, ImmutableRow, ImmutableRowBuilder, Revision};
-pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};
-pub use transaction::ImmutableSchemaTx;
-pub use version::{
-    ActiveVersion, ActiveVersions, InactiveVersion, VersionId, VersionNumber, VersionRepository,
-};
-pub use vtable::{TableWideConstraints, VTable, VTableId, VTableRepository};
 
 pub mod test_support;

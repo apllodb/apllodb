@@ -3,8 +3,11 @@ mod active_version_deserializer;
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
-    ActiveVersion, VTable, VersionId,
+    row::column::non_pk_column::{
+        column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
+    },
+    version::{active_version::ActiveVersion, id::VersionId},
+    vtable::VTable,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DataType, DataTypeKind},
@@ -63,7 +66,7 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
         vtable: &VTable,
         version_id: &VersionId,
     ) -> ApllodbResult<ActiveVersion> {
-        use apllodb_immutable_schema_engine_domain::Entity;
+        use apllodb_immutable_schema_engine_domain::traits::Entity;
 
         let versions = self.select_active_versions(vtable)?;
         versions

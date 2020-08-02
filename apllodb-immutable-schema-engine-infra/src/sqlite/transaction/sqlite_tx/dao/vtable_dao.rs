@@ -1,8 +1,7 @@
 use crate::sqlite::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::SqliteTx};
-use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
-    TableWideConstraints, VTable, VTableId,
-};
+use apllodb_immutable_schema_engine_domain::{row::column::non_pk_column::{column_name::NonPKColumnName, column_data_type::NonPKColumnDataType}, vtable::{
+    constraints::TableWideConstraints, id::VTableId, VTable,
+}};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DataType, DataTypeKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
