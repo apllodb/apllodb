@@ -1,10 +1,12 @@
 use super::{constraints::VersionConstraints, Version, VersionId, VersionNumber};
-use crate::{entity::Entity, vtable::VTableId, NonPKColumnDataType, NonPKColumnName};
-use apllodb_shared_components::data_structure::{
-    AlterTableAction,
+use crate::{
+    entity::Entity,
+    row::column::non_pk_column::{NonPKColumnDataType, NonPKColumnName},
+    vtable::VTableId,
 };
+use apllodb_shared_components::data_structure::AlterTableAction;
 use apllodb_shared_components::{
-    data_structure::{Expression, ColumnName},
+    data_structure::Expression,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use serde::{Deserialize, Serialize};
@@ -80,13 +82,14 @@ impl ActiveVersion {
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,
             } => {
+                let column_to_drop = NonPKColumnName::from(column_to_drop.clone());
                 self.validate_col_existence(&column_to_drop)?;
 
                 let next_column_data_types: Vec<NonPKColumnDataType> = self
                     .0
                     .column_data_types
                     .iter()
-                    .filter(|c| c.0.column_name() != column_to_drop)
+                    .filter(|c| c.column_name().as_str() != column_to_drop.as_str())
                     .cloned()
                     .collect();
 
@@ -122,14 +125,14 @@ impl ActiveVersion {
         // Check if any column not to be inserted is NOT NULL.
         let not_null_columns = column_data_types
             .iter()
-            .filter(|cdt| !cdt.0.data_type().nullable());
+            .filter(|cdt| !cdt.data_type().nullable());
         for not_null_column_name in not_null_columns.map(|cdt| cdt.column_name()) {
             if !column_values.contains_key(&not_null_column_name) {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::NotNullViolation,
                     format!(
                         "column `{}` (NOT NULL) must be included in INSERT command",
-                        not_null_column_name.0,
+                        not_null_column_name
                     ),
                     None,
                 ));
@@ -147,11 +150,11 @@ impl ActiveVersion {
         Ok(())
     }
 
-    fn validate_col_existence(&self, column_name: &ColumnName) -> ApllodbResult<()> {
+    fn validate_col_existence(&self, column_name: &NonPKColumnName) -> ApllodbResult<()> {
         self.0
             .column_data_types
             .iter()
-            .find(|c| c.0.column_name() == column_name)
+            .find(|c| &c.column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
                 ApllodbError::new(
@@ -166,12 +169,13 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{test_support::setup, vtable_id, NonPKColumnName, non_pk_column_name, non_pk_column_data_type};
+    use crate::{
+        non_pk_column_data_type, non_pk_column_name, row::column::non_pk_column::NonPKColumnName,
+        test_support::setup, vtable_id,
+    };
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
     use apllodb_shared_components::{
-        alter_table_action_drop_column, 
-        data_structure::{DataTypeKind},
-        data_type, 
+        alter_table_action_drop_column, data_structure::DataTypeKind, data_type,
     };
 
     #[test]
@@ -181,7 +185,6 @@ mod tests {
         let column_data_types = vec![non_pk_column_data_type!(
             "c1",
             data_type!(DataTypeKind::Integer, false),
-            
         )];
 
         let v = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
@@ -195,14 +198,8 @@ mod tests {
         setup();
 
         let column_data_types = vec![
-            non_pk_column_data_type!(
-                "c1",
-                data_type!(DataTypeKind::Integer, false),
-            ),
-            non_pk_column_data_type!(
-                "c2",
-                data_type!(DataTypeKind::Integer, false),
-            ),
+            non_pk_column_data_type!("c1", data_type!(DataTypeKind::Integer, false),),
+            non_pk_column_data_type!("c2", data_type!(DataTypeKind::Integer, false),),
         ];
 
         let v1 = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;

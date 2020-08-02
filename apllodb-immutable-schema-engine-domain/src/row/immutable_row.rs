@@ -2,10 +2,11 @@ mod builder;
 
 pub use builder::ImmutableRowBuilder;
 
+use super::column::non_pk_column::NonPKColumnName;
 use crate::{ApparentPrimaryKey, FullPrimaryKey};
 use apllodb_shared_components::{
     data_structure::{ColumnName, SqlValue},
-    error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_engine_interface::Row;
 use std::collections::HashMap;
@@ -14,9 +15,7 @@ use std::collections::HashMap;
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ImmutableRow {
     pk: FullPrimaryKey,
-
-    // Columns not including PK.
-    columns: HashMap<ColumnName, SqlValue>,
+    non_pk_columns: HashMap<NonPKColumnName, SqlValue>,
     // TODO have TransactionId to enable time-machine (TODO naming...) feature.
 }
 
@@ -27,11 +26,12 @@ impl Row for ImmutableRow {
         self.pk.apparent_pk()
     }
 
-    fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
-        let sql_value = self.columns.get(column_name).ok_or_else(|| {
+    fn get_core(&self, non_pk_column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+        let non_pk_column_name = NonPKColumnName::from(non_pk_column_name.clone());
+        let sql_value = self.non_pk_columns.get(&non_pk_column_name).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
-                format!("undefined column name: `{:?}`", column_name),
+                format!("undefined column name: `{}`", non_pk_column_name),
                 None,
             )
         })?;

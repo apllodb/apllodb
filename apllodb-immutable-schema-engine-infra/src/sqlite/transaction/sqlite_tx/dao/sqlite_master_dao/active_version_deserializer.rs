@@ -1,4 +1,4 @@
-use apllodb_immutable_schema_engine_domain::{ ActiveVersion, VTable,  NonPKColumnDataType};
+use apllodb_immutable_schema_engine_domain::{ActiveVersion, VTable, row::column::non_pk_column::NonPKColumnDataType};
 use apllodb_shared_components::{
     data_structure::{ColumnName,  DataType, DataTypeKind, ColumnDataType},
     error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
@@ -72,7 +72,7 @@ impl ActiveVersionDeserializer {
 
                     column_name_res.map(|column_name| {
                         let cdt = ColumnDataType::new(column_name, data_type);
-                        NonPKColumnDataType(cdt)
+                        NonPKColumnDataType::from(cdt)
                     }
                 )
                 })
@@ -104,7 +104,7 @@ mod tests {
         column_constraints, column_definition, data_structure::{TableConstraints, DataTypeKind, ColumnDefinition}, data_type,
         error::ApllodbResult, table_constraints, t_pk, table_name, database_name,
     };
-    use apllodb_immutable_schema_engine_domain::{VTable, Entity, NonPKColumnDataType};
+    use apllodb_immutable_schema_engine_domain::{VTable, Entity, row::column::non_pk_column::NonPKColumnDataType};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]
@@ -130,7 +130,7 @@ mod tests {
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
             let non_pk_column_data_types: Vec<NonPKColumnDataType> = t.0.iter().map(|cd| {
                 let cdt = cd.column_data_type();
-                NonPKColumnDataType(cdt)
+                NonPKColumnDataType::from(cdt)
             }).collect();
             let version = ActiveVersion::initial(vtable.id(), &non_pk_column_data_types)?;
 

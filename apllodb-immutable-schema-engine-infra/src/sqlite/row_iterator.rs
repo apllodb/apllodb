@@ -1,6 +1,9 @@
 use super::sqlite_error::map_sqlite_err;
-use apllodb_immutable_schema_engine_domain::{ImmutableRow, VersionRowIter};
-use apllodb_shared_components::{data_structure::ColumnDataType, error::ApllodbResult};
+use apllodb_immutable_schema_engine_domain::{
+    row::column::{non_pk_column::NonPKColumnDataType, pk_column::PKColumnDataType},
+    ImmutableRow, VersionRowIter,
+};
+use apllodb_shared_components::error::ApllodbResult;
 
 use std::{collections::VecDeque, fmt::Debug};
 
@@ -34,7 +37,8 @@ impl VersionRowIter for SqliteRowIterator {}
 impl SqliteRowIterator {
     pub(in crate::sqlite) fn new(
         sqlite_rows: &mut rusqlite::Rows<'_>,
-        column_data_types: &[&ColumnDataType],
+        pk_column_data_types: &[&PKColumnDataType],
+        non_pk_column_data_types: &[&NonPKColumnDataType],
     ) -> ApllodbResult<Self> {
         use crate::sqlite::from_sqlite_row::FromSqliteRow;
 
@@ -43,7 +47,11 @@ impl SqliteRowIterator {
             .next()
             .map_err(|e| map_sqlite_err(e, "failed to get next rusqlite::Row"))?
         {
-            let row = ImmutableRow::from_sqlite_row(sqlite_row, column_data_types)?;
+            let row = ImmutableRow::from_sqlite_row(
+                sqlite_row,
+                pk_column_data_types,
+                non_pk_column_data_types,
+            )?;
             rows.push_back(row);
         }
         Ok(Self(rows))

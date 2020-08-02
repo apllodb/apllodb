@@ -34,11 +34,7 @@ pub mod empty_storage_engine {
             Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize,
         )]
         pub struct EmptyPrimaryKey;
-        impl PrimaryKey for EmptyPrimaryKey {
-            fn column_names(&self) -> &[ColumnName] {
-                unimplemented!()
-            }
-        }
+        impl PrimaryKey for EmptyPrimaryKey {}
 
         pub struct EmptyRow;
         impl Row for EmptyRow {

@@ -6,10 +6,14 @@ pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_ver
 use super::{navi_dao, NaviDao};
 use crate::sqlite::{sqlite_rowid::SqliteRowid, SqliteRowIterator, SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
-    ActiveVersion, PKColumnNames, NonPKColumnDataType, NonPKColumnName, VersionId,
+    row::column::{
+        non_pk_column::{NonPKColumnDataType, NonPKColumnName},
+        pk_column::PKColumnName,
+    },
+    ActiveVersion, VersionId,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, Expression, TableName},
+    data_structure::{Expression, TableName},
     error::ApllodbResult,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
@@ -53,22 +57,23 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         &self,
         version: &ActiveVersion,
         navi_rowids: &[SqliteRowid],
-        apk_column_names: &PKColumnNames,
+        pk_column_names: &[PKColumnName],
         non_pk_column_names: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::Entity;
 
-        let non_pk_column_names: Vec<ColumnName> =
-            non_pk_column_names.iter().map(|cn| cn.0.clone()).collect();
+        let projection: Vec<String> = non_pk_column_names
+            .iter()
+            .map(|cn| cn.as_str().to_string())
+            .collect();
 
         let non_pk_column_data_types = version.column_data_types();
         // Filter existing and requested columns.
         let non_pk_column_data_types: Vec<&NonPKColumnDataType> = non_pk_column_data_types
             .iter()
             .filter(|non_pk_cdt| {
-                let cdt = &non_pk_cdt.0;
-                non_pk_column_names.contains(cdt.column_name())
+                projection.contains(&non_pk_cdt.column_name().as_str().to_string())
             })
             .collect();
 
@@ -76,12 +81,12 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
 
         let sql = format!(
             "
-SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM {version_table}
+SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM {version_table}
   INNER JOIN {navi_table}
     ON {version_table}.{version_navi_rowid} = {navi_table}.{navi_rowid}
   WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
-            apk_column_names = apk_column_names.to_sql_string(),
+            pk_column_names = pk_column_names.to_sql_string(),
             comma_if_non_pk_column_names = if non_pk_column_data_types.is_empty() {
                 ""
             } else {
@@ -91,8 +96,7 @@ SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FRO
                 .iter()
                 .map(|non_pk_cdt| {
                     let non_pk_cn = non_pk_cdt.column_name();
-                    let cn = non_pk_cn.0;
-                    cn.as_str().into()
+                    non_pk_cn.as_str().into()
                 })
                 .collect::<Vec<String>>()
                 .join(", "),
@@ -104,18 +108,10 @@ SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FRO
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        // TODO APKのCDTも
-        let column_data_types: Vec<ColumnDataType> = non_pk_column_data_types
-            .iter()
-            .map(|non_pk_cdt| non_pk_cdt.0.clone())
-            .collect();
-
         let row_iter = stmt.query_named(
             &[(":navi_rowids", &navi_rowids)],
-            &column_data_types
-                .iter()
-                .map(|cdt| cdt)
-                .collect::<Vec<&ColumnDataType>>(),
+            &[], // TODO APKのCDTも
+            &non_pk_column_data_types,
         )?;
         Ok(row_iter)
     }
@@ -141,7 +137,7 @@ SELECT {apk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FRO
             comma_if_non_pk_column_names = if column_values.is_empty() { "" } else { ", " },
             non_pk_column_names = column_values
                 .keys()
-                .map(|cn| cn.0.as_str())
+                .map(|cn| cn.as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
             non_pk_column_values = column_values

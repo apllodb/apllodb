@@ -1,6 +1,9 @@
 use super::SqliteTx;
 use crate::sqlite::{sqlite_error::map_sqlite_err, to_sql_string::ToSqlString, SqliteRowIterator};
-use apllodb_shared_components::{data_structure::ColumnDataType, error::ApllodbResult};
+use apllodb_immutable_schema_engine_domain::row::column::{
+    non_pk_column::NonPKColumnDataType, pk_column::PKColumnDataType,
+};
+use apllodb_shared_components::error::ApllodbResult;
 
 #[derive(Debug)]
 pub struct SqliteStatement<'tx, 'db: 'tx> {
@@ -22,7 +25,8 @@ impl<'tx, 'db: 'tx> SqliteStatement<'tx, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn query_named(
         &mut self,
         params: &[(&str, &dyn ToSqlString)],
-        column_data_types: &[&ColumnDataType],
+        pk_column_data_types: &[&PKColumnDataType],
+        non_pk_column_data_types: &[&NonPKColumnDataType],
     ) -> ApllodbResult<SqliteRowIterator> {
         let params = params
             .into_iter()
@@ -40,8 +44,11 @@ impl<'tx, 'db: 'tx> SqliteStatement<'tx, 'db> {
             )
             .map_err(|e| map_sqlite_err(e, "SQLite raised an error on query_named()"))?;
 
-
-        let iter = SqliteRowIterator::new(&mut rusqlite_rows, column_data_types)?;
+        let iter = SqliteRowIterator::new(
+            &mut rusqlite_rows,
+            pk_column_data_types,
+            non_pk_column_data_types,
+        )?;
         Ok(iter)
     }
 }

@@ -5,19 +5,16 @@
 #[macro_use]
 extern crate derive_new;
 
+pub mod row;
+
 mod entity;
-mod row;
 mod row_iter;
 mod transaction;
 mod version;
 mod vtable;
 
 pub use entity::Entity;
-pub use row::{
-    filter_non_pk_column_definitions, filter_non_pk_column_names, ApparentPrimaryKey,
-    PKColumnNames, FullPrimaryKey, ImmutableRow, ImmutableRowBuilder,
-    NonPKColumnDataType, NonPKColumnDefinition, NonPKColumnName, Revision,
-};
+pub use row::{ApparentPrimaryKey, FullPrimaryKey, ImmutableRow, ImmutableRowBuilder, Revision};
 pub use row_iter::{ImmutableSchemaRowIter, VersionRowIter};
 pub use transaction::ImmutableSchemaTx;
 pub use version::{
