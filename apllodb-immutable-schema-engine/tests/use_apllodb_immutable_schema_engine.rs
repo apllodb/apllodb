@@ -47,22 +47,6 @@ use apllodb_shared_components::data_structure::{
 };
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
-#[test]
-fn test_tx_id_order() -> ApllodbResult<()> {
-    setup();
-
-    let mut db1 =
-        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("db_test_tx_id_order")?)?;
-    let mut db2 =
-        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("db_test_tx_id_order")?)?;
-
-    let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1)?;
-    let tx2 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db2)?;
-
-    assert!(tx1.id() < tx2.id());
-
-    Ok(())
-}
 
 #[test]
 fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
