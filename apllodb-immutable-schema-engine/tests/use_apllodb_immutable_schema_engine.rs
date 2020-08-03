@@ -5,6 +5,7 @@ use apllodb_shared_components::{
     },
     error::{ApllodbErrorKind, ApllodbResult},
 };
+use apllodb_storage_engine_interface::PrimaryKey;
 
 fn setup() {
     let _ = env_logger::builder().is_test(true).try_init();
@@ -198,6 +199,58 @@ fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
             }
             _ => unreachable!(),
         }
+    }
+
+    tx.commit()?;
+
+    Ok(())
+}
+
+#[test]
+fn test_compound_pk() -> ApllodbResult<()> {
+    setup();
+
+    use apllodb_storage_engine_interface::Row;
+
+    let mut db =
+        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("test_compound_pk")?)?;
+    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db)?;
+
+    let t_name = &TableName::new("address")?;
+
+    let c_country_code_def = ColumnDefinition::new(
+        ColumnName::new("country_code")?,
+        DataType::new(DataTypeKind::SmallInt, false),
+        ColumnConstraints::new(vec![])?,
+    )?;
+    let c_postal_code_def = ColumnDefinition::new(
+        ColumnName::new("postal_code")?,
+        DataType::new(DataTypeKind::Integer, false),
+        ColumnConstraints::new(vec![])?,
+    )?;
+    let coldefs = vec![c_country_code_def.clone(), c_postal_code_def.clone()];
+
+    let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+        column_data_types: vec![
+            ColumnDataType::from(&c_country_code_def),
+            ColumnDataType::from(&c_postal_code_def),
+        ],
+    }])?;
+
+    tx.create_table(&t_name, &tc, &coldefs)?;
+
+    tx.insert(
+        &t_name,
+        hmap! { c_country_code_def.column_name().clone() => Expression::ConstantVariant(Constant::from(100i16)),
+            c_postal_code_def. column_name().clone() => Expression::ConstantVariant(Constant::from(1000001i32) )},
+    )?;
+
+    let row_iter = tx.select(&t_name, &vec![c_postal_code_def.column_name().clone()])?;
+    for row_res in row_iter {
+        let row = row_res?;
+        let apk = row.pk();
+        assert_eq!(apk.get::<i16>(c_country_code_def.column_name())?, 100i16, "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
+        assert_eq!(apk.get::<i32>(c_postal_code_def.column_name())?, 1000001i32);
     }
 
     tx.commit()?;

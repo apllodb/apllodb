@@ -34,7 +34,11 @@ pub mod empty_storage_engine {
             Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize,
         )]
         pub struct EmptyPrimaryKey;
-        impl PrimaryKey for EmptyPrimaryKey {}
+        impl PrimaryKey for EmptyPrimaryKey {
+            fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+                unimplemented!()
+            }
+        }
 
         pub struct EmptyRow;
         impl Row for EmptyRow {

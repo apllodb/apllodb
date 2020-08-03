@@ -3,9 +3,10 @@ use crate::row::column::pk_column::{
 };
 use apllodb_shared_components::{
     data_structure::{
-        BooleanExpression, ComparisonFunction, Constant, Expression, LogicalFunction, SqlValue,
+        BooleanExpression, ColumnName, ComparisonFunction, Constant, Expression, LogicalFunction,
+        SqlValue,
     },
-    error::ApllodbResult,
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_engine_interface::PrimaryKey;
 use serde::{Deserialize, Serialize};
@@ -20,7 +21,30 @@ pub struct ApparentPrimaryKey {
     sql_values: Vec<SqlValue>,
 }
 
-impl PrimaryKey for ApparentPrimaryKey {}
+impl PrimaryKey for ApparentPrimaryKey {
+    fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+        let target_cn = PKColumnName::from(column_name.clone());
+
+        let target_sql_value = self
+            .zipped()
+            .iter()
+            .find_map(|(cn, sql_value)| {
+                if *cn == &target_cn {
+                    Some(*sql_value)
+                } else {
+                    None
+                }
+            })
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedColumn,
+                    format!("undefined column name in PK: `{}`", target_cn),
+                    None,
+                )
+            })?;
+        Ok(target_sql_value)
+    }
+}
 
 impl ApparentPrimaryKey {
     pub fn column_names(&self) -> &[PKColumnName] {
