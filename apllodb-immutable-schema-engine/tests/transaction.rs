@@ -1,11 +1,11 @@
 mod test_support;
 
-use crate::test_support::setup;
+use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     data_structure::{
         ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, DataType, DataTypeKind,
-        DatabaseName, TableConstraintKind, TableConstraints, TableName,
+         TableConstraintKind, TableConstraints, TableName,
     },
     error::{ApllodbErrorKind, ApllodbResult},
 };
@@ -15,10 +15,8 @@ use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 fn test_wait_lock() -> ApllodbResult<()> {
     setup();
 
-    let mut db1 =
-        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("test_wait_lock")?)?;
-    let mut db2 =
-        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("test_wait_lock")?)?;
+    let mut db1 = TestDatabase::new()?;
+    let mut db2 = db1.dup()?;
 
     let t_name = &TableName::new("t")?;
 
@@ -33,8 +31,8 @@ fn test_wait_lock() -> ApllodbResult<()> {
         column_data_types: vec![ColumnDataType::from(&c1_def)],
     }])?;
 
-    let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1)?;
-    let tx2 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db2)?;
+    let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1.0)?;
+    let tx2 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db2.0)?;
 
     // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
     // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
@@ -56,13 +54,11 @@ fn test_wait_lock() -> ApllodbResult<()> {
 fn test_tx_id_order() -> ApllodbResult<()> {
     setup();
 
-    let mut db1 =
-        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("db_test_tx_id_order")?)?;
-    let mut db2 =
-        ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new("db_test_tx_id_order")?)?;
+    let mut db1 = TestDatabase::new()?;
+    let mut db2 = db1.dup()?;
 
-    let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1)?;
-    let tx2 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db2)?;
+    let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1.0)?;
+    let tx2 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db2.0)?;
 
     assert!(tx1.id() < tx2.id());
 

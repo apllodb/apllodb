@@ -5,10 +5,9 @@
 #[macro_use]
 extern crate derive_new;
 
-mod external_interface;
+pub mod external_interface;
+
 mod sqlite;
 
 #[cfg(test)]
 mod test_support;
-
-pub use external_interface::ApllodbImmutableSchemaEngine;

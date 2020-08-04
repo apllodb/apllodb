@@ -35,12 +35,16 @@ impl SqliteDatabase {
         })
     }
 
-    fn sqlite_db_path(db_name: &DatabaseName) -> String {
+    pub fn sqlite_db_path(&self) -> String {
+        Self::_sqlite_db_path(&self.name)
+    }
+
+    fn _sqlite_db_path(db_name: &DatabaseName) -> String {
         format!("immutable_schema_{}.sqlite3", db_name) // FIXME: path from configuration
     }
 
     fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<rusqlite::Connection> {
-        let path = Self::sqlite_db_path(&db_name);
+        let path = Self::_sqlite_db_path(&db_name);
         let conn = rusqlite::Connection::open(path).map_err(|e| {
             map_sqlite_err(e, "backend sqlite3 raised an error on creating connection")
         })?;
@@ -53,31 +57,5 @@ impl SqliteDatabase {
 
     pub(in crate::sqlite) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
         &mut self.sqlite_conn
-    }
-}
-
-#[cfg(test)]
-impl SqliteDatabase {
-    pub(crate) fn new_for_test() -> ApllodbResult<Self> {
-        use uuid::Uuid;
-
-        let db_name = format!("{}", Uuid::new_v4());
-        let db_name = DatabaseName::new(db_name)?;
-
-        Self::new(db_name)
-    }
-}
-
-#[cfg(test)]
-impl Drop for SqliteDatabase {
-    fn drop(&mut self) {
-        let path = Self::sqlite_db_path(&self.name);
-
-        std::fs::remove_file(&path)
-            .or_else(|ioerr| match ioerr.kind() {
-                std::io::ErrorKind::NotFound => Ok(()),
-                _ => Err(ioerr),
-            })
-            .unwrap();
     }
 }

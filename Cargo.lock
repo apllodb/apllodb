@@ -18,6 +18,7 @@ dependencies = [
  "apllodb-storage-engine-interface",
  "env_logger",
  "log",
+ "uuid",
 ]
 
 [[package]]
