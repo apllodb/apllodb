@@ -68,6 +68,8 @@ fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
         &vec![c_id_def.column_name().clone(), c1_def.column_name().clone()],
     )?;
 
+    assert_eq!(rows.clone().count(), 2);
+
     for row_res in rows {
         let row = row_res?;
         let id: i32 = row.get(c_id_def.column_name())?;
