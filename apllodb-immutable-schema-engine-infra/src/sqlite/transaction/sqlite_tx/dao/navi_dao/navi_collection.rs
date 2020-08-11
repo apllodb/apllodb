@@ -48,8 +48,15 @@ impl NaviCollection {
                 .expect("NaviCollection should not hold Navi::Deleted inside");
 
             h.entry(version_number)
-                .and_modify(|rows| rows.push_back(r))
-                .or_insert(VecDeque::new());
+                .and_modify(|rows| {
+                    let r = r.clone(); // don't hold r's ownership for or_insert_with.
+                    rows.push_back(r);
+                })
+                .or_insert_with(move || {
+                    let mut rows = VecDeque::new();
+                    rows.push_back(r);
+                    rows
+                });
         }
 
         Ok(h.into_iter()
