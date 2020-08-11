@@ -3,9 +3,8 @@ use crate::row::column::pk_column::{
     column_data_type::PKColumnDataType, column_name::PKColumnName,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDefinition, ColumnName, TableConstraints},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-    helper::collection_validation::find_dup,
+    data_structure::{ColumnDefinition, TableConstraints},
+    error::ApllodbResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -49,90 +48,18 @@ impl TableWideConstraints {
     ///
     /// - [InvalidTableDefinition](error/enum.ApllodbErrorKind.html#variant.InvalidTableDefinition) when:
     ///   - [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey) or
-    ///     [Unique](enum.TableWideConstraintKind.html#variant.Unique) in `table_constraints` and `column_definitions`
-    ///     are applied to the same single column.
-    ///   - Both `table_constraints` and `column_definitions` include [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey).
+    ///     [Unique](enum.TableWideConstraintKind.html#variant.Unique) in `table_constraints` are applied to an unavailable column.
     pub(crate) fn new(
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<Self> {
-        use std::convert::TryFrom;
-
-        let from_table_constraints = table_constraints
+        let kinds = table_constraints
             .kinds()
             .iter()
-            .map(TableWideConstraintKind::from);
-
-        let from_column_definitions = column_definitions
-            .iter()
-            .flat_map(TableWideConstraintKind::try_from);
-
-        let kinds: Vec<TableWideConstraintKind> = from_table_constraints
-            .chain(from_column_definitions)
-            .collect();
-
-        Self::validate_pk_duplication(&kinds)?;
-        Self::validate_pk_or_unique_target_duplication(&kinds)?;
+            .map(|tck| TableWideConstraintKind::new(column_definitions, tck))
+            .collect::<ApllodbResult<Vec<TableWideConstraintKind>>>()?;
 
         Ok(Self { kinds })
-    }
-
-    fn validate_pk_duplication(kinds: &[TableWideConstraintKind]) -> ApllodbResult<()> {
-        if kinds
-            .iter()
-            .filter(|kind| match kind {
-                TableWideConstraintKind::PrimaryKey { .. } => true,
-                _ => false,
-            })
-            .count()
-            > 1
-        {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTableDefinition,
-                "more than 1 PRIMARY KEY are specified",
-                None,
-            ))
-        } else {
-            Ok(())
-        }
-    }
-
-    fn validate_pk_or_unique_target_duplication(
-        kinds: &[TableWideConstraintKind],
-    ) -> ApllodbResult<()> {
-        let single_columns: Vec<ColumnName> = kinds
-            .iter()
-            .flat_map(|k| match k {
-                TableWideConstraintKind::PrimaryKey { column_data_types } => {
-                    if column_data_types.len() == 1 {
-                        column_data_types
-                            .first()
-                            .map(|cdt| cdt.column_name().as_column_name().clone())
-                    } else {
-                        None
-                    }
-                }
-                TableWideConstraintKind::Unique { column_names } => {
-                    if column_names.len() == 1 {
-                        column_names.first().map(|cn| cn.clone())
-                    } else {
-                        None
-                    }
-                }
-            })
-            .collect();
-        if let Some(column) = find_dup(single_columns.iter()) {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTableDefinition,
-                format!(
-                    "more than 1 PRIMARY KEY / UNIQUE are applied to the same column: `{:?}`",
-                    column
-                ),
-                None,
-            ))
-        } else {
-            Ok(())
-        }
     }
 }
 
@@ -142,7 +69,7 @@ mod tests {
     use crate::test_support::setup;
     use apllodb_shared_components::{
         column_constraints, column_definition,
-        data_structure::{ColumnConstraintKind, ColumnDefinition, DataTypeKind, TableConstraints},
+        data_structure::{ColumnDefinition, DataTypeKind, TableConstraints},
         data_type,
         error::ApllodbErrorKind,
         t_pk, t_unique, table_constraints,
@@ -154,7 +81,7 @@ mod tests {
 
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
-                table_constraints!(),
+                table_constraints!(t_pk!("c1")),
                 vec![column_definition!(
                     "c1",
                     data_type!(DataTypeKind::Integer, false),
@@ -177,21 +104,6 @@ mod tests {
                 ],
             ),
             (
-                table_constraints!(t_pk!("c1")),
-                vec![
-                    column_definition!(
-                        "c1",
-                        data_type!(DataTypeKind::Integer, false),
-                        column_constraints!()
-                    ),
-                    column_definition!(
-                        "c2",
-                        data_type!(DataTypeKind::Integer, false),
-                        column_constraints!(ColumnConstraintKind::Unique)
-                    ),
-                ],
-            ),
-            (
                 table_constraints!(t_pk!("c2", "c1")),
                 vec![
                     column_definition!(
@@ -202,7 +114,7 @@ mod tests {
                     column_definition!(
                         "c2",
                         data_type!(DataTypeKind::Integer, false),
-                        column_constraints!(ColumnConstraintKind::Unique)
+                        column_constraints!()
                     ),
                 ],
             ),
@@ -220,32 +132,14 @@ mod tests {
     fn test_failure_invalid_table_definition() {
         setup();
 
-        let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
-            (
-                table_constraints!(t_pk!("c1")),
-                vec![column_definition!(
-                    "c1",
-                    data_type!(DataTypeKind::Integer, false),
-                    column_constraints!(ColumnConstraintKind::Unique)
-                )],
-            ),
-            (
-                table_constraints!(t_unique!("c1")),
-                vec![column_definition!(
-                    "c1",
-                    data_type!(DataTypeKind::Integer, false),
-                    column_constraints!(ColumnConstraintKind::Unique)
-                )],
-            ),
-            (
-                table_constraints!(t_pk!("c1")),
-                vec![column_definition!(
-                    "c2",
-                    data_type!(DataTypeKind::Integer, false),
-                    column_constraints!(ColumnConstraintKind::PrimaryKey)
-                )],
-            ),
-        ];
+        let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![(
+            table_constraints!(t_pk!("c404")),
+            vec![column_definition!(
+                "c1",
+                data_type!(DataTypeKind::Integer, false),
+                column_constraints!()
+            )],
+        )];
 
         for (table_constraints, column_definitions) in testset {
             match TableWideConstraints::new(&table_constraints, &column_definitions) {

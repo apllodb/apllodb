@@ -4,8 +4,8 @@ use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     data_structure::{
-        ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, DataType, DataTypeKind,
-         TableConstraintKind, TableConstraints, TableName,
+        ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
+        TableConstraintKind, TableConstraints, TableName,
     },
     error::{ApllodbErrorKind, ApllodbResult},
 };
@@ -28,7 +28,7 @@ fn test_wait_lock() -> ApllodbResult<()> {
     let coldefs = vec![c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_data_types: vec![ColumnDataType::from(&c1_def)],
+        column_names: vec![c1_def.column_name().clone()],
     }])?;
 
     let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1.0)?;

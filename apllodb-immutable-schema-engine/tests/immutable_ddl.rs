@@ -4,9 +4,8 @@ use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     data_structure::{
-        AlterTableAction, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-        Constant, DataType, DataTypeKind, Expression, TableConstraintKind, TableConstraints,
-        TableName,
+        AlterTableAction, ColumnConstraints, ColumnDefinition, ColumnName, Constant, DataType,
+        DataTypeKind, Expression, TableConstraintKind, TableConstraints, TableName,
     },
     error::{ApllodbErrorKind, ApllodbResult},
 };
@@ -36,7 +35,7 @@ fn test_success_select_all_from_2_versions() -> ApllodbResult<()> {
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_data_types: vec![ColumnDataType::from(&c_id_def)],
+        column_names: vec![c_id_def.column_name().clone()],
     }])?;
 
     tx.create_table(&t_name, &tc, &coldefs)?;

@@ -170,7 +170,10 @@ pub mod empty_storage_engine {
 }
 
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind, TableConstraintKind},
+    data_structure::{
+        ColumnConstraints,  ColumnDefinition, ColumnName, DataType, DataTypeKind,
+        TableConstraintKind,
+    },
     error::ApllodbResult,
 };
 
@@ -185,16 +188,21 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
 
     let mut db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
     let tx = EmptyStorageEngine::begin_transaction(&mut db)?;
+
+    let c1_def = ColumnDefinition::new(
+        ColumnName::new("c1")?,
+        DataType::new(DataTypeKind::Integer, false),
+        ColumnConstraints::default(),
+    )?;
+
     tx.create_table(
         &TableName::new("t")?,
         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-            column_data_types: vec![ColumnDataType::new(
-                ColumnName::new("c1")?,
-                DataType::new(DataTypeKind::Integer, false),
-            )],
+            column_names: vec![c1_def.column_name().clone()],
         }])?,
         &vec![],
     )?;
+
     tx.abort()?;
 
     Ok(())

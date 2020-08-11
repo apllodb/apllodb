@@ -20,10 +20,7 @@ macro_rules! column_constraints {
 #[macro_export]
 macro_rules! column_data_type {
     ($col_name: expr, $data_type: expr $(,)?) => {{
-        $crate::data_structure::ColumnDataType::new(
-            $crate::column_name!($col_name),
-            $data_type,
-        )
+        $crate::data_structure::ColumnDataType::new($crate::column_name!($col_name), $data_type)
     }};
 }
 
@@ -94,18 +91,13 @@ macro_rules! column_name_expr {
 macro_rules! t_pk {
     ($($col_name: expr $(,)?)*) => {{
         $crate::data_structure::TableConstraintKind::PrimaryKey {
-            column_data_types: vec![
+            column_names: vec![
                 $(
-                    $crate::data_structure::ColumnDataType::from(
-                        &$crate::column_definition!(
-                            $col_name,
-                            $crate::data_structure::DataType::new($crate::data_structure::DataTypeKind::Integer, false),
-                            $crate::column_constraints!()
-                        )
-                    ),
+                    $crate::column_name!($col_name),
                 )*
             ],
         }
+
     }};
 }
 

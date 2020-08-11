@@ -4,7 +4,7 @@ use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     data_structure::{
-        ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, Constant, DataType,
+        ColumnConstraints,  ColumnDefinition, ColumnName, Constant, DataType,
         DataTypeKind, Expression, TableConstraintKind, TableConstraints, TableName,
     },
     error::ApllodbResult,
@@ -35,9 +35,9 @@ fn test_compound_pk() -> ApllodbResult<()> {
     let coldefs = vec![c_country_code_def.clone(), c_postal_code_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_data_types: vec![
-            ColumnDataType::from(&c_country_code_def),
-            ColumnDataType::from(&c_postal_code_def),
+        column_names: vec![
+            c_country_code_def.column_name().clone(),
+            c_postal_code_def.column_name().clone(),
         ],
     }])?;
 
