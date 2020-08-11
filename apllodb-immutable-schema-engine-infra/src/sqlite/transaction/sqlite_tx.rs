@@ -122,28 +122,28 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
 }
 
 impl<'db> SqliteTx<'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: Into<String>>(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: AsRef<str>>(
         &self,
         sql: S,
     ) -> ApllodbResult<SqliteStatement<'_, '_>> {
-        let sql = sql.into();
+        let sql = sql.as_ref();
         debug!("SqliteTx::prepare(): {}", sql);
 
         let raw_stmt = self
             .rusqlite_tx
-            .prepare(&sql)
+            .prepare(sql)
             .map_err(|e| map_sqlite_err(e, "SQLite raised an error on prepare"))?;
         Ok(SqliteStatement::new(&self, raw_stmt))
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn execute_named<S: Into<String>>(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn execute_named<S: AsRef<str>>(
         &self,
         sql: S,
         params: &[(&str, &dyn ToSqlString)],
     ) -> ApllodbResult<()> {
         // TODO return ChangedRows(usize)
 
-        let sql = sql.into();
+        let sql = sql.as_ref();
         debug!("SqliteTx::execute_named(): {}", sql);
 
         let params = params
@@ -160,7 +160,7 @@ impl<'db> SqliteTx<'db> {
 
         self.rusqlite_tx
             .execute_named(
-                &sql,
+                sql,
                 params
                     .iter()
                     .map(|(pname, s)| (*pname, s as &dyn rusqlite::ToSql))
