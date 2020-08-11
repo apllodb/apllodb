@@ -32,4 +32,9 @@ impl NonPKColumnName {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+
+    /// Ref to ColumnName
+    pub fn as_column_name(&self) -> &ColumnName {
+        &self.0
+    }
 }

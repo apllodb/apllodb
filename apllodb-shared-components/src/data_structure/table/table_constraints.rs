@@ -116,9 +116,32 @@ impl TableConstraints {
 // TODO テストは書いているが、まだバリデーション条件考えきれてもいないし、いじめ方も足りないので、テストは全体的に見直す
 #[cfg(test)]
 mod tests {
+    macro_rules! t_pk {
+        ($($col_name: expr $(,)?)*) => {{
+            $crate::data_structure::TableConstraintKind::PrimaryKey {
+                column_names: vec![
+                    $(
+                        $crate::data_structure::ColumnName::new($col_name).unwrap(),
+                    )*
+                ],
+            }
+
+        }};
+    }
+    macro_rules! t_unique {
+        ($($col_name: expr $(,)?)*) => {{
+            $crate::data_structure::TableConstraintKind::Unique {
+                column_names: vec![
+                    $(
+                        $crate::data_structure::ColumnName::new($col_name).unwrap(),
+                    )*
+                ],
+            }
+        }}
+    }
+
     use super::TableConstraints;
     use crate::{data_structure::TableConstraintKind, error::ApllodbErrorKind};
-    use crate::{t_pk, t_unique};
 
     #[test]
     fn test_success() {

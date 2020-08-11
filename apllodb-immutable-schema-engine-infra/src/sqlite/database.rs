@@ -59,3 +59,17 @@ impl SqliteDatabase {
         &mut self.sqlite_conn
     }
 }
+
+#[cfg(test)]
+impl Drop for SqliteDatabase {
+    fn drop(&mut self) {
+        let path = self.sqlite_db_path();
+
+        std::fs::remove_file(&path)
+            .or_else(|ioerr| match ioerr.kind() {
+                std::io::ErrorKind::NotFound => Ok(()),
+                _ => Err(ioerr),
+            })
+            .unwrap();
+    }
+}

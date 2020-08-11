@@ -68,55 +68,54 @@ mod tests {
     use super::TableWideConstraints;
     use crate::test_support::setup;
     use apllodb_shared_components::{
-        column_constraints, column_definition,
-        data_structure::{ColumnDefinition, DataTypeKind, TableConstraints},
-        data_type,
-        error::ApllodbErrorKind,
-        t_pk, t_unique, table_constraints,
+        data_structure::{
+            ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
+            TableConstraintKind, TableConstraints,
+        },
+        error::{ApllodbErrorKind, ApllodbResult},
     };
 
     #[test]
-    fn test_success() {
+    fn test_success() -> ApllodbResult<()> {
         setup();
+
+        let c1_def = ColumnDefinition::new(
+            ColumnName::new("c1")?,
+            DataType::new(DataTypeKind::Integer, false),
+            ColumnConstraints::new(vec![])?,
+        )?;
+        let c2_def = ColumnDefinition::new(
+            ColumnName::new("c2")?,
+            DataType::new(DataTypeKind::Integer, false),
+            ColumnConstraints::new(vec![])?,
+        )?;
 
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
-                table_constraints!(t_pk!("c1")),
-                vec![column_definition!(
-                    "c1",
-                    data_type!(DataTypeKind::Integer, false),
-                    column_constraints!()
-                )],
+                TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+                    column_names: vec![c1_def.column_name().clone()],
+                }])?,
+                vec![c1_def.clone(), c2_def.clone()],
             ),
             (
-                table_constraints!(t_pk!("c1"), t_unique!("c2")),
-                vec![
-                    column_definition!(
-                        "c1",
-                        data_type!(DataTypeKind::Integer, false),
-                        column_constraints!()
-                    ),
-                    column_definition!(
-                        "c2",
-                        data_type!(DataTypeKind::Integer, false),
-                        column_constraints!()
-                    ),
-                ],
+                TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+                    column_names: vec![c2_def.column_name().clone(), c1_def.column_name().clone()],
+                }])?,
+                vec![c1_def.clone(), c2_def.clone()],
             ),
             (
-                table_constraints!(t_pk!("c2", "c1")),
-                vec![
-                    column_definition!(
-                        "c1",
-                        data_type!(DataTypeKind::Integer, false),
-                        column_constraints!()
-                    ),
-                    column_definition!(
-                        "c2",
-                        data_type!(DataTypeKind::Integer, false),
-                        column_constraints!()
-                    ),
-                ],
+                TableConstraints::new(vec![
+                    TableConstraintKind::PrimaryKey {
+                        column_names: vec![c1_def.column_name().clone()],
+                    },
+                    TableConstraintKind::Unique {
+                        column_names: vec![
+                            c1_def.column_name().clone(),
+                            c2_def.column_name().clone(),
+                        ],
+                    },
+                ])?,
+                vec![c1_def.clone(), c2_def.clone()],
             ),
         ];
 
@@ -126,19 +125,25 @@ mod tests {
                 Err(e) => panic!("unexpected error kind: {}", e),
             }
         }
+
+        Ok(())
     }
 
     #[test]
-    fn test_failure_invalid_table_definition() {
+    fn test_failure_invalid_table_definition() -> ApllodbResult<()> {
         setup();
 
+        let c1_def = ColumnDefinition::new(
+            ColumnName::new("c1")?,
+            DataType::new(DataTypeKind::Integer, false),
+            ColumnConstraints::new(vec![])?,
+        )?;
+
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![(
-            table_constraints!(t_pk!("c404")),
-            vec![column_definition!(
-                "c1",
-                data_type!(DataTypeKind::Integer, false),
-                column_constraints!()
-            )],
+            TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+                column_names: vec![ColumnName::new("c404")?],
+            }])?,
+            vec![c1_def],
         )];
 
         for (table_constraints, column_definitions) in testset {
@@ -152,5 +157,7 @@ mod tests {
                 Ok(tc) => panic!("Expected to be validation error: {:?}", tc),
             }
         }
+
+        Ok(())
     }
 }

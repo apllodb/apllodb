@@ -171,22 +171,28 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{non_pk_column_data_type, non_pk_column_name, test_support::setup, vtable_id, row::column::non_pk_column::column_name::NonPKColumnName};
-    use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
-    use apllodb_shared_components::{
-        alter_table_action_drop_column, data_structure::DataTypeKind, data_type,
+    use crate::{
+        row::column::non_pk_column::{
+            column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
+        },
+        test_support::setup,
+        vtable_id,
     };
+    use apllodb_shared_components::data_structure::{
+        AlterTableAction, ColumnName, DataType, DataTypeKind,
+    };
+    use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {
         setup();
 
-        let column_data_types = vec![non_pk_column_data_type!(
-            "c1",
-            data_type!(DataTypeKind::Integer, false),
-        )];
+        let c1_cdt = NonPKColumnDataType::new(
+            NonPKColumnName::new("c1")?,
+            DataType::new(DataTypeKind::Integer, false),
+        );
 
-        let v = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
+        let v = ActiveVersion::initial(&vtable_id!(), &vec![c1_cdt])?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
@@ -196,14 +202,22 @@ mod tests {
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
         setup();
 
-        let column_data_types = vec![
-            non_pk_column_data_type!("c1", data_type!(DataTypeKind::Integer, false),),
-            non_pk_column_data_type!("c2", data_type!(DataTypeKind::Integer, false),),
-        ];
+        let c1_cdt = NonPKColumnDataType::new(
+            NonPKColumnName::new("c1")?,
+            DataType::new(DataTypeKind::Integer, false),
+        );
+        let c2_cdt = NonPKColumnDataType::new(
+            NonPKColumnName::new("c2")?,
+            DataType::new(DataTypeKind::Integer, false),
+        );
+
+        let column_data_types = vec![c1_cdt.clone(), c2_cdt.clone()];
 
         let v1 = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
 
-        let action = alter_table_action_drop_column!("c1");
+        let action = AlterTableAction::DropColumn {
+            column_name: c1_cdt.column_name().as_column_name().clone(),
+        };
 
         let v2 = v1.create_next(&action)?;
 
@@ -214,7 +228,7 @@ mod tests {
             .iter()
             .map(|cdt| cdt.column_name())
             .collect();
-        assert_eq!(v2_cols, vec![non_pk_column_name!("c2")]);
+        assert_eq!(v2_cols, vec![c2_cdt.column_name()]);
 
         Ok(())
     }
@@ -223,13 +237,15 @@ mod tests {
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
         setup();
 
-        let column_data_types = vec![non_pk_column_data_type!(
-            "c1",
-            data_type!(DataTypeKind::Integer, false),
-        )];
-        let v1 = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
+        let c1_cdt = NonPKColumnDataType::new(
+            NonPKColumnName::new("c1")?,
+            DataType::new(DataTypeKind::Integer, false),
+        );
+        let v1 = ActiveVersion::initial(&vtable_id!(), &vec![c1_cdt])?;
 
-        let action = alter_table_action_drop_column!("c404");
+        let action = AlterTableAction::DropColumn {
+            column_name: ColumnName::new("c404")?,
+        };
         match v1.create_next(&action) {
             Err(e) => match e.kind() {
                 ApllodbErrorKind::UndefinedColumn => Ok(()),

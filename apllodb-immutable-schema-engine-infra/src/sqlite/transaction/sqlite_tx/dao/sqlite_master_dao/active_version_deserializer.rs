@@ -100,8 +100,8 @@ impl ActiveVersionDeserializer {
 mod tests {
     use super::ActiveVersionDeserializer;
     use apllodb_shared_components::{
-        column_constraints, column_definition, data_structure::{TableConstraints, DataTypeKind, ColumnDefinition}, data_type,
-        error::ApllodbResult, table_constraints, t_pk, table_name, database_name,
+         data_structure::{TableConstraints, DataTypeKind, ColumnDefinition, ColumnName, DataType, ColumnConstraints, TableConstraintKind, DatabaseName, TableName}, 
+        error::ApllodbResult
     };
     use apllodb_immutable_schema_engine_domain::{traits::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType, version::active_version::ActiveVersion, vtable::VTable};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
@@ -110,22 +110,26 @@ mod tests {
     fn test_from_into() -> ApllodbResult<()> {
         setup();
 
+        let c1_def = ColumnDefinition::new(
+            ColumnName::new("c1")?,
+            DataType::new(DataTypeKind::Integer, false),
+            ColumnConstraints::new(vec![])?,
+        )?;
+
         let testset: Vec<(Vec<ColumnDefinition>, TableConstraints)> = vec![
             (
-            vec![column_definition!(
-                "c1",
-                data_type!(DataTypeKind::Integer, false),
-                column_constraints!()
-            )],
-            table_constraints!(t_pk!("c1")),
+            vec![c1_def.clone()],
+            TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+                column_names: vec![c1_def.column_name().clone()],
+            }])?,
         )
         
         // TODO more samples
         ];
 
         for t in testset {
-            let database_name = database_name!("db");
-            let table_name = table_name!("tbl");
+            let database_name = DatabaseName::new("db")?;
+            let table_name = TableName::new("tbl")?;
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
             let non_pk_column_data_types: Vec<NonPKColumnDataType> = t.0.iter().map(|cd| {
                 let cdt = cd.column_data_type();
