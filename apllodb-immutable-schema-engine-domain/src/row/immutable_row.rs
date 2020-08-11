@@ -1,7 +1,7 @@
 pub mod builder;
 
 use super::{
-    column::non_pk_column::column_name::NonPKColumnName,
+    column::{non_pk_column::column_name::NonPKColumnName, pk_column::column_name::PKColumnName},
     pk::{apparent_pk::ApparentPrimaryKey, full_pk::FullPrimaryKey},
 };
 use apllodb_shared_components::{
@@ -26,18 +26,32 @@ impl Row for ImmutableRow {
         self.pk.apparent_pk()
     }
 
-    fn get_core(&self, non_pk_column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
-        let non_pk_column_name = NonPKColumnName::from(non_pk_column_name.clone());
-        let sql_value = self
-            .non_pk_columns
-            .get(&non_pk_column_name)
+    fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+        self.get_from_pk(&PKColumnName::from(column_name.clone()))
+            .or_else(|| self.get_from_non_pk(&NonPKColumnName::from(column_name.clone())))
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedColumn,
-                    format!("undefined column name: `{}`", non_pk_column_name),
+                    format!("undefined column name: `{}`", column_name),
                     None,
                 )
-            })?;
-        Ok(sql_value)
+            })
+    }
+}
+
+impl ImmutableRow {
+    fn get_from_pk(&self, pk_column_name: &PKColumnName) -> Option<&SqlValue> {
+        let apk = self.pk.apparent_pk();
+        apk.zipped().into_iter().find_map(|(cn, sql_value)| {
+            if cn == pk_column_name {
+                Some(sql_value)
+            } else {
+                None
+            }
+        })
+    }
+
+    fn get_from_non_pk(&self, non_pk_column_name: &NonPKColumnName) -> Option<&SqlValue> {
+        self.non_pk_columns.get(&non_pk_column_name)
     }
 }

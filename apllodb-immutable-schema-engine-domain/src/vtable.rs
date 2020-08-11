@@ -4,7 +4,7 @@ pub mod id;
 
 pub(crate) mod repository;
 
-use crate::{entity::Entity, row::column::pk_column::column_name::PKColumnName};
+use crate::entity::Entity;
 use apllodb_shared_components::{
     data_structure::{
         AlterTableAction, ColumnDefinition, DatabaseName, TableConstraints, TableName,
@@ -77,10 +77,6 @@ impl VTable {
     /// Same as `T_create_table_command :: ... :: T_table_name`.
     pub fn table_name(&self) -> &TableName {
         &self.id.table_name
-    }
-
-    pub fn apk_column_names(&self) -> Vec<PKColumnName> {
-        self.table_wide_constraints.apk_column_names()
     }
 
     /// Ref to TableWideConstraints

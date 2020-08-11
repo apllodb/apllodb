@@ -9,11 +9,12 @@ use crate::sqlite::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
+    row::column::non_pk_column::column_name::NonPKColumnName,
     row_iter::ImmutableSchemaRowIter,
     traits::{VTableRepository, VersionRepository},
     transaction::ImmutableSchemaTx,
     version::{active_versions::ActiveVersions, id::VersionId},
-    vtable::{id::VTableId, VTable}, row::column::non_pk_column::column_name::NonPKColumnName,
+    vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::error::ApllodbResult;
 use std::collections::VecDeque;
@@ -74,7 +75,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
 
         let vtable = self.vtable_dao().select(vtable_id)?;
-        let apk_column_names = vtable.apk_column_names();
+        let apk_column_names = vtable.table_wide_constraints().pk_column_names();
 
         let navi_collection = self
             .navi_dao()
@@ -87,11 +88,11 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
                 .select_active_version(&vtable, &version_id)?;
 
             let ver_row_iter = self.version_dao().join_with_navi(
+                &vtable,
                 &version,
                 &navi_collection
                     .map(|navi| navi.map(|n| n.rowid))
                     .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
-                &apk_column_names,
                 non_pk_column_names,
             )?;
             ver_row_iters.push_back(ver_row_iter);

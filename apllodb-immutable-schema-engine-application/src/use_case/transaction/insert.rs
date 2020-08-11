@@ -79,7 +79,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         // Construct ApparentPrimaryKey
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
-        let apk_cdts = vtable.table_wide_constraints().apk_column_data_types();
+        let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
             .map(|cdt| cdt.column_name())

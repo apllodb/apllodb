@@ -58,7 +58,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
             input.column_definitions,
         )?;
 
-        let apk_column_names = vtable.apk_column_names();
+        let apk_column_names = vtable.table_wide_constraints().pk_column_names();
         let column_data_types: Vec<NonPKColumnDataType> =
             filter_non_pk_column_definitions(input.column_definitions, &apk_column_names)
                 .iter()

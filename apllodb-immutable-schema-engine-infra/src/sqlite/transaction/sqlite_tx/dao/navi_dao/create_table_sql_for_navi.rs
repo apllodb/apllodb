@@ -28,7 +28,7 @@ CREATE TABLE {}__{} (
             super::TNAME_SUFFIX,
             vtable
                 .table_wide_constraints()
-                .apk_column_data_types()
+                .pk_column_data_types()
                 .iter()
                 .map(|cdt| cdt.to_sql_string())
                 .collect::<Vec<String>>()

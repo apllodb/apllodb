@@ -20,7 +20,7 @@ pub struct TableWideConstraints {
 }
 impl TableWideConstraints {
     /// Extract ApparentPrimaryKey column data types
-    pub fn apk_column_data_types(&self) -> &[PKColumnDataType] {
+    pub fn pk_column_data_types(&self) -> &[PKColumnDataType] {
         &self
             .kinds
             .iter()
@@ -34,9 +34,9 @@ impl TableWideConstraints {
             .expect("every table must have a primary key")
     }
 
-    /// Extract ApparentPrimaryKeyColumnNames
-    pub fn apk_column_names(&self) -> Vec<PKColumnName> {
-        self.apk_column_data_types()
+    /// Extract ApparentPrimaryKey column names
+    pub fn pk_column_names(&self) -> Vec<PKColumnName> {
+        self.pk_column_data_types()
             .iter()
             .map(|cdt| cdt.column_name().clone())
             .collect()

@@ -10,9 +10,10 @@ use crate::sqlite::{
 use apllodb_immutable_schema_engine_domain::{
     row::column::{
         non_pk_column::{column_data_type::NonPKColumnDataType, column_name::NonPKColumnName},
-        pk_column::column_name::PKColumnName,
+        pk_column::column_data_type::PKColumnDataType,
     },
     version::{active_version::ActiveVersion, id::VersionId},
+    vtable::VTable,
 };
 use apllodb_shared_components::{
     data_structure::{Expression, TableName},
@@ -57,9 +58,9 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
     /// Fetches only existing columns from SQLite, joining ApparentPrimaryKey from navi table.
     pub(in crate::sqlite::transaction::sqlite_tx) fn join_with_navi(
         &self,
+        vtable: &VTable,
         version: &ActiveVersion,
         navi_rowids: &[SqliteRowid],
-        pk_column_names: &[PKColumnName],
         non_pk_column_names: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
@@ -80,6 +81,8 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
             .collect();
 
         let sqlite_table_name = Self::table_name(version.id(), true);
+
+        let pk_column_names = vtable.table_wide_constraints().pk_column_names();
 
         let sql = format!(
             "
@@ -112,7 +115,12 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
 
         let row_iter = stmt.query_named(
             &[(":navi_rowids", &navi_rowids)],
-            &[], // TODO APKのCDTも
+            &vtable
+                .table_wide_constraints()
+                .pk_column_data_types()
+                .iter()
+                .map(|pk_cdt| pk_cdt)
+                .collect::<Vec<&PKColumnDataType>>(),
             &non_pk_column_data_types,
         )?;
         Ok(row_iter)

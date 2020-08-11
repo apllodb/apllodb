@@ -3,7 +3,8 @@ use apllodb_immutable_schema_engine_domain::row::column::non_pk_column::filter_n
 use apllodb_immutable_schema_engine_domain::{
     row_iter::ImmutableSchemaRowIter,
     traits::{VTableRepository, VersionRepository},
-    transaction::ImmutableSchemaTx, vtable::id::VTableId,
+    transaction::ImmutableSchemaTx,
+    vtable::id::VTableId,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
@@ -60,8 +61,10 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
 
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
-        let non_pk_column_names =
-            filter_non_pk_column_names(input.column_names, &vtable.apk_column_names());
+        let non_pk_column_names = filter_non_pk_column_names(
+            input.column_names,
+            &vtable.table_wide_constraints().pk_column_names(),
+        );
 
         let row_iter = vtable_repo.full_scan(&vtable_id, &non_pk_column_names)?;
         Ok(FullScanUseCaseOutput { row_iter })
