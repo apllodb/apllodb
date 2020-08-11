@@ -106,7 +106,7 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
                 .collect::<Vec<String>>()
                 .join(", "),
             version_table = sqlite_table_name.to_sql_string(),
-            navi_table = NaviDao::table_name(version.vtable_id())?.to_sql_string(),
+            navi_table = NaviDao::table_name(version.vtable_id()),
             version_navi_rowid = CNAME_NAVI_ROWID,
             navi_rowid = navi_dao::CNAME_ROWID,
         );

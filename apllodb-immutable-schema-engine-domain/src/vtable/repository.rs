@@ -1,8 +1,9 @@
 use super::{id::VTableId, VTable};
 use crate::{
+    row::column::non_pk_column::column_name::NonPKColumnName,
     row_iter::ImmutableSchemaRowIter,
     transaction::ImmutableSchemaTx,
-    version::{active_versions::ActiveVersions, repository::VersionRepository}, row::column::non_pk_column::column_name::NonPKColumnName,
+    version::{active_versions::ActiveVersions, repository::VersionRepository},
 };
 use apllodb_shared_components::error::ApllodbResult;
 
@@ -45,6 +46,8 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
             <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
         >,
     >;
+
+    fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 
     fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions>;
 }

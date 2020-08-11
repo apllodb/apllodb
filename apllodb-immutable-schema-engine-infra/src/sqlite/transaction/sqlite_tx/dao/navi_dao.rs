@@ -5,19 +5,22 @@ mod navi_collection;
 pub(in crate::sqlite::transaction::sqlite_tx) use navi::{ExistingNavi, Navi};
 pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollection;
 
-use crate::sqlite::{sqlite_rowid::SqliteRowid, transaction::sqlite_tx::SqliteTx};
+use crate::sqlite::{
+    sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
+};
 use apllodb_immutable_schema_engine_domain::{
     row::{
-        column::{pk_column::column_name::PKColumnName, non_pk_column::{
+        column::non_pk_column::{
             column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-        }},
+        },
         pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     },
+    traits::Entity,
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
-    data_structure::{DataType, DataTypeKind, TableName},
+    data_structure::{DataType, DataTypeKind},
     error::ApllodbResult,
 };
 use create_table_sql_for_navi::CreateTableSqlForNavi;
@@ -27,7 +30,7 @@ pub(in crate::sqlite) struct NaviDao<'tx, 'db: 'tx> {
     sqlite_tx: &'tx SqliteTx<'db>,
 }
 
-pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_ROWID: &str = "rowid";
+pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
 const TNAME_SUFFIX: &str = "navi";
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
@@ -35,9 +38,8 @@ const CNAME_VERSION_NUMBER: &str = "version_number";
 impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn table_name(
         vtable_id: &VTableId,
-    ) -> ApllodbResult<TableName> {
-        let s = format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX);
-        Ok(TableName::new(s)?)
+    ) -> String {
+        format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX)
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
@@ -55,11 +57,8 @@ impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
         &self,
-        vtable_id: &VTableId,
-        pk_column_names: &[PKColumnName],
+        vtable: &VTable,
     ) -> ApllodbResult<NaviCollection> {
-        use crate::sqlite::to_sql_string::ToSqlString;
-
         let sql = format!(
             "
 SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
@@ -72,8 +71,11 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
             cname_rowid = CNAME_ROWID,
             cname_revision = CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
-            tname = Self::table_name(vtable_id)?,
-            pk_column_names = pk_column_names.to_sql_string(),
+            tname = Self::table_name(vtable.id()),
+            pk_column_names = vtable
+                .table_wide_constraints()
+                .pk_column_names()
+                .to_sql_string(),
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
@@ -93,7 +95,6 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
         vtable_id: &VTableId,
         apk: &ApparentPrimaryKey,
     ) -> ApllodbResult<Navi> {
-        use crate::sqlite::to_sql_string::ToSqlString;
         use std::convert::TryFrom;
 
         let sql = format!(
@@ -106,7 +107,7 @@ SELECT {cname_rowid}
   LIMIT 1;
 ", // FIXME SQL-i
             cname_rowid = CNAME_ROWID,
-            tname = Self::table_name(vtable_id)?,
+            tname = Self::table_name(vtable_id),
             apk_condition = apk.to_condition_expression()?.to_sql_string(),
             cname_revision = CNAME_REVISION
         );
@@ -136,22 +137,19 @@ SELECT {cname_rowid}
         revision: Revision,
         version_id: &VersionId,
     ) -> ApllodbResult<SqliteRowid> {
-        use crate::sqlite::to_sql_string::ToSqlString;
-
         let vtable_id = version_id.vtable_id();
 
         let sql = format!(
-            "INSERT INTO {}__{} ({}, {}, {}) VALUES ({}, :revision, :version_number);",
-            vtable_id.table_name(),
-            TNAME_SUFFIX,
-            apk.column_names()
+            "INSERT INTO {tname} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, :revision, :version_number);",
+            tname = Self::table_name(vtable_id),
+            pk_column_names = apk.column_names()
                 .iter()
                 .map(|cn| cn.as_str())
                 .collect::<Vec<&str>>()
                 .join(", "),
-            CNAME_REVISION,
-            CNAME_VERSION_NUMBER,
-            apk.sql_values()
+            cname_revision=CNAME_REVISION,
+            cname_version_number = CNAME_VERSION_NUMBER,
+            pk_sql_values = apk.sql_values()
                 .iter()
                 .map(|sql_value| sql_value.to_sql_string())
                 .collect::<Vec<String>>()
@@ -167,6 +165,34 @@ SELECT {cname_rowid}
         )?;
 
         Ok(self.sqlite_tx.last_insert_rowid())
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx) fn insert_deleted_records_all(
+        &self,
+        vtable: &VTable,
+    ) -> ApllodbResult<()> {
+        let sql = format!(
+            "
+INSERT INTO {tname} ({pk_column_names}, {cname_revision})
+  SELECT {pk_column_names}, {cname_revision} + 1 AS {cname_revision}
+    FROM {tname}
+    GROUP BY {pk_column_names}
+    HAVING
+      {cname_revision} = MAX({cname_revision}) AND
+      {cname_version_number} IS NOT NULL
+",
+            cname_revision = CNAME_REVISION,
+            cname_version_number = CNAME_VERSION_NUMBER,
+            tname = Self::table_name(vtable.id()),
+            pk_column_names = vtable
+                .table_wide_constraints()
+                .pk_column_names()
+                .to_sql_string(),
+        );
+
+        let _ = self.sqlite_tx.execute_named(&sql, &[])?;
+
+        Ok(())
     }
 
     fn cdt_rowid(&self) -> NonPKColumnDataType {

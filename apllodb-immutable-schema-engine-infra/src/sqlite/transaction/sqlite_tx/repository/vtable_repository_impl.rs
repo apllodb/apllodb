@@ -66,7 +66,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     fn full_scan(
         &self,
         vtable_id: &VTableId,
-        non_pk_column_names: &[NonPKColumnName],
+        projection: &[NonPKColumnName],
     ) -> ApllodbResult<
         ImmutableSchemaRowIter<
             <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
@@ -75,11 +75,8 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
 
         let vtable = self.vtable_dao().select(vtable_id)?;
-        let apk_column_names = vtable.table_wide_constraints().pk_column_names();
 
-        let navi_collection = self
-            .navi_dao()
-            .full_scan_latest_revision(&vtable_id, &apk_column_names)?;
+        let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable)?;
 
         for (version_number, navi_collection) in navi_collection.group_by_version_number()? {
             let version_id = VersionId::new(&vtable_id, &version_number);
@@ -93,12 +90,17 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
                 &navi_collection
                     .map(|navi| navi.map(|n| n.rowid))
                     .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
-                non_pk_column_names,
+                projection,
             )?;
             ver_row_iters.push_back(ver_row_iter);
         }
 
         Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
+    }
+
+    fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
+        self.navi_dao().insert_deleted_records_all(&vtable)?;
+        Ok(())
     }
 
     fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {

@@ -1,5 +1,6 @@
+use super::NaviDao;
+use apllodb_immutable_schema_engine_domain::{traits::Entity, vtable::VTable};
 use serde::{Deserialize, Serialize};
-use apllodb_immutable_schema_engine_domain::vtable::VTable;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct CreateTableSqlForNavi(String);
@@ -18,23 +19,22 @@ impl From<&VTable> for CreateTableSqlForNavi {
 
         let sql = format!(
             "
-CREATE TABLE {}__{} (
-    {},
-    {} INTEGER NOT NULL,
-    {} INTEGER
+CREATE TABLE {tname} (
+    {pk_coldefs},
+    {cname_revision} INTEGER NOT NULL,
+    {cname_version_number} INTEGER
 )
         ",
-            vtable.table_name(),
-            super::TNAME_SUFFIX,
-            vtable
+            tname = NaviDao::table_name(vtable.id()),
+            pk_coldefs = vtable
                 .table_wide_constraints()
                 .pk_column_data_types()
                 .iter()
                 .map(|cdt| cdt.to_sql_string())
                 .collect::<Vec<String>>()
                 .join(",\n  "),
-            super::CNAME_REVISION,
-            super::CNAME_VERSION_NUMBER
+            cname_revision = super::CNAME_REVISION,
+            cname_version_number = super::CNAME_VERSION_NUMBER
         );
 
         Self(sql)
