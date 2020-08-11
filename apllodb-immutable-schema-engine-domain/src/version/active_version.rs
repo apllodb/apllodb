@@ -176,7 +176,7 @@ mod tests {
             column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
         },
         test_support::setup,
-        vtable_id,
+        vtable::id::VTableId,
     };
     use apllodb_shared_components::data_structure::{
         AlterTableAction, ColumnName, DataType, DataTypeKind,
@@ -192,7 +192,7 @@ mod tests {
             DataType::new(DataTypeKind::Integer, false),
         );
 
-        let v = ActiveVersion::initial(&vtable_id!(), &vec![c1_cdt])?;
+        let v = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
@@ -213,7 +213,7 @@ mod tests {
 
         let column_data_types = vec![c1_cdt.clone(), c2_cdt.clone()];
 
-        let v1 = ActiveVersion::initial(&vtable_id!(), &column_data_types)?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types)?;
 
         let action = AlterTableAction::DropColumn {
             column_name: c1_cdt.column_name().as_column_name().clone(),
@@ -241,7 +241,7 @@ mod tests {
             NonPKColumnName::new("c1")?,
             DataType::new(DataTypeKind::Integer, false),
         );
-        let v1 = ActiveVersion::initial(&vtable_id!(), &vec![c1_cdt])?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;
 
         let action = AlterTableAction::DropColumn {
             column_name: ColumnName::new("c404")?,
