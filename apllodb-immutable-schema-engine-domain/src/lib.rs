@@ -14,4 +14,5 @@ pub mod vtable;
 
 mod entity;
 
+#[cfg(test)]
 pub mod test_support;
