@@ -1,5 +1,6 @@
-use crate::row::column::pk_column::{
-    column_data_type::PKColumnDataType, column_name::PKColumnName,
+use crate::{
+    row::column::pk_column::{column_data_type::PKColumnDataType, column_name::PKColumnName},
+    vtable::VTable,
 };
 use apllodb_shared_components::{
     data_structure::{
@@ -10,7 +11,7 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::PrimaryKey;
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 /// Primary key which other components than Storage Engine observes.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
@@ -47,6 +48,38 @@ impl PrimaryKey for ApparentPrimaryKey {
 }
 
 impl ApparentPrimaryKey {
+    pub fn from_table_and_column_values(
+        vtable: &VTable,
+        column_values: &HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<Self> {
+        let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
+        let apk_column_names = apk_cdts
+            .iter()
+            .map(|cdt| cdt.column_name())
+            .collect::<Vec<PKColumnName>>();
+        let apk_sql_values = apk_cdts
+            .iter()
+            .map(|cdt| {
+                let expr = column_values
+                    .get(cdt.column_name().as_column_name())
+                    .ok_or_else(|| {
+                        ApllodbError::new(
+                            ApllodbErrorKind::NotNullViolation,
+                            format!(
+                                "primary key column `{}` must be specified (table `{}`)",
+                                cdt.column_name(),
+                                vtable.table_name()
+                            ),
+                            None,
+                        )
+                    })?;
+                SqlValue::try_from(expr, cdt.data_type())
+            })
+            .collect::<ApllodbResult<Vec<SqlValue>>>()?;
+
+        Ok(Self::new(apk_column_names, apk_sql_values))
+    }
+
     pub fn column_names(&self) -> &[PKColumnName] {
         &self.pk_column_names
     }

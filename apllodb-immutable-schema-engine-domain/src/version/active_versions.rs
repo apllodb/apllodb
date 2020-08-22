@@ -40,6 +40,7 @@ impl ActiveVersions {
     }
 
     /// Returns the versions to select from.
+    // FIXME これ、 v2 で c2が消されていたときに、c2を求める SELECTに対して v2 を返してない？
     pub fn versions_to_select(&self) -> ApllodbResult<&[ActiveVersion]> {
         Ok(&self.0)
     }

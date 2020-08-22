@@ -143,7 +143,11 @@ pub mod empty_storage_engine {
                 unimplemented!()
             }
 
-            fn update(&self, table_name: &TableName) -> ApllodbResult<()> {
+            fn update(
+                &self,
+                table_name: &TableName,
+                column_values: HashMap<ColumnName, Expression>,
+            ) -> ApllodbResult<()> {
                 unimplemented!()
             }
 
@@ -171,7 +175,7 @@ pub mod empty_storage_engine {
 
 use apllodb_shared_components::{
     data_structure::{
-        ColumnConstraints,  ColumnDefinition, ColumnName, DataType, DataTypeKind,
+        ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
         TableConstraintKind,
     },
     error::ApllodbResult,

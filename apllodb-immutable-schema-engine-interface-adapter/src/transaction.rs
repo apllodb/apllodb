@@ -5,6 +5,7 @@ use apllodb_immutable_schema_engine_application::use_case::{
         delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
         full_scan::{FullScanUseCase, FullScanUseCaseInput},
         insert::{InsertUseCase, InsertUseCaseInput},
+        update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
     },
     UseCase,
 };
@@ -123,9 +124,19 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         Ok(())
     }
 
-    fn update(&'tx self, _table_name: &TableName) -> ApllodbResult<()> {
-        todo!()
+    fn update(
+        &'tx self,
+        table_name: &TableName,
+        column_values: HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()> {
+        let database_name = self.database_name().clone();
+        let input =
+            UpdateAllUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
+        let _ = UpdateAllUseCase::run(input)?;
+
+        Ok(())
     }
+
     fn delete(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
         let input = DeleteAllUseCaseInput::new(&self.tx, &database_name, table_name);

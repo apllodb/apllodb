@@ -1,10 +1,7 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     row::{
-        column::{
-            non_pk_column::column_name::NonPKColumnName, pk_column::column_name::PKColumnName,
-        },
-        pk::apparent_pk::ApparentPrimaryKey,
+        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
     },
     traits::{VTableRepository, VersionRepository},
     transaction::ImmutableSchemaTx,
@@ -12,7 +9,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::id::VTableId,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DatabaseName, Expression, SqlValue, TableName},
+    data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -76,34 +73,13 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let vtable_repo = input.tx.vtable_repo();
         let version_repo = input.tx.version_repo();
 
-        // Construct ApparentPrimaryKey
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
-        let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
-        let apk_column_names = apk_cdts
-            .iter()
-            .map(|cdt| cdt.column_name())
-            .collect::<Vec<PKColumnName>>();
-        let apk_sql_values = apk_cdts
-            .iter()
-            .map(|cdt| {
-                let expr = input.column_values.get(cdt.column_name().as_column_name()).ok_or_else(|| {
-                    ApllodbError::new(
-                        ApllodbErrorKind::NotNullViolation,
-                        format!(
-                            "primary key column `{}` must be specified when INSERTing into table `{}`",
-                            cdt.column_name(),
-                            vtable.table_name()
-                        ),
-                        None,
-                    )
-                })?;
-                SqlValue::try_from(expr, cdt.data_type())
-            })
-            .collect::<ApllodbResult<Vec<SqlValue>>>()?;
-        let apk = ApparentPrimaryKey::new(apk_column_names, apk_sql_values);
 
-        // Filter Non-PK columns
+        // Construct ApparentPrimaryKey
+        let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, input.column_values)?;
+
+        // Filter Non-PK columns from column_values
         let non_pk_column_values: HashMap<NonPKColumnName, Expression> = input
             .column_values
             .clone()
@@ -126,6 +102,7 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
         let version_to_insert = active_versions.version_to_insert(&non_pk_column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
+        // rowで会話するようにしたい。そうすれば、updateでもrowを作ってからversion_repoに同じ用は話しかけられる
         version_repo.insert(&version_id, apk, &non_pk_column_values)?;
 
         Ok(InsertUseCaseOutput)

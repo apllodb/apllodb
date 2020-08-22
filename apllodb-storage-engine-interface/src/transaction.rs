@@ -91,12 +91,12 @@ pub trait Transaction<'tx, 'db: 'tx> {
     ) -> ApllodbResult<()>;
 
     /// UPDATE command.
-    ///
-    /// TODO interface
-    fn update(&'tx self, table_name: &TableName) -> ApllodbResult<()>;
+    fn update(
+        &'tx self,
+        table_name: &TableName,
+        column_values: HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()>;
 
     /// DELETE command.
-    ///
-    /// TODO interface
     fn delete(&'tx self, table_name: &TableName) -> ApllodbResult<()>;
 }
