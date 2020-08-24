@@ -1,0 +1,18 @@
+[package]
+name = "doc"
+version = "0.1.0"
+authors = ["rot1024 <aayhrot@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "2.0.0"
+actix-rt = "1.1.1"
+actix-web-httpauth = "0.4.2"
+env_logger = "0.7.1"
+actix-files = "0.2.2"
+log = "0.4.11"
+lazy_static = "1.4.0"
+envconfig = "0.8.0"
+envconfig_derive = "0.8.0"

@@ -3,5 +3,6 @@
 members = [
     "apllodb-shared-components",
     "apllodb-sql-parser",
+    "doc",
     "main",
 ]

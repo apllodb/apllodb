@@ -1,0 +1,2 @@
+RUST_CARGO_BUILD_FLAGS="--release -p doc"
+RUST_POSTCOMPILE='cargo doc --no-deps; cp -r $CARGO_TARGET_DIR/doc target/release/docs'
