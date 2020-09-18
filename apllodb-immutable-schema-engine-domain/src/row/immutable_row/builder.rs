@@ -110,6 +110,14 @@ impl ImmutableRowBuilder {
         }
     }
 
+    pub fn add_non_pk_void_projection(
+        self,
+        non_pk_column_name: &NonPKColumnName,
+    ) -> ApllodbResult<Self> {
+        let null = SqlValue::null();
+        self.add_non_pk_column(non_pk_column_name, null)
+    }
+
     /// Finalize.
     ///
     /// TODO validate duplicate column name.

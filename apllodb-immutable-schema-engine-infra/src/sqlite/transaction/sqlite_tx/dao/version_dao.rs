@@ -61,23 +61,34 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         vtable: &VTable,
         version: &ActiveVersion,
         navi_rowids: &[SqliteRowid],
-        non_pk_column_names: &[NonPKColumnName],
+        non_pk_projection: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::traits::Entity;
 
-        let projection: Vec<String> = non_pk_column_names
+        let projection: Vec<String> = non_pk_projection
             .iter()
             .map(|cn| cn.as_str().to_string())
             .collect();
 
         let non_pk_column_data_types = version.column_data_types();
         // Filter existing and requested columns.
-        let non_pk_column_data_types: Vec<&NonPKColumnDataType> = non_pk_column_data_types
+        // FIXME これのせいで、v2の c1==NULL が現れないで困っている。
+        // SQLitのレイヤで NULL as c1 とやるか、SQLiteはあくまでもそんなカラムは知らんと返し、ImmutableRowに変換する時にNULLをぶち込むか。
+        let non_pk_existing_projection: Vec<&NonPKColumnDataType> = non_pk_column_data_types
             .iter()
             .filter(|non_pk_cdt| {
                 projection.contains(&non_pk_cdt.column_name().as_str().to_string())
             })
+            .collect();
+        let non_pk_void_projection: Vec<NonPKColumnName> = non_pk_projection
+            .iter()
+            .filter(|prj_cn| {
+                non_pk_column_data_types
+                    .iter()
+                    .any(|non_pk_cdt| non_pk_cdt.column_name() == **prj_cn)
+            })
+            .cloned()
             .collect();
 
         let sqlite_table_name = Self::table_name(version.id(), true);
@@ -92,12 +103,12 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
   WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
             pk_column_names = pk_column_names.to_sql_string(),
-            comma_if_non_pk_column_names = if non_pk_column_data_types.is_empty() {
+            comma_if_non_pk_column_names = if non_pk_existing_projection.is_empty() {
                 ""
             } else {
                 ", "
             },
-            non_pk_column_names = non_pk_column_data_types
+            non_pk_column_names = non_pk_existing_projection
                 .iter()
                 .map(|non_pk_cdt| {
                     let non_pk_cn = non_pk_cdt.column_name();
@@ -121,7 +132,8 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
                 .iter()
                 .map(|pk_cdt| pk_cdt)
                 .collect::<Vec<&PKColumnDataType>>(),
-            &non_pk_column_data_types,
+            &non_pk_existing_projection,
+            &non_pk_void_projection,
         )?;
         Ok(row_iter)
     }

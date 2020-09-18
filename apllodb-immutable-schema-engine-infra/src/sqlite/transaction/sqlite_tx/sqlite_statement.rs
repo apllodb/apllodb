@@ -4,7 +4,7 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::row::column::{
     non_pk_column::column_data_type::NonPKColumnDataType,
-    pk_column::column_data_type::PKColumnDataType,
+    non_pk_column::column_name::NonPKColumnName, pk_column::column_data_type::PKColumnDataType,
 };
 use apllodb_shared_components::error::ApllodbResult;
 
@@ -30,6 +30,7 @@ impl<'tx, 'db: 'tx> SqliteStatement<'tx, 'db> {
         params: &[(&str, &dyn ToSqlString)],
         pk_column_data_types: &[&PKColumnDataType],
         non_pk_column_data_types: &[&NonPKColumnDataType],
+        non_pk_void_projection: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         let params = params
             .into_iter()
@@ -51,6 +52,7 @@ impl<'tx, 'db: 'tx> SqliteStatement<'tx, 'db> {
             &mut rusqlite_rows,
             pk_column_data_types,
             non_pk_column_data_types,
+            non_pk_void_projection,
         )?;
         Ok(iter)
     }

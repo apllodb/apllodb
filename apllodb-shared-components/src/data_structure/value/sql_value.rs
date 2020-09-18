@@ -34,6 +34,15 @@ impl SqlValue {
         })
     }
 
+    pub fn null() -> Self {
+        // TODO Check if it's ok to type as INTEGER?
+        Self::pack(
+            &DataType::new(DataTypeKind::Integer, true),
+            &None::<Option<i32>>,
+        )
+        .expect("creating NULL should always succeed")
+    }
+
     pub fn unpack<T>(&self) -> ApllodbResult<T>
     where
         T: SqlConvertible,

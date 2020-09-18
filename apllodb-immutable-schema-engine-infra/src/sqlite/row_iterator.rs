@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::{
         immutable_row::ImmutableRow,
     },
     traits::VersionRowIter,
-};
+row::column::non_pk_column::column_name::NonPKColumnName};
 use apllodb_shared_components::error::ApllodbResult;
 
 use std::{collections::VecDeque, fmt::Debug};
@@ -38,13 +38,21 @@ impl Iterator for SqliteRowIterator {
     }
 }
 
+// 結局、 VersionRowIter は自分のバージョンが含まない（がprojectionで要求されている) カラムをNULL値として持つべきか、という問題に帰着される。
+// 持たないほうが自然やろ
+// いや、意味論的に、ImmutableRowが「ワイのバージョンにはないけど値を返すべきカラム」を持つべきだな。
 impl VersionRowIter for SqliteRowIterator {}
 
 impl SqliteRowIterator {
+    /// # Arguments
+    ///
+    /// - `non_pk_column_data_types` - Only contains columns `sqlite_rows` have.
+    /// - `non_pk_void_projection` - Columns `sqlite_rows` do not have but another version has.
     pub(in crate::sqlite) fn new(
         sqlite_rows: &mut rusqlite::Rows<'_>,
         pk_column_data_types: &[&PKColumnDataType],
         non_pk_column_data_types: &[&NonPKColumnDataType],
+        non_pk_void_projection: &[NonPKColumnName],
     ) -> ApllodbResult<Self> {
         use crate::sqlite::from_sqlite_row::FromSqliteRow;
 
@@ -57,6 +65,7 @@ impl SqliteRowIterator {
                 sqlite_row,
                 pk_column_data_types,
                 non_pk_column_data_types,
+                non_pk_void_projection,
             )?;
             rows.push_back(row);
         }

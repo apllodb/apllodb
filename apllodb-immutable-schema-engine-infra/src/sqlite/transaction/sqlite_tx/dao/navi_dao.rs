@@ -85,7 +85,7 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
         let cdt_version_number = self.cdt_version_number();
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let row_iter = stmt.query_named(&[], &[], &column_data_types)?;
+        let row_iter = stmt.query_named(&[], &[], &column_data_types, &[])?;
 
         Ok(NaviCollection::new(row_iter))
     }
@@ -117,7 +117,7 @@ SELECT {cname_rowid}
         let cdt_rowid = self.cdt_rowid();
         let column_data_types = vec![&cdt_rowid];
 
-        let mut row_iter = stmt.query_named(&[], &[], &column_data_types)?;
+        let mut row_iter = stmt.query_named(&[], &[], &column_data_types, &[])?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {

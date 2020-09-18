@@ -1,5 +1,6 @@
 use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::row::{
+    column::non_pk_column::column_name::NonPKColumnName,
     column::{
         non_pk_column::column_data_type::NonPKColumnDataType,
         pk_column::column_data_type::PKColumnDataType,
@@ -17,6 +18,7 @@ pub(crate) trait FromSqliteRow {
         sqlite_row: &rusqlite::Row<'_>,
         pk_column_data_types: &[&PKColumnDataType],
         non_pk_column_data_types: &[&NonPKColumnDataType],
+        non_pk_void_projections: &[NonPKColumnName],
     ) -> ApllodbResult<ImmutableRow> {
         let mut builder = ImmutableRowBuilder::default();
 
@@ -28,12 +30,21 @@ pub(crate) trait FromSqliteRow {
             builder = builder.add_pk_column(&pk_column_name, pk_sql_value)?;
         }
 
+        log::error!("sqlite_row id: {:?}", sqlite_row.get::<_, i32>("id"));
+        log::error!("non_pk_column_data_types: {:?}", non_pk_column_data_types);
+
         // add non-PK to builder
         for non_pk_column_data_type in non_pk_column_data_types {
             let non_pk_column_name = non_pk_column_data_type.column_name();
             let non_pk_sql_value =
                 Self::_sql_value(sqlite_row, non_pk_column_data_type.column_data_type())?;
             builder = builder.add_non_pk_column(&non_pk_column_name, non_pk_sql_value)?;
+        }
+
+        // add requested (specified in projection) columns as NULL.
+        // (E.g. v1 has `c1` and v2 does not. This row is for v2 and `c1` is requested.)
+        for non_pk_void_projection in non_pk_void_projections {
+            builder = builder.add_non_pk_void_projection(non_pk_void_projection)?;
         }
 
         let row = builder.build()?;

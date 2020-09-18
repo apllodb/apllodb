@@ -1,7 +1,10 @@
 use crate::sqlite::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::SqliteTx};
-use apllodb_immutable_schema_engine_domain::{row::column::non_pk_column::{column_name::NonPKColumnName, column_data_type::NonPKColumnDataType}, vtable::{
-    constraints::TableWideConstraints, id::VTableId, VTable,
-}};
+use apllodb_immutable_schema_engine_domain::{
+    row::column::non_pk_column::{
+        column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
+    },
+    vtable::{constraints::TableWideConstraints, id::VTableId, VTable},
+};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DataType, DataTypeKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -82,6 +85,7 @@ CREATE TABLE IF NOT EXISTS {} (
             &[(":table_name", vtable_id.table_name())],
             &[],
             &vec![&self.cdt_table_wide_constraints()],
+            &[],
         )?;
         let row = row_iter.next().ok_or_else(|| {
             ApllodbError::new(
