@@ -38,8 +38,15 @@ fn test_success_select_column_available_in_2_versions() -> ApllodbResult<()> {
         column_names: vec![c_id_def.column_name().clone()],
     }])?;
 
+    // v1
+    // | id | c1 |
+    // |----|----|
     tx.create_table(&t_name, &tc, &coldefs)?;
 
+    // v1
+    // | id | c1 |
+    // |----|----|
+    // | 1  | 1  |
     tx.insert(
         &t_name,
         hmap! {
@@ -48,6 +55,14 @@ fn test_success_select_column_available_in_2_versions() -> ApllodbResult<()> {
         },
     )?;
 
+    // v1
+    // | id | c1 |
+    // |----|----|
+    // | 1  | 1  |
+    //
+    // v2
+    // | id |
+    // |----|
     tx.alter_table(
         &t_name,
         &AlterTableAction::DropColumn {
@@ -55,6 +70,15 @@ fn test_success_select_column_available_in_2_versions() -> ApllodbResult<()> {
         },
     )?;
 
+    // v1
+    // | id | c1 |
+    // |----|----|
+    // | 1  | 1  |
+    //
+    // v2
+    // | id |
+    // |----|
+    // | 2  |
     tx.insert(
         &t_name,
         hmap! { c_id_def.column_name().clone() => Expression::ConstantVariant(Constant::from(2)) },
@@ -75,12 +99,13 @@ fn test_success_select_column_available_in_2_versions() -> ApllodbResult<()> {
         match id {
             1 => assert_eq!(row.get::<i32>(c1_def.column_name())?, 1),
             2 => {
-                // Cannot fetch column `c` from v2. Note that v2's `c` is different from NULL,
-                // although it is treated similarly to NULL in GROUP BY, ORDER BY operations.
+                // Cannot fetch column `c1` from v2 as i32.
                 match row.get::<i32>(c1_def.column_name()) {
-                    Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::UndefinedColumn),
+                    Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
                     _ => unreachable!(),
                 };
+                // Can fetch column `c1` from v2 and it's value is NULL.
+                assert_eq!(row.get::<Option<i32>>(c1_def.column_name())?, None);
             }
             _ => unreachable!(),
         }
