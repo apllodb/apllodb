@@ -25,3 +25,4 @@ impl VersionId {
         &self.version_number
     }
 }
+
