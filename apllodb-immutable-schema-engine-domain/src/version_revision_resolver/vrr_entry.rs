@@ -5,14 +5,14 @@ use crate::{
 
 use super::vrr_id::VRRId;
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
-pub struct VRREntry<'a> {
-    id: &'a VRRId,
-    pk: &'a ApparentPrimaryKey,
-    version_id: &'a VersionId,
-    revision: &'a Revision,
+pub struct VRREntry {
+    id: VRRId,
+    pk: ApparentPrimaryKey,
+    version_id: VersionId,
+    revision: Revision,
 }
 
-impl<'a> Entity for VRREntry<'a> {
+impl<'a> Entity for VRREntry {
     type Id = VRRId;
 
     fn id(&self) -> &Self::Id {

@@ -7,6 +7,7 @@ use crate::sqlite::{
         },
         VTableDao,
     },
+    version_revision_resolver::VersionRevisionResolverImpl,
 };
 use apllodb_immutable_schema_engine_domain::{
     row::column::non_pk_column::column_name::NonPKColumnName,
@@ -72,30 +73,37 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
             <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
         >,
 >{
-        let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
+        use apllodb_immutable_schema_engine_domain::version_revision_resolver::VersionRevisionResolver;
 
-        let vtable = self.vtable_dao().select(vtable_id)?;
+        // let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
 
-        let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable)?;
+        // let vtable = self.vtable_dao().select(vtable_id)?;
+        let vrr = VersionRevisionResolverImpl::new();
 
-        for (version_number, navi_collection) in navi_collection.group_by_version_number()? {
-            let version_id = VersionId::new(&vtable_id, &version_number);
-            let version = self
-                .sqlite_master_dao()
-                .select_active_version(&vtable, &version_id)?;
+        let vrr_entries = vrr.scan(&vtable_id)?;
 
-            let ver_row_iter = self.version_dao().join_with_navi(
-                &vtable,
-                &version,
-                &navi_collection
-                    .map(|navi| navi.map(|n| n.rowid))
-                    .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
-                projection,
-            )?;
-            ver_row_iters.push_back(ver_row_iter);
-        }
+        self.vrr_entries_into_immutable_schema_row_iter(vrr_entries)
 
-        Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
+        // let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable)?;
+
+        // for (version_number, navi_collection) in navi_collection.group_by_version_number()? {
+        //     let version_id = VersionId::new(&vtable_id, &version_number);
+        //     let version = self
+        //         .sqlite_master_dao()
+        //         .select_active_version(&vtable, &version_id)?;
+
+        //     let ver_row_iter = self.version_dao().join_with_navi(
+        //         &vtable,
+        //         &version,
+        //         &navi_collection
+        //             .map(|navi| navi.map(|n| n.rowid))
+        //             .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
+        //         projection,
+        //     )?;
+        //     ver_row_iters.push_back(ver_row_iter);
+        // }
+
+        // Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
     }
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
@@ -106,6 +114,19 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
     fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
         let active_versions = self.sqlite_master_dao().select_active_versions(vtable)?;
         Ok(ActiveVersions::from(active_versions))
+    }
+
+    fn vrr_entries_into_immutable_schema_row_iter(
+        &self,
+        vrr_entries: Vec<
+            apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry,
+        >,
+    ) -> ApllodbResult<
+    ImmutableSchemaRowIter<
+        <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
+    >,
+>{
+        todo!()
     }
 }
 

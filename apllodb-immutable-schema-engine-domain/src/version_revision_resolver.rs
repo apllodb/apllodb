@@ -1,8 +1,6 @@
 pub mod vrr_entry;
 pub mod vrr_id;
 
-use std::collections::HashSet;
-
 use apllodb_shared_components::error::ApllodbResult;
 
 use crate::{
@@ -17,17 +15,19 @@ pub trait VersionRevisionResolver<'tx, 'db: 'tx> {
     type Tx: ImmutableSchemaTx<'tx, 'db>;
 
     // probe : PKをキーにして、最新revisionであるものの「VRR-ID, version, revision」(optional) を返す。
+    // pks の指定順序で返却。
     // TODO: 範囲選択に対応するためのI/F
     fn probe(
         &self,
         vtable_id: &VTableId,
-        pks: HashSet<&ApparentPrimaryKey>,
-    ) -> ApllodbResult<HashSet<VRREntry>> {
+        pks: Vec<ApparentPrimaryKey>,
+    ) -> ApllodbResult<Vec<VRREntry>> {
         unimplemented!()
     }
 
     // scan : PKでグルーピングした時に最新のrevisionであるものの「VRR-ID, PK, version, revision」を返す。
-    fn scan(&self, vtable_id: &VTableId) -> ApllodbResult<HashSet<VRREntry>> {
+    // PKの昇順で返却。
+    fn scan(&self, vtable_id: &VTableId) -> ApllodbResult<Vec<VRREntry>> {
         unimplemented!()
     }
 

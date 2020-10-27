@@ -4,6 +4,7 @@ use crate::{
     row_iter::ImmutableSchemaRowIter,
     transaction::ImmutableSchemaTx,
     version::{active_versions::ActiveVersions, repository::VersionRepository},
+    version_revision_resolver::vrr_entry::VRREntry,
 };
 use apllodb_shared_components::error::ApllodbResult;
 
@@ -50,4 +51,11 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 
     fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions>;
+
+    fn vrr_entries_into_immutable_schema_row_iter(
+        &self,
+        vrr_entries: Vec<VRREntry>,
+    ) -> ApllodbResult<ImmutableSchemaRowIter<
+    <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
+    >>;
 }

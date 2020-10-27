@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use apllodb_immutable_schema_engine_domain::{
     row::pk::apparent_pk::ApparentPrimaryKey, version::id::VersionId,
     version_revision_resolver::vrr_entry::VRREntry,
@@ -23,12 +21,12 @@ impl<'tx, 'db: 'tx> VersionRevisionResolver<'tx, 'db> for VersionRevisionResolve
     fn probe(
         &self,
         vtable_id: &VTableId,
-        pks: HashSet<&ApparentPrimaryKey>,
-    ) -> ApllodbResult<HashSet<VRREntry>> {
+        pks: Vec<ApparentPrimaryKey>,
+    ) -> ApllodbResult<Vec<VRREntry>> {
         todo!()
     }
 
-    fn scan(&self, vtable_id: &VTableId) -> ApllodbResult<HashSet<VRREntry>> {
+    fn scan(&self, vtable_id: &VTableId) -> ApllodbResult<Vec<VRREntry>> {
         todo!()
     }
 
@@ -38,5 +36,11 @@ impl<'tx, 'db: 'tx> VersionRevisionResolver<'tx, 'db> for VersionRevisionResolve
 
     fn unregister(&self, version_id: &VersionId, pk: &ApparentPrimaryKey) -> ApllodbResult<()> {
         todo!()
+    }
+}
+
+impl VersionRevisionResolverImpl {
+    pub(crate) fn new() -> Self {
+        Self {}
     }
 }
