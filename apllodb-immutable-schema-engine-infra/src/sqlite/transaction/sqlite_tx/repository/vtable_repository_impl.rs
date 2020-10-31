@@ -75,14 +75,35 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
 >{
         use apllodb_immutable_schema_engine_domain::version_revision_resolver::VersionRevisionResolver;
 
+        let vrr = VersionRevisionResolverImpl::new();
+        let vrr_entries = vrr.scan(&vtable_id)?;
+        self.vrr_entries_into_immutable_schema_row_iter(vrr_entries, projection)
+    }
+
+    fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
+        self.navi_dao().insert_deleted_records_all(&vtable)?;
+        Ok(())
+    }
+
+    fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
+        let active_versions = self.sqlite_master_dao().select_active_versions(vtable)?;
+        Ok(ActiveVersions::from(active_versions))
+    }
+
+    fn vrr_entries_into_immutable_schema_row_iter(
+        &self,
+        vrr_entries: Vec<
+            apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry,
+        >,
+        projection: &[NonPKColumnName],
+    ) -> ApllodbResult<
+    ImmutableSchemaRowIter<
+        <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
+    >,
+>{
         // let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
 
         // let vtable = self.vtable_dao().select(vtable_id)?;
-        let vrr = VersionRevisionResolverImpl::new();
-
-        let vrr_entries = vrr.scan(&vtable_id)?;
-
-        self.vrr_entries_into_immutable_schema_row_iter(vrr_entries)
 
         // let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable)?;
 
@@ -104,28 +125,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         // }
 
         // Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
-    }
 
-    fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.navi_dao().insert_deleted_records_all(&vtable)?;
-        Ok(())
-    }
-
-    fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
-        let active_versions = self.sqlite_master_dao().select_active_versions(vtable)?;
-        Ok(ActiveVersions::from(active_versions))
-    }
-
-    fn vrr_entries_into_immutable_schema_row_iter(
-        &self,
-        vrr_entries: Vec<
-            apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry,
-        >,
-    ) -> ApllodbResult<
-    ImmutableSchemaRowIter<
-        <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
-    >,
->{
         todo!()
     }
 }

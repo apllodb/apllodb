@@ -55,6 +55,7 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
     fn vrr_entries_into_immutable_schema_row_iter(
         &self,
         vrr_entries: Vec<VRREntry>,
+        projection: &[NonPKColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter<
     <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
     >>;
