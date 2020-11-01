@@ -10,7 +10,7 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     row::column::non_pk_column::column_name::NonPKColumnName,
-    row_iter::ImmutableSchemaRowIter,
+    row_iter::ImmutableSchemaRowIterator,
     traits::{VTableRepository, VersionRepository},
     transaction::ImmutableSchemaTx,
     version::{active_versions::ActiveVersions, id::VersionId},
@@ -68,7 +68,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         vtable_id: &VTableId,
         projection: &[NonPKColumnName],
     ) -> ApllodbResult<
-        ImmutableSchemaRowIter<
+        ImmutableSchemaRowIterator<
             <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
         >,
 >{
@@ -95,7 +95,7 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
             ver_row_iters.push_back(ver_row_iter);
         }
 
-        Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
+        Ok(ImmutableSchemaRowIterator::chain(ver_row_iters))
     }
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {

@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_application::use_case::{
     UseCase,
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIter, traits::VersionRepository,
+    row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIterator, traits::VersionRepository,
     transaction::ImmutableSchemaTx,
 };
 use apllodb_shared_components::{
@@ -35,7 +35,7 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
     type TID = Tx::TID;
     type Db = Tx::Db;
     type R = ImmutableRow;
-    type RowIter = ImmutableSchemaRowIter<
+    type RowIter = ImmutableSchemaRowIterator<
         <<Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
     >;
 

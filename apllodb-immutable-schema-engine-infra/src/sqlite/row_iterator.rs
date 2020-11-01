@@ -7,7 +7,7 @@ use apllodb_immutable_schema_engine_domain::{
         },
         immutable_row::ImmutableRow,
     },
-    traits::VersionRowIter,
+    traits::VersionRowIterator,
 row::column::non_pk_column::column_name::NonPKColumnName};
 use apllodb_shared_components::error::ApllodbResult;
 
@@ -41,7 +41,7 @@ impl Iterator for SqliteRowIterator {
 // 結局、 VersionRowIter は自分のバージョンが含まない（がprojectionで要求されている) カラムをNULL値として持つべきか、という問題に帰着される。
 // 持たないほうが自然やろ
 // いや、意味論的に、ImmutableRowが「ワイのバージョンにはないけど値を返すべきカラム」を持つべきだな。
-impl VersionRowIter for SqliteRowIterator {}
+impl VersionRowIterator for SqliteRowIterator {}
 
 impl SqliteRowIterator {
     /// # Arguments

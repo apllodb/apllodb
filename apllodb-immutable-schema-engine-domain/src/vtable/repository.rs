@@ -1,13 +1,13 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    row::column::non_pk_column::column_name::NonPKColumnName, row_iter::ImmutableSchemaRowIter,
+    row::column::non_pk_column::column_name::NonPKColumnName, row_iter::ImmutableSchemaRowIterator,
     transaction::ImmutableSchemaTx, version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::error::ApllodbResult;
 
 pub trait VTableRepository<'tx, 'db: 'tx> {
     type Tx: ImmutableSchemaTx<'tx, 'db>;
-    type RowIter: ImmutableSchemaRowIter;
+    type RowIter: ImmutableSchemaRowIterator;
 
     fn new(tx: &'tx Self::Tx) -> Self;
 

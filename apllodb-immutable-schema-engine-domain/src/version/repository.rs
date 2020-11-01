@@ -3,7 +3,7 @@ use crate::{
     row::{
         column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
     },
-    row_iter::version_row_iter::VersionRowIter,
+    row_iter::version_row_iter::VersionRowIterator,
     transaction::ImmutableSchemaTx,
 };
 use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
@@ -15,7 +15,7 @@ pub trait VersionRepository<'tx, 'db: 'tx> {
     type TID: TransactionId;
 
     /// Row iterator from a single version.
-    type VerRowIter: VersionRowIter;
+    type VerRowIter: VersionRowIterator;
 
     fn new(tx: &'tx Self::Tx) -> Self;
 
