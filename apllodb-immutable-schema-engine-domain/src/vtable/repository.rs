@@ -1,15 +1,12 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    row::column::non_pk_column::column_name::NonPKColumnName, row_iter::ImmutableSchemaRowIterator,
-    transaction::ImmutableSchemaTx, version::active_versions::ActiveVersions,
+    abstract_types::AbstractTypes, row::column::non_pk_column::column_name::NonPKColumnName,
+    version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::error::ApllodbResult;
 
-pub trait VTableRepository<'tx, 'db: 'tx> {
-    type Tx: ImmutableSchemaTx<'tx, 'db>;
-    type RowIter: ImmutableSchemaRowIterator;
-
-    fn new(tx: &'tx Self::Tx) -> Self;
+pub trait VTableRepository<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    fn new(tx: &'tx Types::Tx) -> Self;
 
     /// Create a new table with VTable.
     /// Do nothing for Version.
@@ -40,7 +37,7 @@ pub trait VTableRepository<'tx, 'db: 'tx> {
         &self,
         vtable_id: &VTableId,
         non_pk_column_names: &[NonPKColumnName],
-    ) -> ApllodbResult<Self::RowIter>;
+    ) -> ApllodbResult<Types::ImmutableSchemaRowIter>;
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 

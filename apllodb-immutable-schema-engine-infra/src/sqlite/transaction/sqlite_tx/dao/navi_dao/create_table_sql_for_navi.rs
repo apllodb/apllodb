@@ -1,5 +1,5 @@
 use super::NaviDao;
-use apllodb_immutable_schema_engine_domain::{traits::Entity, vtable::VTable};
+use apllodb_immutable_schema_engine_domain::vtable::VTable;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
@@ -14,6 +14,7 @@ impl CreateTableSqlForNavi {
 impl From<&VTable> for CreateTableSqlForNavi {
     fn from(vtable: &VTable) -> Self {
         use crate::sqlite::to_sql_string::ToSqlString;
+        use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         // TODO Set primary key for performance.
 

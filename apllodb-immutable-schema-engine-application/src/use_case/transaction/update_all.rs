@@ -1,5 +1,5 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::transaction::ImmutableSchemaTx;
+use apllodb_immutable_schema_engine_domain::abstract_types::AbstractTypes;
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -7,8 +7,8 @@ use apllodb_shared_components::{
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct UpdateAllUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    tx: &'tx Tx,
+pub struct UpdateAllUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    tx: &'tx Types::Tx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
@@ -17,15 +17,15 @@ pub struct UpdateAllUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, '
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
-    for UpdateAllUseCaseInput<'a, 'tx, 'db, Tx>
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
+    for UpdateAllUseCaseInput<'a, 'tx, 'db, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UpdateAllUseCaseInput<'a, 'tx, 'db, Tx> {
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UpdateAllUseCaseInput<'a, 'tx, 'db, Types> {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in self.column_values {
             match expr {
@@ -48,20 +48,20 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UpdateAllUseCaseInput<'
 pub struct UpdateAllUseCaseOutput;
 impl UseCaseOutput for UpdateAllUseCaseOutput {}
 
-pub struct UpdateAllUseCase<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Tx>,
+pub struct UpdateAllUseCase<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    _marker: PhantomData<&'a &'tx &'db Types>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
-    for UpdateAllUseCase<'a, 'tx, 'db, Tx>
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCase
+    for UpdateAllUseCase<'a, 'tx, 'db, Types>
 {
-    type In = UpdateAllUseCaseInput<'a, 'tx, 'db, Tx>;
+    type In = UpdateAllUseCaseInput<'a, 'tx, 'db, Types>;
     type Out = UpdateAllUseCaseOutput;
 
     /// # Failures
     ///
     /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+    fn run_core(_input: Self::In) -> ApllodbResult<Self::Out> {
         todo!()
 
         // let vtable_repo = input.tx.vtable_repo();

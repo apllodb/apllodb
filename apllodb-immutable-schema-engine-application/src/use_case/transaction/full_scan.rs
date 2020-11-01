@@ -1,8 +1,10 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::row::column::non_pk_column::filter_non_pk_column_names;
 use apllodb_immutable_schema_engine_domain::{
-    row_iter::ImmutableSchemaRowIterator, traits::VTableRepository, transaction::ImmutableSchemaTx,
-    vtable::id::VTableId,
+    abstract_types::AbstractTypes, row::column::non_pk_column::filter_non_pk_column_names,
+};
+use apllodb_immutable_schema_engine_domain::{
+    transaction::ImmutableSchemaTx,
+    vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
@@ -12,8 +14,8 @@ use apllodb_shared_components::{
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct FullScanUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    tx: &'tx Tx,
+pub struct FullScanUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    tx: &'tx Types::Tx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
@@ -22,8 +24,8 @@ pub struct FullScanUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'd
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
-    for FullScanUseCaseInput<'a, 'tx, 'db, Tx>
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
+    for FullScanUseCaseInput<'a, 'tx, 'db, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -31,25 +33,22 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput<RowIter: ImmutableSchemaRowIterator> {
-    pub row_iter: RowIter,
+pub struct FullScanUseCaseOutput<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    pub row_iter: Types::ImmutableSchemaRowIter,
 }
-impl<RowIter: ImmutableSchemaRowIterator> UseCaseOutput for FullScanUseCaseOutput<RowIter> {}
-
-pub struct FullScanUseCase<
-    'a,
-    'tx,
-    'db: 'tx,
-    Tx: ImmutableSchemaTx<'tx, 'db>,
-    RowIter: ImmutableSchemaRowIterator,
-> {
-    _marker: PhantomData<(&'a &'tx &'db Tx, RowIter)>,
-}
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>, RowIter: ImmutableSchemaRowIterator> UseCase
-    for FullScanUseCase<'a, 'tx, 'db, Tx, RowIter>
+impl<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseOutput
+    for FullScanUseCaseOutput<'tx, 'db, Types>
 {
-    type In = FullScanUseCaseInput<'a, 'tx, 'db, Tx>;
-    type Out = FullScanUseCaseOutput<RowIter>;
+}
+
+pub struct FullScanUseCase<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    _marker: PhantomData<&'a &'tx &'db Types>,
+}
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCase
+    for FullScanUseCase<'a, 'tx, 'db, Types>
+{
+    type In = FullScanUseCaseInput<'a, 'tx, 'db, Types>;
+    type Out = FullScanUseCaseOutput<'tx, 'db, Types>;
 
     /// # Failures
     ///

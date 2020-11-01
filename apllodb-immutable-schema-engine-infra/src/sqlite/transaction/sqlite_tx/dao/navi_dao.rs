@@ -9,13 +9,13 @@ use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
+    entity::Entity,
     row::{
         column::non_pk_column::{
             column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
         },
         pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     },
-    traits::Entity,
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
@@ -122,10 +122,7 @@ SELECT {cname_rowid}
 
         let navi = match opt_row {
             None => Navi::NotExist,
-            Some(r) => {
-                let r = r?;
-                Navi::try_from(r)?
-            }
+            Some(r) => Navi::try_from(r)?,
         };
         Ok(navi)
     }

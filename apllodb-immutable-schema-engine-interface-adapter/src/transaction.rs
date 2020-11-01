@@ -10,8 +10,7 @@ use apllodb_immutable_schema_engine_application::use_case::{
     UseCase,
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIterator, traits::VersionRepository,
-    transaction::ImmutableSchemaTx,
+    abstract_types::AbstractTypes, row::immutable_row::ImmutableRow, transaction::ImmutableSchemaTx,
 };
 use apllodb_shared_components::{
     data_structure::{
@@ -23,23 +22,23 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::Transaction;
 use std::{collections::HashMap, marker::PhantomData};
 
-pub struct TransactionController<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> {
-    tx: Tx,
+#[derive(Hash, Debug, new)]
+pub struct TransactionController<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    tx: Types::Tx,
 
-    _marker: (PhantomData<&'tx &'db ()>, PhantomData<Tx>),
+    #[new(default)]
+    _marker: PhantomData<&'tx &'db ()>,
 }
 
-impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
-    for TransactionController<'tx, 'db, Tx>
+impl<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> Transaction<'tx, 'db>
+    for TransactionController<'tx, 'db, Types>
 {
-    type TID = Tx::TID;
-    type Db = Tx::Db;
+    type TID = Types::TID;
+    type Db = Types::Db;
     type R = ImmutableRow;
-    type RowIter = ImmutableSchemaRowIterator<
-        <<Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
-    >;
+    type RowIter = Types::ImmutableSchemaRowIter;
 
-    fn id(&self) -> &Self::TID {
+    fn id(&self) -> &Types::TID {
         self.tx.id()
     }
 
@@ -47,11 +46,8 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
     where
         Self: Sized,
     {
-        let tx = Tx::begin(db)?;
-        Ok(Self {
-            tx,
-            _marker: (PhantomData, PhantomData),
-        })
+        let tx = Types::Tx::begin(db)?;
+        Ok(Self::new(tx))
     }
 
     fn commit(self) -> ApllodbResult<()> {
@@ -72,7 +68,7 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input = CreateTableUseCaseInput::new(
+        let input: CreateTableUseCaseInput<'_, '_, '_, Types> = CreateTableUseCaseInput::new(
             &self.tx,
             &database_name,
             table_name,
@@ -90,7 +86,8 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input = AlterTableUseCaseInput::new(&self.tx, &database_name, table_name, action);
+        let input: AlterTableUseCaseInput<'_, '_, '_, Types> =
+            AlterTableUseCaseInput::new(&self.tx, &database_name, table_name, action);
         let _ = AlterTableUseCase::run(input)?;
 
         Ok(())
@@ -106,7 +103,8 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         column_names: &[ColumnName],
     ) -> ApllodbResult<Self::RowIter> {
         let database_name = self.database_name().clone();
-        let input = FullScanUseCaseInput::new(&self.tx, &database_name, table_name, &column_names);
+        let input: FullScanUseCaseInput<'_, '_, '_, Types> =
+            FullScanUseCaseInput::new(&self.tx, &database_name, table_name, &column_names);
         let output = FullScanUseCase::run(input)?;
 
         Ok(output.row_iter)
@@ -118,7 +116,8 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input = InsertUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
+        let input: InsertUseCaseInput<'_, '_, '_, Types> =
+            InsertUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
         let _ = InsertUseCase::run(input)?;
 
         Ok(())
@@ -130,7 +129,7 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input =
+        let input: UpdateAllUseCaseInput<'_, '_, '_, Types> =
             UpdateAllUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
         let _ = UpdateAllUseCase::run(input)?;
 
@@ -139,7 +138,8 @@ impl<'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db> + 'db> Transaction<'tx, 'db>
 
     fn delete(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input = DeleteAllUseCaseInput::new(&self.tx, &database_name, table_name);
+        let input: DeleteAllUseCaseInput<'_, '_, '_, Types> =
+            DeleteAllUseCaseInput::new(&self.tx, &database_name, table_name);
         let _ = DeleteAllUseCase::run(input)?;
 
         Ok(())

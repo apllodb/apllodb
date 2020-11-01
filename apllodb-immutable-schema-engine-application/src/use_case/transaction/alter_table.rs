@@ -1,8 +1,9 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    traits::{VTableRepository, VersionRepository},
+    abstract_types::AbstractTypes,
     transaction::ImmutableSchemaTx,
-    vtable::id::VTableId,
+    version::repository::VersionRepository,
+    vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
     data_structure::{AlterTableAction, DatabaseName, TableName},
@@ -11,8 +12,8 @@ use apllodb_shared_components::{
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    tx: &'tx Tx,
+pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    tx: &'tx Types::Tx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
@@ -21,8 +22,8 @@ pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
-    for AlterTableUseCaseInput<'a, 'tx, 'db, Tx>
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
+    for AlterTableUseCaseInput<'a, 'tx, 'db, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -33,13 +34,13 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
 pub struct AlterTableUseCaseOutput;
 impl UseCaseOutput for AlterTableUseCaseOutput {}
 
-pub struct AlterTableUseCase<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Tx>,
+pub struct AlterTableUseCase<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    _marker: PhantomData<&'a &'tx &'db Types>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
-    for AlterTableUseCase<'a, 'tx, 'db, Tx>
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCase
+    for AlterTableUseCase<'a, 'tx, 'db, Types>
 {
-    type In = AlterTableUseCaseInput<'a, 'tx, 'db, Tx>;
+    type In = AlterTableUseCaseInput<'a, 'tx, 'db, Types>;
     type Out = AlterTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {

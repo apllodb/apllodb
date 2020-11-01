@@ -13,3 +13,5 @@ apllodb-immutable-schema-engine-application = { path = "../apllodb-immutable-sch
 apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
 
 apllodb-shared-components = { path = "../apllodb-shared-components" }
+
+derive-new = "0.5"

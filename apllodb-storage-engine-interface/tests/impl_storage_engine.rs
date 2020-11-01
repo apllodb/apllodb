@@ -55,7 +55,7 @@ pub mod empty_storage_engine {
 
         pub struct EmptyRowIterator;
         impl Iterator for EmptyRowIterator {
-            type Item = ApllodbResult<EmptyRow>;
+            type Item = EmptyRow;
 
             fn next(&mut self) -> Option<Self::Item> {
                 unimplemented!()

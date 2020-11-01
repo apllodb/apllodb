@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS {} (
                 ),
                 None,
             )
-        })??;
+        })?;
 
         let table_wide_constraints_str: String =
             row.get(&ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?)?;

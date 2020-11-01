@@ -64,7 +64,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         non_pk_projection: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_immutable_schema_engine_domain::traits::Entity;
+        use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let projection: Vec<String> = non_pk_projection
             .iter()

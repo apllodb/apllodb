@@ -1,19 +1,23 @@
-use crate::sqlite::{
-    sqlite_rowid::SqliteRowid,
-    transaction::{
-        sqlite_tx::{
-            dao::{NaviDao, SqliteMasterDao, VersionDao},
-            SqliteTx,
+use crate::{
+    immutable_schema_row_iter::ImmutableSchemaRowIter,
+    sqlite::{
+        row_iterator::SqliteRowIterator,
+        sqlite_rowid::SqliteRowid,
+        sqlite_types::SqliteTypes,
+        transaction::{
+            sqlite_tx::{
+                dao::{NaviDao, SqliteMasterDao, VersionDao},
+                SqliteTx,
+            },
+            VTableDao,
         },
-        VTableDao,
     },
 };
 use apllodb_immutable_schema_engine_domain::{
     row::column::non_pk_column::column_name::NonPKColumnName,
     row_iter::ImmutableSchemaRowIterator,
-    traits::{VTableRepository, VersionRepository},
-    transaction::ImmutableSchemaTx,
     version::{active_versions::ActiveVersions, id::VersionId},
+    vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::error::ApllodbResult;
@@ -24,10 +28,8 @@ pub struct VTableRepositoryImpl<'tx, 'db: 'tx> {
     tx: &'tx SqliteTx<'db>,
 }
 
-impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db> {
-    type Tx = SqliteTx<'db>;
-
-    fn new(tx: &'tx Self::Tx) -> Self {
+impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db, SqliteTypes> for VTableRepositoryImpl<'tx, 'db> {
+    fn new(tx: &'tx SqliteTx<'db>) -> Self {
         Self { tx }
     }
 
@@ -67,12 +69,8 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db> for VTableRepositoryImpl<'tx, 'db
         &self,
         vtable_id: &VTableId,
         projection: &[NonPKColumnName],
-    ) -> ApllodbResult<
-        ImmutableSchemaRowIterator<
-            <<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter,
-        >,
->{
-        let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
+    ) -> ApllodbResult<ImmutableSchemaRowIter> {
+        let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
         let vtable = self.vtable_dao().select(vtable_id)?;
 

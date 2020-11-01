@@ -46,7 +46,6 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
         let create_table_sqls: Vec<String> = stmt
             .query_named(&vec![], &[], &vec![&self.cdt_create_table_sql()], &[])?
             .map(|row| {
-                let row = row?;
                 let s = row.get::<String>(&ColumnName::new(CNAME_CREATE_TABLE_SQL)?)?;
                 Ok(s)
             })
@@ -66,7 +65,7 @@ impl<'tx, 'db: 'tx> SqliteMasterDao<'tx, 'db> {
         vtable: &VTable,
         version_id: &VersionId,
     ) -> ApllodbResult<ActiveVersion> {
-        use apllodb_immutable_schema_engine_domain::traits::Entity;
+        use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let versions = self.select_active_versions(vtable)?;
         versions

@@ -14,7 +14,7 @@ impl CreateTableSqlForVersion {
 impl From<&ActiveVersion> for CreateTableSqlForVersion {
     fn from(version: &ActiveVersion) -> Self {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_immutable_schema_engine_domain::traits::Entity;
+        use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let version_table_name = VersionDao::table_name(version.id(), true);
 

@@ -31,7 +31,7 @@ pub trait Transaction<'tx, 'db: 'tx> {
     type R: Row;
 
     /// Iterator of `Self::R`s returned from [select()](foobar.html) method.
-    type RowIter: Iterator<Item = ApllodbResult<Self::R>>;
+    type RowIter: Iterator<Item = Self::R>;
 
     /// Transaction ID
     fn id(&self) -> &Self::TID;

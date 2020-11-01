@@ -1,12 +1,12 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
+    abstract_types::AbstractTypes,
     row::{
         column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
     },
-    traits::{VTableRepository, VersionRepository},
     transaction::ImmutableSchemaTx,
-    version::id::VersionId,
-    vtable::id::VTableId,
+    version::{id::VersionId, repository::VersionRepository},
+    vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
@@ -15,8 +15,8 @@ use apllodb_shared_components::{
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct InsertUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    tx: &'tx Tx,
+pub struct InsertUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    tx: &'tx Types::Tx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
@@ -25,15 +25,15 @@ pub struct InsertUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
-    for InsertUseCaseInput<'a, 'tx, 'db, Tx>
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
+    for InsertUseCaseInput<'a, 'tx, 'db, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> InsertUseCaseInput<'a, 'tx, 'db, Tx> {
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> InsertUseCaseInput<'a, 'tx, 'db, Types> {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in self.column_values {
             match expr {
@@ -56,13 +56,13 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> InsertUseCaseInput<'a, 
 pub struct InsertUseCaseOutput;
 impl UseCaseOutput for InsertUseCaseOutput {}
 
-pub struct InsertUseCase<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Tx>,
+pub struct InsertUseCase<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+    _marker: PhantomData<&'a &'tx &'db Types>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
-    for InsertUseCase<'a, 'tx, 'db, Tx>
+impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCase
+    for InsertUseCase<'a, 'tx, 'db, Types>
 {
-    type In = InsertUseCaseInput<'a, 'tx, 'db, Tx>;
+    type In = InsertUseCaseInput<'a, 'tx, 'db, Types>;
     type Out = InsertUseCaseOutput;
 
     /// # Failures

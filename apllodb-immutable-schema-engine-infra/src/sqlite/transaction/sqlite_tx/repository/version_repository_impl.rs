@@ -1,11 +1,8 @@
 use crate::sqlite::{
-    row_iterator::SqliteRowIterator,
-    transaction::{
-        sqlite_tx::{
-            dao::{Navi, NaviDao, VersionDao},
-            SqliteTx,
-        },
-        tx_id::TxId,
+    sqlite_types::SqliteTypes,
+    transaction::sqlite_tx::{
+        dao::{Navi, NaviDao, VersionDao},
+        SqliteTx,
     },
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -13,8 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
         column::non_pk_column::column_name::NonPKColumnName,
         pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     },
-    traits::VersionRepository,
-    version::{active_version::ActiveVersion, id::VersionId},
+    version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
 };
 use apllodb_shared_components::{
     data_structure::Expression,
@@ -27,12 +23,10 @@ pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
     tx: &'tx SqliteTx<'db>,
 }
 
-impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, 'db> {
-    type Tx = SqliteTx<'db>;
-    type TID = TxId;
-    type VerRowIter = SqliteRowIterator;
-
-    fn new(tx: &'tx Self::Tx) -> Self {
+impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db, SqliteTypes>
+    for VersionRepositoryImpl<'tx, 'db>
+{
+    fn new(tx: &'tx SqliteTx<'db>) -> Self {
         Self { tx }
     }
 

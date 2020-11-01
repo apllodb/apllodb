@@ -1,14 +1,18 @@
 mod dao;
-mod repository;
 mod sqlite_statement;
 
+pub(in crate::sqlite) mod repository;
 pub(in crate::sqlite) use dao::VTableDao;
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
+
+use self::repository::{
+    version_repository_impl::VersionRepositoryImpl, vtable_repository_impl::VTableRepositoryImpl,
+};
 
 use super::tx_id::TxId;
 use crate::sqlite::{
     database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
-    to_sql_string::ToSqlString,
+    sqlite_types::SqliteTypes, to_sql_string::ToSqlString,
 };
 use apllodb_immutable_schema_engine_domain::transaction::ImmutableSchemaTx;
 use apllodb_shared_components::{
@@ -16,7 +20,6 @@ use apllodb_shared_components::{
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use log::debug;
-use repository::{VTableRepositoryImpl, VersionRepositoryImpl};
 use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
@@ -45,14 +48,8 @@ impl Ord for SqliteTx<'_> {
     }
 }
 
-impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
-    type Db = SqliteDatabase;
-    type TID = TxId;
-
-    type VTRepo = VTableRepositoryImpl<'tx, 'db>;
-    type VRepo = VersionRepositoryImpl<'tx, 'db>;
-
-    fn id(&self) -> &Self::TID {
+impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db, SqliteTypes> for SqliteTx<'db> {
+    fn id(&self) -> &TxId {
         &self.id
     }
 
@@ -60,7 +57,7 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
     ///
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self> {
+    fn begin(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
         use apllodb_shared_components::traits::Database;
 
         let database_name = { db.name().clone() };
@@ -110,13 +107,13 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db> for SqliteTx<'db> {
         &self.database_name
     }
 
-    fn vtable_repo(&'tx self) -> Self::VTRepo {
-        use apllodb_immutable_schema_engine_domain::traits::VTableRepository;
+    fn vtable_repo(&'tx self) -> VTableRepositoryImpl<'tx, 'db> {
+        use apllodb_immutable_schema_engine_domain::vtable::repository::VTableRepository;
         VTableRepositoryImpl::new(&self)
     }
 
-    fn version_repo(&'tx self) -> Self::VRepo {
-        use apllodb_immutable_schema_engine_domain::traits::VersionRepository;
+    fn version_repo(&'tx self) -> VersionRepositoryImpl<'tx, 'db> {
+        use apllodb_immutable_schema_engine_domain::version::repository::VersionRepository;
         VersionRepositoryImpl::new(&self)
     }
 }
