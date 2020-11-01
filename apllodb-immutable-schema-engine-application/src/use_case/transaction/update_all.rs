@@ -1,13 +1,5 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::{
-    row::{
-        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
-    },
-    traits::VTableRepository,
-    transaction::ImmutableSchemaTx,
-    version::id::VersionId,
-    vtable::id::VTableId,
-};
+use apllodb_immutable_schema_engine_domain::transaction::ImmutableSchemaTx;
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -77,8 +69,6 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
 
         // let vtable_id = VTableId::new(input.database_name, input.table_name);
         // let vtable = vtable_repo.read(&vtable_id)?;
-
-        
 
         // // Fetch all columns of the latest version rows and update requested columns later.
         // // TODO Consider CoW to reduce disk usage (append only updated column to a new version).
