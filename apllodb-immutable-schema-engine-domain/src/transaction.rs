@@ -6,9 +6,7 @@ use crate::abstract_types::AbstractTypes;
 /// Operations a transaction implementation for Immutable Schema must have.
 ///
 /// Meant to be called from implementations of [Transaction](foo.html) (logical transaction interface) internally as physical transaction.
-pub trait ImmutableSchemaTx<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>>:
-    Debug + Sized + 'tx
-{
+pub trait ImmutableSchemaTx<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>>: Debug + Sized {
     fn id(&self) -> &Types::TID;
 
     fn begin(db: &'db mut Types::Db) -> ApllodbResult<Self>
