@@ -1,12 +1,12 @@
 use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
 use std::fmt::Debug;
 
-use crate::abstract_types::AbstractTypes;
+use crate::abstract_types::ImmutableSchemaAbstractTypes;
 
 /// Operations a transaction implementation for Immutable Schema must have.
 ///
 /// Meant to be called from implementations of [Transaction](foo.html) (logical transaction interface) internally as physical transaction.
-pub trait ImmutableSchemaTx<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>>: Debug + Sized {
+pub trait ImmutableSchemaTx<'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>>: Debug + Sized {
     fn id(&self) -> &Types::TID;
 
     fn begin(db: &'db mut Types::Db) -> ApllodbResult<Self>

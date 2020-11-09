@@ -29,9 +29,11 @@
 //! - Implementation of records and record iterators.
 //! - Ways to materialize tables and records.
 
+mod abstract_types;
 mod row;
 mod transaction;
 
+pub use crate::abstract_types::AbstractTypes;
 pub use crate::row::{PrimaryKey, Row};
 pub use crate::transaction::{Transaction, TransactionId};
 
@@ -39,18 +41,15 @@ use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResu
 
 /// An storage engine implementation must implement this.
 pub trait StorageEngine<'tx, 'db: 'tx> {
-    /// Transaction implementation.
-    type Tx: Transaction<'tx, 'db> + 'tx;
-
     /// Specify database to use and return database object.
-    fn use_database(
+    fn use_database<Types: AbstractTypes<'tx, 'db>>(
         database_name: &DatabaseName,
-    ) -> ApllodbResult<<Self::Tx as Transaction<'tx, 'db>>::Db>; // Want to mark result type as `Self::Tx::Db` but not possible for now: https://github.com/rust-lang/rust/issues/38078
+    ) -> ApllodbResult<Types::Db>;
 
     /// Starts transaction and get transaction object.
-    fn begin_transaction(
-        db: &'db mut <Self::Tx as Transaction<'tx, 'db>>::Db,
-    ) -> ApllodbResult<Self::Tx> {
-        Self::Tx::begin(db)
+    fn begin_transaction<Types: AbstractTypes<'tx, 'db>>(
+        db: &'db mut Types::Db,
+    ) -> ApllodbResult<Types::Tx> {
+        Types::Tx::begin(db)
     }
 }

@@ -2,12 +2,12 @@ mod transaction_id;
 
 pub use transaction_id::TransactionId;
 
-use crate::Row;
+use crate::abstract_types::AbstractTypes;
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
     TableName,
 };
-use apllodb_shared_components::{error::ApllodbResult, traits::Database};
+use apllodb_shared_components::error::ApllodbResult;
 use std::collections::HashMap;
 
 /// Transaction interface.
@@ -21,24 +21,12 @@ use std::collections::HashMap;
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
 pub trait Transaction<'tx, 'db: 'tx> {
-    /// Transaction ID.
-    type TID: TransactionId;
-
-    /// Database in which this transaction works.
-    type Db: Database + 'db;
-
-    /// Row.
-    type R: Row;
-
-    /// Iterator of `Self::R`s returned from [select()](foobar.html) method.
-    type RowIter: Iterator<Item = Self::R>;
-
     /// Transaction ID
-    fn id(&self) -> &Self::TID;
+    fn id<Types: AbstractTypes<'tx, 'db>>(&self) -> &Types::TID;
 
     /// Begins a transaction.
     /// A database cannot starts multiple transactions at a time (&mut reference enforces it).
-    fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self>
+    fn begin<Types: AbstractTypes<'tx, 'db>>(db: &'db mut Types::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 
@@ -77,11 +65,11 @@ pub trait Transaction<'tx, 'db: 'tx> {
     ///
     /// Storage engine's SELECT fields are merely ColumnName.
     /// Expression's are not allowed. Calculating expressions is job for query processor.
-    fn select(
+    fn select<Types: AbstractTypes<'tx, 'db>>(
         &'tx self,
         table_name: &TableName,
         column_names: &[ColumnName],
-    ) -> ApllodbResult<Self::RowIter>;
+    ) -> ApllodbResult<Types::RowIter>;
 
     /// INSERT command.
     fn insert(

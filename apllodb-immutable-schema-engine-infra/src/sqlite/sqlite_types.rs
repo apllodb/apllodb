@@ -1,4 +1,4 @@
-use apllodb_immutable_schema_engine_domain::abstract_types::AbstractTypes;
+use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 
 use crate::immutable_schema_row_iter::ImmutableSchemaRowIter;
 
@@ -18,7 +18,7 @@ use super::{
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct SqliteTypes;
 
-impl<'tx, 'db: 'tx> AbstractTypes<'tx, 'db> for SqliteTypes {
+impl<'tx, 'db: 'tx> ImmutableSchemaAbstractTypes<'tx, 'db> for SqliteTypes {
     type VersionRowIter = SqliteRowIterator;
 
     type ImmutableSchemaRowIter = ImmutableSchemaRowIter;

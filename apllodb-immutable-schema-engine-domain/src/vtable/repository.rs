@@ -1,11 +1,11 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    abstract_types::AbstractTypes, row::column::non_pk_column::column_name::NonPKColumnName,
+    abstract_types::ImmutableSchemaAbstractTypes, row::column::non_pk_column::column_name::NonPKColumnName,
     version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::error::ApllodbResult;
 
-pub trait VTableRepository<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+pub trait VTableRepository<'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
     fn new(tx: &'tx Types::Tx) -> Self;
 
     /// Create a new table with VTable.

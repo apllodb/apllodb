@@ -1,6 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::AbstractTypes,
+    abstract_types::ImmutableSchemaAbstractTypes,
     transaction::ImmutableSchemaTx,
     version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
@@ -12,7 +12,7 @@ use apllodb_shared_components::{
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
     tx: &'tx Types::Tx,
 
     database_name: &'a DatabaseName,
@@ -22,7 +22,7 @@ pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, '
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
+impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseInput
     for AlterTableUseCaseInput<'a, 'tx, 'db, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
@@ -34,10 +34,10 @@ impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
 pub struct AlterTableUseCaseOutput;
 impl UseCaseOutput for AlterTableUseCaseOutput {}
 
-pub struct AlterTableUseCase<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+pub struct AlterTableUseCase<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
     _marker: PhantomData<&'a &'tx &'db Types>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCase
+impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCase
     for AlterTableUseCase<'a, 'tx, 'db, Types>
 {
     type In = AlterTableUseCaseInput<'a, 'tx, 'db, Types>;

@@ -1,6 +1,6 @@
 use super::{active_version::ActiveVersion, id::VersionId};
 use crate::{
-    abstract_types::AbstractTypes,
+    abstract_types::ImmutableSchemaAbstractTypes,
     row::{
         column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
     },
@@ -8,7 +8,7 @@ use crate::{
 use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
 use std::collections::HashMap;
 
-pub trait VersionRepository<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+pub trait VersionRepository<'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
     fn new(tx: &'tx Types::Tx) -> Self;
 
     /// Create a version.

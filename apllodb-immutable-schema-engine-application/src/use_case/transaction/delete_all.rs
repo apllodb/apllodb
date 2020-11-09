@@ -1,6 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::AbstractTypes,
+    abstract_types::ImmutableSchemaAbstractTypes,
     transaction::ImmutableSchemaTx,
     vtable::{id::VTableId, repository::VTableRepository},
 };
@@ -12,7 +12,7 @@ use apllodb_shared_components::{
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct DeleteAllUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+pub struct DeleteAllUseCaseInput<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
     tx: &'tx Types::Tx,
 
     database_name: &'a DatabaseName,
@@ -21,7 +21,7 @@ pub struct DeleteAllUseCaseInput<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'd
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
+impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseInput
     for DeleteAllUseCaseInput<'a, 'tx, 'db, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
@@ -33,10 +33,10 @@ impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCaseInput
 pub struct DeleteAllUseCaseOutput;
 impl UseCaseOutput for DeleteAllUseCaseOutput {}
 
-pub struct DeleteAllUseCase<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+pub struct DeleteAllUseCase<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
     _marker: PhantomData<&'a &'tx &'db Types>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> UseCase
+impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCase
     for DeleteAllUseCase<'a, 'tx, 'db, Types>
 {
     type In = DeleteAllUseCaseInput<'a, 'tx, 'db, Types>;

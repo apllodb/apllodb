@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_application::use_case::{
     UseCase,
 };
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::AbstractTypes, row::immutable_row::ImmutableRow, transaction::ImmutableSchemaTx,
+    abstract_types::ImmutableSchemaAbstractTypes, row::immutable_row::ImmutableRow, transaction::ImmutableSchemaTx,
 };
 use apllodb_shared_components::{
     data_structure::{
@@ -23,14 +23,14 @@ use apllodb_storage_engine_interface::Transaction;
 use std::{collections::HashMap, marker::PhantomData};
 
 #[derive(Hash, Debug, new)]
-pub struct TransactionController<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> {
+pub struct TransactionController<'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
     tx: Types::Tx,
 
     #[new(default)]
     _marker: PhantomData<&'tx &'db ()>,
 }
 
-impl<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> Transaction<'tx, 'db>
+impl<'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> Transaction<'tx, 'db>
     for TransactionController<'tx, 'db, Types>
 {
     type TID = Types::TID;
