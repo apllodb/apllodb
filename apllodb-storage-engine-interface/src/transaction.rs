@@ -2,13 +2,14 @@ mod transaction_id;
 
 pub use transaction_id::TransactionId;
 
-use crate::abstract_types::AbstractTypes;
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
     TableName,
 };
 use apllodb_shared_components::error::ApllodbResult;
 use std::collections::HashMap;
+
+use crate::StorageEngine;
 
 /// Transaction interface.
 ///
@@ -20,13 +21,13 @@ use std::collections::HashMap;
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
-pub trait Transaction<'tx, 'db: 'tx> {
+pub trait Transaction<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> {
     /// Transaction ID
-    fn id<Types: AbstractTypes<'tx, 'db>>(&self) -> &Types::TID;
+    fn id(&self) -> &Engine::TID;
 
     /// Begins a transaction.
     /// A database cannot starts multiple transactions at a time (&mut reference enforces it).
-    fn begin<Types: AbstractTypes<'tx, 'db>>(db: &'db mut Types::Db) -> ApllodbResult<Self>
+    fn begin(db: &'db mut Engine::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 
@@ -65,11 +66,11 @@ pub trait Transaction<'tx, 'db: 'tx> {
     ///
     /// Storage engine's SELECT fields are merely ColumnName.
     /// Expression's are not allowed. Calculating expressions is job for query processor.
-    fn select<Types: AbstractTypes<'tx, 'db>>(
+    fn select(
         &'tx self,
         table_name: &TableName,
         column_names: &[ColumnName],
-    ) -> ApllodbResult<Types::RowIter>;
+    ) -> ApllodbResult<Engine::RowIter>;
 
     /// INSERT command.
     fn insert(

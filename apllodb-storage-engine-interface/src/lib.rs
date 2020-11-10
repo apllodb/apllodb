@@ -29,27 +29,40 @@
 //! - Implementation of records and record iterators.
 //! - Ways to materialize tables and records.
 
-mod abstract_types;
 mod row;
 mod transaction;
 
-pub use crate::abstract_types::AbstractTypes;
+use std::fmt::Debug;
+
 pub use crate::row::{PrimaryKey, Row};
 pub use crate::transaction::{Transaction, TransactionId};
 
-use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::DatabaseName, error::ApllodbResult, traits::Database,
+};
 
 /// An storage engine implementation must implement this.
-pub trait StorageEngine<'tx, 'db: 'tx> {
+pub trait StorageEngine<'tx, 'db: 'tx>: Sized + Debug {
+    /// Transaction.
+    type Tx: Transaction<'tx, 'db, Self> + 'tx;
+
+    /// Transaction ID.
+    type TID: TransactionId;
+
+    /// Database.
+    type Db: Database + 'db;
+
+    /// Row.
+    type R: Row;
+
+    /// Iterator of `Self::R`s returned from [select()](foobar.html) method.
+    type RowIter: Iterator<Item = Self::R>;
+
     /// Specify database to use and return database object.
-    fn use_database<Types: AbstractTypes<'tx, 'db>>(
-        database_name: &DatabaseName,
-    ) -> ApllodbResult<Types::Db>;
+    fn use_database(database_name: &DatabaseName) -> ApllodbResult<Self::Db>;
 
     /// Starts transaction and get transaction object.
-    fn begin_transaction<Types: AbstractTypes<'tx, 'db>>(
-        db: &'db mut Types::Db,
-    ) -> ApllodbResult<Types::Tx> {
-        Types::Tx::begin(db)
+    fn begin_transaction(db: &'db mut Self::Db) -> ApllodbResult<Self::Tx> {
+        Self::Tx::begin(db)
     }
 }

@@ -9,11 +9,18 @@ use apllodb_shared_components::{
     data_structure::{AlterTableAction, DatabaseName, TableName},
     error::ApllodbResult,
 };
+use apllodb_storage_engine_interface::StorageEngine;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    tx: &'tx Types::Tx,
+pub struct AlterTableUseCaseInput<
+    'a,
+    'tx,
+    'db: 'tx,
+    Engine: StorageEngine<'tx, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+> {
+    tx: &'tx Engine::Tx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
@@ -22,8 +29,13 @@ pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstr
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseInput
-    for AlterTableUseCaseInput<'a, 'tx, 'db, Types>
+impl<
+        'a,
+        'tx,
+        'db: 'tx,
+        Engine: StorageEngine<'tx, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'tx, 'db>,
+    > UseCaseInput for AlterTableUseCaseInput<'a, 'tx, 'db, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -34,11 +46,22 @@ impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseIn
 pub struct AlterTableUseCaseOutput;
 impl UseCaseOutput for AlterTableUseCaseOutput {}
 
-pub struct AlterTableUseCase<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
+pub struct AlterTableUseCase<
+    'a,
+    'tx,
+    'db: 'tx,
+    Engine: StorageEngine<'tx, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'tx, 'db>,
+> {
     _marker: PhantomData<&'a &'tx &'db Types>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCase
-    for AlterTableUseCase<'a, 'tx, 'db, Types>
+impl<
+        'a,
+        'tx,
+        'db: 'tx,
+        Engine: StorageEngine<'tx, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'tx, 'db>,
+    > UseCase for AlterTableUseCase<'a, 'tx, 'db, Types>
 {
     type In = AlterTableUseCaseInput<'a, 'tx, 'db, Types>;
     type Out = AlterTableUseCaseOutput;

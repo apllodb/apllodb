@@ -1,6 +1,5 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::ImmutableSchemaAbstractTypes,
     row::column::non_pk_column::{
         column_data_type::NonPKColumnDataType, filter_non_pk_column_definitions,
     },
@@ -12,12 +11,13 @@ use apllodb_shared_components::{
     data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},
     error::ApllodbResult,
 };
+use apllodb_storage_engine_interface::StorageEngine;
 
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct CreateTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    tx: &'tx Types::Tx,
+pub struct CreateTableUseCaseInput<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> {
+    tx: &'tx Engine::Tx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
@@ -27,8 +27,8 @@ pub struct CreateTableUseCaseInput<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbst
     #[new(default)]
     _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseInput
-    for CreateTableUseCaseInput<'a, 'tx, 'db, Types>
+impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> UseCaseInput
+    for CreateTableUseCaseInput<'a, 'tx, 'db, Engine>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -39,13 +39,13 @@ impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseIn
 pub struct CreateTableUseCaseOutput;
 impl UseCaseOutput for CreateTableUseCaseOutput {}
 
-pub struct CreateTableUseCase<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Types>,
+pub struct CreateTableUseCase<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> {
+    _marker: PhantomData<&'a &'tx &'db Engine>,
 }
-impl<'a, 'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCase
-    for CreateTableUseCase<'a, 'tx, 'db, Types>
+impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> UseCase
+    for CreateTableUseCase<'a, 'tx, 'db, Engine>
 {
-    type In = CreateTableUseCaseInput<'a, 'tx, 'db, Types>;
+    type In = CreateTableUseCaseInput<'a, 'tx, 'db, Engine>;
     type Out = CreateTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {

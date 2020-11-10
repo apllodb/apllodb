@@ -71,7 +71,7 @@ pub mod empty_storage_engine {
             },
             error::ApllodbResult,
         };
-        use apllodb_storage_engine_interface::{AbstractTypes, Transaction, TransactionId};
+        use apllodb_storage_engine_interface::{StorageEngine, Transaction, TransactionId};
         use std::collections::HashMap;
 
         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -79,12 +79,12 @@ pub mod empty_storage_engine {
         impl TransactionId for EmptyTransactionId {}
 
         pub struct EmptyTx;
-        impl<'tx, 'db: 'tx, Types: AbstractTypes<'tx, 'db>> Transaction<'tx, 'db, Types> for EmptyTx {
-            fn id(&self) -> &Types::TID {
+        impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engine> for EmptyTx {
+            fn id(&self) -> &Engine::TID {
                 unimplemented!()
             }
 
-            fn begin(db: &'db mut Types::Db) -> ApllodbResult<Self> {
+            fn begin(db: &'db mut Engine::Db) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 
@@ -125,7 +125,7 @@ pub mod empty_storage_engine {
                 &self,
                 table_name: &TableName,
                 column_names: &[ColumnName],
-            ) -> ApllodbResult<Types::RowIter> {
+            ) -> ApllodbResult<Engine::RowIter> {
                 unimplemented!()
             }
 
@@ -151,30 +151,22 @@ pub mod empty_storage_engine {
         }
     }
 
-    mod types {
+    mod engine {
         use super::{
             row::EmptyRow, tx::EmptyTransactionId, EmptyDatabase, EmptyRowIterator, EmptyTx,
         };
-        use apllodb_storage_engine_interface::AbstractTypes;
+        use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
+        use apllodb_storage_engine_interface::StorageEngine;
 
         #[derive(Debug)]
-        pub struct EmptyTypes;
-        impl<'tx, 'db: 'tx> AbstractTypes<'tx, 'db> for EmptyTypes {
+        pub struct EmptyStorageEngine;
+        impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for EmptyStorageEngine {
             type Tx = EmptyTx;
             type TID = EmptyTransactionId;
             type Db = EmptyDatabase;
             type R = EmptyRow;
             type RowIter = EmptyRowIterator;
-        }
-    }
 
-    mod engine {
-        use super::{types::EmptyTypes, EmptyDatabase};
-        use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
-        use apllodb_storage_engine_interface::StorageEngine;
-
-        pub struct EmptyStorageEngine;
-        impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db, EmptyTypes> for EmptyStorageEngine {
             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
                 Ok(EmptyDatabase::new())
             }

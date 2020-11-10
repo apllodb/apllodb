@@ -1,12 +1,20 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes, row::column::non_pk_column::column_name::NonPKColumnName,
+    abstract_types::ImmutableSchemaAbstractTypes,
+    row::column::non_pk_column::column_name::NonPKColumnName,
     version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::error::ApllodbResult;
+use apllodb_storage_engine_interface::StorageEngine;
 
-pub trait VTableRepository<'tx, 'db: 'tx, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    fn new(tx: &'tx Types::Tx) -> Self;
+pub trait VTableRepository<
+    'tx,
+    'db: 'tx,
+    Engine: StorageEngine<'tx, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+>
+{
+    fn new(tx: &'tx Engine::Tx) -> Self;
 
     /// Create a new table with VTable.
     /// Do nothing for Version.
