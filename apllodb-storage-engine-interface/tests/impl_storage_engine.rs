@@ -71,20 +71,22 @@ pub mod empty_storage_engine {
             },
             error::ApllodbResult,
         };
-        use apllodb_storage_engine_interface::{StorageEngine, Transaction, TransactionId};
+        use apllodb_storage_engine_interface::{Transaction, TransactionId};
         use std::collections::HashMap;
+
+        use super::{EmptyDatabase, EmptyRowIterator, EmptyStorageEngine};
 
         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
         pub struct EmptyTransactionId;
         impl TransactionId for EmptyTransactionId {}
 
         pub struct EmptyTx;
-        impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engine> for EmptyTx {
-            fn id(&self) -> &Engine::TID {
+        impl Transaction<EmptyStorageEngine> for EmptyTx {
+            fn id(&self) -> &EmptyTransactionId {
                 unimplemented!()
             }
 
-            fn begin(db: &'db mut Engine::Db) -> ApllodbResult<Self> {
+            fn begin<'db>(db: &'db mut EmptyDatabase) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 
@@ -125,7 +127,7 @@ pub mod empty_storage_engine {
                 &self,
                 table_name: &TableName,
                 column_names: &[ColumnName],
-            ) -> ApllodbResult<Engine::RowIter> {
+            ) -> ApllodbResult<EmptyRowIterator> {
                 unimplemented!()
             }
 
@@ -160,7 +162,7 @@ pub mod empty_storage_engine {
 
         #[derive(Debug)]
         pub struct EmptyStorageEngine;
-        impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for EmptyStorageEngine {
+        impl<'tx, 'db: 'tx> StorageEngine for EmptyStorageEngine {
             type Tx = EmptyTx;
             type TID = EmptyTransactionId;
             type Db = EmptyDatabase;
