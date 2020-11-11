@@ -1,6 +1,11 @@
+use std::marker::PhantomData;
+
 use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 
-use crate::immutable_schema_row_iter::ImmutableSchemaRowIter;
+use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
+    immutable_schema_row_iter::ImmutableSchemaRowIter,
+};
 
 use super::{
     database::SqliteDatabase,
@@ -16,20 +21,14 @@ use super::{
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct SqliteTypes;
+pub struct SqliteTypes<'db>(PhantomData<&'db ()>);
 
-impl<'tx, 'db: 'tx> ImmutableSchemaAbstractTypes<'tx, 'db> for SqliteTypes {
+impl<'tx, 'db: 'tx> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngine> for SqliteTypes<'db> {
     type VersionRowIter = SqliteRowIterator;
-
     type ImmutableSchemaRowIter = ImmutableSchemaRowIter;
 
-    type TID = TxId;
-
-    type Tx = SqliteTx<'db>;
-
-    type Db = SqliteDatabase;
+    type ImmutableSchemaTx = SqliteTx<'db>;
 
     type VersionRepo = VersionRepositoryImpl<'tx, 'db>;
-
     type VTableRepo = VTableRepositoryImpl<'tx, 'db>;
 }

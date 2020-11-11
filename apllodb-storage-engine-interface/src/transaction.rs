@@ -3,11 +3,10 @@ mod transaction_id;
 pub use transaction_id::TransactionId;
 
 use apllodb_shared_components::data_structure::{
-    AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
-    TableName,
+    ColumnDefinition, DatabaseName, TableConstraints, TableName,
 };
 use apllodb_shared_components::error::ApllodbResult;
-use std::collections::HashMap;
+use std::fmt::Debug;
 
 use crate::StorageEngine;
 
@@ -21,7 +20,7 @@ use crate::StorageEngine;
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
-pub trait Transaction<Engine: StorageEngine> {
+pub trait Transaction<Engine: StorageEngine>: Debug {
     /// Transaction ID
     fn id(&self) -> &Engine::TID;
 
@@ -52,36 +51,36 @@ pub trait Transaction<Engine: StorageEngine> {
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()>;
 
-    /// ALTER TABLE command.
-    fn alter_table(&self, table_name: &TableName, action: &AlterTableAction) -> ApllodbResult<()>;
+    // /// ALTER TABLE command.
+    // fn alter_table(&self, table_name: &TableName, action: &AlterTableAction) -> ApllodbResult<()>;
 
-    /// DROP TABLE command.
-    fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()>;
+    // /// DROP TABLE command.
+    // fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()>;
 
-    /// SELECT command.
-    ///
-    /// Storage engine's SELECT fields are merely ColumnName.
-    /// Expression's are not allowed. Calculating expressions is job for query processor.
-    fn select(
-        &self,
-        table_name: &TableName,
-        column_names: &[ColumnName],
-    ) -> ApllodbResult<Engine::RowIter>;
+    // /// SELECT command.
+    // ///
+    // /// Storage engine's SELECT fields are merely ColumnName.
+    // /// Expression's are not allowed. Calculating expressions is job for query processor.
+    // fn select(
+    //     &self,
+    //     table_name: &TableName,
+    //     column_names: &[ColumnName],
+    // ) -> ApllodbResult<Engine::RowIter>;
 
-    /// INSERT command.
-    fn insert(
-        &self,
-        table_name: &TableName,
-        column_values: HashMap<ColumnName, Expression>,
-    ) -> ApllodbResult<()>;
+    // /// INSERT command.
+    // fn insert(
+    //     &self,
+    //     table_name: &TableName,
+    //     column_values: HashMap<ColumnName, Expression>,
+    // ) -> ApllodbResult<()>;
 
-    /// UPDATE command.
-    fn update(
-        &self,
-        table_name: &TableName,
-        column_values: HashMap<ColumnName, Expression>,
-    ) -> ApllodbResult<()>;
+    // /// UPDATE command.
+    // fn update(
+    //     &self,
+    //     table_name: &TableName,
+    //     column_values: HashMap<ColumnName, Expression>,
+    // ) -> ApllodbResult<()>;
 
-    /// DELETE command.
-    fn delete(&self, table_name: &TableName) -> ApllodbResult<()>;
+    // /// DELETE command.
+    // fn delete(&self, table_name: &TableName) -> ApllodbResult<()>;
 }

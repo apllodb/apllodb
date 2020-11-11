@@ -1,9 +1,10 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
+    abstract_types::ImmutableSchemaAbstractTypes,
     row::column::non_pk_column::{
         column_data_type::NonPKColumnDataType, filter_non_pk_column_definitions,
     },
-    transaction::ImmutableSchemaTx,
+    transaction::ImmutableSchemaTransaction,
     version::{active_version::ActiveVersion, repository::VersionRepository},
     vtable::{repository::VTableRepository, VTable},
 };
@@ -16,20 +17,13 @@ use apllodb_storage_engine_interface::StorageEngine;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct CreateTableUseCaseInput<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> {
-    tx: &'tx Engine::Tx,
-
+pub struct CreateTableUseCaseInput<'a> {
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     table_constraints: &'a TableConstraints,
     column_definitions: &'a [ColumnDefinition],
-
-    #[new(default)]
-    _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> UseCaseInput
-    for CreateTableUseCaseInput<'a, 'tx, 'db, Engine>
-{
+impl<'a> UseCaseInput for CreateTableUseCaseInput<'a> {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
     }
@@ -39,16 +33,20 @@ impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> UseCaseInput
 pub struct CreateTableUseCaseOutput;
 impl UseCaseOutput for CreateTableUseCaseOutput {}
 
-pub struct CreateTableUseCase<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Engine>,
+pub struct CreateTableUseCase<
+    'a,
+    Engine: StorageEngine,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
+> {
+    _marker: PhantomData<(&'a Engine, Types)>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> UseCase
-    for CreateTableUseCase<'a, 'tx, 'db, Engine>
+impl<'a, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> UseCase<Engine, Types>
+    for CreateTableUseCase<'a, Engine, Types>
 {
-    type In = CreateTableUseCaseInput<'a, 'tx, 'db, Engine>;
+    type In = CreateTableUseCaseInput<'a>;
     type Out = CreateTableUseCaseOutput;
 
-    fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+    fn run_core(tx: &Types::ImmutableSchemaTx, input: Self::In) -> ApllodbResult<Self::Out> {
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let vtable = VTable::create(
@@ -67,8 +65,8 @@ impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> UseCase
 
         let v1 = ActiveVersion::initial(vtable.id(), &column_data_types)?;
 
-        input.tx.vtable_repo().create(&vtable)?;
-        input.tx.version_repo().create(&v1)?;
+        tx.vtable_repo().create(&vtable)?;
+        tx.version_repo().create(&v1)?;
 
         Ok(CreateTableUseCaseOutput)
     }

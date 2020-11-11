@@ -4,28 +4,33 @@ use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
+use apllodb_storage_engine_interface::StorageEngine;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct UpdateAllUseCaseInput<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    tx: &'tx Engine::Tx,
+pub struct UpdateAllUseCaseInput<
+    'a,
+    'tx,
+    Engine: StorageEngine,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
+> {
+    tx: &'tx Types::ImmutableSchemaTx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     column_values: &'a HashMap<ColumnName, Expression>,
-
-    #[new(default)]
-    _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseInput
-    for UpdateAllUseCaseInput<'a, 'tx, 'db, Types>
+impl<'a, 'tx, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> UseCaseInput
+    for UpdateAllUseCaseInput<'a, 'tx, Engine, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UpdateAllUseCaseInput<'a, 'tx, 'db, Types> {
+impl<'a, 'tx, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+    UpdateAllUseCaseInput<'a, 'tx, Engine, Types>
+{
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in self.column_values {
             match expr {
@@ -48,13 +53,18 @@ impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaA
 pub struct UpdateAllUseCaseOutput;
 impl UseCaseOutput for UpdateAllUseCaseOutput {}
 
-pub struct UpdateAllUseCase<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Types>,
+pub struct UpdateAllUseCase<
+    'a,
+    'tx,
+    Engine: StorageEngine,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
+> {
+    _marker: PhantomData<(&'a &'tx Engine, Types)>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCase
-    for UpdateAllUseCase<'a, 'tx, 'db, Types>
+impl<'a, 'tx, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> UseCase
+    for UpdateAllUseCase<'a, 'tx, Engine, Types>
 {
-    type In = UpdateAllUseCaseInput<'a, 'tx, 'db, Types>;
+    type In = UpdateAllUseCaseInput<'a, 'tx, Engine, Types>;
     type Out = UpdateAllUseCaseOutput;
 
     /// # Failures

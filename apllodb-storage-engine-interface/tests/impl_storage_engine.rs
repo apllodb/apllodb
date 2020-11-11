@@ -80,6 +80,7 @@ pub mod empty_storage_engine {
         pub struct EmptyTransactionId;
         impl TransactionId for EmptyTransactionId {}
 
+        #[derive(Debug)]
         pub struct EmptyTx;
         impl Transaction<EmptyStorageEngine> for EmptyTx {
             fn id(&self) -> &EmptyTransactionId {
@@ -111,45 +112,45 @@ pub mod empty_storage_engine {
                 Ok(())
             }
 
-            fn alter_table(
-                &self,
-                table_name: &TableName,
-                action: &AlterTableAction,
-            ) -> ApllodbResult<()> {
-                unimplemented!()
-            }
+            // fn alter_table(
+            //     &self,
+            //     table_name: &TableName,
+            //     action: &AlterTableAction,
+            // ) -> ApllodbResult<()> {
+            //     unimplemented!()
+            // }
 
-            fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()> {
-                unimplemented!()
-            }
+            // fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()> {
+            //     unimplemented!()
+            // }
 
-            fn select(
-                &self,
-                table_name: &TableName,
-                column_names: &[ColumnName],
-            ) -> ApllodbResult<EmptyRowIterator> {
-                unimplemented!()
-            }
+            // fn select(
+            //     &self,
+            //     table_name: &TableName,
+            //     column_names: &[ColumnName],
+            // ) -> ApllodbResult<EmptyRowIterator> {
+            //     unimplemented!()
+            // }
 
-            fn insert(
-                &self,
-                table_name: &TableName,
-                column_values: HashMap<ColumnName, Expression>,
-            ) -> ApllodbResult<()> {
-                unimplemented!()
-            }
+            // fn insert(
+            //     &self,
+            //     table_name: &TableName,
+            //     column_values: HashMap<ColumnName, Expression>,
+            // ) -> ApllodbResult<()> {
+            //     unimplemented!()
+            // }
 
-            fn update(
-                &self,
-                table_name: &TableName,
-                column_values: HashMap<ColumnName, Expression>,
-            ) -> ApllodbResult<()> {
-                unimplemented!()
-            }
+            // fn update(
+            //     &self,
+            //     table_name: &TableName,
+            //     column_values: HashMap<ColumnName, Expression>,
+            // ) -> ApllodbResult<()> {
+            //     unimplemented!()
+            // }
 
-            fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
-                unimplemented!()
-            }
+            // fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
+            //     unimplemented!()
+            // }
         }
     }
 

@@ -9,14 +9,8 @@ use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult
 use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 
-pub trait VersionRepository<
-    'tx,
-    'db: 'tx,
-    Engine: StorageEngine<'tx, 'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
->
-{
-    fn new(tx: &'tx Engine::Tx) -> Self;
+pub trait VersionRepository<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
+    fn new(tx: &Engine::Tx) -> Self;
 
     /// Create a version.
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()>;

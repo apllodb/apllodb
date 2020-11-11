@@ -1,10 +1,9 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::ImmutableSchemaAbstractTypes,
     row::{
         column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
     },
-    transaction::ImmutableSchemaTx,
+    transaction::ImmutableSchemaTransaction,
     version::{id::VersionId, repository::VersionRepository},
     vtable::{id::VTableId, repository::VTableRepository},
 };
@@ -12,28 +11,24 @@ use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
+use apllodb_storage_engine_interface::StorageEngine;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct InsertUseCaseInput<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    tx: &'tx Engine::Tx,
+pub struct InsertUseCaseInput<'a, 'tx, Engine: StorageEngine> {
+    tx: tx: &'tx Engine::Tx,'tx Types::ImmutableSchemaTx,
 
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     column_values: &'a HashMap<ColumnName, Expression>,
-
-    #[new(default)]
-    _marker: PhantomData<&'db ()>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseInput
-    for InsertUseCaseInput<'a, 'tx, 'db, Types>
-{
+impl<'a, 'tx, Engine: StorageEngine> UseCaseInput for InsertUseCaseInput<'a, 'tx, Engine> {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> InsertUseCaseInput<'a, 'tx, 'db, Types> {
+impl<'a, 'tx, Engine: StorageEngine> InsertUseCaseInput<'a, 'tx, Engine> {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in self.column_values {
             match expr {
@@ -56,13 +51,11 @@ impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaA
 pub struct InsertUseCaseOutput;
 impl UseCaseOutput for InsertUseCaseOutput {}
 
-pub struct InsertUseCase<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Types>,
+pub struct InsertUseCase<'a, 'tx, Engine: StorageEngine> {
+    _marker: PhantomData<&'a &'tx Engine>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCase
-    for InsertUseCase<'a, 'tx, 'db, Types>
-{
-    type In = InsertUseCaseInput<'a, 'tx, 'db, Types>;
+impl<'a, 'tx, Engine: StorageEngine> UseCase for InsertUseCase<'a, 'tx, Engine> {
+    type In = InsertUseCaseInput<'a, 'tx, Engine>;
     type Out = InsertUseCaseOutput;
 
     /// # Failures
