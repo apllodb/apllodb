@@ -29,7 +29,7 @@ pub struct InsertUseCaseInput<
     column_values: &'a HashMap<ColumnName, Expression>,
 
     #[new(default)]
-    _marker: PhantomData<&'db &'tx Types>,
+    _marker: PhantomData<(&'tx &'db (), Types)>,
 }
 impl<
         'a,
@@ -81,7 +81,7 @@ pub struct InsertUseCase<
     Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    _marker: PhantomData<(&'a &'tx &'db Types, Engine)>,
+    _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
 }
 impl<
         'a,

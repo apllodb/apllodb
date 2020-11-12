@@ -31,7 +31,7 @@ pub struct CreateTableUseCaseInput<
     column_definitions: &'a [ColumnDefinition],
 
     #[new(default)]
-    _marker: PhantomData<&'db &'tx Types>,
+    _marker: PhantomData<(&'tx &'db (), Types)>,
 }
 impl<
         'a,
@@ -57,7 +57,7 @@ pub struct CreateTableUseCase<
     Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    _marker: PhantomData<(&'a &'tx &'db Engine, Types)>,
+    _marker: PhantomData<(&'a &'tx &'db (), Engine, Types)>,
 }
 impl<
         'a,

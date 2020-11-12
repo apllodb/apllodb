@@ -25,7 +25,7 @@ pub struct DeleteAllUseCaseInput<
     table_name: &'a TableName,
 
     #[new(default)]
-    _marker: PhantomData<&'db &'tx Types>,
+    _marker: PhantomData<(&'tx &'db (), Types)>,
 }
 impl<
         'a,
@@ -51,7 +51,7 @@ pub struct DeleteAllUseCase<
     Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    _marker: PhantomData<(&'a &'tx &'db Types, Engine)>,
+    _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
 }
 impl<
         'a,

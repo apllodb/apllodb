@@ -29,7 +29,7 @@ pub struct FullScanUseCaseInput<
     column_names: &'a [ColumnName],
 
     #[new(default)]
-    _marker: PhantomData<&'db &'tx Types>,
+    _marker: PhantomData<(&'tx &'db (), Types)>,
 }
 impl<
         'a: 'tx,
@@ -69,7 +69,7 @@ pub struct FullScanUseCase<
     Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    _marker: PhantomData<(&'a &'tx &'db Types, Engine)>,
+    _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
 }
 impl<
         'a: 'tx,
