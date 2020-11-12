@@ -21,15 +21,13 @@ use crate::StorageEngine;
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
 /// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
-///
-/// TODO ここまで 'tx パラメータを持ってくれば、 + 'static ではなく + 'tx で十分
-pub trait Transaction<Engine: StorageEngine>: Debug + 'static {
+pub trait Transaction<'db, Engine: StorageEngine<'db>>: Debug {
     /// Transaction ID
     fn id(&self) -> &Engine::TID;
 
     /// Begins a transaction.
     /// A database cannot starts multiple transactions at a time (&mut reference enforces it).
-    fn begin<'db>(db: &'db mut Engine::Db) -> ApllodbResult<Self>
+    fn begin(db: &'db mut Engine::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 

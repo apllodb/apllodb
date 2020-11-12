@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
     row::column::non_pk_column::{
         column_data_type::NonPKColumnDataType, filter_non_pk_column_definitions,
     },
-    transaction::ImmutableSchemaTx,
+    transaction::ImmutableSchemaTransaction,
     version::{active_version::ActiveVersion, repository::VersionRepository},
     vtable::{repository::VTableRepository, VTable},
 };
@@ -21,23 +21,23 @@ pub struct CreateTableUseCaseInput<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    tx: &'a Engine::Tx,
+    tx: &'a Types::ImmutableSchemaTx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     table_constraints: &'a TableConstraints,
     column_definitions: &'a [ColumnDefinition],
 
     #[new(default)]
-    _marker: PhantomData<(&'tx &'db (), Types)>,
+    _marker: PhantomData<&'tx &'db ()>,
 }
 impl<
         'a,
         'tx: 'tx,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCaseInput for CreateTableUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
@@ -54,7 +54,7 @@ pub struct CreateTableUseCase<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
     _marker: PhantomData<(&'a &'tx &'db (), Engine, Types)>,
@@ -63,7 +63,7 @@ impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCase for CreateTableUseCase<'a, 'tx, 'db, Engine, Types>
 {

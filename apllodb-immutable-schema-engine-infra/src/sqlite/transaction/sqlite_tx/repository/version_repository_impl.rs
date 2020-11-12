@@ -1,8 +1,11 @@
-use crate::sqlite::{
-    sqlite_types::SqliteTypes,
-    transaction::sqlite_tx::{
-        dao::{Navi, NaviDao, VersionDao},
-        SqliteTx,
+use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
+    sqlite::{
+        sqlite_types::SqliteTypes,
+        transaction::sqlite_tx::{
+            dao::{Navi, NaviDao, VersionDao},
+            SqliteTx,
+        },
     },
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -23,7 +26,7 @@ pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
     tx: &'tx SqliteTx<'db>,
 }
 
-impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db, SqliteTypes>
+impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
     for VersionRepositoryImpl<'tx, 'db>
 {
     fn new(tx: &'tx SqliteTx<'db>) -> Self {

@@ -52,7 +52,6 @@ version = "0.1.0"
 dependencies = [
  "apllodb-immutable-schema-engine-application",
  "apllodb-immutable-schema-engine-domain",
- "apllodb-immutable-schema-engine-interface-adapter",
  "apllodb-shared-components",
  "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
@@ -67,17 +66,6 @@ dependencies = [
  "serde_yaml",
  "uuid",
  "version-sync",
-]
-
-[[package]]
-name = "apllodb-immutable-schema-engine-interface-adapter"
-version = "0.1.0"
-dependencies = [
- "apllodb-immutable-schema-engine-application",
- "apllodb-immutable-schema-engine-domain",
- "apllodb-shared-components",
- "apllodb-storage-engine-interface",
- "derive-new",
 ]
 
 [[package]]

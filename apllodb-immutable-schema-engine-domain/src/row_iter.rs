@@ -10,7 +10,7 @@ use crate::{abstract_types::ImmutableSchemaAbstractTypes, row::immutable_row::Im
 pub trait ImmutableSchemaRowIterator<
     'tx,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 >: Iterator<Item = ImmutableRow> + Debug
 {

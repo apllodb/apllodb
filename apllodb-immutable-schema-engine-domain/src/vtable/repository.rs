@@ -10,11 +10,11 @@ use apllodb_storage_engine_interface::StorageEngine;
 pub trait VTableRepository<
     'tx,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 >
 {
-    fn new(tx: &'tx Engine::Tx) -> Self;
+    fn new(tx: &'tx Types::ImmutableSchemaTx) -> Self;
 
     /// Create a new table with VTable.
     /// Do nothing for Version.
@@ -45,7 +45,7 @@ pub trait VTableRepository<
         &self,
         vtable_id: &VTableId,
         non_pk_column_names: &[NonPKColumnName],
-    ) -> ApllodbResult<Types::ImmutableSchemaRowIter>;
+    ) -> ApllodbResult<Engine::RowIter>;
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 

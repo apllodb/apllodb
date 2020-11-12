@@ -1,22 +1,21 @@
 [package]
-name = "apllodb-immutable-schema-engine-infra"
-version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
+name = "apllodb-immutable-schema-engine-infra"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-apllodb-immutable-schema-engine-domain = { path = "../apllodb-immutable-schema-engine-domain" }
-apllodb-immutable-schema-engine-application = { path = "../apllodb-immutable-schema-engine-application" }
-apllodb-immutable-schema-engine-interface-adapter = { path = "../apllodb-immutable-schema-engine-interface-adapter" }
+apllodb-immutable-schema-engine-application = {path = "../apllodb-immutable-schema-engine-application"}
+apllodb-immutable-schema-engine-domain = {path = "../apllodb-immutable-schema-engine-domain"}
 
-apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
 
-apllodb-shared-components = { path = "../apllodb-shared-components" }
+apllodb-shared-components = {path = "../apllodb-shared-components"}
 
 # Only SqliteTx uses this to deserialize ActiveVersion from SQLite's sqlite_master table.
-apllodb-sql-parser = { path = "../apllodb-sql-parser" }
+apllodb-sql-parser = {path = "../apllodb-sql-parser"}
 
 chrono = "0.4"
 
@@ -25,13 +24,13 @@ derive-new = "0.5"
 env_logger = "0.7"
 log = "0.4"
 
-rusqlite = { version = "0.23", features = ["bundled"] }
 libsqlite3-sys = "0.18"
+rusqlite = {version = "0.23", features = ["bundled"]}
 
-serde = { version = "1.0", features = ["derive"] }
+serde = {version = "1.0", features = ["derive"]}
 serde_yaml = "0.8"
 
 [dev-dependencies]
-uuid = { version = "0.8", features = ["v4"] }
 rand = "0.7"
+uuid = {version = "0.8", features = ["v4"]}
 version-sync = "0.9"

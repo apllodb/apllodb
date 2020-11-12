@@ -12,22 +12,22 @@ pub struct UpdateAllUseCaseInput<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    tx: &'a Engine::Tx,
+    tx: &'a Types::ImmutableSchemaTx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     column_values: &'a HashMap<ColumnName, Expression>,
 
     #[new(default)]
-    _marker: PhantomData<(&'tx &'db (), Types)>,
+    _marker: PhantomData<&'tx &'db ()>,
 }
 impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCaseInput for UpdateAllUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
@@ -40,7 +40,7 @@ impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UpdateAllUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
@@ -70,7 +70,7 @@ pub struct UpdateAllUseCase<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
     _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
@@ -79,7 +79,7 @@ impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db> + 'a,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCase for UpdateAllUseCase<'a, 'tx, 'db, Engine, Types>
 {

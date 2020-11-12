@@ -42,27 +42,27 @@ use apllodb_shared_components::{
 };
 
 /// An storage engine implementation must implement this.
-pub trait StorageEngine: Sized + Debug {
+pub trait StorageEngine<'db>: Sized + Debug {
     /// Transaction.
-    type Tx: Transaction<Self>;
+    type Tx: Transaction<'db, Self>;
 
     /// Transaction ID.
     type TID: TransactionId;
 
     /// Database.
-    type Db: Database;
+    type Db: Database + 'db;
 
     /// Row.
     type R: Row;
 
     /// Iterator of `Self::R`s returned from [select()](foobar.html) method.
-    type RowIter: Iterator<Item = Self::R>;
+    type RowIter: Iterator<Item = Self::R> + Debug;
 
     /// Specify database to use and return database object.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<Self::Db>;
 
     /// Starts transaction and get transaction object.
-    fn begin_transaction<'db>(db: &'db mut Self::Db) -> ApllodbResult<Self::Tx> {
+    fn begin_transaction(db: &'db mut Self::Db) -> ApllodbResult<Self::Tx> {
         Self::Tx::begin(db)
     }
 }

@@ -1,4 +1,5 @@
 use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         row_iterator::SqliteRowIterator,
@@ -28,7 +29,9 @@ pub struct VTableRepositoryImpl<'tx, 'db: 'tx> {
     tx: &'tx SqliteTx<'db>,
 }
 
-impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db, SqliteTypes> for VTableRepositoryImpl<'tx, 'db> {
+impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
+    for VTableRepositoryImpl<'tx, 'db>
+{
     fn new(tx: &'tx SqliteTx<'db>) -> Self {
         Self { tx }
     }

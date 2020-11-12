@@ -12,11 +12,11 @@ use std::collections::HashMap;
 pub trait VersionRepository<
     'tx,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 >
 {
-    fn new(tx: &'tx Engine::Tx) -> Self;
+    fn new(tx: &'tx Types::ImmutableSchemaTx) -> Self;
 
     /// Create a version.
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()>;

@@ -10,11 +10,14 @@ use self::repository::{
 };
 
 use super::tx_id::TxId;
-use crate::sqlite::{
-    database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
-    sqlite_types::SqliteTypes, to_sql_string::ToSqlString,
+use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
+    sqlite::{
+        database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
+        sqlite_types::SqliteTypes, to_sql_string::ToSqlString,
+    },
 };
-use apllodb_immutable_schema_engine_domain::transaction::ImmutableSchemaTx;
+use apllodb_immutable_schema_engine_domain::transaction::ImmutableSchemaTransaction;
 use apllodb_shared_components::{
     data_structure::DatabaseName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -48,7 +51,9 @@ impl Ord for SqliteTx<'_> {
     }
 }
 
-impl<'tx, 'db: 'tx> ImmutableSchemaTx<'tx, 'db, SqliteTypes> for SqliteTx<'db> {
+impl<'tx, 'db: 'tx> ImmutableSchemaTransaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
+    for SqliteTx<'db>
+{
     fn id(&self) -> &TxId {
         &self.id
     }

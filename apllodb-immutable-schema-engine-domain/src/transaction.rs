@@ -7,10 +7,10 @@ use crate::abstract_types::ImmutableSchemaAbstractTypes;
 /// Operations a transaction implementation for Immutable Schema must have.
 ///
 /// Meant to be called from implementations of [Transaction](foo.html) (logical transaction interface) internally as physical transaction.
-pub trait ImmutableSchemaTx<
+pub trait ImmutableSchemaTransaction<
     'tx,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 >: Debug + Sized + 'tx
 {

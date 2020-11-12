@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
     row::{
         column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
     },
-    transaction::ImmutableSchemaTx,
+    transaction::ImmutableSchemaTransaction,
     version::{id::VersionId, repository::VersionRepository},
     vtable::{id::VTableId, repository::VTableRepository},
 };
@@ -20,22 +20,22 @@ pub struct InsertUseCaseInput<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    tx: &'a Engine::Tx,
+    tx: &'a Types::ImmutableSchemaTx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     column_values: &'a HashMap<ColumnName, Expression>,
 
     #[new(default)]
-    _marker: PhantomData<(&'tx &'db (), Types)>,
+    _marker: PhantomData<&'tx &'db ()>,
 }
 impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCaseInput for InsertUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
@@ -48,7 +48,7 @@ impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > InsertUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
@@ -78,7 +78,7 @@ pub struct InsertUseCase<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
     _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
@@ -87,7 +87,7 @@ impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCase for InsertUseCase<'a, 'tx, 'db, Engine, Types>
 {

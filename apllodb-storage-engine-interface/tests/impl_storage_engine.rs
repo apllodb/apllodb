@@ -53,6 +53,7 @@ pub mod empty_storage_engine {
             }
         }
 
+        #[derive(Debug)]
         pub struct EmptyRowIterator;
         impl Iterator for EmptyRowIterator {
             type Item = EmptyRow;
@@ -82,12 +83,12 @@ pub mod empty_storage_engine {
 
         #[derive(Debug)]
         pub struct EmptyTx;
-        impl Transaction<EmptyStorageEngine> for EmptyTx {
+        impl<'db> Transaction<'db, EmptyStorageEngine> for EmptyTx {
             fn id(&self) -> &EmptyTransactionId {
                 unimplemented!()
             }
 
-            fn begin<'db>(db: &'db mut EmptyDatabase) -> ApllodbResult<Self> {
+            fn begin(db: &'db mut EmptyDatabase) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 
@@ -163,7 +164,7 @@ pub mod empty_storage_engine {
 
         #[derive(Debug)]
         pub struct EmptyStorageEngine;
-        impl<'tx, 'db: 'tx> StorageEngine for EmptyStorageEngine {
+        impl<'tx, 'db: 'tx> StorageEngine<'db> for EmptyStorageEngine {
             type Tx = EmptyTx;
             type TID = EmptyTransactionId;
             type Db = EmptyDatabase;

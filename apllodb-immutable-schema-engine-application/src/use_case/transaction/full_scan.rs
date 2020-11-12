@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
     row::column::non_pk_column::filter_non_pk_column_names,
 };
 use apllodb_immutable_schema_engine_domain::{
-    transaction::ImmutableSchemaTx,
+    transaction::ImmutableSchemaTransaction,
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
@@ -17,25 +17,25 @@ use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
 pub struct FullScanUseCaseInput<
-    'a: 'tx,
-    'tx: 'db,
-    'db,
-    Engine: StorageEngine,
+    'a,
+    'tx: 'a,
+    'db: 'tx,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    tx: &'a Engine::Tx,
+    tx: &'a Types::ImmutableSchemaTx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     column_names: &'a [ColumnName],
 
     #[new(default)]
-    _marker: PhantomData<(&'tx &'db (), Types)>,
+    _marker: PhantomData<&'tx &'db ()>,
 }
 impl<
-        'a: 'tx,
-        'tx: 'db,
-        'db,
-        Engine: StorageEngine,
+        'a,
+        'tx: 'a,
+        'db: 'tx,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCaseInput for FullScanUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
@@ -45,42 +45,30 @@ impl<
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput<
-    'tx,
-    'db: 'tx,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-> {
-    pub row_iter: Types::ImmutableSchemaRowIter,
+pub struct FullScanUseCaseOutput<'db, Engine: StorageEngine<'db>> {
+    pub row_iter: Engine::RowIter,
 }
-impl<
-        'tx,
-        'db: 'tx,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > UseCaseOutput for FullScanUseCaseOutput<'tx, 'db, Engine, Types>
-{
-}
+impl<'db, Engine: StorageEngine<'db>> UseCaseOutput for FullScanUseCaseOutput<'db, Engine> {}
 
 pub struct FullScanUseCase<
-    'a: 'tx,
-    'tx: 'db,
-    'db,
-    Engine: StorageEngine,
+    'a,
+    'tx: 'a,
+    'db: 'tx,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
     _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
 }
 impl<
-        'a: 'tx,
-        'tx: 'db,
-        'db,
-        Engine: StorageEngine,
+        'a,
+        'tx: 'a,
+        'db: 'tx,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCase for FullScanUseCase<'a, 'tx, 'db, Engine, Types>
 {
     type In = FullScanUseCaseInput<'a, 'tx, 'db, Engine, Types>;
-    type Out = FullScanUseCaseOutput<'tx, 'db, Engine, Types>;
+    type Out = FullScanUseCaseOutput<'db, Engine>;
 
     /// # Failures
     ///

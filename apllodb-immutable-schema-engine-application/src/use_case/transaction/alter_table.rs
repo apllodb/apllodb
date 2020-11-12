@@ -1,7 +1,7 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
-    transaction::ImmutableSchemaTx,
+    transaction::ImmutableSchemaTransaction,
     version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
 };
@@ -17,22 +17,22 @@ pub struct AlterTableUseCaseInput<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    tx: &'a Engine::Tx,
+    tx: &'a Types::ImmutableSchemaTx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     action: &'a AlterTableAction,
 
     #[new(default)]
-    _marker: PhantomData<(&'tx &'db (), Types)>,
+    _marker: PhantomData<&'tx &'db ()>,
 }
 impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCaseInput for AlterTableUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
@@ -49,7 +49,7 @@ pub struct AlterTableUseCase<
     'a,
     'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine,
+    Engine: StorageEngine<'db>,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
     _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
@@ -58,7 +58,7 @@ impl<
         'a,
         'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine,
+        Engine: StorageEngine<'db>,
         Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
     > UseCase for AlterTableUseCase<'a, 'tx, 'db, Engine, Types>
 {
