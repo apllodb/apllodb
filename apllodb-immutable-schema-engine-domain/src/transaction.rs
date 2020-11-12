@@ -10,9 +10,9 @@ use crate::abstract_types::ImmutableSchemaAbstractTypes;
 pub trait ImmutableSchemaTx<
     'tx,
     'db: 'tx,
-    Engine: StorageEngine<'tx, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
->: Debug + Sized
+>: Debug + Sized + 'tx
 {
     fn id(&self) -> &Engine::TID;
 

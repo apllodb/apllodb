@@ -8,21 +8,32 @@ use apllodb_shared_components::{
     data_structure::{DatabaseName, TableName},
     error::ApllodbResult,
 };
+use apllodb_storage_engine_interface::StorageEngine;
 
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct DeleteAllUseCaseInput<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    tx: &'tx Engine::Tx,
-
+pub struct DeleteAllUseCaseInput<
+    'a,
+    'tx: 'a,
+    'db: 'tx,
+    Engine: StorageEngine,
+    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+> {
+    tx: &'a Engine::Tx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
 
     #[new(default)]
-    _marker: PhantomData<&'db ()>,
+    _marker: PhantomData<&'db &'tx Types>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCaseInput
-    for DeleteAllUseCaseInput<'a, 'tx, 'db, Types>
+impl<
+        'a,
+        'tx: 'a,
+        'db: 'tx,
+        Engine: StorageEngine,
+        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+    > UseCaseInput for DeleteAllUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -33,13 +44,24 @@ impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaA
 pub struct DeleteAllUseCaseOutput;
 impl UseCaseOutput for DeleteAllUseCaseOutput {}
 
-pub struct DeleteAllUseCase<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Types>,
+pub struct DeleteAllUseCase<
+    'a,
+    'tx: 'a,
+    'db: 'tx,
+    Engine: StorageEngine,
+    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+> {
+    _marker: PhantomData<(&'a &'tx &'db Types, Engine)>,
 }
-impl<'a, 'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>, Types: ImmutableSchemaAbstractTypes<'tx, 'db>> UseCase
-    for DeleteAllUseCase<'a, 'tx, 'db, Types>
+impl<
+        'a,
+        'tx: 'a,
+        'db: 'tx,
+        Engine: StorageEngine,
+        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+    > UseCase for DeleteAllUseCase<'a, 'tx, 'db, Engine, Types>
 {
-    type In = DeleteAllUseCaseInput<'a, 'tx, 'db, Types>;
+    type In = DeleteAllUseCaseInput<'a, 'tx, 'db, Engine, Types>;
     type Out = DeleteAllUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {

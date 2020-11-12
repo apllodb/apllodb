@@ -10,7 +10,7 @@ use apllodb_storage_engine_interface::StorageEngine;
 pub trait VTableRepository<
     'tx,
     'db: 'tx,
-    Engine: StorageEngine<'tx, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 >
 {

@@ -9,7 +9,7 @@ use crate::{
 };
 
 /// Types that must be implemented in an infrastructure layer.
-pub trait ImmutableSchemaAbstractTypes<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>>:
+pub trait ImmutableSchemaAbstractTypes<'tx, 'db: 'tx, Engine: StorageEngine>:
     Debug + Sized
 {
     type VersionRowIter: VersionRowIterator;

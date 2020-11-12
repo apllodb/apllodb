@@ -12,7 +12,7 @@ use std::collections::HashMap;
 pub trait VersionRepository<
     'tx,
     'db: 'tx,
-    Engine: StorageEngine<'tx, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 >
 {

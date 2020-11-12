@@ -21,14 +21,14 @@ use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 use std::{collections::HashMap, marker::PhantomData};
 
 #[derive(Hash, Debug, new)]
-pub struct TransactionController<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> {
+pub struct TransactionController<'tx, 'db: 'tx, Engine: StorageEngine> {
     tx: Engine::Tx,
 
     #[new(default)]
     _marker: PhantomData<&'tx &'db ()>,
 }
 
-impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engine>
+impl<'tx, 'db: 'tx, Engine: StorageEngine> Transaction<'tx, 'db, Engine>
     for TransactionController<'tx, 'db, Engine>
 {
     fn id(&self) -> &Engine::TID {
@@ -55,7 +55,7 @@ impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engin
     }
 
     fn create_table(
-        &'tx self,
+        &self,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
@@ -73,11 +73,7 @@ impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engin
         Ok(())
     }
 
-    fn alter_table(
-        &'tx self,
-        table_name: &TableName,
-        action: &AlterTableAction,
-    ) -> ApllodbResult<()> {
+    fn alter_table(&self, table_name: &TableName, action: &AlterTableAction) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
         let input = AlterTableUseCaseInput::new(&self.tx, &database_name, table_name, action);
         let _ = AlterTableUseCase::run(input)?;
@@ -85,12 +81,12 @@ impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engin
         Ok(())
     }
 
-    fn drop_table(&'tx self, _table_name: &TableName) -> ApllodbResult<()> {
+    fn drop_table(&self, _table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
 
     fn select(
-        &'tx self,
+        &self,
         table_name: &TableName,
         column_names: &[ColumnName],
     ) -> ApllodbResult<Engine::RowIter> {
@@ -102,7 +98,7 @@ impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engin
     }
 
     fn insert(
-        &'tx self,
+        &self,
         table_name: &TableName,
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
@@ -114,7 +110,7 @@ impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engin
     }
 
     fn update(
-        &'tx self,
+        &self,
         table_name: &TableName,
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
@@ -126,7 +122,7 @@ impl<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>> Transaction<'tx, 'db, Engin
         Ok(())
     }
 
-    fn delete(&'tx self, table_name: &TableName) -> ApllodbResult<()> {
+    fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
         let input = DeleteAllUseCaseInput::new(&self.tx, &database_name, table_name);
         let _ = DeleteAllUseCase::run(input)?;

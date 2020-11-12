@@ -15,27 +15,26 @@ use std::{fmt::Debug, marker::PhantomData};
 #[derive(Eq, PartialEq, Hash, Debug, new)]
 pub struct AlterTableUseCaseInput<
     'a,
-    'tx,
+    'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine<'tx, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    tx: &'tx Engine::Tx,
-
+    tx: &'a Engine::Tx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     action: &'a AlterTableAction,
 
     #[new(default)]
-    _marker: PhantomData<&'db ()>,
+    _marker: PhantomData<&'db &'tx Types>,
 }
 impl<
         'a,
-        'tx,
+        'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine<'tx, 'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db>,
-    > UseCaseInput for AlterTableUseCaseInput<'a, 'tx, 'db, Types>
+        Engine: StorageEngine,
+        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+    > UseCaseInput for AlterTableUseCaseInput<'a, 'tx, 'db, Engine, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -48,22 +47,22 @@ impl UseCaseOutput for AlterTableUseCaseOutput {}
 
 pub struct AlterTableUseCase<
     'a,
-    'tx,
+    'tx: 'a,
     'db: 'tx,
-    Engine: StorageEngine<'tx, 'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db>,
+    Engine: StorageEngine,
+    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
 > {
-    _marker: PhantomData<&'a &'tx &'db Types>,
+    _marker: PhantomData<(&'a &'tx &'db Types, Engine)>,
 }
 impl<
         'a,
-        'tx,
+        'tx: 'a,
         'db: 'tx,
-        Engine: StorageEngine<'tx, 'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db>,
-    > UseCase for AlterTableUseCase<'a, 'tx, 'db, Types>
+        Engine: StorageEngine,
+        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
+    > UseCase for AlterTableUseCase<'a, 'tx, 'db, Engine, Types>
 {
-    type In = AlterTableUseCaseInput<'a, 'tx, 'db, Types>;
+    type In = AlterTableUseCaseInput<'a, 'tx, 'db, Engine, Types>;
     type Out = AlterTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {

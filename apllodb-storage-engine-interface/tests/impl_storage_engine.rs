@@ -80,6 +80,7 @@ pub mod empty_storage_engine {
         pub struct EmptyTransactionId;
         impl TransactionId for EmptyTransactionId {}
 
+        #[derive(Debug)]
         pub struct EmptyTx;
         impl Transaction<EmptyStorageEngine> for EmptyTx {
             fn id(&self) -> &EmptyTransactionId {

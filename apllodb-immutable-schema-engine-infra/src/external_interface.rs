@@ -9,7 +9,7 @@ pub use crate::sqlite::database::SqliteDatabase as ApllodbImmutableSchemaDb;
 #[derive(Hash, Debug)]
 pub struct ApllodbImmutableSchemaEngine;
 
-impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for ApllodbImmutableSchemaEngine {
+impl<'tx, 'db: 'tx> StorageEngine for ApllodbImmutableSchemaEngine {
     type Tx = TransactionController<'tx, 'db, SqliteTypes>;
 
     // TODO UndefinedDatabase error.
