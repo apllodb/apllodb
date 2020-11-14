@@ -1,18 +1,14 @@
 use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 
-use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-};
+use crate::external_interface::ApllodbImmutableSchemaEngine;
 
 use super::{
     row_iterator::SqliteRowIterator,
-    transaction::sqlite_tx::SqliteTx,
-    transaction::{
-        sqlite_tx::repository::{
-            version_repository_impl::VersionRepositoryImpl,
-            vtable_repository_impl::VTableRepositoryImpl,
-        },
+    transaction::sqlite_tx::repository::{
+        version_repository_impl::VersionRepositoryImpl,
+        vtable_repository_impl::VTableRepositoryImpl,
     },
+    transaction::sqlite_tx::SqliteTx,
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
@@ -22,8 +18,6 @@ impl<'tx, 'db: 'tx> ImmutableSchemaAbstractTypes<'tx, 'db, ApllodbImmutableSchem
     for SqliteTypes
 {
     type VersionRowIter = SqliteRowIterator;
-
-    type ImmutableSchemaTx = SqliteTx<'db>;
 
     type VersionRepo = VersionRepositoryImpl<'tx, 'db>;
     type VTableRepo = VTableRepositoryImpl<'tx, 'db>;

@@ -17,7 +17,6 @@ use crate::{
         sqlite_types::SqliteTypes, to_sql_string::ToSqlString,
     },
 };
-use apllodb_immutable_schema_engine_domain::transaction::ImmutableSchemaTransaction;
 use apllodb_shared_components::{
     data_structure::DatabaseName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -51,7 +50,7 @@ impl Ord for SqliteTx<'_> {
     }
 }
 
-impl<'tx, 'db: 'tx> ImmutableSchemaTransaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
+impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
     for SqliteTx<'db>
 {
     fn id(&self) -> &TxId {
@@ -191,16 +190,6 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTransaction<'tx, 'db, ApllodbImmutableSchemaE
         let _ = DeleteAllUseCase::run(input)?;
 
         Ok(())
-    }
-
-    fn vtable_repo(&'tx self) -> VTableRepositoryImpl<'tx, 'db> {
-        use apllodb_immutable_schema_engine_domain::vtable::repository::VTableRepository;
-        VTableRepositoryImpl::new(&self)
-    }
-
-    fn version_repo(&'tx self) -> VersionRepositoryImpl<'tx, 'db> {
-        use apllodb_immutable_schema_engine_domain::version::repository::VersionRepository;
-        VersionRepositoryImpl::new(&self)
     }
 }
 

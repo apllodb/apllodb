@@ -9,7 +9,6 @@ pub mod abstract_types;
 pub mod entity;
 pub mod row;
 pub mod row_iter;
-pub mod transaction;
 pub mod version;
 pub mod vtable;
 

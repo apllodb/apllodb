@@ -1,10 +1,8 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::ImmutableSchemaAbstractTypes,
     row::{
         column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
     },
-    transaction::ImmutableSchemaTransaction,
     version::{id::VersionId, repository::VersionRepository},
     vtable::{id::VTableId, repository::VTableRepository},
 };
@@ -16,14 +14,8 @@ use apllodb_storage_engine_interface::StorageEngine;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct InsertUseCaseInput<
-    'a,
-    'tx: 'a,
-    'db: 'tx,
-    Engine: StorageEngine<'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-> {
-    tx: &'a Types::ImmutableSchemaTx,
+pub struct InsertUseCaseInput<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> {
+    tx: &'a Engine::Tx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     column_values: &'a HashMap<ColumnName, Expression>,
@@ -31,27 +23,15 @@ pub struct InsertUseCaseInput<
     #[new(default)]
     _marker: PhantomData<&'tx &'db ()>,
 }
-impl<
-        'a,
-        'tx: 'a,
-        'db: 'tx,
-        Engine: StorageEngine<'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > UseCaseInput for InsertUseCaseInput<'a, 'tx, 'db, Engine, Types>
+impl<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> UseCaseInput
+    for InsertUseCaseInput<'a, 'tx, 'db, Engine>
 {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<
-        'a,
-        'tx: 'a,
-        'db: 'tx,
-        Engine: StorageEngine<'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > InsertUseCaseInput<'a, 'tx, 'db, Engine, Types>
-{
+impl<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> InsertUseCaseInput<'a, 'tx, 'db, Engine> {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in self.column_values {
             match expr {
@@ -74,24 +54,13 @@ impl<
 pub struct InsertUseCaseOutput;
 impl UseCaseOutput for InsertUseCaseOutput {}
 
-pub struct InsertUseCase<
-    'a,
-    'tx: 'a,
-    'db: 'tx,
-    Engine: StorageEngine<'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-> {
-    _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
+pub struct InsertUseCase<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> {
+    _marker: PhantomData<(&'a &'tx &'db (), Engine)>,
 }
-impl<
-        'a,
-        'tx: 'a,
-        'db: 'tx,
-        Engine: StorageEngine<'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > UseCase for InsertUseCase<'a, 'tx, 'db, Engine, Types>
+impl<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> UseCase
+    for InsertUseCase<'a, 'tx, 'db, Engine>
 {
-    type In = InsertUseCaseInput<'a, 'tx, 'db, Engine, Types>;
+    type In = InsertUseCaseInput<'a, 'tx, 'db, Engine>;
     type Out = InsertUseCaseOutput;
 
     /// # Failures

@@ -1,10 +1,8 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::ImmutableSchemaAbstractTypes,
     row::column::non_pk_column::{
         column_data_type::NonPKColumnDataType, filter_non_pk_column_definitions,
     },
-    transaction::ImmutableSchemaTransaction,
     version::{active_version::ActiveVersion, repository::VersionRepository},
     vtable::{repository::VTableRepository, VTable},
 };
@@ -17,14 +15,8 @@ use apllodb_storage_engine_interface::StorageEngine;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct CreateTableUseCaseInput<
-    'a,
-    'tx: 'a,
-    'db: 'tx,
-    Engine: StorageEngine<'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-> {
-    tx: &'a Types::ImmutableSchemaTx,
+pub struct CreateTableUseCaseInput<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> {
+    tx: &'a Engine::Tx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     table_constraints: &'a TableConstraints,
@@ -33,13 +25,8 @@ pub struct CreateTableUseCaseInput<
     #[new(default)]
     _marker: PhantomData<&'tx &'db ()>,
 }
-impl<
-        'a,
-        'tx: 'tx,
-        'db: 'tx,
-        Engine: StorageEngine<'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > UseCaseInput for CreateTableUseCaseInput<'a, 'tx, 'db, Engine, Types>
+impl<'a, 'tx: 'tx, 'db: 'tx, Engine: StorageEngine<'db>> UseCaseInput
+    for CreateTableUseCaseInput<'a, 'tx, 'db, Engine>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -50,24 +37,13 @@ impl<
 pub struct CreateTableUseCaseOutput;
 impl UseCaseOutput for CreateTableUseCaseOutput {}
 
-pub struct CreateTableUseCase<
-    'a,
-    'tx: 'a,
-    'db: 'tx,
-    Engine: StorageEngine<'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-> {
-    _marker: PhantomData<(&'a &'tx &'db (), Engine, Types)>,
+pub struct CreateTableUseCase<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> {
+    _marker: PhantomData<(&'a &'tx &'db (), Engine)>,
 }
-impl<
-        'a,
-        'tx: 'a,
-        'db: 'tx,
-        Engine: StorageEngine<'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > UseCase for CreateTableUseCase<'a, 'tx, 'db, Engine, Types>
+impl<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> UseCase
+    for CreateTableUseCase<'a, 'tx, 'db, Engine>
 {
-    type In = CreateTableUseCaseInput<'a, 'tx, 'db, Engine, Types>;
+    type In = CreateTableUseCaseInput<'a, 'tx, 'db, Engine>;
     type Out = CreateTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {

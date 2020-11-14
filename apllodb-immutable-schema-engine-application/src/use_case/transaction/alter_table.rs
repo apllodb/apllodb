@@ -1,7 +1,5 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::ImmutableSchemaAbstractTypes,
-    transaction::ImmutableSchemaTransaction,
     version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
 };
@@ -13,14 +11,8 @@ use apllodb_storage_engine_interface::StorageEngine;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct AlterTableUseCaseInput<
-    'a,
-    'tx: 'a,
-    'db: 'tx,
-    Engine: StorageEngine<'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-> {
-    tx: &'a Types::ImmutableSchemaTx,
+pub struct AlterTableUseCaseInput<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> {
+    tx: &'a Engine::Tx,
     database_name: &'a DatabaseName,
     table_name: &'a TableName,
     action: &'a AlterTableAction,
@@ -28,13 +20,8 @@ pub struct AlterTableUseCaseInput<
     #[new(default)]
     _marker: PhantomData<&'tx &'db ()>,
 }
-impl<
-        'a,
-        'tx: 'a,
-        'db: 'tx,
-        Engine: StorageEngine<'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > UseCaseInput for AlterTableUseCaseInput<'a, 'tx, 'db, Engine, Types>
+impl<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> UseCaseInput
+    for AlterTableUseCaseInput<'a, 'tx, 'db, Engine>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -45,24 +32,13 @@ impl<
 pub struct AlterTableUseCaseOutput;
 impl UseCaseOutput for AlterTableUseCaseOutput {}
 
-pub struct AlterTableUseCase<
-    'a,
-    'tx: 'a,
-    'db: 'tx,
-    Engine: StorageEngine<'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-> {
-    _marker: PhantomData<(&'a &'tx &'db (), Types, Engine)>,
+pub struct AlterTableUseCase<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> {
+    _marker: PhantomData<(&'a &'tx &'db (), Engine)>,
 }
-impl<
-        'a,
-        'tx: 'a,
-        'db: 'tx,
-        Engine: StorageEngine<'db>,
-        Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
-    > UseCase for AlterTableUseCase<'a, 'tx, 'db, Engine, Types>
+impl<'a, 'tx: 'a, 'db: 'tx, Engine: StorageEngine<'db>> UseCase
+    for AlterTableUseCase<'a, 'tx, 'db, Engine>
 {
-    type In = AlterTableUseCaseInput<'a, 'tx, 'db, Engine, Types>;
+    type In = AlterTableUseCaseInput<'a, 'tx, 'db, Engine>;
     type Out = AlterTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {

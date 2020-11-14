@@ -1,22 +1,13 @@
 use super::{active_version::ActiveVersion, id::VersionId};
-use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes,
-    row::{
-        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
-    },
+use crate::row::{
+    column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
 };
 use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
 use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 
-pub trait VersionRepository<
-    'tx,
-    'db: 'tx,
-    Engine: StorageEngine<'db>,
-    Types: ImmutableSchemaAbstractTypes<'tx, 'db, Engine>,
->
-{
-    fn new(tx: &'tx Types::ImmutableSchemaTx) -> Self;
+pub trait VersionRepository<'tx, 'db: 'tx, Engine: StorageEngine<'db>> {
+    fn new(tx: &'tx Engine::Tx) -> Self;
 
     /// Create a version.
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()>;
