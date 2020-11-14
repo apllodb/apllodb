@@ -4,7 +4,6 @@ use crate::{
     sqlite::{
         row_iterator::SqliteRowIterator,
         sqlite_rowid::SqliteRowid,
-        sqlite_types::SqliteTypes,
         transaction::{
             sqlite_tx::{
                 dao::{NaviDao, SqliteMasterDao, VersionDao},
@@ -25,14 +24,14 @@ use apllodb_shared_components::error::ApllodbResult;
 use std::collections::VecDeque;
 
 #[derive(Debug)]
-pub struct VTableRepositoryImpl<'tx, 'db: 'tx> {
-    tx: &'tx SqliteTx<'db>,
+pub struct VTableRepositoryImpl<'repo, 'db: 'repo> {
+    tx: &'repo SqliteTx<'db>,
 }
 
-impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
-    for VTableRepositoryImpl<'tx, 'db>
+impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngine>
+    for VTableRepositoryImpl<'repo, 'db>
 {
-    fn new(tx: &'tx SqliteTx<'db>) -> Self {
+    fn new(tx: &'repo SqliteTx<'db>) -> Self {
         Self { tx }
     }
 
@@ -110,20 +109,20 @@ impl<'tx, 'db: 'tx> VTableRepository<'tx, 'db, ApllodbImmutableSchemaEngine, Sql
     }
 }
 
-impl<'tx, 'db: 'tx> VTableRepositoryImpl<'tx, 'db> {
-    fn vtable_dao(&self) -> VTableDao<'tx, 'db> {
+impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
+    fn vtable_dao(&self) -> VTableDao<'repo, 'db> {
         VTableDao::new(&self.tx)
     }
 
-    fn version_dao(&self) -> VersionDao<'tx, 'db> {
+    fn version_dao(&self) -> VersionDao<'repo, 'db> {
         VersionDao::new(&self.tx)
     }
 
-    fn navi_dao(&self) -> NaviDao<'tx, 'db> {
+    fn navi_dao(&self) -> NaviDao<'repo, 'db> {
         NaviDao::new(&self.tx)
     }
 
-    fn sqlite_master_dao(&self) -> SqliteMasterDao<'tx, 'db> {
+    fn sqlite_master_dao(&self) -> SqliteMasterDao<'repo, 'db> {
         SqliteMasterDao::new(&self.tx)
     }
 }

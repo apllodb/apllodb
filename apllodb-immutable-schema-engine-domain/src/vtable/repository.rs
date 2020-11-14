@@ -6,8 +6,8 @@ use crate::{
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
-pub trait VTableRepository<'tx, 'db: 'tx, Engine: StorageEngine<'db>> {
-    fn new(tx: &'tx Engine::Tx) -> Self;
+pub trait VTableRepository<'repo, 'db: 'repo, Engine: StorageEngine<'repo, 'db>> {
+    fn new(tx: &'repo Engine::Tx) -> Self;
 
     /// Create a new table with VTable.
     /// Do nothing for Version.

@@ -20,7 +20,7 @@ use crate::StorageEngine;
 ///
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
-pub trait Transaction<'db, Engine: StorageEngine<'db>>: Debug {
+pub trait Transaction<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>>: Debug + 'tx {
     /// Transaction ID
     fn id(&self) -> &Engine::TID;
 

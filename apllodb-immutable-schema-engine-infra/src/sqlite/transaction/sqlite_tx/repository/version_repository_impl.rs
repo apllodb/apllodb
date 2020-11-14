@@ -1,7 +1,6 @@
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
     sqlite::{
-        sqlite_types::SqliteTypes,
         transaction::sqlite_tx::{
             dao::{Navi, NaviDao, VersionDao},
             SqliteTx,
@@ -22,14 +21,14 @@ use apllodb_shared_components::{
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
-    tx: &'tx SqliteTx<'db>,
+pub struct VersionRepositoryImpl<'repo, 'db: 'repo> {
+    tx: &'repo SqliteTx<'db>,
 }
 
-impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
-    for VersionRepositoryImpl<'tx, 'db>
+impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngine>
+    for VersionRepositoryImpl<'repo, 'db>
 {
-    fn new(tx: &'tx SqliteTx<'db>) -> Self {
+    fn new(tx: &'repo SqliteTx<'db>) -> Self {
         Self { tx }
     }
 
@@ -77,12 +76,12 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db, ApllodbImmutableSchemaEngine, Sq
     }
 }
 
-impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
-    fn version_dao(&self) -> VersionDao<'tx, 'db> {
+impl<'repo, 'db: 'repo> VersionRepositoryImpl<'repo, 'db> {
+    fn version_dao(&self) -> VersionDao<'repo, 'db> {
         VersionDao::new(&self.tx)
     }
 
-    fn navi_dao(&self) -> NaviDao<'tx, 'db> {
+    fn navi_dao(&self) -> NaviDao<'repo, 'db> {
         NaviDao::new(&self.tx)
     }
 }

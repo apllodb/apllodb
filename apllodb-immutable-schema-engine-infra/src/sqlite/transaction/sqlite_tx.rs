@@ -2,27 +2,39 @@ mod dao;
 mod sqlite_statement;
 
 pub(in crate::sqlite) mod repository;
+use apllodb_immutable_schema_engine_application::use_case::transaction::{
+    alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
+    create_table::{CreateTableUseCase, CreateTableUseCaseInput},
+    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
+    full_scan::FullScanUseCase,
+    full_scan::FullScanUseCaseInput,
+    insert::{InsertUseCase, InsertUseCaseInput},
+    update_all::UpdateAllUseCase,
+    update_all::UpdateAllUseCaseInput,
+};
+use apllodb_immutable_schema_engine_application::use_case::UseCase;
+use apllodb_storage_engine_interface::Transaction;
 pub(in crate::sqlite) use dao::VTableDao;
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
-
-use self::repository::{
-    version_repository_impl::VersionRepositoryImpl, vtable_repository_impl::VTableRepositoryImpl,
-};
 
 use super::tx_id::TxId;
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
+    immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
         sqlite_types::SqliteTypes, to_sql_string::ToSqlString,
     },
 };
 use apllodb_shared_components::{
-    data_structure::DatabaseName,
+    data_structure::{
+        AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
+        TableName,
+    },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use log::debug;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashMap};
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
@@ -50,9 +62,7 @@ impl Ord for SqliteTx<'_> {
     }
 }
 
-impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
-    for SqliteTx<'db>
-{
+impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for SqliteTx<'db> {
     fn id(&self) -> &TxId {
         &self.id
     }
@@ -118,9 +128,9 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTy
         column_definitions: &[ColumnDefinition],
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input: CreateTableUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
+        let input: CreateTableUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
             CreateTableUseCaseInput::new(
-                &self.tx,
+                self,
                 &database_name,
                 table_name,
                 table_constraints,
@@ -133,8 +143,8 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTy
 
     fn alter_table(&self, table_name: &TableName, action: &AlterTableAction) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input: AlterTableUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            AlterTableUseCaseInput::new(&self.tx, &database_name, table_name, action);
+        let input: AlterTableUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            AlterTableUseCaseInput::new(self, &database_name, table_name, action);
         let _ = AlterTableUseCase::run(input)?;
 
         Ok(())
@@ -150,8 +160,8 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTy
         column_names: &[ColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let database_name = self.database_name().clone();
-        let input: FullScanUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            FullScanUseCaseInput::new(&self.tx, &database_name, table_name, &column_names);
+        let input: FullScanUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            FullScanUseCaseInput::new(self, &database_name, table_name, &column_names);
         let output = FullScanUseCase::run(input)?;
 
         Ok(output.row_iter)
@@ -163,8 +173,8 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTy
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input: InsertUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            InsertUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
+        let input: InsertUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            InsertUseCaseInput::new(self, &database_name, table_name, &column_values);
         let _ = InsertUseCase::run(input)?;
 
         Ok(())
@@ -176,8 +186,8 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTy
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input: UpdateAllUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            UpdateAllUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
+        let input: UpdateAllUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            UpdateAllUseCaseInput::new(self, &database_name, table_name, &column_values);
         let _ = UpdateAllUseCase::run(input)?;
 
         Ok(())
@@ -185,8 +195,8 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine, SqliteTy
 
     fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input: DeleteAllUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            DeleteAllUseCaseInput::new(&self.tx, &database_name, table_name);
+        let input: DeleteAllUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            DeleteAllUseCaseInput::new(self, &database_name, table_name);
         let _ = DeleteAllUseCase::run(input)?;
 
         Ok(())

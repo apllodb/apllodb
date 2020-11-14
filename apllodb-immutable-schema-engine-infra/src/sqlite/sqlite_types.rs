@@ -8,7 +8,6 @@ use super::{
         version_repository_impl::VersionRepositoryImpl,
         vtable_repository_impl::VTableRepositoryImpl,
     },
-    transaction::sqlite_tx::SqliteTx,
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]

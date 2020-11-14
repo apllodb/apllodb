@@ -83,7 +83,7 @@ pub mod empty_storage_engine {
 
         #[derive(Debug)]
         pub struct EmptyTx;
-        impl<'db> Transaction<'db, EmptyStorageEngine> for EmptyTx {
+        impl<'tx, 'db: 'tx> Transaction<'tx, 'db, EmptyStorageEngine> for EmptyTx {
             fn id(&self) -> &EmptyTransactionId {
                 unimplemented!()
             }
@@ -164,7 +164,7 @@ pub mod empty_storage_engine {
 
         #[derive(Debug)]
         pub struct EmptyStorageEngine;
-        impl<'tx, 'db: 'tx> StorageEngine<'db> for EmptyStorageEngine {
+        impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for EmptyStorageEngine {
             type Tx = EmptyTx;
             type TID = EmptyTransactionId;
             type Db = EmptyDatabase;

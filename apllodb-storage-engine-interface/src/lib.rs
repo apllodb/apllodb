@@ -42,9 +42,9 @@ use apllodb_shared_components::{
 };
 
 /// An storage engine implementation must implement this.
-pub trait StorageEngine<'db>: Sized + Debug {
+pub trait StorageEngine<'tx, 'db: 'tx>: Sized + Debug {
     /// Transaction.
-    type Tx: Transaction<'db, Self>;
+    type Tx: Transaction<'tx, 'db, Self> + 'tx;
 
     /// Transaction ID.
     type TID: TransactionId;
