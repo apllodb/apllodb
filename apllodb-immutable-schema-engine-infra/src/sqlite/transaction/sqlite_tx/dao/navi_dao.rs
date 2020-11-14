@@ -26,8 +26,8 @@ use apllodb_shared_components::{
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct NaviDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx SqliteTx<'db>,
+pub(in crate::sqlite) struct NaviDao<'dao, 'db: 'dao> {
+    sqlite_tx: &'dao SqliteTx<'db>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
@@ -35,14 +35,14 @@ const TNAME_SUFFIX: &str = "navi";
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
-impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
+impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn table_name(
         vtable_id: &VTableId,
     ) -> String {
         format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
