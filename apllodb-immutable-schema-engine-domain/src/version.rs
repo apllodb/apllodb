@@ -4,9 +4,8 @@ pub mod constraint_kind;
 pub mod constraints;
 pub mod id;
 pub mod inactive_version;
+pub mod repository;
 pub mod version_number;
-
-pub(crate) mod repository;
 
 use crate::{entity::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType};
 use constraints::VersionConstraints;

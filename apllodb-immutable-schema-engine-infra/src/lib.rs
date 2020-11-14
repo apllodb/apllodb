@@ -7,6 +7,7 @@ extern crate derive_new;
 
 pub mod external_interface;
 
+mod immutable_schema_row_iter;
 mod sqlite;
 
 #[cfg(test)]

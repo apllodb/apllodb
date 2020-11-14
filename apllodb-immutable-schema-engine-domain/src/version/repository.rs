@@ -1,29 +1,21 @@
 use super::{active_version::ActiveVersion, id::VersionId};
-use crate::{
-    row::{
-        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
-    },
-    row_iter::version_row_iter::VersionRowIter,
-    transaction::ImmutableSchemaTx,
+use crate::row::{
+    column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
 };
 use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
-use apllodb_storage_engine_interface::TransactionId;
+use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 
-pub trait VersionRepository<'tx, 'db: 'tx> {
-    type Tx: ImmutableSchemaTx<'tx, 'db>;
-    type TID: TransactionId;
-
-    /// Row iterator from a single version.
-    type VerRowIter: VersionRowIter;
-
-    fn new(tx: &'tx Self::Tx) -> Self;
+pub trait VersionRepository<'repo, 'db: 'repo, Engine: StorageEngine<'repo, 'db>> {
+    fn new(tx: &'repo Engine::Tx) -> Self;
 
     /// Create a version.
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()>;
 
     /// Deactivate a version.
     fn deactivate(&self, version_id: &VersionId) -> ApllodbResult<()>;
+
+    // TODO ここに version scan が現れ、 VerRowIter の型パラメータが入るのが自然
 
     /// # Failures
     ///

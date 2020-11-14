@@ -26,8 +26,8 @@ use std::collections::HashMap;
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VersionDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx SqliteTx<'db>,
+pub(in crate::sqlite) struct VersionDao<'dao, 'db: 'dao> {
+    sqlite_tx: &'dao SqliteTx<'db>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
@@ -41,8 +41,8 @@ impl VersionDao<'_, '_> {
     }
 }
 
-impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
+impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -64,7 +64,7 @@ impl<'tx, 'db: 'tx> VersionDao<'tx, 'db> {
         non_pk_projection: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_immutable_schema_engine_domain::traits::Entity;
+        use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let projection: Vec<String> = non_pk_projection
             .iter()

@@ -107,7 +107,7 @@ fn test_insert() -> ApllodbResult<()> {
         &vec![c_id_def.column_name().clone(), c1_def.column_name().clone()],
     )?;
 
-    let row = rows.next().unwrap()?;
+    let row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_name())?, 1);
     assert_eq!(row.get::<i32>(c1_def.column_name())?, 100);
 
@@ -153,7 +153,7 @@ fn test_update() -> ApllodbResult<()> {
         },
     )?;
     let mut rows = tx.select(&t_name, &vec![c_id_def.column_name().clone()])?;
-    let row = rows.next().unwrap()?;
+    let row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_name())?, 1);
     assert_eq!(row.get::<i32>(c1_def.column_name())?, 100);
     assert!(rows.next().is_none());
@@ -166,7 +166,7 @@ fn test_update() -> ApllodbResult<()> {
         },
     )?;
     let mut rows = tx.select(&t_name, &vec![c_id_def.column_name().clone()])?;
-    let row = rows.next().unwrap()?;
+    let row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_name())?, 1);
     assert_eq!(row.get::<i32>(c1_def.column_name())?, 200);
     assert!(rows.next().is_none());
@@ -179,7 +179,7 @@ fn test_update() -> ApllodbResult<()> {
         },
     )?;
     let mut rows = tx.select(&t_name, &vec![c_id_def.column_name().clone()])?;
-    let row = rows.next().unwrap()?;
+    let row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_name())?, 2);
     assert_eq!(row.get::<i32>(c1_def.column_name())?, 200);
     assert!(rows.next().is_none());

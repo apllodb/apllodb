@@ -1,28 +1,37 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
-    traits::{VTableRepository, VersionRepository},
-    transaction::ImmutableSchemaTx,
-    vtable::id::VTableId,
+    abstract_types::ImmutableSchemaAbstractTypes,
+    version::repository::VersionRepository,
+    vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
     data_structure::{AlterTableAction, DatabaseName, TableName},
     error::ApllodbResult,
 };
+use apllodb_storage_engine_interface::StorageEngine;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
-pub struct AlterTableUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    tx: &'tx Tx,
-
-    database_name: &'a DatabaseName,
-    table_name: &'a TableName,
-    action: &'a AlterTableAction,
+pub struct AlterTableUseCaseInput<
+    'usecase,
+    'db: 'usecase,
+    Engine: StorageEngine<'usecase, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+> {
+    tx: &'usecase Engine::Tx,
+    database_name: &'usecase DatabaseName,
+    table_name: &'usecase TableName,
+    action: &'usecase AlterTableAction,
 
     #[new(default)]
-    _marker: PhantomData<&'db ()>,
+    _marker: PhantomData<(&'db (), Types)>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
-    for AlterTableUseCaseInput<'a, 'tx, 'db, Tx>
+impl<
+        'usecase,
+        'db: 'usecase,
+        Engine: StorageEngine<'usecase, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    > UseCaseInput for AlterTableUseCaseInput<'usecase, 'db, Engine, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
@@ -33,18 +42,27 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
 pub struct AlterTableUseCaseOutput;
 impl UseCaseOutput for AlterTableUseCaseOutput {}
 
-pub struct AlterTableUseCase<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Tx>,
+pub struct AlterTableUseCase<
+    'usecase,
+    'db: 'usecase,
+    Engine: StorageEngine<'usecase, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+> {
+    _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
-    for AlterTableUseCase<'a, 'tx, 'db, Tx>
+impl<
+        'usecase,
+        'db: 'usecase,
+        Engine: StorageEngine<'usecase, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    > UseCase for AlterTableUseCase<'usecase, 'db, Engine, Types>
 {
-    type In = AlterTableUseCaseInput<'a, 'tx, 'db, Tx>;
+    type In = AlterTableUseCaseInput<'usecase, 'db, Engine, Types>;
     type Out = AlterTableUseCaseOutput;
 
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
-        let vtable_repo = input.tx.vtable_repo();
-        let version_repo = input.tx.version_repo();
+        let vtable_repo = Types::VTableRepo::new(&input.tx);
+        let version_repo = Types::VersionRepo::new(&input.tx);
 
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let mut vtable = vtable_repo.read(&vtable_id)?;

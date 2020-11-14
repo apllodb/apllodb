@@ -1,11 +1,10 @@
-use crate::sqlite::{
-    row_iterator::SqliteRowIterator,
-    transaction::{
-        sqlite_tx::{
+use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
+    sqlite::{
+        transaction::sqlite_tx::{
             dao::{Navi, NaviDao, VersionDao},
             SqliteTx,
         },
-        tx_id::TxId,
     },
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -13,8 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
         column::non_pk_column::column_name::NonPKColumnName,
         pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     },
-    traits::VersionRepository,
-    version::{active_version::ActiveVersion, id::VersionId},
+    version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
 };
 use apllodb_shared_components::{
     data_structure::Expression,
@@ -23,16 +21,14 @@ use apllodb_shared_components::{
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub struct VersionRepositoryImpl<'tx, 'db: 'tx> {
-    tx: &'tx SqliteTx<'db>,
+pub struct VersionRepositoryImpl<'repo, 'db: 'repo> {
+    tx: &'repo SqliteTx<'db>,
 }
 
-impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, 'db> {
-    type Tx = SqliteTx<'db>;
-    type TID = TxId;
-    type VerRowIter = SqliteRowIterator;
-
-    fn new(tx: &'tx Self::Tx) -> Self {
+impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngine>
+    for VersionRepositoryImpl<'repo, 'db>
+{
+    fn new(tx: &'repo SqliteTx<'db>) -> Self {
         Self { tx }
     }
 
@@ -80,12 +76,12 @@ impl<'tx, 'db: 'tx> VersionRepository<'tx, 'db> for VersionRepositoryImpl<'tx, '
     }
 }
 
-impl<'tx, 'db: 'tx> VersionRepositoryImpl<'tx, 'db> {
-    fn version_dao(&self) -> VersionDao<'tx, 'db> {
+impl<'repo, 'db: 'repo> VersionRepositoryImpl<'repo, 'db> {
+    fn version_dao(&self) -> VersionDao<'repo, 'db> {
         VersionDao::new(&self.tx)
     }
 
-    fn navi_dao(&self) -> NaviDao<'tx, 'db> {
+    fn navi_dao(&self) -> NaviDao<'repo, 'db> {
         NaviDao::new(&self.tx)
     }
 }

@@ -11,15 +11,15 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VTableDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx SqliteTx<'db>,
+pub(in crate::sqlite) struct VTableDao<'dao, 'db: 'dao> {
+    sqlite_tx: &'dao SqliteTx<'db>,
 }
 
 const TNAME: &str = "_vtable_metadata";
 const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
-impl<'tx, 'db: 'tx> VTableDao<'tx, 'db> {
+impl<'dao, 'db: 'dao> VTableDao<'dao, 'db> {
     pub(in crate::sqlite) fn create_table_if_not_exist(
         sqlite_conn: &rusqlite::Connection,
     ) -> ApllodbResult<()> {
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS {} (
         Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS {} (
                 ),
                 None,
             )
-        })??;
+        })?;
 
         let table_wide_constraints_str: String =
             row.get(&ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?)?;

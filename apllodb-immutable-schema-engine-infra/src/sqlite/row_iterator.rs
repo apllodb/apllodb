@@ -1,5 +1,6 @@
 use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{
+    row::column::non_pk_column::column_name::NonPKColumnName,
     row::{
         column::{
             non_pk_column::column_data_type::NonPKColumnDataType,
@@ -7,8 +8,8 @@ use apllodb_immutable_schema_engine_domain::{
         },
         immutable_row::ImmutableRow,
     },
-    traits::VersionRowIter,
-row::column::non_pk_column::column_name::NonPKColumnName};
+    row_iter::version_row_iter::VersionRowIterator,
+};
 use apllodb_shared_components::error::ApllodbResult;
 
 use std::{collections::VecDeque, fmt::Debug};
@@ -31,17 +32,17 @@ pub struct SqliteRowIterator(
 );
 
 impl Iterator for SqliteRowIterator {
-    type Item = ApllodbResult<ImmutableRow>;
+    type Item = ImmutableRow;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.pop_front().map(Ok)
+        self.0.pop_front()
     }
 }
 
 // 結局、 VersionRowIter は自分のバージョンが含まない（がprojectionで要求されている) カラムをNULL値として持つべきか、という問題に帰着される。
 // 持たないほうが自然やろ
 // いや、意味論的に、ImmutableRowが「ワイのバージョンにはないけど値を返すべきカラム」を持つべきだな。
-impl VersionRowIter for SqliteRowIterator {}
+impl VersionRowIterator for SqliteRowIterator {}
 
 impl SqliteRowIterator {
     /// # Arguments
