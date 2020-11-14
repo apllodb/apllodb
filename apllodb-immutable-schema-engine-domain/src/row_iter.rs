@@ -1,30 +1,19 @@
-pub(crate) mod version_row_iter;
+pub mod version_row_iter;
 
-use std::collections::VecDeque;
-use version_row_iter::VersionRowIter;
+use std::fmt::Debug;
+
+use apllodb_storage_engine_interface::StorageEngine;
+
+use crate::{abstract_types::ImmutableSchemaAbstractTypes, row::immutable_row::ImmutableRow};
 
 /// Row iterator combining VersionRowIter from multiple versions.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct ImmutableSchemaRowIter<I: VersionRowIter>(VecDeque<I>);
-
-impl<I: VersionRowIter> ImmutableSchemaRowIter<I> {
+pub trait ImmutableSchemaRowIterator<
+    'repo,
+    'db: 'repo,
+    Engine: StorageEngine<'repo, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'repo, 'db, Engine>,
+>: Iterator<Item = ImmutableRow> + Debug
+{
     /// Chain iterators from multiple versions.
-    pub fn chain(iters: impl IntoIterator<Item = I>) -> Self {
-        Self(iters.into_iter().collect())
-    }
-}
-
-impl<I: VersionRowIter> Iterator for ImmutableSchemaRowIter<I> {
-    type Item = I::Item;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let ver_row_iter = self.0.front_mut()?;
-        ver_row_iter.next().or_else(|| {
-            let _ = self
-                .0
-                .remove(0)
-                .expect("ver_row_iter exists so self.0 has first element");
-            self.next()
-        })
-    }
+    fn chain(iters: impl IntoIterator<Item = Types::VersionRowIter>) -> Self;
 }

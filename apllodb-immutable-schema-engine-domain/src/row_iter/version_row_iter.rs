@@ -1,6 +1,5 @@
-use apllodb_shared_components::error::ApllodbResult;
-use std::fmt::Debug;
 use crate::row::immutable_row::ImmutableRow;
+use std::fmt::Debug;
 
 /// Row iterator from a single version.
-pub trait VersionRowIter: Iterator<Item = ApllodbResult<ImmutableRow>> + Debug + Sized {}
+pub trait VersionRowIterator: Iterator<Item = ImmutableRow> + Debug + Sized {}

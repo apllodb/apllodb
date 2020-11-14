@@ -5,15 +5,13 @@
 #[macro_use]
 extern crate derive_new;
 
+pub mod abstract_types;
+pub mod entity;
 pub mod row;
 pub mod row_iter;
-pub mod traits;
-pub mod transaction;
 pub mod version;
 pub mod version_revision_resolver;
 pub mod vtable;
-
-mod entity;
 
 #[cfg(test)]
 pub mod test_support;

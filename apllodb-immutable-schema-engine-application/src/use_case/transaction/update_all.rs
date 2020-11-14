@@ -1,39 +1,47 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::{
-    row::{
-        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
-    },
-    traits::VTableRepository,
-    transaction::ImmutableSchemaTx,
-    version::id::VersionId,
-    vtable::id::VTableId,
-};
+
+use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
+use apllodb_storage_engine_interface::StorageEngine;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct UpdateAllUseCaseInput<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    tx: &'tx Tx,
-
-    database_name: &'a DatabaseName,
-    table_name: &'a TableName,
-    column_values: &'a HashMap<ColumnName, Expression>,
+pub struct UpdateAllUseCaseInput<
+    'usecase,
+    'db: 'usecase,
+    Engine: StorageEngine<'usecase, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+> {
+    tx: &'usecase Engine::Tx,
+    database_name: &'usecase DatabaseName,
+    table_name: &'usecase TableName,
+    column_values: &'usecase HashMap<ColumnName, Expression>,
 
     #[new(default)]
-    _marker: PhantomData<&'db ()>,
+    _marker: PhantomData<(&'db (), Types)>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCaseInput
-    for UpdateAllUseCaseInput<'a, 'tx, 'db, Tx>
+impl<
+        'usecase,
+        'db: 'usecase,
+        Engine: StorageEngine<'usecase, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    > UseCaseInput for UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>
 {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UpdateAllUseCaseInput<'a, 'tx, 'db, Tx> {
+impl<
+        'usecase,
+        'db: 'usecase,
+        Engine: StorageEngine<'usecase, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    > UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>
+{
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in self.column_values {
             match expr {
@@ -56,20 +64,29 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UpdateAllUseCaseInput<'
 pub struct UpdateAllUseCaseOutput;
 impl UseCaseOutput for UpdateAllUseCaseOutput {}
 
-pub struct UpdateAllUseCase<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> {
-    _marker: PhantomData<&'a &'tx &'db Tx>,
+pub struct UpdateAllUseCase<
+    'usecase,
+    'db: 'usecase,
+    Engine: StorageEngine<'usecase, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+> {
+    _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
 }
-impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
-    for UpdateAllUseCase<'a, 'tx, 'db, Tx>
+impl<
+        'usecase,
+        'db: 'usecase,
+        Engine: StorageEngine<'usecase, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    > UseCase for UpdateAllUseCase<'usecase, 'db, Engine, Types>
 {
-    type In = UpdateAllUseCaseInput<'a, 'tx, 'db, Tx>;
+    type In = UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>;
     type Out = UpdateAllUseCaseOutput;
 
     /// # Failures
     ///
     /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+    fn run_core(_input: Self::In) -> ApllodbResult<Self::Out> {
         todo!()
 
         // let vtable_repo = input.tx.vtable_repo();
@@ -77,8 +94,6 @@ impl<'a, 'tx, 'db: 'tx, Tx: ImmutableSchemaTx<'tx, 'db>> UseCase
 
         // let vtable_id = VTableId::new(input.database_name, input.table_name);
         // let vtable = vtable_repo.read(&vtable_id)?;
-
-        
 
         // // Fetch all columns of the latest version rows and update requested columns later.
         // // TODO Consider CoW to reduce disk usage (append only updated column to a new version).

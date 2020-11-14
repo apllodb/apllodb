@@ -17,8 +17,7 @@ impl Iterator for NaviCollection {
     fn next(&mut self) -> Option<Self::Item> {
         use std::convert::TryFrom;
 
-        self.row_iter.next().map(|row_res| {
-            let r = row_res?;
+        self.row_iter.next().map(|r| {
             let navi = Navi::try_from(r)?;
 
             match navi {
@@ -40,8 +39,7 @@ impl NaviCollection {
 
         let mut h: HashMap<VersionNumber, VecDeque<ImmutableRow>> = HashMap::new();
 
-        for row in self.row_iter {
-            let r = row?;
+        for r in self.row_iter {
             let version_number = r
                 .get::<Option<i64>>(&ColumnName::new(CNAME_VERSION_NUMBER)?)?
                 .map(VersionNumber::from)

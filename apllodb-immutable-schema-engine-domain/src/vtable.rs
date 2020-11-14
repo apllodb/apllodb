@@ -1,8 +1,7 @@
 pub mod constraint_kind;
 pub mod constraints;
 pub mod id;
-
-pub(crate) mod repository;
+pub mod repository;
 
 use crate::entity::Entity;
 use apllodb_shared_components::{

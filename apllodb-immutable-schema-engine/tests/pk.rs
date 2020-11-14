@@ -4,8 +4,8 @@ use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     data_structure::{
-        ColumnConstraints,  ColumnDefinition, ColumnName, Constant, DataType,
-        DataTypeKind, Expression, TableConstraintKind, TableConstraints, TableName,
+        ColumnConstraints, ColumnDefinition, ColumnName, Constant, DataType, DataTypeKind,
+        Expression, TableConstraintKind, TableConstraints, TableName,
     },
     error::ApllodbResult,
 };
@@ -50,8 +50,7 @@ fn test_compound_pk() -> ApllodbResult<()> {
     )?;
 
     let row_iter = tx.select(&t_name, &vec![c_postal_code_def.column_name().clone()])?;
-    for row_res in row_iter {
-        let row = row_res?;
+    for row in row_iter {
         let apk = row.pk();
         assert_eq!(apk.get::<i16>(c_country_code_def.column_name())?, 100i16, "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
         assert_eq!(apk.get::<i32>(c_postal_code_def.column_name())?, 1000001i32);

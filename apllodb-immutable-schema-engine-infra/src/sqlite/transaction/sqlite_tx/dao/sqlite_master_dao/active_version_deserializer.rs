@@ -27,7 +27,7 @@ impl ActiveVersionDeserializer {
     /// - [UndefinedTable](a.html) when:
     ///   - Version defined in this CreateTableSqlForVersion is deactivated.
     pub(super) fn into_active_version(&self, vtable: &VTable) -> ApllodbResult<ActiveVersion> {
-        use apllodb_immutable_schema_engine_domain::traits::Entity;
+        use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let parser = ApllodbSqlParser::new();
         let ast = parser.parse(&self.create_version_table_sql).map_err(|e| 
@@ -103,7 +103,7 @@ mod tests {
          data_structure::{TableConstraints, DataTypeKind, ColumnDefinition, ColumnName, DataType, ColumnConstraints, TableConstraintKind, DatabaseName, TableName}, 
         error::ApllodbResult
     };
-    use apllodb_immutable_schema_engine_domain::{traits::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType, version::active_version::ActiveVersion, vtable::VTable};
+    use apllodb_immutable_schema_engine_domain::{entity::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType, version::active_version::ActiveVersion, vtable::VTable};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]

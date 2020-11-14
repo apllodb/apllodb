@@ -53,9 +53,10 @@ pub mod empty_storage_engine {
             }
         }
 
+        #[derive(Debug)]
         pub struct EmptyRowIterator;
         impl Iterator for EmptyRowIterator {
-            type Item = ApllodbResult<EmptyRow>;
+            type Item = EmptyRow;
 
             fn next(&mut self) -> Option<Self::Item> {
                 unimplemented!()
@@ -64,7 +65,6 @@ pub mod empty_storage_engine {
     }
 
     mod tx {
-        use super::{row::EmptyRow, EmptyDatabase, EmptyRowIterator};
         use apllodb_shared_components::{
             data_structure::{
                 AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression,
@@ -75,22 +75,20 @@ pub mod empty_storage_engine {
         use apllodb_storage_engine_interface::{Transaction, TransactionId};
         use std::collections::HashMap;
 
+        use super::{EmptyDatabase, EmptyRowIterator, EmptyStorageEngine};
+
         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
         pub struct EmptyTransactionId;
         impl TransactionId for EmptyTransactionId {}
 
+        #[derive(Debug)]
         pub struct EmptyTx;
-        impl<'tx, 'db: 'tx> Transaction<'tx, 'db> for EmptyTx {
-            type TID = EmptyTransactionId;
-            type Db = EmptyDatabase;
-            type R = EmptyRow;
-            type RowIter = EmptyRowIterator;
-
-            fn id(&self) -> &Self::TID {
+        impl<'tx, 'db: 'tx> Transaction<'tx, 'db, EmptyStorageEngine> for EmptyTx {
+            fn id(&self) -> &EmptyTransactionId {
                 unimplemented!()
             }
 
-            fn begin(db: &'db mut Self::Db) -> ApllodbResult<Self> {
+            fn begin(db: &'db mut EmptyDatabase) -> ApllodbResult<Self> {
                 Ok(Self)
             }
 
@@ -131,7 +129,7 @@ pub mod empty_storage_engine {
                 &self,
                 table_name: &TableName,
                 column_names: &[ColumnName],
-            ) -> ApllodbResult<Self::RowIter> {
+            ) -> ApllodbResult<EmptyRowIterator> {
                 unimplemented!()
             }
 
@@ -158,13 +156,20 @@ pub mod empty_storage_engine {
     }
 
     mod engine {
-        use super::{EmptyDatabase, EmptyTx};
+        use super::{
+            row::EmptyRow, tx::EmptyTransactionId, EmptyDatabase, EmptyRowIterator, EmptyTx,
+        };
         use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
         use apllodb_storage_engine_interface::StorageEngine;
 
+        #[derive(Debug)]
         pub struct EmptyStorageEngine;
         impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for EmptyStorageEngine {
             type Tx = EmptyTx;
+            type TID = EmptyTransactionId;
+            type Db = EmptyDatabase;
+            type R = EmptyRow;
+            type RowIter = EmptyRowIterator;
 
             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
                 Ok(EmptyDatabase::new())
@@ -180,6 +185,7 @@ use apllodb_shared_components::{
     },
     error::ApllodbResult,
 };
+use empty_storage_engine::{EmptyDatabase, EmptyTx};
 
 #[test]
 fn test_empty_storage_engine() -> ApllodbResult<()> {
@@ -190,8 +196,8 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
     // `EmptyDatabase` and `EmptyTx` are usable without `use`.
     use empty_storage_engine::EmptyStorageEngine;
 
-    let mut db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
-    let tx = EmptyStorageEngine::begin_transaction(&mut db)?;
+    let mut db: EmptyDatabase = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
+    let tx: EmptyTx = EmptyStorageEngine::begin_transaction(&mut db)?;
 
     let c1_def = ColumnDefinition::new(
         ColumnName::new("c1")?,

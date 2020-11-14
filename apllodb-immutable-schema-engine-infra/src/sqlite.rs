@@ -1,5 +1,6 @@
 pub mod database;
 pub mod row_iterator;
+pub mod sqlite_types;
 pub mod transaction;
 
 mod from_sqlite_row;

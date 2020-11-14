@@ -9,13 +9,13 @@ use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
+    entity::Entity,
     row::{
         column::non_pk_column::{
             column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
         },
         pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     },
-    traits::Entity,
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
@@ -26,8 +26,8 @@ use apllodb_shared_components::{
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct NaviDao<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx SqliteTx<'db>,
+pub(in crate::sqlite) struct NaviDao<'dao, 'db: 'dao> {
+    sqlite_tx: &'dao SqliteTx<'db>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
@@ -35,14 +35,14 @@ const TNAME_SUFFIX: &str = "navi";
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
-impl<'tx, 'db: 'tx> NaviDao<'tx, 'db> {
+impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx::dao) fn table_name(
         vtable_id: &VTableId,
     ) -> String {
         format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'tx SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -122,10 +122,7 @@ SELECT {cname_rowid}
 
         let navi = match opt_row {
             None => Navi::NotExist,
-            Some(r) => {
-                let r = r?;
-                Navi::try_from(r)?
-            }
+            Some(r) => Navi::try_from(r)?,
         };
         Ok(navi)
     }

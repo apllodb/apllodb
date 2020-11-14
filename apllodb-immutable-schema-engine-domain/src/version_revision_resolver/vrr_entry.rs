@@ -1,5 +1,5 @@
 use crate::{
-    row::pk::apparent_pk::ApparentPrimaryKey, row::pk::full_pk::revision::Revision, traits::Entity,
+    entity::Entity, row::pk::apparent_pk::ApparentPrimaryKey, row::pk::full_pk::revision::Revision,
     version::id::VersionId,
 };
 
