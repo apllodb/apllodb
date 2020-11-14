@@ -9,14 +9,14 @@ use apllodb_immutable_schema_engine_domain::row::column::{
 use apllodb_shared_components::error::ApllodbResult;
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction) struct SqliteStatement<'tx, 'db: 'tx> {
-    sqlite_tx: &'tx SqliteTx<'db>,
+pub(in crate::sqlite::transaction) struct SqliteStatement<'stmt, 'db: 'stmt> {
+    sqlite_tx: &'stmt SqliteTx<'db>,
     sqlite_stmt: rusqlite::Statement<'db>,
 }
 
-impl<'tx, 'db: 'tx> SqliteStatement<'tx, 'db> {
+impl<'stmt, 'db: 'stmt> SqliteStatement<'stmt, 'db> {
     pub(super) fn new(
-        sqlite_tx: &'tx SqliteTx<'db>,
+        sqlite_tx: &'stmt SqliteTx<'db>,
         sqlite_stmt: rusqlite::Statement<'db>,
     ) -> Self {
         Self {
