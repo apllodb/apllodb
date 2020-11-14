@@ -20,7 +20,6 @@ use crate::StorageEngine;
 ///
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
-/// See [apllodb-immutable-schema-engine-interface-adapter::TransactionController](foo.html) (impl of `Transaction`) and [apllodb-immutable-schema-engine-domain::ImmutableSchemaTx](foo.html) (interface of physical transaction) for latter example.
 pub trait Transaction<'db, Engine: StorageEngine<'db>>: Debug {
     /// Transaction ID
     fn id(&self) -> &Engine::TID;

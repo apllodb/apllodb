@@ -112,6 +112,87 @@ impl<'tx, 'db: 'tx> ImmutableSchemaTransaction<'tx, 'db, ApllodbImmutableSchemaE
         &self.database_name
     }
 
+    fn create_table(
+        &self,
+        table_name: &TableName,
+        table_constraints: &TableConstraints,
+        column_definitions: &[ColumnDefinition],
+    ) -> ApllodbResult<()> {
+        let database_name = self.database_name().clone();
+        let input: CreateTableUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            CreateTableUseCaseInput::new(
+                &self.tx,
+                &database_name,
+                table_name,
+                table_constraints,
+                column_definitions,
+            );
+        let _ = CreateTableUseCase::run(input)?;
+
+        Ok(())
+    }
+
+    fn alter_table(&self, table_name: &TableName, action: &AlterTableAction) -> ApllodbResult<()> {
+        let database_name = self.database_name().clone();
+        let input: AlterTableUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            AlterTableUseCaseInput::new(&self.tx, &database_name, table_name, action);
+        let _ = AlterTableUseCase::run(input)?;
+
+        Ok(())
+    }
+
+    fn drop_table(&self, _table_name: &TableName) -> ApllodbResult<()> {
+        todo!()
+    }
+
+    fn select(
+        &self,
+        table_name: &TableName,
+        column_names: &[ColumnName],
+    ) -> ApllodbResult<ImmutableSchemaRowIter> {
+        let database_name = self.database_name().clone();
+        let input: FullScanUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            FullScanUseCaseInput::new(&self.tx, &database_name, table_name, &column_names);
+        let output = FullScanUseCase::run(input)?;
+
+        Ok(output.row_iter)
+    }
+
+    fn insert(
+        &self,
+        table_name: &TableName,
+        column_values: HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()> {
+        let database_name = self.database_name().clone();
+        let input: InsertUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            InsertUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
+        let _ = InsertUseCase::run(input)?;
+
+        Ok(())
+    }
+
+    fn update(
+        &self,
+        table_name: &TableName,
+        column_values: HashMap<ColumnName, Expression>,
+    ) -> ApllodbResult<()> {
+        let database_name = self.database_name().clone();
+        let input: UpdateAllUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            UpdateAllUseCaseInput::new(&self.tx, &database_name, table_name, &column_values);
+        let _ = UpdateAllUseCase::run(input)?;
+
+        Ok(())
+    }
+
+    fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
+        let database_name = self.database_name().clone();
+        let input: DeleteAllUseCaseInput<'_, '_, '_, ApllodbImmutableSchemaEngine, SqliteTypes> =
+            DeleteAllUseCaseInput::new(&self.tx, &database_name, table_name);
+        let _ = DeleteAllUseCase::run(input)?;
+
+        Ok(())
+    }
+
     fn vtable_repo(&'tx self) -> VTableRepositoryImpl<'tx, 'db> {
         use apllodb_immutable_schema_engine_domain::vtable::repository::VTableRepository;
         VTableRepositoryImpl::new(&self)
