@@ -34,7 +34,7 @@ impl VersionRevisionResolver for VersionRevisionResolverImpl {
         todo!()
     }
 
-    fn unregister(&self, _version_id: &VersionId, _pk: &ApparentPrimaryKey) -> ApllodbResult<()> {
+    fn deregister(&self, _version_id: &VersionId, _pk: &ApparentPrimaryKey) -> ApllodbResult<()> {
         todo!()
     }
 }
