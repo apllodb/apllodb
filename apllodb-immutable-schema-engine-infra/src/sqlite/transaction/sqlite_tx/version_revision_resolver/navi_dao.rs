@@ -30,15 +30,13 @@ pub(in crate::sqlite) struct NaviDao<'dao, 'db: 'dao> {
     sqlite_tx: &'dao SqliteTx<'db>,
 }
 
-pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
+const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
 const TNAME_SUFFIX: &str = "navi";
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
 impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx::dao) fn table_name(
-        vtable_id: &VTableId,
-    ) -> String {
+    fn table_name(vtable_id: &VTableId) -> String {
         format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX)
     }
 

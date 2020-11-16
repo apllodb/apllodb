@@ -1,3 +1,5 @@
+mod navi_dao;
+
 use apllodb_immutable_schema_engine_domain::{
     row::pk::apparent_pk::ApparentPrimaryKey,
     version::id::VersionId,
@@ -8,10 +10,9 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::error::ApllodbResult;
 
-use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::{sqlite_types::SqliteTypes, transaction::sqlite_tx::dao::navi_dao::NaviDao},
-};
+use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
+
+use self::navi_dao::NaviDao;
 
 use super::SqliteTx;
 
