@@ -10,10 +10,10 @@ use apllodb_shared_components::error::ApllodbResult;
 
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::transaction::sqlite_tx::dao::navi_dao::NaviDao,
+    sqlite::{sqlite_types::SqliteTypes, transaction::sqlite_tx::dao::navi_dao::NaviDao},
 };
 
-use super::{sqlite_types::SqliteTypes, transaction::sqlite_tx::SqliteTx};
+use super::SqliteTx;
 
 // #[derive(Debug)]
 // pub(crate) struct VersionRevisionResolverImpl<'tx, 'db: 'tx> {

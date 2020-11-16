@@ -7,4 +7,3 @@ mod from_sqlite_row;
 mod sqlite_error;
 mod sqlite_rowid;
 mod to_sql_string;
-mod version_revision_resolver;

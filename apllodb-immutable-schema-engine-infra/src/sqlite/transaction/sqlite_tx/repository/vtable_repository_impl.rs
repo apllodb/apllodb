@@ -10,11 +10,11 @@ use crate::{
         transaction::{
             sqlite_tx::{
                 dao::{SqliteMasterDao, VersionDao},
+                version_revision_resolver::VersionRevisionResolverImpl,
                 SqliteTx,
             },
             VTableDao,
         },
-        version_revision_resolver::VersionRevisionResolverImpl,
     },
 };
 use apllodb_immutable_schema_engine_domain::{

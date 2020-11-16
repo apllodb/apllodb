@@ -1,11 +1,7 @@
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::{
-        transaction::sqlite_tx::{
-            dao::{Navi, VersionDao},
-            SqliteTx,
-        },
-        version_revision_resolver::VersionRevisionResolverImpl,
+    sqlite::transaction::sqlite_tx::{
+        dao::VersionDao, version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
     },
 };
 use apllodb_immutable_schema_engine_domain::{
