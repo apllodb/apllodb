@@ -144,7 +144,7 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
     pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
         &self,
         version_id: &VersionId,
-        navi_rowid: SqliteRowid,
+        vrr_id: &SqliteRowid,
         column_values: &HashMap<NonPKColumnName, Expression>,
     ) -> ApllodbResult<()> {
         use crate::sqlite::to_sql_string::ToSqlString;
@@ -158,7 +158,7 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
         ", // FIXME might lead to SQL injection.
             tname = sqlite_table_name.as_str(),
             navi_rowid = CNAME_NAVI_ROWID,
-            navi_rowid_val = navi_rowid.0,
+            navi_rowid_val = vrr_id.0,
             comma_if_non_pk_column_names = if column_values.is_empty() { "" } else { ", " },
             non_pk_column_names = column_values
                 .keys()
