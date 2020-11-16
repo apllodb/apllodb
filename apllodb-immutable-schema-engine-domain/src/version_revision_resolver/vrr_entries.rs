@@ -1,16 +1,31 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
-use crate::{version::id::VersionId, vtable::id::VTableId};
+use apllodb_storage_engine_interface::StorageEngine;
+
+use crate::{
+    abstract_types::ImmutableSchemaAbstractTypes, version::id::VersionId, vtable::id::VTableId,
+};
 
 use super::vrr_entry::VRREntry;
 
 /// Sequence of VRREntry.
 /// Must have at least 1 entry.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
-pub struct VRREntries(Vec<VRREntry>);
+pub struct VRREntries<
+    'vrr,
+    'db: 'vrr,
+    Engine: StorageEngine<'vrr, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
+>(VecDeque<VRREntry<'vrr, 'db, Engine, Types>>);
 
-impl VRREntries {
-    fn new(inner: Vec<VRREntry>) -> Self {
+impl<
+        'vrr,
+        'db: 'vrr,
+        Engine: StorageEngine<'vrr, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
+    > VRREntries<'vrr, 'db, Engine, Types>
+{
+    fn new(inner: VecDeque<VRREntry<'vrr, 'db, Engine, Types>>) -> Self {
         assert!(
             !inner.is_empty(),
             "VRREntries must have at least 1 element."
@@ -20,16 +35,21 @@ impl VRREntries {
 
     /// Order of VRREntry is kept in each group.
     pub fn group_by_version_id(self) -> Vec<(VersionId, Self)> {
-        let mut h: HashMap<VersionId, Vec<VRREntry>> = HashMap::new();
+        let mut h: HashMap<VersionId, VecDeque<VRREntry<'vrr, 'db, Engine, Types>>> =
+            HashMap::new();
 
         for e in self.0 {
             let version_id = &e.version_id;
             h.entry(version_id.clone())
                 .and_modify(|entries| {
-                    let e = e.clone(); // don't hold r's ownership for or_insert_with.
-                    entries.push(e);
+                    let e = e.clone(); // don't hold e's ownership for or_insert_with.
+                    entries.push_back(e);
                 })
-                .or_insert_with(move || vec![e]);
+                .or_insert_with(move || {
+                    let mut v = VecDeque::new();
+                    v.push_back(e);
+                    v
+                });
         }
 
         h.into_iter()
@@ -38,7 +58,21 @@ impl VRREntries {
     }
 
     pub fn vtable_id(&self) -> VTableId {
-        let e = self.0.first().expect("must have at least 1 element");
+        let e = self.0.front().expect("must have at least 1 element");
         e.version_id.vtable_id().clone()
+    }
+}
+
+impl<
+        'vrr,
+        'db: 'vrr,
+        Engine: StorageEngine<'vrr, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
+    > Iterator for VRREntries<'vrr, 'db, Engine, Types>
+{
+    type Item = VRREntry<'vrr, 'db, Engine, Types>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_front()
     }
 }

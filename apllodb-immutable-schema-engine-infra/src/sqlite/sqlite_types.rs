@@ -4,6 +4,7 @@ use crate::external_interface::ApllodbImmutableSchemaEngine;
 
 use super::{
     row_iterator::SqliteRowIterator,
+    sqlite_rowid::SqliteRowid,
     transaction::sqlite_tx::repository::{
         version_repository_impl::VersionRepositoryImpl,
         vtable_repository_impl::VTableRepositoryImpl,
@@ -16,6 +17,8 @@ pub struct SqliteTypes;
 impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<'repo, 'db, ApllodbImmutableSchemaEngine>
     for SqliteTypes
 {
+    type VRRId = SqliteRowid;
+
     type VersionRowIter = SqliteRowIterator;
 
     type VersionRepo = VersionRepositoryImpl<'repo, 'db>;

@@ -55,6 +55,7 @@ impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
         Ok(())
     }
 
+    // TODO VRR::scan に移行する
     pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
         &self,
         vtable: &VTable,

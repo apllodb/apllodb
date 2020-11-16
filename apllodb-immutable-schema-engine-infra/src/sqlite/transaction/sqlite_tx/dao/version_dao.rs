@@ -55,8 +55,10 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         Ok(())
     }
 
-    /// TODO 消す
     /// Fetches only existing columns from SQLite, joining ApparentPrimaryKey from navi table.
+    ///
+    /// TODO For performance:
+    /// - この呼び出し元で VRREntries が取れているので、もう navi テーブルを見る必要はない。
     pub(in crate::sqlite::transaction::sqlite_tx) fn join_with_navi(
         &self,
         vtable: &VTable,

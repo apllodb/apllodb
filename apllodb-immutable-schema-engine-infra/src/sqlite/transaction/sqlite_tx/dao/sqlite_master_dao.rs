@@ -60,6 +60,7 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
             .collect::<ApllodbResult<Vec<ActiveVersion>>>()
     }
 
+    // TODO 消す
     pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_version(
         &self,
         vtable: &VTable,

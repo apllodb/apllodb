@@ -32,6 +32,7 @@ impl Iterator for NaviCollection {
 }
 
 impl NaviCollection {
+    // TODO probe_vrr の内部実装で同じことがされる
     pub(in crate::sqlite::transaction::sqlite_tx) fn group_by_version_number(
         self,
     ) -> ApllodbResult<Vec<(VersionNumber, Self)>> {

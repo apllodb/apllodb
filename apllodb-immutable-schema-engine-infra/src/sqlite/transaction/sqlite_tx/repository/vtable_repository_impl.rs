@@ -1,7 +1,12 @@
+use std::collections::VecDeque;
+
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
+        row_iterator::SqliteRowIterator,
+        sqlite_rowid::SqliteRowid,
+        sqlite_types::SqliteTypes,
         transaction::{
             sqlite_tx::{
                 dao::{NaviDao, SqliteMasterDao, VersionDao},
@@ -13,8 +18,11 @@ use crate::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
+    entity::Entity,
     row::column::non_pk_column::column_name::NonPKColumnName,
+    row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
+    version_revision_resolver::vrr_entries::VRREntries,
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
@@ -25,7 +33,7 @@ pub struct VTableRepositoryImpl<'repo, 'db: 'repo> {
     tx: &'repo SqliteTx<'db>,
 }
 
-impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngine>
+impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
     for VTableRepositoryImpl<'repo, 'db>
 {
     fn new(tx: &'repo SqliteTx<'db>) -> Self {
@@ -73,7 +81,35 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
 
         let vrr = VersionRevisionResolverImpl::new();
         let vrr_entries = vrr.scan(&vtable_id)?;
-        self.vrr_entries_into_immutable_schema_row_iter(vrr_entries, projection)
+        self.probe_vrr_entries(vrr_entries, projection)
+    }
+
+    fn probe_vrr_entries(
+        &self,
+        vrr_entries: VRREntries<'repo, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>,
+        projection: &[NonPKColumnName],
+    ) -> ApllodbResult<ImmutableSchemaRowIter> {
+        let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
+
+        let vtable = self.vtable_dao().select(&vrr_entries.vtable_id())?;
+
+        for (version_id, vrr_entries) in vrr_entries.group_by_version_id() {
+            let version = self
+                .sqlite_master_dao()
+                .select_active_version(&vtable, &version_id)?;
+
+            let ver_row_iter = self.version_dao().join_with_navi(
+                &vtable,
+                &version,
+                &vrr_entries
+                    .map(|e| e.id().clone())
+                    .collect::<Vec<SqliteRowid>>(),
+                projection,
+            )?;
+            ver_row_iters.push_back(ver_row_iter);
+        }
+
+        Ok(ImmutableSchemaRowIter::chain_versions(ver_row_iters))
     }
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
@@ -84,41 +120,6 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
         let active_versions = self.sqlite_master_dao().select_active_versions(vtable)?;
         Ok(ActiveVersions::from(active_versions))
-    }
-
-    fn vrr_entries_into_immutable_schema_row_iter(
-        &self,
-        vrr_entries: Vec<
-            apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry,
-        >,
-        projection: &[NonPKColumnName],
-    ) -> ApllodbResult<ImmutableSchemaRowIter> {
-        // let mut ver_row_iters: VecDeque<<<Self::Tx as ImmutableSchemaTx<'tx, 'db>>::VRepo as VersionRepository<'tx, 'db>>::VerRowIter> = VecDeque::new();
-
-        // let vtable = self.vtable_dao().select(vtable_id)?;
-
-        // let navi_collection = self.navi_dao().full_scan_latest_revision(&vtable)?;
-
-        // for (version_number, navi_collection) in navi_collection.group_by_version_number()? {
-        //     let version_id = VersionId::new(&vtable_id, &version_number);
-        //     let version = self
-        //         .sqlite_master_dao()
-        //         .select_active_version(&vtable, &version_id)?;
-
-        //     let ver_row_iter = self.version_dao().join_with_navi(
-        //         &vtable,
-        //         &version,
-        //         &navi_collection
-        //             .map(|navi| navi.map(|n| n.rowid))
-        //             .collect::<ApllodbResult<Vec<SqliteRowid>>>()?,
-        //         projection,
-        //     )?;
-        //     ver_row_iters.push_back(ver_row_iter);
-        // }
-
-        // Ok(ImmutableSchemaRowIter::chain(ver_row_iters))
-
-        todo!()
     }
 }
 
