@@ -9,7 +9,7 @@ use crate::{
         sqlite_types::SqliteTypes,
         transaction::{
             sqlite_tx::{
-                dao::{NaviDao, SqliteMasterDao, VersionDao},
+                dao::{SqliteMasterDao, VersionDao},
                 SqliteTx,
             },
             VTableDao,
@@ -23,6 +23,7 @@ use apllodb_immutable_schema_engine_domain::{
     row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
     version_revision_resolver::vrr_entries::VRREntries,
+    version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
@@ -47,7 +48,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     /// - Errors from [TableDao::create()](foobar.html).
     fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.vtable_dao().insert(&vtable)?;
-        self.navi_dao().create_table(&vtable)?;
+        self.vrr().create_table(&vtable)?;
         Ok(())
     }
 
@@ -77,10 +78,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
         vtable_id: &VTableId,
         projection: &[NonPKColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
-        use apllodb_immutable_schema_engine_domain::version_revision_resolver::VersionRevisionResolver;
-
-        let vrr = VersionRevisionResolverImpl::new();
-        let vrr_entries = vrr.scan(&vtable_id)?;
+        let vrr_entries = self.vrr().scan(&vtable_id)?;
         self.probe_vrr_entries(vrr_entries, projection)
     }
 
@@ -113,7 +111,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     }
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.navi_dao().insert_deleted_records_all(&vtable)?;
+        self.vrr().deregister_all(vtable)?;
         Ok(())
     }
 
@@ -124,16 +122,16 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
 }
 
 impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
+    fn vrr(&self) -> VersionRevisionResolverImpl {
+        VersionRevisionResolverImpl::new(self.tx)
+    }
+
     fn vtable_dao(&self) -> VTableDao<'repo, 'db> {
         VTableDao::new(&self.tx)
     }
 
     fn version_dao(&self) -> VersionDao<'repo, 'db> {
         VersionDao::new(&self.tx)
-    }
-
-    fn navi_dao(&self) -> NaviDao<'repo, 'db> {
-        NaviDao::new(&self.tx)
     }
 
     fn sqlite_master_dao(&self) -> SqliteMasterDao<'repo, 'db> {

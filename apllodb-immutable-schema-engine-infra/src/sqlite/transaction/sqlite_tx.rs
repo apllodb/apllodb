@@ -1,4 +1,4 @@
-mod dao;
+pub(crate) mod dao; // TODO NaviDaoをVRRに使わせるために pub(crate) しているが、NaviDaoはむしろVRR以外から見えないようにしたい
 mod sqlite_statement;
 
 pub(in crate::sqlite) mod repository;

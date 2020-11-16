@@ -61,7 +61,7 @@ impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngi
 
 impl<'repo, 'db: 'repo> VersionRepositoryImpl<'repo, 'db> {
     fn vrr(&self) -> VersionRevisionResolverImpl {
-        VersionRevisionResolverImpl::new()
+        VersionRevisionResolverImpl::new(self.tx)
     }
 
     fn version_dao(&self) -> VersionDao<'repo, 'db> {

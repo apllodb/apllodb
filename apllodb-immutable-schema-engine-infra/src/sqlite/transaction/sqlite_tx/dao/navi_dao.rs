@@ -42,7 +42,7 @@ impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
         format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -128,6 +128,7 @@ SELECT {cname_rowid}
         Ok(navi)
     }
 
+    // TODO VRR::registerの中で呼び出す
     /// Returns lastly inserted row's ROWID.
     pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
         &self,
@@ -165,7 +166,7 @@ SELECT {cname_rowid}
         Ok(self.sqlite_tx.last_insert_rowid())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn insert_deleted_records_all(
+    pub(in crate::sqlite) fn insert_deleted_records_all(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {

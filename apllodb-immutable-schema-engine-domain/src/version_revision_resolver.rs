@@ -7,7 +7,7 @@ use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, row::pk::apparent_pk::ApparentPrimaryKey,
-    version::id::VersionId, vtable::id::VTableId,
+    version::id::VersionId, vtable::id::VTableId, vtable::VTable,
 };
 
 use self::{vrr_entries::VRREntries, vrr_entry::VRREntry};
@@ -20,6 +20,8 @@ pub trait VersionRevisionResolver<
     Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
 >
 {
+    fn create_table(&self, vtable: &VTable) -> ApllodbResult<()>;
+
     // probe : PKをキーにして、最新revisionであるものの「VRR-ID, version, revision」(optional) を返す。
     // pks の指定順序で返却。
     // TODO: 範囲選択に対応するためのI/F
@@ -41,5 +43,9 @@ pub trait VersionRevisionResolver<
     ) -> ApllodbResult<VRREntry<'vrr, 'db, Engine, Types>>;
 
     // deregister : 「PK」を受け取り、そのPKのレコードを亡き者とする
-    fn deregister(&self, _version_id: &VersionId, _pk: &ApparentPrimaryKey) -> ApllodbResult<()>;
+    fn deregister(&self, _vtable_id: &VTableId, _pk: &ApparentPrimaryKey) -> ApllodbResult<()>;
+
+    fn deregister_all(&self, _vtable: &VTable) -> ApllodbResult<()> {
+        todo!()
+    }
 }
