@@ -1,4 +1,5 @@
 pub mod vrr_entries;
+pub mod vrr_entries_in_version;
 pub mod vrr_entry;
 pub mod vrr_id;
 

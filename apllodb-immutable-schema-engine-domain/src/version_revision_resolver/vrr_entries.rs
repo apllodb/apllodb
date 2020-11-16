@@ -6,7 +6,7 @@ use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, version::id::VersionId, vtable::id::VTableId,
 };
 
-use super::vrr_entry::VRREntry;
+use super::{vrr_entries_in_version::VRREntriesInVersion, vrr_entry::VRREntry};
 
 /// Sequence of VRREntry.
 /// Must have at least 1 entry.
@@ -25,7 +25,9 @@ impl<
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > VRREntries<'vrr, 'db, Engine, Types>
 {
-    fn new(inner: VecDeque<VRREntry<'vrr, 'db, Engine, Types>>) -> Self {
+    pub(in crate::version_revision_resolver) fn new(
+        inner: VecDeque<VRREntry<'vrr, 'db, Engine, Types>>,
+    ) -> Self {
         assert!(
             !inner.is_empty(),
             "VRREntries must have at least 1 element."
@@ -34,7 +36,9 @@ impl<
     }
 
     /// Order of VRREntry is kept in each group.
-    pub fn group_by_version_id(self) -> Vec<(VersionId, Self)> {
+    pub fn group_by_version_id(
+        self,
+    ) -> Vec<(VersionId, VRREntriesInVersion<'vrr, 'db, Engine, Types>)> {
         let mut h: HashMap<VersionId, VecDeque<VRREntry<'vrr, 'db, Engine, Types>>> =
             HashMap::new();
 
@@ -53,7 +57,10 @@ impl<
         }
 
         h.into_iter()
-            .map(|(version_id, es)| (version_id, Self::new(es)))
+            .map(|(version_id, es)| {
+                let vrr_entries_in_version = VRREntriesInVersion::new(es);
+                (version_id, vrr_entries_in_version)
+            })
             .collect()
     }
 
