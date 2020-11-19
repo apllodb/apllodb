@@ -5,7 +5,6 @@ use crate::{
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         row_iterator::SqliteRowIterator,
-        sqlite_rowid::SqliteRowid,
         sqlite_types::SqliteTypes,
         transaction::{
             sqlite_tx::{
@@ -18,7 +17,6 @@ use crate::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
-    entity::Entity,
     row::column::non_pk_column::column_name::NonPKColumnName,
     row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
@@ -91,17 +89,15 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
 
         let vtable = self.vtable_dao().select(&vrr_entries.vtable_id())?;
 
-        for (version_id, vrr_entries) in vrr_entries.group_by_version_id() {
+        for (version_id, vrr_entries_in_version) in vrr_entries.group_by_version_id() {
             let version = self
                 .sqlite_master_dao()
                 .select_active_version(&vtable, &version_id)?;
 
-            let ver_row_iter = self.version_dao().join_with_navi(
+            let ver_row_iter = self.version_dao().probe_in_version(
                 &vtable,
                 &version,
-                &vrr_entries
-                    .map(|e| e.id().clone())
-                    .collect::<Vec<SqliteRowid>>(),
+                vrr_entries_in_version,
                 projection,
             )?;
             ver_row_iters.push_back(ver_row_iter);

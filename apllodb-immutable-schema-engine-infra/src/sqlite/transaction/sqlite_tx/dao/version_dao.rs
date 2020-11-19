@@ -3,8 +3,12 @@ mod sqlite_table_name_for_version;
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_version::SqliteTableNameForVersion;
 
-use crate::sqlite::{
-    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, transaction::sqlite_tx::SqliteTx,
+use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
+    sqlite::{
+        row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::SqliteTypes,
+        transaction::sqlite_tx::SqliteTx,
+    },
 };
 use apllodb_immutable_schema_engine_domain::{
     row::column::{
@@ -12,6 +16,7 @@ use apllodb_immutable_schema_engine_domain::{
         pk_column::column_data_type::PKColumnDataType,
     },
     version::{active_version::ActiveVersion, id::VersionId},
+    version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion,
     vtable::VTable,
 };
 use apllodb_shared_components::{
@@ -54,15 +59,17 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         Ok(())
     }
 
-    /// Fetches only existing columns from SQLite, joining ApparentPrimaryKey from navi table.
-    ///
-    /// TODO For performance:
-    /// - この呼び出し元で VRREntries が取れているので、もう navi テーブルを見る必要はない。
-    pub(in crate::sqlite::transaction::sqlite_tx) fn join_with_navi(
+    /// Fetches only existing columns from SQLite, and makes SqliteRowIterator together with ApparentPrimaryKey from VRREntriesInVersion.
+    pub(in crate::sqlite::transaction::sqlite_tx) fn probe_in_version(
         &self,
         vtable: &VTable,
         version: &ActiveVersion,
-        navi_rowids: &[SqliteRowid],
+        vrr_entries_in_version: VRREntriesInVersion<
+            'dao,
+            'db,
+            ApllodbImmutableSchemaEngine,
+            SqliteTypes,
+        >,
         non_pk_projection: &[NonPKColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
