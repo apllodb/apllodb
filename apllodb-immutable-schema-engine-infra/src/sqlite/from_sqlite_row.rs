@@ -14,8 +14,9 @@ use apllodb_shared_components::{
 };
 
 pub(crate) trait FromSqliteRow {
-    fn from_sqlite_row(
-        sqlite_row: &rusqlite::Row<'_>,
+    /// sqlite_row_with_apk must contain PK value
+    fn from_sqlite_row_with_apk(
+        sqlite_row_with_apk: &rusqlite::Row<'_>,
         pk_column_data_types: &[&PKColumnDataType],
         non_pk_column_data_types: &[&NonPKColumnDataType],
         non_pk_void_projections: &[NonPKColumnName],
@@ -26,18 +27,18 @@ pub(crate) trait FromSqliteRow {
         for pk_column_data_type in pk_column_data_types {
             let pk_column_name = pk_column_data_type.column_name();
             let pk_sql_value =
-                Self::_sql_value(sqlite_row, pk_column_data_type.column_data_type())?;
+                Self::_sql_value(sqlite_row_with_apk, pk_column_data_type.column_data_type())?;
             builder = builder.add_pk_column(&pk_column_name, pk_sql_value)?;
         }
 
-        log::error!("sqlite_row id: {:?}", sqlite_row.get::<_, i32>("id"));
+        log::error!("sqlite_row id: {:?}", sqlite_row_with_apk.get::<_, i32>("id"));
         log::error!("non_pk_column_data_types: {:?}", non_pk_column_data_types);
 
         // add non-PK to builder
         for non_pk_column_data_type in non_pk_column_data_types {
             let non_pk_column_name = non_pk_column_data_type.column_name();
             let non_pk_sql_value =
-                Self::_sql_value(sqlite_row, non_pk_column_data_type.column_data_type())?;
+                Self::_sql_value(sqlite_row_with_apk, non_pk_column_data_type.column_data_type())?;
             builder = builder.add_non_pk_column(&non_pk_column_name, non_pk_sql_value)?;
         }
 

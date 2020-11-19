@@ -51,7 +51,7 @@ impl SqliteRowIterator {
     /// - `non_pk_void_projection` - Columns `sqlite_rows` do not have but another version has.
     pub(in crate::sqlite) fn new(
         sqlite_rows: &mut rusqlite::Rows<'_>,
-        pk_column_data_types: &[&PKColumnDataType],
+        pk_column_data_types: &[&PKColumnDataType],  // sqlite_rows の各要素に、PK値が含まれていることが前提になっている
         non_pk_column_data_types: &[&NonPKColumnDataType],
         non_pk_void_projection: &[NonPKColumnName],
     ) -> ApllodbResult<Self> {
@@ -62,7 +62,7 @@ impl SqliteRowIterator {
             .next()
             .map_err(|e| map_sqlite_err(e, "failed to get next rusqlite::Row"))?
         {
-            let row = ImmutableRow::from_sqlite_row(
+            let row = ImmutableRow::from_sqlite_row_with_apk(  // TODO ここでPKの値を外挿できるようにする
                 sqlite_row,
                 pk_column_data_types,
                 non_pk_column_data_types,
