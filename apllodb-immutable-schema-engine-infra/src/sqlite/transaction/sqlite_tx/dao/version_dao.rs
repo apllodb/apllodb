@@ -8,14 +8,12 @@ use crate::sqlite::{
     row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::column::{
-        non_pk_column::{column_data_type::NonPKColumnDataType, column_name::NonPKColumnName},
-        pk_column::column_data_type::PKColumnDataType,
-    },
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
 };
 use apllodb_shared_components::{
+    data_structure::ColumnDataType,
+    data_structure::ColumnName,
     data_structure::{Expression, TableName},
     error::ApllodbResult,
 };
@@ -61,7 +59,7 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         vtable: &VTable,
         version: &ActiveVersion,
         navi_rowids: &[SqliteRowid],
-        non_pk_projection: &[NonPKColumnName],
+        non_pk_projection: &[ColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::entity::Entity;
@@ -75,18 +73,18 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         // Filter existing and requested columns.
         // FIXME これのせいで、v2の c1==NULL が現れないで困っている。
         // SQLitのレイヤで NULL as c1 とやるか、SQLiteはあくまでもそんなカラムは知らんと返し、ImmutableRowに変換する時にNULLをぶち込むか。
-        let non_pk_existing_projection: Vec<&NonPKColumnDataType> = non_pk_column_data_types
+        let non_pk_existing_projection: Vec<&ColumnDataType> = non_pk_column_data_types
             .iter()
             .filter(|non_pk_cdt| {
                 projection.contains(&non_pk_cdt.column_name().as_str().to_string())
             })
             .collect();
-        let non_pk_void_projection: Vec<NonPKColumnName> = non_pk_projection
+        let non_pk_void_projection: Vec<ColumnName> = non_pk_projection
             .iter()
             .filter(|prj_cn| {
                 non_pk_column_data_types
                     .iter()
-                    .any(|non_pk_cdt| non_pk_cdt.column_name() == **prj_cn)
+                    .any(|non_pk_cdt| non_pk_cdt.column_name() == *prj_cn)
             })
             .cloned()
             .collect();
@@ -131,7 +129,7 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
                 .pk_column_data_types()
                 .iter()
                 .map(|pk_cdt| pk_cdt)
-                .collect::<Vec<&PKColumnDataType>>(),
+                .collect::<Vec<&ColumnDataType>>(),
             &non_pk_existing_projection,
             &non_pk_void_projection,
         )?;
@@ -142,7 +140,7 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
         &self,
         version_id: &VersionId,
         navi_rowid: SqliteRowid,
-        column_values: &HashMap<NonPKColumnName, Expression>,
+        column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         use crate::sqlite::to_sql_string::ToSqlString;
 

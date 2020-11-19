@@ -1,13 +1,10 @@
 use super::ImmutableRow;
-use crate::row::{
-    column::{non_pk_column::column_name::NonPKColumnName, pk_column::column_name::PKColumnName},
-    pk::{
-        apparent_pk::ApparentPrimaryKey,
-        full_pk::{revision::Revision, FullPrimaryKey},
-    },
+use crate::row::pk::{
+    apparent_pk::ApparentPrimaryKey,
+    full_pk::{revision::Revision, FullPrimaryKey},
 };
 use apllodb_shared_components::{
-    data_structure::SqlValue,
+    data_structure::{ColumnName, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use std::collections::HashMap;
@@ -15,19 +12,19 @@ use std::collections::HashMap;
 /// Builder for ImmutableRow.
 #[derive(Debug, Default)]
 pub struct ImmutableRowBuilder {
-    non_pk_columns: HashMap<NonPKColumnName, SqlValue>,
+    non_pk_columns: HashMap<ColumnName, SqlValue>,
     pk_builder: PKBuilder,
 }
 
 #[derive(Debug)]
 struct PKBuilder {
-    pk_columns: HashMap<PKColumnName, SqlValue>,
+    pk_columns: HashMap<ColumnName, SqlValue>,
     revision: Revision,
 }
 impl PKBuilder {
     fn add_pk_column(
         mut self,
-        pk_column_name: &PKColumnName,
+        pk_column_name: &ColumnName,
         value: SqlValue,
     ) -> ApllodbResult<Self> {
         if let Some(_) = self.pk_columns.insert(pk_column_name.clone(), value) {
@@ -45,7 +42,7 @@ impl PKBuilder {
     }
 
     fn to_full_pk(self) -> FullPrimaryKey {
-        let mut pk_column_names: Vec<PKColumnName> = vec![];
+        let mut pk_column_names: Vec<ColumnName> = vec![];
         let mut pk_sql_values: Vec<SqlValue> = vec![];
 
         for (pk_column_name, pk_sql_value) in self.pk_columns {
@@ -75,7 +72,7 @@ impl ImmutableRowBuilder {
     ///   - Same `ColumnName` added twice.
     pub fn add_pk_column(
         mut self,
-        pk_column_name: &PKColumnName,
+        pk_column_name: &ColumnName,
         value: SqlValue,
     ) -> ApllodbResult<Self> {
         self.pk_builder = self.pk_builder.add_pk_column(pk_column_name, value)?;
@@ -90,7 +87,7 @@ impl ImmutableRowBuilder {
     ///   - Same `ColumnName` added twice.
     pub fn add_non_pk_column(
         mut self,
-        non_pk_column_name: &NonPKColumnName,
+        non_pk_column_name: &ColumnName,
         value: SqlValue,
     ) -> ApllodbResult<Self> {
         if let Some(_) = self
@@ -112,7 +109,7 @@ impl ImmutableRowBuilder {
 
     pub fn add_non_pk_void_projection(
         self,
-        non_pk_column_name: &NonPKColumnName,
+        non_pk_column_name: &ColumnName,
     ) -> ApllodbResult<Self> {
         let null = SqlValue::null();
         self.add_non_pk_column(non_pk_column_name, null)
@@ -132,13 +129,9 @@ impl ImmutableRowBuilder {
 #[cfg(test)]
 mod tests {
     use super::ImmutableRowBuilder;
-    use crate::{
-        row::column::{
-            non_pk_column::column_name::NonPKColumnName, pk_column::column_name::PKColumnName,
-        },
-        test_support::setup,
-    };
+    use crate::test_support::setup;
     use apllodb_shared_components::{
+        data_structure::ColumnName,
         data_structure::{DataType, DataTypeKind, SqlValue},
         error::ApllodbResult,
     };
@@ -150,22 +143,22 @@ mod tests {
 
         let row1 = ImmutableRowBuilder::default()
             .add_pk_column(
-                &PKColumnName::new("c1")?,
+                &ColumnName::new("c1")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .add_non_pk_column(
-                &NonPKColumnName::new("c2")?,
+                &ColumnName::new("c2")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &None::<i32>)?,
             )?
             .build()?;
 
         let row2 = ImmutableRowBuilder::default()
             .add_non_pk_column(
-                &NonPKColumnName::new("c2")?,
+                &ColumnName::new("c2")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &None::<i32>)?,
             )?
             .add_pk_column(
-                &PKColumnName::new("c1")?,
+                &ColumnName::new("c1")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .build()?;
@@ -181,13 +174,13 @@ mod tests {
 
         let row1 = ImmutableRowBuilder::default()
             .add_pk_column(
-                &PKColumnName::new("c1")?,
+                &ColumnName::new("c1")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .build()?;
         let row2 = ImmutableRowBuilder::default()
             .add_pk_column(
-                &PKColumnName::new("c1")?,
+                &ColumnName::new("c1")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .build()?;
@@ -203,22 +196,22 @@ mod tests {
 
         let row1 = ImmutableRowBuilder::default()
             .add_pk_column(
-                &PKColumnName::new("c1")?,
+                &ColumnName::new("c1")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .add_pk_column(
-                &PKColumnName::new("c2")?,
+                &ColumnName::new("c2")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &None::<i32>)?,
             )?
             .build()?;
 
         let row2 = ImmutableRowBuilder::default()
             .add_pk_column(
-                &PKColumnName::new("c2")?,
+                &ColumnName::new("c2")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .add_pk_column(
-                &PKColumnName::new("c1")?,
+                &ColumnName::new("c1")?,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &None::<i32>)?,
             )?
             .build()?;

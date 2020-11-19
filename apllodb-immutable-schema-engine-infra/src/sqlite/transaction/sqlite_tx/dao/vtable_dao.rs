@@ -1,14 +1,8 @@
 use crate::sqlite::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::SqliteTx};
-use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::{
-        column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-    },
-    vtable::{constraints::TableWideConstraints, id::VTableId, VTable},
+use apllodb_immutable_schema_engine_domain::vtable::{
+    constraints::TableWideConstraints, id::VTableId, VTable,
 };
-use apllodb_shared_components::{
-    data_structure::{ColumnName, DataType, DataTypeKind},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-};
+use apllodb_shared_components::{data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind}, error::{ApllodbError, ApllodbErrorKind, ApllodbResult}};
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao<'dao, 'db: 'dao> {
@@ -166,9 +160,9 @@ CREATE TABLE IF NOT EXISTS {} (
         Ok(())
     }
 
-    fn cdt_table_wide_constraints(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
+    fn cdt_table_wide_constraints(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
             DataType::new(DataTypeKind::Text, false),
         )
     }

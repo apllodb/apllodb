@@ -2,11 +2,9 @@ use super::SqliteTx;
 use crate::sqlite::{
     row_iterator::SqliteRowIterator, sqlite_error::map_sqlite_err, to_sql_string::ToSqlString,
 };
-use apllodb_immutable_schema_engine_domain::row::column::{
-    non_pk_column::column_data_type::NonPKColumnDataType,
-    non_pk_column::column_name::NonPKColumnName, pk_column::column_data_type::PKColumnDataType,
+use apllodb_shared_components::{
+    data_structure::ColumnDataType, data_structure::ColumnName, error::ApllodbResult,
 };
-use apllodb_shared_components::error::ApllodbResult;
 
 #[derive(Debug)]
 pub(in crate::sqlite::transaction) struct SqliteStatement<'stmt, 'db: 'stmt> {
@@ -28,9 +26,9 @@ impl<'stmt, 'db: 'stmt> SqliteStatement<'stmt, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn query_named(
         &mut self,
         params: &[(&str, &dyn ToSqlString)],
-        pk_column_data_types: &[&PKColumnDataType],
-        non_pk_column_data_types: &[&NonPKColumnDataType],
-        non_pk_void_projection: &[NonPKColumnName],
+        pk_column_data_types: &[&ColumnDataType],
+        non_pk_column_data_types: &[&ColumnDataType],
+        non_pk_void_projection: &[ColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         let params = params
             .into_iter()

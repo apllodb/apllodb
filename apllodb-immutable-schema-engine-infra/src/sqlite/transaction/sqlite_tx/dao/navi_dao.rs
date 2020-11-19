@@ -10,16 +10,13 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    row::{
-        column::non_pk_column::{
-            column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-        },
-        pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
-    },
+    row::pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
+    data_structure::ColumnDataType,
+    data_structure::ColumnName,
     data_structure::{DataType, DataTypeKind},
     error::ApllodbResult,
 };
@@ -192,21 +189,21 @@ INSERT INTO {tname} ({pk_column_names}, {cname_revision})
         Ok(())
     }
 
-    fn cdt_rowid(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_ROWID).unwrap(),
+    fn cdt_rowid(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_ROWID).unwrap(),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_revision(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_REVISION).unwrap(),
+    fn cdt_revision(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_REVISION).unwrap(),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_version_number(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
+    fn cdt_version_number(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
             DataType::new(DataTypeKind::BigInt, true),
         )
     }

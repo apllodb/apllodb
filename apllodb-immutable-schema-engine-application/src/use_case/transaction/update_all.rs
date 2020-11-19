@@ -104,7 +104,7 @@ impl<
         // let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, input.column_values)?;
 
         // // Filter Non-PK columns from column_values
-        // let non_pk_column_values: HashMap<NonPKColumnName, Expression> = input
+        // let non_pk_column_values: HashMap<ColumnName, Expression> = input
         //     .column_values
         //     .clone()
         //     .into_iter()
@@ -116,7 +116,7 @@ impl<
         //         {
         //             None
         //         } else {
-        //             Some((NonPKColumnName::from(column_name), expr))
+        //             Some((ColumnName::from(column_name), expr))
         //         }
         //     })
         //     .collect();

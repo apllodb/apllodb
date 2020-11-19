@@ -1,13 +1,9 @@
 use super::sqlite_error::map_sqlite_err;
-use apllodb_immutable_schema_engine_domain::row::{
-    column::non_pk_column::column_name::NonPKColumnName,
-    column::{
-        non_pk_column::column_data_type::NonPKColumnDataType,
-        pk_column::column_data_type::PKColumnDataType,
-    },
-    immutable_row::{builder::ImmutableRowBuilder, ImmutableRow},
+use apllodb_immutable_schema_engine_domain::row::immutable_row::{
+    builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
+    data_structure::ColumnName,
     data_structure::{ColumnDataType, DataTypeKind, SqlValue},
     error::ApllodbResult,
     traits::SqlConvertible,
@@ -16,17 +12,16 @@ use apllodb_shared_components::{
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
         sqlite_row: &rusqlite::Row<'_>,
-        pk_column_data_types: &[&PKColumnDataType],
-        non_pk_column_data_types: &[&NonPKColumnDataType],
-        non_pk_void_projections: &[NonPKColumnName],
+        pk_column_data_types: &[&ColumnDataType],
+        non_pk_column_data_types: &[&ColumnDataType],
+        non_pk_void_projections: &[ColumnName],
     ) -> ApllodbResult<ImmutableRow> {
         let mut builder = ImmutableRowBuilder::default();
 
         // add PK to builder
         for pk_column_data_type in pk_column_data_types {
             let pk_column_name = pk_column_data_type.column_name();
-            let pk_sql_value =
-                Self::_sql_value(sqlite_row, pk_column_data_type.column_data_type())?;
+            let pk_sql_value = Self::_sql_value(sqlite_row, pk_column_data_type)?;
             builder = builder.add_pk_column(&pk_column_name, pk_sql_value)?;
         }
 
@@ -36,8 +31,7 @@ pub(crate) trait FromSqliteRow {
         // add non-PK to builder
         for non_pk_column_data_type in non_pk_column_data_types {
             let non_pk_column_name = non_pk_column_data_type.column_name();
-            let non_pk_sql_value =
-                Self::_sql_value(sqlite_row, non_pk_column_data_type.column_data_type())?;
+            let non_pk_sql_value = Self::_sql_value(sqlite_row, non_pk_column_data_type)?;
             builder = builder.add_non_pk_column(&non_pk_column_name, non_pk_sql_value)?;
         }
 

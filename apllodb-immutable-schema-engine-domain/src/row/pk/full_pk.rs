@@ -1,7 +1,7 @@
 pub mod revision;
 
 use super::apparent_pk::ApparentPrimaryKey;
-use crate::row::column::pk_column::column_name::PKColumnName;
+use apllodb_shared_components::data_structure::ColumnName;
 use revision::Revision;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +18,7 @@ impl FullPrimaryKey {
         &self.apparent_pk
     }
 
-    pub fn column_names(&self) -> &[PKColumnName] {
+    pub fn column_names(&self) -> &[ColumnName] {
         self.apparent_pk.column_names()
     }
 }

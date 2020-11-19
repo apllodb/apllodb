@@ -14,13 +14,12 @@ use crate::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::column_name::NonPKColumnName,
     row_iter::ImmutableSchemaRowIterator,
     version::{active_versions::ActiveVersions, id::VersionId},
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::{error::ApllodbResult, data_structure::ColumnName};
 use std::collections::VecDeque;
 
 #[derive(Debug)]
@@ -70,7 +69,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     fn full_scan(
         &self,
         vtable_id: &VTableId,
-        projection: &[NonPKColumnName],
+        projection: &[ColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 

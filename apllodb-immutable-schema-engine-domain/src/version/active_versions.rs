@@ -1,7 +1,6 @@
 use super::active_version::ActiveVersion;
-use crate::row::column::non_pk_column::column_name::NonPKColumnName;
 use apllodb_shared_components::{
-    data_structure::Expression,
+    data_structure::{ColumnName, Expression},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use std::collections::HashMap;
@@ -53,7 +52,7 @@ impl ActiveVersions {
     ///   - No active version can accept the column value.
     pub fn version_to_insert(
         &self,
-        non_pk_column_values: &HashMap<NonPKColumnName, Expression>,
+        non_pk_column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<&ActiveVersion> {
         if self.0.is_empty() {
             return Err(ApllodbError::new(

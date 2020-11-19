@@ -3,14 +3,11 @@ mod active_version_deserializer;
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::{
-        column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-    },
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DataType, DataTypeKind},
+    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 
@@ -83,9 +80,9 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
             })
     }
 
-    fn cdt_create_table_sql(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
+    fn cdt_create_table_sql(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
             DataType::new(DataTypeKind::Text, false),
         )
     }

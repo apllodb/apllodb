@@ -1,8 +1,7 @@
 use super::constraint_kind::TableWideConstraintKind;
-use crate::row::column::pk_column::{
-    column_data_type::PKColumnDataType, column_name::PKColumnName,
-};
 use apllodb_shared_components::{
+    data_structure::ColumnDataType,
+    data_structure::ColumnName,
     data_structure::{ColumnDefinition, TableConstraints},
     error::ApllodbResult,
 };
@@ -19,7 +18,7 @@ pub struct TableWideConstraints {
 }
 impl TableWideConstraints {
     /// Extract ApparentPrimaryKey column data types
-    pub fn pk_column_data_types(&self) -> &[PKColumnDataType] {
+    pub fn pk_column_data_types(&self) -> &[ColumnDataType] {
         &self
             .kinds
             .iter()
@@ -34,7 +33,7 @@ impl TableWideConstraints {
     }
 
     /// Extract ApparentPrimaryKey column names
-    pub fn pk_column_names(&self) -> Vec<PKColumnName> {
+    pub fn pk_column_names(&self) -> Vec<ColumnName> {
         self.pk_column_data_types()
             .iter()
             .map(|cdt| cdt.column_name().clone())

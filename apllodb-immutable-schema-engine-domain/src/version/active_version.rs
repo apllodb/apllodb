@@ -1,12 +1,6 @@
 use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
-use crate::{
-    entity::Entity,
-    row::column::non_pk_column::{
-        column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-    },
-    vtable::id::VTableId,
-};
-use apllodb_shared_components::data_structure::AlterTableAction;
+use crate::{entity::Entity, vtable::id::VTableId};
+use apllodb_shared_components::data_structure::{AlterTableAction, ColumnDataType, ColumnName};
 use apllodb_shared_components::{
     data_structure::Expression,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -39,7 +33,7 @@ impl ActiveVersion {
     /// Create v_1.
     pub fn initial(
         vtable_id: &VTableId,
-        non_pk_column_data_types: &[NonPKColumnDataType],
+        non_pk_column_data_types: &[ColumnDataType],
         // TODO constraints from TableConstraints
     ) -> ApllodbResult<Self> {
         Self::new(
@@ -53,7 +47,7 @@ impl ActiveVersion {
     pub fn new(
         vtable_id: &VTableId,
         version_number: &VersionNumber,
-        non_pk_column_data_types: &[NonPKColumnDataType],
+        non_pk_column_data_types: &[ColumnDataType],
         // TODO constraints from TableConstraints
     ) -> ApllodbResult<Self> {
         let id = VersionId::new(vtable_id, version_number);
@@ -67,7 +61,7 @@ impl ActiveVersion {
     }
 
     /// Ref to columns and their data types.
-    pub fn column_data_types(&self) -> &[NonPKColumnDataType] {
+    pub fn column_data_types(&self) -> &[ColumnDataType] {
         &self.0.column_data_types
     }
 
@@ -84,10 +78,10 @@ impl ActiveVersion {
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,
             } => {
-                let column_to_drop = NonPKColumnName::from(column_to_drop.clone());
+                let column_to_drop = ColumnName::from(column_to_drop.clone());
                 self.validate_col_existence(&column_to_drop)?;
 
-                let next_column_data_types: Vec<NonPKColumnDataType> = self
+                let next_column_data_types: Vec<ColumnDataType> = self
                     .0
                     .column_data_types
                     .iter()
@@ -120,7 +114,7 @@ impl ActiveVersion {
     ///   - Column value does not satisfy CHECK constraint.
     pub(in crate::version) fn check_version_constraint(
         &self,
-        column_values: &HashMap<NonPKColumnName, Expression>,
+        column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let column_data_types = self.column_data_types();
 
@@ -152,11 +146,11 @@ impl ActiveVersion {
         Ok(())
     }
 
-    fn validate_col_existence(&self, column_name: &NonPKColumnName) -> ApllodbResult<()> {
+    fn validate_col_existence(&self, column_name: &ColumnName) -> ApllodbResult<()> {
         self.0
             .column_data_types
             .iter()
-            .find(|c| &c.column_name() == column_name)
+            .find(|c| c.column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
                 ApllodbError::new(
@@ -171,15 +165,9 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{
-        row::column::non_pk_column::{
-            column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-        },
-        test_support::setup,
-        vtable::id::VTableId,
-    };
+    use crate::{test_support::setup, vtable::id::VTableId};
     use apllodb_shared_components::data_structure::{
-        AlterTableAction, ColumnName, DataType, DataTypeKind,
+        AlterTableAction, ColumnDataType, ColumnName, DataType, DataTypeKind,
     };
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
 
@@ -187,8 +175,8 @@ mod tests {
     fn test_initial_success() -> ApllodbResult<()> {
         setup();
 
-        let c1_cdt = NonPKColumnDataType::new(
-            NonPKColumnName::new("c1")?,
+        let c1_cdt = ColumnDataType::new(
+            ColumnName::new("c1")?,
             DataType::new(DataTypeKind::Integer, false),
         );
 
@@ -202,12 +190,12 @@ mod tests {
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
         setup();
 
-        let c1_cdt = NonPKColumnDataType::new(
-            NonPKColumnName::new("c1")?,
+        let c1_cdt = ColumnDataType::new(
+            ColumnName::new("c1")?,
             DataType::new(DataTypeKind::Integer, false),
         );
-        let c2_cdt = NonPKColumnDataType::new(
-            NonPKColumnName::new("c2")?,
+        let c2_cdt = ColumnDataType::new(
+            ColumnName::new("c2")?,
             DataType::new(DataTypeKind::Integer, false),
         );
 
@@ -216,14 +204,14 @@ mod tests {
         let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types)?;
 
         let action = AlterTableAction::DropColumn {
-            column_name: c1_cdt.column_name().as_column_name().clone(),
+            column_name: c1_cdt.column_name().clone(),
         };
 
         let v2 = v1.create_next(&action)?;
 
         assert_eq!(v2.number().to_u64(), 2);
 
-        let v2_cols: Vec<NonPKColumnName> = v2
+        let v2_cols: Vec<&ColumnName> = v2
             .column_data_types()
             .iter()
             .map(|cdt| cdt.column_name())
@@ -237,8 +225,8 @@ mod tests {
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
         setup();
 
-        let c1_cdt = NonPKColumnDataType::new(
-            NonPKColumnName::new("c1")?,
+        let c1_cdt = ColumnDataType::new(
+            ColumnName::new("c1")?,
             DataType::new(DataTypeKind::Integer, false),
         );
         let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;
