@@ -1,6 +1,6 @@
 pub mod builder;
 
-use super::pk::{apparent_pk::ApparentPrimaryKey, full_pk::FullPrimaryKey};
+use super::pk::{full_pk::FullPrimaryKey};
 use apllodb_shared_components::{
     data_structure::{ColumnName, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -8,7 +8,8 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::Row;
 use std::collections::HashMap;
 
-/// Immutable row who is never updated or deleted by any transaction.
+/// Immutable row which is never updated or deleted by any transaction.
+/// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ImmutableRow {
     pk: FullPrimaryKey,
@@ -17,12 +18,6 @@ pub struct ImmutableRow {
 }
 
 impl Row for ImmutableRow {
-    type PK = ApparentPrimaryKey;
-
-    fn pk(&self) -> &Self::PK {
-        self.pk.apparent_pk()
-    }
-
     fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
         self.get_from_pk(&ColumnName::from(column_name.clone()))
             .or_else(|| self.get_from_non_pk(&ColumnName::from(column_name.clone())))

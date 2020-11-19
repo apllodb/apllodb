@@ -11,12 +11,6 @@ use apllodb_shared_components::{
 /// Row representation used in storage engine.
 /// Row, unlike `Record`, does not deal with `Expression`s.
 pub trait Row {
-    /// Primary Key.
-    type PK: PrimaryKey;
-
-    /// Primary Key.
-    fn pk(&self) -> &Self::PK;
-
     #[doc(hidden)]
     fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue>;
 

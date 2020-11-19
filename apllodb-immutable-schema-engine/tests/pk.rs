@@ -9,7 +9,7 @@ use apllodb_shared_components::{
     },
     error::ApllodbResult,
 };
-use apllodb_storage_engine_interface::{PrimaryKey, StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
 #[test]
 fn test_compound_pk() -> ApllodbResult<()> {
@@ -51,9 +51,8 @@ fn test_compound_pk() -> ApllodbResult<()> {
 
     let row_iter = tx.select(&t_name, &vec![c_postal_code_def.column_name().clone()])?;
     for row in row_iter {
-        let apk = row.pk();
-        assert_eq!(apk.get::<i16>(c_country_code_def.column_name())?, 100i16, "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
-        assert_eq!(apk.get::<i32>(c_postal_code_def.column_name())?, 1000001i32);
+        assert_eq!(row.get::<i16>(c_country_code_def.column_name())?, 100i16, "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
+        assert_eq!(row.get::<i32>(c_postal_code_def.column_name())?, 1000001i32);
     }
 
     tx.commit()?;

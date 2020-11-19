@@ -185,7 +185,10 @@ mod tests {
             )?
             .build()?;
 
-        assert_eq!(row1.pk(), row2.pk());
+        assert_eq!(
+            row1.get::<i32>(&ColumnName::new("c1")?)?,
+            row2.get::<i32>(&ColumnName::new("c1")?)?
+        );
 
         Ok(())
     }

@@ -42,12 +42,6 @@ pub mod empty_storage_engine {
 
         pub struct EmptyRow;
         impl Row for EmptyRow {
-            type PK = EmptyPrimaryKey;
-
-            fn pk(&self) -> &Self::PK {
-                unimplemented!()
-            }
-
             fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
                 unimplemented!()
             }
