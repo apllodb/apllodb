@@ -12,6 +12,7 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
 #[test]
+#[ignore]
 fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResult<()> {
     setup();
 

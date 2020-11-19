@@ -68,6 +68,7 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
 }
 
 #[test]
+#[ignore]
 fn test_insert() -> ApllodbResult<()> {
     setup();
 
@@ -119,6 +120,7 @@ fn test_insert() -> ApllodbResult<()> {
 }
 
 #[test]
+#[ignore]
 fn test_update() -> ApllodbResult<()> {
     setup();
 
