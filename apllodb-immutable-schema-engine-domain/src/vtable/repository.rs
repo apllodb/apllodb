@@ -1,9 +1,9 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes,
-    row::column::non_pk_column::column_name::NonPKColumnName,
-    version::active_versions::ActiveVersions, version_revision_resolver::vrr_entries::VRREntries,
+    abstract_types::ImmutableSchemaAbstractTypes, version::active_versions::ActiveVersions,
+    version_revision_resolver::vrr_entries::VRREntries,
 };
+use apllodb_shared_components::data_structure::ColumnName;
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
@@ -44,13 +44,13 @@ pub trait VTableRepository<
     fn full_scan(
         &self,
         vtable_id: &VTableId,
-        non_pk_column_names: &[NonPKColumnName],
+        non_pk_column_names: &[ColumnName],
     ) -> ApllodbResult<Engine::RowIter>;
 
     fn probe_vrr_entries(
         &self,
         vrr_entries: VRREntries<'repo, 'db, Engine, Types>,
-        projection: &[NonPKColumnName],
+        projection: &[ColumnName],
     ) -> ApllodbResult<Engine::RowIter>;
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;

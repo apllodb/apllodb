@@ -1,16 +1,6 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::{
-    abstract_types::ImmutableSchemaAbstractTypes,
-    row::column::non_pk_column::{
-        column_data_type::NonPKColumnDataType, filter_non_pk_column_definitions,
-    },
-    version::{active_version::ActiveVersion, repository::VersionRepository},
-    vtable::{repository::VTableRepository, VTable},
-};
-use apllodb_shared_components::{
-    data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},
-    error::ApllodbResult,
-};
+use apllodb_immutable_schema_engine_domain::{abstract_types::ImmutableSchemaAbstractTypes, row::column::filter_non_pk_column_definitions, version::{active_version::ActiveVersion, repository::VersionRepository}, vtable::{repository::VTableRepository, VTable}};
+use apllodb_shared_components::{data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName}, error::ApllodbResult, data_structure::ColumnDataType};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use std::{fmt::Debug, marker::PhantomData};
@@ -79,7 +69,7 @@ impl<
         )?;
 
         let apk_column_names = vtable.table_wide_constraints().pk_column_names();
-        let column_data_types: Vec<NonPKColumnDataType> =
+        let column_data_types: Vec<ColumnDataType> =
             filter_non_pk_column_definitions(input.column_definitions, &apk_column_names)
                 .iter()
                 .map(|coldef| coldef.into())

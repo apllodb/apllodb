@@ -6,12 +6,11 @@ use crate::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    row::{
-        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
-    },
+    row::pk::apparent_pk::ApparentPrimaryKey,
     version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
     version_revision_resolver::VersionRevisionResolver,
 };
+use apllodb_shared_components::data_structure::ColumnName;
 use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
 use std::collections::HashMap;
 
@@ -45,7 +44,7 @@ impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngi
         &self,
         version_id: &VersionId,
         apparent_pk: ApparentPrimaryKey,
-        column_values: &HashMap<NonPKColumnName, Expression>,
+        column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let vrr_entry = self.vrr().register(version_id, apparent_pk)?;
 

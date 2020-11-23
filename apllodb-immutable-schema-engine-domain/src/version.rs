@@ -7,7 +7,8 @@ pub mod inactive_version;
 pub mod repository;
 pub mod version_number;
 
-use crate::{entity::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType};
+use crate::entity::Entity;
+use apllodb_shared_components::data_structure::ColumnDataType;
 use constraints::VersionConstraints;
 use id::VersionId;
 use serde::{Deserialize, Serialize};
@@ -34,7 +35,7 @@ use std::cmp::Ordering;
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub(crate) struct Version {
     id: VersionId,
-    column_data_types: Vec<NonPKColumnDataType>,
+    column_data_types: Vec<ColumnDataType>,
     constraints: VersionConstraints,
 }
 

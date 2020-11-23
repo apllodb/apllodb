@@ -1,9 +1,7 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
-    row::{
-        column::non_pk_column::column_name::NonPKColumnName, pk::apparent_pk::ApparentPrimaryKey,
-    },
+    row::pk::apparent_pk::ApparentPrimaryKey,
     version::{id::VersionId, repository::VersionRepository},
     vtable::{id::VTableId, repository::VTableRepository},
 };
@@ -103,7 +101,7 @@ impl<
         let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, input.column_values)?;
 
         // Filter Non-PK columns from column_values
-        let non_pk_column_values: HashMap<NonPKColumnName, Expression> = input
+        let non_pk_column_values: HashMap<ColumnName, Expression> = input
             .column_values
             .clone()
             .into_iter()
@@ -115,7 +113,7 @@ impl<
                 {
                     None
                 } else {
-                    Some((NonPKColumnName::from(column_name), expr))
+                    Some((ColumnName::from(column_name), expr))
                 }
             })
             .collect();
@@ -125,7 +123,7 @@ impl<
         let version_to_insert = active_versions.version_to_insert(&non_pk_column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-        // rowで会話するようにしたい。そうすれば、updateでもrowを作ってからversion_repoに同じ用は話しかけられる
+        // rowで会話するようにしたい。そうすれば、updateでもrowを作ってからversion_repoに同じように話しかけられる
         version_repo.insert(&version_id, apk, &non_pk_column_values)?;
 
         Ok(InsertUseCaseOutput)

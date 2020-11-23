@@ -17,7 +17,6 @@ use crate::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::column_name::NonPKColumnName,
     row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
     version_revision_resolver::vrr_entries::VRREntries,
@@ -25,7 +24,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
 
 #[derive(Debug)]
 pub struct VTableRepositoryImpl<'repo, 'db: 'repo> {
@@ -74,7 +73,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     fn full_scan(
         &self,
         vtable_id: &VTableId,
-        projection: &[NonPKColumnName],
+        projection: &[ColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let vrr_entries = self.vrr().scan(&vtable_id)?;
         self.probe_vrr_entries(vrr_entries, projection)
@@ -83,7 +82,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     fn probe_vrr_entries(
         &self,
         vrr_entries: VRREntries<'repo, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>,
-        projection: &[NonPKColumnName],
+        projection: &[ColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
