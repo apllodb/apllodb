@@ -1,21 +1,13 @@
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::{
-        transaction::sqlite_tx::{
-            dao::{Navi, NaviDao, VersionDao},
-            SqliteTx,
-        },
+    sqlite::transaction::sqlite_tx::{
+        dao::{Navi, NaviDao, VersionDao},
+        SqliteTx,
     },
 };
-use apllodb_immutable_schema_engine_domain::{
-    row::{
-        column::non_pk_column::column_name::NonPKColumnName,
-        pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
-    },
-    version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
-};
+use apllodb_immutable_schema_engine_domain::{row::pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision}, version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository}};
 use apllodb_shared_components::{
-    data_structure::Expression,
+    data_structure::{ColumnName, Expression},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use std::collections::HashMap;
@@ -50,7 +42,7 @@ impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngi
         &self,
         version_id: &VersionId,
         apparent_pk: ApparentPrimaryKey,
-        column_values: &HashMap<NonPKColumnName, Expression>,
+        column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
         let revision = match self
             .navi_dao()

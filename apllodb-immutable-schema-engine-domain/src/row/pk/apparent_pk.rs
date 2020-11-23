@@ -1,11 +1,8 @@
-use crate::{
-    row::column::pk_column::{column_data_type::PKColumnDataType, column_name::PKColumnName},
-    vtable::VTable,
-};
+use crate::vtable::VTable;
 use apllodb_shared_components::{
     data_structure::{
-        BooleanExpression, ColumnName, ComparisonFunction, Constant, Expression, LogicalFunction,
-        SqlValue,
+        BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ComparisonFunction,
+        Constant, Expression, LogicalFunction, SqlValue, TableName,
     },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
@@ -16,7 +13,8 @@ use std::collections::{HashMap, VecDeque};
 /// Primary key which other components than Storage Engine observes.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ApparentPrimaryKey {
-    pk_column_names: Vec<PKColumnName>,
+    table_name: TableName,
+    pk_column_names: Vec<ColumnName>,
 
     // real "key" of a record.
     sql_values: Vec<SqlValue>,
@@ -24,7 +22,7 @@ pub struct ApparentPrimaryKey {
 
 impl PrimaryKey for ApparentPrimaryKey {
     fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
-        let target_cn = PKColumnName::from(column_name.clone());
+        let target_cn = ColumnName::from(column_name.clone());
 
         let target_sql_value = self
             .zipped()
@@ -55,19 +53,19 @@ impl ApparentPrimaryKey {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
-            .map(|cdt| cdt.column_name())
-            .collect::<Vec<PKColumnName>>();
+            .map(|cdt| cdt.column_ref().as_column_name().clone())
+            .collect::<Vec<ColumnName>>();
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
                 let expr = column_values
-                    .get(cdt.column_name().as_column_name())
+                    .get(cdt.column_ref().as_column_name())
                     .ok_or_else(|| {
                         ApllodbError::new(
                             ApllodbErrorKind::NotNullViolation,
                             format!(
                                 "primary key column `{}` must be specified (table `{}`)",
-                                cdt.column_name(),
+                                cdt.column_ref(),
                                 vtable.table_name()
                             ),
                             None,
@@ -77,10 +75,14 @@ impl ApparentPrimaryKey {
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
 
-        Ok(Self::new(apk_column_names, apk_sql_values))
+        Ok(Self::new(
+            vtable.table_name().clone(),
+            apk_column_names,
+            apk_sql_values,
+        ))
     }
 
-    pub fn column_names(&self) -> &[PKColumnName] {
+    pub fn column_names(&self) -> &[ColumnName] {
         &self.pk_column_names
     }
 
@@ -88,15 +90,16 @@ impl ApparentPrimaryKey {
         &self.sql_values
     }
 
-    pub fn zipped(&self) -> Vec<(&PKColumnName, &SqlValue)> {
+    pub fn zipped(&self) -> Vec<(&ColumnName, &SqlValue)> {
         self.pk_column_names.iter().zip(&self.sql_values).collect()
     }
 
-    pub fn column_data_types(&self) -> Vec<PKColumnDataType> {
+    pub fn column_data_types(&self) -> Vec<ColumnDataType> {
         self.zipped()
             .into_iter()
             .map(|(cname, sql_value)| {
-                PKColumnDataType::new(cname.clone(), sql_value.data_type().clone())
+                let column_ref = ColumnReference::new(self.table_name.clone(), cname.clone());
+                ColumnDataType::new(column_ref, sql_value.data_type().clone())
             })
             .collect()
     }
@@ -108,9 +111,7 @@ impl ApparentPrimaryKey {
             .map(|(column_name, sql_value)| {
                 let constant_expr = Constant::from(sql_value);
                 ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::ColumnNameVariant(
-                        column_name.as_column_name().clone(),
-                    )),
+                    left: Box::new(Expression::ColumnNameVariant(column_name.clone())),
                     right: Box::new(Expression::ConstantVariant(constant_expr)),
                 }
             })

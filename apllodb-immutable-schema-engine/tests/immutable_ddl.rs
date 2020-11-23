@@ -4,8 +4,9 @@ use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     data_structure::{
-        AlterTableAction, ColumnConstraints, ColumnDefinition, ColumnName, Constant, DataType,
-        DataTypeKind, Expression, TableConstraintKind, TableConstraints, TableName,
+        AlterTableAction, ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference,
+        Constant, DataType, DataTypeKind, Expression, TableConstraintKind, TableConstraints,
+        TableName,
     },
     error::{ApllodbErrorKind, ApllodbResult},
 };
@@ -24,19 +25,19 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     let t_name = &TableName::new("t")?;
 
     let c_id_def = ColumnDefinition::new(
-        ColumnName::new("id")?,
+        ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
     )?;
     let c1_def = ColumnDefinition::new(
-        ColumnName::new("c1")?,
+        ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
     )?;
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c_id_def.column_name().clone()],
+        column_names: vec![c_id_def.column_ref().as_column_name().clone()],
     }])?;
 
     // v1
@@ -51,8 +52,8 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     tx.insert(
         &t_name,
         hmap! {
-         c_id_def.column_name().clone() => Expression::ConstantVariant(Constant::from(1)),
-         c1_def.column_name().clone() => Expression::ConstantVariant(Constant::from(1))
+         c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(1)),
+         c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(1))
         },
     )?;
 
@@ -67,7 +68,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     tx.alter_table(
         &t_name,
         &AlterTableAction::DropColumn {
-            column_name: c1_def.column_name().clone(),
+            column_name: c1_def.column_ref().as_column_name().clone(),
         },
     )?;
 
@@ -82,30 +83,33 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     // | 2  |
     tx.insert(
         &t_name,
-        hmap! { c_id_def.column_name().clone() => Expression::ConstantVariant(Constant::from(2)) },
+        hmap! { c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(2)) },
     )?;
 
     // Selects both v1's record (id=1) and v2's record (id=2),
     // although v2 does not have column "c".
     let rows = tx.select(
         &t_name,
-        &vec![c_id_def.column_name().clone(), c1_def.column_name().clone()],
+        &vec![
+            c_id_def.column_ref().as_column_name().clone(),
+            c1_def.column_ref().as_column_name().clone(),
+        ],
     )?;
 
     assert_eq!(rows.clone().count(), 2);
 
     for row in rows {
-        let id: i32 = row.get(c_id_def.column_name())?;
+        let id: i32 = row.get(c_id_def.column_ref())?;
         match id {
-            1 => assert_eq!(row.get::<i32>(c1_def.column_name())?, 1),
+            1 => assert_eq!(row.get::<i32>(c1_def.column_ref())?, 1),
             2 => {
                 // Cannot fetch column `c1` from v2 as i32.
-                match row.get::<i32>(c1_def.column_name()) {
+                match row.get::<i32>(c1_def.column_ref()) {
                     Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
                     _ => unreachable!(),
                 };
                 // Can fetch column `c1` from v2 and it's value is NULL.
-                assert_eq!(row.get::<Option<i32>>(c1_def.column_name())?, None);
+                assert_eq!(row.get::<Option<i32>>(c1_def.column_ref())?, None);
             }
             _ => unreachable!(),
         }

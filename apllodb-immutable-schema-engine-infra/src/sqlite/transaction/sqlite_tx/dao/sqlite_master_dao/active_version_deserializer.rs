@@ -1,8 +1,5 @@
-use apllodb_immutable_schema_engine_domain::{row::column::non_pk_column::column_data_type::NonPKColumnDataType, version::active_version::ActiveVersion, vtable::VTable};
-use apllodb_shared_components::{
-    data_structure::{ColumnName,  DataType, DataTypeKind, ColumnDataType},
-    error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
-};
+use apllodb_immutable_schema_engine_domain::{ version::active_version::ActiveVersion, vtable::VTable};
+use apllodb_shared_components::{data_structure::{ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind}, error::{ApllodbError, ApllodbResult, ApllodbErrorKind}};
 use apllodb_sql_parser::{
     apllodb_ast::{Command, CreateTableCommand,   self},
     ApllodbAst, ApllodbSqlParser,
@@ -49,7 +46,7 @@ impl ActiveVersionDeserializer {
                 };
                 let version_number = sqlite_table_name.to_version_number();
          
-                let non_pk_column_data_types: Vec<NonPKColumnDataType> = column_definitions
+                let non_pk_column_data_types: Vec<ColumnDataType> = column_definitions
                 .as_vec()
                 .iter()
                 .filter(|cd| {
@@ -71,12 +68,12 @@ impl ActiveVersionDeserializer {
                     };
 
                     column_name_res.map(|column_name| {
-                        let cdt = ColumnDataType::new(column_name, data_type);
-                        NonPKColumnDataType::from(cdt)
+                        let cdt = ColumnDataType::new(ColumnReference::new(vtable.table_name().clone(), column_name), data_type);
+                        ColumnDataType::from(cdt)
                     }
                 )
                 })
-                .collect::<ApllodbResult<Vec<NonPKColumnDataType>>>()?;
+                .collect::<ApllodbResult<Vec<ColumnDataType>>>()?;
 
                 ActiveVersion::new(vtable.id(), &version_number, &non_pk_column_data_types)
             }
@@ -99,11 +96,8 @@ impl ActiveVersionDeserializer {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersionDeserializer;
-    use apllodb_shared_components::{
-         data_structure::{TableConstraints, DataTypeKind, ColumnDefinition, ColumnName, DataType, ColumnConstraints, TableConstraintKind, DatabaseName, TableName}, 
-        error::ApllodbResult
-    };
-    use apllodb_immutable_schema_engine_domain::{entity::Entity, row::column::non_pk_column::column_data_type::NonPKColumnDataType, version::active_version::ActiveVersion, vtable::VTable};
+    use apllodb_shared_components::{data_structure::{TableConstraints, DataTypeKind, ColumnDefinition, ColumnName, DataType, ColumnConstraints, TableConstraintKind, DatabaseName, TableName}, data_structure::ColumnDataType, error::ApllodbResult, data_structure::ColumnReference};
+    use apllodb_immutable_schema_engine_domain::{entity::Entity,  version::active_version::ActiveVersion, vtable::VTable};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
     #[test]
@@ -111,7 +105,7 @@ mod tests {
         setup();
 
         let c1_def = ColumnDefinition::new(
-            ColumnName::new("c1")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
         )?;
@@ -120,7 +114,7 @@ mod tests {
             (
             vec![c1_def.clone()],
             TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                column_names: vec![c1_def.column_name().clone()],
+                column_names: vec![c1_def.column_ref().as_column_name().clone()],
             }])?,
         )
         
@@ -131,9 +125,9 @@ mod tests {
             let database_name = DatabaseName::new("db")?;
             let table_name = TableName::new("tbl")?;
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
-            let non_pk_column_data_types: Vec<NonPKColumnDataType> = t.0.iter().map(|cd| {
+            let non_pk_column_data_types: Vec<ColumnDataType> = t.0.iter().map(|cd| {
                 let cdt = cd.column_data_type();
-                NonPKColumnDataType::from(cdt)
+                ColumnDataType::from(cdt)
             }).collect();
             let version = ActiveVersion::initial(vtable.id(), &non_pk_column_data_types)?;
 

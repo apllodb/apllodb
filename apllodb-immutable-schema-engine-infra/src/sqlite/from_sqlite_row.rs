@@ -1,13 +1,9 @@
 use super::sqlite_error::map_sqlite_err;
-use apllodb_immutable_schema_engine_domain::row::{
-    column::non_pk_column::column_name::NonPKColumnName,
-    column::{
-        non_pk_column::column_data_type::NonPKColumnDataType,
-        pk_column::column_data_type::PKColumnDataType,
-    },
-    immutable_row::{builder::ImmutableRowBuilder, ImmutableRow},
+use apllodb_immutable_schema_engine_domain::row::immutable_row::{
+    builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
+    data_structure::ColumnReference,
     data_structure::{ColumnDataType, DataTypeKind, SqlValue},
     error::ApllodbResult,
     traits::SqlConvertible,
@@ -16,35 +12,21 @@ use apllodb_shared_components::{
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
         sqlite_row: &rusqlite::Row<'_>,
-        pk_column_data_types: &[&PKColumnDataType],
-        non_pk_column_data_types: &[&NonPKColumnDataType],
-        non_pk_void_projections: &[NonPKColumnName],
+        column_data_types: &[&ColumnDataType],
+        void_projections: &[ColumnReference],
     ) -> ApllodbResult<ImmutableRow> {
         let mut builder = ImmutableRowBuilder::default();
 
-        // add PK to builder
-        for pk_column_data_type in pk_column_data_types {
-            let pk_column_name = pk_column_data_type.column_name();
-            let pk_sql_value =
-                Self::_sql_value(sqlite_row, pk_column_data_type.column_data_type())?;
-            builder = builder.add_pk_column(&pk_column_name, pk_sql_value)?;
-        }
-
-        log::error!("sqlite_row id: {:?}", sqlite_row.get::<_, i32>("id"));
-        log::error!("non_pk_column_data_types: {:?}", non_pk_column_data_types);
-
-        // add non-PK to builder
-        for non_pk_column_data_type in non_pk_column_data_types {
-            let non_pk_column_name = non_pk_column_data_type.column_name();
-            let non_pk_sql_value =
-                Self::_sql_value(sqlite_row, non_pk_column_data_type.column_data_type())?;
-            builder = builder.add_non_pk_column(&non_pk_column_name, non_pk_sql_value)?;
+        for cdt in column_data_types {
+            let non_pk_column_name = cdt.column_ref();
+            let non_pk_sql_value = Self::_sql_value(sqlite_row, cdt)?;
+            builder = builder.add_col_val(&non_pk_column_name, non_pk_sql_value)?;
         }
 
         // add requested (specified in projection) columns as NULL.
         // (E.g. v1 has `c1` and v2 does not. This row is for v2 and `c1` is requested.)
-        for non_pk_void_projection in non_pk_void_projections {
-            builder = builder.add_non_pk_void_projection(non_pk_void_projection)?;
+        for non_pk_void_projection in void_projections {
+            builder = builder.add_void_projection(non_pk_void_projection)?;
         }
 
         let row = builder.build()?;
@@ -74,21 +56,25 @@ pub(crate) trait FromSqliteRow {
     where
         T: rusqlite::types::FromSql + SqlConvertible,
     {
-        let column_name = column_data_type.column_name();
+        let colref = column_data_type.column_ref();
         let data_type = column_data_type.data_type();
 
         let err_conv = |e: rusqlite::Error| {
             map_sqlite_err(
                 e,
-                format!("failed to get column `{}`'s value from SQLite", column_name),
+                format!("failed to get column `{}`'s value from SQLite", colref),
             )
         };
 
         let sql_value: SqlValue = if data_type.nullable() {
-            let rust_value: Option<T> = sqlite_row.get(column_name.as_str()).map_err(err_conv)?;
+            let rust_value: Option<T> = sqlite_row
+                .get(colref.as_column_name().as_str())
+                .map_err(err_conv)?;
             SqlValue::pack(data_type, &rust_value)?
         } else {
-            let rust_value: T = sqlite_row.get(column_name.as_str()).map_err(err_conv)?;
+            let rust_value: T = sqlite_row
+                .get(colref.as_column_name().as_str())
+                .map_err(err_conv)?;
             SqlValue::pack(data_type, &rust_value)?
         };
 

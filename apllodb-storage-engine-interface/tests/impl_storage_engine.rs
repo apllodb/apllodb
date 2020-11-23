@@ -24,6 +24,7 @@ pub mod empty_storage_engine {
 
     mod row {
         use apllodb_shared_components::{
+            data_structure::ColumnReference,
             data_structure::{ColumnName, SqlValue},
             error::ApllodbResult,
         };
@@ -42,13 +43,7 @@ pub mod empty_storage_engine {
 
         pub struct EmptyRow;
         impl Row for EmptyRow {
-            type PK = EmptyPrimaryKey;
-
-            fn pk(&self) -> &Self::PK {
-                unimplemented!()
-            }
-
-            fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+            fn get_core(&self, colref: &ColumnReference) -> ApllodbResult<&SqlValue> {
                 unimplemented!()
             }
         }
@@ -179,6 +174,7 @@ pub mod empty_storage_engine {
 }
 
 use apllodb_shared_components::{
+    data_structure::ColumnReference,
     data_structure::{
         ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
         TableConstraintKind,
@@ -200,7 +196,7 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
     let tx: EmptyTx = EmptyStorageEngine::begin_transaction(&mut db)?;
 
     let c1_def = ColumnDefinition::new(
-        ColumnName::new("c1")?,
+        ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::default(),
     )?;
@@ -208,7 +204,7 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
     tx.create_table(
         &TableName::new("t")?,
         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-            column_names: vec![c1_def.column_name().clone()],
+            column_names: vec![c1_def.column_ref().as_column_name().clone()],
         }])?,
         &vec![],
     )?;

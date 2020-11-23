@@ -10,16 +10,15 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    row::{
-        column::non_pk_column::{
-            column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-        },
-        pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
-    },
+    row::pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
+    data_structure::ColumnDataType,
+    data_structure::ColumnName,
+    data_structure::ColumnReference,
+    data_structure::TableName,
     data_structure::{DataType, DataTypeKind},
     error::ApllodbResult,
 };
@@ -80,12 +79,12 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let cdt_rowid = self.cdt_rowid();
-        let cdt_revision = self.cdt_revision();
-        let cdt_version_number = self.cdt_version_number();
+        let cdt_rowid = self.cdt_rowid(vtable.table_name().clone());
+        let cdt_revision = self.cdt_revision(vtable.table_name().clone());
+        let cdt_version_number = self.cdt_version_number(vtable.table_name().clone());
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let row_iter = stmt.query_named(&[], &[], &column_data_types, &[])?;
+        let row_iter = stmt.query_named(&[], &column_data_types, &[])?;
 
         Ok(NaviCollection::new(row_iter))
     }
@@ -95,8 +94,6 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
         vtable_id: &VTableId,
         apk: &ApparentPrimaryKey,
     ) -> ApllodbResult<Navi> {
-        use std::convert::TryFrom;
-
         let sql = format!(
             "
 SELECT {cname_rowid}
@@ -114,15 +111,15 @@ SELECT {cname_rowid}
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let cdt_rowid = self.cdt_rowid();
+        let cdt_rowid = self.cdt_rowid(vtable_id.table_name().clone());
         let column_data_types = vec![&cdt_rowid];
 
-        let mut row_iter = stmt.query_named(&[], &[], &column_data_types, &[])?;
+        let mut row_iter = stmt.query_named(&[], &column_data_types, &[])?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {
             None => Navi::NotExist,
-            Some(r) => Navi::try_from(r)?,
+            Some(r) => Navi::from_navi_row(vtable_id.table_name(), r)?,
         };
         Ok(navi)
     }
@@ -192,21 +189,21 @@ INSERT INTO {tname} ({pk_column_names}, {cname_revision})
         Ok(())
     }
 
-    fn cdt_rowid(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_ROWID).unwrap(),
+    fn cdt_rowid(&self, table_name: TableName) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnReference::new(table_name, ColumnName::new(CNAME_ROWID).unwrap()),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_revision(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_REVISION).unwrap(),
+    fn cdt_revision(&self, table_name: TableName) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnReference::new(table_name, ColumnName::new(CNAME_REVISION).unwrap()),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_version_number(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
+    fn cdt_version_number(&self, table_name: TableName) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnReference::new(table_name, ColumnName::new(CNAME_VERSION_NUMBER).unwrap()),
             DataType::new(DataTypeKind::BigInt, true),
         )
     }

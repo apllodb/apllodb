@@ -1,16 +1,11 @@
 use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::column_name::NonPKColumnName,
-    row::{
-        column::{
-            non_pk_column::column_data_type::NonPKColumnDataType,
-            pk_column::column_data_type::PKColumnDataType,
-        },
-        immutable_row::ImmutableRow,
-    },
-    row_iter::version_row_iter::VersionRowIterator,
+    row::immutable_row::ImmutableRow, row_iter::version_row_iter::VersionRowIterator,
 };
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::{
+    data_structure::ColumnDataType, data_structure::ColumnReference,
+    error::ApllodbResult,
+};
 
 use std::{collections::VecDeque, fmt::Debug};
 
@@ -51,9 +46,8 @@ impl SqliteRowIterator {
     /// - `non_pk_void_projection` - Columns `sqlite_rows` do not have but another version has.
     pub(in crate::sqlite) fn new(
         sqlite_rows: &mut rusqlite::Rows<'_>,
-        pk_column_data_types: &[&PKColumnDataType],
-        non_pk_column_data_types: &[&NonPKColumnDataType],
-        non_pk_void_projection: &[NonPKColumnName],
+        column_data_types: &[&ColumnDataType],
+        void_projection: &[ColumnReference],
     ) -> ApllodbResult<Self> {
         use crate::sqlite::from_sqlite_row::FromSqliteRow;
 
@@ -62,12 +56,8 @@ impl SqliteRowIterator {
             .next()
             .map_err(|e| map_sqlite_err(e, "failed to get next rusqlite::Row"))?
         {
-            let row = ImmutableRow::from_sqlite_row(
-                sqlite_row,
-                pk_column_data_types,
-                non_pk_column_data_types,
-                non_pk_void_projection,
-            )?;
+            let row =
+                ImmutableRow::from_sqlite_row(sqlite_row, column_data_types, void_projection)?;
             rows.push_back(row);
         }
         Ok(Self(rows))

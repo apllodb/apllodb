@@ -3,14 +3,13 @@ mod active_version_deserializer;
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
-    row::column::non_pk_column::{
-        column_data_type::NonPKColumnDataType, column_name::NonPKColumnName,
-    },
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DataType, DataTypeKind},
+    data_structure::{
+        ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, TableName,
+    },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 
@@ -44,9 +43,12 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
         let create_table_sqls: Vec<String> = stmt
-            .query_named(&vec![], &[], &vec![&self.cdt_create_table_sql()], &[])?
+            .query_named(&vec![], &vec![&self.cdt_create_table_sql()], &[])?
             .map(|row| {
-                let s = row.get::<String>(&ColumnName::new(CNAME_CREATE_TABLE_SQL)?)?;
+                let s = row.get::<String>(&ColumnReference::new(
+                    TableName::new(TNAME)?,
+                    ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
+                ))?;
                 Ok(s)
             })
             .collect::<ApllodbResult<Vec<String>>>()?;
@@ -83,9 +85,12 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
             })
     }
 
-    fn cdt_create_table_sql(&self) -> NonPKColumnDataType {
-        NonPKColumnDataType::new(
-            NonPKColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
+    fn cdt_create_table_sql(&self) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnReference::new(
+                TableName::new(TNAME).unwrap(),
+                ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
+            ),
             DataType::new(DataTypeKind::Text, false),
         )
     }

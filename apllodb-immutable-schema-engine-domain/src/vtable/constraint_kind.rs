@@ -1,6 +1,5 @@
-use crate::row::column::pk_column::column_data_type::PKColumnDataType;
 use apllodb_shared_components::{
-    data_structure::{ColumnDefinition, ColumnName, TableConstraintKind},
+    data_structure::{ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use serde::{Deserialize, Serialize};
@@ -10,7 +9,7 @@ use serde::{Deserialize, Serialize};
 pub(super) enum TableWideConstraintKind {
     /// PRIMARY KEY ({column_name}, ...)
     PrimaryKey {
-        column_data_types: Vec<PKColumnDataType>,
+        column_data_types: Vec<ColumnDataType>,
     },
 
     /// UNIQUE ({column_name}, ...)
@@ -26,15 +25,15 @@ impl TableWideConstraintKind {
         let kind = match tck {
             TableConstraintKind::PrimaryKey { column_names } => {
                 let pk_column_data_types = column_names.iter().map(|pk_cn| {
-                    let pk_cd = column_definitions.iter().find(|cd| cd.column_name() == pk_cn).ok_or_else(||
+                    let pk_cd = column_definitions.iter().find(|cd| cd.column_ref().as_column_name() == pk_cn).ok_or_else(||
                         ApllodbError::new(
                             ApllodbErrorKind::InvalidTableDefinition,
                             format!("column `{}` does not exist in ColumnDefinition while it is declared as PRIMARY KEY", pk_cn),
                             None,
                         )
                     )?;
-                    Ok(PKColumnDataType::from(pk_cd.column_data_type()))
-                }).collect::<ApllodbResult<Vec<PKColumnDataType>>>()?;
+                    Ok(ColumnDataType::from(pk_cd.column_data_type()))
+                }).collect::<ApllodbResult<Vec<ColumnDataType>>>()?;
 
                 Self::PrimaryKey {
                     column_data_types: pk_column_data_types,
