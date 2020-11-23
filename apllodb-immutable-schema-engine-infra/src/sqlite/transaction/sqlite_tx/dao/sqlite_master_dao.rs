@@ -7,7 +7,9 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind},
+    data_structure::{
+        ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, TableName,
+    },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 
@@ -41,9 +43,12 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
         let create_table_sqls: Vec<String> = stmt
-            .query_named(&vec![], &[], &vec![&self.cdt_create_table_sql()], &[])?
+            .query_named(&vec![], &vec![&self.cdt_create_table_sql()], &[])?
             .map(|row| {
-                let s = row.get::<String>(&ColumnName::new(CNAME_CREATE_TABLE_SQL)?)?;
+                let s = row.get::<String>(&ColumnReference::new(
+                    TableName::new(TNAME)?,
+                    ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
+                ))?;
                 Ok(s)
             })
             .collect::<ApllodbResult<Vec<String>>>()?;
@@ -82,7 +87,10 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
 
     fn cdt_create_table_sql(&self) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
+            ColumnReference::new(
+                TableName::new(TNAME).unwrap(),
+                ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
+            ),
             DataType::new(DataTypeKind::Text, false),
         )
     }

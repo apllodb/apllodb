@@ -85,7 +85,7 @@ impl ActiveVersion {
                     .0
                     .column_data_types
                     .iter()
-                    .filter(|c| c.column_name().as_str() != column_to_drop.as_str())
+                    .filter(|c| c.column_ref().as_column_name().as_str() != column_to_drop.as_str())
                     .cloned()
                     .collect();
 
@@ -122,8 +122,8 @@ impl ActiveVersion {
         let not_null_columns = column_data_types
             .iter()
             .filter(|cdt| !cdt.data_type().nullable());
-        for not_null_column_name in not_null_columns.map(|cdt| cdt.column_name()) {
-            if !column_values.contains_key(&not_null_column_name) {
+        for not_null_column_name in not_null_columns.map(|cdt| cdt.column_ref()) {
+            if !column_values.contains_key(not_null_column_name.as_column_name()) {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::NotNullViolation,
                     format!(
@@ -150,7 +150,7 @@ impl ActiveVersion {
         self.0
             .column_data_types
             .iter()
-            .find(|c| c.column_name() == column_name)
+            .find(|c| c.column_ref().as_column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
                 ApllodbError::new(
@@ -167,7 +167,8 @@ mod tests {
     use super::ActiveVersion;
     use crate::{test_support::setup, vtable::id::VTableId};
     use apllodb_shared_components::data_structure::{
-        AlterTableAction, ColumnDataType, ColumnName, DataType, DataTypeKind,
+        AlterTableAction, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind,
+        TableName,
     };
     use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
 
@@ -176,7 +177,7 @@ mod tests {
         setup();
 
         let c1_cdt = ColumnDataType::new(
-            ColumnName::new("c1")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
         );
 
@@ -191,11 +192,11 @@ mod tests {
         setup();
 
         let c1_cdt = ColumnDataType::new(
-            ColumnName::new("c1")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
         );
         let c2_cdt = ColumnDataType::new(
-            ColumnName::new("c2")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
             DataType::new(DataTypeKind::Integer, false),
         );
 
@@ -204,19 +205,19 @@ mod tests {
         let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types)?;
 
         let action = AlterTableAction::DropColumn {
-            column_name: c1_cdt.column_name().clone(),
+            column_name: c1_cdt.column_ref().as_column_name().clone(),
         };
 
         let v2 = v1.create_next(&action)?;
 
         assert_eq!(v2.number().to_u64(), 2);
 
-        let v2_cols: Vec<&ColumnName> = v2
+        let v2_cols: Vec<&ColumnReference> = v2
             .column_data_types()
             .iter()
-            .map(|cdt| cdt.column_name())
+            .map(|cdt| cdt.column_ref())
             .collect();
-        assert_eq!(v2_cols, vec![c2_cdt.column_name()]);
+        assert_eq!(v2_cols, vec![c2_cdt.column_ref()]);
 
         Ok(())
     }
@@ -226,7 +227,7 @@ mod tests {
         setup();
 
         let c1_cdt = ColumnDataType::new(
-            ColumnName::new("c1")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
         );
         let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;

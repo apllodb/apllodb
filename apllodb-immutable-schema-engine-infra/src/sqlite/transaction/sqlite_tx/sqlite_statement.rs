@@ -3,7 +3,8 @@ use crate::sqlite::{
     row_iterator::SqliteRowIterator, sqlite_error::map_sqlite_err, to_sql_string::ToSqlString,
 };
 use apllodb_shared_components::{
-    data_structure::ColumnDataType, data_structure::ColumnName, error::ApllodbResult,
+    data_structure::ColumnDataType, data_structure::ColumnReference,
+    error::ApllodbResult,
 };
 
 #[derive(Debug)]
@@ -26,9 +27,8 @@ impl<'stmt, 'db: 'stmt> SqliteStatement<'stmt, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn query_named(
         &mut self,
         params: &[(&str, &dyn ToSqlString)],
-        pk_column_data_types: &[&ColumnDataType],
-        non_pk_column_data_types: &[&ColumnDataType],
-        non_pk_void_projection: &[ColumnName],
+        column_data_types: &[&ColumnDataType],
+        void_projection: &[ColumnReference],
     ) -> ApllodbResult<SqliteRowIterator> {
         let params = params
             .into_iter()
@@ -46,12 +46,7 @@ impl<'stmt, 'db: 'stmt> SqliteStatement<'stmt, 'db> {
             )
             .map_err(|e| map_sqlite_err(e, "SQLite raised an error on query_named()"))?;
 
-        let iter = SqliteRowIterator::new(
-            &mut rusqlite_rows,
-            pk_column_data_types,
-            non_pk_column_data_types,
-            non_pk_void_projection,
-        )?;
+        let iter = SqliteRowIterator::new(&mut rusqlite_rows, column_data_types, void_projection)?;
         Ok(iter)
     }
 }

@@ -36,7 +36,7 @@ impl TableWideConstraints {
     pub fn pk_column_names(&self) -> Vec<ColumnName> {
         self.pk_column_data_types()
             .iter()
-            .map(|cdt| cdt.column_name().clone())
+            .map(|cdt| cdt.column_ref().as_column_name().clone())
             .collect()
     }
 
@@ -68,8 +68,8 @@ mod tests {
     use crate::test_support::setup;
     use apllodb_shared_components::{
         data_structure::{
-            ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
-            TableConstraintKind, TableConstraints,
+            ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, DataType,
+            DataTypeKind, TableConstraintKind, TableConstraints, TableName,
         },
         error::{ApllodbErrorKind, ApllodbResult},
     };
@@ -79,12 +79,12 @@ mod tests {
         setup();
 
         let c1_def = ColumnDefinition::new(
-            ColumnName::new("c1")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
         )?;
         let c2_def = ColumnDefinition::new(
-            ColumnName::new("c2")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
         )?;
@@ -92,25 +92,28 @@ mod tests {
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
                 TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                    column_names: vec![c1_def.column_name().clone()],
+                    column_names: vec![c1_def.column_ref().as_column_name().clone()],
                 }])?,
                 vec![c1_def.clone(), c2_def.clone()],
             ),
             (
                 TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                    column_names: vec![c2_def.column_name().clone(), c1_def.column_name().clone()],
+                    column_names: vec![
+                        c2_def.column_ref().as_column_name().clone(),
+                        c1_def.column_ref().as_column_name().clone(),
+                    ],
                 }])?,
                 vec![c1_def.clone(), c2_def.clone()],
             ),
             (
                 TableConstraints::new(vec![
                     TableConstraintKind::PrimaryKey {
-                        column_names: vec![c1_def.column_name().clone()],
+                        column_names: vec![c1_def.column_ref().as_column_name().clone()],
                     },
                     TableConstraintKind::Unique {
                         column_names: vec![
-                            c1_def.column_name().clone(),
-                            c2_def.column_name().clone(),
+                            c1_def.column_ref().as_column_name().clone(),
+                            c2_def.column_ref().as_column_name().clone(),
                         ],
                     },
                 ])?,
@@ -133,7 +136,7 @@ mod tests {
         setup();
 
         let c1_def = ColumnDefinition::new(
-            ColumnName::new("c1")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
         )?;

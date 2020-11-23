@@ -77,7 +77,7 @@ impl ToSqlString for ColumnDataType {
     fn to_sql_string(&self) -> String {
         format!(
             "{} {}",
-            self.column_name().to_sql_string(),
+            self.column_ref().as_column_name().to_sql_string(),
             self.data_type().to_sql_string(),
         )
     }

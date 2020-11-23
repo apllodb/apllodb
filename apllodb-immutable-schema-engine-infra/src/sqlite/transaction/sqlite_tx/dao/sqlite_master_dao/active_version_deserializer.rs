@@ -1,8 +1,5 @@
 use apllodb_immutable_schema_engine_domain::{ version::active_version::ActiveVersion, vtable::VTable};
-use apllodb_shared_components::{
-    data_structure::{ColumnName,  DataType, DataTypeKind, ColumnDataType},
-    error::{ApllodbError, ApllodbResult, ApllodbErrorKind},
-};
+use apllodb_shared_components::{data_structure::{ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind}, error::{ApllodbError, ApllodbResult, ApllodbErrorKind}};
 use apllodb_sql_parser::{
     apllodb_ast::{Command, CreateTableCommand,   self},
     ApllodbAst, ApllodbSqlParser,
@@ -71,7 +68,7 @@ impl ActiveVersionDeserializer {
                     };
 
                     column_name_res.map(|column_name| {
-                        let cdt = ColumnDataType::new(column_name, data_type);
+                        let cdt = ColumnDataType::new(ColumnReference::new(vtable.table_name().clone(), column_name), data_type);
                         ColumnDataType::from(cdt)
                     }
                 )
@@ -99,7 +96,7 @@ impl ActiveVersionDeserializer {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersionDeserializer;
-    use apllodb_shared_components::{data_structure::{TableConstraints, DataTypeKind, ColumnDefinition, ColumnName, DataType, ColumnConstraints, TableConstraintKind, DatabaseName, TableName}, error::ApllodbResult, data_structure::ColumnDataType};
+    use apllodb_shared_components::{data_structure::{TableConstraints, DataTypeKind, ColumnDefinition, ColumnName, DataType, ColumnConstraints, TableConstraintKind, DatabaseName, TableName}, data_structure::ColumnDataType, error::ApllodbResult, data_structure::ColumnReference};
     use apllodb_immutable_schema_engine_domain::{entity::Entity,  version::active_version::ActiveVersion, vtable::VTable};
     use crate::{test_support::setup, sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper};
 
@@ -108,7 +105,7 @@ mod tests {
         setup();
 
         let c1_def = ColumnDefinition::new(
-            ColumnName::new("c1")?,
+            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
         )?;
@@ -117,7 +114,7 @@ mod tests {
             (
             vec![c1_def.clone()],
             TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                column_names: vec![c1_def.column_name().clone()],
+                column_names: vec![c1_def.column_ref().as_column_name().clone()],
             }])?,
         )
         

@@ -2,7 +2,12 @@ use crate::sqlite::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::Sqlite
 use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
-use apllodb_shared_components::{data_structure::{ColumnDataType, ColumnName, DataType, DataTypeKind}, error::{ApllodbError, ApllodbErrorKind, ApllodbResult}};
+use apllodb_shared_components::{
+    data_structure::{
+        ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, TableName,
+    },
+    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+};
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao<'dao, 'db: 'dao> {
@@ -77,8 +82,7 @@ CREATE TABLE IF NOT EXISTS {} (
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
         let mut row_iter = stmt.query_named(
             &[(":table_name", vtable_id.table_name())],
-            &[],
-            &vec![&self.cdt_table_wide_constraints()],
+            &vec![&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
             &[],
         )?;
         let row = row_iter.next().ok_or_else(|| {
@@ -92,8 +96,10 @@ CREATE TABLE IF NOT EXISTS {} (
             )
         })?;
 
-        let table_wide_constraints_str: String =
-            row.get(&ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?)?;
+        let table_wide_constraints_str: String = row.get(&ColumnReference::new(
+            vtable_id.table_name().clone(),
+            ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?,
+        ))?;
 
         let table_wide_constraints: TableWideConstraints =
             serde_yaml::from_str(&table_wide_constraints_str).map_err(|e| {
@@ -160,9 +166,12 @@ CREATE TABLE IF NOT EXISTS {} (
         Ok(())
     }
 
-    fn cdt_table_wide_constraints(&self) -> ColumnDataType {
+    fn cdt_table_wide_constraints(&self, table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
+            ColumnReference::new(
+                table_name,
+                ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
+            ),
             DataType::new(DataTypeKind::Text, false),
         )
     }

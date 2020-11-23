@@ -1,8 +1,8 @@
 use crate::vtable::VTable;
 use apllodb_shared_components::{
     data_structure::{
-        BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Constant, Expression,
-        LogicalFunction, SqlValue,
+        BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ComparisonFunction,
+        Constant, Expression, LogicalFunction, SqlValue, TableName,
     },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
@@ -13,6 +13,7 @@ use std::collections::{HashMap, VecDeque};
 /// Primary key which other components than Storage Engine observes.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ApparentPrimaryKey {
+    table_name: TableName,
     pk_column_names: Vec<ColumnName>,
 
     // real "key" of a record.
@@ -52,19 +53,19 @@ impl ApparentPrimaryKey {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
-            .map(|cdt| cdt.column_name().clone())
+            .map(|cdt| cdt.column_ref().as_column_name().clone())
             .collect::<Vec<ColumnName>>();
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
                 let expr = column_values
-                    .get(cdt.column_name())
+                    .get(cdt.column_ref().as_column_name())
                     .ok_or_else(|| {
                         ApllodbError::new(
                             ApllodbErrorKind::NotNullViolation,
                             format!(
                                 "primary key column `{}` must be specified (table `{}`)",
-                                cdt.column_name(),
+                                cdt.column_ref(),
                                 vtable.table_name()
                             ),
                             None,
@@ -74,7 +75,11 @@ impl ApparentPrimaryKey {
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
 
-        Ok(Self::new(apk_column_names, apk_sql_values))
+        Ok(Self::new(
+            vtable.table_name().clone(),
+            apk_column_names,
+            apk_sql_values,
+        ))
     }
 
     pub fn column_names(&self) -> &[ColumnName] {
@@ -93,7 +98,8 @@ impl ApparentPrimaryKey {
         self.zipped()
             .into_iter()
             .map(|(cname, sql_value)| {
-                ColumnDataType::new(cname.clone(), sql_value.data_type().clone())
+                let column_ref = ColumnReference::new(self.table_name.clone(), cname.clone());
+                ColumnDataType::new(column_ref, sql_value.data_type().clone())
             })
             .collect()
     }
