@@ -3,19 +3,18 @@ mod sqlite_table_name_for_version;
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_version::SqliteTableNameForVersion;
 
-use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::{
-        row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::SqliteTypes,
-        transaction::sqlite_tx::SqliteTx,
-    },
-};
+use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, transaction::sqlite_tx::SqliteTx, sqlite_types::VRREntriesInVersion};
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
-    version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion,
     vtable::VTable,
 };
-use apllodb_shared_components::{data_structure::ColumnDataType, data_structure::ColumnName, data_structure::{Expression, TableName}, error::ApllodbResult, data_structure::ColumnReference};
+use apllodb_shared_components::{
+    data_structure::ColumnDataType,
+    data_structure::ColumnName,
+    data_structure::ColumnReference,
+    data_structure::{Expression, TableName},
+    error::ApllodbResult,
+};
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::collections::HashMap;
 
@@ -57,12 +56,7 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         &self,
         vtable: &VTable,
         version: &ActiveVersion,
-        vrr_entries_in_version: VRREntriesInVersion<
-            'dao,
-            'db,
-            ApllodbImmutableSchemaEngine,
-            SqliteTypes,
-        >,
+        vrr_entries_in_version: VRREntriesInVersion<'dao, 'db>,
         projection: &[ColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         use crate::sqlite::to_sql_string::ToSqlString;
@@ -121,11 +115,8 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
         );
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let navi_rowids:  = vrr_entries_in_version.map(|e| {
-            e.id()
-        }
-        ).collect();
-        
+        let navi_rowids = vrr_entries_in_version.map(|e| e.id()).collect();
+
         let row_iter = stmt.query_named(
             &[(":navi_rowids", &navi_rowids)],
             &vtable

@@ -1,16 +1,15 @@
 mod navi_dao;
 
 use apllodb_immutable_schema_engine_domain::{
-    row::pk::apparent_pk::ApparentPrimaryKey,
-    version::id::VersionId,
-    version_revision_resolver::VersionRevisionResolver,
-    version_revision_resolver::{vrr_entries::VRREntries, vrr_entry::VRREntry},
-    vtable::id::VTableId,
-    vtable::VTable,
+    row::pk::apparent_pk::ApparentPrimaryKey, version::id::VersionId,
+    version_revision_resolver::VersionRevisionResolver, vtable::id::VTableId, vtable::VTable,
 };
 use apllodb_shared_components::error::ApllodbResult;
 
-use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
+use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
+    sqlite::sqlite_types::{SqliteTypes, VRREntries, VRREntry},
+};
 
 use self::navi_dao::NaviDao;
 
@@ -37,14 +36,11 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
         &self,
         _vtable_id: &VTableId,
         _pks: Vec<ApparentPrimaryKey>,
-    ) -> ApllodbResult<VRREntries<'vrr, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>> {
+    ) -> ApllodbResult<VRREntries<'vrr, 'db>> {
         todo!()
     }
 
-    fn scan(
-        &self,
-        _vtable_id: &VTableId,
-    ) -> ApllodbResult<VRREntries<'vrr, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>> {
+    fn scan(&self, _vtable_id: &VTableId) -> ApllodbResult<VRREntries<'vrr, 'db>> {
         todo!()
     }
 
@@ -52,7 +48,7 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
         &self,
         _version_id: &VersionId,
         _pk: ApparentPrimaryKey,
-    ) -> ApllodbResult<VRREntry<'vrr, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>> {
+    ) -> ApllodbResult<VRREntry<'vrr, 'db>> {
         // let revision = match self
         //     .navi_dao()
         //     .probe_latest_revision(version_id.vtable_id(), &apparent_pk)?

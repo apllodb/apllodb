@@ -5,7 +5,7 @@ use crate::{
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         row_iterator::SqliteRowIterator,
-        sqlite_types::SqliteTypes,
+        sqlite_types::{SqliteTypes, VRREntries},
         transaction::{
             sqlite_tx::{
                 dao::{SqliteMasterDao, VersionDao},
@@ -19,7 +19,6 @@ use crate::{
 use apllodb_immutable_schema_engine_domain::{
     row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
-    version_revision_resolver::vrr_entries::VRREntries,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
@@ -109,7 +108,7 @@ impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
 
     fn probe_vrr_entries(
         &self,
-        vrr_entries: VRREntries<'repo, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>,
+        vrr_entries: VRREntries<'repo, 'db>,
         projection: &[ColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
