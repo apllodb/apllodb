@@ -44,12 +44,6 @@ pub trait VTableRepository<
     fn full_scan(
         &self,
         vtable_id: &VTableId,
-        non_pk_column_names: &[ColumnName],
-    ) -> ApllodbResult<Engine::RowIter>;
-
-    fn probe_vrr_entries(
-        &self,
-        vrr_entries: VRREntries<'repo, 'db, Engine, Types>,
         projection: &[ColumnName],
     ) -> ApllodbResult<Engine::RowIter>;
 

@@ -79,32 +79,6 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
         self.probe_vrr_entries(vrr_entries, projection)
     }
 
-    fn probe_vrr_entries(
-        &self,
-        vrr_entries: VRREntries<'repo, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>,
-        projection: &[ColumnName],
-    ) -> ApllodbResult<ImmutableSchemaRowIter> {
-        let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
-
-        let vtable = self.vtable_dao().select(&vrr_entries.vtable_id())?;
-
-        for (version_id, vrr_entries_in_version) in vrr_entries.group_by_version_id() {
-            let version = self
-                .sqlite_master_dao()
-                .select_active_version(&vtable, &version_id)?;
-
-            let ver_row_iter = self.version_dao().probe_in_version(
-                &vtable,
-                &version,
-                vrr_entries_in_version,
-                projection,
-            )?;
-            ver_row_iters.push_back(ver_row_iter);
-        }
-
-        Ok(ImmutableSchemaRowIter::chain_versions(ver_row_iters))
-    }
-
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.vrr().deregister_all(vtable)?;
         Ok(())
@@ -131,5 +105,31 @@ impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
 
     fn sqlite_master_dao(&self) -> SqliteMasterDao<'repo, 'db> {
         SqliteMasterDao::new(&self.tx)
+    }
+
+    fn probe_vrr_entries(
+        &self,
+        vrr_entries: VRREntries<'repo, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>,
+        projection: &[ColumnName],
+    ) -> ApllodbResult<ImmutableSchemaRowIter> {
+        let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
+
+        let vtable = self.vtable_dao().select(&vrr_entries.vtable_id())?;
+
+        for (version_id, vrr_entries_in_version) in vrr_entries.group_by_version_id() {
+            let version = self
+                .sqlite_master_dao()
+                .select_active_version(&vtable, &version_id)?;
+
+            let ver_row_iter = self.version_dao().probe_in_version(
+                &vtable,
+                &version,
+                vrr_entries_in_version,
+                projection,
+            )?;
+            ver_row_iters.push_back(ver_row_iter);
+        }
+
+        Ok(ImmutableSchemaRowIter::chain_versions(ver_row_iters))
     }
 }
