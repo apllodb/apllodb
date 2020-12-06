@@ -9,7 +9,6 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
-    version_revision_resolver::vrr_id::VRRId,
     vtable::VTable,
 };
 use apllodb_shared_components::{
