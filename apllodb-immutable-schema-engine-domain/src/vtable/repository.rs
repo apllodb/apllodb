@@ -1,7 +1,6 @@
 use super::{id::VTableId, VTable};
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, version::active_versions::ActiveVersions,
-    version_revision_resolver::vrr_entries::VRREntries,
 };
 use apllodb_shared_components::data_structure::ColumnName;
 use apllodb_shared_components::error::ApllodbResult;

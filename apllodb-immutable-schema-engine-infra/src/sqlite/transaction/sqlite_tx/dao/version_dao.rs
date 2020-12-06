@@ -3,7 +3,10 @@ mod sqlite_table_name_for_version;
 
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_version::SqliteTableNameForVersion;
 
-use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, transaction::sqlite_tx::SqliteTx, sqlite_types::VRREntriesInVersion};
+use crate::sqlite::{
+    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
+    transaction::sqlite_tx::SqliteTx,
+};
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
@@ -62,31 +65,25 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
-        let projection: Vec<String> = projection
-            .iter()
-            .map(|cn| cn.as_str().to_string())
-            .collect();
         let column_data_types = version.column_data_types();
         // Filter existing and requested columns.
-        // FIXME これのせいで、v2の c1==NULL が現れないで困っている。
-        // SQLitのレイヤで NULL as c1 とやるか、SQLiteはあくまでもそんなカラムは知らんと返し、ImmutableRowに変換する時にNULLをぶち込むか。
         let existing_projection: Vec<&ColumnDataType> = column_data_types
             .iter()
-            .filter(|cdt| {
-                projection.contains(&cdt.column_ref().as_column_name().as_str().to_string())
-            })
+            .filter(|cdt| projection.contains(&cdt.column_ref().as_column_name()))
             .collect();
         let void_projection: Vec<ColumnReference> = projection
             .iter()
             .filter(|prj_cn| {
                 column_data_types
                     .iter()
-                    .any(|cdt| cdt.column_ref().as_column_name().as_str() == **prj_cn)
+                    .any(|cdt| cdt.column_ref().as_column_name() == *prj_cn)
             })
-            .cloned()
+            .map(|prj_cn| ColumnReference::new(vtable.table_name().clone(), prj_cn.clone()))
             .collect();
         let sqlite_table_name = Self::table_name(version.id(), true);
         let pk_column_names = vtable.table_wide_constraints().pk_column_names();
+
+        // TODO ここ、JOINするんじゃなくてVersionテーブルだけから取って、rowを結合する
         let sql = format!(
             "
 SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM {version_table}
@@ -119,12 +116,6 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
 
         let row_iter = stmt.query_named(
             &[(":navi_rowids", &navi_rowids)],
-            &vtable
-                .table_wide_constraints()
-                .pk_column_data_types()
-                .iter()
-                .map(|pk_cdt| pk_cdt)
-                .collect::<Vec<&PKColumnDataType>>(),
             &existing_projection,
             &void_projection,
         )?;
