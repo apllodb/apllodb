@@ -9,6 +9,7 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
+    version_revision_resolver::vrr_id::VRRId,
     vtable::VTable,
 };
 use apllodb_shared_components::{
@@ -106,13 +107,16 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
                 .collect::<Vec<String>>()
                 .join(", "),
             version_table = sqlite_table_name.to_sql_string(),
-            navi_table = NaviDao::table_name(version.vtable_id()),
+            // navi_table = NaviDao::table_name(version.vtable_id()),
+            navi_table = "TODO",
             version_navi_rowid = CNAME_NAVI_ROWID,
-            navi_rowid = navi_dao::CNAME_ROWID,
+            // navi_rowid = navi_dao::CNAME_ROWID,
+            navi_rowid = "TODO",
         );
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let navi_rowids = vrr_entries_in_version.map(|e| e.id()).collect();
+        let navi_rowids: Vec<SqliteRowid> =
+            vrr_entries_in_version.map(|e| e.id().clone()).collect();
 
         let row_iter = stmt.query_named(
             &[(":navi_rowids", &navi_rowids)],
