@@ -136,18 +136,10 @@ SELECT {cname_rowid}
         let sql = format!(
             "INSERT INTO {tname} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, :revision, :version_number);",
             tname = Self::table_name(vtable_id),
-            pk_column_names = apk.column_names()
-                .iter()
-                .map(|cn| cn.as_str())
-                .collect::<Vec<&str>>()
-                .join(", "),
+            pk_column_names = apk.column_names().to_sql_string(),
             cname_revision=CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
-            pk_sql_values = apk.sql_values()
-                .iter()
-                .map(|sql_value| sql_value.to_sql_string())
-                .collect::<Vec<String>>()
-                .join(", "),
+            pk_sql_values = apk.sql_values().to_sql_string(),
         );
 
         let _ = self.sqlite_tx.execute_named(

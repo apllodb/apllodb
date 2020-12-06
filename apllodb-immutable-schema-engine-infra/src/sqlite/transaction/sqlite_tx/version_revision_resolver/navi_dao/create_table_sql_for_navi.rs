@@ -30,10 +30,7 @@ CREATE TABLE {tname} (
             pk_coldefs = vtable
                 .table_wide_constraints()
                 .pk_column_data_types()
-                .iter()
-                .map(|cdt| cdt.to_sql_string())
-                .collect::<Vec<String>>()
-                .join(",\n  "),
+                .to_sql_string(),
             cname_revision = super::CNAME_REVISION,
             cname_version_number = super::CNAME_VERSION_NUMBER
         );

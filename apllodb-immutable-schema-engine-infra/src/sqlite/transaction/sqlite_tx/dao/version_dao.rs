@@ -98,14 +98,7 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
             } else {
                 ", "
             },
-            non_pk_column_names = existing_projection
-                .iter()
-                .map(|non_pk_cdt| {
-                    let non_pk_cn = non_pk_cdt.column_ref().as_column_name();
-                    non_pk_cn.as_str().into()
-                })
-                .collect::<Vec<String>>()
-                .join(", "),
+            non_pk_column_names = existing_projection.to_sql_string(),
             version_table = sqlite_table_name.to_sql_string(),
             // navi_table = NaviDao::table_name(version.vtable_id()),
             navi_table = "TODO",
@@ -145,16 +138,8 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
             navi_rowid = CNAME_NAVI_ROWID,
             navi_rowid_val = vrr_id.0,
             comma_if_non_pk_column_names = if column_values.is_empty() { "" } else { ", " },
-            non_pk_column_names = column_values
-                .keys()
-                .map(|cn| cn.as_str())
-                .collect::<Vec<&str>>()
-                .join(", "),
-            non_pk_column_values = column_values
-                .values()
-                .map(|expr| expr.to_sql_string())
-                .collect::<Vec<String>>()
-                .join(", "),
+            non_pk_column_names = column_values.keys().collect::<Vec<_>>().to_sql_string(),
+            non_pk_column_values = column_values.values().collect::<Vec<_>>().to_sql_string(),
         );
 
         self.sqlite_tx.execute_named(&sql, &vec![])?;
