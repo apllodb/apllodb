@@ -5,9 +5,10 @@ pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_ver
 
 use crate::sqlite::{
     row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
-    transaction::sqlite_tx::SqliteTx,
+    to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
+    row::immutable_row::ImmutableRow,
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
 };
@@ -18,8 +19,9 @@ use apllodb_shared_components::{
     data_structure::{Expression, TableName},
     error::ApllodbResult,
 };
+use apllodb_storage_engine_interface::Row;
 use create_table_sql_for_version::CreateTableSqlForVersion;
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap, VecDeque};
 
 #[cfg(test)]
 pub(in crate::sqlite::transaction::sqlite_tx::dao) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
@@ -62,7 +64,6 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         vrr_entries_in_version: VRREntriesInVersion<'dao, 'db>,
         projection: &[ColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
-        use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let column_data_types = version.column_data_types();
@@ -71,51 +72,76 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
             .iter()
             .filter(|cdt| projection.contains(&cdt.column_ref().as_column_name()))
             .collect();
-        let void_projection: Vec<ColumnReference> = projection
-            .iter()
-            .filter(|prj_cn| {
-                column_data_types
-                    .iter()
-                    .any(|cdt| cdt.column_ref().as_column_name() == *prj_cn)
-            })
-            .map(|prj_cn| ColumnReference::new(vtable.table_name().clone(), prj_cn.clone()))
-            .collect();
-        let sqlite_table_name = Self::table_name(version.id(), true);
-        let pk_column_names = vtable.table_wide_constraints().pk_column_names();
 
-        // TODO ここ、JOINするんじゃなくてVersionテーブルだけから取って、rowを結合する
-        let sql = format!(
-            "
-SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM {version_table}
-  INNER JOIN {navi_table}
-    ON {version_table}.{version_navi_rowid} = {navi_table}.{navi_rowid}
-  WHERE {version_table}.{version_navi_rowid} IN (:navi_rowids)
+        if existing_projection.is_empty() {
+            // PK-only ImmutableRow
+            let pk_row_iter = vrr_entries_in_version
+                .map(|e| ImmutableRow::from(e))
+                .collect::<SqliteRowIterator>();
+            Ok(pk_row_iter)
+        } else {
+            let void_projection: Vec<ColumnReference> = projection
+                .iter()
+                .filter(|prj_cn| {
+                    column_data_types
+                        .iter()
+                        .any(|cdt| cdt.column_ref().as_column_name() == *prj_cn)
+                })
+                .map(|prj_cn| ColumnReference::new(vtable.table_name().clone(), prj_cn.clone()))
+                .collect();
+            let sqlite_table_name = Self::table_name(version.id(), true);
+
+            let sql = format!(
+                "
+SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
+  WHERE {version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
-            pk_column_names = pk_column_names.to_sql_string(),
-            comma_if_non_pk_column_names = if existing_projection.is_empty() {
-                ""
-            } else {
-                ", "
-            },
-            non_pk_column_names = existing_projection.to_sql_string(),
-            version_table = sqlite_table_name.to_sql_string(),
-            // navi_table = NaviDao::table_name(version.vtable_id()),
-            navi_table = "TODO",
-            version_navi_rowid = CNAME_NAVI_ROWID,
-            // navi_rowid = navi_dao::CNAME_ROWID,
-            navi_rowid = "TODO",
-        );
-        let mut stmt = self.sqlite_tx.prepare(&sql)?;
+                non_pk_column_names = existing_projection.to_sql_string(),
+                version_table = sqlite_table_name.to_sql_string(),
+                version_navi_rowid = CNAME_NAVI_ROWID,
+            );
+            let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let navi_rowids: Vec<SqliteRowid> =
-            vrr_entries_in_version.map(|e| e.id().clone()).collect();
+            let navi_rowids: Vec<SqliteRowid> =
+                vrr_entries_in_version.map(|e| e.id().clone()).collect();
 
-        let row_iter = stmt.query_named(
-            &[(":navi_rowids", &navi_rowids)],
-            &existing_projection,
-            &void_projection,
-        )?;
-        Ok(row_iter)
+            let row_iter = stmt.query_named(
+                &[(":navi_rowids", &navi_rowids)],
+                &existing_projection,
+                &void_projection,
+            )?;
+
+            let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
+            for row in row_iter {
+                rowid_vs_row.insert(
+                    row.get(&ColumnReference::new(
+                        sqlite_table_name,
+                        ColumnName::new(CNAME_NAVI_ROWID)?,
+                    ))?,
+                    row,
+                );
+            }
+
+            let mut rows_with_pk = VecDeque::<ImmutableRow>::new();
+            for e in vrr_entries_in_version {
+                let rowid = e.id().clone();
+                let pk = e.into_pk();
+
+                if let Entry::Occupied(e) = rowid_vs_row.entry(rowid) {
+                    let (_, row_wo_pk) = e.remove_entry();
+                    row_wo_pk.append(pk.colvals())?;
+                    rows_with_pk.push_back(row_wo_pk)
+                } else {
+                    panic!(
+                        "navi_rowid={} is requested to table `{}` but it's not found",
+                        rowid.to_sql_string(),
+                        sqlite_table_name
+                    );
+                }
+            }
+
+            Ok(SqliteRowIterator::from(rows_with_pk))
+        }
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
@@ -124,8 +150,6 @@ SELECT {pk_column_names}{comma_if_non_pk_column_names}{non_pk_column_names} FROM
         vrr_id: &SqliteRowid,
         column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
-        use crate::sqlite::to_sql_string::ToSqlString;
-
         let sqlite_table_name = Self::table_name(version_id, true);
         let sql = format!(
             "

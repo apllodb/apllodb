@@ -1,6 +1,6 @@
 mod int;
-mod text;
 mod option;
+mod text;
 
 use crate::{
     data_structure::{DataType, DataTypeKind},
@@ -64,7 +64,7 @@ pub trait SqlConvertible: Serialize + DeserializeOwned + std::fmt::Debug {
     fn from_sql_types() -> HashSet<DataType>;
 }
 
-fn not_null_sql_types(kinds: &[DataTypeKind]) -> HashSet<DataType> {
+pub fn not_null_sql_types(kinds: &[DataTypeKind]) -> HashSet<DataType> {
     kinds
         .iter()
         .map(|kind| DataType::new(kind.clone(), false))

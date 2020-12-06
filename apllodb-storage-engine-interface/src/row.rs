@@ -2,8 +2,11 @@ mod pk;
 
 pub use pk::PrimaryKey;
 
-use apllodb_shared_components::{data_structure::ColumnReference, traits::SqlConvertible};
 use apllodb_shared_components::{data_structure::SqlValue, error::ApllodbResult};
+use apllodb_shared_components::{
+    data_structure::{ColumnReference, ColumnValue},
+    traits::SqlConvertible,
+};
 
 /// Row representation used in storage engine.
 /// Row, unlike `Record`, does not deal with `Expression`s.
@@ -21,4 +24,12 @@ pub trait Row {
         let sql_value = self.get_core(colref)?;
         Ok(sql_value.unpack()?)
     }
+
+    /// Append column values to this row.
+    ///
+    /// # Failures
+    ///
+    /// - [DuplicateColumn](a.html) when:
+    ///   - Same ColumnReference is already in this row.
+    fn append(&mut self, colvals: Vec<ColumnValue>) -> ApllodbResult<()>;
 }

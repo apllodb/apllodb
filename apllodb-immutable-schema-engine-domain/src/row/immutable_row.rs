@@ -1,11 +1,11 @@
 pub mod builder;
 
 use apllodb_shared_components::{
-    data_structure::{ColumnReference, SqlValue},
+    data_structure::{ColumnReference, ColumnValue, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
 use apllodb_storage_engine_interface::Row;
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap};
 
 /// Immutable row which is never updated or deleted by any transaction.
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
@@ -24,5 +24,26 @@ impl Row for ImmutableRow {
                 None,
             )
         })
+    }
+
+    fn append(&mut self, colvals: Vec<ColumnValue>) -> ApllodbResult<()> {
+        colvals
+            .into_iter()
+            .map(
+                |colval| match self.col_vals.entry(colval.as_column_ref().clone()) {
+                    Entry::Occupied(_) => Err(ApllodbError::new(
+                        ApllodbErrorKind::DuplicateColumn,
+                        format!("column `{}` is already in this row", colval.as_column_ref()),
+                        None,
+                    )),
+                    Entry::Vacant(e) => {
+                        e.insert(colval.into_sql_value());
+                        Ok(())
+                    }
+                },
+            )
+            .collect::<ApllodbResult<Vec<()>>>()?;
+
+        Ok(())
     }
 }

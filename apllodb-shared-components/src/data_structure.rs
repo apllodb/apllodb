@@ -12,7 +12,7 @@ mod value;
 pub use alter_table_action::AlterTableAction;
 pub use column::{
     ColumnConstraintKind, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, DataType, DataTypeKind,
+    ColumnReference, ColumnValue, DataType, DataTypeKind,
 };
 pub use database::DatabaseName;
 pub use expression::{
