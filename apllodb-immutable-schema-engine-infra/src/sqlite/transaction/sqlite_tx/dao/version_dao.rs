@@ -8,7 +8,7 @@ use crate::sqlite::{
     to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::immutable_row::ImmutableRow,
+    row::{immutable_row::ImmutableRow, pk::apparent_pk::ApparentPrimaryKey},
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
 };
@@ -75,10 +75,10 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
 
         if existing_projection.is_empty() {
             // PK-only ImmutableRow
-            let pk_row_iter = vrr_entries_in_version
+            let pk_rows = vrr_entries_in_version
                 .map(|e| ImmutableRow::from(e))
-                .collect::<SqliteRowIterator>();
-            Ok(pk_row_iter)
+                .collect::<VecDeque<ImmutableRow>>();
+            Ok(SqliteRowIterator::from(pk_rows))
         } else {
             let void_projection: Vec<ColumnReference> = projection
                 .iter()
@@ -102,8 +102,10 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
             );
             let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-            let navi_rowids: Vec<SqliteRowid> =
-                vrr_entries_in_version.map(|e| e.id().clone()).collect();
+            let (navi_rowids, pks): (Vec<SqliteRowid>, Vec<ApparentPrimaryKey>) =
+                vrr_entries_in_version
+                    .map(|e| (e.id().clone(), e.into_pk()))
+                    .unzip();
 
             let row_iter = stmt.query_named(
                 &[(":navi_rowids", &navi_rowids)],
@@ -115,7 +117,7 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
             for row in row_iter {
                 rowid_vs_row.insert(
                     row.get(&ColumnReference::new(
-                        sqlite_table_name,
+                        sqlite_table_name.clone(),
                         ColumnName::new(CNAME_NAVI_ROWID)?,
                     ))?,
                     row,
@@ -123,13 +125,10 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
             }
 
             let mut rows_with_pk = VecDeque::<ImmutableRow>::new();
-            for e in vrr_entries_in_version {
-                let rowid = e.id().clone();
-                let pk = e.into_pk();
-
-                if let Entry::Occupied(e) = rowid_vs_row.entry(rowid) {
-                    let (_, row_wo_pk) = e.remove_entry();
-                    row_wo_pk.append(pk.colvals())?;
+            for (rowid, pk) in navi_rowids.into_iter().zip(pks) {
+                if let Entry::Occupied(oe) = rowid_vs_row.entry(rowid.clone()) {
+                    let (_, mut row_wo_pk) = oe.remove_entry();
+                    row_wo_pk.append(pk.into_colvals())?;
                     rows_with_pk.push_back(row_wo_pk)
                 } else {
                     panic!(

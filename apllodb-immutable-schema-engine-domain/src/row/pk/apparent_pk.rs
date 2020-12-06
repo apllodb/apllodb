@@ -1,8 +1,8 @@
 use crate::vtable::VTable;
 use apllodb_shared_components::{
     data_structure::{
-        BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ComparisonFunction,
-        Constant, Expression, LogicalFunction, SqlValue, TableName,
+        BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ColumnValue,
+        ComparisonFunction, Constant, Expression, LogicalFunction, SqlValue, TableName,
     },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
@@ -92,6 +92,19 @@ impl ApparentPrimaryKey {
 
     pub fn zipped(&self) -> Vec<(&ColumnName, &SqlValue)> {
         self.pk_column_names.iter().zip(&self.sql_values).collect()
+    }
+
+    pub fn into_colvals(self) -> Vec<ColumnValue> {
+        let table_name = &self.table_name;
+
+        self.pk_column_names
+            .into_iter()
+            .zip(self.sql_values)
+            .map(|(cn, v)| {
+                let colref = ColumnReference::new(table_name.clone(), cn);
+                ColumnValue::new(colref, v)
+            })
+            .collect()
     }
 
     pub fn column_data_types(&self) -> Vec<ColumnDataType> {

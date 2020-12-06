@@ -26,6 +26,18 @@ impl<
         'db: 'vrr,
         Engine: StorageEngine<'vrr, 'db>,
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
+    > VRREntry<'vrr, 'db, Engine, Types>
+{
+    pub fn into_pk(self) -> ApparentPrimaryKey {
+        self.pk
+    }
+}
+
+impl<
+        'vrr,
+        'db: 'vrr,
+        Engine: StorageEngine<'vrr, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > Clone for VRREntry<'vrr, 'db, Engine, Types>
 {
     fn clone(&self) -> Self {
