@@ -42,7 +42,7 @@ pub trait VTableRepository<
 
     fn full_scan(
         &self,
-        vtable_id: &VTableId,
+        vtable: &VTable,
         projection: &[ColumnName],
     ) -> ApllodbResult<Engine::RowIter>;
 

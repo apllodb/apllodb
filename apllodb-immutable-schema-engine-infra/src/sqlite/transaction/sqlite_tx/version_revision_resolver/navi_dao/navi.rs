@@ -1,14 +1,17 @@
 use super::{CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
 use crate::sqlite::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
-    row::{immutable_row::ImmutableRow, pk::full_pk::revision::Revision},
+    row::{
+        immutable_row::ImmutableRow,
+        pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
+    },
     version::version_number::VersionNumber,
+    vtable::VTable,
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, ColumnReference, TableName},
-    error::{ApllodbResult},
+    error::ApllodbResult,
 };
-
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx) enum Navi {
@@ -26,7 +29,7 @@ pub(in crate::sqlite::transaction::sqlite_tx) enum Navi {
 impl Navi {
     pub(in crate::sqlite::transaction::sqlite_tx) fn from_navi_row(
         table_name: &TableName,
-        r: ImmutableRow,
+        r: &ImmutableRow,
     ) -> ApllodbResult<Self> {
         use apllodb_storage_engine_interface::Row;
 
@@ -55,9 +58,34 @@ impl Navi {
     }
 }
 
+/// Does not have PrimaryKey for performance
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx) struct ExistingNavi {
     pub(in crate::sqlite::transaction::sqlite_tx) rowid: SqliteRowid,
     pub(in crate::sqlite::transaction::sqlite_tx) revision: Revision,
     pub(in crate::sqlite::transaction::sqlite_tx) version_number: VersionNumber,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub(in crate::sqlite::transaction::sqlite_tx) struct ExistingNaviWithPK {
+    pub(in crate::sqlite::transaction::sqlite_tx) navi: ExistingNavi,
+    pub(in crate::sqlite::transaction::sqlite_tx) pk: ApparentPrimaryKey,
+}
+
+/// `Some()` only when `r` is Navi::Exist.
+impl ExistingNaviWithPK {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn from_navi_row(
+        vtable: &VTable,
+        r: ImmutableRow,
+    ) -> ApllodbResult<Option<Self>> {
+        let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(vtable.table_name(), &r)? {
+            Some(ExistingNaviWithPK {
+                navi: existing_navi,
+                pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, r)?,
+            })
+        } else {
+            None
+        };
+        Ok(ret)
+    }
 }

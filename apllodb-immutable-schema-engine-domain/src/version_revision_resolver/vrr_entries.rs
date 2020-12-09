@@ -25,9 +25,7 @@ impl<
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > VRREntries<'vrr, 'db, Engine, Types>
 {
-    pub(in crate::version_revision_resolver) fn new(
-        inner: VecDeque<VRREntry<'vrr, 'db, Engine, Types>>,
-    ) -> Self {
+    pub fn new(inner: VecDeque<VRREntry<'vrr, 'db, Engine, Types>>) -> Self {
         assert!(
             !inner.is_empty(),
             "VRREntries must have at least 1 element."

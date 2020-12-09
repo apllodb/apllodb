@@ -1,4 +1,4 @@
-use crate::vtable::VTable;
+use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     data_structure::{
         BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ColumnValue,
@@ -46,6 +46,13 @@ impl PrimaryKey for ApparentPrimaryKey {
 }
 
 impl ApparentPrimaryKey {
+    pub fn from_table_and_immutable_row(
+        vtable: &VTable, // こっからPKの定義を得る
+        row: ImmutableRow,
+    ) -> ApllodbResult<Self> {
+        todo!()
+    }
+
     pub fn from_table_and_column_values(
         vtable: &VTable,
         column_values: &HashMap<ColumnName, Expression>,

@@ -14,7 +14,7 @@ impl Iterator for NaviCollection {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.row_iter.next().map(|r| {
-            let navi = Navi::from_navi_row(&self.navi_table_name, r)?;
+            let navi = Navi::from_navi_row(&self.navi_table_name, &r)?;
 
             match navi {
                 Navi::Exist(existing_navi) => Ok(existing_navi),

@@ -24,17 +24,14 @@ pub trait VersionRevisionResolver<
     fn create_table(&self, vtable: &VTable) -> ApllodbResult<()>;
 
     // probe : PKをキーにして、最新revisionであるものの「VRR-ID, version, revision」(optional) を返す。
-    // pks の指定順序で返却。
-    // TODO: 範囲選択に対応するためのI/F
     fn probe(
         &self,
-        _vtable_id: &VTableId,
-        _pks: Vec<ApparentPrimaryKey>,
+        vtable_id: &VTableId,
+        pks: Vec<ApparentPrimaryKey>,
     ) -> ApllodbResult<VRREntries<'vrr, 'db, Engine, Types>>;
 
     // scan : PKでグルーピングした時に最新のrevisionであるものの「VRR-ID, PK, version, revision」を返す。
-    // PKの昇順で返却。
-    fn scan(&self, _vtable_id: &VTableId) -> ApllodbResult<VRREntries<'vrr, 'db, Engine, Types>>;
+    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db, Engine, Types>>;
 
     // register : 「PK, version」を受け取り、それをそのPKにおける新revisionとして登録し、VRR-IDを発行する。
     fn register(

@@ -3,7 +3,6 @@ mod navi;
 mod navi_collection;
 
 pub(in crate::sqlite::transaction::sqlite_tx) use navi::{ExistingNavi, Navi};
-pub(in crate::sqlite::transaction::sqlite_tx) use navi_collection::NaviCollection;
 
 use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
@@ -23,6 +22,8 @@ use apllodb_shared_components::{
     error::ApllodbResult,
 };
 use create_table_sql_for_navi::CreateTableSqlForNavi;
+
+use self::navi::ExistingNaviWithPK;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct NaviDao<'dao, 'db: 'dao> {
@@ -52,28 +53,27 @@ impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
         Ok(())
     }
 
-    // TODO VRR::scan に移行する
     pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
         &self,
         vtable: &VTable,
-    ) -> ApllodbResult<NaviCollection> {
+    ) -> ApllodbResult<Vec<ExistingNaviWithPK>> {
         let sql = format!(
             "
-SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
+SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number}
   FROM {tname}
   GROUP BY {pk_column_names}
   HAVING
     {cname_revision} = MAX({cname_revision}) AND
     {cname_version_number} IS NOT NULL
 ",
-            cname_rowid = CNAME_ROWID,
-            cname_revision = CNAME_REVISION,
-            cname_version_number = CNAME_VERSION_NUMBER,
-            tname = Self::table_name(vtable.id()),
             pk_column_names = vtable
                 .table_wide_constraints()
                 .pk_column_names()
                 .to_sql_string(),
+            cname_rowid = CNAME_ROWID,
+            cname_revision = CNAME_REVISION,
+            cname_version_number = CNAME_VERSION_NUMBER,
+            tname = Self::table_name(vtable.id()),
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
@@ -85,7 +85,10 @@ SELECT {cname_rowid}, {cname_revision}, {cname_version_number}
 
         let row_iter = stmt.query_named(&[], &column_data_types, &[])?;
 
-        Ok(NaviCollection::new(vtable.table_name().clone(), row_iter))
+        let ret: Vec<ExistingNaviWithPK> = row_iter
+            .filter_map(|r| ExistingNaviWithPK::from_navi_row(vtable, r).ok().flatten())
+            .collect();
+        Ok(ret)
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn probe_latest_revision(
@@ -118,17 +121,16 @@ SELECT {cname_rowid}
 
         let navi = match opt_row {
             None => Navi::NotExist,
-            Some(r) => Navi::from_navi_row(vtable_id.table_name(), r)?,
+            Some(r) => Navi::from_navi_row(vtable_id.table_name(), &r)?,
         };
         Ok(navi)
     }
 
-    // TODO VRR::registerの中で呼び出す
     /// Returns lastly inserted row's ROWID.
     pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
         &self,
-        apk: ApparentPrimaryKey,
-        revision: Revision,
+        apk: &ApparentPrimaryKey,
+        revision: &Revision,
         version_id: &VersionId,
     ) -> ApllodbResult<SqliteRowid> {
         let vtable_id = version_id.vtable_id();

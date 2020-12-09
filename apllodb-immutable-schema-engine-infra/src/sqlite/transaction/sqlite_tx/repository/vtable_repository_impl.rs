@@ -71,10 +71,10 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
 
     fn full_scan(
         &self,
-        vtable_id: &VTableId,
+        vtable: &VTable,
         projection: &[ColumnName],
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
-        let vrr_entries = self.vrr().scan(&vtable_id)?;
+        let vrr_entries = self.vrr().scan(&vtable)?;
         self.probe_vrr_entries(vrr_entries, projection)
     }
 
