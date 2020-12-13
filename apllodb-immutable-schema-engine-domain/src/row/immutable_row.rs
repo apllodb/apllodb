@@ -4,12 +4,8 @@ use apllodb_shared_components::{
     data_structure::{ColumnReference, ColumnValue, SqlValue},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::{Row, StorageEngine};
+use apllodb_storage_engine_interface::Row;
 use std::collections::{hash_map::Entry, HashMap};
-
-use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes, version_revision_resolver::vrr_entry::VRREntry,
-};
 
 /// Immutable row which is never updated or deleted by any transaction.
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
@@ -49,17 +45,5 @@ impl Row for ImmutableRow {
             .collect::<ApllodbResult<Vec<()>>>()?;
 
         Ok(())
-    }
-}
-
-impl<
-        'vrr,
-        'db: 'vrr,
-        Engine: StorageEngine<'vrr, 'db>,
-        Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
-    > From<VRREntry<'vrr, 'db, Engine, Types>> for ImmutableRow
-{
-    fn from(_: VRREntry<'vrr, 'db, Engine, Types>) -> Self {
-        todo!()
     }
 }

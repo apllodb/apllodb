@@ -76,8 +76,8 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         if existing_projection.is_empty() {
             // PK-only ImmutableRow
             let pk_rows = vrr_entries_in_version
-                .map(|e| ImmutableRow::from(e))
-                .collect::<VecDeque<ImmutableRow>>();
+                .map(|e| e.into_pk_only_row())
+                .collect::<ApllodbResult<VecDeque<ImmutableRow>>>()?;
             Ok(SqliteRowIterator::from(pk_rows))
         } else {
             let void_projection: Vec<ColumnReference> = projection
