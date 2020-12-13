@@ -71,6 +71,7 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
                 version_id,
                 navi.navi.revision.clone(),
             );
+            entries.push_back(entry);
         }
         Ok(VRREntries::new(entries))
     }
