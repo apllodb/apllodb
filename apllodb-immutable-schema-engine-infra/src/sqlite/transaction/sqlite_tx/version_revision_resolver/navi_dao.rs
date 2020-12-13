@@ -1,7 +1,7 @@
 mod create_table_sql_for_navi;
 mod navi;
 
-pub(in crate::sqlite::transaction::sqlite_tx) use navi::{Navi};
+pub(in crate::sqlite::transaction::sqlite_tx) use navi::Navi;
 
 use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
@@ -85,7 +85,10 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
         let row_iter = stmt.query_named(&[], &column_data_types, &[])?;
 
         let ret: Vec<ExistingNaviWithPK> = row_iter
-            .filter_map(|r| ExistingNaviWithPK::from_navi_row(vtable, r).ok().flatten())
+            .map(|r| ExistingNaviWithPK::from_navi_row(vtable, r))
+            .collect::<ApllodbResult<Vec<Option<ExistingNaviWithPK>>>>()?
+            .into_iter()
+            .flatten()
             .collect();
         Ok(ret)
     }
