@@ -12,7 +12,7 @@ use apllodb_shared_components::{
 /// Row, unlike `Record`, does not deal with `Expression`s.
 pub trait Row {
     #[doc(hidden)]
-    fn get_core(&self, colref: &ColumnReference) -> ApllodbResult<&SqlValue>;
+    fn get_sql_value(&self, colref: &ColumnReference) -> ApllodbResult<&SqlValue>;
 
     /// Get value from column.
     ///
@@ -21,7 +21,7 @@ pub trait Row {
     /// - [UndefinedColumn](a.html) when:
     ///   - `column_name` is not in this Row.
     fn get<T: SqlConvertible>(&self, colref: &ColumnReference) -> ApllodbResult<T> {
-        let sql_value = self.get_core(colref)?;
+        let sql_value = self.get_sql_value(colref)?;
         Ok(sql_value.unpack()?)
     }
 

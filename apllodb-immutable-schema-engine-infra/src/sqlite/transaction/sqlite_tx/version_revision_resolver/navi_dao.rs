@@ -1,7 +1,7 @@
 mod create_table_sql_for_navi;
 mod navi;
 
-pub(in crate::sqlite::transaction::sqlite_tx) use navi::{ExistingNavi, Navi};
+pub(in crate::sqlite::transaction::sqlite_tx) use navi::{Navi};
 
 use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
