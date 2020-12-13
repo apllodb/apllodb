@@ -80,7 +80,11 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
         let cdt_rowid = self.cdt_rowid(vtable.table_name().clone());
         let cdt_revision = self.cdt_revision(vtable.table_name().clone());
         let cdt_version_number = self.cdt_version_number(vtable.table_name().clone());
-        let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
+
+        let mut column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
+        for pk_cdt in vtable.table_wide_constraints().pk_column_data_types() {
+            column_data_types.push(pk_cdt);
+        }
 
         let row_iter = stmt.query_named(&[], &column_data_types, &[])?;
 
