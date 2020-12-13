@@ -27,16 +27,13 @@ impl<
     > VRREntriesInVersion<'vrr, 'db, Engine, Types>
 {
     pub(in crate::version_revision_resolver) fn new(
+        version_id: VersionId,
         vrr_entries_in_version: VecDeque<VRREntry<'vrr, 'db, Engine, Types>>,
     ) -> Self {
-        assert!(!vrr_entries_in_version.is_empty(),);
+        let vtable_id = version_id.vtable_id().clone();
         Self {
-            version_id: vrr_entries_in_version
-                .front()
-                .expect("VRREntriesInVersion must have at least 1 element.")
-                .version_id
-                .clone(),
-            vrr_entries: VRREntries::new(vrr_entries_in_version),
+            version_id,
+            vrr_entries: VRREntries::new(vtable_id, vrr_entries_in_version),
         }
     }
 

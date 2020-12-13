@@ -57,7 +57,7 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
                 _ => {}
             }
         }
-        Ok(VRREntries::new(entries))
+        Ok(VRREntries::new(vtable_id.clone(), entries))
     }
 
     fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db>> {
@@ -73,7 +73,7 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
             );
             entries.push_back(entry);
         }
-        Ok(VRREntries::new(entries))
+        Ok(VRREntries::new(vtable.id().clone(), entries))
     }
 
     fn register(

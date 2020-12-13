@@ -115,10 +115,10 @@ impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
 
         let vtable = self.vtable_dao().select(&vrr_entries.vtable_id())?;
 
-        for (version_id, vrr_entries_in_version) in vrr_entries.group_by_version_id() {
+        for vrr_entries_in_version in vrr_entries.group_by_version_id() {
             let version = self
                 .sqlite_master_dao()
-                .select_active_version(&vtable, &version_id)?;
+                .select_active_version(&vtable, vrr_entries_in_version.version_id())?;
 
             let ver_row_iter = self.version_dao().probe_in_version(
                 &vtable,
