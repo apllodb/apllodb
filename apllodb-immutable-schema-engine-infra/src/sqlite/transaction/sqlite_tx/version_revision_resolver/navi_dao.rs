@@ -120,7 +120,7 @@ SELECT {cname_rowid}
 
         let navi = match opt_row {
             None => Navi::NotExist,
-            Some(r) => Navi::from_navi_row(vtable_id.table_name(), &r)?,
+            Some(mut r) => Navi::from_navi_row(vtable_id.table_name(), &mut r)?,
         };
         Ok(navi)
     }

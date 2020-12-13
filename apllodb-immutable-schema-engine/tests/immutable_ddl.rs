@@ -98,7 +98,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
 
     assert_eq!(rows.clone().count(), 2);
 
-    for row in rows {
+    for mut row in rows {
         let id: i32 = row.get(c_id_def.column_ref())?;
         match id {
             1 => assert_eq!(row.get::<i32>(c1_def.column_ref())?, 1),

@@ -65,13 +65,13 @@ mod tests {
 
         let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
 
-        let row1 = ImmutableRowBuilder::default()
+        let mut row1 = ImmutableRowBuilder::default()
             .add_col_val(
                 &colref,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .build()?;
-        let row2 = ImmutableRowBuilder::default()
+        let mut row2 = ImmutableRowBuilder::default()
             .add_col_val(
                 &colref,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,

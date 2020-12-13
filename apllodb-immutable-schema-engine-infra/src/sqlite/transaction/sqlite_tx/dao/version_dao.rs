@@ -114,7 +114,7 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
             )?;
 
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
-            for row in row_iter {
+            for mut row in row_iter {
                 rowid_vs_row.insert(
                     row.get(&ColumnReference::new(
                         sqlite_table_name.clone(),

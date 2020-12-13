@@ -20,8 +20,8 @@ pub struct ImmutableRow {
 }
 
 impl Row for ImmutableRow {
-    fn get_sql_value(&self, colref: &ColumnReference) -> ApllodbResult<&SqlValue> {
-        self.col_vals.get(&colref).ok_or_else(|| {
+    fn get_sql_value(&mut self, colref: &ColumnReference) -> ApllodbResult<SqlValue> {
+        self.col_vals.remove(&colref).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
                 format!("undefined column: `{}`", colref),

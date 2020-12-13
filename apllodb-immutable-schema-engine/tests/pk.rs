@@ -54,7 +54,7 @@ fn test_compound_pk() -> ApllodbResult<()> {
         &t_name,
         &vec![c_postal_code_def.column_ref().as_column_name().clone()],
     )?;
-    for row in row_iter {
+    for mut row in row_iter {
         assert_eq!(row.get::<i16>(c_country_code_def.column_ref())?, 100i16, "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
         assert_eq!(row.get::<i32>(c_postal_code_def.column_ref())?, 1000001i32);
     }

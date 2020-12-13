@@ -29,7 +29,7 @@ pub(in crate::sqlite::transaction::sqlite_tx) enum Navi {
 impl Navi {
     pub(in crate::sqlite::transaction::sqlite_tx) fn from_navi_row(
         table_name: &TableName,
-        r: &ImmutableRow,
+        r: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
         use apllodb_storage_engine_interface::Row;
 
@@ -76,9 +76,9 @@ pub(in crate::sqlite::transaction::sqlite_tx) struct ExistingNaviWithPK {
 impl ExistingNaviWithPK {
     pub(in crate::sqlite::transaction::sqlite_tx) fn from_navi_row(
         vtable: &VTable,
-        r: ImmutableRow,
+        mut r: ImmutableRow,
     ) -> ApllodbResult<Option<Self>> {
-        let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(vtable.table_name(), &r)? {
+        let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(vtable.table_name(), &mut r)? {
             Some(ExistingNaviWithPK {
                 navi: existing_navi,
                 pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, r)?,
