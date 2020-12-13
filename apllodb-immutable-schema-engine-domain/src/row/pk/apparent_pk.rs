@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::PrimaryKey;
+use apllodb_storage_engine_interface::{PrimaryKey, Row};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
@@ -47,10 +47,25 @@ impl PrimaryKey for ApparentPrimaryKey {
 
 impl ApparentPrimaryKey {
     pub fn from_table_and_immutable_row(
-        vtable: &VTable, // こっからPKの定義を得る
-        row: ImmutableRow,
+        vtable: &VTable,
+        mut row: ImmutableRow,
     ) -> ApllodbResult<Self> {
-        todo!()
+        let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
+        let apk_column_names = apk_cdts
+            .iter()
+            .map(|cdt| cdt.column_ref().as_column_name().clone())
+            .collect::<Vec<ColumnName>>();
+
+        let apk_sql_values = apk_cdts
+            .iter()
+            .map(|cdt| row.get_sql_value(cdt.column_ref()))
+            .collect::<ApllodbResult<Vec<SqlValue>>>()?;
+
+        Ok(Self::new(
+            vtable.table_name().clone(),
+            apk_column_names,
+            apk_sql_values,
+        ))
     }
 
     pub fn from_table_and_column_values(
