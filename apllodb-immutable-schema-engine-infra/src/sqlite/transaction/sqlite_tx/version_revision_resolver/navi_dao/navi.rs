@@ -78,14 +78,15 @@ impl ExistingNaviWithPK {
         vtable: &VTable,
         mut r: ImmutableRow,
     ) -> ApllodbResult<Option<Self>> {
-        let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(vtable.table_name(), &mut r)? {
-            Some(ExistingNaviWithPK {
-                navi: existing_navi,
-                pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, r)?,
-            })
-        } else {
-            None
-        };
+        let ret =
+            if let Navi::Exist(existing_navi) = Navi::from_navi_row(vtable.table_name(), &mut r)? {
+                Some(ExistingNaviWithPK {
+                    navi: existing_navi,
+                    pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, r)?,
+                })
+            } else {
+                None
+            };
         Ok(ret)
     }
 }

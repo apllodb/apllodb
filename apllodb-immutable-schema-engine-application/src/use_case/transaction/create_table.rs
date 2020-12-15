@@ -1,6 +1,15 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::{abstract_types::ImmutableSchemaAbstractTypes, row::column::filter_non_pk_column_definitions, version::{active_version::ActiveVersion, repository::VersionRepository}, vtable::{repository::VTableRepository, VTable}};
-use apllodb_shared_components::{data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName}, error::ApllodbResult, data_structure::ColumnDataType};
+use apllodb_immutable_schema_engine_domain::{
+    abstract_types::ImmutableSchemaAbstractTypes,
+    row::column::filter_non_pk_column_definitions,
+    version::{active_version::ActiveVersion, repository::VersionRepository},
+    vtable::{repository::VTableRepository, VTable},
+};
+use apllodb_shared_components::{
+    data_structure::ColumnDataType,
+    data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},
+    error::ApllodbResult,
+};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use std::{fmt::Debug, marker::PhantomData};

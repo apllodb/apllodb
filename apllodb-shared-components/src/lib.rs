@@ -4,5 +4,5 @@
 
 pub mod data_structure;
 pub mod error;
-pub mod traits;
 pub mod helper;
+pub mod traits;

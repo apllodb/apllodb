@@ -1,6 +1,6 @@
 use super::version_number::VersionNumber;
-use serde::{Deserialize, Serialize};
 use crate::vtable::id::VTableId;
+use serde::{Deserialize, Serialize};
 
 /// ID of VTable
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -25,4 +25,3 @@ impl VersionId {
         &self.version_number
     }
 }
-
