@@ -84,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_order_matters() -> ApllodbResult<()> {
+    fn test_add_order_does_not_matter() -> ApllodbResult<()> {
         setup();
 
         let colref1 = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
@@ -112,7 +112,7 @@ mod tests {
             )?
             .build()?;
 
-        assert_ne!(row1, row2);
+        assert_eq!(row1, row2);
 
         Ok(())
     }
