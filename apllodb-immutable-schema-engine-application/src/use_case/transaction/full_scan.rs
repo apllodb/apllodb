@@ -75,7 +75,6 @@ impl<
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
 
-        // TODO ここで PK projection を弾いてはいけない。
         let non_pk_column_names = filter_non_pk_column_names(
             input.column_names,
             &vtable.table_wide_constraints().pk_column_names(),

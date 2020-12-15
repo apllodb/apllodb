@@ -69,6 +69,9 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
         Ok(())
     }
 
+    /// Every PK column is included in resulting row although it is not specified in `projection`.
+    ///
+    /// FIXME Exclude unnecessary PK column in resulting row for performance.
     fn full_scan(
         &self,
         vtable: &VTable,

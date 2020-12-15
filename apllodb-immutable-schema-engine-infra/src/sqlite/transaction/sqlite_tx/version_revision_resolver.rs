@@ -33,15 +33,18 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
         self.navi_dao().create_table(vtable)
     }
 
+    /// Every PK column is included in resulting row although it is not specified in `projection`.
+    ///
+    /// FIXME Exclude unnecessary PK column in resulting row for performance.
     fn probe(
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
     ) -> ApllodbResult<VRREntries<'vrr, 'db>> {
-        // TODO solve N+1 problem
         let mut entries = VecDeque::<VRREntry>::new();
 
         for pk in pks {
+            // FIXME solve N+1 problem
             let navi = self.navi_dao().probe_latest_revision(vtable_id, &pk)?;
             match navi {
                 Navi::Exist(existing_navi) => {
@@ -60,6 +63,9 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
         Ok(VRREntries::new(vtable_id.clone(), entries))
     }
 
+    /// Every PK column is included in resulting row although it is not specified in `projection`.
+    ///
+    /// FIXME Exclude unnecessary PK column in resulting row for performance.
     fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db>> {
         let mut entries = VecDeque::<VRREntry>::new();
 
