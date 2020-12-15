@@ -98,7 +98,7 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
         Ok(VRREntry::new(rowid, pk, version_id.clone(), revision))
     }
 
-    fn deregister(&self, _vtable_id: &VTableId, _pk: &ApparentPrimaryKey) -> ApllodbResult<()> {
+    fn deregister(&self, _vtable_id: &VTableId, _pks: &[ApparentPrimaryKey]) -> ApllodbResult<()> {
         todo!()
     }
 

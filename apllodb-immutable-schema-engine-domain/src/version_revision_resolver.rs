@@ -23,27 +23,23 @@ pub trait VersionRevisionResolver<
 {
     fn create_table(&self, vtable: &VTable) -> ApllodbResult<()>;
 
-    // probe : PKをキーにして、最新revisionであるものの「VRR-ID, version, revision」(optional) を返す。
+    /// Returns undefined order of VRREntry
     fn probe(
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
     ) -> ApllodbResult<VRREntries<'vrr, 'db, Engine, Types>>;
 
-    // scan : PKでグルーピングした時に最新のrevisionであるものの「VRR-ID, PK, version, revision」を返す。
+    /// Returns undefined order of VRREntry
     fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db, Engine, Types>>;
 
-    // register : 「PK, version」を受け取り、それをそのPKにおける新revisionとして登録し、VRR-IDを発行する。
     fn register(
         &self,
-        _version_id: &VersionId,
-        _pk: ApparentPrimaryKey,
+        version_id: &VersionId,
+        pk: ApparentPrimaryKey,
     ) -> ApllodbResult<VRREntry<'vrr, 'db, Engine, Types>>;
 
-    // deregister : 「PK」を受け取り、そのPKのレコードを亡き者とする
-    fn deregister(&self, _vtable_id: &VTableId, _pk: &ApparentPrimaryKey) -> ApllodbResult<()>;
+    fn deregister(&self, vtable_id: &VTableId, pks: &[ApparentPrimaryKey]) -> ApllodbResult<()>;
 
-    fn deregister_all(&self, _vtable: &VTable) -> ApllodbResult<()> {
-        todo!()
-    }
+    fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 }
