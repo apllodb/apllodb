@@ -54,7 +54,7 @@ impl ActiveVersion {
 
         Ok(Self(Version {
             id,
-            column_data_types: non_pk_column_data_types.iter().cloned().collect(),
+            column_data_types: non_pk_column_data_types.to_vec(),
             // TODO: カラム制約とテーブル制約からつくる
             constraints: VersionConstraints::default(),
         }))
@@ -78,7 +78,6 @@ impl ActiveVersion {
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,
             } => {
-                let column_to_drop = ColumnName::from(column_to_drop.clone());
                 self.validate_col_existence(&column_to_drop)?;
 
                 let next_column_data_types: Vec<ColumnDataType> = self
@@ -136,12 +135,10 @@ impl ActiveVersion {
         }
 
         // Check column value to insert.
-        for (_column_name, _expr) in column_values {
-
-            // TODO implement NullViolation error detection after Expression can hold NULL.
-
-            // TODO implement CheckViolation error detection
-        }
+        // for (_column_name, _expr) in column_values {
+        // TODO implement NullViolation error detection after Expression can hold NULL.
+        // TODO implement CheckViolation error detection
+        // }
 
         Ok(())
     }

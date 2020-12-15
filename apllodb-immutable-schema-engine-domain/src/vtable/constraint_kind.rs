@@ -32,7 +32,7 @@ impl TableWideConstraintKind {
                             None,
                         )
                     )?;
-                    Ok(ColumnDataType::from(pk_cd.column_data_type()))
+                    Ok(pk_cd.column_data_type())
                 }).collect::<ApllodbResult<Vec<ColumnDataType>>>()?;
 
                 Self::PrimaryKey {

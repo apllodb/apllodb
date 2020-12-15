@@ -75,13 +75,11 @@ impl ActiveVersions {
         // summarize errors
 
         // none version has a specified column.
-        if errors_per_versions.iter().map(|(_, e)| e.kind()).all(|k| {
-            if let ApllodbErrorKind::UndefinedColumn = k {
-                true
-            } else {
-                false
-            }
-        }) {
+        if errors_per_versions
+            .iter()
+            .map(|(_, e)| e.kind())
+            .all(|k| matches!(k, ApllodbErrorKind::UndefinedColumn))
+        {
             Err(ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
                 format!(
