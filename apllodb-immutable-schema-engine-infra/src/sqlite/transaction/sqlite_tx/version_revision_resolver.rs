@@ -17,7 +17,7 @@ use crate::{
     sqlite::sqlite_types::{SqliteTypes, VRREntries, VRREntry},
 };
 
-use self::navi_dao::{NaviDao, navi::Navi};
+use self::navi_dao::{navi::Navi, NaviDao};
 
 use super::SqliteTx;
 

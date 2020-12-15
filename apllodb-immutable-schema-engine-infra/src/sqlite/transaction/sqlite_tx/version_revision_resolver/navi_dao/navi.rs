@@ -63,7 +63,8 @@ impl Navi {
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct ExistingNavi {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) rowid: SqliteRowid,
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) revision: Revision,
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) version_number: VersionNumber,
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) version_number:
+        VersionNumber,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
