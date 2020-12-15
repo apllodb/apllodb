@@ -9,7 +9,6 @@ use crate::{
 use super::{vrr_entries_in_version::VRREntriesInVersion, vrr_entry::VRREntry};
 
 /// Sequence of VRREntry.
-/// Must have at least 1 entry.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
 pub struct VRREntries<
     'vrr,
