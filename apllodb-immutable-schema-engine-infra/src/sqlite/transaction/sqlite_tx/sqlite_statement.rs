@@ -3,8 +3,7 @@ use crate::sqlite::{
     row_iterator::SqliteRowIterator, sqlite_error::map_sqlite_err, to_sql_string::ToSqlString,
 };
 use apllodb_shared_components::{
-    data_structure::ColumnDataType, data_structure::ColumnReference,
-    error::ApllodbResult,
+    data_structure::ColumnDataType, data_structure::ColumnReference, error::ApllodbResult,
 };
 
 #[derive(Debug)]

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::BooleanExpression;
+use serde::{Deserialize, Serialize};
 
 /// AND, OR, NOT
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]

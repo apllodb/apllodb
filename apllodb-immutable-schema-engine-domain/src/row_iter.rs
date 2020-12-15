@@ -15,5 +15,5 @@ pub trait ImmutableSchemaRowIterator<
 >: Iterator<Item = ImmutableRow> + Debug
 {
     /// Chain iterators from multiple versions.
-    fn chain(iters: impl IntoIterator<Item = Types::VersionRowIter>) -> Self;
+    fn chain_versions(iters: impl IntoIterator<Item = Types::VersionRowIter>) -> Self;
 }

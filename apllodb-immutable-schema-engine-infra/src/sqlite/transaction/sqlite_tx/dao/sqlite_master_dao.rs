@@ -44,7 +44,7 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
         let create_table_sqls: Vec<String> = stmt
             .query_named(&vec![], &vec![&self.cdt_create_table_sql()], &[])?
-            .map(|row| {
+            .map(|mut row| {
                 let s = row.get::<String>(&ColumnReference::new(
                     TableName::new(TNAME)?,
                     ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
@@ -62,6 +62,7 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
             .collect::<ApllodbResult<Vec<ActiveVersion>>>()
     }
 
+    // TODO 消す
     pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_version(
         &self,
         vtable: &VTable,

@@ -65,13 +65,13 @@ mod tests {
 
         let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
 
-        let row1 = ImmutableRowBuilder::default()
+        let mut row1 = ImmutableRowBuilder::default()
             .add_col_val(
                 &colref,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
             )?
             .build()?;
-        let row2 = ImmutableRowBuilder::default()
+        let mut row2 = ImmutableRowBuilder::default()
             .add_col_val(
                 &colref,
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
@@ -84,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_order_matters() -> ApllodbResult<()> {
+    fn test_add_order_does_not_matter() -> ApllodbResult<()> {
         setup();
 
         let colref1 = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
@@ -112,7 +112,7 @@ mod tests {
             )?
             .build()?;
 
-        assert_ne!(row1, row2);
+        assert_eq!(row1, row2);
 
         Ok(())
     }

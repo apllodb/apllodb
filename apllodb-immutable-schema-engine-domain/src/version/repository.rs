@@ -1,7 +1,9 @@
 use crate::row::pk::apparent_pk::ApparentPrimaryKey;
 
 use super::{active_version::ActiveVersion, id::VersionId};
-use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult, data_structure::ColumnName};
+use apllodb_shared_components::{
+    data_structure::ColumnName, data_structure::Expression, error::ApllodbResult,
+};
 use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 

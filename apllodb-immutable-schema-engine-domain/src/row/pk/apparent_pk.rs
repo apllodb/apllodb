@@ -1,12 +1,12 @@
-use crate::vtable::VTable;
+use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     data_structure::{
-        BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ComparisonFunction,
-        Constant, Expression, LogicalFunction, SqlValue, TableName,
+        BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ColumnValue,
+        ComparisonFunction, Constant, Expression, LogicalFunction, SqlValue, TableName,
     },
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::PrimaryKey;
+use apllodb_storage_engine_interface::{PrimaryKey, Row};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
@@ -46,6 +46,28 @@ impl PrimaryKey for ApparentPrimaryKey {
 }
 
 impl ApparentPrimaryKey {
+    pub fn from_table_and_immutable_row(
+        vtable: &VTable,
+        mut row: ImmutableRow,
+    ) -> ApllodbResult<Self> {
+        let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
+        let apk_column_names = apk_cdts
+            .iter()
+            .map(|cdt| cdt.column_ref().as_column_name().clone())
+            .collect::<Vec<ColumnName>>();
+
+        let apk_sql_values = apk_cdts
+            .iter()
+            .map(|cdt| row.get_sql_value(cdt.column_ref()))
+            .collect::<ApllodbResult<Vec<SqlValue>>>()?;
+
+        Ok(Self::new(
+            vtable.table_name().clone(),
+            apk_column_names,
+            apk_sql_values,
+        ))
+    }
+
     pub fn from_table_and_column_values(
         vtable: &VTable,
         column_values: &HashMap<ColumnName, Expression>,
@@ -92,6 +114,19 @@ impl ApparentPrimaryKey {
 
     pub fn zipped(&self) -> Vec<(&ColumnName, &SqlValue)> {
         self.pk_column_names.iter().zip(&self.sql_values).collect()
+    }
+
+    pub fn into_colvals(self) -> Vec<ColumnValue> {
+        let table_name = &self.table_name;
+
+        self.pk_column_names
+            .into_iter()
+            .zip(self.sql_values)
+            .map(|(cn, v)| {
+                let colref = ColumnReference::new(table_name.clone(), cn);
+                ColumnValue::new(colref, v)
+            })
+            .collect()
     }
 
     pub fn column_data_types(&self) -> Vec<ColumnDataType> {

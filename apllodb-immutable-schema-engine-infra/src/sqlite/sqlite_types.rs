@@ -4,6 +4,7 @@ use crate::external_interface::ApllodbImmutableSchemaEngine;
 
 use super::{
     row_iterator::SqliteRowIterator,
+    sqlite_rowid::SqliteRowid,
     transaction::sqlite_tx::repository::{
         version_repository_impl::VersionRepositoryImpl,
         vtable_repository_impl::VTableRepositoryImpl,
@@ -16,8 +17,28 @@ pub struct SqliteTypes;
 impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<'repo, 'db, ApllodbImmutableSchemaEngine>
     for SqliteTypes
 {
+    type VRRId = SqliteRowid;
+
     type VersionRowIter = SqliteRowIterator;
 
     type VersionRepo = VersionRepositoryImpl<'repo, 'db>;
     type VTableRepo = VTableRepositoryImpl<'repo, 'db>;
 }
+
+// Fill structs' type parameters in domain / application layers.
+pub(crate) type VRREntriesInVersion<'vrr, 'db> =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion<'vrr, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>;
+pub(crate) type VRREntries<'vrr, 'db> =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VRREntries<
+        'vrr,
+        'db,
+        ApllodbImmutableSchemaEngine,
+        SqliteTypes,
+    >;
+pub(crate) type VRREntry<'vrr, 'db> =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry<
+        'vrr,
+        'db,
+        ApllodbImmutableSchemaEngine,
+        SqliteTypes,
+    >;

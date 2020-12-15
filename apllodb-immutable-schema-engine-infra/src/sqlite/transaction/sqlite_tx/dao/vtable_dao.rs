@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS {} (
             &vec![&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
             &[],
         )?;
-        let row = row_iter.next().ok_or_else(|| {
+        let mut row = row_iter.next().ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedTable,
                 format!(

@@ -1,6 +1,6 @@
 use super::VersionDao;
-use serde::{Deserialize, Serialize};
 use apllodb_immutable_schema_engine_domain::version::active_version::ActiveVersion;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct CreateTableSqlForVersion(String);
@@ -33,12 +33,7 @@ CREATE TABLE {table_name} (
             } else {
                 ","
             },
-            non_pk_columns = version
-                .column_data_types()
-                .iter()
-                .map(|cdt| cdt.to_sql_string())
-                .collect::<Vec<String>>()
-                .join(",\n  "),
+            non_pk_columns = version.column_data_types().to_sql_string(),
         );
 
         // TODO materialize Version::constraints

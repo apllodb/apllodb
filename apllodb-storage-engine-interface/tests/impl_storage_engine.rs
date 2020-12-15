@@ -43,7 +43,14 @@ pub mod empty_storage_engine {
 
         pub struct EmptyRow;
         impl Row for EmptyRow {
-            fn get_core(&self, colref: &ColumnReference) -> ApllodbResult<&SqlValue> {
+            fn get_sql_value(&mut self, colref: &ColumnReference) -> ApllodbResult<SqlValue> {
+                unimplemented!()
+            }
+
+            fn append(
+                &mut self,
+                colvals: Vec<apllodb_shared_components::data_structure::ColumnValue>,
+            ) -> ApllodbResult<()> {
                 unimplemented!()
             }
         }

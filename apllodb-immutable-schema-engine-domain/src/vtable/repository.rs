@@ -1,9 +1,18 @@
 use super::{id::VTableId, VTable};
-use crate::version::active_versions::ActiveVersions;
-use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+use crate::{
+    abstract_types::ImmutableSchemaAbstractTypes, version::active_versions::ActiveVersions,
+};
+use apllodb_shared_components::data_structure::ColumnName;
+use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
-pub trait VTableRepository<'repo, 'db: 'repo, Engine: StorageEngine<'repo, 'db>> {
+pub trait VTableRepository<
+    'repo,
+    'db: 'repo,
+    Engine: StorageEngine<'repo, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'repo, 'db, Engine>,
+>
+{
     fn new(tx: &'repo Engine::Tx) -> Self;
 
     /// Create a new table with VTable.
@@ -33,8 +42,8 @@ pub trait VTableRepository<'repo, 'db: 'repo, Engine: StorageEngine<'repo, 'db>>
 
     fn full_scan(
         &self,
-        vtable_id: &VTableId,
-        non_pk_column_names: &[ColumnName],
+        vtable: &VTable,
+        projection: &[ColumnName],
     ) -> ApllodbResult<Engine::RowIter>;
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;

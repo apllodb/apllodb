@@ -26,6 +26,14 @@ impl<T: ToSqlString> ToSqlString for [T] {
             .join(", ")
     }
 }
+impl<T: ToSqlString> ToSqlString for Vec<T> {
+    fn to_sql_string(&self) -> String {
+        self.iter()
+            .map(|v| v.to_sql_string())
+            .collect::<Vec<String>>()
+            .join(", ")
+    }
+}
 
 impl ToSqlString for String {
     fn to_sql_string(&self) -> String {

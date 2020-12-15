@@ -1,5 +1,6 @@
 mod dao;
 mod sqlite_statement;
+pub(crate) mod version_revision_resolver;
 
 pub(in crate::sqlite) mod repository;
 use apllodb_immutable_schema_engine_application::use_case::transaction::{

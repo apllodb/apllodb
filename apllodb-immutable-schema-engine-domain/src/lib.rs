@@ -10,6 +10,7 @@ pub mod entity;
 pub mod row;
 pub mod row_iter;
 pub mod version;
+pub mod version_revision_resolver;
 pub mod vtable;
 
 #[cfg(test)]
