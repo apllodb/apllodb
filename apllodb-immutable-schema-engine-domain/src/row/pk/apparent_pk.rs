@@ -22,13 +22,11 @@ pub struct ApparentPrimaryKey {
 
 impl PrimaryKey for ApparentPrimaryKey {
     fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
-        let target_cn = ColumnName::from(column_name.clone());
-
         let target_sql_value = self
             .zipped()
             .iter()
             .find_map(|(cn, sql_value)| {
-                if *cn == &target_cn {
+                if *cn == column_name {
                     Some(*sql_value)
                 } else {
                     None
@@ -37,7 +35,7 @@ impl PrimaryKey for ApparentPrimaryKey {
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedColumn,
-                    format!("undefined column name in PK: `{}`", target_cn),
+                    format!("undefined column name in PK: `{}`", column_name),
                     None,
                 )
             })?;

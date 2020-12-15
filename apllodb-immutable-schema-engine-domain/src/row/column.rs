@@ -15,7 +15,7 @@ pub fn filter_non_pk_column_names(
             if apk_column_names.contains(&cn.as_str().to_string()) {
                 None
             } else {
-                Some(ColumnName::from(cn.clone()))
+                Some(cn.clone())
             }
         })
         .collect()
@@ -36,7 +36,7 @@ pub fn filter_non_pk_column_definitions(
             if apk_column_names.contains(&cd.column_ref().as_column_name().as_str().to_string()) {
                 None
             } else {
-                Some(ColumnDefinition::from(cd.clone()))
+                Some(cd.clone())
             }
         })
         .collect()

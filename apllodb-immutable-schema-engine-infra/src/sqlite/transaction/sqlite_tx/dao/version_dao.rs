@@ -164,7 +164,7 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
             non_pk_column_values = column_values.values().collect::<Vec<_>>().to_sql_string(),
         );
 
-        self.sqlite_tx.execute_named(&sql, &vec![])?;
+        self.sqlite_tx.execute_named(&sql, &[])?;
 
         Ok(())
     }

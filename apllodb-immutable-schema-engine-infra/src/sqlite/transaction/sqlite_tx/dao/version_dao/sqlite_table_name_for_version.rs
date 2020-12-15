@@ -24,7 +24,7 @@ impl SqliteTableNameForVersion {
             version_id.version_number().to_u64(),
             if is_active { "active" } else { "inactive" }
         );
-        Self(s.into())
+        Self(s)
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx::dao::version_dao) fn to_full_table_name(

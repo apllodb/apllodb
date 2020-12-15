@@ -30,7 +30,7 @@ impl<'stmt, 'db: 'stmt> SqliteStatement<'stmt, 'db> {
         void_projection: &[ColumnReference],
     ) -> ApllodbResult<SqliteRowIterator> {
         let params = params
-            .into_iter()
+            .iter()
             .map(|(pname, v)| (*pname, v.to_sql_string()))
             .collect::<Vec<(&str, String)>>();
 

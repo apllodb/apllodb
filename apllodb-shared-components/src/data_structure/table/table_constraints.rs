@@ -59,13 +59,10 @@ impl TableConstraints {
 
     fn validate_multiple_pks(constraints: &[TableConstraintKind]) -> ApllodbResult<()> {
         if constraints
-            .iter()
-            .filter(|table_constraint_kind| match table_constraint_kind {
-                TableConstraintKind::PrimaryKey { .. } => true,
-                _ => false,
-            })
-            .count()
-            > 1
+        .iter()
+        .filter(|table_constraint_kind| matches!(table_constraint_kind, TableConstraintKind::PrimaryKey {..}))
+        .count()
+        > 1
         {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidTableDefinition,

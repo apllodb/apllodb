@@ -32,7 +32,7 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
             column_names: vec![c1_def.column_ref().as_column_name().clone()],
         }])?,
-        &vec![c1_def],
+        &[c1_def],
     )?;
     tx.abort()?;
 

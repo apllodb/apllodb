@@ -31,7 +31,7 @@ fn test_create_table_success() -> ApllodbResult<()> {
         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
             column_names: vec![c1_def.column_ref().as_column_name().clone()],
         }])?,
-        &vec![c1_def],
+        &[c1_def],
     )?;
     tx.abort()?;
 
@@ -107,7 +107,7 @@ fn test_insert() -> ApllodbResult<()> {
 
     let mut rows = tx.select(
         &t_name,
-        &vec![
+        &[
             c_id_def.column_ref().as_column_name().clone(),
             c1_def.column_ref().as_column_name().clone(),
         ],
@@ -159,10 +159,7 @@ fn test_update() -> ApllodbResult<()> {
          c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(100))
         },
     )?;
-    let mut rows = tx.select(
-        &t_name,
-        &vec![c_id_def.column_ref().as_column_name().clone()],
-    )?;
+    let mut rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
     let mut row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
     assert_eq!(row.get::<i32>(c1_def.column_ref())?, 100);
@@ -175,10 +172,7 @@ fn test_update() -> ApllodbResult<()> {
             c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(200))
         },
     )?;
-    let mut rows = tx.select(
-        &t_name,
-        &vec![c_id_def.column_ref().as_column_name().clone()],
-    )?;
+    let mut rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
     let mut row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
     assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
@@ -191,10 +185,7 @@ fn test_update() -> ApllodbResult<()> {
             c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(2))
         },
     )?;
-    let mut rows = tx.select(
-        &t_name,
-        &vec![c_id_def.column_ref().as_column_name().clone()],
-    )?;
+    let mut rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
     let mut row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 2);
     assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
@@ -240,17 +231,11 @@ fn test_delete() -> ApllodbResult<()> {
         },
     )?;
 
-    let rows = tx.select(
-        &t_name,
-        &vec![c_id_def.column_ref().as_column_name().clone()],
-    )?;
+    let rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
     assert_eq!(rows.count(), 1);
 
     tx.delete(&t_name)?;
-    let rows = tx.select(
-        &t_name,
-        &vec![c_id_def.column_ref().as_column_name().clone()],
-    )?;
+    let rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
     assert_eq!(rows.count(), 0);
 
     tx.commit()?;

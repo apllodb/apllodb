@@ -54,7 +54,7 @@ impl ActiveVersion {
 
         Ok(Self(Version {
             id,
-            column_data_types: non_pk_column_data_types.iter().cloned().collect(),
+            column_data_types: non_pk_column_data_types.to_vec(),
             // TODO: カラム制約とテーブル制約からつくる
             constraints: VersionConstraints::default(),
         }))
@@ -78,7 +78,6 @@ impl ActiveVersion {
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,
             } => {
-                let column_to_drop = ColumnName::from(column_to_drop.clone());
                 self.validate_col_existence(&column_to_drop)?;
 
                 let next_column_data_types: Vec<ColumnDataType> = self
@@ -136,12 +135,10 @@ impl ActiveVersion {
         }
 
         // Check column value to insert.
-        for (_column_name, _expr) in column_values {
-
-            // TODO implement NullViolation error detection after Expression can hold NULL.
-
-            // TODO implement CheckViolation error detection
-        }
+        // for (_column_name, _expr) in column_values {
+        // TODO implement NullViolation error detection after Expression can hold NULL.
+        // TODO implement CheckViolation error detection
+        // }
 
         Ok(())
     }
@@ -181,7 +178,7 @@ mod tests {
             DataType::new(DataTypeKind::Integer, false),
         );
 
-        let v = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;
+        let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
@@ -230,7 +227,7 @@ mod tests {
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
         );
-        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
 
         let action = AlterTableAction::DropColumn {
             column_name: ColumnName::new("c404")?,

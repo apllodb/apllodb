@@ -46,18 +46,15 @@ impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaE
         for pk in pks {
             // FIXME solve N+1 problem
             let navi = self.navi_dao().probe_latest_revision(vtable_id, &pk)?;
-            match navi {
-                Navi::Exist(existing_navi) => {
-                    let version_id = VersionId::new(&vtable_id, &existing_navi.version_number);
-                    let entry = VRREntry::new(
-                        existing_navi.rowid.clone(),
-                        pk,
-                        version_id,
-                        existing_navi.revision.clone(),
-                    );
-                    entries.push_back(entry);
-                }
-                _ => {}
+            if let Navi::Exist(existing_navi) = navi {
+                let version_id = VersionId::new(&vtable_id, &existing_navi.version_number);
+                let entry = VRREntry::new(
+                    existing_navi.rowid.clone(),
+                    pk,
+                    version_id,
+                    existing_navi.revision.clone(),
+                );
+                entries.push_back(entry);
             }
         }
         Ok(VRREntries::new(vtable_id.clone(), entries))

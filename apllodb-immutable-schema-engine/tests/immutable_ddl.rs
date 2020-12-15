@@ -90,7 +90,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     // although v2 does not have column "c".
     let rows = tx.select(
         &t_name,
-        &vec![
+        &[
             c_id_def.column_ref().as_column_name().clone(),
             c1_def.column_ref().as_column_name().clone(),
         ],

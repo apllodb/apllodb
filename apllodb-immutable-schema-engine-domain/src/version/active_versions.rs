@@ -12,6 +12,7 @@ pub struct ActiveVersions(Vec<ActiveVersion>);
 impl<I: IntoIterator<Item = ActiveVersion>> From<I> for ActiveVersions {
     /// Construct sorted collection.
     /// `i` need not to be sorted.
+    #[allow(clippy::unnecessary_sort_by)] // https://github.com/rust-lang/rust-clippy/issues/6001
     fn from(i: I) -> Self {
         let mut v: Vec<ActiveVersion> = i.into_iter().collect();
         v.sort_by(|a, b| b.cmp(a));
@@ -75,13 +76,11 @@ impl ActiveVersions {
         // summarize errors
 
         // none version has a specified column.
-        if errors_per_versions.iter().map(|(_, e)| e.kind()).all(|k| {
-            if let ApllodbErrorKind::UndefinedColumn = k {
-                true
-            } else {
-                false
-            }
-        }) {
+        if errors_per_versions
+            .iter()
+            .map(|(_, e)| e.kind())
+            .all(|k| matches!(k, ApllodbErrorKind::UndefinedColumn))
+        {
             Err(ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
                 format!(

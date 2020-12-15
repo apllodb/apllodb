@@ -29,7 +29,7 @@ impl ActiveVersionDeserializer {
     ///
     /// - [UndefinedTable](a.html) when:
     ///   - Version defined in this CreateTableSqlForVersion is deactivated.
-    pub(super) fn into_active_version(&self, vtable: &VTable) -> ApllodbResult<ActiveVersion> {
+    pub(super) fn to_active_version(&self, vtable: &VTable) -> ApllodbResult<ActiveVersion> {
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         let parser = ApllodbSqlParser::new();
@@ -80,11 +80,10 @@ impl ActiveVersionDeserializer {
                         };
 
                         column_name_res.map(|column_name| {
-                            let cdt = ColumnDataType::new(
+                            ColumnDataType::new(
                                 ColumnReference::new(vtable.table_name().clone(), column_name),
                                 data_type,
-                            );
-                            ColumnDataType::from(cdt)
+                            )
                         })
                     })
                     .collect::<ApllodbResult<Vec<ColumnDataType>>>()?;
@@ -149,19 +148,14 @@ mod tests {
             let table_name = TableName::new("t")?;
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
             let non_pk_column_data_types: Vec<ColumnDataType> =
-                t.0.iter()
-                    .map(|cd| {
-                        let cdt = cd.column_data_type();
-                        ColumnDataType::from(cdt)
-                    })
-                    .collect();
+                t.0.iter().map(|cd| cd.column_data_type()).collect();
             let version = ActiveVersion::initial(vtable.id(), &non_pk_column_data_types)?;
 
             let sql = CreateTableSqlForVersionTestWrapper::from(&version);
             let sql = sql.as_str();
             let deser = ActiveVersionDeserializer::new(sql);
 
-            assert_eq!(deser.into_active_version(&vtable)?, version);
+            assert_eq!(deser.to_active_version(&vtable)?, version);
         }
 
         Ok(())
