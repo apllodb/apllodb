@@ -43,7 +43,7 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
         let create_table_sqls: Vec<String> = stmt
-            .query_named(&vec![], &vec![&self.cdt_create_table_sql()], &[])?
+            .query_named(&[], &[&self.cdt_create_table_sql()], &[])?
             .map(|mut row| {
                 let s = row.get::<String>(&ColumnReference::new(
                     TableName::new(TNAME)?,
@@ -57,7 +57,7 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
             .iter()
             .map(|create_table_sql| {
                 let deserializer = ActiveVersionDeserializer::new(create_table_sql);
-                deserializer.into_active_version(vtable)
+                deserializer.to_active_version(vtable)
             })
             .collect::<ApllodbResult<Vec<ActiveVersion>>>()
     }

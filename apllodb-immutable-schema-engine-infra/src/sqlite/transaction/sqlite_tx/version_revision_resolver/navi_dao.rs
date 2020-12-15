@@ -51,7 +51,7 @@ impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForNavi::from(vtable);
-        self.sqlite_tx.execute_named(sql.as_str(), &vec![])?;
+        self.sqlite_tx.execute_named(sql.as_str(), &[])?;
         Ok(())
     }
 

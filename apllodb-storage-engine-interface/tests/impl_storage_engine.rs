@@ -213,7 +213,7 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
             column_names: vec![c1_def.column_ref().as_column_name().clone()],
         }])?,
-        &vec![],
+        &[],
     )?;
 
     tx.abort()?;

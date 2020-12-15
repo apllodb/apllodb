@@ -80,13 +80,13 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
         let tx = db.sqlite_conn().transaction().map_err(|e| {
             map_sqlite_err(
                 e,
-                format!("backend sqlite3 raised an error on beginning transaction"),
+                "backend sqlite3 raised an error on beginning transaction",
             )
         })?;
 
         Ok(Self {
             id: TxId::new(),
-            database_name: database_name,
+            database_name,
             rusqlite_tx: tx,
         })
     }
@@ -230,7 +230,7 @@ impl<'db> SqliteTx<'db> {
         debug!("SqliteTx::execute_named(): {}", sql);
 
         let params = params
-            .into_iter()
+            .iter()
             .map(|(pname, v)| (*pname, v.to_sql_string()))
             .collect::<Vec<(&str, String)>>();
 

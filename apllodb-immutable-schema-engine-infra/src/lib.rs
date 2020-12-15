@@ -2,7 +2,6 @@
 
 //! Infrastructure layer of apllodb-immutable-schema-engine.
 
-#[macro_use]
 extern crate derive_new;
 
 pub mod external_interface;

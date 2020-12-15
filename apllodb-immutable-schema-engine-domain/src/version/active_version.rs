@@ -181,7 +181,7 @@ mod tests {
             DataType::new(DataTypeKind::Integer, false),
         );
 
-        let v = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;
+        let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
         assert_eq!(v.number().to_u64(), 1);
 
         Ok(())
@@ -230,7 +230,7 @@ mod tests {
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
         );
-        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &vec![c1_cdt])?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
 
         let action = AlterTableAction::DropColumn {
             column_name: ColumnName::new("c404")?,

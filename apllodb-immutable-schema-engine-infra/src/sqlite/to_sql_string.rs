@@ -37,25 +37,25 @@ impl<T: ToSqlString> ToSqlString for Vec<T> {
 
 impl ToSqlString for String {
     fn to_sql_string(&self) -> String {
-        format!("{}", self)
+        self.to_string()
     }
 }
 
 impl ToSqlString for str {
     fn to_sql_string(&self) -> String {
-        format!("{}", self)
+        self.to_string()
     }
 }
 
 impl ToSqlString for TableName {
     fn to_sql_string(&self) -> String {
-        format!("{}", self)
+        self.to_string()
     }
 }
 
 impl ToSqlString for ColumnName {
     fn to_sql_string(&self) -> String {
-        format!("{}", self)
+        self.to_string()
     }
 }
 
