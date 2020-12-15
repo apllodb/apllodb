@@ -1,7 +1,5 @@
 mod create_table_sql_for_navi;
-mod navi;
-
-pub(in crate::sqlite::transaction::sqlite_tx) use navi::Navi;
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) mod navi;
 
 use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
@@ -22,10 +20,13 @@ use apllodb_shared_components::{
 };
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
-use self::navi::ExistingNaviWithPK;
+use self::navi::{ExistingNaviWithPK, Navi};
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct NaviDao<'dao, 'db: 'dao> {
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao<
+    'dao,
+    'db: 'dao,
+> {
     sqlite_tx: &'dao SqliteTx<'db>,
 }
 
@@ -39,11 +40,13 @@ impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
         format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX)
     }
 
-    pub(in crate::sqlite) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
+        sqlite_tx: &'dao SqliteTx<'db>,
+    ) -> Self {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn create_table(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn create_table(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
@@ -52,7 +55,7 @@ impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
         Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn full_scan_latest_revision(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn full_scan_latest_revision(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<Vec<ExistingNaviWithPK>> {
@@ -97,7 +100,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
         Ok(ret)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn probe_latest_revision(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn probe_latest_revision(
         &self,
         vtable_id: &VTableId,
         apk: &ApparentPrimaryKey,
@@ -133,7 +136,7 @@ SELECT {cname_rowid}
     }
 
     /// Returns lastly inserted row's ROWID.
-    pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn insert(
         &self,
         apk: &ApparentPrimaryKey,
         revision: &Revision,
@@ -161,7 +164,7 @@ SELECT {cname_rowid}
         Ok(self.sqlite_tx.last_insert_rowid())
     }
 
-    pub(in crate::sqlite) fn insert_deleted_records_all(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn insert_deleted_records_all(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {

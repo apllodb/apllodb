@@ -14,7 +14,7 @@ use apllodb_shared_components::{
 };
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx) enum Navi {
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Navi {
     /// Record exists in navi table and it is not DELETEd.
     Exist(ExistingNavi),
     /// Record does not exist (never has been INSERTed) in navi table.
@@ -27,7 +27,7 @@ pub(in crate::sqlite::transaction::sqlite_tx) enum Navi {
 }
 
 impl Navi {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn from_navi_row(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn from_navi_row(
         table_name: &TableName,
         r: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
@@ -60,21 +60,21 @@ impl Navi {
 
 /// Does not have PrimaryKey for performance
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx) struct ExistingNavi {
-    pub(in crate::sqlite::transaction::sqlite_tx) rowid: SqliteRowid,
-    pub(in crate::sqlite::transaction::sqlite_tx) revision: Revision,
-    pub(in crate::sqlite::transaction::sqlite_tx) version_number: VersionNumber,
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct ExistingNavi {
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) rowid: SqliteRowid,
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) revision: Revision,
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) version_number: VersionNumber,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx) struct ExistingNaviWithPK {
-    pub(in crate::sqlite::transaction::sqlite_tx) navi: ExistingNavi,
-    pub(in crate::sqlite::transaction::sqlite_tx) pk: ApparentPrimaryKey,
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct ExistingNaviWithPK {
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) navi: ExistingNavi,
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) pk: ApparentPrimaryKey,
 }
 
 /// `Some()` only when `r` is Navi::Exist.
 impl ExistingNaviWithPK {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn from_navi_row(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn from_navi_row(
         vtable: &VTable,
         mut r: ImmutableRow,
     ) -> ApllodbResult<Option<Self>> {
