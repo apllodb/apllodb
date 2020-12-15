@@ -113,7 +113,7 @@ impl<
                 {
                     None
                 } else {
-                    Some((ColumnName::from(column_name), expr))
+                    Some((column_name, expr))
                 }
             })
             .collect();
