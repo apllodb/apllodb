@@ -123,7 +123,7 @@ mod tests {
 
         for t in testset {
             let database_name = DatabaseName::new("db")?;
-            let table_name = TableName::new("tbl")?;
+            let table_name = TableName::new("t")?;
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
             let non_pk_column_data_types: Vec<ColumnDataType> = t.0.iter().map(|cd| {
                 let cdt = cd.column_data_type();
