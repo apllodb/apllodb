@@ -96,7 +96,11 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
 SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
   WHERE {version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
-                non_pk_column_names = existing_projection.to_sql_string(),
+                non_pk_column_names = existing_projection
+                    .iter()
+                    .map(|cdt| cdt.column_ref().as_column_name())
+                    .collect::<Vec<_>>()
+                    .to_sql_string(),
                 version_table = sqlite_table_name.to_sql_string(),
                 version_navi_rowid = CNAME_NAVI_ROWID,
             );
