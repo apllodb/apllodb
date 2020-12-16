@@ -5,9 +5,9 @@ use crate::external_interface::ApllodbImmutableSchemaEngine;
 use super::{
     row_iterator::SqliteRowIterator,
     sqlite_rowid::SqliteRowid,
-    transaction::sqlite_tx::repository::{
-        version_repository_impl::VersionRepositoryImpl,
-        vtable_repository_impl::VTableRepositoryImpl,
+    transaction::sqlite_tx::{
+        version::repository_impl::VersionRepositoryImpl,
+        vtable::repository_impl::VTableRepositoryImpl,
     },
 };
 

@@ -1,8 +1,8 @@
-mod dao;
 mod sqlite_statement;
+pub(crate) mod version;
 pub(crate) mod version_revision_resolver;
+pub(crate) mod vtable;
 
-pub(in crate::sqlite) mod repository;
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
     create_table::{CreateTableUseCase, CreateTableUseCaseInput},
@@ -15,7 +15,6 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
 };
 use apllodb_immutable_schema_engine_application::use_case::UseCase;
 use apllodb_storage_engine_interface::Transaction;
-pub(in crate::sqlite) use dao::VTableDao;
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use super::tx_id::TxId;

@@ -5,7 +5,7 @@ use apllodb_shared_components::data_structure::TableName;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub(in crate::sqlite::transaction::sqlite_tx::dao) struct SqliteTableNameForVersion(String);
+pub(in crate::sqlite::transaction::sqlite_tx) struct SqliteTableNameForVersion(String);
 
 impl<S: Into<String>> From<S> for SqliteTableNameForVersion {
     fn from(s: S) -> Self {
@@ -14,7 +14,7 @@ impl<S: Into<String>> From<S> for SqliteTableNameForVersion {
 }
 
 impl SqliteTableNameForVersion {
-    pub(in crate::sqlite::transaction::sqlite_tx::dao::version_dao) fn new(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(
         version_id: &VersionId,
         is_active: bool,
     ) -> Self {
@@ -27,15 +27,11 @@ impl SqliteTableNameForVersion {
         Self(s)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::dao::version_dao) fn to_full_table_name(
-        &self,
-    ) -> TableName {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn to_full_table_name(&self) -> TableName {
         TableName::new(self.0.clone()).unwrap()
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::dao) fn to_version_number(
-        &self,
-    ) -> VersionNumber {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn to_version_number(&self) -> VersionNumber {
         self.split().1
     }
 

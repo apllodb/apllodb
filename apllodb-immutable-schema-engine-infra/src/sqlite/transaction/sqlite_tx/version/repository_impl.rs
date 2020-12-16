@@ -1,7 +1,7 @@
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
     sqlite::transaction::sqlite_tx::{
-        dao::VersionDao, version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
+        version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
     },
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -13,6 +13,8 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::data_structure::ColumnName;
 use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
 use std::collections::HashMap;
+
+use super::dao::VersionDao;
 
 #[derive(Debug)]
 pub struct VersionRepositoryImpl<'repo, 'db: 'repo> {
