@@ -6,13 +6,10 @@ use crate::{
     sqlite::{
         row_iterator::SqliteRowIterator,
         sqlite_types::{SqliteTypes, VRREntries},
-        transaction::{
-            sqlite_tx::{
-                dao::{SqliteMasterDao, VersionDao},
-                version_revision_resolver::VersionRevisionResolverImpl,
-                SqliteTx,
-            },
-            VTableDao,
+        transaction::sqlite_tx::version::dao::VersionDao,
+        transaction::sqlite_tx::{
+            sqlite_master::dao::SqliteMasterDao,
+            version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
         },
     },
 };
@@ -24,6 +21,8 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+
+use super::dao::VTableDao;
 
 #[derive(Debug)]
 pub struct VTableRepositoryImpl<'repo, 'db: 'repo> {

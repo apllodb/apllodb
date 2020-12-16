@@ -3,7 +3,7 @@ use apllodb_immutable_schema_engine_domain::version::active_version::ActiveVersi
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
-pub(super) struct CreateTableSqlForVersion(String);
+pub(in crate::sqlite::transaction::sqlite_tx) struct CreateTableSqlForVersion(String);
 
 impl CreateTableSqlForVersion {
     pub(super) fn as_str(&self) -> &str {
@@ -43,23 +43,21 @@ CREATE TABLE {table_name} (
 }
 
 #[cfg(test)]
-pub(in crate::sqlite::transaction::sqlite_tx::dao) mod test_wrapper {
+pub(in crate::sqlite::transaction::sqlite_tx) mod test_wrapper {
     use super::CreateTableSqlForVersion;
     use apllodb_immutable_schema_engine_domain::version::active_version::ActiveVersion;
 
     /// Provides access to other dao for unit tests.
-    pub(in crate::sqlite::transaction::sqlite_tx::dao) struct CreateTableSqlForVersionTestWrapper(
+    pub(in crate::sqlite::transaction::sqlite_tx) struct CreateTableSqlForVersionTestWrapper(
         CreateTableSqlForVersion,
     );
     impl CreateTableSqlForVersionTestWrapper {
-        pub(in crate::sqlite::transaction::sqlite_tx::dao) fn from(
-            version: &ActiveVersion,
-        ) -> Self {
+        pub(in crate::sqlite::transaction::sqlite_tx) fn from(version: &ActiveVersion) -> Self {
             let inner = CreateTableSqlForVersion::from(version);
             Self(inner)
         }
 
-        pub(in crate::sqlite::transaction::sqlite_tx::dao) fn as_str(&self) -> &str {
+        pub(in crate::sqlite::transaction::sqlite_tx) fn as_str(&self) -> &str {
             let inner = &self.0;
             &inner.0
         }

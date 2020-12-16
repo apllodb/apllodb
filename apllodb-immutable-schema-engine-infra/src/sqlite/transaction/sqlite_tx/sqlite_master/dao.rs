@@ -14,7 +14,7 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct SqliteMasterDao<'dao, 'db: 'dao> {
+pub(in crate::sqlite::transaction::sqlite_tx) struct SqliteMasterDao<'dao, 'db: 'dao> {
     sqlite_tx: &'dao SqliteTx<'db>,
 }
 
@@ -22,7 +22,7 @@ const TNAME: &str = "sqlite_master";
 const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
 impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
-    pub(in crate::sqlite) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
         Self { sqlite_tx }
     }
 

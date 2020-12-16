@@ -1,4 +1,3 @@
-use crate::sqlite::transaction::sqlite_tx::dao::version_dao;
 use apllodb_immutable_schema_engine_domain::{
     version::active_version::ActiveVersion, vtable::VTable,
 };
@@ -11,7 +10,10 @@ use apllodb_sql_parser::{
     ApllodbAst, ApllodbSqlParser,
 };
 use serde::{Deserialize, Serialize};
-use version_dao::SqliteTableNameForVersion;
+
+use crate::sqlite::transaction::sqlite_tx::version::dao::{
+    sqlite_table_name_for_version::SqliteTableNameForVersion, CNAME_NAVI_ROWID,
+};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub(super) struct ActiveVersionDeserializer {
@@ -100,17 +102,15 @@ impl ActiveVersionDeserializer {
 
     fn is_control_column(column_definition: &apllodb_ast::ColumnDefinition) -> bool {
         let id = &column_definition.column_name.0;
-        id.0.as_str() == version_dao::CNAME_NAVI_ROWID
+        id.0.as_str() == CNAME_NAVI_ROWID
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::ActiveVersionDeserializer;
-    use crate::{
-        sqlite::transaction::sqlite_tx::dao::version_dao::CreateTableSqlForVersionTestWrapper,
-        test_support::setup,
-    };
+    use crate::sqlite::transaction::sqlite_tx::version::dao::CreateTableSqlForVersionTestWrapper;
+    use crate::test_support::setup;
     use apllodb_immutable_schema_engine_domain::{
         entity::Entity, version::active_version::ActiveVersion, vtable::VTable,
     };

@@ -1,7 +1,5 @@
-mod create_table_sql_for_version;
-mod sqlite_table_name_for_version;
-
-pub(in crate::sqlite::transaction::sqlite_tx::dao) use sqlite_table_name_for_version::SqliteTableNameForVersion;
+pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
+pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
 use crate::sqlite::{
     row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
@@ -24,14 +22,16 @@ use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::collections::{hash_map::Entry, HashMap, VecDeque};
 
 #[cfg(test)]
-pub(in crate::sqlite::transaction::sqlite_tx::dao) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
+pub(in crate::sqlite::transaction::sqlite_tx) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
+
+use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao<'dao, 'db: 'dao> {
     sqlite_tx: &'dao SqliteTx<'db>,
 }
 
-pub(in crate::sqlite::transaction::sqlite_tx::dao) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
+pub(in crate::sqlite::transaction::sqlite_tx) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
 
 impl VersionDao<'_, '_> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn table_name(

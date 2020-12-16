@@ -1,4 +1,4 @@
-use super::{sqlite_error::map_sqlite_err, transaction::VTableDao};
+use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
 use apllodb_shared_components::{
     data_structure::DatabaseName, error::ApllodbResult, traits::Database,
 };
