@@ -1,4 +1,3 @@
-mod sqlite_master;
 mod sqlite_statement;
 pub(crate) mod version;
 pub(crate) mod version_revision_resolver;

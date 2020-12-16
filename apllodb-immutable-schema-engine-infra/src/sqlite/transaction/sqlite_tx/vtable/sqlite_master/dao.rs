@@ -14,7 +14,7 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx) struct SqliteMasterDao<'dao, 'db: 'dao> {
+pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao<'dao, 'db: 'dao> {
     sqlite_tx: &'dao SqliteTx<'db>,
 }
 
@@ -22,11 +22,13 @@ const TNAME: &str = "sqlite_master";
 const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
 impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn new(
+        sqlite_tx: &'dao SqliteTx<'db>,
+    ) -> Self {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_versions(
+    pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn select_active_versions(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<Vec<ActiveVersion>> {
@@ -63,7 +65,7 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
     }
 
     // TODO 消す
-    pub(in crate::sqlite::transaction::sqlite_tx) fn select_active_version(
+    pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn select_active_version(
         &self,
         vtable: &VTable,
         version_id: &VersionId,
