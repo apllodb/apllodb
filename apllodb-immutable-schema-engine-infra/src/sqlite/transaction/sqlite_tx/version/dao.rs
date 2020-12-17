@@ -14,7 +14,7 @@ use apllodb_shared_components::{
     data_structure::ColumnDataType,
     data_structure::ColumnName,
     data_structure::ColumnReference,
-    data_structure::{Expression, TableName},
+    data_structure::{DataType, DataTypeKind, Expression, TableName},
     error::ApllodbResult,
 };
 use apllodb_storage_engine_interface::Row;
@@ -68,7 +68,7 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
 
         let column_data_types = version.column_data_types();
         // Filter existing and requested columns.
-        let existing_projection: Vec<&ColumnDataType> = column_data_types
+        let mut existing_projection: Vec<&ColumnDataType> = column_data_types
             .iter()
             .filter(|cdt| projection.contains(&cdt.column_ref().as_column_name()))
             .collect();
@@ -106,6 +106,10 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
             );
             let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
+            let cdt_navi_rowid = self.cdt_navi_rowid(sqlite_table_name.clone());
+            let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
+            prj_with_navi_rowid.append(&mut existing_projection);
+
             let (navi_rowids, pks): (Vec<SqliteRowid>, Vec<ApparentPrimaryKey>) =
                 vrr_entries_in_version
                     .map(|e| (e.id().clone(), e.into_pk()))
@@ -113,7 +117,7 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
 
             let row_iter = stmt.query_named(
                 &[(":navi_rowids", &navi_rowids)],
-                &existing_projection,
+                &prj_with_navi_rowid,
                 &void_projection,
             )?;
 
@@ -171,5 +175,14 @@ SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
         self.sqlite_tx.execute_named(&sql, &[])?;
 
         Ok(())
+    }
+}
+
+impl VersionDao<'_, '_> {
+    fn cdt_navi_rowid(&self, table_name: TableName) -> ColumnDataType {
+        ColumnDataType::new(
+            ColumnReference::new(table_name, ColumnName::new(CNAME_NAVI_ROWID).unwrap()),
+            DataType::new(DataTypeKind::BigInt, false),
+        )
     }
 }
