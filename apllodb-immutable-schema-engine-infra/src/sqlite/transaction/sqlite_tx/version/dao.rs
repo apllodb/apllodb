@@ -66,20 +66,20 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
     ) -> ApllodbResult<SqliteRowIterator> {
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
-        let column_data_types = version.column_data_types();
-        // Filter existing and requested columns.
-        let mut existing_projection: Vec<&ColumnDataType> = column_data_types
-            .iter()
-            .filter(|cdt| projection.contains(&cdt.column_ref().as_column_name()))
-            .collect();
-
-        if existing_projection.is_empty() {
+        if projection.is_empty() {
             // PK-only ImmutableRow
             let pk_rows = vrr_entries_in_version
                 .map(|e| e.into_pk_only_row())
                 .collect::<ApllodbResult<VecDeque<ImmutableRow>>>()?;
             Ok(SqliteRowIterator::from(pk_rows))
         } else {
+            let column_data_types = version.column_data_types();
+
+            let mut existing_projection: Vec<&ColumnDataType> = column_data_types
+                .iter()
+                .filter(|cdt| projection.contains(&cdt.column_ref().as_column_name()))
+                .collect();
+
             let void_projection: Vec<ColumnReference> = projection
                 .iter()
                 .filter(|prj_cn| {
@@ -93,14 +93,25 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
 
             let sql = format!(
                 "
-SELECT {version_navi_rowid}, {non_pk_column_names} FROM {version_table}
+SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_if_void_projection}{void_projection} FROM {version_table}
   WHERE {version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
+                comma_if_non_pk_column = if existing_projection.is_empty() {
+                    ""
+                } else {
+                    ", "
+                },
                 non_pk_column_names = existing_projection
                     .iter()
                     .map(|cdt| cdt.column_ref().as_column_name())
                     .collect::<Vec<_>>()
                     .to_sql_string(),
+                comma_if_void_projection = if void_projection.is_empty() {""} else {", "},
+                void_projection = void_projection
+                .iter()
+                .map(|cref| format!("NULL {}", cref.as_column_name()))
+                .collect::<Vec<_>>()
+                .to_sql_string(),
                 version_table = sqlite_table_name.to_sql_string(),
                 version_navi_rowid = CNAME_NAVI_ROWID,
             );
