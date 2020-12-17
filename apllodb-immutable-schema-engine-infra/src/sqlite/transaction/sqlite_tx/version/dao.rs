@@ -83,7 +83,7 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
             let void_projection: Vec<ColumnReference> = projection
                 .iter()
                 .filter(|prj_cn| {
-                    column_data_types
+                    !column_data_types
                         .iter()
                         .any(|cdt| cdt.column_ref().as_column_name() == *prj_cn)
                 })
