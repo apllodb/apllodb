@@ -1,7 +1,10 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::vtable::{id::VTableId, repository::VTableRepository};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes, row::column::filter_non_pk_column_names,
+};
+use apllodb_immutable_schema_engine_domain::{
+    query::projection::ProjectionInQuery,
+    vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, TableName},
@@ -80,7 +83,10 @@ impl<
             &vtable.table_wide_constraints().pk_column_names(),
         );
 
-        let row_iter = vtable_repo.full_scan(&vtable, &non_pk_column_names)?;
+        let row_iter = vtable_repo.full_scan(
+            &vtable,
+            ProjectionInQuery::ColumnNames(non_pk_column_names.iter().cloned().collect()),
+        )?;
         Ok(FullScanUseCaseOutput { row_iter })
     }
 }

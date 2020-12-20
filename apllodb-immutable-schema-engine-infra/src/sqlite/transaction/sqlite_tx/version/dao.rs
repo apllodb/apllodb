@@ -6,6 +6,7 @@ use crate::sqlite::{
     to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
+    query::projection::ProjectionInQuery,
     row::{immutable_row::ImmutableRow, pk::apparent_pk::ApparentPrimaryKey},
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
@@ -62,7 +63,7 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
         vtable: &VTable,
         version: &ActiveVersion,
         vrr_entries_in_version: VRREntriesInVersion<'dao, 'db>,
-        projection: &[ColumnName],
+        projection: ProjectionInQuery,
     ) -> ApllodbResult<SqliteRowIterator> {
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 

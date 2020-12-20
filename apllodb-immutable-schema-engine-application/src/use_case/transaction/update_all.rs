@@ -1,6 +1,11 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 
-use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
+use apllodb_immutable_schema_engine_domain::{
+    abstract_types::ImmutableSchemaAbstractTypes,
+    query::projection::ProjectionInQuery,
+    version::{id::VersionId, repository::VersionRepository},
+    vtable::{id::VTableId, repository::VTableRepository},
+};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
@@ -86,48 +91,27 @@ impl<
     ///
     /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(_input: Self::In) -> ApllodbResult<Self::Out> {
-        todo!()
+    fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+        let vtable_repo = Types::VTableRepo::new(&input.tx);
+        let version_repo = Types::VersionRepo::new(&input.tx);
 
-        // let vtable_repo = input.tx.vtable_repo();
-        // let version_repo = input.tx.version_repo();
+        let vtable_id = VTableId::new(input.database_name, input.table_name);
+        let vtable = vtable_repo.read(&vtable_id)?;
 
-        // let vtable_id = VTableId::new(input.database_name, input.table_name);
-        // let vtable = vtable_repo.read(&vtable_id)?;
+        let active_versions = vtable_repo.active_versions(&vtable)?;
 
-        // // Fetch all columns of the latest version rows and update requested columns later.
-        // // TODO Consider CoW to reduce disk usage (append only updated column to a new version).
-        // let row_iter = vtable_repo.full_scan_all_columns(&vtable_id)?;
+        // Fetch all columns of the latest version rows and update requested columns later.
+        // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
+        let row_iter = vtable_repo.full_scan(&vtable, ProjectionInQuery::All)?;
 
-        // // Construct ApparentPrimaryKey
-        // // FIXME INSERTではないので、必要なvalueがあるとは限らない！！
-        // let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, input.column_values)?;
+        for row in row_iter {
+            // TODO PK: ApparentPrimaryKey, non-PK: HashMap<ColumnName, Expression> に各 row を分ける
 
-        // // Filter Non-PK columns from column_values
-        // let non_pk_column_values: HashMap<ColumnName, Expression> = input
-        //     .column_values
-        //     .clone()
-        //     .into_iter()
-        //     .filter_map(|(column_name, expr)| {
-        //         if apk
-        //             .column_names()
-        //             .iter()
-        //             .any(|pk_cn| pk_cn.as_str() == column_name.as_str())
-        //         {
-        //             None
-        //         } else {
-        //             Some((ColumnName::from(column_name), expr))
-        //         }
-        //     })
-        //     .collect();
+            // let version_to_update = active_versions.version_to_insert(&non_pk_column_values)?;
+            // let version_id = VersionId::new(&vtable_id, version_to_insert.number());
+            // version_repo.insert(&version_id, apk, &non_pk_column_values)?;
+        }
 
-        // // Determine version to update
-        // let active_versions = vtable_repo.active_versions(&vtable)?;
-        // let version_to_update = active_versions.version_to_update(&non_pk_column_values)?;
-        // let version_id = VersionId::new(&vtable_id, version_to_update.number());
-
-        // version_repo.update(&version_id, apk, &non_pk_column_values)?;
-
-        // Ok(UpdateAllUseCaseOutput)
+        Ok(UpdateAllUseCaseOutput)
     }
 }

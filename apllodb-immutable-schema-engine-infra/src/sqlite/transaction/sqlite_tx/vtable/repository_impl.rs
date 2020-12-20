@@ -13,6 +13,7 @@ use crate::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
+    query::projection::ProjectionInQuery,
     row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
@@ -73,7 +74,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     fn full_scan(
         &self,
         vtable: &VTable,
-        projection: &[ColumnName],
+        projection: ProjectionInQuery,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let vrr_entries = self.vrr().scan(&vtable)?;
         self.probe_vrr_entries(vrr_entries, projection)
@@ -110,7 +111,7 @@ impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
     fn probe_vrr_entries(
         &self,
         vrr_entries: VRREntries<'repo, 'db>,
-        projection: &[ColumnName],
+        projection: ProjectionInQuery,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 

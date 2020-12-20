@@ -1,8 +1,5 @@
 use super::{id::VTableId, VTable};
-use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes, version::active_versions::ActiveVersions,
-};
-use apllodb_shared_components::data_structure::ColumnName;
+use crate::{abstract_types::ImmutableSchemaAbstractTypes, query::projection::ProjectionInQuery, version::active_versions::ActiveVersions};
 use apllodb_shared_components::error::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
@@ -43,7 +40,7 @@ pub trait VTableRepository<
     fn full_scan(
         &self,
         vtable: &VTable,
-        projection: &[ColumnName],
+        projection: ProjectionInQuery,
     ) -> ApllodbResult<Engine::RowIter>;
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
