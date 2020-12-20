@@ -2,11 +2,14 @@ pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
 pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
 use crate::sqlite::{
-    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
-    to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
+    row_iterator::SqliteRowIterator,
+    sqlite_rowid::SqliteRowid,
+    sqlite_types::{ProjectionResult, VRREntriesInVersion},
+    to_sql_string::ToSqlString,
+    transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
-    query::projection::ProjectionInQuery,
+    entity::Entity,
     row::{immutable_row::ImmutableRow, pk::apparent_pk::ApparentPrimaryKey},
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::VTable,
@@ -60,57 +63,43 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
     /// Fetches only existing columns from SQLite, and makes SqliteRowIterator together with ApparentPrimaryKey from VRREntriesInVersion.
     pub(in crate::sqlite::transaction::sqlite_tx) fn probe_in_version(
         &self,
-        vtable: &VTable,
         version: &ActiveVersion,
         vrr_entries_in_version: VRREntriesInVersion<'dao, 'db>,
-        projection: ProjectionInQuery,
+        projection: &ProjectionResult<'dao, 'db>,
     ) -> ApllodbResult<SqliteRowIterator> {
-        use apllodb_immutable_schema_engine_domain::entity::Entity;
-
-        if projection.is_empty() {
+        if projection
+            .non_pk_effective_projection(version.id())?
+            .is_empty()
+            && projection.non_pk_void_projection(version.id())?.is_empty()
+        {
             // PK-only ImmutableRow
             let pk_rows = vrr_entries_in_version
                 .map(|e| e.into_pk_only_row())
                 .collect::<ApllodbResult<VecDeque<ImmutableRow>>>()?;
             Ok(SqliteRowIterator::from(pk_rows))
         } else {
-            let column_data_types = version.column_data_types();
-
-            let mut existing_projection: Vec<&ColumnDataType> = column_data_types
-                .iter()
-                .filter(|cdt| projection.contains(&cdt.column_ref().as_column_name()))
-                .collect();
-
-            let void_projection: Vec<ColumnReference> = projection
-                .iter()
-                .filter(|prj_cn| {
-                    !column_data_types
-                        .iter()
-                        .any(|cdt| cdt.column_ref().as_column_name() == *prj_cn)
-                })
-                .map(|prj_cn| ColumnReference::new(vtable.table_name().clone(), prj_cn.clone()))
-                .collect();
             let sqlite_table_name = Self::table_name(version.id(), true);
+
+            let non_pk_effective_projection =
+                projection.non_pk_effective_projection(version.id())?;
+            let non_pk_void_projection = projection.non_pk_void_projection(version.id())?;
 
             let sql = format!(
                 "
 SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_if_void_projection}{void_projection} FROM {version_table}
   WHERE {version_navi_rowid} IN (:navi_rowids)
 ", // FIXME prevent SQL injection
-                comma_if_non_pk_column = if existing_projection.is_empty() {
+                comma_if_non_pk_column = if non_pk_effective_projection.is_empty() {
                     ""
                 } else {
                     ", "
                 },
-                non_pk_column_names = existing_projection
-                    .iter()
-                    .map(|cdt| cdt.column_ref().as_column_name())
-                    .collect::<Vec<_>>()
+                non_pk_column_names = non_pk_effective_projection
                     .to_sql_string(),
-                comma_if_void_projection = if void_projection.is_empty() {""} else {", "},
-                void_projection = void_projection
+                comma_if_void_projection = if non_pk_void_projection.is_empty() {""} else {", "},
+                void_projection = non_pk_void_projection
                 .iter()
-                .map(|cref| format!("NULL {}", cref.as_column_name()))
+                .map(|cn| format!("NULL {}", cn))
                 .collect::<Vec<_>>()
                 .to_sql_string(),
                 version_table = sqlite_table_name.to_sql_string(),
@@ -118,9 +107,16 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             );
             let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
+            let mut effective_prj_cdts: Vec<&ColumnDataType> = version
+                .column_data_types()
+                .iter()
+                .filter(|cdt| {
+                    non_pk_effective_projection.contains(cdt.column_ref().as_column_name())
+                })
+                .collect();
             let cdt_navi_rowid = self.cdt_navi_rowid(sqlite_table_name.clone());
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
-            prj_with_navi_rowid.append(&mut existing_projection);
+            prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
             let (navi_rowids, pks): (Vec<SqliteRowid>, Vec<ApparentPrimaryKey>) =
                 vrr_entries_in_version
@@ -130,7 +126,13 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let row_iter = stmt.query_named(
                 &[(":navi_rowids", &navi_rowids)],
                 &prj_with_navi_rowid,
-                &void_projection,
+                non_pk_void_projection
+                    .iter()
+                    .map(|cn| {
+                        ColumnReference::new(version.vtable_id().table_name().clone(), cn.clone())
+                    })
+                    .collect::<Vec<_>>()
+                    .as_slice(),
             )?;
 
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();

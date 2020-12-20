@@ -145,7 +145,9 @@ SELECT {cname_rowid}
         let vtable_id = version_id.vtable_id();
 
         let sql = format!(
-            "INSERT INTO {tname} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, :revision, :version_number);",
+            "
+            INSERT INTO {tname} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, :revision, :version_number);
+            ",
             tname = Self::table_name(vtable_id),
             pk_column_names = apk.column_names().to_sql_string(),
             cname_revision=CNAME_REVISION,

@@ -14,7 +14,7 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::UpdateAllUseCaseInput,
 };
 use apllodb_immutable_schema_engine_application::use_case::UseCase;
-use apllodb_storage_engine_interface::Transaction;
+use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use super::tx_id::TxId;
@@ -157,11 +157,11 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
     fn select(
         &self,
         table_name: &TableName,
-        column_names: &[ColumnName],
+        projection: ProjectionQuery,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let database_name = self.database_name().clone();
         let input: FullScanUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            FullScanUseCaseInput::new(self, &database_name, table_name, &column_names);
+            FullScanUseCaseInput::new(self, &database_name, table_name, projection);
         let output = FullScanUseCase::run(input)?;
 
         Ok(output.row_iter)

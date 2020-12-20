@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     data_structure::ColumnName,
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -17,13 +17,7 @@ use crate::{
     vtable::{repository::VTableRepository, VTable},
 };
 
-/// Projection query for single table column references.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub enum ProjectionQuery {
-    All,
-    ColumnNames(Vec<ColumnName>),
-}
-
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct ProjectionResult<
     'prj,
     'db: 'prj,
@@ -43,7 +37,7 @@ impl<
 {
     pub fn new(
         tx: &'prj Engine::Tx,
-        vtable: VTable,
+        vtable: &VTable,
         query: ProjectionQuery,
     ) -> ApllodbResult<Self> {
         let vtable_repo = Types::VTableRepo::new(tx);
@@ -55,7 +49,7 @@ impl<
             .into_iter()
             .collect();
 
-        let versions_available_columns_with_pk: HashSet<ColumnName> = active_versions
+        let versions_available_columns: HashSet<ColumnName> = active_versions
             .as_sorted_slice()
             .iter()
             .map(|active_version| {
@@ -66,24 +60,48 @@ impl<
             })
             .flatten()
             .cloned()
-            .chain(pk_columns)
             .collect();
 
-        let query_columns: Vec<ColumnName> = match query {
-            ProjectionQuery::All => versions_available_columns_with_pk.iter().cloned().collect(),
-            ProjectionQuery::ColumnNames(cn) => cn,
+        let pk_query_columns: Vec<ColumnName> = match &query {
+            ProjectionQuery::All => pk_columns.iter().cloned().collect(),
+            ProjectionQuery::ColumnNames(cns) => cns
+                .iter()
+                .filter(|cn| pk_columns.contains(cn))
+                .cloned()
+                .collect(),
+        };
+        let non_pk_query_columns: Vec<ColumnName> = match &query {
+            ProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
+            ProjectionQuery::ColumnNames(cns) => cns
+                .iter()
+                .filter(|cn| versions_available_columns.contains(cn))
+                .cloned()
+                .collect(),
         };
 
         // check UndefinedColumn
-        for q_cn in &query_columns {
-            if !versions_available_columns_with_pk.contains(q_cn) {
-                return Err(ApllodbError::new(
-                    ApllodbErrorKind::UndefinedColumn,
-                    format!("undefined column `{}` is queried", q_cn),
-                    None,
-                ));
+        {
+            let available_columns: Vec<&ColumnName> = pk_columns
+                .iter()
+                .chain(versions_available_columns.iter())
+                .collect();
+
+            for q_cn in pk_query_columns.iter().chain(non_pk_query_columns.iter()) {
+                if !available_columns.contains(&q_cn) {
+                    return Err(ApllodbError::new(
+                        ApllodbErrorKind::UndefinedColumn,
+                        format!("undefined column `{}` is queried", q_cn),
+                        None,
+                    ));
+                }
             }
         }
+
+        let (pk_effective_columns, pk_void_columns): (Vec<ColumnName>, Vec<ColumnName>) =
+            pk_query_columns
+                .iter()
+                .cloned()
+                .partition(|q_cn| pk_columns.contains(q_cn));
 
         let mut result_per_version: HashMap<VersionId, ProjectionResultInVersion> = HashMap::new();
         for active_version in active_versions.as_sorted_slice() {
@@ -95,15 +113,19 @@ impl<
                 .map(|cdt| cdt.column_ref().as_column_name())
                 .collect();
 
-            let (effective_columns, void_columns): (Vec<ColumnName>, Vec<ColumnName>) =
-                query_columns
-                    .iter()
-                    .cloned()
-                    .partition(|q_cn| version_columns.contains(q_cn));
+            let (non_pk_effective_columns, non_pk_void_columns): (
+                Vec<ColumnName>,
+                Vec<ColumnName>,
+            ) = non_pk_query_columns
+                .iter()
+                .cloned()
+                .partition(|q_cn| version_columns.contains(q_cn));
 
             let result_in_version = ProjectionResultInVersion {
-                effective: effective_columns,
-                void: void_columns,
+                pk_effective: pk_effective_columns.clone(),
+                pk_void: pk_void_columns.clone(),
+                non_pk_effective: non_pk_effective_columns,
+                non_pk_void: non_pk_void_columns,
             };
 
             result_per_version.insert(version_id.clone(), result_in_version);
@@ -115,23 +137,45 @@ impl<
         })
     }
 
-    pub fn effective_projection(&self, version_id: &VersionId) -> ApllodbResult<&Vec<ColumnName>> {
-        self.result_per_version
-            .get(version_id)
-            .map(|result_in_version| &result_in_version.effective)
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::InvalidVersion,
-                    format!("invalid version `{:?}` is queried", version_id),
-                    None,
-                )
-            })
+    pub fn pk_effective_projection(
+        &self,
+        version_id: &VersionId,
+    ) -> ApllodbResult<&Vec<ColumnName>> {
+        self.get_projection_core(version_id, |result_in_version| {
+            &result_in_version.pk_effective
+        })
     }
 
-    pub fn void_projection(&self, version_id: &VersionId) -> ApllodbResult<&Vec<ColumnName>> {
+    pub fn pk_void_projection(&self, version_id: &VersionId) -> ApllodbResult<&Vec<ColumnName>> {
+        self.get_projection_core(version_id, |result_in_version| &result_in_version.pk_void)
+    }
+
+    pub fn non_pk_effective_projection(
+        &self,
+        version_id: &VersionId,
+    ) -> ApllodbResult<&Vec<ColumnName>> {
+        self.get_projection_core(version_id, |result_in_version| {
+            &result_in_version.non_pk_effective
+        })
+    }
+
+    pub fn non_pk_void_projection(
+        &self,
+        version_id: &VersionId,
+    ) -> ApllodbResult<&Vec<ColumnName>> {
+        self.get_projection_core(version_id, |result_in_version| {
+            &result_in_version.non_pk_void
+        })
+    }
+
+    fn get_projection_core<F: FnOnce(&ProjectionResultInVersion) -> &Vec<ColumnName>>(
+        &self,
+        version_id: &VersionId,
+        columns_from_result_in_version: F,
+    ) -> ApllodbResult<&Vec<ColumnName>> {
         self.result_per_version
             .get(version_id)
-            .map(|result_in_version| &result_in_version.void)
+            .map(columns_from_result_in_version)
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::InvalidVersion,
@@ -142,7 +186,11 @@ impl<
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 struct ProjectionResultInVersion {
-    effective: Vec<ColumnName>,
-    void: Vec<ColumnName>,
+    pk_effective: Vec<ColumnName>,
+    pk_void: Vec<ColumnName>,
+
+    non_pk_effective: Vec<ColumnName>,
+    non_pk_void: Vec<ColumnName>,
 }

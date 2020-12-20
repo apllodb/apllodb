@@ -10,7 +10,7 @@ use apllodb_shared_components::{
     },
     error::{ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
 
 #[test]
 fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResult<()> {
@@ -87,13 +87,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
 
     // Selects both v1's record (id=1) and v2's record (id=2),
     // although v2 does not have column "c".
-    let rows = tx.select(
-        &t_name,
-        &[
-            c_id_def.column_ref().as_column_name().clone(),
-            c1_def.column_ref().as_column_name().clone(),
-        ],
-    )?;
+    let rows = tx.select(&t_name, ProjectionQuery::All)?;
 
     assert_eq!(rows.clone().count(), 2);
 

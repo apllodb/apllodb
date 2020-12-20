@@ -1,16 +1,14 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
+use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 use apllodb_immutable_schema_engine_domain::{
-    abstract_types::ImmutableSchemaAbstractTypes, row::column::filter_non_pk_column_names,
-};
-use apllodb_immutable_schema_engine_domain::{
-    query::projection::ProjectionInQuery,
+    query::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DatabaseName, TableName},
+    data_structure::{DatabaseName, TableName},
     error::ApllodbResult,
 };
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -24,7 +22,7 @@ pub struct FullScanUseCaseInput<
     tx: &'usecase Engine::Tx,
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
-    column_names: &'usecase [ColumnName],
+    projection: ProjectionQuery,
 
     #[new(default)]
     _marker: PhantomData<(&'db (), Types)>,
@@ -78,15 +76,9 @@ impl<
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
 
-        let non_pk_column_names = filter_non_pk_column_names(
-            input.column_names,
-            &vtable.table_wide_constraints().pk_column_names(),
-        );
-
-        let row_iter = vtable_repo.full_scan(
-            &vtable,
-            ProjectionInQuery::ColumnNames(non_pk_column_names.iter().cloned().collect()),
-        )?;
+        let projection_result: ProjectionResult<'_, 'db, Engine, Types> =
+            ProjectionResult::new(input.tx, &vtable, input.projection)?;
+        let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
         Ok(FullScanUseCaseOutput { row_iter })
     }
 }

@@ -29,11 +29,13 @@
 //! - Implementation of records and record iterators.
 //! - Ways to materialize tables and records.
 
+mod query;
 mod row;
 mod transaction;
 
 use std::fmt::Debug;
 
+pub use crate::query::projection::ProjectionQuery;
 pub use crate::row::{PrimaryKey, Row};
 pub use crate::transaction::{Transaction, TransactionId};
 

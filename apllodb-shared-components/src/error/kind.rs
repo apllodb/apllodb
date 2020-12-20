@@ -263,4 +263,5 @@ pub enum ApllodbErrorKind {
     DeserializationError,
     SerializationError,
     UndefinedPrimaryKey,
+    InvalidVersion,
 }

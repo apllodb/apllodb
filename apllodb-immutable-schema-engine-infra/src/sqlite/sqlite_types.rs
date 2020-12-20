@@ -42,3 +42,10 @@ pub(crate) type VRREntry<'vrr, 'db> =
         ApllodbImmutableSchemaEngine,
         SqliteTypes,
     >;
+pub(crate) type ProjectionResult<'prj, 'db> =
+    apllodb_immutable_schema_engine_domain::query::projection::ProjectionResult<
+        'prj,
+        'db,
+        ApllodbImmutableSchemaEngine,
+        SqliteTypes,
+    >;

@@ -2,15 +2,15 @@ use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
-    query::projection::ProjectionInQuery,
-    version::{id::VersionId, repository::VersionRepository},
+    query::projection::ProjectionResult,
+    version::{repository::VersionRepository},
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
@@ -102,7 +102,9 @@ impl<
 
         // Fetch all columns of the latest version rows and update requested columns later.
         // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
-        let row_iter = vtable_repo.full_scan(&vtable, ProjectionInQuery::All)?;
+        let projection_result: ProjectionResult<'_, 'db, Engine, Types> =
+            ProjectionResult::new(input.tx, &vtable, ProjectionQuery::All)?;
+        let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
         for row in row_iter {
             // TODO PK: ApparentPrimaryKey, non-PK: HashMap<ColumnName, Expression> に各 row を分ける
