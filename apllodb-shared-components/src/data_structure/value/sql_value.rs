@@ -37,8 +37,11 @@ impl SqlValue {
     }
 
     pub fn null() -> Self {
-        Self::pack(&DataType::new(DataTypeKind::SmallInt, true), &SQL_VALUE_NULL)
-            .expect("creating NULL should always succeed")
+        Self::pack(
+            &DataType::new(DataTypeKind::SmallInt, true),
+            &SQL_VALUE_NULL,
+        )
+        .expect("creating NULL should always succeed")
     }
 
     pub fn unpack<T>(&self) -> ApllodbResult<T>
