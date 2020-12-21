@@ -17,18 +17,18 @@ pub trait UseCase {
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out>;
 
     fn run(input: Self::In) -> ApllodbResult<Self::Out> {
-        debug!("{}::run() input: {:?}", type_name::<Self>(), &input);
+        debug!("{}::run() input: {:#?}", type_name::<Self>(), &input);
 
         input.validate()?;
 
         Self::run_core(input)
             .map_err(|e| {
-                debug!("{}::run() raised error: {:?}", type_name::<Self>(), e);
+                debug!("{}::run() raised error: {:#?}", type_name::<Self>(), e);
                 e
             })
             .map(|out| {
                 debug!(
-                    "{}::run() succeeds with output: {:?}",
+                    "{}::run() succeeds with output: {:#?}",
                     type_name::<Self>(),
                     out
                 );

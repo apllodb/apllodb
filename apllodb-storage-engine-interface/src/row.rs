@@ -22,7 +22,12 @@ pub trait Row {
     ///   - `column_name` is not in this Row.
     fn get<T: SqlConvertible>(&mut self, colref: &ColumnReference) -> ApllodbResult<T> {
         let sql_value = self.get_sql_value(colref)?;
-        Ok(sql_value.unpack()?)
+        sql_value.unpack().or_else(|e| {
+            // write back removed value into row
+            let colval = ColumnValue::new(colref.clone(), sql_value);
+            self.append(vec![colval])?;
+            Err(e)
+        })
     }
 
     /// Append column values to this row.

@@ -1,4 +1,4 @@
-use super::NaviDao;
+use super::navi_table_name::NaviTableName;
 use apllodb_immutable_schema_engine_domain::vtable::VTable;
 use serde::{Deserialize, Serialize};
 
@@ -14,19 +14,18 @@ impl CreateTableSqlForNavi {
 impl From<&VTable> for CreateTableSqlForNavi {
     fn from(vtable: &VTable) -> Self {
         use crate::sqlite::to_sql_string::ToSqlString;
-        use apllodb_immutable_schema_engine_domain::entity::Entity;
 
         // TODO Set primary key for performance.
 
         let sql = format!(
             "
-CREATE TABLE {tname} (
+CREATE TABLE {navi_table_name} (
     {pk_coldefs},
     {cname_revision} INTEGER NOT NULL,
     {cname_version_number} INTEGER
 )
         ",
-            tname = NaviDao::table_name(vtable.id()),
+            navi_table_name = NaviTableName::from(vtable.table_name().clone()).to_sql_string(),
             pk_coldefs = vtable
                 .table_wide_constraints()
                 .pk_column_data_types()

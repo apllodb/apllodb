@@ -128,7 +128,9 @@ CREATE TABLE IF NOT EXISTS {} (
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
     fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let sql = format!(
-            "INSERT INTO {} ({}, {}) VALUES (:table_name, :table_wide_constraints);",
+            "
+            INSERT INTO {} ({}, {}) VALUES (:table_name, :table_wide_constraints);
+            ",
             TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
         );
 

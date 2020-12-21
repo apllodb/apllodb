@@ -5,7 +5,7 @@ use crate::{
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         row_iterator::SqliteRowIterator,
-        sqlite_types::{SqliteTypes, VRREntries},
+        sqlite_types::{ProjectionResult, SqliteTypes, VRREntries},
         transaction::sqlite_tx::version::dao::VersionDao,
         transaction::sqlite_tx::{
             version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
@@ -19,7 +19,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+use apllodb_shared_components::error::ApllodbResult;
 
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 
@@ -73,7 +73,7 @@ impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngin
     fn full_scan(
         &self,
         vtable: &VTable,
-        projection: &[ColumnName],
+        projection: ProjectionResult<'repo, 'db>,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let vrr_entries = self.vrr().scan(&vtable)?;
         self.probe_vrr_entries(vrr_entries, projection)
@@ -110,7 +110,7 @@ impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
     fn probe_vrr_entries(
         &self,
         vrr_entries: VRREntries<'repo, 'db>,
-        projection: &[ColumnName],
+        projection: ProjectionResult<'repo, 'db>,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
@@ -122,10 +122,9 @@ impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
                 .select_active_version(&vtable, vrr_entries_in_version.version_id())?;
 
             let ver_row_iter = self.version_dao().probe_in_version(
-                &vtable,
                 &version,
                 vrr_entries_in_version,
-                projection,
+                &projection,
             )?;
             ver_row_iters.push_back(ver_row_iter);
         }

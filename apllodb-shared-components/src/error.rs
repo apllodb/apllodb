@@ -865,6 +865,10 @@ impl ApllodbError {
                 sqlstate: SqlState::new("58200".into()),
                 errcode: "ERRCODE_UNDEFINED_PRIMARY_KEY_ERROR".into(),
             },
+            ApllodbErrorKind::InvalidVersion => ApllodbErrorAux {
+                sqlstate: SqlState::new("58300".into()),
+                errcode: "ERRCODE_INVALID_VERSION_ERROR".into(),
+            },
         }
     }
 }

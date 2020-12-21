@@ -74,7 +74,7 @@ pub mod empty_storage_engine {
             },
             error::ApllodbResult,
         };
-        use apllodb_storage_engine_interface::{Transaction, TransactionId};
+        use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionId};
         use std::collections::HashMap;
 
         use super::{EmptyDatabase, EmptyRowIterator, EmptyStorageEngine};
@@ -130,7 +130,7 @@ pub mod empty_storage_engine {
             fn select(
                 &self,
                 table_name: &TableName,
-                column_names: &[ColumnName],
+                projection: ProjectionQuery,
             ) -> ApllodbResult<EmptyRowIterator> {
                 unimplemented!()
             }

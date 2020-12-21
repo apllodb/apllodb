@@ -1,12 +1,21 @@
 use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 
-use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
+use apllodb_immutable_schema_engine_domain::{
+    abstract_types::ImmutableSchemaAbstractTypes,
+    query::projection::ProjectionResult,
+    vtable::{id::VTableId, repository::VTableRepository},
+};
 use apllodb_shared_components::{
     data_structure::{ColumnName, DatabaseName, Expression, TableName},
     error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
+
+use super::{
+    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
+    insert::{InsertUseCase, InsertUseCaseInput},
+};
 
 #[derive(Eq, PartialEq, Debug, new)]
 pub struct UpdateAllUseCaseInput<
@@ -18,7 +27,7 @@ pub struct UpdateAllUseCaseInput<
     tx: &'usecase Engine::Tx,
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
-    column_values: &'usecase HashMap<ColumnName, Expression>,
+    column_values: HashMap<ColumnName, Expression>,
 
     #[new(default)]
     _marker: PhantomData<(&'db (), Types)>,
@@ -43,7 +52,7 @@ impl<
     > UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>
 {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
-        for (column_name, expr) in self.column_values {
+        for (column_name, expr) in &self.column_values {
             match expr {
                 Expression::ConstantVariant(_) => {}
                 Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
@@ -86,48 +95,48 @@ impl<
     ///
     /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(_input: Self::In) -> ApllodbResult<Self::Out> {
-        todo!()
+    fn run_core(mut input: Self::In) -> ApllodbResult<Self::Out> {
+        let vtable_repo = Types::VTableRepo::new(&input.tx);
 
-        // let vtable_repo = input.tx.vtable_repo();
-        // let version_repo = input.tx.version_repo();
+        let vtable_id = VTableId::new(input.database_name, input.table_name);
+        let vtable = vtable_repo.read(&vtable_id)?;
 
-        // let vtable_id = VTableId::new(input.database_name, input.table_name);
-        // let vtable = vtable_repo.read(&vtable_id)?;
+        // Fetch all columns of the latest version rows and update requested columns later.
+        // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
+        let projection_result: ProjectionResult<'_, 'db, Engine, Types> =
+            ProjectionResult::new(input.tx, &vtable, ProjectionQuery::All)?;
+        let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
-        // // Fetch all columns of the latest version rows and update requested columns later.
-        // // TODO Consider CoW to reduce disk usage (append only updated column to a new version).
-        // let row_iter = vtable_repo.full_scan_all_columns(&vtable_id)?;
+        let mut new_col_vals_to_insert: Vec<HashMap<ColumnName, Expression>> = Vec::new();
+        for row in row_iter {
+            let col_vals_before = row.into_col_vals();
+            let mut col_vals_after: HashMap<ColumnName, Expression> = HashMap::new();
 
-        // // Construct ApparentPrimaryKey
-        // // FIXME INSERTではないので、必要なvalueがあるとは限らない！！
-        // let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, input.column_values)?;
+            for (colref, val_before) in col_vals_before {
+                let expr_after =
+                    if let Some(expr_after) = input.column_values.remove(colref.as_column_name()) {
+                        expr_after
+                    } else {
+                        Expression::from(&val_before)
+                    };
+                col_vals_after.insert(colref.as_column_name().clone(), expr_after);
+            }
 
-        // // Filter Non-PK columns from column_values
-        // let non_pk_column_values: HashMap<ColumnName, Expression> = input
-        //     .column_values
-        //     .clone()
-        //     .into_iter()
-        //     .filter_map(|(column_name, expr)| {
-        //         if apk
-        //             .column_names()
-        //             .iter()
-        //             .any(|pk_cn| pk_cn.as_str() == column_name.as_str())
-        //         {
-        //             None
-        //         } else {
-        //             Some((ColumnName::from(column_name), expr))
-        //         }
-        //     })
-        //     .collect();
+            new_col_vals_to_insert.push(col_vals_after);
+        }
 
-        // // Determine version to update
-        // let active_versions = vtable_repo.active_versions(&vtable)?;
-        // let version_to_update = active_versions.version_to_update(&non_pk_column_values)?;
-        // let version_id = VersionId::new(&vtable_id, version_to_update.number());
+        // DELETE all
+        let delete_all_usecase_input: DeleteAllUseCaseInput<'_, 'db, Engine, Types> =
+            DeleteAllUseCaseInput::new(input.tx, input.database_name, input.table_name);
+        let _ = DeleteAllUseCase::run(delete_all_usecase_input)?;
 
-        // version_repo.update(&version_id, apk, &non_pk_column_values)?;
+        // INSERT
+        for col_vals in new_col_vals_to_insert {
+            let insert_usecase_input: InsertUseCaseInput<'_, 'db, Engine, Types> =
+                InsertUseCaseInput::new(input.tx, input.database_name, input.table_name, col_vals);
+            let _ = InsertUseCase::run(insert_usecase_input)?;
+        }
 
-        // Ok(UpdateAllUseCaseOutput)
+        Ok(UpdateAllUseCaseOutput)
     }
 }

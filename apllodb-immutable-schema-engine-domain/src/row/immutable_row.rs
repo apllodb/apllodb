@@ -47,3 +47,9 @@ impl Row for ImmutableRow {
         Ok(())
     }
 }
+
+impl ImmutableRow {
+    pub fn into_col_vals(self) -> HashMap<ColumnReference, SqlValue> {
+        self.col_vals
+    }
+}

@@ -9,7 +9,7 @@ use apllodb_shared_components::data_structure::{
 use apllodb_shared_components::error::ApllodbResult;
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::StorageEngine;
+use crate::{ProjectionQuery, StorageEngine};
 
 /// Transaction interface.
 ///
@@ -64,7 +64,7 @@ pub trait Transaction<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>>: Debug + '
     fn select(
         &self,
         table_name: &TableName,
-        column_names: &[ColumnName],
+        projection: ProjectionQuery,
     ) -> ApllodbResult<Engine::RowIter>;
 
     /// INSERT command.

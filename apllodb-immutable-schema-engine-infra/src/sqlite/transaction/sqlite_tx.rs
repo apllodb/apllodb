@@ -14,7 +14,7 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::UpdateAllUseCaseInput,
 };
 use apllodb_immutable_schema_engine_application::use_case::UseCase;
-use apllodb_storage_engine_interface::Transaction;
+use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use super::tx_id::TxId;
@@ -157,11 +157,11 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
     fn select(
         &self,
         table_name: &TableName,
-        column_names: &[ColumnName],
+        projection: ProjectionQuery,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let database_name = self.database_name().clone();
         let input: FullScanUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            FullScanUseCaseInput::new(self, &database_name, table_name, &column_names);
+            FullScanUseCaseInput::new(self, &database_name, table_name, projection);
         let output = FullScanUseCase::run(input)?;
 
         Ok(output.row_iter)
@@ -174,7 +174,7 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
         let input: InsertUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            InsertUseCaseInput::new(self, &database_name, table_name, &column_values);
+            InsertUseCaseInput::new(self, &database_name, table_name, column_values);
         let _ = InsertUseCase::run(input)?;
 
         Ok(())
@@ -187,7 +187,7 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
         let input: UpdateAllUseCaseInput<'_, 'db, ApllodbImmutableSchemaEngine, SqliteTypes> =
-            UpdateAllUseCaseInput::new(self, &database_name, table_name, &column_values);
+            UpdateAllUseCaseInput::new(self, &database_name, table_name, column_values);
         let _ = UpdateAllUseCase::run(input)?;
 
         Ok(())
@@ -209,7 +209,7 @@ impl<'db> SqliteTx<'db> {
         sql: S,
     ) -> ApllodbResult<SqliteStatement<'_, '_>> {
         let sql = sql.as_ref();
-        debug!("SqliteTx::prepare(): {}", sql);
+        debug!("SqliteTx::prepare():\n    {}", sql);
 
         let raw_stmt = self
             .rusqlite_tx
@@ -226,7 +226,7 @@ impl<'db> SqliteTx<'db> {
         // TODO return ChangedRows(usize)
 
         let sql = sql.as_ref();
-        debug!("SqliteTx::execute_named(): {}", sql);
+        debug!("SqliteTx::execute_named():\n    {}", sql);
 
         let params = params
             .iter()
@@ -235,7 +235,7 @@ impl<'db> SqliteTx<'db> {
 
         let msg = |prefix: &str| {
             format!(
-                "{} while execute_named() with the following command: {}",
+                "{} while execute_named() with the following command:\n    {}",
                 prefix, sql
             )
         };

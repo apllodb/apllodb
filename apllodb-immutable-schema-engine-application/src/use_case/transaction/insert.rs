@@ -22,7 +22,7 @@ pub struct InsertUseCaseInput<
     tx: &'usecase Engine::Tx,
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
-    column_values: &'usecase HashMap<ColumnName, Expression>,
+    column_values: HashMap<ColumnName, Expression>,
 
     #[new(default)]
     _marker: PhantomData<(&'db (), Types)>,
@@ -47,7 +47,7 @@ impl<
     > InsertUseCaseInput<'usecase, 'db, Engine, Types>
 {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
-        for (column_name, expr) in self.column_values {
+        for (column_name, expr) in &self.column_values {
             match expr {
                 Expression::ConstantVariant(_) => {}
                 Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
@@ -98,12 +98,11 @@ impl<
         let vtable = vtable_repo.read(&vtable_id)?;
 
         // Construct ApparentPrimaryKey
-        let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, input.column_values)?;
+        let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, &input.column_values)?;
 
         // Filter Non-PK columns from column_values
         let non_pk_column_values: HashMap<ColumnName, Expression> = input
             .column_values
-            .clone()
             .into_iter()
             .filter_map(|(column_name, expr)| {
                 if apk
@@ -123,7 +122,6 @@ impl<
         let version_to_insert = active_versions.version_to_insert(&non_pk_column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-        // rowで会話するようにしたい。そうすれば、updateでもrowを作ってからversion_repoに同じように話しかけられる
         version_repo.insert(&version_id, apk, &non_pk_column_values)?;
 
         Ok(InsertUseCaseOutput)

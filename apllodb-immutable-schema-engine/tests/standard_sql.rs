@@ -9,7 +9,7 @@ use apllodb_shared_components::{
     },
     error::{ApllodbErrorKind, ApllodbResult},
 };
-use apllodb_storage_engine_interface::{Row, StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{ProjectionQuery, Row, StorageEngine, Transaction};
 
 #[test]
 fn test_create_table_success() -> ApllodbResult<()> {
@@ -70,7 +70,6 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
 }
 
 #[test]
-#[ignore]
 fn test_insert() -> ApllodbResult<()> {
     setup();
 
@@ -105,13 +104,7 @@ fn test_insert() -> ApllodbResult<()> {
         },
     )?;
 
-    let mut rows = tx.select(
-        &t_name,
-        &[
-            c_id_def.column_ref().as_column_name().clone(),
-            c1_def.column_ref().as_column_name().clone(),
-        ],
-    )?;
+    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
 
     let mut row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
@@ -125,7 +118,6 @@ fn test_insert() -> ApllodbResult<()> {
 }
 
 #[test]
-#[ignore]
 fn test_update() -> ApllodbResult<()> {
     setup();
 
@@ -159,7 +151,7 @@ fn test_update() -> ApllodbResult<()> {
          c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(100))
         },
     )?;
-    let mut rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
+    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
     let mut row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
     assert_eq!(row.get::<i32>(c1_def.column_ref())?, 100);
@@ -172,7 +164,7 @@ fn test_update() -> ApllodbResult<()> {
             c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(200))
         },
     )?;
-    let mut rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
+    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
     let mut row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
     assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
@@ -185,7 +177,7 @@ fn test_update() -> ApllodbResult<()> {
             c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(2))
         },
     )?;
-    let mut rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
+    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
     let mut row = rows.next().unwrap();
     assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 2);
     assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
@@ -231,11 +223,17 @@ fn test_delete() -> ApllodbResult<()> {
         },
     )?;
 
-    let rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
+    let rows = tx.select(
+        &t_name,
+        ProjectionQuery::ColumnNames(vec![c_id_def.column_ref().as_column_name().clone()]),
+    )?;
     assert_eq!(rows.count(), 1);
 
     tx.delete(&t_name)?;
-    let rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
+    let rows = tx.select(
+        &t_name,
+        ProjectionQuery::ColumnNames(vec![c_id_def.column_ref().as_column_name().clone()]),
+    )?;
     assert_eq!(rows.count(), 0);
 
     tx.commit()?;
