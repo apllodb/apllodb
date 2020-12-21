@@ -33,6 +33,7 @@ impl VTableId {
         let database_name = apllodb_shared_components::data_structure::DatabaseName::new(
             rand::thread_rng()
                 .sample_iter(&rand::distributions::Alphanumeric)
+                .map(char::from)
                 .filter(|&c| 'a' <= c && c <= 'z')
                 .take(10)
                 .collect::<String>(),
@@ -41,6 +42,7 @@ impl VTableId {
         let table_name = apllodb_shared_components::data_structure::TableName::new(
             rand::thread_rng()
                 .sample_iter(&rand::distributions::Alphanumeric)
+                .map(char::from)
                 .filter(|&c| 'a' <= c && c <= 'z')
                 .take(10)
                 .collect::<String>(),

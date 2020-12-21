@@ -15,5 +15,5 @@ apllodb-shared-components = { path = "../apllodb-shared-components" }
 
 derive-new = "0.5"
 
-env_logger = "0.7"
+env_logger = "0.8"
 log = "0.4"
