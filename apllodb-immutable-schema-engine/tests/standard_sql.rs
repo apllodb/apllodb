@@ -170,18 +170,18 @@ fn test_update() -> ApllodbResult<()> {
     assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
     assert!(rows.next().is_none());
 
-    // // update PK
-    // tx.update(
-    //     &t_name,
-    //     hmap! {
-    //         c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(2))
-    //     },
-    // )?;
-    // let mut rows = tx.select(&t_name, &[c_id_def.column_ref().as_column_name().clone()])?;
-    // let mut row = rows.next().unwrap();
-    // assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 2);
-    // assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
-    // assert!(rows.next().is_none());
+    // update PK
+    tx.update(
+        &t_name,
+        hmap! {
+            c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(2))
+        },
+    )?;
+    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
+    let mut row = rows.next().unwrap();
+    assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 2);
+    assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
+    assert!(rows.next().is_none());
 
     tx.commit()?;
 

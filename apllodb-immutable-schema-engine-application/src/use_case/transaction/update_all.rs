@@ -12,7 +12,10 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
-use super::insert::{InsertUseCase, InsertUseCaseInput};
+use super::{
+    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
+    insert::{InsertUseCase, InsertUseCaseInput},
+};
 
 #[derive(Eq, PartialEq, Debug, new)]
 pub struct UpdateAllUseCaseInput<
@@ -104,6 +107,7 @@ impl<
             ProjectionResult::new(input.tx, &vtable, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
+        let mut new_col_vals_to_insert: Vec<HashMap<ColumnName, Expression>> = Vec::new();
         for row in row_iter {
             let col_vals_before = row.into_col_vals();
             let mut col_vals_after: HashMap<ColumnName, Expression> = HashMap::new();
@@ -118,13 +122,18 @@ impl<
                 col_vals_after.insert(colref.as_column_name().clone(), expr_after);
             }
 
+            new_col_vals_to_insert.push(col_vals_after);
+        }
+
+        // DELETE all
+        let delete_all_usecase_input: DeleteAllUseCaseInput<'_, 'db, Engine, Types> =
+            DeleteAllUseCaseInput::new(input.tx, input.database_name, input.table_name);
+        let _ = DeleteAllUseCase::run(delete_all_usecase_input)?;
+
+        // INSERT
+        for col_vals in new_col_vals_to_insert {
             let insert_usecase_input: InsertUseCaseInput<'_, 'db, Engine, Types> =
-                InsertUseCaseInput::new(
-                    input.tx,
-                    input.database_name,
-                    input.table_name,
-                    col_vals_after,
-                );
+                InsertUseCaseInput::new(input.tx, input.database_name, input.table_name, col_vals);
             let _ = InsertUseCase::run(insert_usecase_input)?;
         }
 
