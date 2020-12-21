@@ -26,7 +26,7 @@ CREATE TABLE {tname} (
     {cname_version_number} INTEGER
 )
         ",
-            tname = NaviDao::table_name(vtable.id()),
+            tname = NaviDao::table_name_str(vtable.id()),
             pk_coldefs = vtable
                 .table_wide_constraints()
                 .pk_column_data_types()

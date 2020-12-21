@@ -1,6 +1,7 @@
-use super::{CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
+use super::{NaviDao, CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
 use crate::sqlite::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
+    entity::Entity,
     row::{
         immutable_row::ImmutableRow,
         pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
@@ -28,22 +29,22 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Na
 
 impl Navi {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn from_navi_row(
-        table_name: &TableName,
+        navi_table_name: &TableName,
         r: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
         use apllodb_storage_engine_interface::Row;
 
         let rowid = SqliteRowid(r.get::<i64>(&ColumnReference::new(
-            table_name.clone(),
+            navi_table_name.clone(),
             ColumnName::new(CNAME_ROWID)?,
         ))?);
         let revision = Revision::from(r.get::<i64>(&ColumnReference::new(
-            table_name.clone(),
+            navi_table_name.clone(),
             ColumnName::new(CNAME_REVISION)?,
         ))?);
         let opt_version_number = r
             .get::<Option<i64>>(&ColumnReference::new(
-                table_name.clone(),
+                navi_table_name.clone(),
                 ColumnName::new(CNAME_VERSION_NUMBER)?,
             ))?
             .map(VersionNumber::from);
@@ -79,15 +80,16 @@ impl ExistingNaviWithPK {
         vtable: &VTable,
         mut r: ImmutableRow,
     ) -> ApllodbResult<Option<Self>> {
-        let ret =
-            if let Navi::Exist(existing_navi) = Navi::from_navi_row(vtable.table_name(), &mut r)? {
-                Some(ExistingNaviWithPK {
-                    navi: existing_navi,
-                    pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, &mut r)?,
-                })
-            } else {
-                None
-            };
+        let ret = if let Navi::Exist(existing_navi) =
+            Navi::from_navi_row(&NaviDao::table_name(vtable.id()), &mut r)?
+        {
+            Some(ExistingNaviWithPK {
+                navi: existing_navi,
+                pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, &mut r)?,
+            })
+        } else {
+            None
+        };
         Ok(ret)
     }
 }

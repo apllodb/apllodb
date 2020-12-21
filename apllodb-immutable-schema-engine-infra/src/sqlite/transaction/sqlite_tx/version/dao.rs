@@ -12,7 +12,6 @@ use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
     row::{immutable_row::ImmutableRow, pk::apparent_pk::ApparentPrimaryKey},
     version::{active_version::ActiveVersion, id::VersionId},
-    vtable::VTable,
 };
 use apllodb_shared_components::{
     data_structure::ColumnDataType,

@@ -36,8 +36,13 @@ const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
 impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
-    fn table_name(vtable_id: &VTableId) -> String {
+    fn table_name_str(vtable_id: &VTableId) -> String {
         format!("{}__{}", vtable_id.table_name(), TNAME_SUFFIX)
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn table_name(vtable_id: &VTableId) -> TableName {
+        TableName::new(Self::table_name_str(vtable_id))
+            .expect("navi table length must not be too long")
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
@@ -75,14 +80,14 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             cname_rowid = CNAME_ROWID,
             cname_revision = CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
-            tname = Self::table_name(vtable.id()),
+            tname = Self::table_name_str(vtable.id()),
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let cdt_rowid = self.cdt_rowid(vtable.table_name().clone());
-        let cdt_revision = self.cdt_revision(vtable.table_name().clone());
-        let cdt_version_number = self.cdt_version_number(vtable.table_name().clone());
+        let cdt_rowid = self.cdt_rowid(Self::table_name(vtable.id()));
+        let cdt_revision = self.cdt_revision(Self::table_name(vtable.id()));
+        let cdt_version_number = self.cdt_version_number(Self::table_name(vtable.id()));
 
         let mut column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
         for pk_cdt in vtable.table_wide_constraints().pk_column_data_types() {
@@ -107,7 +112,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
     ) -> ApllodbResult<Navi> {
         let sql = format!(
             "
-SELECT {cname_rowid}
+SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
   FROM {tname}
   WHERE 
     {apk_condition}
@@ -115,22 +120,25 @@ SELECT {cname_rowid}
   LIMIT 1;
 ", // FIXME SQL-i
             cname_rowid = CNAME_ROWID,
-            tname = Self::table_name(vtable_id),
+            cname_revision = CNAME_REVISION,
+            cname_version_number = CNAME_VERSION_NUMBER,
+            tname = Self::table_name_str(vtable_id),
             apk_condition = apk.to_condition_expression()?.to_sql_string(),
-            cname_revision = CNAME_REVISION
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
-        let cdt_rowid = self.cdt_rowid(vtable_id.table_name().clone());
-        let column_data_types = vec![&cdt_rowid];
+        let cdt_rowid = self.cdt_rowid(Self::table_name(vtable_id));
+        let cdt_revision = self.cdt_revision(Self::table_name(vtable_id));
+        let cdt_version_number = self.cdt_version_number(Self::table_name(vtable_id));
+        let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
         let mut row_iter = stmt.query_named(&[], &column_data_types, &[])?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {
             None => Navi::NotExist,
-            Some(mut r) => Navi::from_navi_row(vtable_id.table_name(), &mut r)?,
+            Some(mut r) => Navi::from_navi_row(&Self::table_name(vtable_id), &mut r)?,
         };
         Ok(navi)
     }
@@ -148,7 +156,7 @@ SELECT {cname_rowid}
             "
             INSERT INTO {tname} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, :revision, :version_number);
             ",
-            tname = Self::table_name(vtable_id),
+            tname = Self::table_name_str(vtable_id),
             pk_column_names = apk.column_names().to_sql_string(),
             cname_revision=CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
@@ -182,7 +190,7 @@ INSERT INTO {tname} ({pk_column_names}, {cname_revision})
 ",
             cname_revision = CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
-            tname = Self::table_name(vtable.id()),
+            tname = Self::table_name_str(vtable.id()),
             pk_column_names = vtable
                 .table_wide_constraints()
                 .pk_column_names()
@@ -194,21 +202,24 @@ INSERT INTO {tname} ({pk_column_names}, {cname_revision})
         Ok(())
     }
 
-    fn cdt_rowid(&self, table_name: TableName) -> ColumnDataType {
+    fn cdt_rowid(&self, navi_table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(table_name, ColumnName::new(CNAME_ROWID).unwrap()),
+            ColumnReference::new(navi_table_name, ColumnName::new(CNAME_ROWID).unwrap()),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_revision(&self, table_name: TableName) -> ColumnDataType {
+    fn cdt_revision(&self, navi_table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(table_name, ColumnName::new(CNAME_REVISION).unwrap()),
+            ColumnReference::new(navi_table_name, ColumnName::new(CNAME_REVISION).unwrap()),
             DataType::new(DataTypeKind::BigInt, false),
         )
     }
-    fn cdt_version_number(&self, table_name: TableName) -> ColumnDataType {
+    fn cdt_version_number(&self, navi_table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(table_name, ColumnName::new(CNAME_VERSION_NUMBER).unwrap()),
+            ColumnReference::new(
+                navi_table_name,
+                ColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
+            ),
             DataType::new(DataTypeKind::BigInt, true),
         )
     }

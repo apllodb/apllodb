@@ -19,7 +19,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::{data_structure::ColumnName, error::ApllodbResult};
+use apllodb_shared_components::error::ApllodbResult;
 
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 

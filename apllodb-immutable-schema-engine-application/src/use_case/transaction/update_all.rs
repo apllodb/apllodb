@@ -3,7 +3,6 @@ use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     query::projection::ProjectionResult,
-    version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
@@ -25,7 +24,7 @@ pub struct UpdateAllUseCaseInput<
     tx: &'usecase Engine::Tx,
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
-    column_values: &'usecase HashMap<ColumnName, Expression>,
+    column_values: HashMap<ColumnName, Expression>,
 
     #[new(default)]
     _marker: PhantomData<(&'db (), Types)>,
@@ -50,7 +49,7 @@ impl<
     > UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>
 {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
-        for (column_name, expr) in self.column_values {
+        for (column_name, expr) in &self.column_values {
             match expr {
                 Expression::ConstantVariant(_) => {}
                 Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
@@ -93,14 +92,11 @@ impl<
     ///
     /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
+    fn run_core(mut input: Self::In) -> ApllodbResult<Self::Out> {
         let vtable_repo = Types::VTableRepo::new(&input.tx);
-        let version_repo = Types::VersionRepo::new(&input.tx);
 
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
-
-        let active_versions = vtable_repo.active_versions(&vtable)?;
 
         // Fetch all columns of the latest version rows and update requested columns later.
         // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
@@ -108,7 +104,7 @@ impl<
             ProjectionResult::new(input.tx, &vtable, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
-        for mut row in row_iter {
+        for row in row_iter {
             let col_vals_before = row.into_col_vals();
             let mut col_vals_after: HashMap<ColumnName, Expression> = HashMap::new();
 
@@ -127,7 +123,7 @@ impl<
                     input.tx,
                     input.database_name,
                     input.table_name,
-                    &col_vals_after,
+                    col_vals_after,
                 );
             let _ = InsertUseCase::run(insert_usecase_input)?;
         }
