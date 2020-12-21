@@ -102,11 +102,6 @@ impl ApparentPrimaryKey {
         ))
     }
 
-    /// Returns old value.
-    pub fn update_colval(&mut self, _col: &ColumnName, _val: SqlValue) -> ApllodbResult<SqlValue> {
-        todo!()
-    }
-
     pub fn column_names(&self) -> &[ColumnName] {
         &self.pk_column_names
     }
