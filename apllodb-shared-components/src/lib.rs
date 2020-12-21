@@ -6,3 +6,6 @@ pub mod data_structure;
 pub mod error;
 pub mod helper;
 pub mod traits;
+
+#[cfg(test)]
+pub mod test_support;

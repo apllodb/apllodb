@@ -1,4 +1,8 @@
-use crate::data_structure::{DataTypeKind, SqlValue};
+use crate::{
+    data_structure::{DataTypeKind, SqlValue},
+    error::ApllodbErrorKind,
+    traits::SqlConvertible,
+};
 use serde::{Deserialize, Serialize};
 
 /// Constant.
@@ -63,25 +67,32 @@ impl From<String> for Constant {
 
 impl From<&SqlValue> for Constant {
     fn from(sql_value: &SqlValue) -> Self {
-        let msg = "DatatypeMismatch never happen if pattern-match here is correct";
+        fn core<T: SqlConvertible, F: FnOnce(T) -> Constant>(
+            sql_value: &SqlValue,
+            rust_val_to_constant: F,
+        ) -> Constant {
+            let msg = "DatatypeMismatch never happen if pattern-match here is correct";
+
+            match sql_value.unpack::<Option<T>>() {
+                Ok(opt) => match opt {
+                    None => Constant::Null,
+                    Some(v) => rust_val_to_constant(v),
+                },
+                Err(e) => match e.kind() {
+                    ApllodbErrorKind::DatatypeMismatch => {
+                        let v = sql_value.unpack::<T>().expect(msg);
+                        rust_val_to_constant(v)
+                    }
+                    _ => panic!("unexpected error `{}` with sql_value=`{:?}`", e, sql_value),
+                },
+            }
+        }
 
         match sql_value.data_type().kind() {
-            DataTypeKind::SmallInt => {
-                let v: i16 = sql_value.unpack().expect(msg);
-                Self::from(v)
-            }
-            DataTypeKind::Integer => {
-                let v: i32 = sql_value.unpack().expect(msg);
-                Self::from(v)
-            }
-            DataTypeKind::BigInt => {
-                let v: i64 = sql_value.unpack().expect(msg);
-                Self::from(v)
-            }
-            DataTypeKind::Text => {
-                let v: String = sql_value.unpack().expect(msg);
-                Self::from(v)
-            }
+            DataTypeKind::SmallInt => core::<i16, _>(sql_value, Self::from),
+            DataTypeKind::Integer => core::<i32, _>(sql_value, Self::from),
+            DataTypeKind::BigInt => core::<i64, _>(sql_value, Self::from),
+            DataTypeKind::Text => core::<String, _>(sql_value, Self::from),
         }
     }
 }
