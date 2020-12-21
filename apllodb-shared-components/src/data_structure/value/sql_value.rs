@@ -57,6 +57,17 @@ impl SqlValue {
     pub fn try_from(expr: &Expression, data_type: &DataType) -> ApllodbResult<Self> {
         match expr {
             Expression::ConstantVariant(v) => match v {
+                Constant::Null => {
+                    if data_type.nullable() {
+                        SqlValue::pack(&data_type, &None::<i16>)
+                    } else {
+                        Err(ApllodbError::new(
+                        ApllodbErrorKind::NullValueNotAllowed,
+                        format!("NULL expression is passed but requested to interpret as non-nullable type: {:?}",  data_type),
+                        None
+                    ))
+                    }
+                }
                 Constant::NumericConstantVariant(v) => match v {
                     NumericConstant::IntegerConstantVariant(IntegerConstant(i)) => {
                         match data_type.kind() {

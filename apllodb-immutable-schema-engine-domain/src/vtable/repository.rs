@@ -44,7 +44,7 @@ pub trait VTableRepository<
         &self,
         vtable: &VTable,
         projection: ProjectionResult<'repo, 'db, Engine, Types>,
-    ) -> ApllodbResult<Engine::RowIter>;
+    ) -> ApllodbResult<Types::ImmutableSchemaRowIter>;
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 

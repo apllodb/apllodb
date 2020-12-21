@@ -40,11 +40,20 @@ impl<
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput<'usecase, 'db: 'usecase, Engine: StorageEngine<'usecase, 'db>> {
-    pub row_iter: Engine::RowIter,
+pub struct FullScanUseCaseOutput<
+    'usecase,
+    'db: 'usecase,
+    Engine: StorageEngine<'usecase, 'db>,
+    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+> {
+    pub row_iter: Types::ImmutableSchemaRowIter,
 }
-impl<'usecase, 'db: 'usecase, Engine: StorageEngine<'usecase, 'db>> UseCaseOutput
-    for FullScanUseCaseOutput<'usecase, 'db, Engine>
+impl<
+        'usecase,
+        'db: 'usecase,
+        Engine: StorageEngine<'usecase, 'db>,
+        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    > UseCaseOutput for FullScanUseCaseOutput<'usecase, 'db, Engine, Types>
 {
 }
 
@@ -64,7 +73,7 @@ impl<
     > UseCase for FullScanUseCase<'usecase, 'db, Engine, Types>
 {
     type In = FullScanUseCaseInput<'usecase, 'db, Engine, Types>;
-    type Out = FullScanUseCaseOutput<'usecase, 'db, Engine>;
+    type Out = FullScanUseCaseOutput<'usecase, 'db, Engine, Types>;
 
     /// # Failures
     ///

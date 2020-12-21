@@ -46,7 +46,7 @@ impl PrimaryKey for ApparentPrimaryKey {
 impl ApparentPrimaryKey {
     pub fn from_table_and_immutable_row(
         vtable: &VTable,
-        mut row: ImmutableRow,
+        row: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
@@ -100,6 +100,11 @@ impl ApparentPrimaryKey {
             apk_column_names,
             apk_sql_values,
         ))
+    }
+
+    /// Returns old value.
+    pub fn update_colval(&mut self, _col: &ColumnName, _val: SqlValue) -> ApllodbResult<SqlValue> {
+        todo!()
     }
 
     pub fn column_names(&self) -> &[ColumnName] {

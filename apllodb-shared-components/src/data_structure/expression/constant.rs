@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 /// Constant.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Constant {
+    /// NULL
+    Null,
+
     /// Numeric constant.
     NumericConstantVariant(NumericConstant),
 

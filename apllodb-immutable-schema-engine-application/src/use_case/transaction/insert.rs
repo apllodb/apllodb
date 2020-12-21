@@ -123,7 +123,6 @@ impl<
         let version_to_insert = active_versions.version_to_insert(&non_pk_column_values)?;
         let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-        // rowで会話するようにしたい。そうすれば、updateでもrowを作ってからversion_repoに同じように話しかけられる
         version_repo.insert(&version_id, apk, &non_pk_column_values)?;
 
         Ok(InsertUseCaseOutput)

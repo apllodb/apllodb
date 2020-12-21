@@ -1,6 +1,9 @@
 use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 
-use crate::external_interface::ApllodbImmutableSchemaEngine;
+use crate::{
+    external_interface::ApllodbImmutableSchemaEngine,
+    immutable_schema_row_iter::ImmutableSchemaRowIter,
+};
 
 use super::{
     row_iterator::SqliteRowIterator,
@@ -19,10 +22,11 @@ impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<'repo, 'db, ApllodbImmutabl
 {
     type VRRId = SqliteRowid;
 
+    type ImmutableSchemaRowIter = ImmutableSchemaRowIter;
     type VersionRowIter = SqliteRowIterator;
 
-    type VersionRepo = VersionRepositoryImpl<'repo, 'db>;
     type VTableRepo = VTableRepositoryImpl<'repo, 'db>;
+    type VersionRepo = VersionRepositoryImpl<'repo, 'db>;
 }
 
 // Fill structs' type parameters in domain / application layers.

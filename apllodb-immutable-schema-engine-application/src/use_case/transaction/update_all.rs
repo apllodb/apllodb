@@ -3,7 +3,7 @@ use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     query::projection::ProjectionResult,
-    version::{repository::VersionRepository},
+    version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
@@ -12,6 +12,8 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
+
+use super::insert::{InsertUseCase, InsertUseCaseInput};
 
 #[derive(Eq, PartialEq, Debug, new)]
 pub struct UpdateAllUseCaseInput<
@@ -106,12 +108,28 @@ impl<
             ProjectionResult::new(input.tx, &vtable, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
-        for row in row_iter {
-            // TODO PK: ApparentPrimaryKey, non-PK: HashMap<ColumnName, Expression> に各 row を分ける
+        for mut row in row_iter {
+            let col_vals_before = row.into_col_vals();
+            let mut col_vals_after: HashMap<ColumnName, Expression> = HashMap::new();
 
-            // let version_to_update = active_versions.version_to_insert(&non_pk_column_values)?;
-            // let version_id = VersionId::new(&vtable_id, version_to_insert.number());
-            // version_repo.insert(&version_id, apk, &non_pk_column_values)?;
+            for (colref, val_before) in col_vals_before {
+                let expr_after =
+                    if let Some(expr_after) = input.column_values.remove(colref.as_column_name()) {
+                        expr_after
+                    } else {
+                        Expression::from(&val_before)
+                    };
+                col_vals_after.insert(colref.as_column_name().clone(), expr_after);
+            }
+
+            let insert_usecase_input: InsertUseCaseInput<'_, 'db, Engine, Types> =
+                InsertUseCaseInput::new(
+                    input.tx,
+                    input.database_name,
+                    input.table_name,
+                    &col_vals_after,
+                );
+            let _ = InsertUseCase::run(insert_usecase_input)?;
         }
 
         Ok(UpdateAllUseCaseOutput)
