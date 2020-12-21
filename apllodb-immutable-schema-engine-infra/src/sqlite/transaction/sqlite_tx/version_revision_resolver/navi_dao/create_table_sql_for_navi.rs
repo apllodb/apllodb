@@ -1,4 +1,4 @@
-use super::{navi_table_name::NaviTableName};
+use super::navi_table_name::NaviTableName;
 use apllodb_immutable_schema_engine_domain::vtable::VTable;
 use serde::{Deserialize, Serialize};
 

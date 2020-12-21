@@ -11,7 +11,9 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct 
 );
 
 impl NaviTableName {
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn to_table_name(&self) -> TableName {
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn to_table_name(
+        &self,
+    ) -> TableName {
         // better to return TableName("{self.0}__navi") but it might be invalid as ShortName.
         self.0.clone()
     }
