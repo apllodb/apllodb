@@ -89,10 +89,10 @@ impl From<&SqlValue> for Constant {
         }
 
         match sql_value.data_type().kind() {
-            DataTypeKind::SmallInt => core(sql_value, |v: i16| Self::from(v)),
-            DataTypeKind::Integer => core(sql_value, |v: i32| Self::from(v)),
-            DataTypeKind::BigInt => core(sql_value, |v: i64| Self::from(v)),
-            DataTypeKind::Text => core(sql_value, |v: String| Self::from(v)),
+            DataTypeKind::SmallInt => core::<i16, _>(sql_value, Self::from),
+            DataTypeKind::Integer => core::<i32, _>(sql_value, Self::from),
+            DataTypeKind::BigInt => core::<i64, _>(sql_value, Self::from),
+            DataTypeKind::Text => core::<String, _>(sql_value, Self::from),
         }
     }
 }
