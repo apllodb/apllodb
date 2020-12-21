@@ -101,6 +101,7 @@ impl ToSqlString for SqlValue {
 impl ToSqlString for Constant {
     fn to_sql_string(&self) -> String {
         match self {
+            Constant::Null => "NULL".to_string(),
             Constant::NumericConstantVariant(n) => match n {
                 NumericConstant::IntegerConstantVariant(IntegerConstant(i)) => format!("{}", i),
             },
