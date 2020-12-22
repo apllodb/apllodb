@@ -30,7 +30,7 @@
 //!
 //! ```bash
 //! # (clone repository)
-//! 
+//!
 //! cd apllodb
 //! cargo build
 //! cargo test
