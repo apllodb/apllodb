@@ -1,10 +1,9 @@
 //! apllodb というRDBMSのサーバ実装。以下の機能を特徴として持つ予定。
 //!
 //! - Immutable Schema
+//! - 曖昧なデータ（ "大体1000年前" など）
 //! - 代数的データ型 (apllo-cms のデータモデリングで実現するか、apllodbの機能としてやるかの検討段階)
-//! - 曖昧なデータ（ "大体1000年前" など。apllo-cms のデータモデリングで実現するか、apllodbの機能としてやるかの検討段階）
 //!
-//! ![correct_and_check_pr](https://github.com/darwin-education/apllodb/workflows/correct_and_check_pr/badge.svg)
 //! ![MSRV](https://img.shields.io/badge/rustc-1.43+-lightgray.svg)
 //!
 //! # 開発開始までの手順
