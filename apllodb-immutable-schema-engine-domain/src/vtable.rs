@@ -19,7 +19,7 @@ use std::cmp::Ordering;
 /// A vtable is mutable. Its [TableWideConstraint](enum.TableWideConstraint.html)s are changed by
 /// apllodb ALTER TABLE commands (ADDing / MODIFYing column with T_table_constraint, DROPping column).
 ///
-/// See: https://github.com/darwin-education/apllodb/wiki/Immutable-Schema-102:-Immutable-Schema-%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E5%AE%9A%E7%BE%A9%E3%83%BB%E5%AE%9A%E7%90%86
+/// See: <https://github.com/darwin-education/apllodb/wiki/Immutable-Schema-102:-Immutable-Schema-%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E5%AE%9A%E7%BE%A9%E3%83%BB%E5%AE%9A%E7%90%86>
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
 pub struct VTable {
     id: VTableId,
