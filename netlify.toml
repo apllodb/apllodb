@@ -1,3 +1,3 @@
 [build]
-command = "RUSTDOCFLAGS='--enable-index-page -Zunstable-options' cargo +nightly doc --no-deps --all-features && mv target/doc build"
+command = "rustup toolchain install nightly && RUSTDOCFLAGS='--enable-index-page -Zunstable-options' cargo +nightly doc --no-deps --all-features && mv target/doc build"
 publish = "build"
