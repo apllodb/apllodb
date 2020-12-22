@@ -1,7 +1,16 @@
 [workspace]
 
 members = [
-    "apllodb-shared-components",
-    "apllodb-sql-parser",
-    "main",
+  "apllodb-shared-components",
+  "apllodb-sql-parser",
+  "apllodb-storage-engine-interface", 
+  
+  # Immutable Schema Storage Engine.
+  # Has "Clean Architecture"-like structure, lower crate depends on upper ones.
+  "apllodb-immutable-schema-engine-domain",
+  "apllodb-immutable-schema-engine-application",
+  "apllodb-immutable-schema-engine-infra",
+  
+  "apllodb-immutable-schema-engine",
+  "main",
 ]
