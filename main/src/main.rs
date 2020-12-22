@@ -17,7 +17,7 @@
 //!
 //! ["Architecture of a Database System"](https://dsf.berkeley.edu/papers/fntdb07-architecture.pdf) の Fig. 1.1 をベースに記載。
 //!
-//! ![apllodb コンポーネント図](http://drive.google.com/uc?export=view&id=1hlHuIgVHkGb_n8A8ZBKIyxtRBGqIDgfQ)
+//! ![apllodb コンポーネント図](https://drive.google.com/uc?export=view&id=1hlHuIgVHkGb_n8A8ZBKIyxtRBGqIDgfQ)
 //!
 //! ## 諸々ドキュメント
 //!
