@@ -2,6 +2,7 @@
 
 mod aux;
 mod dummy;
+mod from;
 mod kind;
 mod sqlstate;
 
@@ -843,6 +844,30 @@ impl ApllodbError {
             ApllodbErrorKind::WithCheckOptionViolation => ApllodbErrorAux {
                 sqlstate: SqlState::new("44000".into()),
                 errcode: "ERRCODE_WITH_CHECK_OPTION_VIOLATION".into(),
+            },
+            ApllodbErrorKind::SystemError => ApllodbErrorAux {
+                sqlstate: SqlState::new("58000".into()),
+                errcode: "ERRCODE_SYSTEM_ERROR".into(),
+            },
+            ApllodbErrorKind::IoError => ApllodbErrorAux {
+                sqlstate: SqlState::new("58030".into()),
+                errcode: "ERRCODE_IO_ERROR".into(),
+            },
+            ApllodbErrorKind::DeserializationError => ApllodbErrorAux {
+                sqlstate: SqlState::new("58100".into()),
+                errcode: "ERRCODE_DESERIALIZATION_ERROR".into(),
+            },
+            ApllodbErrorKind::SerializationError => ApllodbErrorAux {
+                sqlstate: SqlState::new("58110".into()),
+                errcode: "ERRCODE_SERIALIZATION_ERROR".into(),
+            },
+            ApllodbErrorKind::UndefinedPrimaryKey => ApllodbErrorAux {
+                sqlstate: SqlState::new("58200".into()),
+                errcode: "ERRCODE_UNDEFINED_PRIMARY_KEY_ERROR".into(),
+            },
+            ApllodbErrorKind::InvalidVersion => ApllodbErrorAux {
+                sqlstate: SqlState::new("58300".into()),
+                errcode: "ERRCODE_INVALID_VERSION_ERROR".into(),
             },
         }
     }
