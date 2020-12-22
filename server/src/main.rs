@@ -25,16 +25,22 @@
 //!
 //! # 開発の手引
 //!
+//! ## Building & Testing
+//!
 //! [Cargo](https://github.com/rust-lang/cargo) までインストールしていることが前提。
 //! [Multi-package project](https://doc.rust-lang.org/edition-guide/rust-2018/cargo-and-crates-io/cargo-workspaces-for-multi-package-projects.html) の構成になっている。
 //!
 //! ```bash
 //! # (clone repository)
-//! 
+//!
 //! cd apllodb
 //! cargo build
 //! cargo test
 //! ```
+//!
+//! ## Crates
+//!
+//! - `server/`: apllodbサーバの実行バイナリを作る。
 
 fn main() {
     println!("Hello, world!");
