@@ -1,10 +1,11 @@
-use crate::data_structure::{ColumnDefinition, DataType};
 use serde::{Deserialize, Serialize};
 
-use super::ColumnReference;
+use super::{
+    column_definition::ColumnDefinition, column_reference::ColumnReference, data_type::DataType,
+};
 
 /// Column with data type.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ColumnDataType {
     column: ColumnReference,
     data_type: DataType,
@@ -20,10 +21,6 @@ impl From<&ColumnDefinition> for ColumnDataType {
 }
 
 impl ColumnDataType {
-    pub fn new(column: ColumnReference, data_type: DataType) -> Self {
-        Self { column, data_type }
-    }
-
     /// Ref to column reference.
     pub fn column_ref(&self) -> &ColumnReference {
         &self.column

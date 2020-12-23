@@ -1,12 +1,13 @@
-use crate::data_structure::ColumnName;
 use serde::{Deserialize, Serialize};
+
+use crate::data_structure::column::column_name::ColumnName;
 
 /// A constraint parameter in a table definition.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum TableConstraintKind {
     /// PRIMARY KEY ({column_name}, ...)
     PrimaryKey {
-        /// compound columns
+        /// Compound columns.
         column_names: Vec<ColumnName>,
     },
 

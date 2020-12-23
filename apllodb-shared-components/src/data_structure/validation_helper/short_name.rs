@@ -1,4 +1,4 @@
-use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use crate::error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult};
 use serde::{Deserialize, Serialize};
 
 /// Short (64 chars in UTF-8 at maximum) object name used for table names, column names, and so on.
@@ -44,7 +44,7 @@ impl ShortName {
 #[cfg(test)]
 mod tests {
     use super::ShortName;
-    use crate::error::ApllodbErrorKind;
+    use crate::error::kind::ApllodbErrorKind;
 
     #[test]
     fn test_success() {

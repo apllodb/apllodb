@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 pub enum LogicalFunction {
     /// `AND` operation
     AndVariant {
+        /// Left operand
         left: Box<BooleanExpression>,
+        /// Right operand
         right: Box<BooleanExpression>,
     },
 }

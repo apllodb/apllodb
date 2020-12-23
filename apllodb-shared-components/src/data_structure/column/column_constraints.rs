@@ -15,12 +15,14 @@ impl Default for ColumnConstraints {
 }
 
 impl ColumnConstraints {
-    /// TODO UNIQUE, PK は共存できないというバリデーション
+    /// Constructor
+    ///
+    /// TODO validate mixed UNIQUE and PRIMARY KEY
     pub fn new(kinds: Vec<ColumnConstraintKind>) -> ApllodbResult<Self> {
         Ok(Self { kinds })
     }
 
-    /// Ref to seq of [ColumnConstraintKind](enum.ColumnConstraintKind.html).
+    /// Ref to seq of [ColumnConstraintKind](crate::ColumnConstraintKind).
     pub fn kinds(&self) -> &[ColumnConstraintKind] {
         &self.kinds
     }

@@ -1,9 +1,6 @@
-use crate::{
-    data_structure::{DataTypeKind, SqlValue},
-    error::ApllodbErrorKind,
-    traits::SqlConvertible,
-};
 use serde::{Deserialize, Serialize};
+
+use crate::{data_structure::{column::data_type_kind::DataTypeKind, value::sql_value::SqlValue}, error::kind::ApllodbErrorKind, traits::sql_convertible::SqlConvertible};
 
 /// Constant.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -27,25 +24,44 @@ pub enum NumericConstant {
 
 /// Integer constant.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct IntegerConstant(pub i64); // TODO re-think about data size
+pub enum IntegerConstant {
+    /// 64-bit signed integer
+    I64(i64),
+    /// 32-bit signed integer
+    I32(i32),
+    /// 16-bit signed integer
+    I16(i16),
+}
+impl IntegerConstant {
+    /// Get as i64 value
+    pub fn as_i64(&self) -> i64 {
+        match self {
+            IntegerConstant::I64(v) => *v as i64,
+            IntegerConstant::I32(v) => *v as i64,
+            IntegerConstant::I16(v) => *v as i64,
+        }
+    }
+}
 
 impl From<i64> for Constant {
     fn from(v: i64) -> Self {
-        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(v)))
+        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(
+            IntegerConstant::I64(v),
+        ))
     }
 }
 impl From<i32> for Constant {
     fn from(v: i32) -> Self {
-        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(
-            v as i64,
-        )))
+        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(
+            IntegerConstant::I32(v),
+        ))
     }
 }
 impl From<i16> for Constant {
     fn from(v: i16) -> Self {
-        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(
-            v as i64,
-        )))
+        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(
+            IntegerConstant::I16(v),
+        ))
     }
 }
 
@@ -56,8 +72,14 @@ pub enum CharacterConstant {
     TextConstantVariant(TextConstant),
 }
 /// Text constant (arbitrary length; UTF-8).
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct TextConstant(pub String);
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
+pub struct TextConstant(String);
+impl TextConstant {
+    /// Get as &str
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
 
 impl From<String> for Constant {
     fn from(v: String) -> Self {

@@ -3,13 +3,16 @@ mod option;
 mod text;
 
 use crate::{
-    data_structure::{DataType, DataTypeKind},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    data_structure::column::{data_type::DataType, data_type_kind::DataTypeKind},
+    error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
 };
 use serde::{de::DeserializeOwned, Serialize};
 use std::{any::type_name, collections::HashSet};
 
+/// Rust values which can be serialized into / deserialized from binary and can have bidirectional mapping to/from SQL [DataType](crate::DataType).
 pub trait SqlConvertible: Serialize + DeserializeOwned + std::fmt::Debug {
+    /// Serialize into binary.
+    /// Default implementation should be fast enough.
     fn pack(into_type: &DataType, rust_value: &Self) -> ApllodbResult<Vec<u8>> {
         if Self::to_sql_types().contains(into_type) {
             let raw = bincode::serialize(&rust_value).map_err(|e| {
@@ -34,6 +37,8 @@ pub trait SqlConvertible: Serialize + DeserializeOwned + std::fmt::Debug {
         }
     }
 
+    /// Deserialize from binary.
+    /// Default implementation should be fast enough.
     fn unpack(from_type: &DataType, raw: &[u8]) -> ApllodbResult<Self> {
         if Self::from_sql_types().contains(from_type) {
             let v = bincode::deserialize(raw).map_err(|e| {

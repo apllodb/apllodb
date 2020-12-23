@@ -1,9 +1,14 @@
-use crate::data_structure::{
-    validation_helper::collection::find_dup_slow, ColumnName, TableConstraintKind,
+use crate::error::{ApllodbError, ApllodbResult};
+use crate::{
+    data_structure::{
+        column::column_name::ColumnName, validation_helper::collection::find_dup_slow,
+    },
+    error::kind::ApllodbErrorKind,
 };
-use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+
+use super::table_constraint_kind::TableConstraintKind;
 
 /// Table constraints.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
@@ -21,13 +26,13 @@ impl TableConstraints {
     /// Constructor.
     ///
     /// # Failures
-    /// - [InvalidTableDefinition](error/enum.ApllodbErrorKind.html#variant.InvalidTableDefinition) when:
-    ///   - No [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey) is specified.
-    ///   - Multiple [PrimaryKey](enum.TableConstraintKind.html#variant.PrimaryKey)s appear.
-    ///   - More than 1 [PrimaryKey](enum.TableConstraintKind.html#variant.PrimaryKey) /
-    ///     [Unique](enum.TableConstraintKind.html#variant.Unique) constraints are applied to the same column set.
-    ///   - Column sequence of [PrimaryKey](enum.TableConstraintKind.html#variant.PrimaryKey) or
-    ///     [Unique](enum.TableConstraintKind.html#variant.Unique) have duplicate column.
+    /// - [InvalidTableDefinition](crate::ApllodbErrorKind::InvalidTableDefinition) when:
+    ///   - No [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) is specified.
+    ///   - Multiple [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey)s appear.
+    ///   - More than 1 [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) /
+    ///     [Unique](crate::TableConstraintKind::Unique) constraints are applied to the same column set.
+    ///   - Column sequence of [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) or
+    ///     [Unique](crate::TableConstraintKind::Unique) have duplicate column.
     pub fn new(constraints: Vec<TableConstraintKind>) -> ApllodbResult<Self> {
         Self::validate_col_duplication(&constraints)?;
         Self::validate_pk_existence(&constraints)?;
@@ -115,10 +120,10 @@ impl TableConstraints {
 mod tests {
     macro_rules! t_pk {
         ($($col_name: expr $(,)?)*) => {{
-            $crate::data_structure::TableConstraintKind::PrimaryKey {
+            $crate::TableConstraintKind::PrimaryKey {
                 column_names: vec![
                     $(
-                        $crate::data_structure::ColumnName::new($col_name).unwrap(),
+                        $crate::ColumnName::new($col_name).unwrap(),
                     )*
                 ],
             }
@@ -127,18 +132,22 @@ mod tests {
     }
     macro_rules! t_unique {
         ($($col_name: expr $(,)?)*) => {{
-            $crate::data_structure::TableConstraintKind::Unique {
+            $crate::TableConstraintKind::Unique {
                 column_names: vec![
                     $(
-                        $crate::data_structure::ColumnName::new($col_name).unwrap(),
+                        $crate::ColumnName::new($col_name).unwrap(),
                     )*
                 ],
             }
         }}
     }
 
+    use crate::{
+        data_structure::table::table_constraint_kind::TableConstraintKind,
+        error::kind::ApllodbErrorKind,
+    };
+
     use super::TableConstraints;
-    use crate::{data_structure::TableConstraintKind, error::ApllodbErrorKind};
 
     #[test]
     fn test_success() {

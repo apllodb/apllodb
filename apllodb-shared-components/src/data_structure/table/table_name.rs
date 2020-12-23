@@ -1,16 +1,9 @@
 use crate::{data_structure::validation_helper::short_name::ShortName, error::ApllodbResult};
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
 
 /// Table name.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct TableName(ShortName);
-
-impl Display for TableName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
 
 impl TableName {
     /// Constructor.
@@ -23,6 +16,7 @@ impl TableName {
         Ok(Self(sn))
     }
 
+    /// Table name as str
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }

@@ -1,48 +1,54 @@
+use crate::data_structure::column::{data_type::DataType, data_type_kind::DataTypeKind};
+
 use super::{not_null_sql_types, SqlConvertible};
-use crate::data_structure::{DataType, DataTypeKind};
 use std::collections::HashSet;
 
 impl SqlConvertible for i16 {
     fn to_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        not_null_sql_types(&[SmallInt, Integer, BigInt])
+        not_null_sql_types(&[
+            DataTypeKind::SmallInt,
+            DataTypeKind::Integer,
+            DataTypeKind::BigInt,
+        ])
     }
 
     fn from_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        not_null_sql_types(&[SmallInt])
+        not_null_sql_types(&[DataTypeKind::SmallInt])
     }
 }
 
 impl SqlConvertible for i32 {
     fn to_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        not_null_sql_types(&[Integer, BigInt])
+        not_null_sql_types(&[DataTypeKind::Integer, DataTypeKind::BigInt])
     }
 
     fn from_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        not_null_sql_types(&[SmallInt, Integer])
+        not_null_sql_types(&[DataTypeKind::SmallInt, DataTypeKind::Integer])
     }
 }
 
 impl SqlConvertible for i64 {
     fn to_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        not_null_sql_types(&[BigInt])
+        not_null_sql_types(&[DataTypeKind::BigInt])
     }
 
     fn from_sql_types() -> HashSet<DataType> {
-        use DataTypeKind::*;
-        not_null_sql_types(&[SmallInt, Integer, BigInt])
+        not_null_sql_types(&[
+            DataTypeKind::SmallInt,
+            DataTypeKind::Integer,
+            DataTypeKind::BigInt,
+        ])
     }
 }
 
 #[cfg(test)]
 mod tests_i32 {
     use crate::{
-        data_structure::{DataType, DataTypeKind, SqlValue},
-        error::{ApllodbErrorKind, ApllodbResult},
+        data_structure::{
+            column::{data_type::DataType, data_type_kind::DataTypeKind},
+            value::sql_value::SqlValue,
+        },
+        error::{kind::ApllodbErrorKind, ApllodbResult},
     };
 
     #[test]

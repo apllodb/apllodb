@@ -1,11 +1,4 @@
-use crate::{
-    data_structure::{
-        CharacterConstant, Constant, DataType, DataTypeKind, Expression, IntegerConstant,
-        NumericConstant, TextConstant,
-    },
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-    traits::SqlConvertible,
-};
+use crate::{data_structure::{column::{data_type::DataType, data_type_kind::DataTypeKind}, expression::{Expression, constant::{CharacterConstant, Constant, NumericConstant}}}, error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult}, traits::sql_convertible::SqlConvertible};
 use serde::{Deserialize, Serialize};
 
 pub const SQL_VALUE_NULL: Option<i16> = None;
@@ -36,6 +29,7 @@ impl SqlValue {
         })
     }
 
+    /// Makes NULL SqlValue
     pub fn null() -> Self {
         Self::pack(
             &DataType::new(DataTypeKind::SmallInt, true),
@@ -44,6 +38,7 @@ impl SqlValue {
         .expect("creating NULL should always succeed")
     }
 
+    /// Retrieve Rust value
     pub fn unpack<T>(&self) -> ApllodbResult<T>
     where
         T: SqlConvertible,
@@ -51,10 +46,12 @@ impl SqlValue {
         T::unpack(&self.data_type, &self.raw)
     }
 
+    /// DataType of this value
     pub fn data_type(&self) -> &DataType {
         &self.data_type
     }
 
+    /// Construct from Expression. DataType must be passed explicitly.
     pub fn try_from(expr: &Expression, data_type: &DataType) -> ApllodbResult<Self> {
         match expr {
             Expression::ConstantVariant(v) => match v {
@@ -69,20 +66,20 @@ impl SqlValue {
                     ))
                     }
                 }
-                Constant::NumericConstantVariant(v) => match v {
-                    NumericConstant::IntegerConstantVariant(IntegerConstant(i)) => {
+                Constant::NumericConstantVariant(nv) => match nv {
+                    NumericConstant::IntegerConstantVariant(iv) => 
                         match data_type.kind() {
                             DataTypeKind::SmallInt => {
-                                let v = *i as i16;
-                                SqlValue::pack(&data_type, &v)
+                                let i = iv.as_i64() as i16;
+                                SqlValue::pack(&data_type, &i)
                             }
                             DataTypeKind::Integer => {
-                                let v = *i as i32;
-                                SqlValue::pack(&data_type, &v)
+                                let i = iv.as_i64() as i32;
+                                SqlValue::pack(&data_type, &i)
                             }
                             DataTypeKind::BigInt => {
-                                let v = *i;
-                                SqlValue::pack(&data_type, &v)
+                                let i = iv.as_i64();
+                                SqlValue::pack(&data_type, &i)
                             }
                             data_type_kind  => {
                                 Err(ApllodbError::new(
@@ -92,13 +89,13 @@ impl SqlValue {
                                 ))
                             }
                         }
-                    }
+
                 },
                 Constant::CharacterConstantVariant(c) => match c {
-                    CharacterConstant::TextConstantVariant(TextConstant(s)) => {
+                    CharacterConstant::TextConstantVariant(tx) => {
                         match data_type.kind() {
                             DataTypeKind::Text => {
-                                SqlValue::pack(&data_type, s)
+                                SqlValue::pack(&data_type, &tx.as_str().to_string())
                             }
                             data_type_kind  => {
                                 Err(ApllodbError::new(
@@ -114,7 +111,7 @@ impl SqlValue {
             Expression::ColumnNameVariant(column_name) => Err(ApllodbError::new(
                 ApllodbErrorKind::DataException,
                 format!(
-                    "cannot construct SqlValue from column reference: {}",
+                    "cannot construct SqlValue from column reference: {:?}",
                     column_name
                 ),
                 None,
