@@ -21,7 +21,7 @@ pub struct ApparentPrimaryKey {
 }
 
 impl PrimaryKey for ApparentPrimaryKey {
-    fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+    fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
         let target_sql_value = self
             .zipped()
             .iter()

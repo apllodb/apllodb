@@ -36,7 +36,7 @@ pub mod empty_storage_engine {
         )]
         pub struct EmptyPrimaryKey;
         impl PrimaryKey for EmptyPrimaryKey {
-            fn get_core(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+            fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
                 unimplemented!()
             }
         }
