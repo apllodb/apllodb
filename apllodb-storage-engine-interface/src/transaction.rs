@@ -1,6 +1,4 @@
-mod transaction_id;
-
-pub use transaction_id::TransactionId;
+pub(crate) mod transaction_id;
 
 use apllodb_shared_components::data_structure::{
     AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,

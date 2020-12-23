@@ -1,6 +1,4 @@
-mod pk;
-
-pub use pk::PrimaryKey;
+pub(crate) mod pk;
 
 use apllodb_shared_components::{data_structure::SqlValue, error::ApllodbResult};
 use apllodb_shared_components::{

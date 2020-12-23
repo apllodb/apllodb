@@ -36,14 +36,18 @@ mod transaction;
 use std::fmt::Debug;
 
 pub use crate::query::projection::ProjectionQuery;
-pub use crate::row::{PrimaryKey, Row};
-pub use crate::transaction::{Transaction, TransactionId};
+pub use crate::row::{pk::PrimaryKey, Row};
+pub use crate::transaction::{Transaction, transaction_id::TransactionId};
 
 use apllodb_shared_components::{
     data_structure::DatabaseName, error::ApllodbResult, traits::Database,
 };
 
-/// An storage engine implementation must implement this.
+/// An storage engine implementation must implement this trait and included associated-types.
+///
+/// Lifetimes:
+/// - `'tx`: Lifetime of a transaction's start (BEGIN) to end (COMMIT/ABORT).
+/// - `'db`: Lifetime database's open to close.
 pub trait StorageEngine<'tx, 'db: 'tx>: Sized + Debug {
     /// Transaction.
     type Tx: Transaction<'tx, 'db, Self> + 'tx;
@@ -57,7 +61,7 @@ pub trait StorageEngine<'tx, 'db: 'tx>: Sized + Debug {
     /// Row.
     type R: Row;
 
-    /// Iterator of `Self::R`s returned from [select()](foobar.html) method.
+    /// Iterator of `Self::R`s returned from [select()](crate::Transaction::select) method.
     type RowIter: Iterator<Item = Self::R> + Debug;
 
     /// Specify database to use and return database object.
