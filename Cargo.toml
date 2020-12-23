@@ -12,5 +12,5 @@ members = [
   "apllodb-immutable-schema-engine-application",
   "apllodb-immutable-schema-engine-infra",
 
-  "server",
+  "apllodb-server",
 ]

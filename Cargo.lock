@@ -75,6 +75,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "apllodb-server"
+version = "0.1.0"
+dependencies = [
+ "apllodb-sql-parser",
+]
+
+[[package]]
 name = "apllodb-shared-components"
 version = "0.1.0"
 dependencies = [
@@ -658,13 +665,6 @@ dependencies = [
  "linked-hash-map",
  "serde",
  "yaml-rust",
-]
-
-[[package]]
-name = "server"
-version = "0.1.0"
-dependencies = [
- "apllodb-sql-parser",
 ]
 
 [[package]]
