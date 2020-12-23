@@ -1,11 +1,11 @@
 use crate::data_structure::column::{data_type::DataType, data_type_kind::DataTypeKind};
 
-use super::{not_null_sql_types, SqlConvertible};
+use super::{not_null_data_types, SqlConvertible};
 use std::collections::HashSet;
 
 impl SqlConvertible for i16 {
     fn to_sql_types() -> HashSet<DataType> {
-        not_null_sql_types(&[
+        not_null_data_types(&[
             DataTypeKind::SmallInt,
             DataTypeKind::Integer,
             DataTypeKind::BigInt,
@@ -13,27 +13,27 @@ impl SqlConvertible for i16 {
     }
 
     fn from_sql_types() -> HashSet<DataType> {
-        not_null_sql_types(&[DataTypeKind::SmallInt])
+        not_null_data_types(&[DataTypeKind::SmallInt])
     }
 }
 
 impl SqlConvertible for i32 {
     fn to_sql_types() -> HashSet<DataType> {
-        not_null_sql_types(&[DataTypeKind::Integer, DataTypeKind::BigInt])
+        not_null_data_types(&[DataTypeKind::Integer, DataTypeKind::BigInt])
     }
 
     fn from_sql_types() -> HashSet<DataType> {
-        not_null_sql_types(&[DataTypeKind::SmallInt, DataTypeKind::Integer])
+        not_null_data_types(&[DataTypeKind::SmallInt, DataTypeKind::Integer])
     }
 }
 
 impl SqlConvertible for i64 {
     fn to_sql_types() -> HashSet<DataType> {
-        not_null_sql_types(&[DataTypeKind::BigInt])
+        not_null_data_types(&[DataTypeKind::BigInt])
     }
 
     fn from_sql_types() -> HashSet<DataType> {
-        not_null_sql_types(&[
+        not_null_data_types(&[
             DataTypeKind::SmallInt,
             DataTypeKind::Integer,
             DataTypeKind::BigInt,

@@ -1,10 +1,8 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
-    data_structure::{
-        BooleanExpression, ColumnDataType, ColumnName, ColumnReference, ColumnValue,
-        ComparisonFunction, Constant, Expression, LogicalFunction, SqlValue, TableName,
-    },
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
+    ColumnReference, ColumnValue, ComparisonFunction, Constant, Expression, LogicalFunction,
+    SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::{PrimaryKey, Row};
 use serde::{Deserialize, Serialize};
@@ -35,7 +33,7 @@ impl PrimaryKey for ApparentPrimaryKey {
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedColumn,
-                    format!("undefined column name in PK: `{}`", column_name),
+                    format!("undefined column name in PK: `{:?}`", column_name),
                     None,
                 )
             })?;
@@ -84,7 +82,7 @@ impl ApparentPrimaryKey {
                         ApllodbError::new(
                             ApllodbErrorKind::NotNullViolation,
                             format!(
-                                "primary key column `{}` must be specified (table `{}`)",
+                                "primary key column `{:?}` must be specified (table `{:?}`)",
                                 cdt.column_ref(),
                                 vtable.table_name()
                             ),

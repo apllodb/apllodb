@@ -1,4 +1,14 @@
-use crate::{data_structure::{column::{data_type::DataType, data_type_kind::DataTypeKind}, expression::{Expression, constant::{CharacterConstant, Constant, NumericConstant}}}, error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult}, traits::sql_convertible::SqlConvertible};
+use crate::{
+    data_structure::{
+        column::{data_type::DataType, data_type_kind::DataTypeKind},
+        expression::{
+            constant::{CharacterConstant, Constant, NumericConstant},
+            Expression,
+        },
+    },
+    error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
+    traits::sql_convertible::SqlConvertible,
+};
 use serde::{Deserialize, Serialize};
 
 pub const SQL_VALUE_NULL: Option<i16> = None;
@@ -67,7 +77,7 @@ impl SqlValue {
                     }
                 }
                 Constant::NumericConstantVariant(nv) => match nv {
-                    NumericConstant::IntegerConstantVariant(iv) => 
+                    NumericConstant::IntegerConstantVariant(iv) =>
                         match data_type.kind() {
                             DataTypeKind::SmallInt => {
                                 let i = iv.as_i64() as i16;

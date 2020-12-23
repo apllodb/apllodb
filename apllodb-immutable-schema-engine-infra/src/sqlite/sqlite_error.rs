@@ -1,4 +1,4 @@
-use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind};
 
 pub(in crate::sqlite) fn map_sqlite_err<S: Into<String>>(
     e: rusqlite::Error,

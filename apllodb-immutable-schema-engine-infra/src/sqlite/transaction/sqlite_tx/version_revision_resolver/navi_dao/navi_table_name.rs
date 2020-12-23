@@ -1,4 +1,4 @@
-use apllodb_shared_components::data_structure::TableName;
+use apllodb_shared_components::TableName;
 use serde::{Deserialize, Serialize};
 
 use crate::sqlite::to_sql_string::ToSqlString;
@@ -27,6 +27,6 @@ impl From<TableName> for NaviTableName {
 
 impl ToSqlString for NaviTableName {
     fn to_sql_string(&self) -> String {
-        format!("{}__{}", self.0, TNAME_SUFFIX)
+        format!("{}__{}", self.0.as_str(), TNAME_SUFFIX)
     }
 }

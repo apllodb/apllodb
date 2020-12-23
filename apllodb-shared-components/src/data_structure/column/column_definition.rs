@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use super::{column_constraints::ColumnConstraints, column_data_type::ColumnDataType, column_reference::ColumnReference, data_type::DataType};
+use super::{
+    column_constraints::ColumnConstraints, column_data_type::ColumnDataType,
+    column_reference::ColumnReference, data_type::DataType,
+};
 
 /// Column definition used in DDL.
 /// Note that NULLABLE SQL constraint is treated as [DataType](crate::DataType) (not [ColumnConstraint](crate::ColumnConstraint)).

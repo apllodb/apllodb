@@ -37,11 +37,9 @@ use std::fmt::Debug;
 
 pub use crate::query::projection::ProjectionQuery;
 pub use crate::row::{pk::PrimaryKey, Row};
-pub use crate::transaction::{Transaction, transaction_id::TransactionId};
+pub use crate::transaction::{transaction_id::TransactionId, Transaction};
 
-use apllodb_shared_components::{
-    data_structure::DatabaseName, error::ApllodbResult, traits::Database,
-};
+use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
 
 /// An storage engine implementation must implement this trait and included associated-types.
 ///

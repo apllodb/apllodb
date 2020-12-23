@@ -3,7 +3,7 @@ use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, query::projection::ProjectionResult,
     version::active_versions::ActiveVersions,
 };
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
 pub trait VTableRepository<

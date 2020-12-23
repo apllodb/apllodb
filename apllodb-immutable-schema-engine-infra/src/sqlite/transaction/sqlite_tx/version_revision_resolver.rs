@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::id::VTableId,
     vtable::VTable,
 };
-use apllodb_shared_components::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,

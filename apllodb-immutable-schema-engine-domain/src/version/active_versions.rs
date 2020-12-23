@@ -1,7 +1,6 @@
 use super::active_version::ActiveVersion;
 use apllodb_shared_components::{
-    data_structure::{ColumnName, Expression},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, Expression,
 };
 use std::collections::HashMap;
 

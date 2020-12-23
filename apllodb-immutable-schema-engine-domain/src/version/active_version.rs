@@ -1,10 +1,7 @@
 use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
 use crate::{entity::Entity, vtable::id::VTableId};
-use apllodb_shared_components::data_structure::{AlterTableAction, ColumnDataType, ColumnName};
-use apllodb_shared_components::{
-    data_structure::Expression,
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-};
+use apllodb_shared_components::{AlterTableAction, ColumnDataType, ColumnName};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Expression};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -126,7 +123,7 @@ impl ActiveVersion {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::NotNullViolation,
                     format!(
-                        "column `{}` (NOT NULL) must be included in INSERT command",
+                        "column `{:?}` (NOT NULL) must be included in INSERT command",
                         not_null_column_name
                     ),
                     None,
@@ -152,7 +149,10 @@ impl ActiveVersion {
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedColumn,
-                    format!("column `{}` does not exist in current version", column_name),
+                    format!(
+                        "column `{:?}` does not exist in current version",
+                        column_name
+                    ),
                     None,
                 )
             })
@@ -163,11 +163,11 @@ impl ActiveVersion {
 mod tests {
     use super::ActiveVersion;
     use crate::{test_support::setup, vtable::id::VTableId};
-    use apllodb_shared_components::data_structure::{
+    use apllodb_shared_components::{
         AlterTableAction, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind,
         TableName,
     };
-    use apllodb_shared_components::error::{ApllodbErrorKind, ApllodbResult};
+    use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {

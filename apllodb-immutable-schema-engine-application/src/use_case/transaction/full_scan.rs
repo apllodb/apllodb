@@ -4,10 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
     query::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{
-    data_structure::{DatabaseName, TableName},
-    error::ApllodbResult,
-};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, TableName};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 
 use std::{fmt::Debug, marker::PhantomData};

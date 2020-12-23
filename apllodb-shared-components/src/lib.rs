@@ -24,7 +24,9 @@ pub use crate::{
                 comparison_function::ComparisonFunction, logical_function::LogicalFunction,
                 BooleanExpression,
             },
-            constant::{Constant, IntegerConstant, NumericConstant},
+            constant::{
+                CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant,
+            },
             Expression,
         },
         record::{field_index::FieldIndex, Record},
@@ -34,7 +36,7 @@ pub use crate::{
         },
         value::sql_value::SqlValue,
     },
-    error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError},
+    error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},
     traits::{database::Database, sql_convertible::SqlConvertible},
 };
 

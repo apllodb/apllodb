@@ -1,7 +1,7 @@
 use apllodb_immutable_schema_engine_domain::version::{
     id::VersionId, version_number::VersionNumber,
 };
-use apllodb_shared_components::data_structure::TableName;
+use apllodb_shared_components::TableName;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -20,7 +20,7 @@ impl SqliteTableNameForVersion {
     ) -> Self {
         let s = format!(
             "{}__v{}__{}",
-            version_id.vtable_id().table_name(),
+            version_id.vtable_id().table_name().as_str(),
             version_id.version_number().to_u64(),
             if is_active { "active" } else { "inactive" }
         );

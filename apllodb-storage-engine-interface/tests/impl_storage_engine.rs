@@ -7,11 +7,11 @@ pub mod empty_storage_engine {
     pub use tx::EmptyTx;
 
     mod db {
-        use apllodb_shared_components::traits::Database;
+        use apllodb_shared_components::Database;
 
         pub struct EmptyDatabase;
         impl Database for EmptyDatabase {
-            fn name(&self) -> &apllodb_shared_components::data_structure::DatabaseName {
+            fn name(&self) -> &apllodb_shared_components::DatabaseName {
                 unimplemented!()
             }
         }
@@ -24,9 +24,7 @@ pub mod empty_storage_engine {
 
     mod row {
         use apllodb_shared_components::{
-            data_structure::ColumnReference,
-            data_structure::{ColumnName, SqlValue},
-            error::ApllodbResult,
+            ApllodbResult, ColumnName, ColumnReference, ColumnValue, SqlValue,
         };
         use apllodb_storage_engine_interface::{PrimaryKey, Row};
         use serde::{Deserialize, Serialize};
@@ -47,10 +45,7 @@ pub mod empty_storage_engine {
                 unimplemented!()
             }
 
-            fn append(
-                &mut self,
-                colvals: Vec<apllodb_shared_components::data_structure::ColumnValue>,
-            ) -> ApllodbResult<()> {
+            fn append(&mut self, colvals: Vec<ColumnValue>) -> ApllodbResult<()> {
                 unimplemented!()
             }
         }
@@ -68,11 +63,8 @@ pub mod empty_storage_engine {
 
     mod tx {
         use apllodb_shared_components::{
-            data_structure::{
-                AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression,
-                TableConstraints, TableName,
-            },
-            error::ApllodbResult,
+            AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName,
+            Expression, TableConstraints, TableName,
         };
         use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionId};
         use std::collections::HashMap;
@@ -161,7 +153,7 @@ pub mod empty_storage_engine {
         use super::{
             row::EmptyRow, tx::EmptyTransactionId, EmptyDatabase, EmptyRowIterator, EmptyTx,
         };
-        use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
+        use apllodb_shared_components::{ApllodbResult, DatabaseName};
         use apllodb_storage_engine_interface::StorageEngine;
 
         #[derive(Debug)]
@@ -181,18 +173,14 @@ pub mod empty_storage_engine {
 }
 
 use apllodb_shared_components::{
-    data_structure::ColumnReference,
-    data_structure::{
-        ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
-        TableConstraintKind,
-    },
-    error::ApllodbResult,
+    ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, DataType,
+    DataTypeKind, TableConstraintKind,
 };
 use empty_storage_engine::{EmptyDatabase, EmptyTx};
 
 #[test]
 fn test_empty_storage_engine() -> ApllodbResult<()> {
-    use apllodb_shared_components::data_structure::{DatabaseName, TableConstraints, TableName};
+    use apllodb_shared_components::{DatabaseName, TableConstraints, TableName};
     use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
     // `use` only `EmptyStorageEngine` from `empty_storage_engine`.
@@ -206,7 +194,7 @@ fn test_empty_storage_engine() -> ApllodbResult<()> {
         ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::default(),
-    )?;
+    );
 
     tx.create_table(
         &TableName::new("t")?,

@@ -2,10 +2,9 @@ use super::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
     row::pk::full_pk::revision::Revision, version::version_number::VersionNumber,
 };
-use apllodb_shared_components::data_structure::{
+use apllodb_shared_components::{
     BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
-    DataType, DataTypeKind, Expression, IntegerConstant, LogicalFunction, NumericConstant,
-    SqlValue, TableName, TextConstant,
+    DataType, DataTypeKind, Expression, LogicalFunction, NumericConstant, SqlValue, TableName,
 };
 
 pub(in crate::sqlite) trait ToSqlString {
@@ -37,7 +36,7 @@ impl<T: ToSqlString> ToSqlString for Vec<T> {
 
 impl ToSqlString for String {
     fn to_sql_string(&self) -> String {
-        self.to_string()
+        self.clone()
     }
 }
 
@@ -49,13 +48,13 @@ impl ToSqlString for str {
 
 impl ToSqlString for TableName {
     fn to_sql_string(&self) -> String {
-        self.to_string()
+        self.as_str().to_string()
     }
 }
 
 impl ToSqlString for ColumnName {
     fn to_sql_string(&self) -> String {
-        self.to_string()
+        self.as_str().to_string()
     }
 }
 
@@ -103,10 +102,10 @@ impl ToSqlString for Constant {
         match self {
             Constant::Null => "NULL".to_string(),
             Constant::NumericConstantVariant(n) => match n {
-                NumericConstant::IntegerConstantVariant(IntegerConstant(i)) => format!("{}", i),
+                NumericConstant::IntegerConstantVariant(ic) => format!("{}", ic.as_i64()),
             },
             Constant::CharacterConstantVariant(c) => match c {
-                CharacterConstant::TextConstantVariant(TextConstant(s)) => s.clone(),
+                CharacterConstant::TextConstantVariant(tc) => tc.as_str().to_string(),
             },
         }
     }

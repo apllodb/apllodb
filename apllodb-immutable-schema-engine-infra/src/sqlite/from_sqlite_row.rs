@@ -3,10 +3,7 @@ use apllodb_immutable_schema_engine_domain::row::immutable_row::{
     builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
-    data_structure::ColumnReference,
-    data_structure::{ColumnDataType, DataTypeKind, SqlValue},
-    error::ApllodbResult,
-    traits::SqlConvertible,
+    ApllodbResult, ColumnDataType, ColumnReference, DataTypeKind, SqlConvertible, SqlValue,
 };
 
 pub(crate) trait FromSqliteRow {
@@ -62,7 +59,7 @@ pub(crate) trait FromSqliteRow {
         let err_conv = |e: rusqlite::Error| {
             map_sqlite_err(
                 e,
-                format!("failed to get column `{}`'s value from SQLite", colref),
+                format!("failed to get column `{:?}`'s value from SQLite", colref),
             )
         };
 

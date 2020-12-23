@@ -3,10 +3,7 @@ use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{
-    data_structure::{DatabaseName, TableName},
-    error::ApllodbResult,
-};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, TableName};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use std::{fmt::Debug, marker::PhantomData};

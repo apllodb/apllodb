@@ -27,11 +27,8 @@ use crate::{
     },
 };
 use apllodb_shared_components::{
-    data_structure::{
-        AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
-        TableName,
-    },
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    AlterTableAction, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDefinition, ColumnName,
+    DatabaseName, Expression, TableConstraints, TableName,
 };
 use log::debug;
 use std::{cmp::Ordering, collections::HashMap};
@@ -72,7 +69,7 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
     /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
     ///   - rusqlite raises an error.
     fn begin(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
-        use apllodb_shared_components::traits::Database;
+        use apllodb_shared_components::Database;
 
         let database_name = { db.name().clone() };
 

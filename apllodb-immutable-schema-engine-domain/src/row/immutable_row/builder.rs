@@ -1,8 +1,7 @@
 use super::ImmutableRow;
 
 use apllodb_shared_components::{
-    data_structure::{ColumnReference, SqlValue},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, SqlValue,
 };
 use std::collections::HashMap;
 
@@ -23,7 +22,7 @@ impl ImmutableRowBuilder {
         if self.col_vals.insert(colref.clone(), value).is_some() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
-                format!("column `{}` is already added to this record", colref),
+                format!("column `{:?}` is already added to this record", colref),
                 None,
             ))
         } else {
@@ -51,11 +50,7 @@ mod tests {
     use super::ImmutableRowBuilder;
     use crate::test_support::setup;
     use apllodb_shared_components::{
-        data_structure::ColumnName,
-        data_structure::ColumnReference,
-        data_structure::TableName,
-        data_structure::{DataType, DataTypeKind, SqlValue},
-        error::ApllodbResult,
+        ApllodbResult, ColumnName, ColumnReference, DataType, DataTypeKind, SqlValue, TableName,
     };
     use apllodb_storage_engine_interface::Row;
 

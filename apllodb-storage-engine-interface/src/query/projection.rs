@@ -1,4 +1,4 @@
-use apllodb_shared_components::data_structure::ColumnName;
+use apllodb_shared_components::ColumnName;
 use serde::{Deserialize, Serialize};
 
 /// Projection query for single table columns.

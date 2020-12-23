@@ -1,9 +1,6 @@
 use super::constraint_kind::TableWideConstraintKind;
 use apllodb_shared_components::{
-    data_structure::ColumnDataType,
-    data_structure::ColumnName,
-    data_structure::{ColumnDefinition, TableConstraints},
-    error::ApllodbResult,
+    ApllodbResult, ColumnDataType, ColumnDefinition, ColumnName, TableConstraints,
 };
 use serde::{Deserialize, Serialize};
 
@@ -67,11 +64,8 @@ mod tests {
     use super::TableWideConstraints;
     use crate::test_support::setup;
     use apllodb_shared_components::{
-        data_structure::{
-            ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, DataType,
-            DataTypeKind, TableConstraintKind, TableConstraints, TableName,
-        },
-        error::{ApllodbErrorKind, ApllodbResult},
+        ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName,
+        ColumnReference, DataType, DataTypeKind, TableConstraintKind, TableConstraints, TableName,
     };
 
     #[test]
@@ -82,12 +76,12 @@ mod tests {
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
-        )?;
+        );
         let c2_def = ColumnDefinition::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
-        )?;
+        );
 
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
@@ -139,7 +133,7 @@ mod tests {
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
-        )?;
+        );
 
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![(
             TableConstraints::new(vec![TableConstraintKind::PrimaryKey {

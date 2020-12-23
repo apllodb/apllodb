@@ -1,8 +1,4 @@
-use apllodb_shared_components::{
-    data_structure::{ColumnName, SqlValue},
-    error::ApllodbResult,
-    traits::SqlConvertible,
-};
+use apllodb_shared_components::{ApllodbResult, ColumnName, SqlConvertible, SqlValue};
 
 /// Primary Key.
 pub trait PrimaryKey: Eq + PartialEq {

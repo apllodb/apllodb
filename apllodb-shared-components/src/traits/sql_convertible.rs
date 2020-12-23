@@ -69,7 +69,7 @@ pub trait SqlConvertible: Serialize + DeserializeOwned + std::fmt::Debug {
     fn from_sql_types() -> HashSet<DataType>;
 }
 
-pub fn not_null_sql_types(kinds: &[DataTypeKind]) -> HashSet<DataType> {
+fn not_null_data_types(kinds: &[DataTypeKind]) -> HashSet<DataType> {
     kinds
         .iter()
         .map(|kind| DataType::new(kind.clone(), false))
