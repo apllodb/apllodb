@@ -2,7 +2,7 @@ use apllodb_shared_components::{ApllodbResult, ColumnName, SqlConvertible, SqlVa
 
 /// Primary Key.
 pub trait PrimaryKey: Eq + PartialEq {
-    /// Get [SqlValue](apllodb_shared_components::data_structure::value::sql_value::SqlValue) from a PK column.
+    /// Get [SqlValue](apllodb_shared_components::SqlValue) from a PK column.
     ///
     /// # Failures
     ///

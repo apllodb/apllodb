@@ -6,7 +6,7 @@ use super::{
 };
 
 /// Column definition used in DDL.
-/// Note that NULLABLE SQL constraint is treated as [DataType](crate::DataType) (not [ColumnConstraint](crate::ColumnConstraint)).
+/// Note that NULLABLE SQL constraint is treated as [DataType](crate::DataType) (not [ColumnConstraints](crate::ColumnConstraints)).
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ColumnDefinition {
     column_ref: ColumnReference,

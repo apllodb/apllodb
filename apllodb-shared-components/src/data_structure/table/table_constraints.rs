@@ -27,11 +27,11 @@ impl TableConstraints {
     ///
     /// # Failures
     /// - [InvalidTableDefinition](crate::ApllodbErrorKind::InvalidTableDefinition) when:
-    ///   - No [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) is specified.
-    ///   - Multiple [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey)s appear.
-    ///   - More than 1 [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) /
+    ///   - No [PrimaryKey](crate::TableConstraintKind::PrimaryKey) is specified.
+    ///   - Multiple [PrimaryKey](crate::TableConstraintKind::PrimaryKey)s appear.
+    ///   - More than 1 [PrimaryKey](crate::TableConstraintKind::PrimaryKey) /
     ///     [Unique](crate::TableConstraintKind::Unique) constraints are applied to the same column set.
-    ///   - Column sequence of [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) or
+    ///   - Column sequence of [PrimaryKey](crate::TableConstraintKind::PrimaryKey) or
     ///     [Unique](crate::TableConstraintKind::Unique) have duplicate column.
     pub fn new(constraints: Vec<TableConstraintKind>) -> ApllodbResult<Self> {
         Self::validate_col_duplication(&constraints)?;
