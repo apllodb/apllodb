@@ -83,11 +83,17 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
                 projection.non_pk_effective_projection(version.id())?;
             let non_pk_void_projection = projection.non_pk_void_projection(version.id())?;
 
+            let (navi_rowids, pks): (Vec<SqliteRowid>, Vec<ApparentPrimaryKey>) =
+                vrr_entries_in_version
+                    .map(|e| (e.id().clone(), e.into_pk()))
+                    .unzip();
+
             let sql = format!(
                 "
 SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_if_void_projection}{void_projection} FROM {version_table}
-  WHERE {version_navi_rowid} IN (:navi_rowids)
+  WHERE {version_navi_rowid} IN ({navi_rowids})
 ", // FIXME prevent SQL injection
+// rusqlite seems not able to get sequence in placeholder...
                 comma_if_non_pk_column = if non_pk_effective_projection.is_empty() {
                     ""
                 } else {
@@ -103,6 +109,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 .to_sql_string(),
                 version_table = sqlite_table_name.to_sql_string(),
                 version_navi_rowid = CNAME_NAVI_ROWID,
+                navi_rowids=navi_rowids.to_sql_string(),
             );
             let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
@@ -117,13 +124,8 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
             prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
-            let (navi_rowids, pks): (Vec<SqliteRowid>, Vec<ApparentPrimaryKey>) =
-                vrr_entries_in_version
-                    .map(|e| (e.id().clone(), e.into_pk()))
-                    .unzip();
-
             let row_iter = stmt.query_named(
-                &[(":navi_rowids", &navi_rowids)],
+                &[],
                 &prj_with_navi_rowid,
                 non_pk_void_projection
                     .iter()

@@ -85,16 +85,35 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
         hmap! { c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(2)) },
     )?;
 
+    // v1
+    // | id | c1 |
+    // |----|----|
+    // | 1  | 1  |
+    // | 3  | 3  |
+    //
+    // v2
+    // | id |
+    // |----|
+    // | 2  |
+    tx.insert(
+        &t_name,
+        hmap! {
+            c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(3)),
+            c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(3))
+         },
+    )?;
+
     // Selects both v1's record (id=1) and v2's record (id=2),
     // although v2 does not have column "c".
     let rows = tx.select(&t_name, ProjectionQuery::All)?;
 
-    assert_eq!(rows.clone().count(), 2);
+    assert_eq!(rows.clone().count(), 3);
 
     for mut row in rows {
         let id: i32 = row.get(c_id_def.column_ref())?;
         match id {
             1 => assert_eq!(row.get::<i32>(c1_def.column_ref())?, 1),
+            3 => assert_eq!(row.get::<i32>(c1_def.column_ref())?, 3),
             2 => {
                 // Cannot fetch column `c1` from v2 as i32.
                 match row.get::<i32>(c1_def.column_ref()) {

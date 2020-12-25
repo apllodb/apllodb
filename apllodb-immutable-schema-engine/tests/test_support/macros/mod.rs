@@ -14,7 +14,7 @@
 /// assert_eq!(h, h2);
 /// ```
 #[macro_export]
-macro_rules! hmap(
+macro_rules! hmap {
     { $($key:expr => $value:expr),+ } => {
         {
             let mut m = std::collections::HashMap::new();
@@ -23,5 +23,5 @@ macro_rules! hmap(
             )+
             m
         }
-     };
-);
+    };
+}
