@@ -97,7 +97,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     // | 2  |
     tx.insert(
         &t_name,
-        hmap! { 
+        hmap! {
             c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(3)),
             c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(3))
          },
