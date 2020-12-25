@@ -1,5 +1,6 @@
-use super::ColumnName;
 use serde::{Deserialize, Serialize};
+
+use super::column::column_name::ColumnName;
 
 /// Actions to be done by ALTER TABLE statement.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]

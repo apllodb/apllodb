@@ -14,11 +14,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    data_structure::ColumnDataType,
-    data_structure::ColumnName,
-    data_structure::ColumnReference,
-    data_structure::{DataType, DataTypeKind, Expression, TableName},
-    error::ApllodbResult,
+    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, Expression,
+    TableName,
 };
 use apllodb_storage_engine_interface::Row;
 use create_table_sql_for_version::CreateTableSqlForVersion;
@@ -104,7 +101,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 comma_if_void_projection = if non_pk_void_projection.is_empty() {""} else {", "},
                 void_projection = non_pk_void_projection
                 .iter()
-                .map(|cn| format!("NULL {}", cn))
+                .map(|cn| format!("NULL {}", cn.to_sql_string()))
                 .collect::<Vec<_>>()
                 .to_sql_string(),
                 version_table = sqlite_table_name.to_sql_string(),
@@ -155,7 +152,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                     rows_with_pk.push_back(row_wo_pk)
                 } else {
                     panic!(
-                        "navi_rowid={} is requested to table `{}` but it's not found",
+                        "navi_rowid={} is requested to table `{:?}` but it's not found",
                         rowid.to_sql_string(),
                         sqlite_table_name
                     );

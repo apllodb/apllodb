@@ -3,12 +3,8 @@ mod test_support;
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
-    data_structure::ColumnReference,
-    data_structure::{
-        ColumnConstraints, ColumnDefinition, ColumnName, Constant, DataType, DataTypeKind,
-        Expression, TableConstraintKind, TableConstraints, TableName,
-    },
-    error::ApllodbResult,
+    ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, Constant,
+    DataType, DataTypeKind, Expression, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
 
@@ -27,12 +23,12 @@ fn test_compound_pk() -> ApllodbResult<()> {
         ColumnReference::new(t_name.clone(), ColumnName::new("country_code")?),
         DataType::new(DataTypeKind::SmallInt, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let c_postal_code_def = ColumnDefinition::new(
         ColumnReference::new(t_name.clone(), ColumnName::new("postal_code")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let coldefs = vec![c_country_code_def.clone(), c_postal_code_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {

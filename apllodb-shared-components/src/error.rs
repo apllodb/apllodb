@@ -3,14 +3,15 @@
 mod aux;
 mod dummy;
 mod from;
-mod kind;
-mod sqlstate;
+pub(crate) mod kind;
+pub(crate) mod sqlstate;
 
 use aux::ApllodbErrorAux;
 use dummy::DummyError;
-pub use kind::ApllodbErrorKind;
 use sqlstate::SqlState;
 use std::{error::Error, fmt::Display};
+
+use self::kind::ApllodbErrorKind;
 
 /// Result type commonly used in apllodb workspace.
 pub type ApllodbResult<T> = Result<T, ApllodbError>;

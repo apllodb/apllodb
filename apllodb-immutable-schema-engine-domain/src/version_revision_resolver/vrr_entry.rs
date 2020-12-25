@@ -1,6 +1,6 @@
 use std::{fmt::Debug, hash::Hash};
 
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{

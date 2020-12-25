@@ -6,8 +6,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnName, DatabaseName, Expression, TableName},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression, TableName,
 };
 use apllodb_storage_engine_interface::StorageEngine;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -88,7 +87,7 @@ impl<
 
     /// # Failures
     ///
-    /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
+    /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
     fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
         let vtable_repo = Types::VTableRepo::new(&input.tx);

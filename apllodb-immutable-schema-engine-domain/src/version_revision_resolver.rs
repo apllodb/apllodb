@@ -3,7 +3,7 @@ pub mod vrr_entries_in_version;
 pub mod vrr_entry;
 pub mod vrr_id;
 
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{

@@ -2,8 +2,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::active_version::ActiveVersion, vtable::VTable,
 };
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
+    DataType, DataTypeKind,
 };
 use apllodb_sql_parser::{
     apllodb_ast::{self, Command, CreateTableCommand},
@@ -115,13 +115,9 @@ mod tests {
         entity::Entity, version::active_version::ActiveVersion, vtable::VTable,
     };
     use apllodb_shared_components::{
-        data_structure::ColumnDataType,
-        data_structure::ColumnReference,
-        data_structure::{
-            ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind, DatabaseName,
-            TableConstraintKind, TableConstraints, TableName,
-        },
-        error::ApllodbResult,
+        ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
+        ColumnReference, DataType, DataTypeKind, DatabaseName, TableConstraintKind,
+        TableConstraints, TableName,
     };
 
     #[test]
@@ -132,7 +128,7 @@ mod tests {
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
-        )?;
+        );
 
         let testset: Vec<(Vec<ColumnDefinition>, TableConstraints)> = vec![
             (

@@ -1,10 +1,9 @@
-mod comparison_function;
-mod logical_function;
-
-pub use comparison_function::ComparisonFunction;
-pub use logical_function::LogicalFunction;
+pub(crate) mod comparison_function;
+pub(crate) mod logical_function;
 
 use serde::{Deserialize, Serialize};
+
+use self::{comparison_function::ComparisonFunction, logical_function::LogicalFunction};
 
 /// Boolean expression.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -12,6 +11,6 @@ pub enum BooleanExpression {
     /// AND, OR, NOT
     LogicalFunctionVariant(LogicalFunction),
 
-    /// Comparison function and its operators
+    /// Comparison functions
     ComparisonFunctionVariant(ComparisonFunction),
 }

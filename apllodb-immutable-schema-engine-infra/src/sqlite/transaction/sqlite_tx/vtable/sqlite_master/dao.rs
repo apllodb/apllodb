@@ -7,10 +7,8 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{
-    data_structure::{
-        ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, TableName,
-    },
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
+    DataType, DataTypeKind, TableName,
 };
 
 #[derive(Debug)]
@@ -80,7 +78,7 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedTable,
                     format!(
-                        "table `{}` not found (or every version is inactive)",
+                        "table `{:?}` not found (or every version is inactive)",
                         vtable.table_name()
                     ),
                     None,

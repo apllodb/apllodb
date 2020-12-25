@@ -27,11 +27,8 @@ use crate::{
     },
 };
 use apllodb_shared_components::{
-    data_structure::{
-        AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
-        TableName,
-    },
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    AlterTableAction, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDefinition, ColumnName,
+    DatabaseName, Expression, TableConstraints, TableName,
 };
 use log::debug;
 use std::{cmp::Ordering, collections::HashMap};
@@ -69,10 +66,10 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
 
     /// # Failures
     ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
     fn begin(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
-        use apllodb_shared_components::traits::Database;
+        use apllodb_shared_components::Database;
 
         let database_name = { db.name().clone() };
 
@@ -94,7 +91,7 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
     ///
     /// If any of the following error is returned, transaction has already been aborted.
     ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
     fn commit(self) -> ApllodbResult<()> {
         self.rusqlite_tx.commit().map_err(|e| {
@@ -108,7 +105,7 @@ impl<'tx, 'db: 'tx> Transaction<'tx, 'db, ApllodbImmutableSchemaEngine> for Sqli
 
     /// # Failures
     ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
     fn abort(self) -> ApllodbResult<()> {
         self.rusqlite_tx.rollback().map_err(|e| {

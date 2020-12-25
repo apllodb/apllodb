@@ -1,8 +1,7 @@
 pub mod builder;
 
 use apllodb_shared_components::{
-    data_structure::{ColumnReference, ColumnValue, SqlValue},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, ColumnValue, SqlValue,
 };
 use apllodb_storage_engine_interface::Row;
 use std::collections::{hash_map::Entry, HashMap};
@@ -20,7 +19,7 @@ impl Row for ImmutableRow {
         self.col_vals.remove(&colref).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
-                format!("undefined column: `{}`", colref),
+                format!("undefined column: `{:?}`", colref),
                 None,
             )
         })
@@ -33,7 +32,10 @@ impl Row for ImmutableRow {
                 |colval| match self.col_vals.entry(colval.as_column_ref().clone()) {
                     Entry::Occupied(_) => Err(ApllodbError::new(
                         ApllodbErrorKind::DuplicateColumn,
-                        format!("column `{}` is already in this row", colval.as_column_ref()),
+                        format!(
+                            "column `{:?}` is already in this row",
+                            colval.as_column_ref()
+                        ),
                         None,
                     )),
                     Entry::Vacant(e) => {

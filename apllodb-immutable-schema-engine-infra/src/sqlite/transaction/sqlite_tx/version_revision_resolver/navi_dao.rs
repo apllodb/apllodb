@@ -11,11 +11,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
-    data_structure::ColumnDataType,
-    data_structure::ColumnName,
-    data_structure::ColumnReference,
-    data_structure::{DataType, DataTypeKind},
-    error::ApllodbResult,
+    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind,
 };
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 

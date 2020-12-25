@@ -1,4 +1,4 @@
-use apllodb_shared_components::data_structure::{DatabaseName, TableName};
+use apllodb_shared_components::{DatabaseName, TableName};
 use serde::{Deserialize, Serialize};
 
 /// ID of VTable
@@ -30,7 +30,7 @@ impl VTableId {
     pub(crate) fn new_for_test() -> Self {
         use rand::Rng;
 
-        let database_name = apllodb_shared_components::data_structure::DatabaseName::new(
+        let database_name = DatabaseName::new(
             rand::thread_rng()
                 .sample_iter(&rand::distributions::Alphanumeric)
                 .map(char::from)
@@ -39,7 +39,7 @@ impl VTableId {
                 .collect::<String>(),
         )
         .unwrap();
-        let table_name = apllodb_shared_components::data_structure::TableName::new(
+        let table_name = TableName::new(
             rand::thread_rng()
                 .sample_iter(&rand::distributions::Alphanumeric)
                 .map(char::from)

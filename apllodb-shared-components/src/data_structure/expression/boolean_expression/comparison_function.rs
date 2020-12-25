@@ -1,12 +1,15 @@
-use crate::data_structure::Expression;
 use serde::{Deserialize, Serialize};
 
-/// Comparison function and its operators
+use crate::data_structure::expression::Expression;
+
+/// Comparison function and its operands
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum ComparisonFunction {
     /// `=` operation
     EqualVariant {
+        /// Left operand
         left: Box<Expression>,
+        /// Right operand
         right: Box<Expression>,
     },
 }

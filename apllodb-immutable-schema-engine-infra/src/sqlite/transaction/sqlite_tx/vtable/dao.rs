@@ -3,10 +3,8 @@ use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
 use apllodb_shared_components::{
-    data_structure::{
-        ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, TableName,
-    },
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
+    DataType, DataTypeKind, TableName,
 };
 
 #[derive(Debug)]
@@ -64,9 +62,9 @@ CREATE TABLE IF NOT EXISTS {} (
 
     /// # Failures
     ///
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - `table` is not visible from this transaction.
-    /// - [DeserializationError](error/enum.ApllodbErrorKind.html#variant.DeserializationError) when:
+    /// - [DeserializationError](apllodb_shared_components::ApllodbErrorKind::DeserializationError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
     pub(in crate::sqlite::transaction::sqlite_tx) fn select(
         &self,
@@ -89,7 +87,7 @@ CREATE TABLE IF NOT EXISTS {} (
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedTable,
                 format!(
-                    "table `{}`'s metadata is not visible from this transaction",
+                    "table `{:?}`'s metadata is not visible from this transaction",
                     vtable_id.table_name()
                 ),
                 None,
@@ -106,7 +104,7 @@ CREATE TABLE IF NOT EXISTS {} (
                 ApllodbError::new(
                     ApllodbErrorKind::DeserializationError,
                     format!(
-                        "failed to deserialize table `{}`'s metadata: `{}`",
+                        "failed to deserialize table `{:?}`'s metadata: `{:?}`",
                         vtable_id.table_name(),
                         table_wide_constraints_str
                     ),
@@ -120,11 +118,11 @@ CREATE TABLE IF NOT EXISTS {} (
 
     /// # Failures
     ///
-    /// - [DeadlockDetected](error/enum.ApllodbErrorKind.html#variant.DeadlockDetected) when:
+    /// - [DeadlockDetected](apllodb_shared_components::ApllodbErrorKind::DeadlockDetected) when:
     ///   - transaction lock to metadata table takes too long time.
-    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
+    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - `table` is already created.
-    /// - [SerializationError](error/enum.ApllodbErrorKind.html#variant.SerializationError) when:
+    /// - [SerializationError](apllodb_shared_components::ApllodbErrorKind::SerializationError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
     fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let sql = format!(
@@ -140,7 +138,7 @@ CREATE TABLE IF NOT EXISTS {} (
                 ApllodbError::new(
                     ApllodbErrorKind::SerializationError,
                     format!(
-                        "failed to serialize `{}`'s table wide constraints: `{:?}`",
+                        "failed to serialize `{:?}`'s table wide constraints: `{:?}`",
                         vtable.table_name(),
                         table_wide_constraints
                     ),
@@ -159,7 +157,7 @@ CREATE TABLE IF NOT EXISTS {} (
             .map_err(|e| match e.kind() {
                 ApllodbErrorKind::UniqueViolation => ApllodbError::new(
                     ApllodbErrorKind::DuplicateTable,
-                    format!("table `{}` is already created", vtable.table_name()),
+                    format!("table `{:?}` is already created", vtable.table_name()),
                     Some(Box::new(e)),
                 ),
                 _ => e,

@@ -8,7 +8,7 @@ pub mod repository;
 pub mod version_number;
 
 use crate::entity::Entity;
-use apllodb_shared_components::data_structure::ColumnDataType;
+use apllodb_shared_components::ColumnDataType;
 use constraints::VersionConstraints;
 use id::VersionId;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 pub mod transaction;
 
-use apllodb_shared_components::error::ApllodbResult;
+use apllodb_shared_components::ApllodbResult;
 use log::*;
 use std::{any::type_name, fmt::Debug};
 

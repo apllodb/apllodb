@@ -3,11 +3,9 @@ mod test_support;
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
-    data_structure::{
-        ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, Constant, DataType,
-        DataTypeKind, Expression, TableConstraintKind, TableConstraints, TableName,
-    },
-    error::{ApllodbErrorKind, ApllodbResult},
+    ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName,
+    ColumnReference, Constant, DataType, DataTypeKind, Expression, TableConstraintKind,
+    TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, Row, StorageEngine, Transaction};
 
@@ -24,7 +22,7 @@ fn test_create_table_success() -> ApllodbResult<()> {
         ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::default(),
-    )?;
+    );
 
     tx.create_table(
         &t_name,
@@ -50,7 +48,7 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
         ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let coldefs = vec![c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
@@ -82,12 +80,12 @@ fn test_insert() -> ApllodbResult<()> {
         ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let c1_def = ColumnDefinition::new(
         ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
@@ -130,12 +128,12 @@ fn test_update() -> ApllodbResult<()> {
         ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let c1_def = ColumnDefinition::new(
         ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
@@ -201,12 +199,12 @@ fn test_delete() -> ApllodbResult<()> {
         ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let c1_def = ColumnDefinition::new(
         ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {

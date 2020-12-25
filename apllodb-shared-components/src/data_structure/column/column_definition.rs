@@ -1,30 +1,19 @@
-use super::{ColumnDataType, ColumnReference};
-use crate::data_structure::{ColumnConstraints, DataType};
-use crate::error::ApllodbResult;
 use serde::{Deserialize, Serialize};
 
+use super::{
+    column_constraints::ColumnConstraints, column_data_type::ColumnDataType,
+    column_reference::ColumnReference, data_type::DataType,
+};
+
 /// Column definition used in DDL.
-/// Note that NULLABLE SQL constraint is treated as DataType (not ColumnConstraint).
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+/// Note that NULLABLE SQL constraint is treated as [DataType](crate::DataType) (not [ColumnConstraints](crate::ColumnConstraints)).
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ColumnDefinition {
     column_ref: ColumnReference,
     data_type: DataType,
     column_constraints: ColumnConstraints,
 }
 impl ColumnDefinition {
-    /// Constructor
-    pub fn new(
-        column_ref: ColumnReference,
-        data_type: DataType,
-        column_constraints: ColumnConstraints,
-    ) -> ApllodbResult<Self> {
-        Ok(Self {
-            column_ref,
-            data_type,
-            column_constraints,
-        })
-    }
-
     /// Ref to ColumnReference.
     pub fn column_ref(&self) -> &ColumnReference {
         &self.column_ref

@@ -1,9 +1,7 @@
 use crate::row::pk::apparent_pk::ApparentPrimaryKey;
 
 use super::{active_version::ActiveVersion, id::VersionId};
-use apllodb_shared_components::{
-    data_structure::ColumnName, data_structure::Expression, error::ApllodbResult,
-};
+use apllodb_shared_components::{ApllodbResult, ColumnName, Expression};
 use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 
@@ -20,7 +18,7 @@ pub trait VersionRepository<'repo, 'db: 'repo, Engine: StorageEngine<'repo, 'db>
 
     /// # Failures
     ///
-    /// - [UniqueViolation](error/enum.ApllodbErrorKind.html#variant.UniqueViolation) when:
+    /// - [UniqueViolation](apllodb_shared_components::ApllodbErrorKind::UniqueViolation) when:
     ///   - record with the same `apparent_pk` already exists.
     fn insert(
         &self,

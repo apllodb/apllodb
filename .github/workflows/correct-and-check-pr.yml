@@ -10,11 +10,15 @@ jobs:
   auto_correct:
     runs-on: ubuntu-latest
     env:
-      REPO: https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
+      # PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW:
+      #   Instead of GITHUB_TOKEN (which cannot trigger another workflow: https://docs.github.com/ja/free-pro-team@latest/actions/reference/authentication-in-a-workflow#%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E5%86%85%E3%81%A7%E3%81%AEgithub_token%E3%81%AE%E5%88%A9%E7%94%A8),
+      #   issue your personal token and set it to secret.
+      REPO: https://${{github.actor}}:${{secrets.PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW}}@github.com/${{github.repository}}.git
     steps:
       - uses: actions/checkout@v2
         with:
           ref: ${{github.event.pull_request.head.ref}}
+          persist-credentials: false
 
       - name: rustup override set `cat rust-toolchain`
         uses: actions-rs/toolchain@v1
@@ -40,37 +44,22 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install cargo-readme
-        run: cargo install cargo-readme
-
-
       - name: cargo fmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all
 
-      - name: Sync README.md with rustdoc
-        run: |
-          crate_dirs=$(find . -name 'Cargo.toml' |grep -v '^./Cargo.toml' |sed -e 's/Cargo.toml$//g') ; \
-          for crate_dir in $crate_dirs ; do \
-            ( cd $crate_dir ; cargo readme > README.md ) ; \
-          done
-
-      - run: mv main/README.md .
-
-      # https://qiita.com/HeRo/items/935d5e268208d411ab5a#%E3%83%97%E3%83%AB%E3%83%AA%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%82%92%E3%83%9E%E3%83%BC%E3%82%B8%E3%81%99%E3%82%8B
-      - name: commit sync-ed README.md and push
+      - name: commit formatted sources and push
         run: |
           git config --global user.email "workflow@example.com"
           git config --global user.name "workflow user"
           git add .
-          if git commit -m '(auto commit) cargo readme > README.md' ; then
+          if git commit -m '(auto commit) cargo fmt' ; then
             git push ${REPO} HEAD:${{github.event.pull_request.head.ref}}
           fi
 
   lint:
-    needs: auto_correct
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -106,7 +95,6 @@ jobs:
           args: --all-targets --all-features -- -D warnings
 
   test:
-    needs: auto_correct
     runs-on: ubuntu-latest
     strategy:
         matrix:
@@ -168,7 +156,6 @@ jobs:
           args: --release --all-features
 
   check_rustdoc:
-    needs: auto_correct
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -207,7 +194,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --all-features
+          args: --no-deps --all-features
           
-      - run: cargo install cargo-deadlinks
-      # - run: cargo deadlinks # TODO enable
+      # TODO comment-in
+      # - run: cargo install cargo-deadlinks
+      # - run: cargo deadlinks

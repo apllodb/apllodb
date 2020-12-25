@@ -1,9 +1,6 @@
 use super::constraint_kind::TableWideConstraintKind;
 use apllodb_shared_components::{
-    data_structure::ColumnDataType,
-    data_structure::ColumnName,
-    data_structure::{ColumnDefinition, TableConstraints},
-    error::ApllodbResult,
+    ApllodbResult, ColumnDataType, ColumnDefinition, ColumnName, TableConstraints,
 };
 use serde::{Deserialize, Serialize};
 
@@ -45,9 +42,9 @@ impl TableWideConstraints {
     ///
     /// # Failures
     ///
-    /// - [InvalidTableDefinition](error/enum.ApllodbErrorKind.html#variant.InvalidTableDefinition) when:
-    ///   - [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey) or
-    ///     [Unique](enum.TableWideConstraintKind.html#variant.Unique) in `table_constraints` are applied to an unavailable column.
+    /// - [InvalidTableDefinition](apllodb_shared_components::ApllodbErrorKind::InvalidTableDefinition) when:
+    ///   - [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) or
+    ///     [Unique](crate::TableWideConstraintKind::Unique) in `table_constraints` are applied to an unavailable column.
     pub(crate) fn new(
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],
@@ -67,11 +64,8 @@ mod tests {
     use super::TableWideConstraints;
     use crate::test_support::setup;
     use apllodb_shared_components::{
-        data_structure::{
-            ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, DataType,
-            DataTypeKind, TableConstraintKind, TableConstraints, TableName,
-        },
-        error::{ApllodbErrorKind, ApllodbResult},
+        ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName,
+        ColumnReference, DataType, DataTypeKind, TableConstraintKind, TableConstraints, TableName,
     };
 
     #[test]
@@ -82,12 +76,12 @@ mod tests {
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
-        )?;
+        );
         let c2_def = ColumnDefinition::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
-        )?;
+        );
 
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![
             (
@@ -139,7 +133,7 @@ mod tests {
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             DataType::new(DataTypeKind::Integer, false),
             ColumnConstraints::new(vec![])?,
-        )?;
+        );
 
         let testset: Vec<(TableConstraints, Vec<ColumnDefinition>)> = vec![(
             TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
