@@ -199,5 +199,6 @@ jobs:
           command: doc
           args: --no-deps --all-features
           
-      - run: cargo install cargo-deadlinks
-      - run: cargo deadlinks
+      # TODO comment-in
+      # - run: cargo install cargo-deadlinks
+      # - run: cargo deadlinks
