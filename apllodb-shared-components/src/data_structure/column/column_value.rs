@@ -1,22 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-use crate::data_structure::SqlValue;
+use crate::data_structure::value::sql_value::SqlValue;
 
-use super::ColumnReference;
+use super::column_reference::ColumnReference;
 
 /// Column value with ColumnReference
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ColumnValue {
     colref: ColumnReference,
     value: SqlValue,
 }
 
 impl ColumnValue {
-    /// Constructor.
-    pub fn new(colref: ColumnReference, value: SqlValue) -> Self {
-        Self { colref, value }
-    }
-
     /// Ref to column reference
     pub fn as_column_ref(&self) -> &ColumnReference {
         &self.colref

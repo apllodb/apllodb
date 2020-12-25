@@ -1,6 +1,6 @@
 use apllodb_shared_components::{
-    data_structure::{ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind},
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnDefinition, ColumnName,
+    TableConstraintKind,
 };
 use serde::{Deserialize, Serialize};
 
@@ -28,7 +28,7 @@ impl TableWideConstraintKind {
                     let pk_cd = column_definitions.iter().find(|cd| cd.column_ref().as_column_name() == pk_cn).ok_or_else(||
                         ApllodbError::new(
                             ApllodbErrorKind::InvalidTableDefinition,
-                            format!("column `{}` does not exist in ColumnDefinition while it is declared as PRIMARY KEY", pk_cn),
+                            format!("column `{:?}` does not exist in ColumnDefinition while it is declared as PRIMARY KEY", pk_cn),
                             None,
                         )
                     )?;

@@ -1,4 +1,4 @@
-use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use crate::error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult};
 use serde::{Deserialize, Serialize};
 
 /// Short (64 chars in UTF-8 at maximum) object name used for table names, column names, and so on.
@@ -12,7 +12,7 @@ impl ShortName {
     /// (since it should be assured by tokenizer).
     ///
     /// # Failures
-    /// - [NameTooLong](error/enum.ApllodbErrorKind.html#variant.NameTooLong) when:
+    /// - [NameTooLong](apllodb_shared_components::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub(in crate::data_structure) fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
         let name = name.into();
@@ -44,7 +44,7 @@ impl ShortName {
 #[cfg(test)]
 mod tests {
     use super::ShortName;
-    use crate::error::ApllodbErrorKind;
+    use crate::error::kind::ApllodbErrorKind;
 
     #[test]
     fn test_success() {

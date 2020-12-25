@@ -3,7 +3,7 @@ use crate::{
     sqlite::transaction::{sqlite_tx::SqliteTx, tx_id::TxId},
 };
 use apllodb_immutable_schema_engine_domain::row::immutable_row::ImmutableRow;
-use apllodb_shared_components::{data_structure::DatabaseName, error::ApllodbResult};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
 use apllodb_storage_engine_interface::StorageEngine;
 
 pub use crate::sqlite::database::SqliteDatabase as ApllodbImmutableSchemaDb;

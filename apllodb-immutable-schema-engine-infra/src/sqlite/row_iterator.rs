@@ -2,9 +2,7 @@ use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow, row_iter::version_row_iter::VersionRowIterator,
 };
-use apllodb_shared_components::{
-    data_structure::ColumnDataType, data_structure::ColumnReference, error::ApllodbResult,
-};
+use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference};
 
 use std::{collections::VecDeque, fmt::Debug};
 

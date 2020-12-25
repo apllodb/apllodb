@@ -10,8 +10,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
     version_revision_resolver::VersionRevisionResolver,
 };
-use apllodb_shared_components::data_structure::ColumnName;
-use apllodb_shared_components::{data_structure::Expression, error::ApllodbResult};
+use apllodb_shared_components::ColumnName;
+use apllodb_shared_components::{ApllodbResult, Expression};
 use std::collections::HashMap;
 
 use super::dao::VersionDao;
@@ -30,7 +30,7 @@ impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngi
 
     /// # Failures
     ///
-    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
+    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {

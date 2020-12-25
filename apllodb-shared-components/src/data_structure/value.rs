@@ -1,3 +1,1 @@
-mod sql_value;
-
-pub use sql_value::SqlValue;
+pub(crate) mod sql_value;

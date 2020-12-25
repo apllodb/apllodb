@@ -1,3 +1,1 @@
-mod database_name;
-
-pub use database_name::DatabaseName;
+pub(crate) mod database_name;

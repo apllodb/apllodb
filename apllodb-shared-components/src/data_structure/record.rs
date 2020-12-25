@@ -1,12 +1,15 @@
-mod field_index;
+pub(crate) mod field_index;
 
-pub use field_index::FieldIndex;
-
-use super::SqlValue;
-use crate::error::{ApllodbError, ApllodbErrorKind, ApllodbResult};
-use crate::traits::SqlConvertible;
+use crate::{
+    error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
+    traits::sql_convertible::SqlConvertible,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use self::field_index::FieldIndex;
+
+use super::value::sql_value::SqlValue;
 
 /// Record representation used in client and query processor.
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.

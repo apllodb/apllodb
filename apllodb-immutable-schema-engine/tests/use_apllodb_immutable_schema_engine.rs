@@ -3,12 +3,8 @@ mod test_support;
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
-    data_structure::ColumnReference,
-    data_structure::{
-        ColumnConstraints, ColumnDefinition, ColumnName, DataType, DataTypeKind,
-        TableConstraintKind, TableConstraints, TableName,
-    },
-    error::ApllodbResult,
+    ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, DataType,
+    DataTypeKind, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
@@ -25,7 +21,7 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::default(),
-    )?;
+    );
 
     tx.create_table(
         &t_name,

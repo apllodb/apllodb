@@ -3,12 +3,9 @@ mod test_support;
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
-    data_structure::{
-        AlterTableAction, ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference,
-        Constant, DataType, DataTypeKind, Expression, TableConstraintKind, TableConstraints,
-        TableName,
-    },
-    error::{ApllodbErrorKind, ApllodbResult},
+    AlterTableAction, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition,
+    ColumnName, ColumnReference, Constant, DataType, DataTypeKind, Expression, TableConstraintKind,
+    TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
 
@@ -27,12 +24,12 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
         ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let c1_def = ColumnDefinition::new(
         ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
         DataType::new(DataTypeKind::Integer, false),
         ColumnConstraints::new(vec![])?,
-    )?;
+    );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {

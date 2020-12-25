@@ -6,9 +6,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{repository::VTableRepository, VTable},
 };
 use apllodb_shared_components::{
-    data_structure::ColumnDataType,
-    data_structure::{ColumnDefinition, DatabaseName, TableConstraints, TableName},
-    error::ApllodbResult,
+    ApllodbResult, ColumnDataType, ColumnDefinition, DatabaseName, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::StorageEngine;
 

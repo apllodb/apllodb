@@ -8,10 +8,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::version_number::VersionNumber,
     vtable::VTable,
 };
-use apllodb_shared_components::{
-    data_structure::{ColumnName, ColumnReference},
-    error::ApllodbResult,
-};
+use apllodb_shared_components::{ApllodbResult, ColumnName, ColumnReference};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Navi {

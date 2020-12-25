@@ -1,7 +1,5 @@
 use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
-use apllodb_shared_components::{
-    data_structure::DatabaseName, error::ApllodbResult, traits::Database,
-};
+use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
 use std::time::Duration;
 
 /// Database context.
@@ -22,7 +20,7 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
-    /// - [IoError](error/enum.ApllodbErrorKind.html#variant.IoError) when:
+    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
     pub(crate) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
         let conn = Self::connect_sqlite(&db_name)?;
@@ -40,7 +38,7 @@ impl SqliteDatabase {
     }
 
     fn _sqlite_db_path(db_name: &DatabaseName) -> String {
-        format!("immutable_schema_{}.sqlite3", db_name) // FIXME: path from configuration
+        format!("immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
     }
 
     fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<rusqlite::Connection> {

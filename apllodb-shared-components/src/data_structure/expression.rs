@@ -1,11 +1,11 @@
-mod boolean_expression;
-mod constant;
+pub(crate) mod boolean_expression;
+pub(crate) mod constant;
 
-pub use boolean_expression::{BooleanExpression, ComparisonFunction, LogicalFunction};
-pub use constant::{CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant};
-
-use super::{ColumnName, SqlValue};
 use serde::{Deserialize, Serialize};
+
+use self::{boolean_expression::BooleanExpression, constant::Constant};
+
+use super::{column::column_name::ColumnName, value::sql_value::SqlValue};
 
 /// Expression.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -30,13 +30,17 @@ impl From<&SqlValue> for Expression {
 #[cfg(test)]
 mod tests {
     use crate::{
-        data_structure::{DataType, DataTypeKind, SqlValue},
+        data_structure::{
+            column::{data_type::DataType, data_type_kind::DataTypeKind},
+            value::sql_value::SqlValue,
+        },
         error::ApllodbResult,
         test_support::setup,
     };
 
     use super::{
-        CharacterConstant, Constant, Expression, IntegerConstant, NumericConstant, TextConstant,
+        constant::{CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant},
+        Expression,
     };
 
     #[test]
@@ -48,19 +52,19 @@ mod tests {
             (
                 SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &i16::MAX)?,
                 Expression::ConstantVariant(Constant::NumericConstantVariant(
-                    NumericConstant::IntegerConstantVariant(IntegerConstant(i16::MAX as i64)),
+                    NumericConstant::IntegerConstantVariant(IntegerConstant::I16(i16::MAX)),
                 )),
             ),
             (
                 SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &i32::MAX)?,
                 Expression::ConstantVariant(Constant::NumericConstantVariant(
-                    NumericConstant::IntegerConstantVariant(IntegerConstant(i32::MAX as i64)),
+                    NumericConstant::IntegerConstantVariant(IntegerConstant::I32(i32::MAX)),
                 )),
             ),
             (
                 SqlValue::pack(&DataType::new(DataTypeKind::BigInt, false), &i64::MAX)?,
                 Expression::ConstantVariant(Constant::NumericConstantVariant(
-                    NumericConstant::IntegerConstantVariant(IntegerConstant(i64::MAX)),
+                    NumericConstant::IntegerConstantVariant(IntegerConstant::I64(i64::MAX)),
                 )),
             ),
             (
@@ -69,7 +73,7 @@ mod tests {
                     &"abc".to_string(),
                 )?,
                 Expression::ConstantVariant(Constant::CharacterConstantVariant(
-                    CharacterConstant::TextConstantVariant(TextConstant("abc".to_string())),
+                    CharacterConstant::TextConstantVariant(TextConstant::new("abc".to_string())),
                 )),
             ),
             // NULLABLE, IS NULL
@@ -84,7 +88,7 @@ mod tests {
                     &Some(i16::MAX),
                 )?,
                 Expression::ConstantVariant(Constant::NumericConstantVariant(
-                    NumericConstant::IntegerConstantVariant(IntegerConstant(i16::MAX as i64)),
+                    NumericConstant::IntegerConstantVariant(IntegerConstant::I16(i16::MAX)),
                 )),
             ),
         ];

@@ -1,12 +1,10 @@
-mod transaction_id;
+pub(crate) mod transaction_id;
 
-pub use transaction_id::TransactionId;
-
-use apllodb_shared_components::data_structure::{
+use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{
     AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
     TableName,
 };
-use apllodb_shared_components::error::ApllodbResult;
 use std::{collections::HashMap, fmt::Debug};
 
 use crate::{ProjectionQuery, StorageEngine};

@@ -3,10 +3,7 @@ use std::{
     marker::PhantomData,
 };
 
-use apllodb_shared_components::{
-    data_structure::ColumnName,
-    error::{ApllodbError, ApllodbErrorKind, ApllodbResult},
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 use serde::{Deserialize, Serialize};
 
@@ -90,7 +87,7 @@ impl<
                 if !available_columns.contains(&q_cn) {
                     return Err(ApllodbError::new(
                         ApllodbErrorKind::UndefinedColumn,
-                        format!("undefined column `{}` is queried", q_cn),
+                        format!("undefined column `{:?}` is queried", q_cn),
                         None,
                     ));
                 }
