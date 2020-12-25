@@ -99,7 +99,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
                     _ => unreachable!(),
                 };
                 // Can fetch column `c1` from v2 and it's value is NULL.
-                assert_eq!(row.get::<Option<i32>>(c1_def.column_ref())?, None);
+                      assert_eq!(row.get::<Option<i32>>(c1_def.column_ref())?, None);
             }
             _ => unreachable!(),
         }

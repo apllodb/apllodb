@@ -10,7 +10,10 @@ jobs:
   auto_correct:
     runs-on: ubuntu-latest
     env:
-      REPO: https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git
+      # PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW:
+      #   Instead of GITHUB_TOKEN (which cannot trigger another workflow: https://docs.github.com/ja/free-pro-team@latest/actions/reference/authentication-in-a-workflow#%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E5%86%85%E3%81%A7%E3%81%AEgithub_token%E3%81%AE%E5%88%A9%E7%94%A8),
+      #   issue your personal token and set it to secret.
+      REPO: https://${{github.actor}}:${{secrets.PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW}}@github.com/${{github.repository}}.git
     steps:
       - uses: actions/checkout@v2
         with:
