@@ -109,25 +109,46 @@ impl ActiveVersion {
     /// - [NotNullViolation](error/enum.ApllodbErrorKind.html#variant.NotNullViolation) when:
     ///   - Not inserting into a NOT NULL column.
     ///   - Inserting NULL to column with NOT NULL constraint.
+    /// - [InvalidColumnReference](apllodb-shared-components::ApllodbErrorKind::InvalidColumnReference) when:
+    ///   - `column_values` includes any column not defined in this version.
     /// - [CheckViolation](error/enum.ApllodbErrorKind.html#variant.CheckViolation) when:
     ///   - Column value does not satisfy CHECK constraint.
     pub(in crate::version) fn check_version_constraint(
         &self,
         column_values: &HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
-        let column_data_types = self.column_data_types();
+        let version_column_data_types = self.column_data_types();
 
-        // Check if any column not to be inserted is NOT NULL.
-        let not_null_columns = column_data_types
+        // Check if all NOT NULL columns are included in `column_values`.
+        let version_not_null_columns = version_column_data_types
             .iter()
             .filter(|cdt| !cdt.data_type().nullable());
-        for not_null_column_name in not_null_columns.map(|cdt| cdt.column_ref()) {
+        for not_null_column_name in version_not_null_columns.map(|cdt| cdt.column_ref()) {
             if !column_values.contains_key(not_null_column_name.as_column_name()) {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::NotNullViolation,
                     format!(
                         "column `{}` (NOT NULL) must be included in INSERT command",
                         not_null_column_name
+                    ),
+                    None,
+                ));
+            }
+        }
+
+        let version_column_names: Vec<&ColumnName> = version_column_data_types
+            .iter()
+            .map(|cdt| cdt.column_ref().as_column_name())
+            .collect();
+
+        // Check if all columns in `column_values` are included in version's definition.
+        for (cn, _) in column_values {
+            if !version_column_names.contains(&cn) {
+                return Err(ApllodbError::new(
+                    ApllodbErrorKind::InvalidColumnReference,
+                    format!(
+                        "inserted column `{}` is not defined in version `{:?}`",
+                        cn, self
                     ),
                     None,
                 ));
