@@ -142,7 +142,7 @@ impl ActiveVersion {
             .collect();
 
         // Check if all columns in `column_values` are included in version's definition.
-        for (cn, _) in column_values {
+        for cn in column_values.keys() {
             if !version_column_names.contains(&cn) {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::InvalidColumnReference,
