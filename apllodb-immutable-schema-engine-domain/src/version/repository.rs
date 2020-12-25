@@ -18,7 +18,7 @@ pub trait VersionRepository<'repo, 'db: 'repo, Engine: StorageEngine<'repo, 'db>
 
     /// # Failures
     ///
-    /// - [UniqueViolation](error/enum.ApllodbErrorKind.html#variant.UniqueViolation) when:
+    /// - [UniqueViolation](apllodb_shared_components::ApllodbErrorKind::UniqueViolation) when:
     ///   - record with the same `apparent_pk` already exists.
     fn insert(
         &self,

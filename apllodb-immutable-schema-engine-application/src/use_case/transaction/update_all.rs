@@ -92,7 +92,7 @@ impl<
 
     /// # Failures
     ///
-    /// - [FeatureNotSupported](error/enum.ApllodbErrorKind.html#variant.FeatureNotSupported) when:
+    /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
     fn run_core(mut input: Self::In) -> ApllodbResult<Self::Out> {
         let vtable_repo = Types::VTableRepo::new(&input.tx);

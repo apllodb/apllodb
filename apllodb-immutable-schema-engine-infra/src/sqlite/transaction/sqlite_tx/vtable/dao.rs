@@ -62,9 +62,9 @@ CREATE TABLE IF NOT EXISTS {} (
 
     /// # Failures
     ///
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - `table` is not visible from this transaction.
-    /// - [DeserializationError](error/enum.ApllodbErrorKind.html#variant.DeserializationError) when:
+    /// - [DeserializationError](apllodb_shared_components::ApllodbErrorKind::DeserializationError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
     pub(in crate::sqlite::transaction::sqlite_tx) fn select(
         &self,
@@ -118,11 +118,11 @@ CREATE TABLE IF NOT EXISTS {} (
 
     /// # Failures
     ///
-    /// - [DeadlockDetected](error/enum.ApllodbErrorKind.html#variant.DeadlockDetected) when:
+    /// - [DeadlockDetected](apllodb_shared_components::ApllodbErrorKind::DeadlockDetected) when:
     ///   - transaction lock to metadata table takes too long time.
-    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
+    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - `table` is already created.
-    /// - [SerializationError](error/enum.ApllodbErrorKind.html#variant.SerializationError) when:
+    /// - [SerializationError](apllodb_shared_components::ApllodbErrorKind::SerializationError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
     fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let sql = format!(

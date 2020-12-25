@@ -9,7 +9,7 @@ impl TableName {
     /// Constructor.
     ///
     /// # Failures
-    /// - [NameTooLong](error/enum.ApllodbErrorKind.html#variant.NameTooLong) when:
+    /// - [NameTooLong](crate::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
         let sn = ShortName::new(name)?;

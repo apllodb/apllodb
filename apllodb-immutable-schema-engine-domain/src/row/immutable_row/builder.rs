@@ -16,7 +16,7 @@ impl ImmutableRowBuilder {
     ///
     /// # Failures
     ///
-    /// - [DuplicateColumn](error/enum.ApllodbErrorKind.html#variant.DuplicateColumn) when:
+    /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
     ///   - Same `ColumnName` added twice.
     pub fn add_col_val(mut self, colref: &ColumnReference, value: SqlValue) -> ApllodbResult<Self> {
         if self.col_vals.insert(colref.clone(), value).is_some() {

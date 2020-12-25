@@ -103,12 +103,12 @@ impl ActiveVersion {
     ///
     /// # Failures
     ///
-    /// - [NotNullViolation](error/enum.ApllodbErrorKind.html#variant.NotNullViolation) when:
+    /// - [NotNullViolation](apllodb_shared_components::ApllodbErrorKind::NotNullViolation) when:
     ///   - Not inserting into a NOT NULL column.
     ///   - Inserting NULL to column with NOT NULL constraint.
     /// - [InvalidColumnReference](apllodb-shared-components::ApllodbErrorKind::InvalidColumnReference) when:
     ///   - `column_values` includes any column not defined in this version.
-    /// - [CheckViolation](error/enum.ApllodbErrorKind.html#variant.CheckViolation) when:
+    /// - [CheckViolation](apllodb_shared_components::ApllodbErrorKind::CheckViolation) when:
     ///   - Column value does not satisfy CHECK constraint.
     pub(in crate::version) fn check_version_constraint(
         &self,

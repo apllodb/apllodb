@@ -26,7 +26,7 @@ impl ActiveVersions {
 
     /// # Failures
     ///
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - No version is active (table must be already DROPped).
     pub fn current_version(&self) -> ApllodbResult<&ActiveVersion> {
         self.0.first().ok_or_else(|| {
@@ -48,7 +48,7 @@ impl ActiveVersions {
     ///
     /// # Failures
     ///
-    /// - [IntegrityConstraintViolation](error/enum.ApllodbErrorKind.html#variant.IntegrityConstraintViolation) when:
+    /// - [IntegrityConstraintViolation](apllodb_shared_components::ApllodbErrorKind::IntegrityConstraintViolation) when:
     ///   - No active version can accept the column value.
     pub fn version_to_insert(
         &self,

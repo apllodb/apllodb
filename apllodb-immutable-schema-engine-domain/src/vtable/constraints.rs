@@ -42,9 +42,9 @@ impl TableWideConstraints {
     ///
     /// # Failures
     ///
-    /// - [InvalidTableDefinition](error/enum.ApllodbErrorKind.html#variant.InvalidTableDefinition) when:
-    ///   - [PrimaryKey](enum.TableWideConstraintKind.html#variant.PrimaryKey) or
-    ///     [Unique](enum.TableWideConstraintKind.html#variant.Unique) in `table_constraints` are applied to an unavailable column.
+    /// - [InvalidTableDefinition](apllodb_shared_components::ApllodbErrorKind::InvalidTableDefinition) when:
+    ///   - [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) or
+    ///     [Unique](crate::TableWideConstraintKind::Unique) in `table_constraints` are applied to an unavailable column.
     pub(crate) fn new(
         table_constraints: &TableConstraints,
         column_definitions: &[ColumnDefinition],

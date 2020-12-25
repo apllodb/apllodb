@@ -20,7 +20,7 @@ pub trait VTableRepository<
     ///
     /// # Failures
     ///
-    /// - [DuplicateTable](error/enum.ApllodbErrorKind.html#variant.DuplicateTable) when:
+    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
     fn create(&self, vtable: &VTable) -> ApllodbResult<()>;
 
@@ -28,7 +28,7 @@ pub trait VTableRepository<
     ///
     /// # Failures
     ///
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - Table specified by `vtable_id` is not visible to this transaction.
     fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable>;
 
@@ -36,7 +36,7 @@ pub trait VTableRepository<
     ///
     /// # Failures
     ///
-    /// - [UndefinedTable](error/enum.ApllodbErrorKind.html#variant.UndefinedTable) when:
+    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - Table specified by `vtable.id` is not visible to this transaction.
     fn update(&self, vtable: &VTable) -> ApllodbResult<()>;
 
