@@ -144,7 +144,7 @@ impl ActiveVersion {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::InvalidColumnReference,
                     format!(
-                        "inserted column `{}` is not defined in version `{:?}`",
+                        "inserted column `{:?}` is not defined in version `{:?}`",
                         cn, self
                     ),
                     None,
