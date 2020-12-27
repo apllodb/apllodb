@@ -9,12 +9,10 @@ use apllodb_storage_engine_interface::StorageEngine;
 pub trait VTableRepository<
     'repo,
     'db: 'repo,
-    Engine: StorageEngine<'repo, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'repo, 'db, Engine>,
 >
 {
-    fn new(tx: &'repo Engine::Tx) -> Self;
-
     /// Create a new table with VTable.
     /// Do nothing for Version.
     ///

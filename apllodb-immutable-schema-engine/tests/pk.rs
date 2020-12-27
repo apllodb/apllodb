@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, Constant,
     DataType, DataTypeKind, Expression, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
 
 #[test]
 fn test_compound_pk() -> ApllodbResult<()> {

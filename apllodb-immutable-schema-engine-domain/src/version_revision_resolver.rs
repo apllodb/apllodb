@@ -17,7 +17,7 @@ use self::{vrr_entries::VRREntries, vrr_entry::VRREntry};
 pub trait VersionRevisionResolver<
     'vrr,
     'db: 'vrr,
-    Engine: StorageEngine<'vrr, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
 >
 {

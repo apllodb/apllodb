@@ -1,8 +1,9 @@
-use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
+use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     row::pk::apparent_pk::ApparentPrimaryKey,
-    version::{id::VersionId, repository::VersionRepository},
+    version::id::VersionId,
+    version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
@@ -12,39 +13,18 @@ use apllodb_storage_engine_interface::StorageEngine;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct InsertUseCaseInput<
-    'usecase,
-    'db: 'usecase,
-    Engine: StorageEngine<'usecase, 'db>,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-> {
-    tx: &'usecase Engine::Tx,
+pub struct InsertUseCaseInput<'usecase> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     column_values: HashMap<ColumnName, Expression>,
-
-    #[new(default)]
-    _marker: PhantomData<(&'db (), Types)>,
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine<'usecase, 'db>,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > UseCaseInput for InsertUseCaseInput<'usecase, 'db, Engine, Types>
-{
+impl<'usecase> UseCaseInput for InsertUseCaseInput<'usecase> {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine<'usecase, 'db>,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > InsertUseCaseInput<'usecase, 'db, Engine, Types>
-{
+impl<'usecase> InsertUseCaseInput<'usecase> {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in &self.column_values {
             match expr {
@@ -70,7 +50,7 @@ impl UseCaseOutput for InsertUseCaseOutput {}
 pub struct InsertUseCase<
     'usecase,
     'db: 'usecase,
-    Engine: StorageEngine<'usecase, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
 > {
     _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
@@ -78,21 +58,22 @@ pub struct InsertUseCase<
 impl<
         'usecase,
         'db: 'usecase,
-        Engine: StorageEngine<'usecase, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > UseCase for InsertUseCase<'usecase, 'db, Engine, Types>
+    > TxUseCase<'usecase, 'db, Engine, Types> for InsertUseCase<'usecase, 'db, Engine, Types>
 {
-    type In = InsertUseCaseInput<'usecase, 'db, Engine, Types>;
+    type In = InsertUseCaseInput<'usecase>;
     type Out = InsertUseCaseOutput;
 
     /// # Failures
     ///
     /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(input: Self::In) -> ApllodbResult<Self::Out> {
-        let vtable_repo = Types::VTableRepo::new(&input.tx);
-        let version_repo = Types::VersionRepo::new(&input.tx);
-
+    fn run_core(
+        vtable_repo: &Types::VTableRepo,
+        version_repo: &Types::VersionRepo,
+        input: Self::In,
+    ) -> ApllodbResult<Self::Out> {
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
 

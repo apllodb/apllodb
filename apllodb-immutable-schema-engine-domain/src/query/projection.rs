@@ -10,15 +10,15 @@ use serde::{Deserialize, Serialize};
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes,
     entity::Entity,
-    version::id::VersionId,
-    vtable::{repository::VTableRepository, VTable},
+    version::{active_versions::ActiveVersions, id::VersionId},
+    vtable::VTable,
 };
 
 #[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct ProjectionResult<
     'prj,
     'db: 'prj,
-    Engine: StorageEngine<'prj, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'prj, 'db, Engine>,
 > {
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
@@ -28,18 +28,15 @@ pub struct ProjectionResult<
 impl<
         'prj,
         'db: 'prj,
-        Engine: StorageEngine<'prj, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'prj, 'db, Engine>,
     > ProjectionResult<'prj, 'db, Engine, Types>
 {
     pub fn new(
-        tx: &'prj Engine::Tx,
         vtable: &VTable,
+        active_versions: ActiveVersions,
         query: ProjectionQuery,
     ) -> ApllodbResult<Self> {
-        let vtable_repo = Types::VTableRepo::new(tx);
-        let active_versions = vtable_repo.active_versions(&vtable)?;
-
         let pk_columns: HashSet<ColumnName> = vtable
             .table_wide_constraints()
             .pk_column_names()

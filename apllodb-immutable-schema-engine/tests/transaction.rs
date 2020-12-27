@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName,
     ColumnReference, DataType, DataTypeKind, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use apllodb_storage_engine_interface::Transaction;
 
 #[test]
 fn test_wait_lock() -> ApllodbResult<()> {

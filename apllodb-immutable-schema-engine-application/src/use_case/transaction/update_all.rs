@@ -1,4 +1,4 @@
-use crate::use_case::{UseCase, UseCaseInput, UseCaseOutput};
+use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
@@ -17,39 +17,18 @@ use super::{
 };
 
 #[derive(Eq, PartialEq, Debug, new)]
-pub struct UpdateAllUseCaseInput<
-    'usecase,
-    'db: 'usecase,
-    Engine: StorageEngine<'usecase, 'db>,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-> {
-    tx: &'usecase Engine::Tx,
+pub struct UpdateAllUseCaseInput<'usecase> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     column_values: HashMap<ColumnName, Expression>,
-
-    #[new(default)]
-    _marker: PhantomData<(&'db (), Types)>,
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine<'usecase, 'db>,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > UseCaseInput for UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>
-{
+impl<'usecase> UseCaseInput for UpdateAllUseCaseInput<'usecase> {
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine<'usecase, 'db>,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>
-{
+impl<'usecase> UpdateAllUseCaseInput<'usecase> {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in &self.column_values {
             match expr {
@@ -75,7 +54,7 @@ impl UseCaseOutput for UpdateAllUseCaseOutput {}
 pub struct UpdateAllUseCase<
     'usecase,
     'db: 'usecase,
-    Engine: StorageEngine<'usecase, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
 > {
     _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
@@ -83,27 +62,31 @@ pub struct UpdateAllUseCase<
 impl<
         'usecase,
         'db: 'usecase,
-        Engine: StorageEngine<'usecase, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > UseCase for UpdateAllUseCase<'usecase, 'db, Engine, Types>
+    > TxUseCase<'usecase, 'db, Engine, Types> for UpdateAllUseCase<'usecase, 'db, Engine, Types>
 {
-    type In = UpdateAllUseCaseInput<'usecase, 'db, Engine, Types>;
+    type In = UpdateAllUseCaseInput<'usecase>;
     type Out = UpdateAllUseCaseOutput;
 
     /// # Failures
     ///
     /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(mut input: Self::In) -> ApllodbResult<Self::Out> {
-        let vtable_repo = Types::VTableRepo::new(&input.tx);
-
+    fn run_core(
+        vtable_repo: &Types::VTableRepo,
+        version_repo: &Types::VersionRepo,
+        mut input: Self::In,
+    ) -> ApllodbResult<Self::Out> {
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
+
+        let active_versions = vtable_repo.active_versions(&vtable)?;
 
         // Fetch all columns of the latest version rows and update requested columns later.
         // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
         let projection_result: ProjectionResult<'_, 'db, Engine, Types> =
-            ProjectionResult::new(input.tx, &vtable, ProjectionQuery::All)?;
+            ProjectionResult::new(&vtable, active_versions, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
         let mut new_col_vals_to_insert: Vec<HashMap<ColumnName, Expression>> = Vec::new();
@@ -125,15 +108,23 @@ impl<
         }
 
         // DELETE all
-        let delete_all_usecase_input: DeleteAllUseCaseInput<'_, 'db, Engine, Types> =
-            DeleteAllUseCaseInput::new(input.tx, input.database_name, input.table_name);
-        let _ = DeleteAllUseCase::run(delete_all_usecase_input)?;
+        let delete_all_usecase_input =
+            DeleteAllUseCaseInput::new(input.database_name, input.table_name);
+        let _ = DeleteAllUseCase::<'_, '_, Engine, Types>::run(
+            vtable_repo,
+            version_repo,
+            delete_all_usecase_input,
+        )?;
 
         // INSERT
         for col_vals in new_col_vals_to_insert {
-            let insert_usecase_input: InsertUseCaseInput<'_, 'db, Engine, Types> =
-                InsertUseCaseInput::new(input.tx, input.database_name, input.table_name, col_vals);
-            let _ = InsertUseCase::run(insert_usecase_input)?;
+            let insert_usecase_input =
+                InsertUseCaseInput::new(input.database_name, input.table_name, col_vals);
+            let _ = InsertUseCase::<'_, '_, Engine, Types>::run(
+                vtable_repo,
+                version_repo,
+                insert_usecase_input,
+            )?;
         }
 
         Ok(UpdateAllUseCaseOutput)

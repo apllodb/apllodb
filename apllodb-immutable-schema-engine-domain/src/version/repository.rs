@@ -5,9 +5,7 @@ use apllodb_shared_components::{ApllodbResult, ColumnName, Expression};
 use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 
-pub trait VersionRepository<'repo, 'db: 'repo, Engine: StorageEngine<'repo, 'db>> {
-    fn new(tx: &'repo Engine::Tx) -> Self;
-
+pub trait VersionRepository<'repo, 'db: 'repo, Engine: StorageEngine> {
     /// Create a version.
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()>;
 

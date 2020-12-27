@@ -11,7 +11,7 @@ use super::{vrr_entries::VRREntries, vrr_entry::VRREntry};
 pub struct VRREntriesInVersion<
     'vrr,
     'db: 'vrr,
-    Engine: StorageEngine<'vrr, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
 > {
     version_id: VersionId,
@@ -21,7 +21,7 @@ pub struct VRREntriesInVersion<
 impl<
         'vrr,
         'db: 'vrr,
-        Engine: StorageEngine<'vrr, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > VRREntriesInVersion<'vrr, 'db, Engine, Types>
 {
@@ -44,7 +44,7 @@ impl<
 impl<
         'vrr,
         'db: 'vrr,
-        Engine: StorageEngine<'vrr, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > Iterator for VRREntriesInVersion<'vrr, 'db, Engine, Types>
 {

@@ -39,7 +39,7 @@
 //!     pub use db::EmptyDatabase;
 //!     pub use engine::EmptyStorageEngine;
 //!     pub use row::EmptyRowIterator;
-//!     pub use tx::EmptyTx;
+//!     pub use tx::{EmptyTx, EmptyTxBuilder};
 //!
 //!     mod db {
 //!         use apllodb_shared_components::Database;
@@ -101,10 +101,14 @@
 //!             AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName,
 //!             Expression, TableConstraints, TableName,
 //!         };
-//!         use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionId};
+//!         use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionBuilder, TransactionId};
 //!         use std::collections::HashMap;
 //!
 //!         use super::{EmptyDatabase, EmptyRowIterator, EmptyStorageEngine};
+//!
+//!         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+//!         pub struct EmptyTxBuilder;
+//!         impl TransactionBuilder for EmptyTxBuilder {}
 //!
 //!         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 //!         pub struct EmptyTransactionId;
@@ -112,12 +116,12 @@
 //!
 //!         #[derive(Debug)]
 //!         pub struct EmptyTx;
-//!         impl<'tx, 'db: 'tx> Transaction<'tx, 'db, EmptyStorageEngine> for EmptyTx {
+//!         impl Transaction<EmptyStorageEngine> for EmptyTx {
 //!             fn id(&self) -> &EmptyTransactionId {
 //!                 unimplemented!()
 //!             }
 //!
-//!             fn begin(db: &'db mut EmptyDatabase) -> ApllodbResult<Self> {
+//!             fn begin(_builder: EmptyTxBuilder) -> ApllodbResult<Self> {
 //!                 Ok(Self)
 //!             }
 //!
@@ -186,15 +190,16 @@
 //!
 //!     mod engine {
 //!         use super::{
-//!             row::EmptyRow, tx::EmptyTransactionId, EmptyDatabase, EmptyRowIterator, EmptyTx,
+//!             row::EmptyRow, tx::EmptyTransactionId, EmptyDatabase, EmptyRowIterator, EmptyTx, EmptyTxBuilder,
 //!         };
 //!         use apllodb_shared_components::{ApllodbResult, DatabaseName};
 //!         use apllodb_storage_engine_interface::StorageEngine;
 //!
 //!         #[derive(Debug)]
 //!         pub struct EmptyStorageEngine;
-//!         impl<'tx, 'db: 'tx> StorageEngine<'tx, 'db> for EmptyStorageEngine {
+//!         impl StorageEngine for EmptyStorageEngine {
 //!             type Tx = EmptyTx;
+//!             type TxBuilder = EmptyTxBuilder;
 //!             type TID = EmptyTransactionId;
 //!             type Db = EmptyDatabase;
 //!             type R = EmptyRow;
@@ -218,10 +223,11 @@
 //!
 //!     // `use` only `EmptyStorageEngine` from `empty_storage_engine`.
 //!     // `EmptyDatabase` and `EmptyTx` are usable without `use`.
-//!     use empty_storage_engine::EmptyStorageEngine;
+//!     use empty_storage_engine::{EmptyStorageEngine, EmptyTx, EmptyTxBuilder};
 //!
 //!     let mut db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
-//!     let tx = EmptyStorageEngine::begin_transaction(&mut db)?;
+//!     let builder = EmptyTxBuilder;
+//!     let tx = EmptyTx::begin(builder)?;
 //!
 //!     let table_name = TableName::new("t")?;
 //!
@@ -253,24 +259,23 @@ use std::fmt::Debug;
 
 pub use crate::query::projection::ProjectionQuery;
 pub use crate::row::{pk::PrimaryKey, Row};
-pub use crate::transaction::{transaction_id::TransactionId, Transaction};
+pub use crate::transaction::{transaction_id::TransactionId, Transaction, TransactionBuilder};
 
 use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
 
 /// An storage engine implementation must implement this trait and included associated-types.
-///
-/// Lifetimes:
-/// - `'tx`: Lifetime of a transaction's start (BEGIN) to end (COMMIT/ABORT).
-/// - `'db`: Lifetime database's open to close.
-pub trait StorageEngine<'tx, 'db: 'tx>: Sized + Debug {
+pub trait StorageEngine: Sized + Debug {
     /// Transaction.
-    type Tx: Transaction<'tx, 'db, Self> + 'tx;
+    type Tx: Transaction<Self>;
+
+    /// Transaction builder to begin a Transaction.
+    type TxBuilder: TransactionBuilder;
 
     /// Transaction ID.
     type TID: TransactionId;
 
     /// Database.
-    type Db: Database + 'db;
+    type Db: Database;
 
     /// Row.
     type R: Row;
@@ -280,9 +285,4 @@ pub trait StorageEngine<'tx, 'db: 'tx>: Sized + Debug {
 
     /// Specify database to use and return database object.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<Self::Db>;
-
-    /// Starts transaction and get transaction object.
-    fn begin_transaction(db: &'db mut Self::Db) -> ApllodbResult<Self::Tx> {
-        Self::Tx::begin(db)
-    }
 }

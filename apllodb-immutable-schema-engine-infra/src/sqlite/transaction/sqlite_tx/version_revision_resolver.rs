@@ -26,7 +26,8 @@ pub(crate) struct VersionRevisionResolverImpl<'vrr, 'db: 'vrr> {
     tx: &'vrr SqliteTx<'db>,
 }
 
-impl<'vrr, 'db: 'vrr> VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
+impl<'vrr, 'db: 'vrr>
+    VersionRevisionResolver<'vrr, 'db, ApllodbImmutableSchemaEngine<'db>, SqliteTypes>
     for VersionRevisionResolverImpl<'vrr, 'db>
 {
     fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {

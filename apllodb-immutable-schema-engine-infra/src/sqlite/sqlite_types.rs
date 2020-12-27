@@ -17,7 +17,7 @@ use super::{
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct SqliteTypes;
 
-impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<'repo, 'db, ApllodbImmutableSchemaEngine>
+impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<'repo, 'db, ApllodbImmutableSchemaEngine<'db>>
     for SqliteTypes
 {
     type VRRId = SqliteRowid;
@@ -31,25 +31,25 @@ impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<'repo, 'db, ApllodbImmutabl
 
 // Fill structs' type parameters in domain / application layers.
 pub(crate) type VRREntriesInVersion<'vrr, 'db> =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion<'vrr, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>;
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion<'vrr, 'db, ApllodbImmutableSchemaEngine<'db>, SqliteTypes>;
 pub(crate) type VRREntries<'vrr, 'db> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VRREntries<
         'vrr,
         'db,
-        ApllodbImmutableSchemaEngine,
+        ApllodbImmutableSchemaEngine<'db>,
         SqliteTypes,
     >;
 pub(crate) type VRREntry<'vrr, 'db> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry<
         'vrr,
         'db,
-        ApllodbImmutableSchemaEngine,
+        ApllodbImmutableSchemaEngine<'db>,
         SqliteTypes,
     >;
 pub(crate) type ProjectionResult<'prj, 'db> =
     apllodb_immutable_schema_engine_domain::query::projection::ProjectionResult<
         'prj,
         'db,
-        ApllodbImmutableSchemaEngine,
+        ApllodbImmutableSchemaEngine<'db>,
         SqliteTypes,
     >;
