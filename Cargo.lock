@@ -78,6 +78,8 @@ dependencies = [
 name = "apllodb-query-processor"
 version = "0.1.0"
 dependencies = [
+ "apllodb-shared-components",
+ "apllodb-storage-engine-interface",
  "derive-new",
  "env_logger",
  "log",

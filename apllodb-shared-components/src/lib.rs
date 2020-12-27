@@ -30,6 +30,7 @@ pub use crate::{
             Expression,
         },
         record::{field_index::FieldIndex, Record},
+        record_iterator::RecordIterator,
         table::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,

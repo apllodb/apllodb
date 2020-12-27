@@ -8,7 +8,6 @@ edition = "2018"
 
 [dependencies]
 apllodb-shared-components = { path = "../apllodb-shared-components" }
-
 apllodb-storage-engine-interface = { path = "../apllodb-storage-engine-interface" }
 
 derive-new = "0.5"

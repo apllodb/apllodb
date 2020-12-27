@@ -11,6 +11,9 @@ repository = "https://github.com/darwin-education/apllodb"
 version = "0.1.0"
 
 [dependencies]
+apllodb-shared-components = { path = "../apllodb-shared-components" }
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
+
 serde = {version = "1.0", features = ["derive"]}
 
 derive-new = "0.5"
