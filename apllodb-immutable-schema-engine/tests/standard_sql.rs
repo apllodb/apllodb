@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     ColumnReference, Constant, DataType, DataTypeKind, Expression, TableConstraintKind,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, Row, StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{ProjectionQuery, Row, Transaction};
 
 #[test]
 fn test_create_table_success() -> ApllodbResult<()> {

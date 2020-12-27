@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, DataType,
     DataTypeKind, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use apllodb_storage_engine_interface::Transaction;
 
 #[test]
 fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {

@@ -28,13 +28,15 @@ pub struct VTableRepositoryImpl<'repo, 'db: 'repo> {
     tx: &'repo SqliteTx<'db>,
 }
 
-impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngine, SqliteTypes>
-    for VTableRepositoryImpl<'repo, 'db>
-{
-    fn new(tx: &'repo SqliteTx<'db>) -> Self {
+impl<'repo, 'db> VTableRepositoryImpl<'repo, 'db> {
+    pub fn new(tx: &'repo SqliteTx<'db>) -> Self {
         Self { tx }
     }
+}
 
+impl<'repo, 'db: 'repo> VTableRepository<'repo, 'db, ApllodbImmutableSchemaEngine<'db>, SqliteTypes>
+    for VTableRepositoryImpl<'repo, 'db>
+{
     /// # Failures
     ///
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
