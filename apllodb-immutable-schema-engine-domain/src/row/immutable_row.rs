@@ -1,6 +1,8 @@
 pub mod builder;
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, ColumnValue, Record, SqlValue};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, ColumnValue, Record, SqlValue,
+};
 use apllodb_storage_engine_interface::Row;
 use std::collections::{hash_map::Entry, HashMap};
 

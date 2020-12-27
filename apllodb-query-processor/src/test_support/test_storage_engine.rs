@@ -138,15 +138,15 @@ mod tx {
             _projection: ProjectionQuery,
         ) -> ApllodbResult<TestRowIterator> {
             let testset: Vec<Record> = vec![
-                record! { 
+                record! {
                     "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
                     "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
                 },
-                record! { 
+                record! {
                     "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
                     "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
                 },
-                record! { 
+                record! {
                     "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
                     "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
                 },
