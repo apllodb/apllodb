@@ -75,6 +75,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "apllodb-query-processor"
+version = "0.1.0"
+dependencies = [
+ "derive-new",
+ "env_logger",
+ "log",
+ "serde",
+]
+
+[[package]]
 name = "apllodb-server"
 version = "0.1.0"
 dependencies = [
