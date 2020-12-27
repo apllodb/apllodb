@@ -59,7 +59,7 @@
 //!
 //!     mod row {
 //!         use apllodb_shared_components::{
-//!             ApllodbResult, ColumnName, ColumnReference, ColumnValue, SqlValue,
+//!             ApllodbResult, ColumnName, ColumnReference, ColumnValue, Record, SqlValue,
 //!         };
 //!         use apllodb_storage_engine_interface::{PrimaryKey, Row};
 //!         use serde::{Deserialize, Serialize};
@@ -81,6 +81,11 @@
 //!             }
 //!
 //!             fn append(&mut self, colvals: Vec<ColumnValue>) -> ApllodbResult<()> {
+//!                 unimplemented!()
+//!             }
+//!         }
+//!         impl Into<Record> for EmptyRow {
+//!             fn into(self) -> Record {
 //!                 unimplemented!()
 //!             }
 //!         }
