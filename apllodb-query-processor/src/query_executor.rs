@@ -18,10 +18,13 @@ mod tests {
     use apllodb_shared_components::ApllodbResult;
     use apllodb_storage_engine_interface::ProjectionQuery;
 
-    use crate::query_plan::{QueryPlan, plan_tree::{
-        plan_node::{LeafPlanOperation, PlanNode},
-        PlanTree,
-    }};
+    use crate::query_plan::{
+        plan_tree::{
+            plan_node::{LeafPlanOperation, PlanNode},
+            PlanTree,
+        },
+        QueryPlan,
+    };
 
     use super::QueryExecutor;
 
