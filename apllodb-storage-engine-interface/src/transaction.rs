@@ -9,6 +9,11 @@ use std::{collections::HashMap, fmt::Debug};
 
 use crate::{ProjectionQuery, StorageEngine};
 
+/// Transaction builder.
+/// Implement this to contain reference type in it.
+/// (Without builder, [Transaction::begin()](crate::Transaction::begin) may take reference type and it should take lifetime parameter although Transaction is a trait.)
+pub trait TransactionBuilder: Debug {}
+
 /// Transaction interface.
 ///
 /// It has methods to control transaction's lifetime (BEGIN, COMMIT/ABORT)
@@ -18,13 +23,12 @@ use crate::{ProjectionQuery, StorageEngine};
 ///
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
-pub trait Transaction<'tx, 'db: 'tx, Engine: StorageEngine<'tx, 'db>>: Debug + 'tx {
+pub trait Transaction<Engine: StorageEngine>: Debug {
     /// Transaction ID
     fn id(&self) -> &Engine::TID;
 
     /// Begins a transaction.
-    /// A database cannot starts multiple transactions at a time (&mut reference enforces it).
-    fn begin(db: &'db mut Engine::Db) -> ApllodbResult<Self>
+    fn begin(builder: Engine::TxBuilder) -> ApllodbResult<Self>
     where
         Self: Sized;
 

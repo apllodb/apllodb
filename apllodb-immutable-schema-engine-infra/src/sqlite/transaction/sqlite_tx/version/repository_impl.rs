@@ -21,13 +21,15 @@ pub struct VersionRepositoryImpl<'repo, 'db: 'repo> {
     tx: &'repo SqliteTx<'db>,
 }
 
-impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngine>
-    for VersionRepositoryImpl<'repo, 'db>
-{
-    fn new(tx: &'repo SqliteTx<'db>) -> Self {
+impl<'repo, 'db> VersionRepositoryImpl<'repo, 'db> {
+    pub fn new(tx: &'repo SqliteTx<'db>) -> Self {
         Self { tx }
     }
+}
 
+impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngine<'db>>
+    for VersionRepositoryImpl<'repo, 'db>
+{
     /// # Failures
     ///
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:

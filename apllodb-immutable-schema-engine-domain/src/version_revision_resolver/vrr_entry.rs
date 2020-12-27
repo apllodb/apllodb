@@ -18,7 +18,7 @@ use crate::{
 pub struct VRREntry<
     'vrr,
     'db: 'vrr,
-    Engine: StorageEngine<'vrr, 'db>,
+    Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
 > {
     id: Types::VRRId,
@@ -30,7 +30,7 @@ pub struct VRREntry<
 impl<
         'vrr,
         'db: 'vrr,
-        Engine: StorageEngine<'vrr, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > VRREntry<'vrr, 'db, Engine, Types>
 {
@@ -51,7 +51,7 @@ impl<
 impl<
         'vrr,
         'db: 'vrr,
-        Engine: StorageEngine<'vrr, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > Clone for VRREntry<'vrr, 'db, Engine, Types>
 {
@@ -68,7 +68,7 @@ impl<
 impl<
         'vrr,
         'db: 'vrr,
-        Engine: StorageEngine<'vrr, 'db>,
+        Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
     > Entity for VRREntry<'vrr, 'db, Engine, Types>
 {
