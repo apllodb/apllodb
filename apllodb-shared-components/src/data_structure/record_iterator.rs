@@ -10,6 +10,14 @@ pub struct RecordIterator {
     // TODO use batched Records for memory reduction?
     inner: VecDeque<Record>,
 }
+impl RecordIterator {
+    /// Constructor
+    pub fn new<IntoRecord: Into<Record>, I: Iterator<Item = IntoRecord>>(it: I) -> Self {
+        Self {
+            inner: it.map(|into_record| into_record.into()).collect(),
+        }
+    }
+}
 
 impl Iterator for RecordIterator {
     type Item = Record;

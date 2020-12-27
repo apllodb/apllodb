@@ -104,7 +104,7 @@
 //!         use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionBuilder, TransactionId};
 //!         use std::collections::HashMap;
 //!
-//!         use super::{EmptyDatabase, EmptyRowIterator, EmptyStorageEngine};
+//!         use super::{EmptyRowIterator, EmptyStorageEngine};
 //!
 //!         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 //!         pub struct EmptyTxBuilder;

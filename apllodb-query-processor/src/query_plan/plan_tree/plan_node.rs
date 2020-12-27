@@ -1,3 +1,4 @@
+use apllodb_shared_components::TableName;
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +22,10 @@ pub(crate) enum PlanNode {
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub(crate) enum LeafPlanOperation {
-    SeqScan { projection: ProjectionQuery },
+    SeqScan {
+        table_name: TableName,
+        projection: ProjectionQuery,
+    },
     // TODO extend.
     // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
 }

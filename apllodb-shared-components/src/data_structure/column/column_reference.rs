@@ -21,4 +21,13 @@ impl ColumnReference {
     pub fn as_column_name(&self) -> &ColumnName {
         &self.column_name
     }
+
+    /// To string
+    pub fn to_string(&self) -> String {
+        format!(
+            "{}.{}",
+            self.as_table_name().as_str(),
+            self.as_column_name().as_str()
+        )
+    }
 }

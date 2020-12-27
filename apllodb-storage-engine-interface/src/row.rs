@@ -1,11 +1,11 @@
 pub(crate) mod pk;
 
-use apllodb_shared_components::{ApllodbResult, SqlValue};
+use apllodb_shared_components::{ApllodbResult, Record, SqlValue};
 use apllodb_shared_components::{ColumnReference, ColumnValue, SqlConvertible};
 
 /// Row representation used in storage engine.
 /// Row, unlike `Record`, does not deal with `Expression`s.
-pub trait Row {
+pub trait Row: Into<Record> {
     /// Retrieve (and remove) an SqlValue from this row.
     fn get_sql_value(&mut self, colref: &ColumnReference) -> ApllodbResult<SqlValue>;
 

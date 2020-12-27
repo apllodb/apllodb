@@ -1,8 +1,6 @@
 pub mod builder;
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, ColumnValue, SqlValue,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, ColumnValue, Record, SqlValue};
 use apllodb_storage_engine_interface::Row;
 use std::collections::{hash_map::Entry, HashMap};
 
@@ -47,6 +45,12 @@ impl Row for ImmutableRow {
             .collect::<ApllodbResult<Vec<()>>>()?;
 
         Ok(())
+    }
+}
+
+impl Into<Record> for ImmutableRow {
+    fn into(self) -> Record {
+        todo!()
     }
 }
 
