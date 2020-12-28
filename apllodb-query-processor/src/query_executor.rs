@@ -52,6 +52,8 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use apllodb_shared_components::{
         ApllodbResult, DataType, DataTypeKind, FieldIndex, Record, SqlValue, TableName,
     };
@@ -117,7 +119,7 @@ mod tests {
             },
             record! {
                 "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-                "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
+                "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &77i32)?
             },
             record! {
                 "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
