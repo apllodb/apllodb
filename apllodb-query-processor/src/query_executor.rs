@@ -16,7 +16,17 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
     pub(crate) fn run(&self, plan: QueryPlan) -> ApllodbResult<RecordIterator> {
         let plan_tree = plan.plan_tree;
         let root = plan_tree.root;
-        let record_iter = match root {
+        self.run_dfs_post_order(root)
+    }
+
+    /// Runs `node` in post-order and returns `node`'s output.
+    ///
+    /// 1. Runs left child node and get output if exists.
+    /// 2. Runs left child node and get output if exists.
+    /// 3. Runs this `node` using inputs from left & right nodes if exist.
+    /// 4. Returns `node`'s output.
+    fn run_dfs_post_order(&self, node: PlanNode) -> ApllodbResult<RecordIterator> {
+        let output = match node {
             PlanNode::Leaf { op } => match op {
                 LeafPlanOperation::SeqScan {
                     table_name,
@@ -27,13 +37,16 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
                 }
             },
             PlanNode::Unary { op, left } => {
+                let left_input = self.run_dfs_post_order(*left)?;
                 todo!()
             }
             PlanNode::Binary { op, left, right } => {
+                let left_input = self.run_dfs_post_order(*left)?;
+                let right_input = self.run_dfs_post_order(*right)?;
                 todo!()
             }
         };
-        Ok(record_iter)
+        Ok(output)
     }
 }
 
