@@ -52,6 +52,10 @@ pub(crate) enum UnaryPlanOperation {
 /// Binary operations, which inputs two [RecordIterator](apllodb-shared-components::RecordIterator) and outputs one [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub(crate) enum BinaryPlanOperation {
+    HashJoin {
+        left_field: FieldIndex,
+        right_field: FieldIndex,
+    },
     // TODO extend.
-// See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
+    // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
 }

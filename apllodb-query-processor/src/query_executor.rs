@@ -60,7 +60,8 @@ mod tests {
         query_plan::{
             plan_tree::{
                 plan_node::{
-                    LeafPlanOperation, PlanNode, PlanNodeLeaf, PlanNodeUnary, UnaryPlanOperation,
+                    BinaryPlanOperation, LeafPlanOperation, PlanNode, PlanNodeBinary, PlanNodeLeaf,
+                    PlanNodeUnary, UnaryPlanOperation,
                 },
                 PlanTree,
             },
@@ -91,23 +92,38 @@ mod tests {
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
-        let r1 = record! {
+        let t_r1 = record! {
             "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
             "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
         };
-        let r2 = record! {
+        let t_r2 = record! {
             "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
             "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
         };
-        let r3 = record! {
+        let t_r3 = record! {
             "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
             "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
         };
 
-        let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![StubTable::new(
-            TableName::new("t")?,
-            StubRowIterator::from(vec![r1.clone(), r2.clone(), r3.clone()]),
-        )]))?;
+        let s_r1 = record! {
+            "t_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            "height" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &145i32)?
+        };
+        let s_r3 = record! {
+            "t_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            "height" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
+        };
+
+        let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![
+            StubTable::new(
+                TableName::new("t")?,
+                StubRowIterator::from(vec![t_r1.clone(), t_r2.clone(), t_r3.clone()]),
+            ),
+            StubTable::new(
+                TableName::new("s")?,
+                StubRowIterator::from(vec![s_r1.clone(), s_r3.clone()]),
+            ),
+        ]))?;
         let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
 
         let test_data: Vec<TestDatum> = vec![
@@ -119,7 +135,7 @@ mod tests {
                         projection: ProjectionQuery::All,
                     },
                 })),
-                expected_records: vec![r1.clone(), r2.clone(), r3.clone()],
+                expected_records: vec![t_r1.clone(), t_r2.clone(), t_r3.clone()],
             },
             TestDatum {
                 in_plan_tree: PlanTree::new(PlanNode::Leaf(PlanNodeLeaf {
@@ -129,9 +145,9 @@ mod tests {
                     },
                 })),
                 expected_records: vec![
-                    projection(r1.clone(), vec!["id"])?,
-                    projection(r2.clone(), vec!["id"])?,
-                    projection(r3.clone(), vec!["id"])?,
+                    projection(t_r1.clone(), vec!["id"])?,
+                    projection(t_r2.clone(), vec!["id"])?,
+                    projection(t_r3.clone(), vec!["id"])?,
                 ],
             },
             TestDatum {
@@ -142,9 +158,9 @@ mod tests {
                     },
                 })),
                 expected_records: vec![
-                    projection(r1.clone(), vec!["age"])?,
-                    projection(r2.clone(), vec!["age"])?,
-                    projection(r3.clone(), vec!["age"])?,
+                    projection(t_r1.clone(), vec!["age"])?,
+                    projection(t_r2.clone(), vec!["age"])?,
+                    projection(t_r3.clone(), vec!["age"])?,
                 ],
             },
             // Projection
@@ -161,9 +177,9 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    projection(r1.clone(), vec!["id"])?,
-                    projection(r2.clone(), vec!["id"])?,
-                    projection(r3.clone(), vec!["id"])?,
+                    projection(t_r1.clone(), vec!["id"])?,
+                    projection(t_r2.clone(), vec!["id"])?,
+                    projection(t_r3.clone(), vec!["id"])?,
                 ],
             },
             TestDatum {
@@ -179,10 +195,32 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    projection(r1.clone(), vec!["age"])?,
-                    projection(r2.clone(), vec!["age"])?,
-                    projection(r3.clone(), vec!["age"])?,
+                    projection(t_r1.clone(), vec!["age"])?,
+                    projection(t_r2.clone(), vec!["age"])?,
+                    projection(t_r3.clone(), vec!["age"])?,
                 ],
+            },
+            // HashJoin
+            TestDatum {
+                in_plan_tree: PlanTree::new(PlanNode::Binary(PlanNodeBinary {
+                    op: BinaryPlanOperation::HashJoin {
+                        left_field: FieldIndex::from("id"),
+                        right_field: FieldIndex::from("t_id"),
+                    },
+                    left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: TableName::new("t")?,
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                    right: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: TableName::new("s")?,
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                })),
+                expected_records: vec![t_r1.join(s_r1)?, t_r3.join(s_r3)?],
             },
         ];
 

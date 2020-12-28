@@ -64,4 +64,35 @@ impl Record {
 
         Ok(self)
     }
+
+    /// Joins another record into this record.
+    ///
+    /// # Failures
+    ///
+    /// - [DuplicateObject](apllodb_shared_components::ApllodbErrorKind::DuplicateObject) when:
+    ///   - `another` has the same field with self.
+    pub fn join(mut self, mut another: Record) -> ApllodbResult<Self> {
+        let another_fields: HashSet<&FieldIndex> = another.fields.keys().collect();
+        if let Some(dup_field) = self
+            .fields
+            .keys()
+            .filter(|field| another_fields.contains(field))
+            .next()
+        {
+            return Err(ApllodbError::new(
+                ApllodbErrorKind::DuplicateColumn,
+                format!(
+                    "joining two records with duplicate field: `{:?}`",
+                    dup_field
+                ),
+                None,
+            ));
+        }
+
+        let new_fields: HashMap<FieldIndex, SqlValue> =
+            self.fields.drain().chain(another.fields.drain()).collect();
+        self.fields = new_fields;
+
+        Ok(self)
+    }
 }
