@@ -53,7 +53,7 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
 #[cfg(test)]
 mod tests {
     use apllodb_shared_components::{
-        ApllodbResult, DataType, DataTypeKind, FieldIndex, SqlValue, TableName,
+        ApllodbResult, DataType, DataTypeKind, FieldIndex, Record, SqlValue, TableName,
     };
     use apllodb_storage_engine_interface::ProjectionQuery;
 
@@ -107,26 +107,27 @@ mod tests {
                 },
             ]),
         )]))?;
+
         let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
 
-        let mut records = executor.run(query_plan)?;
+        let expected = vec![
+            record! {
+                "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+                "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
+            },
+            record! {
+                "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
+                "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
+            },
+            record! {
+                "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+                "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
+            },
+        ];
 
-        let id_field = FieldIndex::from("id");
-        let age_field = FieldIndex::from("age");
+        let result = executor.run(query_plan)?;
 
-        let r1 = records.next().unwrap();
-        assert_eq!(r1.get::<i32>(id_field.clone())?, 1);
-        assert_eq!(r1.get::<i32>(age_field.clone())?, 13);
-
-        let r2 = records.next().unwrap();
-        assert_eq!(r2.get::<i32>(id_field.clone())?, 2);
-        assert_eq!(r2.get::<i32>(age_field.clone())?, 70);
-
-        let r3 = records.next().unwrap();
-        assert_eq!(r3.get::<i32>(id_field.clone())?, 3);
-        assert_eq!(r3.get::<i32>(age_field.clone())?, 35);
-
-        assert!(records.next().is_none());
+        assert_eq!(result.collect::<Vec<Record>>(), expected);
 
         Ok(())
     }
