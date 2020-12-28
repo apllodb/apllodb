@@ -83,6 +83,11 @@ mod tests {
         expected_records: Vec<Record>,
     }
 
+    fn projection(mut r: Record, fields: Vec<&str>) -> ApllodbResult<Record> {
+        r.projection(&fields.into_iter().map(FieldIndex::from).collect())?;
+        Ok(r)
+    }
+
     #[test]
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
@@ -115,20 +120,7 @@ mod tests {
                         projection: ProjectionQuery::All,
                     },
                 })),
-                expected_records: vec![
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-                    },
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-                    },
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-                    },
-                ],
+                expected_records: vec![r1.clone(), r2.clone(), r3.clone()],
             },
             TestDatum {
                 in_plan_tree: PlanTree::new(PlanNode::Leaf(PlanNodeLeaf {
@@ -138,15 +130,9 @@ mod tests {
                     },
                 })),
                 expected_records: vec![
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?
-                    },
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?
-                    },
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?
-                    },
+                    projection(r1.clone(), vec!["id"])?,
+                    projection(r2.clone(), vec!["id"])?,
+                    projection(r3.clone(), vec!["id"])?,
                 ],
             },
             TestDatum {
@@ -157,15 +143,9 @@ mod tests {
                     },
                 })),
                 expected_records: vec![
-                    record! {
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-                    },
-                    record! {
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-                    },
-                    record! {
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-                    },
+                    projection(r1.clone(), vec!["age"])?,
+                    projection(r2.clone(), vec!["age"])?,
+                    projection(r3.clone(), vec!["age"])?,
                 ],
             },
             // Projection
@@ -182,15 +162,9 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?
-                    },
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?
-                    },
-                    record! {
-                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?
-                    },
+                    projection(r1.clone(), vec!["id"])?,
+                    projection(r2.clone(), vec!["id"])?,
+                    projection(r3.clone(), vec!["id"])?,
                 ],
             },
             TestDatum {
@@ -206,15 +180,9 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    record! {
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-                    },
-                    record! {
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-                    },
-                    record! {
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-                    },
+                    projection(r1.clone(), vec!["age"])?,
+                    projection(r2.clone(), vec!["age"])?,
+                    projection(r3.clone(), vec!["age"])?,
                 ],
             },
         ];
