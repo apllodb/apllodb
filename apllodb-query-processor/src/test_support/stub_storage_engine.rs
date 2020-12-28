@@ -75,7 +75,8 @@ mod row {
 mod tx {
     use apllodb_shared_components::{
         AlterTableAction, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDefinition,
-        ColumnName, DatabaseName, Expression, FieldIndex, TableConstraints, TableName,
+        ColumnName, ColumnReference, DatabaseName, Expression, FieldIndex, TableConstraints,
+        TableName,
     };
     use apllodb_storage_engine_interface::{
         ProjectionQuery, Transaction, TransactionBuilder, TransactionId,
@@ -168,7 +169,7 @@ mod tx {
                 ProjectionQuery::ColumnNames(column_names) => {
                     let fields: HashSet<FieldIndex> = column_names
                         .into_iter()
-                        .map(|cn| FieldIndex::from(cn.as_str()))
+                        .map(|cn| FieldIndex::from(ColumnReference::new(table_name.clone(), cn)))
                         .collect();
 
                     let projected_rows: VecDeque<StubRow> = row_iter

@@ -4,20 +4,22 @@
 ///
 /// ```
 /// use crate::record;
-/// use apllodb_shared_components::{DataType, DataTypeKind, SqlValue};
+/// use apllodb_shared_components::{ColumnName, ColumnReference, DataType, DataTypeKind, FieldIndex, SqlValue, TableName};
 ///
-/// let r1 = record! { "field" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &123i32)? };
-/// let r2 = record! { "field" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &456i32)? };
+/// let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c")?);
+///
+/// let r1 = record! { FieldIndex::from(colref.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &123i32)? };
+/// let r2 = record! { FieldIndex::from(colref.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &456i32)? };
 ///
 /// assert_ne!(r1, r2);
 /// ```
 #[macro_export]
 macro_rules! record {
-    { $($field_str:expr => $sql_value:expr),+ } => {
+    { $($field_index:expr => $sql_value:expr),+ } => {
         {
             let mut fields = std::collections::HashMap::new();
             $(
-                fields.insert(apllodb_shared_components::FieldIndex::from($field_str), $sql_value);
+                fields.insert($field_index, $sql_value);
             )+
             apllodb_shared_components::Record::new(fields)
         }

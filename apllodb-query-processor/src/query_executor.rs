@@ -49,7 +49,8 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use apllodb_shared_components::{
-        ApllodbResult, ColumnName, DataType, DataTypeKind, FieldIndex, Record, SqlValue, TableName,
+        ApllodbResult, ColumnName, ColumnReference, DataType, DataTypeKind, FieldIndex, Record,
+        SqlValue, TableName,
     };
     use apllodb_storage_engine_interface::ProjectionQuery;
 
@@ -81,7 +82,7 @@ mod tests {
         expected_records: Vec<Record>,
     }
 
-    fn projection(r: Record, fields: Vec<&str>) -> ApllodbResult<Record> {
+    fn projection(r: Record, fields: Vec<ColumnReference>) -> ApllodbResult<Record> {
         r.projection(&fields.into_iter().map(FieldIndex::from).collect())
     }
 
@@ -90,45 +91,55 @@ mod tests {
         setup();
 
         let t_people = TableName::new("people")?;
+        let t_people_c_id = ColumnReference::new(t_people.clone(), ColumnName::new("id")?);
+        let t_people_c_age = ColumnReference::new(t_people.clone(), ColumnName::new("age")?);
+
         let t_body = TableName::new("body")?;
+        let t_body_c_people_id =
+            ColumnReference::new(t_body.clone(), ColumnName::new("people_id")?);
+        let t_body_c_height = ColumnReference::new(t_body.clone(), ColumnName::new("height")?);
+
         let t_pet = TableName::new("pet")?;
+        let t_pet_c_people_id = ColumnReference::new(t_pet.clone(), ColumnName::new("people_id")?);
+        let t_pet_c_kind = ColumnReference::new(t_pet.clone(), ColumnName::new("kind")?);
+        let t_pet_c_age = ColumnReference::new(t_pet.clone(), ColumnName::new("age")?);
 
         let t_people_r1 = record! {
-            "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
+            FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
         };
         let t_people_r2 = record! {
-            "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-            "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
+            FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
+            FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
         };
         let t_people_r3 = record! {
-            "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
+            FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
         };
 
         let t_body_r1 = record! {
-            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            "height" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &145i32)?
+            FieldIndex::from(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            FieldIndex::from(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &145i32)?
         };
         let t_body_r3 = record! {
-            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            "height" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
+            FieldIndex::from(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::from(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
         };
 
         let t_pet_r1 = record! {
-            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            "kind" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            "age" => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
+            FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
+            FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
         };
         let t_pet_r3_1 = record! {
-            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            "kind" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            "age" => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
+            FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
+            FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
         };
         let t_pet_r3_2 = record! {
-            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            "kind" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
-            "age" => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
+            FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
+            FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
         };
 
         let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![
@@ -174,33 +185,39 @@ mod tests {
                 in_plan_tree: PlanTree::new(PlanNode::Leaf(PlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: t_people.clone(),
-                        projection: ProjectionQuery::ColumnNames(vec![ColumnName::new("id")?]),
+                        projection: ProjectionQuery::ColumnNames(vec![t_people_c_id
+                            .as_column_name()
+                            .clone()]),
                     },
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec!["id"])?,
-                    projection(t_people_r2.clone(), vec!["id"])?,
-                    projection(t_people_r3.clone(), vec!["id"])?,
+                    projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
+                    projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
+                    projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
                 ],
             },
             TestDatum {
                 in_plan_tree: PlanTree::new(PlanNode::Leaf(PlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: t_people.clone(),
-                        projection: ProjectionQuery::ColumnNames(vec![ColumnName::new("age")?]),
+                        projection: ProjectionQuery::ColumnNames(vec![t_people_c_age
+                            .as_column_name()
+                            .clone()]),
                     },
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec!["age"])?,
-                    projection(t_people_r2.clone(), vec!["age"])?,
-                    projection(t_people_r3.clone(), vec!["age"])?,
+                    projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
+                    projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
+                    projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
                 ],
             },
             // Projection
             TestDatum {
                 in_plan_tree: PlanTree::new(PlanNode::Unary(PlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::from("id")].into_iter().collect(),
+                        fields: vec![FieldIndex::from(t_people_c_id.clone())]
+                            .into_iter()
+                            .collect(),
                     },
                     left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -210,15 +227,17 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec!["id"])?,
-                    projection(t_people_r2.clone(), vec!["id"])?,
-                    projection(t_people_r3.clone(), vec!["id"])?,
+                    projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
+                    projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
+                    projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
                 ],
             },
             TestDatum {
                 in_plan_tree: PlanTree::new(PlanNode::Unary(PlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::from("age")].into_iter().collect(),
+                        fields: vec![FieldIndex::from(t_people_c_age.clone())]
+                            .into_iter()
+                            .collect(),
                     },
                     left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -228,17 +247,17 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec!["age"])?,
-                    projection(t_people_r2.clone(), vec!["age"])?,
-                    projection(t_people_r3.clone(), vec!["age"])?,
+                    projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
+                    projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
+                    projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
                 ],
             },
             // HashJoin
             TestDatum {
                 in_plan_tree: PlanTree::new(PlanNode::Binary(PlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::from("id"),
-                        right_field: FieldIndex::from("people_id"),
+                        left_field: FieldIndex::from(t_people_c_id.clone()),
+                        right_field: FieldIndex::from(t_body_c_people_id.clone()),
                     },
                     left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -262,8 +281,8 @@ mod tests {
                 // right has 2 same join keys
                 in_plan_tree: PlanTree::new(PlanNode::Binary(PlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::from("id"),
-                        right_field: FieldIndex::from("people_id"),
+                        left_field: FieldIndex::from(t_people_c_id.clone()),
+                        right_field: FieldIndex::from(t_pet_c_people_id.clone()),
                     },
                     left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -288,8 +307,8 @@ mod tests {
                 // left has 2 same join keys
                 in_plan_tree: PlanTree::new(PlanNode::Binary(PlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::from("people_id"),
-                        right_field: FieldIndex::from("id"),
+                        left_field: FieldIndex::from(t_pet_c_people_id.clone()),
+                        right_field: FieldIndex::from(t_people_c_id.clone()),
                     },
                     left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
