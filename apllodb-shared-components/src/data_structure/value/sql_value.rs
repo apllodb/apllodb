@@ -16,7 +16,7 @@ pub const SQL_VALUE_NULL: Option<i16> = None;
 /// SQL-typed value that is efficiently compressed.
 ///
 /// A storage engine may (or may not) save `SqlValue`'s serialized instance as-is.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct SqlValue {
     data_type: DataType,
     raw: Vec<u8>,
@@ -135,5 +135,20 @@ impl SqlValue {
                 None,
             )),
         }
+    }
+}
+
+impl std::fmt::Debug for SqlValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "
+SqlValue {{
+    data_type: {:?},
+    (raw into Expression): {:?}
+}}",
+            self.data_type,
+            Expression::from(self)
+        )
     }
 }
