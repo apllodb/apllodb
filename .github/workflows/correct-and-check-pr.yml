@@ -96,6 +96,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      RUST_LOG: debug
+      RUST_BACKTRACE: 1
     strategy:
         matrix:
           rust:
