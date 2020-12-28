@@ -298,7 +298,7 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    t_people_r2.clone().join(t_pet_r1.clone())?,
+                    t_people_r1.clone().join(t_pet_r1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_2.clone())?,
                 ],
@@ -324,7 +324,7 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    t_people_r2.clone().join(t_pet_r1.clone())?,
+                    t_people_r1.clone().join(t_pet_r1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_2.clone())?,
                 ],
