@@ -30,10 +30,7 @@ impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
         let output = match op_unary {
             UnaryPlanOperation::Projection { fields } => RecordIterator::new(
                 input_left
-                    .map(|mut record| {
-                        record.projection(&fields)?;
-                        Ok(record)
-                    })
+                    .map(|record| record.projection(&fields))
                     .collect::<ApllodbResult<Vec<Record>>>()?,
             ),
         };

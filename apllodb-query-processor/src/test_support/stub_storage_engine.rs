@@ -173,8 +173,7 @@ mod tx {
 
                     let projected_rows: VecDeque<StubRow> = row_iter
                         .map(|row| {
-                            let mut record = row.0;
-                            record.projection(&fields)?;
+                            let record = row.0.projection(&fields)?;
                             Ok(StubRow::new(record))
                         })
                         .collect::<ApllodbResult<_>>()?;

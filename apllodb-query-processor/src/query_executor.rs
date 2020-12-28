@@ -83,9 +83,8 @@ mod tests {
         expected_records: Vec<Record>,
     }
 
-    fn projection(mut r: Record, fields: Vec<&str>) -> ApllodbResult<Record> {
-        r.projection(&fields.into_iter().map(FieldIndex::from).collect())?;
-        Ok(r)
+    fn projection(r: Record, fields: Vec<&str>) -> ApllodbResult<Record> {
+        r.projection(&fields.into_iter().map(FieldIndex::from).collect())
     }
 
     #[test]

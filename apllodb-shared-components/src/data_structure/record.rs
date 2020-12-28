@@ -43,7 +43,7 @@ impl Record {
     ///
     /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(&mut self, fields: &HashSet<FieldIndex>) -> ApllodbResult<()> {
+    pub fn projection(mut self, fields: &HashSet<FieldIndex>) -> ApllodbResult<Self> {
         if let Some(invalid_field) = fields
             .difference(&self.fields.keys().cloned().collect())
             .next()
@@ -62,6 +62,6 @@ impl Record {
             .collect();
         self.fields = new_fields;
 
-        Ok(())
+        Ok(self)
     }
 }
