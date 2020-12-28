@@ -19,14 +19,14 @@ pub struct Record {
 }
 
 impl Record {
-    /// Get value from record's field.
+    /// Get Rust value from record's field.
     ///
     /// # Failures
     ///
     /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
-    pub fn get<T: SqlConvertible>(&mut self, index: FieldIndex) -> ApllodbResult<T> {
+    pub fn get<T: SqlConvertible>(&self, index: &FieldIndex) -> ApllodbResult<T> {
         let sql_value = self.get_sql_value(index)?;
         Ok(sql_value.unpack()?)
     }
@@ -37,8 +37,8 @@ impl Record {
     ///
     /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn get_sql_value(&mut self, index: FieldIndex) -> ApllodbResult<SqlValue> {
-        let sql_value = self.fields.remove(&index).ok_or_else(|| {
+    pub fn get_sql_value(&self, index: &FieldIndex) -> ApllodbResult<&SqlValue> {
+        let sql_value = self.fields.get(index).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
                 format!("invalid field reference: `{:?}`", index),

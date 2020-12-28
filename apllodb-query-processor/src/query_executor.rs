@@ -3,10 +3,7 @@ mod plan_node_executor;
 use apllodb_shared_components::{ApllodbResult, RecordIterator};
 use apllodb_storage_engine_interface::StorageEngine;
 
-use crate::query_plan::{
-    plan_tree::plan_node::{PlanNode, PlanNodeBinary},
-    QueryPlan,
-};
+use crate::query_plan::{plan_tree::plan_node::PlanNode, QueryPlan};
 
 use self::plan_node_executor::PlanNodeExecutor;
 
@@ -38,10 +35,10 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
                 let left_input = self.run_dfs_post_order(*node_unary.left)?;
                 node_executor.run_unary(node_unary.op, left_input)
             }
-            PlanNode::Binary(PlanNodeBinary { op, left, right }) => {
-                let left_input = self.run_dfs_post_order(*left)?;
-                let right_input = self.run_dfs_post_order(*right)?;
-                todo!()
+            PlanNode::Binary(node_binary) => {
+                let left_input = self.run_dfs_post_order(*node_binary.left)?;
+                let right_input = self.run_dfs_post_order(*node_binary.right)?;
+                node_executor.run_binary(node_binary.op, left_input, right_input)
             }
         }
     }
