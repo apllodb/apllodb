@@ -161,7 +161,7 @@ mod tests {
                         "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
                     },
                     record! {
-                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &77i32)?
+                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
                     },
                     record! {
                         "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?

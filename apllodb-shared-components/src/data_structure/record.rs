@@ -5,7 +5,7 @@ use crate::{
     traits::sql_convertible::SqlConvertible,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use self::field_index::FieldIndex;
 
@@ -23,7 +23,7 @@ impl Record {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](x.html) when:
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
     pub fn get<T: SqlConvertible>(&self, index: FieldIndex) -> ApllodbResult<T> {
@@ -35,5 +35,33 @@ impl Record {
             )
         })?;
         Ok(sql_value.unpack()?)
+    }
+
+    /// Shrink a record into record with specified `fields`.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    ///   - Specified field does not exist in this record.
+    pub fn projection(&mut self, fields: &HashSet<FieldIndex>) -> ApllodbResult<()> {
+        if let Some(invalid_field) = fields
+            .difference(&self.fields.keys().cloned().collect())
+            .next()
+        {
+            return Err(ApllodbError::new(
+                ApllodbErrorKind::InvalidName,
+                format!("invalid field reference: `{:?}`", invalid_field),
+                None,
+            ));
+        }
+
+        let new_fields: HashMap<FieldIndex, SqlValue> = self
+            .fields
+            .drain()
+            .filter(|(k, _)| fields.contains(k))
+            .collect();
+        self.fields = new_fields;
+
+        Ok(())
     }
 }

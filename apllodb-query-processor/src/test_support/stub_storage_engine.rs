@@ -40,7 +40,7 @@ mod row {
     }
 
     #[derive(Clone, Eq, PartialEq, Debug, new)]
-    pub(crate) struct StubRow(Record);
+    pub(crate) struct StubRow(pub(super) Record);
     impl Row for StubRow {
         fn get_sql_value(&mut self, _colref: &ColumnReference) -> ApllodbResult<SqlValue> {
             unimplemented!()
@@ -75,14 +75,17 @@ mod row {
 mod tx {
     use apllodb_shared_components::{
         AlterTableAction, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDefinition,
-        ColumnName, DatabaseName, Expression, TableConstraints, TableName,
+        ColumnName, DatabaseName, Expression, FieldIndex, TableConstraints, TableName,
     };
     use apllodb_storage_engine_interface::{
         ProjectionQuery, Transaction, TransactionBuilder, TransactionId,
     };
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet, VecDeque};
 
-    use super::{row::StubRowIterator, StubData, StubStorageEngine};
+    use super::{
+        row::{StubRow, StubRowIterator},
+        StubData, StubStorageEngine,
+    };
 
     #[derive(Clone, Eq, PartialEq, Debug, new)]
     pub(crate) struct StubTxBuilder {
@@ -143,7 +146,7 @@ mod tx {
         fn select(
             &self,
             table_name: &TableName,
-            _projection: ProjectionQuery,
+            projection: ProjectionQuery,
         ) -> ApllodbResult<StubRowIterator> {
             let stub_table = self
                 .stub_data
@@ -157,7 +160,28 @@ mod tx {
                         None,
                     )
                 })?;
-            Ok(stub_table.rows.clone())
+
+            let row_iter = stub_table.rows.clone();
+
+            match projection {
+                ProjectionQuery::All => Ok(row_iter),
+                ProjectionQuery::ColumnNames(column_names) => {
+                    let fields: HashSet<FieldIndex> = column_names
+                        .into_iter()
+                        .map(|cn| FieldIndex::from(cn.as_str()))
+                        .collect();
+
+                    let projected_rows: VecDeque<StubRow> = row_iter
+                        .map(|row| {
+                            let mut record = row.0;
+                            record.projection(&fields)?;
+                            Ok(StubRow::new(record))
+                        })
+                        .collect::<ApllodbResult<_>>()?;
+
+                    Ok(StubRowIterator::new(projected_rows))
+                }
+            }
         }
 
         fn insert(
