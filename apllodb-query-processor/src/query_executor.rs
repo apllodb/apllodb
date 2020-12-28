@@ -91,6 +91,7 @@ mod tests {
 
         let t_people = TableName::new("people")?;
         let t_body = TableName::new("body")?;
+        let t_hobby = TableName::new("hobby")?;
 
         let t_people_r1 = record! {
             "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
@@ -114,6 +115,19 @@ mod tests {
             "height" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
         };
 
+        let t_hobby_r2 = record! {
+            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
+            "hobby" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"baseball".to_string())?
+        };
+        let t_hobby_r3_1 = record! {
+            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            "hobby" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"baseball".to_string())?
+        };
+        let t_hobby_r3_2 = record! {
+            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            "hobby" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"youtube".to_string())?
+        };
+
         let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![
             StubTable::new(
                 t_people.clone(),
@@ -126,6 +140,14 @@ mod tests {
             StubTable::new(
                 t_body.clone(),
                 StubRowIterator::from(vec![t_body_r1.clone(), t_body_r3.clone()]),
+            ),
+            StubTable::new(
+                t_hobby.clone(),
+                StubRowIterator::from(vec![
+                    t_hobby_r2.clone(),
+                    t_hobby_r3_1.clone(),
+                    t_hobby_r3_2.clone(),
+                ]),
             ),
         ]))?;
         let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
@@ -228,7 +250,62 @@ mod tests {
                         },
                     })),
                 })),
-                expected_records: vec![t_people_r1.join(t_body_r1)?, t_people_r3.join(t_body_r3)?],
+                expected_records: vec![
+                    t_people_r1.clone().join(t_body_r1.clone())?,
+                    t_people_r3.clone().join(t_body_r3.clone())?,
+                ],
+            },
+            TestDatum {
+                // right has 2 same join keys
+                in_plan_tree: PlanTree::new(PlanNode::Binary(PlanNodeBinary {
+                    op: BinaryPlanOperation::HashJoin {
+                        left_field: FieldIndex::from("id"),
+                        right_field: FieldIndex::from("people_id"),
+                    },
+                    left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: t_people.clone(),
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                    right: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: t_hobby.clone(),
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                })),
+                expected_records: vec![
+                    t_people_r2.clone().join(t_hobby_r2.clone())?,
+                    t_people_r3.clone().join(t_hobby_r3_1.clone())?,
+                    t_people_r3.clone().join(t_hobby_r3_2.clone())?,
+                ],
+            },
+            TestDatum {
+                // left has 2 same join keys
+                in_plan_tree: PlanTree::new(PlanNode::Binary(PlanNodeBinary {
+                    op: BinaryPlanOperation::HashJoin {
+                        left_field: FieldIndex::from("people_id"),
+                        right_field: FieldIndex::from("id"),
+                    },
+                    left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: t_hobby.clone(),
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                    right: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: t_people.clone(),
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                })),
+                expected_records: vec![
+                    t_people_r2.clone().join(t_hobby_r2.clone())?,
+                    t_people_r3.clone().join(t_hobby_r3_1.clone())?,
+                    t_people_r3.clone().join(t_hobby_r3_2.clone())?,
+                ],
             },
         ];
 
