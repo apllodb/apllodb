@@ -1,10 +1,14 @@
-use apllodb_shared_components::{ApllodbResult, Record, RecordIterator};
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+mod plan_node_executor;
+
+use apllodb_shared_components::{ApllodbResult, RecordIterator};
+use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::query_plan::{
-    plan_tree::plan_node::{LeafPlanOperation, PlanNode, UnaryPlanOperation},
+    plan_tree::plan_node::{PlanNode, PlanNodeBinary},
     QueryPlan,
 };
+
+use self::plan_node_executor::PlanNodeExecutor;
 
 /// Query executor which inputs a [QueryPlan](crate::query_plan::QueryPlan) and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
@@ -26,36 +30,20 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
     /// 3. Runs this `node` using inputs from left & right nodes if exist.
     /// 4. Returns `node`'s output.
     fn run_dfs_post_order(&self, node: PlanNode) -> ApllodbResult<RecordIterator> {
-        let output = match node {
-            PlanNode::Leaf { op } => match op {
-                LeafPlanOperation::SeqScan {
-                    table_name,
-                    projection,
-                } => {
-                    let row_iter = self.tx.select(&table_name, projection)?;
-                    RecordIterator::new(row_iter)
-                }
-            },
-            PlanNode::Unary { op, left } => {
-                let left_input = self.run_dfs_post_order(*left)?;
-                match op {
-                    UnaryPlanOperation::Projection { fields } => RecordIterator::new(
-                        left_input
-                            .map(|mut record| {
-                                record.projection(&fields)?;
-                                Ok(record)
-                            })
-                            .collect::<ApllodbResult<Vec<Record>>>()?,
-                    ),
-                }
+        let node_executor = PlanNodeExecutor::<'_, Engine>::new(self.tx);
+
+        match node {
+            PlanNode::Leaf(node_leaf) => node_executor.run_leaf(node_leaf.op),
+            PlanNode::Unary(node_unary) => {
+                let left_input = self.run_dfs_post_order(*node_unary.left)?;
+                node_executor.run_unary(node_unary.op, left_input)
             }
-            PlanNode::Binary { op, left, right } => {
+            PlanNode::Binary(PlanNodeBinary { op, left, right }) => {
                 let left_input = self.run_dfs_post_order(*left)?;
                 let right_input = self.run_dfs_post_order(*right)?;
                 todo!()
             }
-        };
-        Ok(output)
+        }
     }
 }
 
@@ -71,7 +59,9 @@ mod tests {
     use crate::{
         query_plan::{
             plan_tree::{
-                plan_node::{LeafPlanOperation, PlanNode, UnaryPlanOperation},
+                plan_node::{
+                    LeafPlanOperation, PlanNode, PlanNodeLeaf, PlanNodeUnary, UnaryPlanOperation,
+                },
                 PlanTree,
             },
             QueryPlan,
@@ -119,12 +109,12 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             // SeqScan (with storage engine layer projection)
             TestDatum {
-                in_plan_tree: PlanTree::new(PlanNode::Leaf {
+                in_plan_tree: PlanTree::new(PlanNode::Leaf(PlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: TableName::new("t")?,
                         projection: ProjectionQuery::All,
                     },
-                }),
+                })),
                 expected_records: vec![
                     record! {
                         "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
@@ -141,12 +131,12 @@ mod tests {
                 ],
             },
             TestDatum {
-                in_plan_tree: PlanTree::new(PlanNode::Leaf {
+                in_plan_tree: PlanTree::new(PlanNode::Leaf(PlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: TableName::new("t")?,
                         projection: ProjectionQuery::ColumnNames(vec![ColumnName::new("id")?]),
                     },
-                }),
+                })),
                 expected_records: vec![
                     record! {
                         "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?
@@ -160,12 +150,12 @@ mod tests {
                 ],
             },
             TestDatum {
-                in_plan_tree: PlanTree::new(PlanNode::Leaf {
+                in_plan_tree: PlanTree::new(PlanNode::Leaf(PlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: TableName::new("t")?,
                         projection: ProjectionQuery::ColumnNames(vec![ColumnName::new("age")?]),
                     },
-                }),
+                })),
                 expected_records: vec![
                     record! {
                         "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
@@ -180,17 +170,17 @@ mod tests {
             },
             // Projection
             TestDatum {
-                in_plan_tree: PlanTree::new(PlanNode::Unary {
+                in_plan_tree: PlanTree::new(PlanNode::Unary(PlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
                         fields: vec![FieldIndex::from("id")].into_iter().collect(),
                     },
-                    left: Box::new(PlanNode::Leaf {
+                    left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: TableName::new("t")?,
                             projection: ProjectionQuery::All,
                         },
-                    }),
-                }),
+                    })),
+                })),
                 expected_records: vec![
                     record! {
                         "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?
@@ -204,17 +194,17 @@ mod tests {
                 ],
             },
             TestDatum {
-                in_plan_tree: PlanTree::new(PlanNode::Unary {
+                in_plan_tree: PlanTree::new(PlanNode::Unary(PlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
                         fields: vec![FieldIndex::from("age")].into_iter().collect(),
                     },
-                    left: Box::new(PlanNode::Leaf {
+                    left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: TableName::new("t")?,
                             projection: ProjectionQuery::All,
                         },
-                    }),
-                }),
+                    })),
+                })),
                 expected_records: vec![
                     record! {
                         "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
