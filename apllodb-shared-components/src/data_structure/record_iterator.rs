@@ -12,9 +12,12 @@ pub struct RecordIterator {
 }
 impl RecordIterator {
     /// Constructor
-    pub fn new<IntoRecord: Into<Record>, I: Iterator<Item = IntoRecord>>(it: I) -> Self {
+    pub fn new<IntoRecord: Into<Record>, I: IntoIterator<Item = IntoRecord>>(it: I) -> Self {
         Self {
-            inner: it.map(|into_record| into_record.into()).collect(),
+            inner: it
+                .into_iter()
+                .map(|into_record| into_record.into())
+                .collect(),
         }
     }
 }
