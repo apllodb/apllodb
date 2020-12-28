@@ -329,6 +329,28 @@ mod tests {
                     t_people_r3.clone().join(t_pet_r3_2.clone())?,
                 ],
             },
+            TestDatum {
+                // Eq comparison with Integer & SmallInt
+                in_plan_tree: PlanTree::new(PlanNode::Binary(PlanNodeBinary {
+                    op: BinaryPlanOperation::HashJoin {
+                        left_field: FieldIndex::from(t_people_c_age.clone()),
+                        right_field: FieldIndex::from(t_pet_c_age.clone()),
+                    },
+                    left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: t_people.clone(),
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                    right: Box::new(PlanNode::Leaf(PlanNodeLeaf {
+                        op: LeafPlanOperation::SeqScan {
+                            table_name: t_pet.clone(),
+                            projection: ProjectionQuery::All,
+                        },
+                    })),
+                })),
+                expected_records: vec![t_people_r1.clone().join(t_pet_r1.clone())?],
+            },
         ];
 
         for test_datum in test_data {
