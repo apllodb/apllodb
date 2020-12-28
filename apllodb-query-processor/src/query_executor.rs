@@ -55,7 +55,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use apllodb_shared_components::{
-        ApllodbResult, DataType, DataTypeKind, Record, SqlValue, TableName,
+        ApllodbResult, ColumnName, DataType, DataTypeKind, Record, SqlValue, TableName,
     };
     use apllodb_storage_engine_interface::ProjectionQuery;
 
@@ -88,9 +88,8 @@ mod tests {
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
-        let tname_t = TableName::new("t")?;
         let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![StubTable::new(
-            tname_t.clone(),
+            TableName::new("t")?,
             StubRowIterator::from(vec![
                 record! {
                     "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
@@ -108,28 +107,68 @@ mod tests {
         )]))?;
         let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
 
-        let test_data: Vec<TestDatum> = vec![TestDatum {
-            in_plan_tree: PlanTree::new(PlanNode::Leaf {
-                op: LeafPlanOperation::SeqScan {
-                    table_name: TableName::new("t")?,
-                    projection: ProjectionQuery::All,
-                },
-            }),
-            expected_records: vec![
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-                },
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &77i32)?
-                },
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-                },
-            ],
-        }];
+        let test_data: Vec<TestDatum> = vec![
+            TestDatum {
+                in_plan_tree: PlanTree::new(PlanNode::Leaf {
+                    op: LeafPlanOperation::SeqScan {
+                        table_name: TableName::new("t")?,
+                        projection: ProjectionQuery::All,
+                    },
+                }),
+                expected_records: vec![
+                    record! {
+                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
+                    },
+                    record! {
+                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
+                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
+                    },
+                    record! {
+                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
+                    },
+                ],
+            },
+            TestDatum {
+                in_plan_tree: PlanTree::new(PlanNode::Leaf {
+                    op: LeafPlanOperation::SeqScan {
+                        table_name: TableName::new("t")?,
+                        projection: ProjectionQuery::ColumnNames(vec![ColumnName::new("id")?]),
+                    },
+                }),
+                expected_records: vec![
+                    record! {
+                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?
+                    },
+                    record! {
+                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?
+                    },
+                    record! {
+                        "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?
+                    },
+                ],
+            },
+            TestDatum {
+                in_plan_tree: PlanTree::new(PlanNode::Leaf {
+                    op: LeafPlanOperation::SeqScan {
+                        table_name: TableName::new("t")?,
+                        projection: ProjectionQuery::ColumnNames(vec![ColumnName::new("age")?]),
+                    },
+                }),
+                expected_records: vec![
+                    record! {
+                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
+                    },
+                    record! {
+                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &77i32)?
+                    },
+                    record! {
+                        "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
+                    },
+                ],
+            },
+        ];
 
         for test_datum in test_data {
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
