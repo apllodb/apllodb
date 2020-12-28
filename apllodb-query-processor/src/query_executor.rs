@@ -1,8 +1,8 @@
-use apllodb_shared_components::{ApllodbResult, RecordIterator};
+use apllodb_shared_components::{ApllodbResult, Record, RecordIterator};
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
 use crate::query_plan::{
-    plan_tree::plan_node::{LeafPlanOperation, PlanNode},
+    plan_tree::plan_node::{LeafPlanOperation, PlanNode, UnaryPlanOperation},
     QueryPlan,
 };
 
@@ -38,7 +38,16 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
             },
             PlanNode::Unary { op, left } => {
                 let left_input = self.run_dfs_post_order(*left)?;
-                todo!()
+                match op {
+                    UnaryPlanOperation::Projection { fields } => RecordIterator::new(
+                        left_input
+                            .map(|mut record| {
+                                record.projection(&fields)?;
+                                Ok(record)
+                            })
+                            .collect::<ApllodbResult<Vec<Record>>>()?,
+                    ),
+                }
             }
             PlanNode::Binary { op, left, right } => {
                 let left_input = self.run_dfs_post_order(*left)?;
@@ -88,22 +97,22 @@ mod tests {
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
+        let r1 = record! {
+            "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
+        };
+        let r2 = record! {
+            "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
+            "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
+        };
+        let r3 = record! {
+            "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
+        };
+
         let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![StubTable::new(
             TableName::new("t")?,
-            StubRowIterator::from(vec![
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-                },
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-                },
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-                },
-            ]),
+            StubRowIterator::from(vec![r1.clone(), r2.clone(), r3.clone()]),
         )]))?;
         let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
 
@@ -221,15 +230,15 @@ mod tests {
         ];
 
         for test_datum in test_data {
+            log::debug!(
+                "testing with input plan tree: {:#?}",
+                test_datum.in_plan_tree
+            );
+
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
             let result = executor.run(query_plan)?;
 
-            assert_eq!(
-                result.collect::<Vec<Record>>(),
-                test_datum.expected_records,
-                "input plan tree: {:#?}",
-                test_datum.in_plan_tree
-            );
+            assert_eq!(result.collect::<Vec<Record>>(), test_datum.expected_records,);
         }
         Ok(())
     }
