@@ -52,7 +52,9 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
 
 #[cfg(test)]
 mod tests {
-    use apllodb_shared_components::{ApllodbResult, FieldIndex, TableName};
+    use apllodb_shared_components::{
+        ApllodbResult, DataType, DataTypeKind, FieldIndex, SqlValue, TableName,
+    };
     use apllodb_storage_engine_interface::ProjectionQuery;
 
     use crate::{
@@ -63,7 +65,13 @@ mod tests {
             },
             QueryPlan,
         },
-        test_support::{setup, test_storage_engine::TestStorageEngine},
+        record,
+        test_support::{
+            setup,
+            stub_storage_engine::{
+                stub_data::StubTable, StubData, StubRowIterator, StubStorageEngine,
+            },
+        },
     };
 
     use super::QueryExecutor;
@@ -80,8 +88,26 @@ mod tests {
         });
         let query_plan = QueryPlan::new(plan_tree);
 
-        let tx = TestStorageEngine::begin()?;
-        let executor = QueryExecutor::<'_, TestStorageEngine>::new(&tx);
+        let tname_t = TableName::new("t")?;
+
+        let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![StubTable::new(
+            tname_t.clone(),
+            StubRowIterator::from(vec![
+                record! {
+                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
+                },
+                record! {
+                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
+                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
+                },
+                record! {
+                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
+                },
+            ]),
+        )]))?;
+        let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
 
         let mut records = executor.run(query_plan)?;
 

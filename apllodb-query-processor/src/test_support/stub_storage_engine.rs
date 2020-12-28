@@ -1,15 +1,19 @@
-pub(crate) use engine::TestStorageEngine;
+pub(crate) mod stub_data;
+
+pub(crate) use engine::StubStorageEngine;
+pub(crate) use row::StubRowIterator;
+pub(crate) use stub_data::StubData;
 
 mod db {
     use apllodb_shared_components::Database;
 
-    pub(crate) struct TestDatabase;
-    impl Database for TestDatabase {
+    pub(crate) struct StubDatabase;
+    impl Database for StubDatabase {
         fn name(&self) -> &apllodb_shared_components::DatabaseName {
             unimplemented!()
         }
     }
-    impl TestDatabase {
+    impl StubDatabase {
         pub(super) fn new() -> Self {
             Self
         }
@@ -28,16 +32,16 @@ mod row {
     #[derive(
         Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize,
     )]
-    pub(crate) struct TestPrimaryKey;
-    impl PrimaryKey for TestPrimaryKey {
+    pub(crate) struct StubPrimaryKey;
+    impl PrimaryKey for StubPrimaryKey {
         fn get_sql_value(&self, _column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
             unimplemented!()
         }
     }
 
     #[derive(Clone, Eq, PartialEq, Debug, new)]
-    pub(crate) struct TestRow(Record);
-    impl Row for TestRow {
+    pub(crate) struct StubRow(Record);
+    impl Row for StubRow {
         fn get_sql_value(&mut self, _colref: &ColumnReference) -> ApllodbResult<SqlValue> {
             unimplemented!()
         }
@@ -46,57 +50,61 @@ mod row {
             unimplemented!()
         }
     }
-    impl Into<Record> for TestRow {
+    impl Into<Record> for StubRow {
         fn into(self) -> Record {
             self.0
         }
     }
 
-    #[derive(Debug, new)]
-    pub(crate) struct TestRowIterator(VecDeque<TestRow>);
-    impl Iterator for TestRowIterator {
-        type Item = TestRow;
+    #[derive(Clone, Eq, PartialEq, Debug, new)]
+    pub(crate) struct StubRowIterator(VecDeque<StubRow>);
+    impl Iterator for StubRowIterator {
+        type Item = StubRow;
 
         fn next(&mut self) -> Option<Self::Item> {
             self.0.pop_front()
+        }
+    }
+    impl From<Vec<Record>> for StubRowIterator {
+        fn from(records: Vec<Record>) -> Self {
+            Self(records.into_iter().map(StubRow::new).collect())
         }
     }
 }
 
 mod tx {
     use apllodb_shared_components::{
-        AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DataType, DataTypeKind,
-        DatabaseName, Expression, Record, SqlValue, TableConstraints, TableName,
+        AlterTableAction, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDefinition,
+        ColumnName, DatabaseName, Expression, TableConstraints, TableName,
     };
     use apllodb_storage_engine_interface::{
         ProjectionQuery, Transaction, TransactionBuilder, TransactionId,
     };
     use std::collections::HashMap;
 
-    use crate::record;
+    use super::{row::StubRowIterator, StubData, StubStorageEngine};
 
-    use super::{
-        row::{TestRow, TestRowIterator},
-        TestStorageEngine,
-    };
-
-    #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-    pub(crate) struct TestTxBuilder;
-    impl TransactionBuilder for TestTxBuilder {}
+    #[derive(Clone, Eq, PartialEq, Debug, new)]
+    pub(crate) struct StubTxBuilder {
+        stub_data: StubData,
+    }
+    impl TransactionBuilder for StubTxBuilder {}
 
     #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-    pub(crate) struct TestTransactionId;
-    impl TransactionId for TestTransactionId {}
+    pub(crate) struct StubTransactionId;
+    impl TransactionId for StubTransactionId {}
 
-    #[derive(Debug)]
-    pub(crate) struct TestTx;
-    impl Transaction<TestStorageEngine> for TestTx {
-        fn id(&self) -> &TestTransactionId {
+    #[derive(Debug, new)]
+    pub(crate) struct StubTx {
+        stub_data: StubData,
+    }
+    impl Transaction<StubStorageEngine> for StubTx {
+        fn id(&self) -> &StubTransactionId {
             unimplemented!()
         }
 
-        fn begin(_builder: TestTxBuilder) -> ApllodbResult<Self> {
-            Ok(Self)
+        fn begin(builder: StubTxBuilder) -> ApllodbResult<Self> {
+            Ok(Self::new(builder.stub_data))
         }
 
         fn commit(self) -> ApllodbResult<()> {
@@ -134,27 +142,22 @@ mod tx {
 
         fn select(
             &self,
-            _table_name: &TableName,
+            table_name: &TableName,
             _projection: ProjectionQuery,
-        ) -> ApllodbResult<TestRowIterator> {
-            let testset: Vec<Record> = vec![
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-                },
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-                },
-                record! {
-                    "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-                    "age" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-                },
-            ];
-
-            Ok(TestRowIterator::new(
-                testset.into_iter().map(TestRow::new).collect(),
-            ))
+        ) -> ApllodbResult<StubRowIterator> {
+            let stub_table = self
+                .stub_data
+                .tables
+                .iter()
+                .find(|stub_table| stub_table.table_name == *table_name)
+                .ok_or_else(|| {
+                    ApllodbError::new(
+                        ApllodbErrorKind::UndefinedTable,
+                        format!("table `{:?}` is undefined in StubTx", table_name),
+                        None,
+                    )
+                })?;
+            Ok(stub_table.rows.clone())
         }
 
         fn insert(
@@ -180,32 +183,32 @@ mod tx {
 }
 
 mod engine {
-
     use super::{
-        db::TestDatabase,
-        row::{TestRow, TestRowIterator},
-        tx::{TestTransactionId, TestTx, TestTxBuilder},
+        db::StubDatabase,
+        row::{StubRow, StubRowIterator},
+        tx::{StubTransactionId, StubTx, StubTxBuilder},
+        StubData,
     };
     use apllodb_shared_components::{ApllodbResult, DatabaseName};
     use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
     #[derive(Debug)]
-    pub(crate) struct TestStorageEngine;
-    impl StorageEngine for TestStorageEngine {
-        type Tx = TestTx;
-        type TxBuilder = TestTxBuilder;
-        type TID = TestTransactionId;
-        type Db = TestDatabase;
-        type R = TestRow;
-        type RowIter = TestRowIterator;
+    pub(crate) struct StubStorageEngine;
+    impl StorageEngine for StubStorageEngine {
+        type Tx = StubTx;
+        type TxBuilder = StubTxBuilder;
+        type TID = StubTransactionId;
+        type Db = StubDatabase;
+        type R = StubRow;
+        type RowIter = StubRowIterator;
 
-        fn use_database(_database_name: &DatabaseName) -> ApllodbResult<TestDatabase> {
-            Ok(TestDatabase::new())
+        fn use_database(_database_name: &DatabaseName) -> ApllodbResult<StubDatabase> {
+            Ok(StubDatabase::new())
         }
     }
-    impl TestStorageEngine {
-        pub(crate) fn begin() -> ApllodbResult<TestTx> {
-            TestTx::begin(TestTxBuilder)
+    impl StubStorageEngine {
+        pub(crate) fn begin_stub_tx(stub: StubData) -> ApllodbResult<StubTx> {
+            StubTx::begin(StubTxBuilder::new(stub))
         }
     }
 }
