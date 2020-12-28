@@ -26,15 +26,26 @@ impl Record {
     /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
-    pub fn get<T: SqlConvertible>(&self, index: FieldIndex) -> ApllodbResult<T> {
-        let sql_value = self.fields.get(&index).ok_or_else(|| {
+    pub fn get<T: SqlConvertible>(&mut self, index: FieldIndex) -> ApllodbResult<T> {
+        let sql_value = self.get_sql_value(index)?;
+        Ok(sql_value.unpack()?)
+    }
+
+    /// Get [SqlValue](apllodb_shared_components::SqlValue) from record's field.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    ///   - Specified field does not exist in this record.
+    pub fn get_sql_value(&mut self, index: FieldIndex) -> ApllodbResult<SqlValue> {
+        let sql_value = self.fields.remove(&index).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
                 format!("invalid field reference: `{:?}`", index),
                 None,
             )
         })?;
-        Ok(sql_value.unpack()?)
+        Ok(sql_value)
     }
 
     /// Shrink a record into record with specified `fields`.
