@@ -91,7 +91,7 @@ mod tests {
 
         let t_people = TableName::new("people")?;
         let t_body = TableName::new("body")?;
-        let t_hobby = TableName::new("hobby")?;
+        let t_pet = TableName::new("pet")?;
 
         let t_people_r1 = record! {
             "id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
@@ -115,17 +115,20 @@ mod tests {
             "height" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
         };
 
-        let t_hobby_r2 = record! {
-            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-            "hobby" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"baseball".to_string())?
+        let t_pet_r1 = record! {
+            "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            "kind" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
+            "age" => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
         };
-        let t_hobby_r3_1 = record! {
+        let t_pet_r3_1 = record! {
             "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            "hobby" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"baseball".to_string())?
+            "kind" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
+            "age" => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
         };
-        let t_hobby_r3_2 = record! {
+        let t_pet_r3_2 = record! {
             "people_id" => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            "hobby" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"youtube".to_string())?
+            "kind" => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
+            "age" => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
         };
 
         let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![
@@ -142,11 +145,11 @@ mod tests {
                 StubRowIterator::from(vec![t_body_r1.clone(), t_body_r3.clone()]),
             ),
             StubTable::new(
-                t_hobby.clone(),
+                t_pet.clone(),
                 StubRowIterator::from(vec![
-                    t_hobby_r2.clone(),
-                    t_hobby_r3_1.clone(),
-                    t_hobby_r3_2.clone(),
+                    t_pet_r1.clone(),
+                    t_pet_r3_1.clone(),
+                    t_pet_r3_2.clone(),
                 ]),
             ),
         ]))?;
@@ -270,15 +273,15 @@ mod tests {
                     })),
                     right: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_hobby.clone(),
+                            table_name: t_pet.clone(),
                             projection: ProjectionQuery::All,
                         },
                     })),
                 })),
                 expected_records: vec![
-                    t_people_r2.clone().join(t_hobby_r2.clone())?,
-                    t_people_r3.clone().join(t_hobby_r3_1.clone())?,
-                    t_people_r3.clone().join(t_hobby_r3_2.clone())?,
+                    t_people_r2.clone().join(t_pet_r1.clone())?,
+                    t_people_r3.clone().join(t_pet_r3_1.clone())?,
+                    t_people_r3.clone().join(t_pet_r3_2.clone())?,
                 ],
             },
             TestDatum {
@@ -290,7 +293,7 @@ mod tests {
                     },
                     left: Box::new(PlanNode::Leaf(PlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_hobby.clone(),
+                            table_name: t_pet.clone(),
                             projection: ProjectionQuery::All,
                         },
                     })),
@@ -302,9 +305,9 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    t_people_r2.clone().join(t_hobby_r2.clone())?,
-                    t_people_r3.clone().join(t_hobby_r3_1.clone())?,
-                    t_people_r3.clone().join(t_hobby_r3_2.clone())?,
+                    t_people_r2.clone().join(t_pet_r1.clone())?,
+                    t_people_r3.clone().join(t_pet_r3_1.clone())?,
+                    t_people_r3.clone().join(t_pet_r3_2.clone())?,
                 ],
             },
         ];
