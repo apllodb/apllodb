@@ -1,6 +1,6 @@
 use crate::{
     data_structure::{
-        data_type::{DataType, data_type_kind::DataTypeKind},
+        data_type::{data_type_kind::DataTypeKind, DataType},
         expression::{
             constant::{CharacterConstant, Constant, NumericConstant},
             Expression,
@@ -16,6 +16,10 @@ pub const SQL_VALUE_NULL: Option<i16> = None;
 /// SQL-typed value that is efficiently compressed.
 ///
 /// # Comparing SqlValues
+///
+/// Use [SqlValue::sql_compare()](crate::SqlValue::sql_compare) to compare two SqlValues for most cases.
+/// `Eq` and `PartialEq` auto-derive are just binary matching and only useful in test cases.
+/// TODO enum SqlCompareResult { Eq, Lt, Gt, Neq, Null } みたいなのを返すイメージ。selection, sortの実装で使う
 ///
 /// An SqlValue internally holds [DataTypeKind](crate::DataTypeKind).
 /// Each DataTypeKind belongs to a [GeneralDataType](crate::GeneralDataType).
