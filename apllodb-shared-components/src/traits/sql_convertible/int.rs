@@ -43,7 +43,13 @@ impl SqlConvertible for i64 {
 
 #[cfg(test)]
 mod tests_i32 {
-    use crate::{data_structure::{data_type::{DataType, data_type_kind::DataTypeKind}, value::sql_value::SqlValue}, error::{kind::ApllodbErrorKind, ApllodbResult}};
+    use crate::{
+        data_structure::{
+            data_type::{data_type_kind::DataTypeKind, DataType},
+            value::sql_value::SqlValue,
+        },
+        error::{kind::ApllodbErrorKind, ApllodbResult},
+    };
 
     #[test]
     fn test_pack_unpack() -> ApllodbResult<()> {
