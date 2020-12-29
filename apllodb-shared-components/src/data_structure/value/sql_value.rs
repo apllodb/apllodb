@@ -199,7 +199,7 @@ impl SqlValue {
     ///     matches!(
     ///         v_integer_not_null.sql_compare(&v_text_not_null)
     ///             .expect_err("comparing totally different types").kind(),
-    ///         ApllodbErrorKind::DatatypeMismatch,
+    ///         ApllodbErrorKind::DatatypeMismatch
     ///     );
     ///
     ///     Ok(())
