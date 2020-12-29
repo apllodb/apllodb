@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use self::query_plan_tree::QueryPlanTree;
 
 /// Query plan from which an executor can do its work deterministically.
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize, new)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, new)]
 pub(crate) struct QueryPlan {
     pub(crate) plan_tree: QueryPlanTree,
     // TODO evaluated cost, etc...

@@ -8,7 +8,7 @@
 #[macro_use]
 extern crate derive_new;
 
-//pub(crate) mod modification;
+pub(crate) mod modification;
 pub(crate) mod query;
 
 #[cfg(test)]

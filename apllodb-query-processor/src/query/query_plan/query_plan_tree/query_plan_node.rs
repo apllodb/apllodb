@@ -1,29 +1,29 @@
 use std::collections::HashSet;
 
-use apllodb_shared_components::{FieldIndex, TableName};
+use apllodb_shared_components::{FieldIndex, RecordIterator, TableName};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 /// Node of query plan tree.
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) enum QueryPlanNode {
     Leaf(QueryPlanNodeLeaf),
     Unary(QueryPlanNodeUnary),
     Binary(QueryPlanNodeBinary),
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) struct QueryPlanNodeLeaf {
     pub(crate) op: LeafPlanOperation,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) struct QueryPlanNodeUnary {
     pub(crate) op: UnaryPlanOperation,
     pub(crate) left: Box<QueryPlanNode>,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) struct QueryPlanNodeBinary {
     pub(crate) op: BinaryPlanOperation,
     pub(crate) left: Box<QueryPlanNode>,
@@ -31,8 +31,11 @@ pub(crate) struct QueryPlanNodeBinary {
 }
 
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) enum LeafPlanOperation {
+    DirectInput {
+        records: RecordIterator,
+    },
     SeqScan {
         table_name: TableName,
         projection: ProjectionQuery,

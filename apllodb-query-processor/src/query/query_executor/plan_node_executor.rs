@@ -17,6 +17,7 @@ pub(super) struct PlanNodeExecutor<'exe, Engine: StorageEngine> {
 impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
     pub(super) fn run_leaf(&self, op_leaf: LeafPlanOperation) -> ApllodbResult<RecordIterator> {
         match op_leaf {
+            LeafPlanOperation::DirectInput { records } => Ok(records),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
