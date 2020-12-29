@@ -1,4 +1,6 @@
-use super::data_type_kind::DataTypeKind;
+pub(crate) mod data_type_kind;
+
+use data_type_kind::DataTypeKind;
 use serde::{Deserialize, Serialize};
 
 /// Data type.

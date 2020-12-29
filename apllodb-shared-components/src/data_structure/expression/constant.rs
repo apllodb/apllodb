@@ -1,10 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    data_structure::{column::data_type_kind::DataTypeKind, value::sql_value::SqlValue},
-    error::kind::ApllodbErrorKind,
-    traits::sql_convertible::SqlConvertible,
-};
+use crate::{data_structure::{data_type::data_type_kind::DataTypeKind, value::sql_value::SqlValue}, error::kind::ApllodbErrorKind, traits::sql_convertible::SqlConvertible};
 
 /// Constant.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]

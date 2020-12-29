@@ -16,8 +16,8 @@ pub use crate::{
             column_constraint_kind::ColumnConstraintKind, column_constraints::ColumnConstraints,
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName, column_reference::ColumnReference, column_value::ColumnValue,
-            data_type::DataType, data_type_kind::DataTypeKind,
         },
+        data_type::{data_type_kind::DataTypeKind, DataType},
         database::database_name::DatabaseName,
         expression::{
             boolean_expression::{

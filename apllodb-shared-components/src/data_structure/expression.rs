@@ -31,7 +31,7 @@ impl From<&SqlValue> for Expression {
 mod tests {
     use crate::{
         data_structure::{
-            column::{data_type::DataType, data_type_kind::DataTypeKind},
+            data_type::{data_type_kind::DataTypeKind, DataType},
             value::sql_value::SqlValue,
         },
         error::ApllodbResult,

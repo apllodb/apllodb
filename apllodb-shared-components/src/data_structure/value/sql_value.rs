@@ -1,6 +1,6 @@
 use crate::{
     data_structure::{
-        column::{data_type::DataType, data_type_kind::DataTypeKind},
+        data_type::{DataType, data_type_kind::DataTypeKind},
         expression::{
             constant::{CharacterConstant, Constant, NumericConstant},
             Expression,
