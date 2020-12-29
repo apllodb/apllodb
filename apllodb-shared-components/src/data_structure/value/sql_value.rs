@@ -171,6 +171,40 @@ impl SqlValue {
     ///
     /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
     ///   - `self` and `other` have different top-level variant of [Constant](crate::Constant).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::collections::HashSet;
+    /// use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, DataType, DataTypeKind, SqlCompareResult, SqlValue};
+    ///
+    /// fn main() -> ApllodbResult<()> {
+    ///     let v_integer_not_null = SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &42i32)?;
+    ///     let v_smallint_not_null = SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &42i16)?;
+    ///     let v_bigint_not_null = SqlValue::pack(&DataType::new(DataTypeKind::BigInt, false), &42i64)?;
+    ///     let v_integer_nullable = SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &Some(42i32))?;
+    ///     let v_integer_not_null_minus = SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &-42i32)?;
+    ///     let v_text_not_null = SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"abc".to_string())?;
+    ///     let v_null = SqlValue::null();
+    ///
+    ///     matches!(v_integer_not_null.sql_compare(&v_integer_not_null)?, SqlCompareResult::Eq);
+    ///     matches!(v_smallint_not_null.sql_compare(&v_bigint_not_null)?, SqlCompareResult::Eq);
+    ///     matches!(v_integer_nullable.sql_compare(&v_integer_not_null)?, SqlCompareResult::Eq);
+    ///     matches!(v_integer_not_null.sql_compare(&v_integer_not_null_minus)?, SqlCompareResult::GreaterThan);
+    ///     matches!(v_integer_not_null_minus.sql_compare(&v_integer_not_null)?, SqlCompareResult::LessThan);
+    ///     matches!(v_null.sql_compare(&v_integer_not_null)?, SqlCompareResult::Null);
+    ///     matches!(v_integer_not_null.sql_compare(&v_null)?, SqlCompareResult::Null);
+    ///     matches!(v_null.sql_compare(&v_null)?, SqlCompareResult::Null);
+    ///
+    ///     matches!(
+    ///         v_integer_not_null.sql_compare(&v_text_not_null)
+    ///             .expect_err("comparing totally different types").kind(),
+    ///         ApllodbErrorKind::DatatypeMismatch,
+    ///     );
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn sql_compare(&self, other: &Self) -> ApllodbResult<SqlCompareResult> {
         match (Constant::from(self), Constant::from(other)) {
             (Constant::Null, _) | (_, Constant::Null) => Ok(SqlCompareResult::Null),

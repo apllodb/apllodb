@@ -37,7 +37,9 @@ pub use crate::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
         },
-        value::sql_value::{sql_value_hash_key::SqlValueHashKey, SqlValue},
+        value::sql_value::{
+            sql_compare_result::SqlCompareResult, sql_value_hash_key::SqlValueHashKey, SqlValue,
+        },
     },
     error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},
     traits::{database::Database, sql_convertible::SqlConvertible},
