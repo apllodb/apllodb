@@ -8,8 +8,8 @@
 #[macro_use]
 extern crate derive_new;
 
-pub(crate) mod query_executor;
-pub(crate) mod query_plan;
+//pub(crate) mod modification;
+pub(crate) mod query;
 
 #[cfg(test)]
 pub(crate) mod test_support;

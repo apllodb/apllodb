@@ -6,28 +6,28 @@ use serde::{Deserialize, Serialize};
 
 /// Node of query plan tree.
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub(crate) enum PlanNode {
-    Leaf(PlanNodeLeaf),
-    Unary(PlanNodeUnary),
-    Binary(PlanNodeBinary),
+pub(crate) enum QueryPlanNode {
+    Leaf(QueryPlanNodeLeaf),
+    Unary(QueryPlanNodeUnary),
+    Binary(QueryPlanNodeBinary),
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub(crate) struct PlanNodeLeaf {
+pub(crate) struct QueryPlanNodeLeaf {
     pub(crate) op: LeafPlanOperation,
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub(crate) struct PlanNodeUnary {
+pub(crate) struct QueryPlanNodeUnary {
     pub(crate) op: UnaryPlanOperation,
-    pub(crate) left: Box<PlanNode>,
+    pub(crate) left: Box<QueryPlanNode>,
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub(crate) struct PlanNodeBinary {
+pub(crate) struct QueryPlanNodeBinary {
     pub(crate) op: BinaryPlanOperation,
-    pub(crate) left: Box<PlanNode>,
-    pub(crate) right: Box<PlanNode>,
+    pub(crate) left: Box<QueryPlanNode>,
+    pub(crate) right: Box<QueryPlanNode>,
 }
 
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
