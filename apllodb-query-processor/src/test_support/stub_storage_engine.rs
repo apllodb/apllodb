@@ -39,7 +39,7 @@ mod row {
         }
     }
 
-    #[derive(Clone, Eq, PartialEq, Debug, new)]
+    #[derive(Clone, PartialEq, Debug, new)]
     pub(crate) struct StubRow(pub(super) Record);
     impl Row for StubRow {
         fn get_sql_value(&mut self, _colref: &ColumnReference) -> ApllodbResult<SqlValue> {
@@ -56,7 +56,7 @@ mod row {
         }
     }
 
-    #[derive(Clone, Eq, PartialEq, Debug, new)]
+    #[derive(Clone, PartialEq, Debug, new)]
     pub(crate) struct StubRowIterator(VecDeque<StubRow>);
     impl Iterator for StubRowIterator {
         type Item = StubRow;
@@ -88,7 +88,7 @@ mod tx {
         StubData, StubStorageEngine,
     };
 
-    #[derive(Clone, Eq, PartialEq, Debug, new)]
+    #[derive(Clone, PartialEq, Debug, new)]
     pub(crate) struct StubTxBuilder {
         stub_data: StubData,
     }

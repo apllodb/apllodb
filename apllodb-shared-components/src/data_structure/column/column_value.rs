@@ -5,7 +5,7 @@ use crate::data_structure::value::sql_value::SqlValue;
 use super::column_reference::ColumnReference;
 
 /// Column value with ColumnReference
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ColumnValue {
     colref: ColumnReference,
     value: SqlValue,

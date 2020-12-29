@@ -8,7 +8,7 @@ use std::collections::{hash_map::Entry, HashMap};
 
 /// Immutable row which is never updated or deleted by any transaction.
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct ImmutableRow {
     col_vals: HashMap<ColumnReference, SqlValue>,
     // TODO have TransactionId to enable time-machine (TODO naming...) feature.

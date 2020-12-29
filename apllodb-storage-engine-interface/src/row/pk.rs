@@ -1,7 +1,8 @@
 use apllodb_shared_components::{ApllodbResult, ColumnName, SqlConvertible, SqlValue};
 
 /// Primary Key.
-pub trait PrimaryKey: Eq + PartialEq {
+/// Since PK can contain NULL value, even the same PK may be evaluated as not-equal (NULL != NULL).
+pub trait PrimaryKey: PartialEq {
     /// Get [SqlValue](apllodb_shared_components::SqlValue) from a PK column.
     ///
     /// # Failures

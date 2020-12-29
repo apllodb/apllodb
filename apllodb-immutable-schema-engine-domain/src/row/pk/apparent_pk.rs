@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
 /// Primary key which other components than Storage Engine observes.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ApparentPrimaryKey {
     table_name: TableName,
     pk_column_names: Vec<ColumnName>,

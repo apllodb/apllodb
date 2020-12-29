@@ -13,7 +13,7 @@ use super::value::sql_value::SqlValue;
 
 /// Record representation used in client and query processor.
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize, new)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, new)]
 pub struct Record {
     fields: HashMap<FieldIndex, SqlValue>,
 }

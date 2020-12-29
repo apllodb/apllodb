@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use apllodb_shared_components::{
-    ApllodbResult, FieldIndex, Record, RecordIterator, SqlValue, TableName,
+    ApllodbResult, FieldIndex, Record, RecordIterator, SqlValueHashKey, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
 
@@ -40,7 +40,7 @@ impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
         input_left: RecordIterator,
         input_right: RecordIterator,
     ) -> ApllodbResult<RecordIterator> {
-         match op_binary {
+        match op_binary {
             // TODO type cast
             BinaryPlanOperation::HashJoin {
                 left_field,
@@ -93,13 +93,13 @@ impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
         right_field: &FieldIndex,
     ) -> ApllodbResult<RecordIterator> {
         // TODO Create hash table from smaller input.
-        let mut hash_table = HashMap::<SqlValue, Vec<Record>>::new();
+        let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
 
         for left_record in input_left {
-            // FIXME Clone less. If join keys are unique, no need for clone.
-            let left_sql_value = left_record.get_sql_value(&left_field)?.clone();
+            let left_sql_value = left_record.get_sql_value(&left_field)?;
             hash_table
-                .entry(left_sql_value)
+                .entry(SqlValueHashKey::from(left_sql_value))
+                // FIXME Clone less. If join keys are unique, no need for clone.
                 .and_modify(|records| records.push(left_record.clone()))
                 .or_insert_with(|| vec![left_record]);
         }
@@ -107,8 +107,8 @@ impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
         let mut ret = Vec::<Record>::new();
 
         for right_record in input_right {
-            let right_sql_value = right_record.get_sql_value(&right_field)?.clone();
-            if let Some(left_records) = hash_table.get(&right_sql_value) {
+            let right_sql_value = right_record.get_sql_value(&right_field)?;
+            if let Some(left_records) = hash_table.get(&SqlValueHashKey::from(right_sql_value)) {
                 ret.append(
                     &mut left_records
                         .iter()

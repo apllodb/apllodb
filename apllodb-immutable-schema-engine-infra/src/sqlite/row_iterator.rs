@@ -6,7 +6,7 @@ use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference};
 
 use std::{collections::VecDeque, fmt::Debug};
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct SqliteRowIterator(
     // Better to hold rusqlite::Rows or rusqlite::MappedRows (which implements Iterator) inside
     // to reduce memory consumption but I found it's impossible.

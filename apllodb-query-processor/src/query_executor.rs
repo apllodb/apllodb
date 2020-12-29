@@ -76,7 +76,7 @@ mod tests {
 
     use super::QueryExecutor;
 
-    #[derive(Clone, Eq, PartialEq, Debug)]
+    #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
         in_plan_tree: PlanTree,
         expected_records: Vec<Record>,

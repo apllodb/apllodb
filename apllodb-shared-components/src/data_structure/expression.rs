@@ -36,12 +36,10 @@ mod tests {
         },
         error::ApllodbResult,
         test_support::setup,
+        CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant,
     };
 
-    use super::{
-        constant::{CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant},
-        Expression,
-    };
+    use super::Expression;
 
     #[test]
     fn test_from_sql_value_into_expression() -> ApllodbResult<()> {

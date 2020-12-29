@@ -64,7 +64,7 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct 
         VersionNumber,
 }
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, PartialEq, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct ExistingNaviWithPK {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) navi: ExistingNavi,
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) pk: ApparentPrimaryKey,

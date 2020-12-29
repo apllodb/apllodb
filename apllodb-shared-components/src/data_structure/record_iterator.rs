@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::Record;
 
 /// Iterator of [Record](crate::Record)s.
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct RecordIterator {
     // TODO use batched Records for memory reduction?
     inner: VecDeque<Record>,
