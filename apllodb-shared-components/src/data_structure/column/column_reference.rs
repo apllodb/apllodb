@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use crate::data_structure::table::table_name::TableName;
@@ -21,10 +23,12 @@ impl ColumnReference {
     pub fn as_column_name(&self) -> &ColumnName {
         &self.column_name
     }
+}
 
-    /// To string
-    pub fn to_string(&self) -> String {
-        format!(
+impl Display for ColumnReference {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
             "{}.{}",
             self.as_table_name().as_str(),
             self.as_column_name().as_str()

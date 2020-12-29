@@ -217,13 +217,7 @@ impl SqlValue {
                     NumericConstant::IntegerConstantVariant(other_ic),
                 ) => {
                     let (self_i64, other_i64) = (self_ic.as_i64(), other_ic.as_i64());
-                    if self_i64 == other_i64 {
-                        Ok(SqlCompareResult::Eq)
-                    } else if self_i64 < other_i64 {
-                        Ok(SqlCompareResult::LessThan)
-                    } else {
-                        Ok(SqlCompareResult::GreaterThan)
-                    }
+                    Ok(SqlCompareResult::from(self_i64.cmp(&other_i64)))
                 }
             },
             (
@@ -235,13 +229,7 @@ impl SqlValue {
                     CharacterConstant::TextConstantVariant(other_tc),
                 ) => {
                     let (self_str, other_str) = (self_tc.as_str(), other_tc.as_str());
-                    if self_str == other_str {
-                        Ok(SqlCompareResult::Eq)
-                    } else if self_str < other_str {
-                        Ok(SqlCompareResult::LessThan)
-                    } else {
-                        Ok(SqlCompareResult::GreaterThan)
-                    }
+                    Ok(SqlCompareResult::from(self_str.cmp(&other_str)))
                 }
             },
             _ => Err(ApllodbError::new(

@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use serde::{Deserialize, Serialize};
 
 /// Comparison result of two [SqlValue](crate::SqlValue)s.
@@ -24,9 +26,16 @@ pub enum SqlCompareResult {
 impl SqlCompareResult {
     /// Whether self is Self::Eq
     pub fn is_equal(&self) -> bool {
-        match self {
-            SqlCompareResult::Eq => true,
-            _ => false,
+        matches!(self, SqlCompareResult::Eq)
+    }
+}
+
+impl From<Ordering> for SqlCompareResult {
+    fn from(ord: Ordering) -> Self {
+        match ord {
+            Ordering::Less => Self::LessThan,
+            Ordering::Equal => Self::Eq,
+            Ordering::Greater => Self::GreaterThan,
         }
     }
 }

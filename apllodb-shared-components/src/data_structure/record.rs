@@ -87,8 +87,7 @@ impl Record {
         if let Some(dup_field) = self
             .fields
             .keys()
-            .filter(|field| another_fields.contains(field))
-            .next()
+            .find(|field| another_fields.contains(field))
         {
             return Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
