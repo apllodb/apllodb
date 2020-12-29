@@ -57,6 +57,7 @@ dependencies = [
  "derive-new",
  "env_logger",
  "log",
+ "pretty_assertions",
  "rand 0.8.0",
  "serde",
 ]
