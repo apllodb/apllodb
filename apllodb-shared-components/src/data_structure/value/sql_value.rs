@@ -15,7 +15,30 @@ pub const SQL_VALUE_NULL: Option<i16> = None;
 
 /// SQL-typed value that is efficiently compressed.
 ///
-/// A storage engine may (or may not) save `SqlValue`'s serialized instance as-is.
+/// # Comparing SqlValues
+///
+/// An SqlValue internally holds [DataTypeKind](crate::DataTypeKind).
+/// Each DataTypeKind belongs to a [GeneralDataType](crate::GeneralDataType).
+/// [DataTypeKind::SmallInt](crate::DataTypeKind::SmallInt) belongs to [GeneralDataType::Number](crate::GeneralDataType::Number), for example.
+///
+/// ## *Comparable* and *Ordered* types
+///
+/// If two SqlValues belong to the same GeneralDataType, these two are **comparable**, meaning equality comparison to them is valid.
+/// Also, ordered comparison is valid for values within some GeneralDataType.
+/// Such GeneralDataType's and values within one are called **ordered**.
+/// **Ordered** is stronger property than **comparable**.
+///
+/// ## Failures on comparison
+///
+/// Comparing non-**comparable** values and ordered comparison to non-**ordered** values cause [crate::ApllodbErrorKind::DataException].
+///
+/// ## Comparison with NULL
+///
+/// Any [DataTypeKind](crate::DataTypeKind) can be NULLABLE.
+/// So any SqlValue can calculate equality- and ordered- comparison with NULL value.
+///
+/// Equality-comparison and ordered-comparison with NULL is evaluated to NULL.
+/// NULL is always evaluated as FALSE in boolean context (, therefore all of `x = NULL`, `x != NULL`, `x < NULL`, `x > NULL` are evaluated to FALSE in boolean context).
 #[derive(Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct SqlValue {
     data_type: DataType,
