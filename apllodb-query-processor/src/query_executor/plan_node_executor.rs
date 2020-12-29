@@ -1,7 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, SqlValue};
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use apllodb_shared_components::{
+    ApllodbResult, FieldIndex, Record, RecordIterator, SqlValue, TableName,
+};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
 
 use crate::query_plan::plan_tree::plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
@@ -14,16 +16,12 @@ pub(super) struct PlanNodeExecutor<'exe, Engine: StorageEngine> {
 
 impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
     pub(super) fn run_leaf(&self, op_leaf: LeafPlanOperation) -> ApllodbResult<RecordIterator> {
-        let output = match op_leaf {
+        match op_leaf {
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-            } => {
-                let row_iter = self.tx.select(&table_name, projection)?;
-                RecordIterator::new(row_iter)
-            }
-        };
-        Ok(output)
+            } => self.seq_scan(table_name, projection),
+        }
     }
 
     pub(super) fn run_unary(
@@ -31,14 +29,9 @@ impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
         op_unary: UnaryPlanOperation,
         input_left: RecordIterator,
     ) -> ApllodbResult<RecordIterator> {
-        let output = match op_unary {
-            UnaryPlanOperation::Projection { fields } => RecordIterator::new(
-                input_left
-                    .map(|record| record.projection(&fields))
-                    .collect::<ApllodbResult<Vec<Record>>>()?,
-            ),
-        };
-        Ok(output)
+        match op_unary {
+            UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
+        }
     }
 
     pub(super) fn run_binary(
@@ -47,40 +40,83 @@ impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
         input_left: RecordIterator,
         input_right: RecordIterator,
     ) -> ApllodbResult<RecordIterator> {
-        let output = match op_binary {
+         match op_binary {
             // TODO type cast
             BinaryPlanOperation::HashJoin {
                 left_field,
                 right_field,
-            } => {
-                // TODO Create hash table from smaller input.
-                let mut hash_table = HashMap::<SqlValue, Vec<Record>>::new();
+            } => self.hash_join(input_left, input_right, &left_field, &right_field),
+        }
+    }
 
-                for left_record in input_left {
-                    // FIXME Clone less. If join keys are unique, no need for clone.
-                    let left_sql_value = left_record.get_sql_value(&left_field)?.clone();
-                    hash_table
-                        .entry(left_sql_value)
-                        .and_modify(|records| records.push(left_record.clone()))
-                        .or_insert_with(|| vec![left_record]);
-                }
+    /// # Failures
+    ///
+    /// Failures from [Transaction::select()](apllodb_storage_engine_interface::Transaction::select) implementation.
+    fn seq_scan(
+        &self,
+        table_name: TableName,
+        projection: ProjectionQuery,
+    ) -> ApllodbResult<RecordIterator> {
+        let row_iter = self.tx.select(&table_name, projection)?;
+        Ok(RecordIterator::new(row_iter))
+    }
 
-                let mut ret = Vec::<Record>::new();
+    /// # Failures
+    ///
+    /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
+    fn projection(
+        &self,
+        input_left: RecordIterator,
+        fields: HashSet<FieldIndex>,
+    ) -> ApllodbResult<RecordIterator> {
+        let it = RecordIterator::new(
+            input_left
+                .map(|record| record.projection(&fields))
+                .collect::<ApllodbResult<Vec<Record>>>()?,
+        );
+        Ok(it)
+    }
 
-                for right_record in input_right {
-                    let right_sql_value = right_record.get_sql_value(&right_field)?.clone();
-                    if let Some(left_records) = hash_table.get(&right_sql_value) {
-                        ret.append(
-                            &mut left_records
-                                .iter()
-                                .map(|left_record| left_record.clone().join(right_record.clone()))
-                                .collect::<ApllodbResult<Vec<Record>>>()?,
-                        );
-                    }
-                }
-                RecordIterator::new(ret)
+    /// Join algorithm using hash table.
+    /// It can be used with join keys' equality (like `ON t.id = s.t_id`).
+    /// This algorithm's time-complexity is `max[O(len(input_left)), O(len(input_right))]` but uses relatively large memory.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    ///   - Specified field does not exist in any record.
+    fn hash_join(
+        &self,
+        input_left: RecordIterator,
+        input_right: RecordIterator,
+        left_field: &FieldIndex,
+        right_field: &FieldIndex,
+    ) -> ApllodbResult<RecordIterator> {
+        // TODO Create hash table from smaller input.
+        let mut hash_table = HashMap::<SqlValue, Vec<Record>>::new();
+
+        for left_record in input_left {
+            // FIXME Clone less. If join keys are unique, no need for clone.
+            let left_sql_value = left_record.get_sql_value(&left_field)?.clone();
+            hash_table
+                .entry(left_sql_value)
+                .and_modify(|records| records.push(left_record.clone()))
+                .or_insert_with(|| vec![left_record]);
+        }
+
+        let mut ret = Vec::<Record>::new();
+
+        for right_record in input_right {
+            let right_sql_value = right_record.get_sql_value(&right_field)?.clone();
+            if let Some(left_records) = hash_table.get(&right_sql_value) {
+                ret.append(
+                    &mut left_records
+                        .iter()
+                        .map(|left_record| left_record.clone().join(right_record.clone()))
+                        .collect::<ApllodbResult<Vec<Record>>>()?,
+                );
             }
-        };
-        Ok(output)
+        }
+        Ok(RecordIterator::new(ret))
     }
 }
