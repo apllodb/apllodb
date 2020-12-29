@@ -23,7 +23,7 @@ impl Record {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
     pub fn get<T: SqlConvertible>(&self, index: &FieldIndex) -> ApllodbResult<T> {
@@ -31,11 +31,11 @@ impl Record {
         Ok(sql_value.unpack()?)
     }
 
-    /// Get [SqlValue](apllodb_shared_components::SqlValue) from record's field.
+    /// Get [SqlValue](crate::SqlValue) from record's field.
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, index: &FieldIndex) -> ApllodbResult<&SqlValue> {
         let sql_value = self.fields.get(index).ok_or_else(|| {
@@ -52,7 +52,7 @@ impl Record {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn projection(mut self, fields: &HashSet<FieldIndex>) -> ApllodbResult<Self> {
         if let Some(invalid_field) = fields
@@ -80,7 +80,7 @@ impl Record {
     ///
     /// # Failures
     ///
-    /// - [DuplicateObject](apllodb_shared_components::ApllodbErrorKind::DuplicateObject) when:
+    /// - [DuplicateObject](crate::ApllodbErrorKind::DuplicateObject) when:
     ///   - `another` has the same field with self.
     pub fn join(mut self, mut another: Record) -> ApllodbResult<Self> {
         let another_fields: HashSet<&FieldIndex> = another.fields.keys().collect();
