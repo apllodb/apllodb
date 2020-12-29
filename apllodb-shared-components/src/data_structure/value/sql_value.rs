@@ -47,6 +47,37 @@ pub const SQL_VALUE_NULL: Option<i16> = None;
 /// SqlValue implements `Hash` but does not `Eq` so SqlValue cannot be used as hash key of `HashMap` and `HashSet`.
 ///
 /// Use [SqlValueHashKey](self::sql_value_hash_key::SqlValueHashKey) for that purpose.
+///
+/// # Examples
+///
+/// ```
+/// use std::collections::HashSet;
+/// use apllodb_shared_components::{ApllodbResult, DataType, DataTypeKind, SqlValue, SqlValueHashKey};
+///
+/// fn main() -> ApllodbResult<()> {
+///     let v_integer_not_null = SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &42i32)?;
+///     let v_smallint_not_null = SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &42i16)?;
+///     let v_bigint_not_null = SqlValue::pack(&DataType::new(DataTypeKind::BigInt, false), &42i64)?;
+///     let v_integer_nullable = SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &Some(42i32))?;
+///     let v_null = SqlValue::null();
+///
+///     assert_eq!(v_integer_not_null, v_integer_not_null);
+///     assert_eq!(v_smallint_not_null, v_bigint_not_null, "Comparing SmallInt with BigInt is valid");
+///     assert_eq!(v_integer_nullable, v_integer_not_null, "Comparing NULLABLE value with NOT NULL is valid");
+///     assert_ne!(v_null, v_null, "NULL != NULL");
+///
+///     let mut hash_set = HashSet::<SqlValueHashKey>::new();
+///     assert_eq!(hash_set.insert(SqlValueHashKey::from(&v_integer_not_null)), true);
+///     assert_eq!(hash_set.insert(SqlValueHashKey::from(&v_integer_not_null)), false, "same value is already inserted");
+///     assert_eq!(hash_set.insert(SqlValueHashKey::from(&v_smallint_not_null)), false, "same hash values are generated from both SmallInt and Integer");
+///     assert_eq!(hash_set.insert(SqlValueHashKey::from(&v_null)), true);
+///     assert_eq!(hash_set.insert(SqlValueHashKey::from(&v_null)), true, "two NULL values are different");
+///
+///     assert_ne!(SqlValueHashKey::from(&v_null), SqlValueHashKey::from(&v_null), "two NULL values generates different Hash value");
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SqlValue {
     data_type: DataType,
