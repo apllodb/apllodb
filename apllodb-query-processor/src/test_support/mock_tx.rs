@@ -1,3 +1,5 @@
+pub(crate) mod mock_tx_select;
+
 use std::collections::HashMap;
 
 use apllodb_shared_components::{
