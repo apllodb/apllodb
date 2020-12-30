@@ -46,7 +46,6 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
 
 #[cfg(test)]
 mod tests {
-
     use pretty_assertions::assert_eq;
 
     use apllodb_shared_components::{ApllodbResult, FieldIndex, Record};
@@ -64,7 +63,9 @@ mod tests {
             QueryPlan,
         },
         test_support::{
-            mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum},
+            mock_tx::mock_tx_select::mock_select_with_models::{
+                mock_select_with_models, ModelsMock,
+            },
             setup,
             test_models::{Body, People, Pet},
             test_storage_engine::TestStorageEngine,
@@ -97,27 +98,16 @@ mod tests {
 
         let mut tx = TestStorageEngine::begin()?;
 
-        mock_select(
+        mock_select_with_models(
             &mut tx,
-            MockTxDbDatum {
-                tables: vec![
-                    MockTxTableDatum {
-                        table_name: People::table_name(),
-                        records: vec![
-                            t_people_r1.clone(),
-                            t_people_r2.clone(),
-                            t_people_r3.clone(),
-                        ],
-                    },
-                    MockTxTableDatum {
-                        table_name: Body::table_name(),
-                        records: vec![t_body_r1.clone(), t_body_r3.clone()],
-                    },
-                    MockTxTableDatum {
-                        table_name: Pet::table_name(),
-                        records: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
-                    },
+            ModelsMock {
+                people: vec![
+                    t_people_r1.clone(),
+                    t_people_r2.clone(),
+                    t_people_r3.clone(),
                 ],
+                body: vec![t_body_r1.clone(), t_body_r3.clone()],
+                pet: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
             },
         );
 

@@ -28,3 +28,18 @@ impl<'exe, Engine: StorageEngine> QueryProcessor<'exe, Engine> {
         executor.run(plan)
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use apllodb_shared_components::{ApllodbResult, Record};
+//     use pretty_assertions::assert_eq;
+
+//     #[derive(Clone, PartialEq, Debug)]
+//     struct TestDatum {
+//         in_select_sql: String,
+//         expected_select_records: Vec<Record>,
+//     }
+
+//     #[test]
+//     fn test_query_processor_with_sql() -> ApllodbResult<()> {}
+// }

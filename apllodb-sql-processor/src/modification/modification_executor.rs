@@ -49,7 +49,9 @@ mod tests {
             LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
         },
         test_support::{
-            mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum},
+            mock_tx::mock_tx_select::mock_select_with_models::{
+                mock_select_with_models, ModelsMock,
+            },
             setup,
             test_models::{People, Pet},
             test_storage_engine::TestStorageEngine,
@@ -81,13 +83,11 @@ mod tests {
 
         let mut tx = TestStorageEngine::begin()?;
 
-        mock_select(
+        mock_select_with_models(
             &mut tx,
-            MockTxDbDatum {
-                tables: vec![MockTxTableDatum {
-                    table_name: Pet::table_name(),
-                    records: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
-                }],
+            ModelsMock {
+                pet: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
+                ..ModelsMock::default()
             },
         );
 

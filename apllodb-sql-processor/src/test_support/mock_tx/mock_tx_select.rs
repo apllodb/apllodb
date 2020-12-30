@@ -1,3 +1,5 @@
+pub(crate) mod mock_select_with_models;
+
 use std::collections::HashSet;
 
 use super::MockTx;
@@ -8,17 +10,17 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::ProjectionQuery;
 
 #[derive(Clone, PartialEq, Debug)]
-pub(crate) struct MockTxDbDatum {
-    pub(crate) tables: Vec<MockTxTableDatum>,
+struct MockTxDbDatum {
+    tables: Vec<MockTxTableDatum>,
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub(crate) struct MockTxTableDatum {
-    pub(crate) table_name: TableName,
-    pub(crate) records: Vec<Record>,
+struct MockTxTableDatum {
+    table_name: TableName,
+    records: Vec<Record>,
 }
 
-pub(crate) fn mock_select(tx: &mut MockTx, data: MockTxDbDatum) {
+fn mock_select(tx: &mut MockTx, data: MockTxDbDatum) {
     tx.expect_select().returning(move |table_name, projection| {
         let table = data
             .tables
