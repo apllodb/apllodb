@@ -7,38 +7,20 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression, TableName,
+    ApllodbResult, ColumnName, ColumnReference, DatabaseName, RecordIterator, SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::StorageEngine;
+use std::convert::TryFrom;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
-#[derive(Eq, PartialEq, Debug, new)]
+#[derive(PartialEq, Debug, new)]
 pub struct InsertUseCaseInput<'usecase> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
-    column_values: HashMap<ColumnName, Expression>,
+    records: RecordIterator,
 }
 impl<'usecase> UseCaseInput for InsertUseCaseInput<'usecase> {
     fn validate(&self) -> ApllodbResult<()> {
-        self.validate_expression_type()?;
-        Ok(())
-    }
-}
-impl<'usecase> InsertUseCaseInput<'usecase> {
-    fn validate_expression_type(&self) -> ApllodbResult<()> {
-        for (column_name, expr) in &self.column_values {
-            match expr {
-                Expression::ConstantVariant(_) => {}
-                Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
-                    return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
-                        format!("trying to insert `{:?}={:?}` while expr of `INSERT INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
-                        column_name, expr
-                    ),
-                    None
-                    ))
-                }
-            }
-        }
         Ok(())
     }
 }
@@ -77,32 +59,38 @@ impl<
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id)?;
 
-        // Construct ApparentPrimaryKey
-        let apk = ApparentPrimaryKey::from_table_and_column_values(&vtable, &input.column_values)?;
+        for record in input.records {
+            // Construct ApparentPrimaryKey
+            let apk = ApparentPrimaryKey::from_table_and_record(&vtable, &record)?;
 
-        // Filter Non-PK columns from column_values
-        let non_pk_column_values: HashMap<ColumnName, Expression> = input
-            .column_values
-            .into_iter()
-            .filter_map(|(column_name, expr)| {
-                if apk
-                    .column_names()
-                    .iter()
-                    .any(|pk_cn| pk_cn.as_str() == column_name.as_str())
-                {
-                    None
-                } else {
-                    Some((column_name, expr))
-                }
-            })
-            .collect();
+            // Filter Non-PK columns from column_values
+            let colref_values: HashMap<ColumnReference, SqlValue> = record
+                .into_field_values()
+                .into_iter()
+                .map(|(field, v)| Ok((ColumnReference::try_from(field)?, v)))
+                .collect::<ApllodbResult<_>>()?;
+            let non_pk_col_values: HashMap<ColumnName, SqlValue> = colref_values
+                .into_iter()
+                .filter_map(|(colref, sql_value)| {
+                    if apk
+                        .column_names()
+                        .iter()
+                        .any(|pk_cn| pk_cn == colref.as_column_name())
+                    {
+                        None
+                    } else {
+                        Some((colref.as_column_name().clone(), sql_value))
+                    }
+                })
+                .collect();
 
-        // Determine version to insert
-        let active_versions = vtable_repo.active_versions(&vtable)?;
-        let version_to_insert = active_versions.version_to_insert(&non_pk_column_values)?;
-        let version_id = VersionId::new(&vtable_id, version_to_insert.number());
+            // Determine version to insert
+            let active_versions = vtable_repo.active_versions(&vtable)?;
+            let version_to_insert = active_versions.version_to_insert(&non_pk_col_values)?;
+            let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-        version_repo.insert(&version_id, apk, &non_pk_column_values)?;
+            version_repo.insert(&version_id, apk, &non_pk_col_values)?;
+        }
 
         Ok(InsertUseCaseOutput)
     }

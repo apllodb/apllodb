@@ -10,8 +10,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
     version_revision_resolver::VersionRevisionResolver,
 };
-use apllodb_shared_components::ColumnName;
-use apllodb_shared_components::{ApllodbResult, Expression};
+use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ColumnName, SqlValue};
 use std::collections::HashMap;
 
 use super::dao::VersionDao;
@@ -48,7 +48,7 @@ impl<'repo, 'db: 'repo> VersionRepository<'repo, 'db, ApllodbImmutableSchemaEngi
         &self,
         version_id: &VersionId,
         apparent_pk: ApparentPrimaryKey,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<()> {
         let vrr_entry = self.vrr().register(version_id, apparent_pk)?;
 

@@ -24,7 +24,6 @@ use self::{
 use super::tx_id::TxId;
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
-    immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
         sqlite_types::SqliteTypes, to_sql_string::ToSqlString,
@@ -32,7 +31,7 @@ use crate::{
 };
 use apllodb_shared_components::{
     AlterTableAction, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDefinition, ColumnName,
-    DatabaseName, Expression, TableConstraints, TableName,
+    DatabaseName, Expression, RecordIterator, TableConstraints, TableName,
 };
 use log::debug;
 use std::{cmp::Ordering, collections::HashMap};
@@ -203,7 +202,7 @@ impl<'tx, 'db: 'tx> Transaction<ApllodbImmutableSchemaEngine<'db>> for SqliteTx<
         &self,
         table_name: &TableName,
         projection: ProjectionQuery,
-    ) -> ApllodbResult<ImmutableSchemaRowIter> {
+    ) -> ApllodbResult<RecordIterator> {
         let database_name = self.database_name().clone();
         let input = FullScanUseCaseInput::new(&database_name, table_name, projection);
         let output = FullScanUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
@@ -212,16 +211,12 @@ impl<'tx, 'db: 'tx> Transaction<ApllodbImmutableSchemaEngine<'db>> for SqliteTx<
             input,
         )?;
 
-        Ok(output.row_iter)
+        Ok(RecordIterator::new(output.row_iter))
     }
 
-    fn insert(
-        &self,
-        table_name: &TableName,
-        column_values: HashMap<ColumnName, Expression>,
-    ) -> ApllodbResult<()> {
+    fn insert(&self, table_name: &TableName, records: RecordIterator) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
-        let input = InsertUseCaseInput::new(&database_name, table_name, column_values);
+        let input = InsertUseCaseInput::new(&database_name, table_name, records);
         let _ = InsertUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &self.vtable_repo(),
             &self.version_repo(),

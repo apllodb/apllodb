@@ -1,6 +1,6 @@
 use super::active_version::ActiveVersion;
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, Expression,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, SqlValue,
 };
 use std::collections::HashMap;
 
@@ -39,7 +39,6 @@ impl ActiveVersions {
     }
 
     /// Returns the versions to select from.
-    // FIXME これ、 v2 で c2が消されていたときに、c2を求める SELECTに対して v2 を返してない？
     pub fn versions_to_select(&self) -> ApllodbResult<&[ActiveVersion]> {
         Ok(&self.0)
     }
@@ -52,7 +51,7 @@ impl ActiveVersions {
     ///   - No active version can accept the column value.
     pub fn version_to_insert(
         &self,
-        non_pk_column_values: &HashMap<ColumnName, Expression>,
+        non_pk_column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<&ActiveVersion> {
         if self.0.is_empty() {
             return Err(ApllodbError::new(
@@ -92,7 +91,7 @@ impl ActiveVersions {
             Err(ApllodbError::new(
                 ApllodbErrorKind::IntegrityConstraintViolation,
                 format!(
-                    "all versions reject INSERTing {:?}: {:?}",
+                    "all versions reject INSERTing {:#?}: {:#?}",
                     non_pk_column_values, errors_per_versions,
                 ),
                 None,

@@ -30,8 +30,6 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<Vec<ActiveVersion>> {
-        use apllodb_storage_engine_interface::Row;
-
         let sql = format!(
             r#"
             SELECT {} FROM {} WHERE type = "table" AND name LIKE "{}__v%"

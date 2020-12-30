@@ -2,8 +2,8 @@ pub(crate) mod transaction_id;
 
 use apllodb_shared_components::ApllodbResult;
 use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, TableConstraints,
-    TableName,
+    AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, RecordIterator,
+    TableConstraints, TableName,
 };
 use std::{collections::HashMap, fmt::Debug};
 
@@ -62,19 +62,15 @@ pub trait Transaction<Engine: StorageEngine>: Debug {
     /// SELECT command.
     ///
     /// Storage engine's SELECT fields are merely ColumnName.
-    /// Expression's are not allowed. Calculating expressions is job for query processor.
+    /// Expression fields are not allowed. Calculating expressions is job for query processor.
     fn select(
         &self,
         table_name: &TableName,
         projection: ProjectionQuery,
-    ) -> ApllodbResult<Engine::RowIter>;
+    ) -> ApllodbResult<RecordIterator>;
 
     /// INSERT command.
-    fn insert(
-        &self,
-        table_name: &TableName,
-        column_values: HashMap<ColumnName, Expression>,
-    ) -> ApllodbResult<()>;
+    fn insert(&self, table_name: &TableName, records: RecordIterator) -> ApllodbResult<()>;
 
     /// UPDATE command.
     fn update(

@@ -14,10 +14,9 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, Expression,
+    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, SqlValue,
     TableName,
 };
-use apllodb_storage_engine_interface::Row;
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::collections::{hash_map::Entry, HashMap, VecDeque};
 
@@ -167,7 +166,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
         &self,
         version_id: &VersionId,
         vrr_id: &SqliteRowid,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<()> {
         let sqlite_table_name = Self::table_name(version_id, true);
         let sql = format!(

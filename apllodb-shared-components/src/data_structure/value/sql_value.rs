@@ -62,6 +62,8 @@ impl SqlValue {
     }
 
     /// Construct from Expression. DataType must be passed explicitly.
+    ///
+    /// FIXME Currently not used. Maybe used by query processor while parsing DML and making Record.
     pub fn try_from(expr: &Expression, data_type: &DataType) -> ApllodbResult<Self> {
         match expr {
             Expression::ConstantVariant(v) => match v {
