@@ -34,10 +34,7 @@ impl<'exe, Engine: StorageEngine> ModificationExecutor<'exe, Engine> {
 
 #[cfg(test)]
 mod tests {
-    use apllodb_shared_components::{
-        ApllodbResult, ColumnName, ColumnReference, DataType, DataTypeKind, FieldIndex, Record,
-        RecordIterator, SqlValue, TableName,
-    };
+    use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
     use apllodb_storage_engine_interface::ProjectionQuery;
 
     use crate::{
@@ -51,10 +48,10 @@ mod tests {
         query::query_plan::query_plan_tree::query_plan_node::{
             LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
         },
-        record,
         test_support::{
             mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum},
             setup,
+            test_models::{People, Pet},
             test_storage_engine::TestStorageEngine,
         },
     };
@@ -74,43 +71,13 @@ mod tests {
     fn test_modification_executor() -> ApllodbResult<()> {
         setup();
 
-        let t_people = TableName::new("people")?;
-        let t_people_c_id = ColumnReference::new(t_people.clone(), ColumnName::new("id")?);
-        let t_people_c_age = ColumnReference::new(t_people.clone(), ColumnName::new("age")?);
+        let t_people_r1 = People::record(1, 13);
+        let t_people_r2 = People::record(2, 70);
+        let t_people_r3 = People::record(3, 35);
 
-        let t_pet = TableName::new("pet")?;
-        let t_pet_c_people_id = ColumnReference::new(t_pet.clone(), ColumnName::new("people_id")?);
-        let t_pet_c_kind = ColumnReference::new(t_pet.clone(), ColumnName::new("kind")?);
-        let t_pet_c_age = ColumnReference::new(t_pet.clone(), ColumnName::new("age")?);
-
-        let t_people_r1 = record! {
-            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-        };
-        let t_people_r2 = record! {
-            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-        };
-        let t_people_r3 = record! {
-            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-        };
-
-        let t_pet_r1 = record! {
-            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
-        };
-        let t_pet_r3_1 = record! {
-            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
-        };
-        let t_pet_r3_2 = record! {
-            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
-            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
-        };
+        let t_pet_r1 = Pet::record(1, "dog", 13);
+        let t_pet_r3_1 = Pet::record(3, "dog", 5);
+        let t_pet_r3_2 = Pet::record(3, "cat", 3);
 
         let mut tx = TestStorageEngine::begin()?;
 
@@ -118,7 +85,7 @@ mod tests {
             &mut tx,
             MockTxDbDatum {
                 tables: vec![MockTxTableDatum {
-                    table_name: t_pet.clone(),
+                    table_name: Pet::table_name(),
                     records: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
                 }],
             },
@@ -128,7 +95,7 @@ mod tests {
             // input from DirectInput
             TestDatum {
                 in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(InsertNode {
-                    table_name: t_people.clone(),
+                    table_name: People::table_name(),
                     child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::DirectInput {
                             records: RecordIterator::new(vec![
@@ -139,7 +106,7 @@ mod tests {
                         },
                     }),
                 })),
-                expected_insert_table: t_people.clone(),
+                expected_insert_table: People::table_name(),
                 expected_insert_records: vec![
                     t_people_r1.clone(),
                     t_people_r2.clone(),
@@ -149,15 +116,15 @@ mod tests {
             // input from same table records (dup)
             TestDatum {
                 in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(InsertNode {
-                    table_name: t_pet.clone(),
+                    table_name: Pet::table_name(),
                     child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_pet.clone(),
+                            table_name: Pet::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     }),
                 })),
-                expected_insert_table: t_pet.clone(),
+                expected_insert_table: Pet::table_name(),
                 expected_insert_records: vec![
                     t_pet_r1.clone(),
                     t_pet_r3_1.clone(),
