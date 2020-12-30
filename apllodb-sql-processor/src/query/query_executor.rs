@@ -68,7 +68,7 @@ mod tests {
         },
         record,
         test_support::{
-            mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum},
+            mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum, People},
             setup,
             stub_storage_engine::StubStorageEngine,
             utility_functions::r_projection,
@@ -87,10 +87,6 @@ mod tests {
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
-        let t_people = TableName::new("people")?;
-        let t_people_c_id = ColumnReference::new(t_people.clone(), ColumnName::new("id")?);
-        let t_people_c_age = ColumnReference::new(t_people.clone(), ColumnName::new("age")?);
-
         let t_body = TableName::new("body")?;
         let t_body_c_people_id =
             ColumnReference::new(t_body.clone(), ColumnName::new("people_id")?);
@@ -101,18 +97,9 @@ mod tests {
         let t_pet_c_kind = ColumnReference::new(t_pet.clone(), ColumnName::new("kind")?);
         let t_pet_c_age = ColumnReference::new(t_pet.clone(), ColumnName::new("age")?);
 
-        let t_people_r1 = record! {
-            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-        };
-        let t_people_r2 = record! {
-            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-        };
-        let t_people_r3 = record! {
-            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-        };
+        let t_people_r1 = People::record(1, 13);
+        let t_people_r2 = People::record(2, 70);
+        let t_people_r3 = People::record(3, 35);
 
         let t_body_r1 = record! {
             FieldIndex::InColumnReference(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
@@ -146,7 +133,7 @@ mod tests {
             MockTxDbDatum {
                 tables: vec![
                     MockTxTableDatum {
-                        table_name: t_people.clone(),
+                        table_name: People::table_name(),
                         records: vec![
                             t_people_r1.clone(),
                             t_people_r2.clone(),
@@ -172,7 +159,7 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
-                        table_name: t_people.clone(),
+                        table_name: People::table_name(),
                         projection: ProjectionQuery::All,
                     },
                 })),
@@ -185,84 +172,84 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
-                        table_name: t_people.clone(),
-                        projection: ProjectionQuery::ColumnNames(vec![t_people_c_id
+                        table_name: People::table_name(),
+                        projection: ProjectionQuery::ColumnNames(vec![People::colref_id()
                             .as_column_name()
                             .clone()]),
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
-                    r_projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
-                    r_projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![People::colref_id()])?,
+                    r_projection(t_people_r2.clone(), vec![People::colref_id()])?,
+                    r_projection(t_people_r3.clone(), vec![People::colref_id()])?,
                 ],
             },
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
-                        table_name: t_people.clone(),
-                        projection: ProjectionQuery::ColumnNames(vec![t_people_c_age
+                        table_name: People::table_name(),
+                        projection: ProjectionQuery::ColumnNames(vec![People::colref_age()
                             .as_column_name()
                             .clone()]),
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
-                    r_projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
-                    r_projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![People::colref_age()])?,
+                    r_projection(t_people_r2.clone(), vec![People::colref_age()])?,
+                    r_projection(t_people_r3.clone(), vec![People::colref_age()])?,
                 ],
             },
             // Projection
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::InColumnReference(t_people_c_id.clone())]
+                        fields: vec![FieldIndex::InColumnReference(People::colref_id())]
                             .into_iter()
                             .collect(),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_people.clone(),
+                            table_name: People::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
-                    r_projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
-                    r_projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![People::colref_id()])?,
+                    r_projection(t_people_r2.clone(), vec![People::colref_id()])?,
+                    r_projection(t_people_r3.clone(), vec![People::colref_id()])?,
                 ],
             },
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::InColumnReference(t_people_c_age.clone())]
+                        fields: vec![FieldIndex::InColumnReference(People::colref_age())]
                             .into_iter()
                             .collect(),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_people.clone(),
+                            table_name: People::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
-                    r_projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
-                    r_projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![People::colref_age()])?,
+                    r_projection(t_people_r2.clone(), vec![People::colref_age()])?,
+                    r_projection(t_people_r3.clone(), vec![People::colref_age()])?,
                 ],
             },
             // HashJoin
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(t_people_c_id.clone()),
+                        left_field: FieldIndex::InColumnReference(People::colref_id()),
                         right_field: FieldIndex::InColumnReference(t_body_c_people_id.clone()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_people.clone(),
+                            table_name: People::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
@@ -282,12 +269,12 @@ mod tests {
                 // right has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(t_people_c_id.clone()),
+                        left_field: FieldIndex::InColumnReference(People::colref_id()),
                         right_field: FieldIndex::InColumnReference(t_pet_c_people_id.clone()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_people.clone(),
+                            table_name: People::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
@@ -309,7 +296,7 @@ mod tests {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
                         left_field: FieldIndex::InColumnReference(t_pet_c_people_id.clone()),
-                        right_field: FieldIndex::InColumnReference(t_people_c_id.clone()),
+                        right_field: FieldIndex::InColumnReference(People::colref_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -319,7 +306,7 @@ mod tests {
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_people.clone(),
+                            table_name: People::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
@@ -334,12 +321,12 @@ mod tests {
                 // Eq comparison with Integer & SmallInt
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(t_people_c_age.clone()),
+                        left_field: FieldIndex::InColumnReference(People::colref_age()),
                         right_field: FieldIndex::InColumnReference(t_pet_c_age.clone()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_people.clone(),
+                            table_name: People::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
