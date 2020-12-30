@@ -49,10 +49,7 @@ mod tests {
 
     use pretty_assertions::assert_eq;
 
-    use apllodb_shared_components::{
-        ApllodbResult, ColumnName, ColumnReference, DataType, DataTypeKind, FieldIndex, Record,
-        SqlValue, TableName,
-    };
+    use apllodb_shared_components::{ApllodbResult, FieldIndex, Record};
     use apllodb_storage_engine_interface::ProjectionQuery;
 
     use crate::{
@@ -66,11 +63,10 @@ mod tests {
             },
             QueryPlan,
         },
-        record,
         test_support::{
             mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum},
             setup,
-            test_models::People,
+            test_models::{Body, People, Pet},
             test_storage_engine::TestStorageEngine,
             utility_functions::r_projection,
         },
@@ -88,44 +84,16 @@ mod tests {
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
-        let t_body = TableName::new("body")?;
-        let t_body_c_people_id =
-            ColumnReference::new(t_body.clone(), ColumnName::new("people_id")?);
-        let t_body_c_height = ColumnReference::new(t_body.clone(), ColumnName::new("height")?);
-
-        let t_pet = TableName::new("pet")?;
-        let t_pet_c_people_id = ColumnReference::new(t_pet.clone(), ColumnName::new("people_id")?);
-        let t_pet_c_kind = ColumnReference::new(t_pet.clone(), ColumnName::new("kind")?);
-        let t_pet_c_age = ColumnReference::new(t_pet.clone(), ColumnName::new("age")?);
-
         let t_people_r1 = People::record(1, 13);
         let t_people_r2 = People::record(2, 70);
         let t_people_r3 = People::record(3, 35);
 
-        let t_body_r1 = record! {
-            FieldIndex::InColumnReference(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::InColumnReference(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &145i32)?
-        };
-        let t_body_r3 = record! {
-            FieldIndex::InColumnReference(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::InColumnReference(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
-        };
+        let t_body_r1 = Body::record(1, 145);
+        let t_body_r3 = Body::record(3, 175);
 
-        let t_pet_r1 = record! {
-            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
-        };
-        let t_pet_r3_1 = record! {
-            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
-        };
-        let t_pet_r3_2 = record! {
-            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
-            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
-        };
+        let t_pet_r1 = Pet::record(1, "dog", 13);
+        let t_pet_r3_1 = Pet::record(3, "dog", 5);
+        let t_pet_r3_2 = Pet::record(3, "cat", 3);
 
         let mut tx = TestStorageEngine::begin()?;
 
@@ -142,11 +110,11 @@ mod tests {
                         ],
                     },
                     MockTxTableDatum {
-                        table_name: t_body.clone(),
+                        table_name: Body::table_name(),
                         records: vec![t_body_r1.clone(), t_body_r3.clone()],
                     },
                     MockTxTableDatum {
-                        table_name: t_pet.clone(),
+                        table_name: Pet::table_name(),
                         records: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
                     },
                 ],
@@ -246,7 +214,7 @@ mod tests {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
                         left_field: FieldIndex::InColumnReference(People::colref_id()),
-                        right_field: FieldIndex::InColumnReference(t_body_c_people_id.clone()),
+                        right_field: FieldIndex::InColumnReference(Body::colref_people_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -256,7 +224,7 @@ mod tests {
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_body.clone(),
+                            table_name: Body::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
@@ -271,7 +239,7 @@ mod tests {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
                         left_field: FieldIndex::InColumnReference(People::colref_id()),
-                        right_field: FieldIndex::InColumnReference(t_pet_c_people_id.clone()),
+                        right_field: FieldIndex::InColumnReference(Pet::colref_people_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -281,7 +249,7 @@ mod tests {
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_pet.clone(),
+                            table_name: Pet::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
@@ -296,12 +264,12 @@ mod tests {
                 // left has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(t_pet_c_people_id.clone()),
+                        left_field: FieldIndex::InColumnReference(Pet::colref_people_id()),
                         right_field: FieldIndex::InColumnReference(People::colref_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_pet.clone(),
+                            table_name: Pet::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
@@ -323,7 +291,7 @@ mod tests {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
                         left_field: FieldIndex::InColumnReference(People::colref_age()),
-                        right_field: FieldIndex::InColumnReference(t_pet_c_age.clone()),
+                        right_field: FieldIndex::InColumnReference(Pet::colref_age()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -333,7 +301,7 @@ mod tests {
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
-                            table_name: t_pet.clone(),
+                            table_name: Pet::table_name(),
                             projection: ProjectionQuery::All,
                         },
                     })),
