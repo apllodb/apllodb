@@ -120,6 +120,7 @@ name = "apllodb-sql-processor"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
+ "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
  "derive-new",
  "env_logger",
