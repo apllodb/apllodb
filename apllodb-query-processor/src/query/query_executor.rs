@@ -80,7 +80,7 @@ mod tests {
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
         in_plan_tree: QueryPlanTree,
-        expected_records: Vec<Record>,
+        expected_select_records: Vec<Record>,
     }
 
     #[test]
@@ -197,7 +197,7 @@ mod tests {
                         projection: ProjectionQuery::All,
                     },
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     t_people_r1.clone(),
                     t_people_r2.clone(),
                     t_people_r3.clone(),
@@ -212,7 +212,7 @@ mod tests {
                             .clone()]),
                     },
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     r_projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
                     r_projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
                     r_projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
@@ -227,7 +227,7 @@ mod tests {
                             .clone()]),
                     },
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     r_projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
                     r_projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
                     r_projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
@@ -248,7 +248,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     r_projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
                     r_projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
                     r_projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
@@ -268,7 +268,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     r_projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
                     r_projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
                     r_projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
@@ -294,7 +294,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     t_people_r1.clone().join(t_body_r1.clone())?,
                     t_people_r3.clone().join(t_body_r3.clone())?,
                 ],
@@ -319,7 +319,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     t_people_r1.clone().join(t_pet_r1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_2.clone())?,
@@ -345,7 +345,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_records: vec![
+                expected_select_records: vec![
                     t_people_r1.clone().join(t_pet_r1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_1.clone())?,
                     t_people_r3.clone().join(t_pet_r3_2.clone())?,
@@ -371,7 +371,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_records: vec![t_people_r1.clone().join(t_pet_r1.clone())?],
+                expected_select_records: vec![t_people_r1.clone().join(t_pet_r1.clone())?],
             },
         ];
 
@@ -384,7 +384,7 @@ mod tests {
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
             let result = executor.run(query_plan)?;
 
-            assert_eq!(result.collect::<Vec<Record>>(), test_datum.expected_records,);
+            assert_eq!(result.collect::<Vec<Record>>(), test_datum.expected_select_records,);
         }
         Ok(())
     }
