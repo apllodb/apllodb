@@ -55,7 +55,7 @@ mod tests {
         test_support::{
             mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum},
             setup,
-            stub_storage_engine::StubStorageEngine,
+            test_storage_engine::TestStorageEngine,
         },
     };
 
@@ -112,7 +112,7 @@ mod tests {
             FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
         };
 
-        let mut tx = StubStorageEngine::begin()?;
+        let mut tx = TestStorageEngine::begin()?;
 
         mock_select(
             &mut tx,
@@ -182,7 +182,7 @@ mod tests {
                 )
                 .returning(|_, _| Ok(()));
 
-            let executor = ModificationExecutor::<'_, StubStorageEngine>::new(&tx);
+            let executor = ModificationExecutor::<'_, TestStorageEngine>::new(&tx);
             executor.run(modification_plan)?;
         }
 

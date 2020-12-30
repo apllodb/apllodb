@@ -70,7 +70,7 @@ mod tests {
         test_support::{
             mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum, People},
             setup,
-            stub_storage_engine::StubStorageEngine,
+            test_storage_engine::TestStorageEngine,
             utility_functions::r_projection,
         },
     };
@@ -126,7 +126,7 @@ mod tests {
             FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
         };
 
-        let mut tx = StubStorageEngine::begin()?;
+        let mut tx = TestStorageEngine::begin()?;
 
         mock_select(
             &mut tx,
@@ -152,7 +152,7 @@ mod tests {
             },
         );
 
-        let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
+        let executor = QueryExecutor::<'_, TestStorageEngine>::new(&tx);
 
         let test_data: Vec<TestDatum> = vec![
             // SeqScan (with storage engine layer projection)

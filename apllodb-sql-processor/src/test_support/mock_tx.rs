@@ -8,7 +8,7 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
 
-use super::stub_storage_engine::{StubStorageEngine, StubTransactionId, StubTxBuilder};
+use super::test_storage_engine::{TestStorageEngine, TestTransactionId, TestTxBuilder};
 
 use mockall::mock;
 
@@ -19,10 +19,10 @@ mock! {
         fn fmt<'a>(&self, f: &mut std::fmt::Formatter<'a>) -> std::result::Result<(), std::fmt::Error>;
     }
 
-    impl Transaction<StubStorageEngine> for Tx {
-        fn id(&self) -> &StubTransactionId;
+    impl Transaction<TestStorageEngine> for Tx {
+        fn id(&self) -> &TestTransactionId;
 
-        fn begin(_builder: StubTxBuilder) -> ApllodbResult<Self>;
+        fn begin(_builder: TestTxBuilder) -> ApllodbResult<Self>;
 
         fn commit(self) -> ApllodbResult<()>;
 
