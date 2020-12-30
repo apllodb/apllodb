@@ -93,8 +93,8 @@ impl ApparentPrimaryKey {
                     .get_sql_value(&FieldIndex::InColumnReference(cdt.column_ref().clone()))
                     // FIXME less clone
                     .map(|sql_value| sql_value.clone())
-                    .or_else(|e| {
-                        Err(ApllodbError::new(
+                    .map_err(|e| {
+                        ApllodbError::new(
                             ApllodbErrorKind::NotNullViolation,
                             format!(
                                 "primary key column `{:?}` is not held in this record: `{:#?}` (table `{:#?}`)",
@@ -103,7 +103,7 @@ impl ApparentPrimaryKey {
                                 vtable.table_name()
                             ),
                             Some(Box::new(e)),
-                        ))
+                        )
                     })
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
