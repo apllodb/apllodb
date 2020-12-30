@@ -86,20 +86,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "apllodb-query-processor"
-version = "0.1.0"
-dependencies = [
- "apllodb-shared-components",
- "apllodb-storage-engine-interface",
- "derive-new",
- "env_logger",
- "log",
- "mockall",
- "pretty_assertions",
- "serde",
-]
-
-[[package]]
 name = "apllodb-server"
 version = "0.1.0"
 dependencies = [
@@ -127,6 +113,20 @@ dependencies = [
  "pest_derive",
  "serde",
  "version-sync",
+]
+
+[[package]]
+name = "apllodb-sql-processor"
+version = "0.1.0"
+dependencies = [
+ "apllodb-shared-components",
+ "apllodb-storage-engine-interface",
+ "derive-new",
+ "env_logger",
+ "log",
+ "mockall",
+ "pretty_assertions",
+ "serde",
 ]
 
 [[package]]

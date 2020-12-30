@@ -3,7 +3,7 @@
 members = [
   "apllodb-shared-components",
   "apllodb-sql-parser",
-  "apllodb-query-processor",
+  "apllodb-sql-processor",
   "apllodb-storage-engine-interface", 
   
   # Immutable Schema Storage Engine.
