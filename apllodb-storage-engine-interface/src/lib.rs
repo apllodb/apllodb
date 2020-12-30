@@ -34,11 +34,10 @@
 //! `EmptyStorageEngine` does no effective work but it just compiles and runs.
 //!
 //! ```rust
-// example storage engine implementation.
+//! // example storage engine implementation.
 //! pub mod empty_storage_engine {
 //!     pub use db::EmptyDatabase;
 //!     pub use engine::EmptyStorageEngine;
-//!     pub use row::EmptyRowIterator;
 //!     pub use tx::{EmptyTx, EmptyTxBuilder};
 //!
 //!     mod db {
@@ -57,54 +56,15 @@
 //!         }
 //!     }
 //!
-//!     mod row {
-//!         use apllodb_shared_components::{
-//!             ApllodbResult, ColumnName, ColumnReference, ColumnValue, SqlValue,
-//!         };
-//!         use apllodb_storage_engine_interface::{PrimaryKey, Row};
-//!         use serde::{Deserialize, Serialize};
-//!
-//!         #[derive(
-//!             Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize,
-//!         )]
-//!         pub struct EmptyPrimaryKey;
-//!         impl PrimaryKey for EmptyPrimaryKey {
-//!             fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
-//!                 unimplemented!()
-//!             }
-//!         }
-//!
-//!         pub struct EmptyRow;
-//!         impl Row for EmptyRow {
-//!             fn get_sql_value(&mut self, colref: &ColumnReference) -> ApllodbResult<SqlValue> {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn append(&mut self, colvals: Vec<ColumnValue>) -> ApllodbResult<()> {
-//!                 unimplemented!()
-//!             }
-//!         }
-//!
-//!         #[derive(Debug)]
-//!         pub struct EmptyRowIterator;
-//!         impl Iterator for EmptyRowIterator {
-//!             type Item = EmptyRow;
-//!
-//!             fn next(&mut self) -> Option<Self::Item> {
-//!                 unimplemented!()
-//!             }
-//!         }
-//!     }
-//!
 //!     mod tx {
 //!         use apllodb_shared_components::{
 //!             AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName,
-//!             Expression, TableConstraints, TableName,
+//!             Expression, RecordIterator, TableConstraints, TableName,
 //!         };
 //!         use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionBuilder, TransactionId};
 //!         use std::collections::HashMap;
 //!
-//!         use super::{EmptyDatabase, EmptyRowIterator, EmptyStorageEngine};
+//!         use super::{EmptyDatabase, EmptyStorageEngine};
 //!
 //!         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 //!         pub struct EmptyTxBuilder;
@@ -162,14 +122,14 @@
 //!                 &self,
 //!                 table_name: &TableName,
 //!                 projection: ProjectionQuery,
-//!             ) -> ApllodbResult<EmptyRowIterator> {
+//!             ) -> ApllodbResult<RecordIterator> {
 //!                 unimplemented!()
 //!             }
 //!
 //!             fn insert(
 //!                 &self,
 //!                 table_name: &TableName,
-//!                 column_values: HashMap<ColumnName, Expression>,
+//!                 records: RecordIterator,
 //!             ) -> ApllodbResult<()> {
 //!                 unimplemented!()
 //!             }
@@ -190,7 +150,7 @@
 //!
 //!     mod engine {
 //!         use super::{
-//!             row::EmptyRow, tx::EmptyTransactionId, EmptyDatabase, EmptyRowIterator, EmptyTx, EmptyTxBuilder,
+//!             tx::EmptyTransactionId, EmptyDatabase, EmptyTx, EmptyTxBuilder,
 //!         };
 //!         use apllodb_shared_components::{ApllodbResult, DatabaseName};
 //!         use apllodb_storage_engine_interface::StorageEngine;
@@ -202,8 +162,6 @@
 //!             type TxBuilder = EmptyTxBuilder;
 //!             type TID = EmptyTransactionId;
 //!             type Db = EmptyDatabase;
-//!             type R = EmptyRow;
-//!             type RowIter = EmptyRowIterator;
 //!
 //!             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
 //!                 Ok(EmptyDatabase::new())
@@ -252,13 +210,11 @@
 //! ```
 
 mod query;
-mod row;
 mod transaction;
 
 use std::fmt::Debug;
 
 pub use crate::query::projection::ProjectionQuery;
-pub use crate::row::{pk::PrimaryKey, Row};
 pub use crate::transaction::{transaction_id::TransactionId, Transaction, TransactionBuilder};
 
 use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
@@ -276,12 +232,6 @@ pub trait StorageEngine: Sized + Debug {
 
     /// Database.
     type Db: Database;
-
-    /// Row.
-    type R: Row;
-
-    /// Iterator of `Self::R`s returned from [select()](crate::Transaction::select) method.
-    type RowIter: Iterator<Item = Self::R> + Debug;
 
     /// Specify database to use and return database object.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<Self::Db>;

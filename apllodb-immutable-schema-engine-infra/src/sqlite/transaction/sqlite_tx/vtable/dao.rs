@@ -70,8 +70,6 @@ CREATE TABLE IF NOT EXISTS {} (
         &self,
         vtable_id: &VTableId,
     ) -> ApllodbResult<VTable> {
-        use apllodb_storage_engine_interface::Row;
-
         let sql = format!(
             "SELECT {}, {} FROM {} WHERE {} = :table_name;",
             CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS, TNAME, CNAME_TABLE_NAME

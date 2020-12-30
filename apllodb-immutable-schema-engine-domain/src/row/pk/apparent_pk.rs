@@ -1,12 +1,11 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ColumnReference, ColumnValue, ComparisonFunction, Constant, Expression, LogicalFunction,
-    SqlValue, TableName,
+    ColumnReference, ColumnValue, ComparisonFunction, Constant, Expression, FieldIndex,
+    LogicalFunction, Record, SqlConvertible, SqlValue, TableName,
 };
-use apllodb_storage_engine_interface::{PrimaryKey, Row};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
 /// Primary key which other components than Storage Engine observes.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
@@ -18,8 +17,14 @@ pub struct ApparentPrimaryKey {
     sql_values: Vec<SqlValue>,
 }
 
-impl PrimaryKey for ApparentPrimaryKey {
-    fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+impl ApparentPrimaryKey {
+    /// Get [SqlValue](apllodb_shared_components::SqlValue) from a PK column.
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    ///   - `column_name` is not in this PK.
+    pub fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
         let target_sql_value = self
             .zipped()
             .iter()
@@ -38,6 +43,17 @@ impl PrimaryKey for ApparentPrimaryKey {
                 )
             })?;
         Ok(target_sql_value)
+    }
+
+    /// Get Rust value from a PK column.
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    ///   - `column_name` is not in this PK.
+    pub fn get<T: SqlConvertible>(&self, column_name: &ColumnName) -> ApllodbResult<T> {
+        let sql_value = self.get_sql_value(column_name)?;
+        Ok(sql_value.unpack()?)
     }
 }
 
@@ -64,10 +80,7 @@ impl ApparentPrimaryKey {
         ))
     }
 
-    pub fn from_table_and_column_values(
-        vtable: &VTable,
-        column_values: &HashMap<ColumnName, Expression>,
-    ) -> ApllodbResult<Self> {
+    pub fn from_table_and_record(vtable: &VTable, record: &Record) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
@@ -76,20 +89,22 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let expr = column_values
-                    .get(cdt.column_ref().as_column_name())
-                    .ok_or_else(|| {
-                        ApllodbError::new(
+                record
+                    .get_sql_value(&FieldIndex::InColumnReference(cdt.column_ref().clone()))
+                    // FIXME less clone
+                    .map(|sql_value| sql_value.clone())
+                    .or_else(|e| {
+                        Err(ApllodbError::new(
                             ApllodbErrorKind::NotNullViolation,
                             format!(
-                                "primary key column `{:?}` must be specified (table `{:?}`)",
+                                "primary key column `{:?}` is not held in this record: `{:#?}` (table `{:#?}`)",
                                 cdt.column_ref(),
+                                record,
                                 vtable.table_name()
                             ),
-                            None,
-                        )
-                    })?;
-                SqlValue::try_from(expr, cdt.data_type())
+                            Some(Box::new(e)),
+                        ))
+                    })
             })
             .collect::<ApllodbResult<Vec<SqlValue>>>()?;
 

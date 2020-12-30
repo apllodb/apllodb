@@ -1,6 +1,10 @@
+use std::convert::TryFrom;
+
 use serde::{Deserialize, Serialize};
 
-use crate::data_structure::table::table_name::TableName;
+use crate::{
+    data_structure::table::table_name::TableName, ApllodbError, ApllodbResult, FieldIndex,
+};
 
 use super::column_name::ColumnName;
 
@@ -20,5 +24,21 @@ impl ColumnReference {
     /// Ref to column name
     pub fn as_column_name(&self) -> &ColumnName {
         &self.column_name
+    }
+}
+
+impl TryFrom<FieldIndex> for ColumnReference {
+    type Error = ApllodbError;
+
+    /// # Panics
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
+    ///   - this field index does not represent a column reference.
+    fn try_from(field: FieldIndex) -> ApllodbResult<Self> {
+        match field {
+            FieldIndex::InColumnReference(colref) => Ok(colref),
+        }
     }
 }

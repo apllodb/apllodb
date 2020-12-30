@@ -4,10 +4,10 @@ use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName,
-    ColumnReference, Constant, DataType, DataTypeKind, Expression, TableConstraintKind,
-    TableConstraints, TableName,
+    ColumnReference, Constant, DataType, DataTypeKind, Expression, FieldIndex, RecordIterator,
+    SqlValue, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, Row, Transaction};
+use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
 
 #[test]
 fn test_create_table_success() -> ApllodbResult<()> {
@@ -96,19 +96,29 @@ fn test_insert() -> ApllodbResult<()> {
 
     tx.insert(
         &t_name,
-        hmap! {
-         c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(1)),
-         c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(100))
-        },
+        RecordIterator::new(vec![
+            record! {
+                FieldIndex::InColumnReference(c_id_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+                FieldIndex::InColumnReference(c1_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &100i32)?
+            }
+        ])
     )?;
 
-    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
+    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
 
-    let mut row = rows.next().unwrap();
-    assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
-    assert_eq!(row.get::<i32>(c1_def.column_ref())?, 100);
+    let record = records.next().unwrap();
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(
+            c_id_def.column_ref().clone()
+        ))?,
+        1
+    );
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(c1_def.column_ref().clone()))?,
+        100
+    );
 
-    assert!(rows.next().is_none());
+    assert!(records.next().is_none());
 
     tx.commit()?;
 
@@ -144,16 +154,26 @@ fn test_update() -> ApllodbResult<()> {
 
     tx.insert(
         &t_name,
-        hmap! {
-         c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(1)),
-         c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(100))
-        },
+        RecordIterator::new(vec![
+            record! {
+                FieldIndex::InColumnReference(c_id_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+                FieldIndex::InColumnReference(c1_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &100i32)?
+            }
+        ])
     )?;
-    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
-    let mut row = rows.next().unwrap();
-    assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
-    assert_eq!(row.get::<i32>(c1_def.column_ref())?, 100);
-    assert!(rows.next().is_none());
+    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
+    let record = records.next().unwrap();
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(
+            c_id_def.column_ref().clone()
+        ))?,
+        1
+    );
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(c1_def.column_ref().clone()))?,
+        100
+    );
+    assert!(records.next().is_none());
 
     // update non-PK
     tx.update(
@@ -162,11 +182,19 @@ fn test_update() -> ApllodbResult<()> {
             c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(200))
         },
     )?;
-    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
-    let mut row = rows.next().unwrap();
-    assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 1);
-    assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
-    assert!(rows.next().is_none());
+    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
+    let record = records.next().unwrap();
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(
+            c_id_def.column_ref().clone()
+        ))?,
+        1
+    );
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(c1_def.column_ref().clone()))?,
+        200
+    );
+    assert!(records.next().is_none());
 
     // update PK
     tx.update(
@@ -175,11 +203,19 @@ fn test_update() -> ApllodbResult<()> {
             c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(2))
         },
     )?;
-    let mut rows = tx.select(&t_name, ProjectionQuery::All)?;
-    let mut row = rows.next().unwrap();
-    assert_eq!(row.get::<i32>(c_id_def.column_ref())?, 2);
-    assert_eq!(row.get::<i32>(c1_def.column_ref())?, 200);
-    assert!(rows.next().is_none());
+    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
+    let record = records.next().unwrap();
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(
+            c_id_def.column_ref().clone()
+        ))?,
+        2
+    );
+    assert_eq!(
+        record.get::<i32>(&FieldIndex::InColumnReference(c1_def.column_ref().clone()))?,
+        200
+    );
+    assert!(records.next().is_none());
 
     tx.commit()?;
 
@@ -215,10 +251,12 @@ fn test_delete() -> ApllodbResult<()> {
 
     tx.insert(
         &t_name,
-        hmap! {
-         c_id_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(1)),
-         c1_def.column_ref().as_column_name().clone() => Expression::ConstantVariant(Constant::from(100))
-        },
+        RecordIterator::new(vec![
+            record! {
+                FieldIndex::InColumnReference(c_id_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+                FieldIndex::InColumnReference(c1_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &100i32)?
+            }
+        ])
     )?;
 
     let rows = tx.select(
