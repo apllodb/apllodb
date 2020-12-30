@@ -68,8 +68,9 @@ mod tests {
         },
         record,
         test_support::{
-            mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum, People},
+            mock_tx::mock_tx_select::{mock_select, MockTxDbDatum, MockTxTableDatum},
             setup,
+            test_models::People,
             test_storage_engine::TestStorageEngine,
             utility_functions::r_projection,
         },
