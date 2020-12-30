@@ -46,11 +46,13 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::{HashSet, VecDeque};
+
     use pretty_assertions::assert_eq;
 
     use apllodb_shared_components::{
-        ApllodbResult, ColumnName, ColumnReference, DataType, DataTypeKind, FieldIndex, Record,
-        SqlValue, TableName,
+        ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, ColumnReference, DataType,
+        DataTypeKind, FieldIndex, Record, SqlValue, TableName,
     };
     use apllodb_storage_engine_interface::ProjectionQuery;
 
@@ -68,9 +70,8 @@ mod tests {
         record,
         test_support::{
             setup,
-            stub_storage_engine::{
-                stub_data::StubTable, StubData, StubRowIterator, StubStorageEngine,
-            },
+            stub_storage_engine::{StubRow, StubRowIterator, StubStorageEngine},
+            utility_functions::{dup, r_projection},
         },
     };
 
@@ -82,88 +83,109 @@ mod tests {
         expected_records: Vec<Record>,
     }
 
-    fn projection(r: Record, fields: Vec<ColumnReference>) -> ApllodbResult<Record> {
-        r.projection(&fields.into_iter().map(FieldIndex::from).collect())
-    }
-
     #[test]
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
-        let t_people = TableName::new("people")?;
+        let (t_people, t_people_mock) = dup(TableName::new("people")?);
         let t_people_c_id = ColumnReference::new(t_people.clone(), ColumnName::new("id")?);
         let t_people_c_age = ColumnReference::new(t_people.clone(), ColumnName::new("age")?);
 
-        let t_body = TableName::new("body")?;
+        let (t_body, t_body_mock) = dup(TableName::new("body")?);
         let t_body_c_people_id =
             ColumnReference::new(t_body.clone(), ColumnName::new("people_id")?);
         let t_body_c_height = ColumnReference::new(t_body.clone(), ColumnName::new("height")?);
 
-        let t_pet = TableName::new("pet")?;
+        let (t_pet, t_pet_mock) = dup(TableName::new("pet")?);
         let t_pet_c_people_id = ColumnReference::new(t_pet.clone(), ColumnName::new("people_id")?);
         let t_pet_c_kind = ColumnReference::new(t_pet.clone(), ColumnName::new("kind")?);
         let t_pet_c_age = ColumnReference::new(t_pet.clone(), ColumnName::new("age")?);
 
-        let t_people_r1 = record! {
+        let (t_people_r1, t_people_r1_mock) = dup(record! {
             FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
             FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
-        };
-        let t_people_r2 = record! {
+        });
+        let (t_people_r2, t_people_r2_mock) = dup(record! {
             FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
             FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
-        };
-        let t_people_r3 = record! {
+        });
+        let (t_people_r3, t_people_r3_mock) = dup(record! {
             FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
             FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
-        };
+        });
 
-        let t_body_r1 = record! {
+        let (t_body_r1, t_body_r1_mock) = dup(record! {
             FieldIndex::from(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
             FieldIndex::from(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &145i32)?
-        };
-        let t_body_r3 = record! {
+        });
+        let (t_body_r3, t_body_r3_mock) = dup(record! {
             FieldIndex::from(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
             FieldIndex::from(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
-        };
+        });
 
-        let t_pet_r1 = record! {
+        let (t_pet_r1, t_pet_r1_mock) = dup(record! {
             FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
             FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
             FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
-        };
-        let t_pet_r3_1 = record! {
+        });
+        let (t_pet_r3_1, t_pet_r3_1_mock) = dup(record! {
             FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
             FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
             FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
-        };
-        let t_pet_r3_2 = record! {
+        });
+        let (t_pet_r3_2, t_pet_r3_2_mock) = dup(record! {
             FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
             FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
             FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
-        };
+        });
 
-        let tx = StubStorageEngine::begin_stub_tx(StubData::new(vec![
-            StubTable::new(
-                t_people.clone(),
-                StubRowIterator::from(vec![
-                    t_people_r1.clone(),
-                    t_people_r2.clone(),
-                    t_people_r3.clone(),
-                ]),
-            ),
-            StubTable::new(
-                t_body.clone(),
-                StubRowIterator::from(vec![t_body_r1.clone(), t_body_r3.clone()]),
-            ),
-            StubTable::new(
-                t_pet.clone(),
-                StubRowIterator::from(vec![
-                    t_pet_r1.clone(),
-                    t_pet_r3_1.clone(),
-                    t_pet_r3_2.clone(),
-                ]),
-            ),
-        ]))?;
+        let mut tx = StubStorageEngine::begin()?;
+
+        // mocking
+        tx.expect_select().returning(move |table_name, projection| {
+            let records: Vec<Record> = if *table_name == t_people_mock {
+                vec![
+                    t_people_r1_mock.clone(),
+                    t_people_r2_mock.clone(),
+                    t_people_r3_mock.clone(),
+                ]
+            } else if *table_name == t_body_mock {
+                vec![t_body_r1_mock.clone(), t_body_r3_mock.clone()]
+            } else if *table_name == t_pet_mock {
+                vec![
+                    t_pet_r1_mock.clone(),
+                    t_pet_r3_1_mock.clone(),
+                    t_pet_r3_2_mock.clone(),
+                ]
+            } else {
+                return Err(ApllodbError::new(
+                    ApllodbErrorKind::UndefinedTable,
+                    format!("table `{:?}` is undefined in StubTx", table_name),
+                    None,
+                ));
+            };
+
+            let projected_rows: VecDeque<StubRow> = match projection {
+                ProjectionQuery::All => records.into_iter().map(StubRow::new).collect(),
+                ProjectionQuery::ColumnNames(column_names) => {
+                    let fields: HashSet<FieldIndex> = column_names
+                        .into_iter()
+                        .map(|cn| FieldIndex::from(ColumnReference::new(table_name.clone(), cn)))
+                        .collect();
+
+                    records
+                        .into_iter()
+                        .map(|record| {
+                            let record = record.projection(&fields)?;
+                            Ok(StubRow::new(record))
+                        })
+                        .collect::<ApllodbResult<_>>()?
+                }
+            };
+
+            Ok(StubRowIterator::new(projected_rows))
+        });
+
         let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
 
         let test_data: Vec<TestDatum> = vec![
@@ -191,9 +213,9 @@ mod tests {
                     },
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
-                    projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
-                    projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
                 ],
             },
             TestDatum {
@@ -206,9 +228,9 @@ mod tests {
                     },
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
-                    projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
-                    projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
                 ],
             },
             // Projection
@@ -227,9 +249,9 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
-                    projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
-                    projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r2.clone(), vec![t_people_c_id.clone()])?,
+                    r_projection(t_people_r3.clone(), vec![t_people_c_id.clone()])?,
                 ],
             },
             TestDatum {
@@ -247,9 +269,9 @@ mod tests {
                     })),
                 })),
                 expected_records: vec![
-                    projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
-                    projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
-                    projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r1.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r2.clone(), vec![t_people_c_age.clone()])?,
+                    r_projection(t_people_r3.clone(), vec![t_people_c_age.clone()])?,
                 ],
             },
             // HashJoin
