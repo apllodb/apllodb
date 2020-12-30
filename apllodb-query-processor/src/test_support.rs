@@ -1,4 +1,5 @@
 pub(crate) mod macros;
+pub(crate) mod mock_tx;
 pub(crate) mod stub_storage_engine;
 pub(crate) mod utility_functions;
 
