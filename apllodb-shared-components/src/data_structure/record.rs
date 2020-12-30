@@ -105,4 +105,9 @@ impl Record {
 
         Ok(self)
     }
+
+    /// Get raw representation
+    pub fn into_field_values(self) -> HashMap<FieldIndex, SqlValue> {
+        self.fields
+    }
 }

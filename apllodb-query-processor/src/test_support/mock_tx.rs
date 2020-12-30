@@ -2,13 +2,11 @@ use std::collections::HashMap;
 
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName, Expression,
-    TableConstraints, TableName,
+    RecordIterator, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
 
-use super::stub_storage_engine::{
-    StubRowIterator, StubStorageEngine, StubTransactionId, StubTxBuilder,
-};
+use super::stub_storage_engine::{StubStorageEngine, StubTransactionId, StubTxBuilder};
 
 use mockall::mock;
 
@@ -49,12 +47,12 @@ mock! {
             &self,
             table_name: &TableName,
             projection: ProjectionQuery,
-        ) -> ApllodbResult<StubRowIterator>;
+        ) -> ApllodbResult<RecordIterator>;
 
         fn insert(
             &self,
             table_name: &TableName,
-            column_values: HashMap<ColumnName, Expression>,
+            records: RecordIterator,
         ) -> ApllodbResult<()>;
 
         fn update(

@@ -33,6 +33,7 @@ dependencies = [
  "apllodb-storage-engine-interface",
  "env_logger",
  "log",
+ "pretty_assertions",
  "uuid",
 ]
 

@@ -46,13 +46,13 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashSet, VecDeque};
+    use std::collections::HashSet;
 
     use pretty_assertions::assert_eq;
 
     use apllodb_shared_components::{
         ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, ColumnReference, DataType,
-        DataTypeKind, FieldIndex, Record, SqlValue, TableName,
+        DataTypeKind, FieldIndex, Record, RecordIterator, SqlValue, TableName,
     };
     use apllodb_storage_engine_interface::ProjectionQuery;
 
@@ -70,7 +70,7 @@ mod tests {
         record,
         test_support::{
             setup,
-            stub_storage_engine::{StubRow, StubRowIterator, StubStorageEngine},
+            stub_storage_engine::StubStorageEngine,
             utility_functions::{dup, r_projection},
         },
     };
@@ -102,41 +102,41 @@ mod tests {
         let t_pet_c_age = ColumnReference::new(t_pet.clone(), ColumnName::new("age")?);
 
         let (t_people_r1, t_people_r1_mock) = dup(record! {
-            FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
+            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &13i32)?
         });
         let (t_people_r2, t_people_r2_mock) = dup(record! {
-            FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
-            FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
+            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)?,
+            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &70i32)?
         });
         let (t_people_r3, t_people_r3_mock) = dup(record! {
-            FieldIndex::from(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::from(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
+            FieldIndex::InColumnReference(t_people_c_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::InColumnReference(t_people_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &35i32)?
         });
 
         let (t_body_r1, t_body_r1_mock) = dup(record! {
-            FieldIndex::from(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::from(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &145i32)?
+            FieldIndex::InColumnReference(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            FieldIndex::InColumnReference(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &145i32)?
         });
         let (t_body_r3, t_body_r3_mock) = dup(record! {
-            FieldIndex::from(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::from(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
+            FieldIndex::InColumnReference(t_body_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::InColumnReference(t_body_c_height.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &175i32)?
         });
 
         let (t_pet_r1, t_pet_r1_mock) = dup(record! {
-            FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
+            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
+            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
+            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &13i16)?
         });
         let (t_pet_r3_1, t_pet_r3_1_mock) = dup(record! {
-            FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
-            FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
+            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"dog".to_string())?,
+            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &5i16)?
         });
         let (t_pet_r3_2, t_pet_r3_2_mock) = dup(record! {
-            FieldIndex::from(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-            FieldIndex::from(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
-            FieldIndex::from(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
+            FieldIndex::InColumnReference(t_pet_c_people_id.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
+            FieldIndex::InColumnReference(t_pet_c_kind.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &"cat".to_string())?,
+            FieldIndex::InColumnReference(t_pet_c_age.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &3i16)?
         });
 
         let mut tx = StubStorageEngine::begin()?;
@@ -165,25 +165,27 @@ mod tests {
                 ));
             };
 
-            let projected_rows: VecDeque<StubRow> = match projection {
-                ProjectionQuery::All => records.into_iter().map(StubRow::new).collect(),
+            let projected_records: Vec<Record> = match projection {
+                ProjectionQuery::All => records,
                 ProjectionQuery::ColumnNames(column_names) => {
                     let fields: HashSet<FieldIndex> = column_names
                         .into_iter()
-                        .map(|cn| FieldIndex::from(ColumnReference::new(table_name.clone(), cn)))
+                        .map(|cn| {
+                            FieldIndex::InColumnReference(ColumnReference::new(
+                                table_name.clone(),
+                                cn,
+                            ))
+                        })
                         .collect();
 
                     records
                         .into_iter()
-                        .map(|record| {
-                            let record = record.projection(&fields)?;
-                            Ok(StubRow::new(record))
-                        })
+                        .map(|record| Ok(record.projection(&fields)?))
                         .collect::<ApllodbResult<_>>()?
                 }
             };
 
-            Ok(StubRowIterator::new(projected_rows))
+            Ok(RecordIterator::new(projected_records))
         });
 
         let executor = QueryExecutor::<'_, StubStorageEngine>::new(&tx);
@@ -237,7 +239,7 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::from(t_people_c_id.clone())]
+                        fields: vec![FieldIndex::InColumnReference(t_people_c_id.clone())]
                             .into_iter()
                             .collect(),
                     },
@@ -257,7 +259,7 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::from(t_people_c_age.clone())]
+                        fields: vec![FieldIndex::InColumnReference(t_people_c_age.clone())]
                             .into_iter()
                             .collect(),
                     },
@@ -278,8 +280,8 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::from(t_people_c_id.clone()),
-                        right_field: FieldIndex::from(t_body_c_people_id.clone()),
+                        left_field: FieldIndex::InColumnReference(t_people_c_id.clone()),
+                        right_field: FieldIndex::InColumnReference(t_body_c_people_id.clone()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -303,8 +305,8 @@ mod tests {
                 // right has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::from(t_people_c_id.clone()),
-                        right_field: FieldIndex::from(t_pet_c_people_id.clone()),
+                        left_field: FieldIndex::InColumnReference(t_people_c_id.clone()),
+                        right_field: FieldIndex::InColumnReference(t_pet_c_people_id.clone()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -329,8 +331,8 @@ mod tests {
                 // left has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::from(t_pet_c_people_id.clone()),
-                        right_field: FieldIndex::from(t_people_c_id.clone()),
+                        left_field: FieldIndex::InColumnReference(t_pet_c_people_id.clone()),
+                        right_field: FieldIndex::InColumnReference(t_people_c_id.clone()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -355,8 +357,8 @@ mod tests {
                 // Eq comparison with Integer & SmallInt
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::from(t_people_c_age.clone()),
-                        right_field: FieldIndex::from(t_pet_c_age.clone()),
+                        left_field: FieldIndex::InColumnReference(t_people_c_age.clone()),
+                        right_field: FieldIndex::InColumnReference(t_pet_c_age.clone()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -384,7 +386,10 @@ mod tests {
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
             let result = executor.run(query_plan)?;
 
-            assert_eq!(result.collect::<Vec<Record>>(), test_datum.expected_select_records,);
+            assert_eq!(
+                result.collect::<Vec<Record>>(),
+                test_datum.expected_select_records,
+            );
         }
         Ok(())
     }

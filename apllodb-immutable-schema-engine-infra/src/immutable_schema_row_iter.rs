@@ -26,6 +26,7 @@ impl Iterator for ImmutableSchemaRowIter {
         })
     }
 }
+
 impl<'tx, 'db: 'tx>
     ImmutableSchemaRowIterator<'tx, 'db, ApllodbImmutableSchemaEngine<'db>, SqliteTypes>
     for ImmutableSchemaRowIter

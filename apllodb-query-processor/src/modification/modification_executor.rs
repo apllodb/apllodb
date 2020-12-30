@@ -16,16 +16,15 @@ impl<'exe, Engine: StorageEngine> ModificationExecutor<'exe, Engine> {
     }
 }
 
+// #[cfg(test)]
+// mod tests {
+//     use pretty_assertions::assert_eq;
 
-#[cfg(test)]
-mod tests {
-    use pretty_assertions::assert_eq;
+//     use crate::modification::modification_plan::modification_plan_tree::ModificationPlanTree;
 
-    use crate::modification::modification_plan::modification_plan_tree::ModificationPlanTree;
-
-    #[derive(Clone, PartialEq, Debug)]
-    struct TestDatum {
-        in_plan_tree: ModificationPlanTree,
-        expected_insert_records: Vec<Record>,
-    }
-}
+//     #[derive(Clone, PartialEq, Debug)]
+//     struct TestDatum {
+//         in_plan_tree: ModificationPlanTree,
+//         expected_insert_records: Vec<Record>,
+//     }
+// }

@@ -54,7 +54,6 @@ mod tests {
     use apllodb_shared_components::{
         ApllodbResult, ColumnName, ColumnReference, DataType, DataTypeKind, SqlValue, TableName,
     };
-    use apllodb_storage_engine_interface::Row;
 
     #[test]
     fn test_success() -> ApllodbResult<()> {

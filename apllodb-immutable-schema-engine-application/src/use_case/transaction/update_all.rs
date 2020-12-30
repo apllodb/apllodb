@@ -6,7 +6,8 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, ColumnReference, DatabaseName,
+    Expression, FieldIndex, Record, RecordIterator, SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -89,19 +90,24 @@ impl<
             ProjectionResult::new(&vtable, active_versions, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
-        let mut new_col_vals_to_insert: Vec<HashMap<ColumnName, Expression>> = Vec::new();
+        let mut new_col_vals_to_insert: Vec<HashMap<ColumnName, SqlValue>> = Vec::new();
         for row in row_iter {
             let col_vals_before = row.into_col_vals();
-            let mut col_vals_after: HashMap<ColumnName, Expression> = HashMap::new();
+            let mut col_vals_after: HashMap<ColumnName, SqlValue> = HashMap::new();
 
             for (colref, val_before) in col_vals_before {
-                let expr_after =
-                    if let Some(expr_after) = input.column_values.remove(colref.as_column_name()) {
-                        expr_after
+                let val_after =
+                    if let Some(expr) = input.column_values.remove(colref.as_column_name()) {
+                        // TODO Apply expression to existing row
+                        assert!(
+                            matches!(expr, Expression::ConstantVariant(_)),
+                            "only Constant is acceptable for now"
+                        );
+                        SqlValue::try_from(&expr, val_before.data_type())?
                     } else {
-                        Expression::from(&val_before)
+                        val_before
                     };
-                col_vals_after.insert(colref.as_column_name().clone(), expr_after);
+                col_vals_after.insert(colref.as_column_name().clone(), val_after);
             }
 
             new_col_vals_to_insert.push(col_vals_after);
@@ -116,16 +122,31 @@ impl<
             delete_all_usecase_input,
         )?;
 
-        // INSERT
-        for col_vals in new_col_vals_to_insert {
-            let insert_usecase_input =
-                InsertUseCaseInput::new(input.database_name, input.table_name, col_vals);
-            let _ = InsertUseCase::<'_, '_, Engine, Types>::run(
-                vtable_repo,
-                version_repo,
-                insert_usecase_input,
-            )?;
-        }
+        // INSERT all
+        let records: Vec<Record> = new_col_vals_to_insert
+            .into_iter()
+            .map(|mut fields| {
+                Record::new(
+                    fields
+                        .drain()
+                        .map(|(cn, sql_value)| {
+                            let colref = ColumnReference::new(vtable.table_name().clone(), cn);
+                            let field = FieldIndex::InColumnReference(colref);
+                            (field, sql_value)
+                        })
+                        .collect(),
+                )
+            })
+            .collect();
+        let records = RecordIterator::new(records);
+
+        let insert_usecase_input =
+            InsertUseCaseInput::new(input.database_name, input.table_name, records);
+        let _ = InsertUseCase::<'_, '_, Engine, Types>::run(
+            vtable_repo,
+            version_repo,
+            insert_usecase_input,
+        )?;
 
         Ok(UpdateAllUseCaseOutput)
     }

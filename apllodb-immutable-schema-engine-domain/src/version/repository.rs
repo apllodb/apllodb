@@ -1,7 +1,7 @@
 use crate::row::pk::apparent_pk::ApparentPrimaryKey;
 
 use super::{active_version::ActiveVersion, id::VersionId};
-use apllodb_shared_components::{ApllodbResult, ColumnName, Expression};
+use apllodb_shared_components::{ApllodbResult, ColumnName, SqlValue};
 use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 
@@ -22,6 +22,6 @@ pub trait VersionRepository<'repo, 'db: 'repo, Engine: StorageEngine> {
         &self,
         version_id: &VersionId,
         apparent_pk: ApparentPrimaryKey,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<()>;
 }

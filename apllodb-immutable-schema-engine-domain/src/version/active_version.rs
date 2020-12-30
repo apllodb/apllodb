@@ -1,7 +1,7 @@
 use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
 use crate::{entity::Entity, vtable::id::VTableId};
-use apllodb_shared_components::{AlterTableAction, ColumnDataType, ColumnName};
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Expression};
+use apllodb_shared_components::{AlterTableAction, ColumnDataType, ColumnName, SqlValue};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -112,7 +112,7 @@ impl ActiveVersion {
     ///   - Column value does not satisfy CHECK constraint.
     pub(in crate::version) fn check_version_constraint(
         &self,
-        column_values: &HashMap<ColumnName, Expression>,
+        column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<()> {
         let version_column_data_types = self.column_data_types();
 

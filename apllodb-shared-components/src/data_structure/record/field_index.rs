@@ -8,9 +8,3 @@ pub enum FieldIndex {
     /// column reference
     InColumnReference(ColumnReference),
 }
-
-impl From<ColumnReference> for FieldIndex {
-    fn from(colref: ColumnReference) -> Self {
-        Self::InColumnReference(colref)
-    }
-}

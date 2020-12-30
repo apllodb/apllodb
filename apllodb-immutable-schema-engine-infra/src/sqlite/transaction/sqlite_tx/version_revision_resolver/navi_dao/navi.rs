@@ -28,8 +28,6 @@ impl Navi {
         navi_table_name: &NaviTableName,
         r: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
-        use apllodb_storage_engine_interface::Row;
-
         let rowid = SqliteRowid(r.get::<i64>(&ColumnReference::new(
             navi_table_name.to_table_name(),
             ColumnName::new(CNAME_ROWID)?,

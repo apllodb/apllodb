@@ -5,5 +5,10 @@ pub(crate) fn dup<T: Clone>(v: T) -> (T, T) {
 }
 
 pub(crate) fn r_projection(r: Record, fields: Vec<ColumnReference>) -> ApllodbResult<Record> {
-    r.projection(&fields.into_iter().map(FieldIndex::from).collect())
+    r.projection(
+        &fields
+            .into_iter()
+            .map(FieldIndex::InColumnReference)
+            .collect(),
+    )
 }
