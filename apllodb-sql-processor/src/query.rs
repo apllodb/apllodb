@@ -63,6 +63,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::redundant_clone)]
     fn test_query_processor_with_sql() -> ApllodbResult<()> {
         setup();
 

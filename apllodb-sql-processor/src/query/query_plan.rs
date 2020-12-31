@@ -24,16 +24,16 @@ impl TryFrom<SelectCommand> for QueryPlan {
     type Error = ApllodbError;
 
     fn try_from(sc: SelectCommand) -> ApllodbResult<Self> {
-        if let Some(_) = sc.where_condition {
+        if sc.where_condition.is_some() {
             unimplemented!();
         }
-        if let Some(_) = sc.grouping_elements {
+        if sc.grouping_elements.is_some() {
             unimplemented!();
         }
-        if let Some(_) = sc.having_conditions {
+        if sc.having_conditions.is_some() {
             unimplemented!();
         }
-        if let Some(_) = sc.order_bys {
+        if sc.order_bys.is_some() {
             unimplemented!();
         }
 
@@ -41,7 +41,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
         let table_names: Vec<TableName> = from_items
             .into_iter()
             .map(|from_item| {
-                if let Some(_) = from_item.alias {
+                if from_item.alias.is_some() {
                     unimplemented!();
                 }
                 TableName::new(from_item.table_name.0 .0)
@@ -58,7 +58,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
         let column_names: Vec<ColumnName> = select_fields
             .into_iter()
             .map(|select_field| {
-                if let Some(_) = select_field.alias {
+                if select_field.alias.is_some() {
                     unimplemented!();
                 }
 
@@ -67,7 +67,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         unimplemented!();
                     }
                     apllodb_ast::Expression::ColumnReferenceVariant(colref) => {
-                        if let Some(_) = colref.correlation {
+                        if colref.correlation.is_some() {
                             unimplemented!();
                         }
 

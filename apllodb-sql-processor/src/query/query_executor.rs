@@ -82,6 +82,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::redundant_clone)]
     fn test_query_executor() -> ApllodbResult<()> {
         setup();
 

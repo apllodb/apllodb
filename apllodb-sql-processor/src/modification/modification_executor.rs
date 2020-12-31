@@ -17,6 +17,7 @@ pub(crate) struct ModificationExecutor<'exe, Engine: StorageEngine> {
 }
 
 impl<'exe, Engine: StorageEngine> ModificationExecutor<'exe, Engine> {
+    #[allow(dead_code)]
     pub(crate) fn run(&self, plan: ModificationPlan) -> ApllodbResult<()> {
         let plan_tree = plan.plan_tree;
         match plan_tree.root {
@@ -70,6 +71,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::redundant_clone)]
     fn test_modification_executor() -> ApllodbResult<()> {
         setup();
 
