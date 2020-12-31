@@ -9,7 +9,7 @@ use crate::{
     sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes},
 };
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct ImmutableSchemaRowIter(VecDeque<SqliteRowIterator>);
 
 impl Iterator for ImmutableSchemaRowIter {

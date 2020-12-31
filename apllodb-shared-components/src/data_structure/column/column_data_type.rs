@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{
-    column_definition::ColumnDefinition, column_reference::ColumnReference, data_type::DataType,
-};
+use crate::data_structure::data_type::DataType;
+
+use super::{column_definition::ColumnDefinition, column_reference::ColumnReference};
 
 /// Column with data type.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]

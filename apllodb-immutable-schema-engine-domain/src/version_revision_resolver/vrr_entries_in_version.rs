@@ -7,7 +7,7 @@ use crate::{abstract_types::ImmutableSchemaAbstractTypes, version::id::VersionId
 use super::{vrr_entries::VRREntries, vrr_entry::VRREntry};
 
 /// Sequence of VRREntry in a specific Version.
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, PartialEq, Hash, Debug)]
 pub struct VRREntriesInVersion<
     'vrr,
     'db: 'vrr,

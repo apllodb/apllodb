@@ -5,5 +5,3 @@ pub(crate) mod column_definition;
 pub(crate) mod column_name;
 pub(crate) mod column_reference;
 pub(crate) mod column_value;
-pub(crate) mod data_type;
-pub(crate) mod data_type_kind;

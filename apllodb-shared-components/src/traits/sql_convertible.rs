@@ -3,7 +3,7 @@ mod option;
 mod text;
 
 use crate::{
-    data_structure::column::{data_type::DataType, data_type_kind::DataTypeKind},
+    data_structure::data_type::{data_type_kind::DataTypeKind, DataType},
     error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
 };
 use serde::{de::DeserializeOwned, Serialize};

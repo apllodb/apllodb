@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// Primary key with revision.
 /// Used for Immutable DML.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct FullPrimaryKey {
     apparent_pk: ApparentPrimaryKey,
     revision: Revision,

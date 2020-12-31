@@ -16,8 +16,8 @@ pub use crate::{
             column_constraint_kind::ColumnConstraintKind, column_constraints::ColumnConstraints,
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName, column_reference::ColumnReference, column_value::ColumnValue,
-            data_type::DataType, data_type_kind::DataTypeKind,
         },
+        data_type::{data_type_kind::DataTypeKind, DataType},
         database::database_name::DatabaseName,
         expression::{
             boolean_expression::{
@@ -25,7 +25,9 @@ pub use crate::{
                 BooleanExpression,
             },
             constant::{
-                CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant,
+                character_constant::{CharacterConstant, TextConstant},
+                numeric_constant::{IntegerConstant, NumericConstant},
+                Constant,
             },
             Expression,
         },
@@ -35,11 +37,13 @@ pub use crate::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
         },
-        value::sql_value::SqlValue,
+        value::sql_value::{
+            sql_compare_result::SqlCompareResult, sql_value_hash_key::SqlValueHashKey, SqlValue,
+        },
     },
     error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},
     traits::{database::Database, sql_convertible::SqlConvertible},
 };
 
 #[cfg(test)]
-pub mod test_support;
+pub(crate) mod test_support;
