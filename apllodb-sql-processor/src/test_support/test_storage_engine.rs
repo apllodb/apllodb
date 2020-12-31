@@ -1,8 +1,6 @@
 use super::mock_tx::MockTx;
 use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
-use apllodb_storage_engine_interface::{
-    StorageEngine, Transaction, TransactionBuilder, TransactionId,
-};
+use apllodb_storage_engine_interface::{StorageEngine, TransactionBuilder, TransactionId};
 
 pub(crate) struct TestDatabase;
 impl Database for TestDatabase {
@@ -38,9 +36,6 @@ impl StorageEngine for TestStorageEngine {
 }
 impl TestStorageEngine {
     pub(crate) fn begin() -> ApllodbResult<MockTx> {
-        let ctx = MockTx::begin_context();
-        ctx.expect().returning(|_| Ok(MockTx::new()));
-
-        MockTx::begin(TestTxBuilder::new())
+        Ok(MockTx::new())
     }
 }
