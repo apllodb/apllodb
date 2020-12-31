@@ -1,4 +1,4 @@
-use crate::data_structure::column::{data_type::DataType, data_type_kind::DataTypeKind};
+use crate::data_structure::data_type::{data_type_kind::DataTypeKind, DataType};
 
 use super::{not_null_data_types, SqlConvertible};
 use std::collections::HashSet;

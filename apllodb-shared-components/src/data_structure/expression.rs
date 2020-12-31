@@ -31,17 +31,15 @@ impl From<&SqlValue> for Expression {
 mod tests {
     use crate::{
         data_structure::{
-            column::{data_type::DataType, data_type_kind::DataTypeKind},
+            data_type::{data_type_kind::DataTypeKind, DataType},
             value::sql_value::SqlValue,
         },
         error::ApllodbResult,
         test_support::setup,
+        CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant,
     };
 
-    use super::{
-        constant::{CharacterConstant, Constant, IntegerConstant, NumericConstant, TextConstant},
-        Expression,
-    };
+    use super::Expression;
 
     #[test]
     fn test_from_sql_value_into_expression() -> ApllodbResult<()> {

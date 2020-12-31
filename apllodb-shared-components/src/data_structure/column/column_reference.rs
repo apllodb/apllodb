@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
@@ -24,6 +25,17 @@ impl ColumnReference {
     /// Ref to column name
     pub fn as_column_name(&self) -> &ColumnName {
         &self.column_name
+    }
+}
+
+impl Display for ColumnReference {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}.{}",
+            self.as_table_name().as_str(),
+            self.as_column_name().as_str()
+        )
     }
 }
 

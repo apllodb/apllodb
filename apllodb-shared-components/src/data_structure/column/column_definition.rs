@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+use crate::data_structure::data_type::DataType;
+
 use super::{
     column_constraints::ColumnConstraints, column_data_type::ColumnDataType,
-    column_reference::ColumnReference, data_type::DataType,
+    column_reference::ColumnReference,
 };
 
 /// Column definition used in DDL.

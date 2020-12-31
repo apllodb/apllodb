@@ -14,7 +14,7 @@ use crate::{
     version::id::VersionId,
 };
 
-#[derive(Eq, PartialEq, Hash, Debug, new)] // Clone here doesn't work. `Engine`'s Clone bound is somehow required. See: https://github.com/rust-lang/rust/issues/41481
+#[derive(PartialEq, Hash, Debug, new)] // Clone here doesn't work. `Engine`'s Clone bound is somehow required. See: https://github.com/rust-lang/rust/issues/41481
 pub struct VRREntry<
     'vrr,
     'db: 'vrr,

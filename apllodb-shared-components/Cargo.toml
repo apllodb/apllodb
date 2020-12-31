@@ -19,5 +19,7 @@ derive-new = "0.5"
 env_logger = "0.8"
 log = "0.4"
 
+fastrand = "1.4"
+
 [dev-dependencies]
 version-sync = "0.9"

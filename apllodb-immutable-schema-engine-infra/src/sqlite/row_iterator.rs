@@ -6,7 +6,7 @@ use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference};
 
 use std::{collections::VecDeque, fmt::Debug};
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct SqliteRowIterator(
     // Better to hold rusqlite::Rows or rusqlite::MappedRows (which implements Iterator) inside
     // to reduce memory consumption but I found it's impossible.
@@ -31,9 +31,6 @@ impl Iterator for SqliteRowIterator {
     }
 }
 
-// 結局、 VersionRowIter は自分のバージョンが含まない（がprojectionで要求されている) カラムをNULL値として持つべきか、という問題に帰着される。
-// 持たないほうが自然やろ
-// いや、意味論的に、ImmutableRowが「ワイのバージョンにはないけど値を返すべきカラム」を持つべきだな。
 impl VersionRowIterator for SqliteRowIterator {}
 
 impl SqliteRowIterator {

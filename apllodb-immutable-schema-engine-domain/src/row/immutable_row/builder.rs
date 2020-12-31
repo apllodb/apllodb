@@ -47,6 +47,8 @@ impl ImmutableRowBuilder {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use super::ImmutableRowBuilder;
     use crate::test_support::setup;
     use apllodb_shared_components::{
@@ -91,14 +93,14 @@ mod tests {
             )?
             .add_col_val(
                 &colref2,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &None::<i32>)?,
+                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
             )?
             .build()?;
 
         let row2 = ImmutableRowBuilder::default()
             .add_col_val(
                 &colref2,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, true), &None::<i32>)?,
+                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
             )?
             .add_col_val(
                 &colref1,

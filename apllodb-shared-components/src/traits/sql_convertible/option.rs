@@ -1,4 +1,4 @@
-use crate::data_structure::column::data_type::DataType;
+use crate::data_structure::data_type::DataType;
 
 use super::SqlConvertible;
 use std::collections::HashSet;
@@ -23,7 +23,7 @@ impl<T: SqlConvertible> SqlConvertible for Option<T> {
 mod tests_option {
     use crate::{
         data_structure::{
-            column::{data_type::DataType, data_type_kind::DataTypeKind},
+            data_type::{data_type_kind::DataTypeKind, DataType},
             value::sql_value::SqlValue,
         },
         error::{kind::ApllodbErrorKind, ApllodbResult},

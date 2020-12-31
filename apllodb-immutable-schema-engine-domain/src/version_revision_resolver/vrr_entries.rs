@@ -9,7 +9,7 @@ use crate::{
 use super::{vrr_entries_in_version::VRREntriesInVersion, vrr_entry::VRREntry};
 
 /// Sequence of VRREntry.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
+#[derive(Clone, PartialEq, Hash, Debug, new)]
 pub struct VRREntries<
     'vrr,
     'db: 'vrr,
