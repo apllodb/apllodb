@@ -2,5 +2,6 @@
 
 pub(crate) mod constant;
 
+#[allow(dead_code)]
 /// Holds static translation methods.
 pub(crate) struct AstTranslator;
