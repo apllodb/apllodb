@@ -261,7 +261,6 @@ impl SqlValue {
                     }
                 }
                 Constant::NumericConstantVariant(nv) => match nv {
-                    // TODO この辺の処理の要否の見直し
                     NumericConstant::IntegerConstantVariant(iv) =>
                         match data_type.kind() {
                             DataTypeKind::SmallInt => {
