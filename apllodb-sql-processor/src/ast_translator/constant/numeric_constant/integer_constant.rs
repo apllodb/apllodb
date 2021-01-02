@@ -19,15 +19,15 @@ impl AstTranslator {
             .map(IntegerConstant::I16)
             .or_else(|_| s.parse::<i32>().map(IntegerConstant::I32))
             .or_else(|_| s.parse::<i64>().map(IntegerConstant::I64))
-            .or_else(|_| {
-                Err(ApllodbError::new(
+            .map_err(|e| {
+                ApllodbError::new(
                     ApllodbErrorKind::NumericValueOutOfRange,
                     format!(
                         "integer value `{}` could not be parsed as i64 (max supported size)",
                         s
                     ),
-                    None,
-                ))
+                    Some(Box::new(e)),
+                )
             })
     }
 }
