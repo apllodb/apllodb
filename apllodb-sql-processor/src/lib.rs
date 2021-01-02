@@ -1,4 +1,6 @@
-#![deny(warnings, missing_debug_implementations, missing_docs)]
+#![deny(
+    //warnings,
+    missing_debug_implementations, missing_docs)]
 
 //! SQL processor.
 //!
@@ -152,6 +154,7 @@
 #[macro_use]
 extern crate derive_new;
 
+pub(crate) mod ast_translator;
 pub(crate) mod modification;
 pub(crate) mod query;
 
