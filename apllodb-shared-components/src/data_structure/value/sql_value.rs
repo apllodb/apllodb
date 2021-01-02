@@ -302,11 +302,11 @@ impl SqlValue {
                     }
                 },
             },
-            Expression::ColumnReferenceVariant(column_reference) => Err(ApllodbError::new(
+            Expression::ColumnNameVariant(column_name) => Err(ApllodbError::new(
                 ApllodbErrorKind::DataException,
                 format!(
                     "cannot construct SqlValue from column reference: {:?}",
-                    column_reference
+                    column_name
                 ),
                 None,
             )),

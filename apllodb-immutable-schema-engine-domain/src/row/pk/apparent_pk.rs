@@ -157,10 +157,7 @@ impl ApparentPrimaryKey {
             .map(|(column_name, sql_value)| {
                 let constant_expr = Constant::from(sql_value);
                 ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::ColumnReferenceVariant(ColumnReference::new(
-                        self.table_name.clone(),
-                        column_name.clone(),
-                    ))),
+                    left: Box::new(Expression::ColumnNameVariant(column_name.clone())),
                     right: Box::new(Expression::ConstantVariant(constant_expr)),
                 }
             })

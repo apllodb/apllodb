@@ -3,9 +3,8 @@ use apllodb_immutable_schema_engine_domain::{
     row::pk::full_pk::revision::Revision, version::version_number::VersionNumber,
 };
 use apllodb_shared_components::{
-    BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ColumnReference,
-    ComparisonFunction, Constant, DataType, DataTypeKind, Expression, LogicalFunction,
-    NumericConstant, SqlValue, TableName,
+    BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
+    DataType, DataTypeKind, Expression, LogicalFunction, NumericConstant, SqlValue, TableName,
 };
 
 pub(in crate::sqlite) trait ToSqlString {
@@ -56,12 +55,6 @@ impl ToSqlString for TableName {
 impl ToSqlString for ColumnName {
     fn to_sql_string(&self) -> String {
         self.as_str().to_string()
-    }
-}
-
-impl ToSqlString for ColumnReference {
-    fn to_sql_string(&self) -> String {
-        self.to_string()
     }
 }
 
@@ -148,9 +141,7 @@ impl ToSqlString for Expression {
     fn to_sql_string(&self) -> String {
         match self {
             Expression::ConstantVariant(c) => c.to_sql_string(),
-            Expression::ColumnReferenceVariant(column_reference) => {
-                column_reference.to_sql_string()
-            }
+            Expression::ColumnNameVariant(column_name) => column_name.to_sql_string(),
             Expression::BooleanExpressionVariant(boolean_expr) => boolean_expr.to_sql_string(),
         }
     }
