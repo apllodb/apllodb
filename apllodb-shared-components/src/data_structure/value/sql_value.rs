@@ -261,6 +261,7 @@ impl SqlValue {
                     }
                 }
                 Constant::NumericConstantVariant(nv) => match nv {
+                    // TODO この辺の処理の要否の見直し
                     NumericConstant::IntegerConstantVariant(iv) =>
                         match data_type.kind() {
                             DataTypeKind::SmallInt => {
@@ -302,11 +303,11 @@ impl SqlValue {
                     }
                 },
             },
-            Expression::ColumnNameVariant(column_name) => Err(ApllodbError::new(
+            Expression::ColumnReferenceVariant(column_reference) => Err(ApllodbError::new(
                 ApllodbErrorKind::DataException,
                 format!(
                     "cannot construct SqlValue from column reference: {:?}",
-                    column_name
+                    column_reference
                 ),
                 None,
             )),

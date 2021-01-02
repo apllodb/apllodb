@@ -3,9 +3,11 @@ pub(crate) mod constant;
 
 use serde::{Deserialize, Serialize};
 
+use crate::ColumnReference;
+
 use self::{boolean_expression::BooleanExpression, constant::Constant};
 
-use super::{column::column_name::ColumnName, value::sql_value::SqlValue};
+use super::value::sql_value::SqlValue;
 
 /// Expression.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -13,8 +15,8 @@ pub enum Expression {
     /// Constant
     ConstantVariant(Constant),
 
-    /// Reference to column value
-    ColumnNameVariant(ColumnName),
+    /// Reference to column reference
+    ColumnReferenceVariant(ColumnReference),
 
     /// Boolean expression
     BooleanExpressionVariant(BooleanExpression),

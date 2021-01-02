@@ -34,7 +34,7 @@ impl<'usecase> UpdateAllUseCaseInput<'usecase> {
         for (column_name, expr) in &self.column_values {
             match expr {
                 Expression::ConstantVariant(_) => {}
-                Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
+                Expression::ColumnReferenceVariant(_) | Expression::BooleanExpressionVariant(_) => {
                     return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
                         format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
                         column_name, expr
