@@ -156,6 +156,7 @@ pub(crate) mod ast_translator;
 pub(crate) mod modification;
 pub(crate) mod query;
 
+pub use modification::ModificationProcessor;
 pub use query::QueryProcessor;
 
 #[cfg(test)]
