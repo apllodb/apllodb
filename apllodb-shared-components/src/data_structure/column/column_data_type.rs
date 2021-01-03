@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::data_structure::data_type::DataType;
+use crate::data_structure::value::sql_type::SqlType;
 
 use super::{column_definition::ColumnDefinition, column_reference::ColumnReference};
 
@@ -8,15 +8,13 @@ use super::{column_definition::ColumnDefinition, column_reference::ColumnReferen
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ColumnDataType {
     column: ColumnReference,
-    data_type: DataType,
+    sql_type: SqlType,
+    nullable: bool,
 }
 
 impl From<&ColumnDefinition> for ColumnDataType {
     fn from(d: &ColumnDefinition) -> Self {
-        Self {
-            column: d.column_ref().clone(),
-            data_type: d.data_type().clone(),
-        }
+        d.column_data_type().clone()
     }
 }
 
@@ -27,7 +25,12 @@ impl ColumnDataType {
     }
 
     /// Ref to data type.
-    pub fn data_type(&self) -> &DataType {
-        &self.data_type
+    pub fn sql_type(&self) -> &SqlType {
+        &self.sql_type
+    }
+
+    /// IS NULL
+    pub fn nullable(&self) -> bool {
+        self.nullable
     }
 }

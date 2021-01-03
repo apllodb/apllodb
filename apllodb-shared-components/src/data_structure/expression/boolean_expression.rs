@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use self::{comparison_function::ComparisonFunction, logical_function::LogicalFunction};
 
 /// Boolean expression.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum BooleanExpression {
     /// AND, OR, NOT
     LogicalFunctionVariant(LogicalFunction),

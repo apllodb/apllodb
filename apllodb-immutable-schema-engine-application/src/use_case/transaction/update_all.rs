@@ -17,7 +17,7 @@ use super::{
     insert::{InsertUseCase, InsertUseCaseInput},
 };
 
-#[derive(Eq, PartialEq, Debug, new)]
+#[derive(PartialEq, Debug, new)]
 pub struct UpdateAllUseCaseInput<'usecase> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
@@ -98,12 +98,12 @@ impl<
             for (colref, val_before) in col_vals_before {
                 let val_after =
                     if let Some(expr) = input.column_values.remove(colref.as_column_name()) {
-                        // TODO Apply expression to existing row
-                        assert!(
-                            matches!(expr, Expression::ConstantVariant(_)),
-                            "only Constant is acceptable for now"
-                        );
-                        SqlValue::try_from(&expr, val_before.data_type())?
+                        if let Expression::ConstantVariant(sql_value) = expr {
+                            sql_value
+                        } else {
+                            todo!("only ConstantVariant is acceptable for now")
+                        }
+
                     } else {
                         val_before
                     };

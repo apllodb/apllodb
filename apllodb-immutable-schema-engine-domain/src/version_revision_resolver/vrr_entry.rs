@@ -41,8 +41,7 @@ impl<
     pub fn into_pk_only_row(self) -> ApllodbResult<ImmutableRow> {
         let mut builder = ImmutableRowBuilder::default();
         for colval in self.pk.into_colvals() {
-            let colref = colval.as_column_ref().clone();
-            builder = builder.add_col_val(&colref, colval.into_sql_value())?;
+            builder = builder.add_colval(colval)?;
         }
         builder.build()
     }

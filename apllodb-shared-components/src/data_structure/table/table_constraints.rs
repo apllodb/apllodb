@@ -142,15 +142,14 @@ mod tests {
         }}
     }
 
-    use crate::{
-        data_structure::table::table_constraint_kind::TableConstraintKind,
-        error::kind::ApllodbErrorKind,
-    };
+    use crate::{data_structure::table::table_constraint_kind::TableConstraintKind, error::kind::ApllodbErrorKind, test_support::setup};
 
     use super::TableConstraints;
 
     #[test]
     fn test_success() {
+        setup();
+
         let testset: Vec<Vec<TableConstraintKind>> = vec![
             vec![t_pk!("c1")],
             vec![t_pk!("c1"), t_unique!("c2")],
@@ -169,6 +168,8 @@ mod tests {
 
     #[test]
     fn test_failure_invalid_table_definition() {
+        setup();
+
         let testset: Vec<Vec<TableConstraintKind>> = vec![
             // no PK
             vec![t_unique!("c1")],

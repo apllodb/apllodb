@@ -174,8 +174,8 @@
 //!
 //! fn main() -> ApllodbResult<()> {
 //!     use apllodb_shared_components::{
-//!         ColumnConstraints, ColumnDefinition, ColumnName, ColumnReference, DataType, DataTypeKind,
-//!         DatabaseName, TableConstraintKind, TableConstraints, TableName,
+//!         ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, ColumnReference,
+//!         DatabaseName, SqlType, TableConstraintKind, TableConstraints, TableName,
 //!     };
 //!     use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 //!
@@ -190,15 +190,18 @@
 //!     let table_name = TableName::new("t")?;
 //!
 //!     let c1_def = ColumnDefinition::new(
-//!         ColumnReference::new(table_name.clone(), ColumnName::new("c1")?),
-//!         DataType::new(DataTypeKind::Integer, false),
+//!         ColumnDataType::new(
+//!             ColumnReference::new(table_name.clone(), ColumnName::new("c1")?),
+//!             SqlType::integer(),
+//!             false
+//!         ),
 //!         ColumnConstraints::default(),
 //!     );
 //!
 //!     tx.create_table(
 //!         &table_name,
 //!         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-//!             column_names: vec![c1_def.column_ref().as_column_name().clone()],
+//!             column_names: vec![c1_def.column_data_type().column_ref().as_column_name().clone()],
 //!         }])?,
 //!         &[],
 //!     )?;

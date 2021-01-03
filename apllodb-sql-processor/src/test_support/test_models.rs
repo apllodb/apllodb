@@ -1,5 +1,5 @@
 use apllodb_shared_components::{
-    ColumnName, ColumnReference, DataType, DataTypeKind, FieldIndex, Record, SqlValue, TableName,
+    ColumnName, ColumnReference, FieldIndex, Record, SqlType, SqlValue, TableName,
 };
 
 use crate::record;
@@ -23,8 +23,8 @@ impl People {
 
     pub(crate) fn record(id: i32, age: i32) -> Record {
         record! {
-            FieldIndex::InColumnReference(Self::colref_id()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &id).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &age).unwrap()
+            FieldIndex::InColumnReference(Self::colref_id()) => SqlValue::pack(SqlType::integer(), &id).unwrap(),
+            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::pack(SqlType::integer(), &age).unwrap()
         }
     }
 }
@@ -48,8 +48,8 @@ impl Body {
 
     pub(crate) fn record(people_id: i32, height: i32) -> Record {
         record! {
-            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &people_id).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_height()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &height).unwrap()
+            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::pack(SqlType::integer(), &people_id).unwrap(),
+            FieldIndex::InColumnReference(Self::colref_height()) => SqlValue::pack(SqlType::integer(), &height).unwrap()
         }
     }
 }
@@ -77,9 +77,9 @@ impl Pet {
 
     pub(crate) fn record(people_id: i32, kind: &str, age: i16) -> Record {
         record! {
-            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &people_id).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_kind()) => SqlValue::pack(&DataType::new(DataTypeKind::Text, false), &kind.to_string()).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::pack(&DataType::new(DataTypeKind::SmallInt, false), &age).unwrap()
+            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::pack(SqlType::integer(), &people_id).unwrap(),
+            FieldIndex::InColumnReference(Self::colref_kind()) => SqlValue::pack(SqlType::text(), &kind.to_string()).unwrap(),
+            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::pack(SqlType::small_int(), &age).unwrap()
         }
     }
 }

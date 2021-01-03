@@ -14,8 +14,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind, SqlValue,
-    TableName,
+    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, SqlType, SqlValue, TableName,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::collections::{hash_map::Entry, HashMap, VecDeque};
@@ -138,7 +137,8 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                     row.get(&ColumnReference::new(
                         sqlite_table_name.clone(),
                         ColumnName::new(CNAME_NAVI_ROWID)?,
-                    ))?,
+                    ))?
+                    .expect("must be NOT NULL"),
                     row,
                 );
             }
@@ -193,7 +193,8 @@ impl VersionDao<'_, '_> {
     fn cdt_navi_rowid(&self, table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
             ColumnReference::new(table_name, ColumnName::new(CNAME_NAVI_ROWID).unwrap()),
-            DataType::new(DataTypeKind::BigInt, false),
+            SqlType::big_int(),
+            false,
         )
     }
 }

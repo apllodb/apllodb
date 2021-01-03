@@ -2,10 +2,7 @@ mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::{
-    ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition, ColumnName,
-    ColumnReference, DataType, DataTypeKind, TableConstraintKind, TableConstraints, TableName,
-};
+use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName};
 use apllodb_storage_engine_interface::Transaction;
 
 #[test]
@@ -18,14 +15,21 @@ fn test_wait_lock() -> ApllodbResult<()> {
     let t_name = &TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
-        ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
-        DataType::new(DataTypeKind::Integer, false),
+        ColumnDataType::new(
+            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            SqlType::integer(),
+            false,
+        ),
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c1_def.column_ref().as_column_name().clone()],
+        column_names: vec![c1_def
+            .column_data_type()
+            .column_ref()
+            .as_column_name()
+            .clone()],
     }])?;
 
     let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1.0)?;

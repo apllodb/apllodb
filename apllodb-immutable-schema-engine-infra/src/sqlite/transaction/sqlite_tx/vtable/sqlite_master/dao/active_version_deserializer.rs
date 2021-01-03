@@ -3,7 +3,7 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
-    DataType, DataTypeKind,
+    SqlType,
 };
 use apllodb_sql_parser::{
     apllodb_ast::{self, Command, CreateTableCommand},
@@ -59,34 +59,33 @@ impl ActiveVersionDeserializer {
                     .iter()
                     .filter(|cd| !Self::is_control_column(cd))
                     .map(|cd| {
-                        let column_name_res = {
+                        let colref = {
                             let id = &cd.column_name.0;
-                            ColumnName::new(id.0.as_str())
-                        };
-                        let data_type = {
-                            let not_null = cd
-                                .column_constraints
-                                .contains(&apllodb_ast::ColumnConstraint::NotNullVariant);
-                            let data_type_kind = match cd.data_type {
-                                apllodb_ast::DataType::IntegerTypeVariant(
-                                    apllodb_ast::IntegerType::SmallIntVariant,
-                                ) => DataTypeKind::SmallInt,
-                                apllodb_ast::DataType::IntegerTypeVariant(
-                                    apllodb_ast::IntegerType::IntegerVariant,
-                                ) => DataTypeKind::Integer,
-                                apllodb_ast::DataType::IntegerTypeVariant(
-                                    apllodb_ast::IntegerType::BigIntVariant,
-                                ) => DataTypeKind::BigInt,
-                            };
-                            DataType::new(data_type_kind, !not_null)
+                            ColumnReference::new(
+                                vtable.table_name().clone(),
+                                ColumnName::new(id.0.as_str())?,
+                            )
                         };
 
-                        column_name_res.map(|column_name| {
-                            ColumnDataType::new(
-                                ColumnReference::new(vtable.table_name().clone(), column_name),
-                                data_type,
-                            )
-                        })
+                        let not_null = cd
+                            .column_constraints
+                            .contains(&apllodb_ast::ColumnConstraint::NotNullVariant);
+
+                        let sql_type = {
+                            match cd.data_type {
+                                apllodb_ast::DataType::IntegerTypeVariant(
+                                    apllodb_ast::IntegerType::SmallIntVariant,
+                                ) => SqlType::small_int(),
+                                apllodb_ast::DataType::IntegerTypeVariant(
+                                    apllodb_ast::IntegerType::IntegerVariant,
+                                ) => SqlType::integer(),
+                                apllodb_ast::DataType::IntegerTypeVariant(
+                                    apllodb_ast::IntegerType::BigIntVariant,
+                                ) => SqlType::big_int(),
+                            }
+                        };
+
+                        Ok(ColumnDataType::new(colref, sql_type, !not_null))
                     })
                     .collect::<ApllodbResult<Vec<ColumnDataType>>>()?;
 
@@ -108,6 +107,8 @@ impl ActiveVersionDeserializer {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use super::ActiveVersionDeserializer;
     use crate::sqlite::transaction::sqlite_tx::version::dao::CreateTableSqlForVersionTestWrapper;
     use crate::test_support::setup;
@@ -116,8 +117,7 @@ mod tests {
     };
     use apllodb_shared_components::{
         ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-        ColumnReference, DataType, DataTypeKind, DatabaseName, TableConstraintKind,
-        TableConstraints, TableName,
+        ColumnReference, DatabaseName, SqlType, TableConstraintKind, TableConstraints, TableName,
     };
 
     #[test]
@@ -125,8 +125,11 @@ mod tests {
         setup();
 
         let c1_def = ColumnDefinition::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-            DataType::new(DataTypeKind::Integer, false),
+            ColumnDataType::new(
+                ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
+                SqlType::integer(),
+                false,
+            ),
             ColumnConstraints::new(vec![])?,
         );
 
@@ -134,7 +137,11 @@ mod tests {
             (
                 vec![c1_def.clone()],
                 TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                    column_names: vec![c1_def.column_ref().as_column_name().clone()],
+                    column_names: vec![c1_def
+                        .column_data_type()
+                        .column_ref()
+                        .as_column_name()
+                        .clone()],
                 }])?,
             ), // TODO more samples
         ];
@@ -144,7 +151,7 @@ mod tests {
             let table_name = TableName::new("t")?;
             let vtable = VTable::create(&database_name, &table_name, &t.1, &t.0)?;
             let non_pk_column_data_types: Vec<ColumnDataType> =
-                t.0.iter().map(|cd| cd.column_data_type()).collect();
+                t.0.iter().map(|cd| cd.column_data_type().clone()).collect();
             let version = ActiveVersion::initial(vtable.id(), &non_pk_column_data_types)?;
 
             let sql = CreateTableSqlForVersionTestWrapper::from(&version);

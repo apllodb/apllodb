@@ -33,7 +33,13 @@ pub fn filter_non_pk_column_definitions(
     all_column_definitions
         .iter()
         .filter_map(|cd| {
-            if apk_column_names.contains(&cd.column_ref().as_column_name().as_str().to_string()) {
+            if apk_column_names.contains(
+                &cd.column_data_type()
+                    .column_ref()
+                    .as_column_name()
+                    .as_str()
+                    .to_string(),
+            ) {
                 None
             } else {
                 Some(cd.clone())
