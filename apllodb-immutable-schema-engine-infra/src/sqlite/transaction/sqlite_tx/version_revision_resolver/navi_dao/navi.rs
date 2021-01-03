@@ -28,16 +28,22 @@ impl Navi {
         navi_table_name: &NaviTableName,
         r: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
-        let rowid = SqliteRowid(r.get::<i64>(&ColumnReference::new(
-            navi_table_name.to_table_name(),
-            ColumnName::new(CNAME_ROWID)?,
-        ))?);
-        let revision = Revision::from(r.get::<i64>(&ColumnReference::new(
-            navi_table_name.to_table_name(),
-            ColumnName::new(CNAME_REVISION)?,
-        ))?);
+        let rowid = SqliteRowid(
+            r.get::<i64>(&ColumnReference::new(
+                navi_table_name.to_table_name(),
+                ColumnName::new(CNAME_ROWID)?,
+            ))?
+            .expect("must be NOT NULL"),
+        );
+        let revision = Revision::from(
+            r.get::<i64>(&ColumnReference::new(
+                navi_table_name.to_table_name(),
+                ColumnName::new(CNAME_REVISION)?,
+            ))?
+            .expect("must be NOT NULL"),
+        );
         let opt_version_number = r
-            .get::<Option<i64>>(&ColumnReference::new(
+            .get::<i64>(&ColumnReference::new(
                 navi_table_name.to_table_name(),
                 ColumnName::new(CNAME_VERSION_NUMBER)?,
             ))?

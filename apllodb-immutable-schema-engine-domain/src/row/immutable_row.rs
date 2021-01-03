@@ -15,7 +15,12 @@ pub struct ImmutableRow {
 }
 
 impl ImmutableRow {
-    /// Retrieve (and remove) an [SqlValue](apllodb_shared_components::SqlValue) from this row.
+    /// Retrieve (and remove) an [NNSqlValue](apllodb_shared_components::NNSqlValue) from this row.
+    ///
+    /// # Failures
+    ///
+    /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
+    ///   - Specified column does not exist in this row.
     pub fn get_sql_value(&mut self, colref: &ColumnReference) -> ApllodbResult<SqlValue> {
         self.col_vals.remove(&colref).ok_or_else(|| {
             ApllodbError::new(
@@ -28,18 +33,26 @@ impl ImmutableRow {
 
     /// Retrieve (and remove) an SqlValue from this row and return it as Rust type.
     ///
+    /// Returns `None` if matching [SqlValue](apllodb_shared_components::SqlValue) is NULL.
+    ///
     /// # Failures
     ///
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `column_name` is not in this row.
-    pub fn get<T: SqlConvertible>(&mut self, colref: &ColumnReference) -> ApllodbResult<T> {
+    pub fn get<T: SqlConvertible>(&mut self, colref: &ColumnReference) -> ApllodbResult<Option<T>> {
         let sql_value = self.get_sql_value(colref)?;
-        sql_value.unpack().or_else(|e| {
-            // write back removed value into row
-            let colval = ColumnValue::new(colref.clone(), sql_value);
-            self.append(vec![colval])?;
-            Err(e)
-        })
+        match sql_value {
+            SqlValue::Null => Ok(None),
+            SqlValue::NotNull(nn) => {
+                let v = nn.unpack().or_else(|e| {
+                    // write back removed value into row
+                    let colval = ColumnValue::new(colref.clone(), SqlValue::NotNull(nn));
+                    self.append(vec![colval])?;
+                    Err(e)
+                })?;
+                Ok(Some(v))
+            }
+        }
     }
 
     /// Append column values to this row.
