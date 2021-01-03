@@ -152,6 +152,12 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ steps.rustc_version.outputs.version }}-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: cargo build --tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --tests --release --all-features
+
       - name: cargo test
         uses: actions-rs/cargo@v1
         with:
