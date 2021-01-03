@@ -104,11 +104,11 @@ mod tests {
 
         let row2 = ImmutableRowBuilder::default()
             .add_colval(ColumnValue::new(
-                colref2.clone(),
+                colref2,
                 SqlValue::pack(SqlType::integer(), &1i32)?,
             ))?
             .add_colval(ColumnValue::new(
-                colref1.clone(),
+                colref1,
                 SqlValue::pack(SqlType::integer(), &0i32)?,
             ))?
             .build()?;

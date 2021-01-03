@@ -19,7 +19,7 @@ impl ImmutableRow {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - Specified column does not exist in this row.
     pub fn get_sql_value(&mut self, colref: &ColumnReference) -> ApllodbResult<SqlValue> {
         self.col_vals.remove(&colref).ok_or_else(|| {
@@ -33,7 +33,7 @@ impl ImmutableRow {
 
     /// Retrieve (and remove) an SqlValue from this row and return it as Rust type.
     ///
-    /// Returns `None` if matching [SqlValue](crate::SqlValue) is NULL.
+    /// Returns `None` if matching [SqlValue](apllodb_shared_components::SqlValue) is NULL.
     ///
     /// # Failures
     ///
