@@ -2,7 +2,7 @@ use super::BooleanExpression;
 use serde::{Deserialize, Serialize};
 
 /// AND, OR, NOT
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum LogicalFunction {
     /// `AND` operation
     AndVariant {

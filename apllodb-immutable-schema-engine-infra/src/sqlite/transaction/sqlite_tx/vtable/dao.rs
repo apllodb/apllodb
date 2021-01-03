@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine_domain::vtable::{
 };
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
-    DataType, DataTypeKind, TableName,
+    SqlType, TableName,
 };
 
 #[derive(Debug)]
@@ -92,10 +92,12 @@ CREATE TABLE IF NOT EXISTS {} (
             )
         })?;
 
-        let table_wide_constraints_str: String = row.get(&ColumnReference::new(
-            vtable_id.table_name().clone(),
-            ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?,
-        ))?;
+        let table_wide_constraints_str: String = row
+            .get(&ColumnReference::new(
+                vtable_id.table_name().clone(),
+                ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?,
+            ))?
+            .expect("must be NOT NULL");
 
         let table_wide_constraints: TableWideConstraints =
             serde_yaml::from_str(&table_wide_constraints_str).map_err(|e| {
@@ -170,7 +172,8 @@ CREATE TABLE IF NOT EXISTS {} (
                 table_name,
                 ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
             ),
-            DataType::new(DataTypeKind::Text, false),
+            SqlType::text(),
+            false,
         )
     }
 }

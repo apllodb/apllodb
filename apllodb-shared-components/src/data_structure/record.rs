@@ -21,14 +21,20 @@ pub struct Record {
 impl Record {
     /// Get Rust value from record's field.
     ///
+    /// Returns `None` if matching [SqlValue](crate::SqlValue) is NULL.
+    ///
     /// # Failures
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
-    pub fn get<T: SqlConvertible>(&self, index: &FieldIndex) -> ApllodbResult<T> {
+    pub fn get<T: SqlConvertible>(&self, index: &FieldIndex) -> ApllodbResult<Option<T>> {
         let sql_value = self.get_sql_value(index)?;
-        Ok(sql_value.unpack()?)
+        let ret = match sql_value {
+            SqlValue::Null => None,
+            SqlValue::NotNull(nn) => Some(nn.unpack()?),
+        };
+        Ok(ret)
     }
 
     /// Get [SqlValue](crate::SqlValue) from record's field.

@@ -8,8 +8,8 @@
 ///
 /// let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c")?);
 ///
-/// let r1 = record! { FieldIndex::from(colref.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &123i32)? };
-/// let r2 = record! { FieldIndex::from(colref.clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &456i32)? };
+/// let r1 = record! { FieldIndex::from(colref.clone()) => SqlValue::pack(SqlType::integer(), &123i32)? };
+/// let r2 = record! { FieldIndex::from(colref.clone()) => SqlValue::pack(SqlType::integer(), &456i32)? };
 ///
 /// assert_ne!(r1, r2);
 /// ```

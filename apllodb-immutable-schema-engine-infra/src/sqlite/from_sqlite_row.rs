@@ -3,7 +3,8 @@ use apllodb_immutable_schema_engine_domain::row::immutable_row::{
     builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnReference, DataTypeKind, SqlConvertible, SqlValue,
+    ApllodbResult, ColumnDataType, ColumnReference, ColumnValue, I64LooseType,
+    NumericComparableType, SqlConvertible, SqlType, SqlValue, StringComparableLoseType,
 };
 
 pub(crate) trait FromSqliteRow {
@@ -15,9 +16,10 @@ pub(crate) trait FromSqliteRow {
         let mut builder = ImmutableRowBuilder::default();
 
         for cdt in column_data_types {
-            let non_pk_column_name = cdt.column_ref();
+            let non_pk_colref = cdt.column_ref();
             let non_pk_sql_value = Self::_sql_value(sqlite_row, cdt)?;
-            builder = builder.add_col_val(&non_pk_column_name, non_pk_sql_value)?;
+            builder =
+                builder.add_colval(ColumnValue::new(non_pk_colref.clone(), non_pk_sql_value))?;
         }
 
         // add requested (specified in projection) columns as NULL.
@@ -34,13 +36,25 @@ pub(crate) trait FromSqliteRow {
         sqlite_row: &rusqlite::Row<'_>,
         column_data_type: &ColumnDataType,
     ) -> ApllodbResult<SqlValue> {
-        let data_type = column_data_type.data_type();
-
-        let sql_value = match data_type.kind() {
-            DataTypeKind::SmallInt => Self::_sqlite_row_value::<i16>(sqlite_row, column_data_type)?,
-            DataTypeKind::Integer => Self::_sqlite_row_value::<i32>(sqlite_row, column_data_type)?,
-            DataTypeKind::BigInt => Self::_sqlite_row_value::<i64>(sqlite_row, column_data_type)?,
-            DataTypeKind::Text => Self::_sqlite_row_value::<String>(sqlite_row, column_data_type)?,
+        let sql_value = match column_data_type.sql_type() {
+            SqlType::NumericComparable(n) => match n {
+                NumericComparableType::I64Loose(i) => match i {
+                    I64LooseType::SmallInt => {
+                        Self::_sqlite_row_value::<i16>(sqlite_row, column_data_type)?
+                    }
+                    I64LooseType::Integer => {
+                        Self::_sqlite_row_value::<i32>(sqlite_row, column_data_type)?
+                    }
+                    I64LooseType::BigInt => {
+                        Self::_sqlite_row_value::<i64>(sqlite_row, column_data_type)?
+                    }
+                },
+            },
+            SqlType::StringComparableLoose(s) => match s {
+                StringComparableLoseType::Text => {
+                    Self::_sqlite_row_value::<String>(sqlite_row, column_data_type)?
+                }
+            },
         };
 
         Ok(sql_value)
@@ -54,7 +68,7 @@ pub(crate) trait FromSqliteRow {
         T: rusqlite::types::FromSql + SqlConvertible,
     {
         let colref = column_data_type.column_ref();
-        let data_type = column_data_type.data_type();
+        let sql_type = column_data_type.sql_type();
 
         let err_conv = |e: rusqlite::Error| {
             map_sqlite_err(
@@ -63,16 +77,14 @@ pub(crate) trait FromSqliteRow {
             )
         };
 
-        let sql_value: SqlValue = if data_type.nullable() {
-            let rust_value: Option<T> = sqlite_row
-                .get(colref.as_column_name().as_str())
-                .map_err(err_conv)?;
-            SqlValue::pack(data_type, &rust_value)?
+        let rust_value: Option<T> = sqlite_row
+            .get(colref.as_column_name().as_str())
+            .map_err(err_conv)?;
+
+        let sql_value = if let Some(rust_value) = rust_value {
+            SqlValue::pack(sql_type.clone(), &rust_value)?
         } else {
-            let rust_value: T = sqlite_row
-                .get(colref.as_column_name().as_str())
-                .map_err(err_conv)?;
-            SqlValue::pack(data_type, &rust_value)?
+            SqlValue::Null
         };
 
         Ok(sql_value)

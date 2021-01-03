@@ -17,17 +17,11 @@ pub use crate::{
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName, column_reference::ColumnReference, column_value::ColumnValue,
         },
-        data_type::{data_type_kind::DataTypeKind, DataType},
         database::database_name::DatabaseName,
         expression::{
             boolean_expression::{
                 comparison_function::ComparisonFunction, logical_function::LogicalFunction,
                 BooleanExpression,
-            },
-            constant::{
-                character_constant::{CharacterConstant, TextConstant},
-                numeric_constant::{IntegerConstant, NumericConstant},
-                Constant,
             },
             Expression,
         },
@@ -37,8 +31,12 @@ pub use crate::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
         },
-        value::sql_value::{
-            sql_compare_result::SqlCompareResult, sql_value_hash_key::SqlValueHashKey, SqlValue,
+        value::{
+            sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
+            sql_value::{
+                nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult,
+                sql_value_hash_key::SqlValueHashKey, SqlValue,
+            },
         },
     },
     error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},

@@ -1,7 +1,7 @@
 use super::ImmutableRow;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, SqlValue,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, ColumnValue, SqlValue,
 };
 use std::collections::HashMap;
 
@@ -18,8 +18,14 @@ impl ImmutableRowBuilder {
     ///
     /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
     ///   - Same `ColumnName` added twice.
-    pub fn add_col_val(mut self, colref: &ColumnReference, value: SqlValue) -> ApllodbResult<Self> {
-        if self.col_vals.insert(colref.clone(), value).is_some() {
+    pub fn add_colval(mut self, colval: ColumnValue) -> ApllodbResult<Self> {
+        let colref = colval.as_column_ref().clone();
+
+        if self
+            .col_vals
+            .insert(colref.clone(), colval.into_sql_value())
+            .is_some()
+        {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
                 format!("column `{:?}` is already added to this record", colref),
@@ -31,8 +37,7 @@ impl ImmutableRowBuilder {
     }
 
     pub fn add_void_projection(self, colref: &ColumnReference) -> ApllodbResult<Self> {
-        let null = SqlValue::null();
-        self.add_col_val(colref, null)
+        self.add_colval(ColumnValue::new(colref.clone(), SqlValue::Null))
     }
 
     /// Finalize.
@@ -52,7 +57,7 @@ mod tests {
     use super::ImmutableRowBuilder;
     use crate::test_support::setup;
     use apllodb_shared_components::{
-        ApllodbResult, ColumnName, ColumnReference, DataType, DataTypeKind, SqlValue, TableName,
+        ApllodbResult, ColumnName, ColumnReference, ColumnValue, SqlType, SqlValue, TableName,
     };
 
     #[test]
@@ -62,16 +67,16 @@ mod tests {
         let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
 
         let mut row1 = ImmutableRowBuilder::default()
-            .add_col_val(
-                &colref,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
-            )?
+            .add_colval(ColumnValue::new(
+                colref.clone(),
+                SqlValue::pack(SqlType::integer(), &0i32)?,
+            ))?
             .build()?;
         let mut row2 = ImmutableRowBuilder::default()
-            .add_col_val(
-                &colref,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
-            )?
+            .add_colval(ColumnValue::new(
+                colref.clone(),
+                SqlValue::pack(SqlType::integer(), &0i32)?,
+            ))?
             .build()?;
 
         assert_eq!(row1.get::<i32>(&colref)?, row2.get::<i32>(&colref)?);
@@ -87,25 +92,25 @@ mod tests {
         let colref2 = ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?);
 
         let row1 = ImmutableRowBuilder::default()
-            .add_col_val(
-                &colref1,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
-            )?
-            .add_col_val(
-                &colref2,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            )?
+            .add_colval(ColumnValue::new(
+                colref1.clone(),
+                SqlValue::pack(SqlType::integer(), &0i32)?,
+            ))?
+            .add_colval(ColumnValue::new(
+                colref2.clone(),
+                SqlValue::pack(SqlType::integer(), &1i32)?,
+            ))?
             .build()?;
 
         let row2 = ImmutableRowBuilder::default()
-            .add_col_val(
-                &colref2,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-            )?
-            .add_col_val(
-                &colref1,
-                SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &0i32)?,
-            )?
+            .add_colval(ColumnValue::new(
+                colref2,
+                SqlValue::pack(SqlType::integer(), &1i32)?,
+            ))?
+            .add_colval(ColumnValue::new(
+                colref1,
+                SqlValue::pack(SqlType::integer(), &0i32)?,
+            ))?
             .build()?;
 
         assert_eq!(row1, row2);

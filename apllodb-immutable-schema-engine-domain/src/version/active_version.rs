@@ -119,7 +119,7 @@ impl ActiveVersion {
         // Check if all NOT NULL columns are included in `column_values`.
         let version_not_null_columns = version_column_data_types
             .iter()
-            .filter(|cdt| !cdt.data_type().nullable());
+            .filter(|cdt| !cdt.nullable());
         for not_null_column_name in version_not_null_columns.map(|cdt| cdt.column_ref()) {
             if !column_values.contains_key(not_null_column_name.as_column_name()) {
                 return Err(ApllodbError::new(
@@ -185,8 +185,7 @@ mod tests {
     use super::ActiveVersion;
     use crate::{test_support::setup, vtable::id::VTableId};
     use apllodb_shared_components::{
-        AlterTableAction, ColumnDataType, ColumnName, ColumnReference, DataType, DataTypeKind,
-        TableName,
+        AlterTableAction, ColumnDataType, ColumnName, ColumnReference, SqlType, TableName,
     };
     use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 
@@ -196,7 +195,8 @@ mod tests {
 
         let c1_cdt = ColumnDataType::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-            DataType::new(DataTypeKind::Integer, false),
+            SqlType::integer(),
+            false,
         );
 
         let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
@@ -211,11 +211,13 @@ mod tests {
 
         let c1_cdt = ColumnDataType::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-            DataType::new(DataTypeKind::Integer, false),
+            SqlType::integer(),
+            false,
         );
         let c2_cdt = ColumnDataType::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
-            DataType::new(DataTypeKind::Integer, false),
+            SqlType::integer(),
+            false,
         );
 
         let column_data_types = vec![c1_cdt.clone(), c2_cdt.clone()];
@@ -246,7 +248,8 @@ mod tests {
 
         let c1_cdt = ColumnDataType::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-            DataType::new(DataTypeKind::Integer, false),
+            SqlType::integer(),
+            false,
         );
         let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
 

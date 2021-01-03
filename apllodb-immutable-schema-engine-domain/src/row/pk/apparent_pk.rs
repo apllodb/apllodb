@@ -1,8 +1,8 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ColumnReference, ColumnValue, ComparisonFunction, Constant, Expression, FieldIndex,
-    LogicalFunction, Record, SqlConvertible, SqlValue, TableName,
+    ColumnReference, ColumnValue, ComparisonFunction, Expression, FieldIndex, LogicalFunction,
+    NNSqlValue, Record, SqlConvertible, SqlValue, TableName,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
@@ -14,17 +14,17 @@ pub struct ApparentPrimaryKey {
     pk_column_names: Vec<ColumnName>,
 
     // real "key" of a record.
-    sql_values: Vec<SqlValue>,
+    sql_values: Vec<NNSqlValue>,
 }
 
 impl ApparentPrimaryKey {
-    /// Get [SqlValue](apllodb_shared_components::SqlValue) from a PK column.
+    /// Get [NNSqlValue](apllodb_shared_components::NNSqlValue) from a PK column.
     ///
     /// # Failures
     ///
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `column_name` is not in this PK.
-    pub fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&SqlValue> {
+    pub fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&NNSqlValue> {
         let target_sql_value = self
             .zipped()
             .iter()
@@ -70,8 +70,14 @@ impl ApparentPrimaryKey {
 
         let apk_sql_values = apk_cdts
             .iter()
-            .map(|cdt| row.get_sql_value(cdt.column_ref()))
-            .collect::<ApllodbResult<Vec<SqlValue>>>()?;
+            .map(|cdt| {
+                if let SqlValue::NotNull(sql_value) = row.get_sql_value(cdt.column_ref())? {
+                    Ok(sql_value)
+                } else {
+                    panic!("primary key's column must be NOT NULL")
+                }
+            })
+            .collect::<ApllodbResult<Vec<NNSqlValue>>>()?;
 
         Ok(Self::new(
             vtable.table_name().clone(),
@@ -92,7 +98,14 @@ impl ApparentPrimaryKey {
                 record
                     .get_sql_value(&FieldIndex::InColumnReference(cdt.column_ref().clone()))
                     // FIXME less clone
-                    .map(|sql_value| sql_value.clone())
+                    .map(|sql_value| {
+                        if let SqlValue::NotNull(sql_value) =    sql_value {
+                            sql_value.clone()
+                        }else {
+                            panic!("primary key's column must be NOT NULL")
+                        }
+                    }
+                    )
                     .map_err(|e| {
                         ApllodbError::new(
                             ApllodbErrorKind::NotNullViolation,
@@ -106,7 +119,7 @@ impl ApparentPrimaryKey {
                         )
                     })
             })
-            .collect::<ApllodbResult<Vec<SqlValue>>>()?;
+            .collect::<ApllodbResult<Vec<NNSqlValue>>>()?;
 
         Ok(Self::new(
             vtable.table_name().clone(),
@@ -119,11 +132,11 @@ impl ApparentPrimaryKey {
         &self.pk_column_names
     }
 
-    pub fn sql_values(&self) -> &[SqlValue] {
+    pub fn sql_values(&self) -> &[NNSqlValue] {
         &self.sql_values
     }
 
-    pub fn zipped(&self) -> Vec<(&ColumnName, &SqlValue)> {
+    pub fn zipped(&self) -> Vec<(&ColumnName, &NNSqlValue)> {
         self.pk_column_names.iter().zip(&self.sql_values).collect()
     }
 
@@ -133,9 +146,10 @@ impl ApparentPrimaryKey {
         self.pk_column_names
             .into_iter()
             .zip(self.sql_values)
-            .map(|(cn, v)| {
+            .map(|(cn, nn)| {
                 let colref = ColumnReference::new(table_name.clone(), cn);
-                ColumnValue::new(colref, v)
+                let sql_value = SqlValue::NotNull(nn);
+                ColumnValue::new(colref, sql_value)
             })
             .collect()
     }
@@ -145,7 +159,7 @@ impl ApparentPrimaryKey {
             .into_iter()
             .map(|(cname, sql_value)| {
                 let column_ref = ColumnReference::new(self.table_name.clone(), cname.clone());
-                ColumnDataType::new(column_ref, sql_value.data_type().clone())
+                ColumnDataType::new(column_ref, sql_value.sql_type().clone(), false)
             })
             .collect()
     }
@@ -154,13 +168,14 @@ impl ApparentPrimaryKey {
         let mut comparisons = self
             .zipped()
             .into_iter()
-            .map(|(column_name, sql_value)| {
-                let constant_expr = Constant::from(sql_value);
-                ComparisonFunction::EqualVariant {
+            .map(
+                |(column_name, sql_value)| ComparisonFunction::EqualVariant {
                     left: Box::new(Expression::ColumnNameVariant(column_name.clone())),
-                    right: Box::new(Expression::ConstantVariant(constant_expr)),
-                }
-            })
+                    right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
+                        sql_value.clone(),
+                    ))),
+                },
+            )
             .collect::<VecDeque<ComparisonFunction>>();
 
         let mut boolean_expr = BooleanExpression::ComparisonFunctionVariant(
