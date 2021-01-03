@@ -3,8 +3,8 @@ mod test_support;
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
-    AlterTableAction, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDefinition,
-    ColumnName, ColumnReference, DataType, DataTypeKind, FieldIndex, RecordIterator, SqlValue,
+    AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
+    ColumnName, ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
@@ -21,19 +21,29 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     let t_name = &TableName::new("t")?;
 
     let c_id_def = ColumnDefinition::new(
-        ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
-        DataType::new(DataTypeKind::Integer, false),
+        ColumnDataType::new(
+            ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
+            SqlType::integer(),
+            false,
+        ),
         ColumnConstraints::new(vec![])?,
     );
     let c1_def = ColumnDefinition::new(
-        ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
-        DataType::new(DataTypeKind::Integer, false),
+        ColumnDataType::new(
+            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            SqlType::integer(),
+            false,
+        ),
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c_id_def.column_ref().as_column_name().clone()],
+        column_names: vec![c_id_def
+            .column_data_type()
+            .column_ref()
+            .as_column_name()
+            .clone()],
     }])?;
 
     // v1
@@ -49,8 +59,8 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
         &t_name,
         RecordIterator::new(vec![
             record! {
-                FieldIndex::InColumnReference(c_id_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?,
-                FieldIndex::InColumnReference(c1_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &1i32)?
+                FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
+                FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?
             }
         ])
     )?;
@@ -66,7 +76,11 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     tx.alter_table(
         &t_name,
         &AlterTableAction::DropColumn {
-            column_name: c1_def.column_ref().as_column_name().clone(),
+            column_name: c1_def
+                .column_data_type()
+                .column_ref()
+                .as_column_name()
+                .clone(),
         },
     )?;
 
@@ -82,7 +96,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     tx.insert(
         &t_name,
         RecordIterator::new(vec![
-            record! { FieldIndex::InColumnReference(c_id_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &2i32)? },
+            record! { FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &2i32)? },
         ])
     )?;
 
@@ -100,8 +114,8 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
         &t_name,
         RecordIterator::new(vec![
             record! {
-                FieldIndex::InColumnReference(c_id_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?,
-                FieldIndex::InColumnReference(c1_def.column_ref().clone()) => SqlValue::pack(&DataType::new(DataTypeKind::Integer, false), &3i32)?
+                FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?,
+                FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?
             }
         ])
     )?;
@@ -113,29 +127,29 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     assert_eq!(records.clone().count(), 3);
 
     for record in records {
-        let id: i32 = record.get(&FieldIndex::InColumnReference(
-            c_id_def.column_ref().clone(),
-        ))?;
+        let id: i32 = record
+            .get(&FieldIndex::InColumnReference(
+                c_id_def.column_data_type().column_ref().clone(),
+            ))?
+            .unwrap();
         match id {
             1 => assert_eq!(
-                record.get::<i32>(&FieldIndex::InColumnReference(c1_def.column_ref().clone()))?,
-                1
+                record.get::<i32>(&FieldIndex::InColumnReference(
+                    c1_def.column_data_type().column_ref().clone()
+                ))?,
+                Some(1)
             ),
             3 => assert_eq!(
-                record.get::<i32>(&FieldIndex::InColumnReference(c1_def.column_ref().clone()))?,
-                3
+                record.get::<i32>(&FieldIndex::InColumnReference(
+                    c1_def.column_data_type().column_ref().clone()
+                ))?,
+                Some(3)
             ),
             2 => {
-                // Cannot fetch column `c1` from v2 as i32.
-                match record.get::<i32>(&FieldIndex::InColumnReference(c1_def.column_ref().clone()))
-                {
-                    Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DatatypeMismatch),
-                    _ => unreachable!(),
-                };
                 // Can fetch column `c1` from v2 and it's value is NULL.
                 assert_eq!(
-                    record.get::<Option<i32>>(&FieldIndex::InColumnReference(
-                        c1_def.column_ref().clone()
+                    record.get::<i32>(&FieldIndex::InColumnReference(
+                        c1_def.column_data_type().column_ref().clone()
                     ))?,
                     None
                 );

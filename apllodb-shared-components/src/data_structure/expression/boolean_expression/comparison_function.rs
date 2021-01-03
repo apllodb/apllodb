@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::data_structure::expression::Expression;
 
 /// Comparison function and its operands
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum ComparisonFunction {
     /// `=` operation
     EqualVariant {

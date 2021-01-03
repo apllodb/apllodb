@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
-    DataType, DataTypeKind, TableName,
+    SqlType, TableName,
 };
 
 #[derive(Debug)]
@@ -43,10 +43,12 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
         let create_table_sqls: Vec<String> = stmt
             .query_named(&[], &[&self.cdt_create_table_sql()], &[])?
             .map(|mut row| {
-                let s = row.get::<String>(&ColumnReference::new(
-                    TableName::new(TNAME)?,
-                    ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
-                ))?;
+                let s = row
+                    .get::<String>(&ColumnReference::new(
+                        TableName::new(TNAME)?,
+                        ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
+                    ))?
+                    .expect("must be NOT NULL");
                 Ok(s)
             })
             .collect::<ApllodbResult<Vec<String>>>()?;
@@ -90,7 +92,8 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
                 TableName::new(TNAME).unwrap(),
                 ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
             ),
-            DataType::new(DataTypeKind::Text, false),
+            SqlType::text(),
+            false,
         )
     }
 }

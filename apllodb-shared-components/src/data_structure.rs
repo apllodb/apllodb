@@ -2,7 +2,6 @@
 
 pub(crate) mod alter_table_action;
 pub(crate) mod column;
-pub(crate) mod data_type;
 pub(crate) mod database;
 pub(crate) mod expression;
 pub(crate) mod record;

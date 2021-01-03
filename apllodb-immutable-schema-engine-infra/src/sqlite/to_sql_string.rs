@@ -3,8 +3,9 @@ use apllodb_immutable_schema_engine_domain::{
     row::pk::full_pk::revision::Revision, version::version_number::VersionNumber,
 };
 use apllodb_shared_components::{
-    BooleanExpression, CharacterConstant, ColumnDataType, ColumnName, ComparisonFunction, Constant,
-    DataType, DataTypeKind, Expression, LogicalFunction, NumericConstant, SqlValue, TableName,
+    BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Expression, I64LooseType,
+    LogicalFunction, NNSqlValue, NumericComparableType, SqlType, SqlValue,
+    StringComparableLoseType, TableName,
 };
 
 pub(in crate::sqlite) trait ToSqlString {
@@ -58,56 +59,43 @@ impl ToSqlString for ColumnName {
     }
 }
 
-impl ToSqlString for DataTypeKind {
+impl ToSqlString for SqlType {
     fn to_sql_string(&self) -> String {
-        use DataTypeKind::*;
-
         match self {
-            SmallInt | Integer | BigInt => "INTEGER",
-            Text => "TEXT",
+            SqlType::NumericComparable(n) => match n {
+                NumericComparableType::I64Loose(i) => match i {
+                    I64LooseType::SmallInt => "SMALLINT",
+                    I64LooseType::Integer => "INTEGER",
+                    I64LooseType::BigInt => "BIGINT",
+                },
+            },
+            SqlType::StringComparableLoose(s) => match s {
+                StringComparableLoseType::Text => "TEXT",
+            },
         }
         .to_string()
-    }
-}
-
-impl ToSqlString for DataType {
-    fn to_sql_string(&self) -> String {
-        format!(
-            "{}{}",
-            self.kind().to_sql_string(),
-            if self.nullable() { "" } else { " NOT NULL" }
-        )
     }
 }
 
 impl ToSqlString for ColumnDataType {
     fn to_sql_string(&self) -> String {
         format!(
-            "{} {}",
+            "{} {} {}",
             self.column_ref().as_column_name().to_sql_string(),
-            self.data_type().to_sql_string(),
+            self.sql_type().to_sql_string(),
+            if self.nullable() { "" } else { "NOT NULL" }
         )
     }
 }
 
 impl ToSqlString for SqlValue {
     fn to_sql_string(&self) -> String {
-        let constant = Constant::from(self);
-        constant.to_sql_string()
+        self.to_string()
     }
 }
-
-impl ToSqlString for Constant {
+impl ToSqlString for NNSqlValue {
     fn to_sql_string(&self) -> String {
-        match self {
-            Constant::Null => "NULL".to_string(),
-            Constant::NumericConstantVariant(n) => match n {
-                NumericConstant::IntegerConstantVariant(ic) => format!("{}", ic.as_i64()),
-            },
-            Constant::CharacterConstantVariant(c) => match c {
-                CharacterConstant::TextConstantVariant(tc) => tc.as_str().to_string(),
-            },
-        }
+        self.to_string()
     }
 }
 
