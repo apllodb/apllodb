@@ -2,7 +2,10 @@ mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName};
+use apllodb_shared_components::{
+    ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
+    ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
+};
 use apllodb_storage_engine_interface::Transaction;
 
 #[test]

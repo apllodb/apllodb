@@ -142,7 +142,10 @@ mod tests {
         }}
     }
 
-    use crate::{data_structure::table::table_constraint_kind::TableConstraintKind, error::kind::ApllodbErrorKind, test_support::setup};
+    use crate::{
+        data_structure::table::table_constraint_kind::TableConstraintKind,
+        error::kind::ApllodbErrorKind, test_support::setup,
+    };
 
     use super::TableConstraints;
 
