@@ -103,7 +103,6 @@ impl<
                         } else {
                             todo!("only ConstantVariant is acceptable for now")
                         }
-
                     } else {
                         val_before
                     };
