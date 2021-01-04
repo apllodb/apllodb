@@ -84,7 +84,7 @@
 //!         &self,
 //!         table_name: &TableName,
 //!         table_constraints: &TableConstraints,
-//!         column_definitions: &[ColumnDefinition],
+//!         column_definitions: Vec<ColumnDefinition>,
 //!     ) -> ApllodbResult<()> {
 //!         unimplemented!()
 //!     }
