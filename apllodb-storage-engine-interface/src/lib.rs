@@ -101,7 +101,7 @@
 //!                 &self,
 //!                 table_name: &TableName,
 //!                 table_constraints: &TableConstraints,
-//!                 column_definitions: &[ColumnDefinition],
+//!                 column_definitions: Vec<ColumnDefinition>,
 //!             ) -> ApllodbResult<()> {
 //!                 Ok(())
 //!             }
@@ -203,7 +203,7 @@
 //!         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
 //!             column_names: vec![c1_def.column_data_type().column_ref().as_column_name().clone()],
 //!         }])?,
-//!         &[],
+//!         vec![],
 //!     )?;
 //!
 //!     tx.abort()?;
