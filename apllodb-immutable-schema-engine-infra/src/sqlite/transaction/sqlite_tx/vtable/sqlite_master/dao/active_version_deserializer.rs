@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     SqlType,
 };
 use apllodb_sql_parser::{
-    apllodb_ast::{self, Command, CreateTableCommand},
+    apllodb_ast::{self, Command, CreateTableCommand, TableElement},
     ApllodbAst, ApllodbSqlParser,
 };
 use serde::{Deserialize, Serialize};
@@ -46,7 +46,7 @@ impl ActiveVersionDeserializer {
         match ast {
             ApllodbAst(Command::CreateTableCommandVariant(CreateTableCommand {
                 table_name,
-                column_definitions,
+                table_elements,
             })) => {
                 let sqlite_table_name = {
                     let id = table_name.0;
@@ -54,10 +54,20 @@ impl ActiveVersionDeserializer {
                 };
                 let version_number = sqlite_table_name.to_version_number();
 
-                let non_pk_column_data_types: Vec<ColumnDataType> = column_definitions
+                let non_pk_column_data_types: Vec<ColumnDataType> = table_elements
                     .as_vec()
                     .iter()
-                    .filter(|cd| !Self::is_control_column(cd))
+                    .filter_map(|table_element| {
+                        if let TableElement::ColumnDefinitionVariant(cd) = table_element {
+                            if Self::is_control_column(cd) {
+                                None
+                            } else {
+                                Some(cd)
+                            }
+                        } else {
+                            None
+                        }
+                    })
                     .map(|cd| {
                         let colref = {
                             let id = &cd.column_name.0;

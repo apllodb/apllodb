@@ -1,5 +1,7 @@
-use apllodb_shared_components::{ApllodbResult, ColumnDefinition, TableConstraints};
-use apllodb_sql_parser::apllodb_ast::Command;
+use apllodb_shared_components::{
+    ApllodbResult, ColumnDefinition, TableConstraintKind, TableConstraints,
+};
+use apllodb_sql_parser::apllodb_ast::{Command, TableElement};
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
 use crate::ast_translator::AstTranslator;
@@ -18,16 +20,38 @@ impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
                 let table_name = AstTranslator::table_name(cc.table_name)?;
 
                 let column_definitions: Vec<ColumnDefinition> = cc
-                    .column_definitions
-                    .into_vec()
-                    .into_iter()
-                    .map(|cd| AstTranslator::column_definition(cd, table_name.clone()))
+                    .table_elements
+                    .as_vec()
+                    .iter()
+                    .filter_map(|table_element| {
+                        if let TableElement::ColumnDefinitionVariant(cd) = table_element {
+                            Some(cd)
+                        } else {
+                            None
+                        }
+                    })
+                    .map(|cd| AstTranslator::column_definition(cd.clone(), table_name.clone()))
                     .collect::<ApllodbResult<_>>()?;
 
-                let table_constraints = TableConstraints::default();
+                let table_constraints: Vec<TableConstraintKind> = cc
+                    .table_elements
+                    .as_vec()
+                    .iter()
+                    .filter_map(|table_element| {
+                        if let TableElement::TableConstraintVariant(tc) = table_element {
+                            Some(tc)
+                        } else {
+                            None
+                        }
+                    })
+                    .map(|tc| AstTranslator::table_constraint(tc.clone()))
+                    .collect::<ApllodbResult<_>>()?;
 
-                self.tx
-                    .create_table(&table_name, &table_constraints, column_definitions)
+                self.tx.create_table(
+                    &table_name,
+                    &TableConstraints::new(table_constraints)?,
+                    column_definitions,
+                )
             }
             _ => unimplemented!(),
         }

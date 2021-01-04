@@ -49,5 +49,7 @@ fn main() -> ApllodbResult<()> {
                 Ok(())
             }
         },
-    }
+    }?;
+
+    tx.commit()
 }
