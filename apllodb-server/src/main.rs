@@ -54,7 +54,7 @@ fn main() -> ApllodbResult<()> {
                     let processor = QueryProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
                     let records = processor.run(select_command)?;
                     // TODO return records to client
-                    log::info!("SELECT result: {:#?}", records);
+                    println!("SELECT result: {:#?}", records);
                     Ok(())
                 }
             },

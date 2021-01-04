@@ -62,7 +62,7 @@ impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
 mod tests {
     use apllodb_shared_components::{
         ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, SqlType,
-        TableConstraints, TableName,
+        TableConstraintKind, TableConstraints, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
     use mockall::predicate::eq;
@@ -76,7 +76,7 @@ mod tests {
     struct TestDatum<'test> {
         in_create_table_sql: &'test str,
         expected_table_name: TableName,
-        expected_table_constraints: TableConstraints,
+        expected_table_constraints: Vec<TableConstraintKind>,
         expected_column_definitions: Vec<ColumnDefinition>,
     }
 
@@ -91,10 +91,13 @@ mod tests {
             "
             CREATE TABLE people (
                 id INTEGER, 
-                age INTEGER
+                age INTEGER,
+                PRIMARY KEY (id)
             )",
             People::table_name(),
-            TableConstraints::default(),
+            vec![TableConstraintKind::PrimaryKey {
+                column_names: vec![People::colref_id().as_column_name().clone()],
+            }],
             vec![
                 ColumnDefinition::new(
                     ColumnDataType::new(People::colref_id(), SqlType::integer(), true),
@@ -118,7 +121,9 @@ mod tests {
             tx.expect_create_table()
                 .with(
                     eq(test_datum.expected_table_name),
-                    eq(test_datum.expected_table_constraints),
+                    eq(TableConstraints::new(
+                        test_datum.expected_table_constraints,
+                    )?),
                     eq(test_datum.expected_column_definitions),
                 )
                 .returning(|_, _, _| Ok(()));
