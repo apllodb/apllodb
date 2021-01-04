@@ -51,7 +51,7 @@ fn test_compound_pk() -> ApllodbResult<()> {
         ],
     }])?;
 
-    tx.create_table(&t_name, &tc, &coldefs)?;
+    tx.create_table(&t_name, &tc, coldefs)?;
 
     tx.insert(
         &t_name,

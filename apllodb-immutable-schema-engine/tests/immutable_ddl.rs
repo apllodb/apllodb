@@ -49,7 +49,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     // v1
     // | id | c1 |
     // |----|----|
-    tx.create_table(&t_name, &tc, &coldefs)?;
+    tx.create_table(&t_name, &tc, coldefs)?;
 
     // v1
     // | id | c1 |
