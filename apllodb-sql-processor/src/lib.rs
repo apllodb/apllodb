@@ -7,31 +7,43 @@
 //!
 //! # Examples
 //!
-//! ## SELECT query
-//!
 //! ```
 //! use std::collections::HashMap;
 //! use apllodb_shared_components::{AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, Database, DatabaseName, Expression, Record, RecordIterator, TableConstraints, TableName};
 //! use apllodb_storage_engine_interface::{
 //!     ProjectionQuery, StorageEngine, Transaction, TransactionBuilder, TransactionId,
 //! };
-//! use apllodb_sql_parser::{ApllodbSqlParser, apllodb_ast::Command};
-//! use apllodb_sql_processor::QueryProcessor;
+//! use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser, apllodb_ast::Command};
+//! use apllodb_sql_processor::{DDLProcessor, ModificationProcessor, QueryProcessor};
 //!
-//! fn main() -> ApllodbResult<()> {
-//!     let parser = ApllodbSqlParser::new();
-//!     let tx = MyStorageEngine::begin()?;
-//!
-//!     let ast = parser.parse("SELECT id, c FROM t")
-//!         .expect("syntactically valid SQL");
-//!     match ast.0 {
+//! fn process_ast(tx: &MyTx, ast: ApllodbAst) -> ApllodbResult<()> {
+//!     let command = ast.0;
+//!     match command {
 //!         Command::SelectCommandVariant(select_command) => {
 //!             let processor = QueryProcessor::<'_, MyStorageEngine>::new(&tx);
 //!             // Here gets records from MyStorageEngine!
 //!             let records: RecordIterator = processor.run(select_command)?;
 //!         },
-//!         _ => todo!(),
+//!         Command::InsertCommandVariant(_) | Command::UpdateCommandVariant(_) | Command::DeleteCommandVariant(_) => {
+//!             let processor = ModificationProcessor::<'_, MyStorageEngine>::new(&tx);
+//!             processor.run(command)?;
+//!         }
+//!         Command::CreateTableCommandVariant(_) | Command::AlterTableCommandVariant(_) | Command::DropTableCommandVariant(_) => {
+//!             let processor = DDLProcessor::<'_, MyStorageEngine>::new(&tx);
+//!             processor.run(command)?;
+//!         }
 //!     };
+//!     Ok(())
+//! }
+//!
+//! fn main() -> ApllodbResult<()> {
+//!     let parser = ApllodbSqlParser::new();
+//!     let tx = MyStorageEngine::begin()?;
+//!
+//!     process_ast(&tx, parser.parse("CREATE TABLE t (id INTEGER, c INTEGER)").unwrap())?;
+//!     process_ast(&tx, parser.parse("SELECT id, c FROM t").unwrap())?;
+//!     process_ast(&tx, parser.parse("INSERT INTO t (id, c) VALUES (1, 13)").unwrap())?;
+//!
 //!     Ok(())
 //! }
 //!     
@@ -86,7 +98,7 @@
 //!         table_constraints: &TableConstraints,
 //!         column_definitions: Vec<ColumnDefinition>,
 //!     ) -> ApllodbResult<()> {
-//!         unimplemented!()
+//!         Ok(())
 //!     }
 //!
 //!     fn alter_table(
@@ -114,7 +126,7 @@
 //!         table_name: &TableName,
 //!         records: RecordIterator,
 //!     ) -> ApllodbResult<()> {
-//!         unimplemented!()
+//!         Ok(())
 //!     }
 //!
 //!     fn update(
