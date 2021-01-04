@@ -1,5 +1,7 @@
-use apllodb_shared_components::{ApllodbResult, ColumnDefinition, TableConstraints};
-use apllodb_sql_parser::apllodb_ast::Command;
+use apllodb_shared_components::{
+    ApllodbResult, ColumnDefinition, TableConstraintKind, TableConstraints,
+};
+use apllodb_sql_parser::apllodb_ast::{Command, TableElement};
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
 use crate::ast_translator::AstTranslator;
@@ -18,16 +20,38 @@ impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
                 let table_name = AstTranslator::table_name(cc.table_name)?;
 
                 let column_definitions: Vec<ColumnDefinition> = cc
-                    .column_definitions
-                    .into_vec()
-                    .into_iter()
-                    .map(|cd| AstTranslator::column_definition(cd, table_name.clone()))
+                    .table_elements
+                    .as_vec()
+                    .iter()
+                    .filter_map(|table_element| {
+                        if let TableElement::ColumnDefinitionVariant(cd) = table_element {
+                            Some(cd)
+                        } else {
+                            None
+                        }
+                    })
+                    .map(|cd| AstTranslator::column_definition(cd.clone(), table_name.clone()))
                     .collect::<ApllodbResult<_>>()?;
 
-                let table_constraints = TableConstraints::default();
+                let table_constraints: Vec<TableConstraintKind> = cc
+                    .table_elements
+                    .as_vec()
+                    .iter()
+                    .filter_map(|table_element| {
+                        if let TableElement::TableConstraintVariant(tc) = table_element {
+                            Some(tc)
+                        } else {
+                            None
+                        }
+                    })
+                    .map(|tc| AstTranslator::table_constraint(tc.clone()))
+                    .collect::<ApllodbResult<_>>()?;
 
-                self.tx
-                    .create_table(&table_name, &table_constraints, column_definitions)
+                self.tx.create_table(
+                    &table_name,
+                    &TableConstraints::new(table_constraints)?,
+                    column_definitions,
+                )
             }
             _ => unimplemented!(),
         }
@@ -38,7 +62,7 @@ impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
 mod tests {
     use apllodb_shared_components::{
         ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, SqlType,
-        TableConstraints, TableName,
+        TableConstraintKind, TableConstraints, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
     use mockall::predicate::eq;
@@ -52,7 +76,7 @@ mod tests {
     struct TestDatum<'test> {
         in_create_table_sql: &'test str,
         expected_table_name: TableName,
-        expected_table_constraints: TableConstraints,
+        expected_table_constraints: Vec<TableConstraintKind>,
         expected_column_definitions: Vec<ColumnDefinition>,
     }
 
@@ -67,10 +91,13 @@ mod tests {
             "
             CREATE TABLE people (
                 id INTEGER, 
-                age INTEGER
+                age INTEGER,
+                PRIMARY KEY (id)
             )",
             People::table_name(),
-            TableConstraints::default(),
+            vec![TableConstraintKind::PrimaryKey {
+                column_names: vec![People::colref_id().as_column_name().clone()],
+            }],
             vec![
                 ColumnDefinition::new(
                     ColumnDataType::new(People::colref_id(), SqlType::integer(), true),
@@ -94,7 +121,9 @@ mod tests {
             tx.expect_create_table()
                 .with(
                     eq(test_datum.expected_table_name),
-                    eq(test_datum.expected_table_constraints),
+                    eq(TableConstraints::new(
+                        test_datum.expected_table_constraints,
+                    )?),
                     eq(test_datum.expected_column_definitions),
                 )
                 .returning(|_, _, _| Ok(()));

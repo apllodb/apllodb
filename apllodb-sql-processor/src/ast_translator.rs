@@ -5,6 +5,7 @@ pub(crate) mod column_definition;
 pub(crate) mod column_name;
 pub(crate) mod constant;
 pub(crate) mod data_type;
+pub(crate) mod table_constraint;
 pub(crate) mod table_name;
 
 #[allow(dead_code)]

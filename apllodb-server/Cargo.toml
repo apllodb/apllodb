@@ -1,8 +1,17 @@
 [package]
-name = "apllodb-server"
-version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
+name = "apllodb-server"
+version = "0.1.0"
 
 [dependencies]
-apllodb-sql-parser = { path = "../apllodb-sql-parser" }
+apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
+apllodb-shared-components = {path = "../apllodb-shared-components"}
+apllodb-sql-parser = {path = "../apllodb-sql-parser"}
+apllodb-sql-processor = {path = "../apllodb-sql-processor"}
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
+
+env_logger = "0.8"
+log = "0.4"
+
+chrono = "0.4" # TODO main() で色々やるのを辞めたら消す
