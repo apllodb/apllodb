@@ -45,7 +45,7 @@ fn test_alter_table_accepted() {
                 "t",
                 vec![add_column!(
                     "c1",
-                    DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
+                    DataType::integer(),
                     vec![]
                 )]
             ),
@@ -57,7 +57,7 @@ fn test_alter_table_accepted() {
                 vec![
                     add_column!(
                         "c1",
-                        DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
+                        DataType::integer(),
                         vec![ColumnConstraint::NotNullVariant]
                     ),
                     drop_column!("c2")
