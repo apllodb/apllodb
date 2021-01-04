@@ -1,4 +1,4 @@
-use crate::data_structure::database::database_name::DatabaseName;
+use apllodb_shared_components::DatabaseName;
 
 /// Database interface.
 pub trait Database {
