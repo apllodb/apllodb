@@ -20,7 +20,7 @@ fn main() -> ApllodbResult<()> {
         ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new(database_name_from_client)?)?;
     let tx = ApllodbImmutableSchemaTx::begin(&mut db)?;
 
-    let sql_from_client = "CREATE TABLE people (id INTEGER, age INTEGER)";
+    let sql_from_client = "CREATE TABLE people (id INTEGER, age SMALLINT, PRIMARY KEY (id))";
 
     match parser.parse(sql_from_client) {
         Err(e) => Err(ApllodbError::new(
