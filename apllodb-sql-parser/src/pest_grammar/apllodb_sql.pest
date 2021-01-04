@@ -319,7 +319,7 @@ keyword = {
     // | "KEYS"
     // | "KEY_MEMBER"
     // | "KEY_TYPE"
-    // | "KEY"
+    | "KEY"
     // | "K"
     // | "LAG"
     // | "LANGUAGE"
@@ -456,7 +456,7 @@ keyword = {
     // | "PRECISION"
     // | "PREPARE"
     // | "PRESERVE"
-    // | "PRIMARY"
+    | "PRIMARY"
     // | "PRIOR"
     // | "PRIVATE_PARAMETERS"
     // | "PRIVATE_PARAMS_S"
@@ -902,7 +902,7 @@ create_table_command = {
     "CREATE" ~ "TABLE"
     ~ table_name
     ~ "("
-    ~ column_definition ~ ("," ~ column_definition)*
+    ~ table_element ~ ("," ~ table_element)*
     ~ ")"
 }
 
@@ -1028,12 +1028,30 @@ correlation = {
 
 /*
  * ----------------------------------------------------------------------------
+ * Table Elements
+ * ----------------------------------------------------------------------------
+ */
+
+table_element = {
+    column_definition
+    | table_constraint
+}
+
+/*
+ * ----------------------------------------------------------------------------
  * Constraints
  * ----------------------------------------------------------------------------
  */
 
 column_constraint = {
     "NOT NULL"
+}
+
+table_constraint = {
+    "PRIMARY" ~ "KEY"
+    ~ "("
+    ~ column_name ~ ("," ~ column_name)*
+    ~ ")"
 }
 
 /*
