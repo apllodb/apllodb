@@ -1,13 +1,11 @@
 use std::marker::PhantomData;
 
-use crate::sqlite::transaction::{
-    sqlite_tx::{SqliteTx, SqliteTxBuilder},
-    tx_id::TxId,
-};
 use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use apllodb_storage_engine_interface::StorageEngine;
 
+// Hide SQLite (implementation detail)
 pub use crate::sqlite::database::SqliteDatabase as ApllodbImmutableSchemaDb;
+pub use crate::sqlite::transaction::sqlite_tx::SqliteTx as ApllodbImmutableSchemaTx;
 
 /// Storage engine implementation.
 #[derive(Hash, Debug)]
@@ -16,21 +14,11 @@ pub struct ApllodbImmutableSchemaEngine<'db> {
 }
 
 impl<'db> StorageEngine for ApllodbImmutableSchemaEngine<'db> {
-    type Tx = SqliteTx<'db>;
-    type TxBuilder = SqliteTxBuilder<'db>;
-    type TID = TxId;
     type Db = ApllodbImmutableSchemaDb;
+    type Tx = ApllodbImmutableSchemaTx<'db>;
 
     // TODO UndefinedDatabase error.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<ApllodbImmutableSchemaDb> {
         ApllodbImmutableSchemaDb::new(database_name.clone())
-    }
-}
-
-impl<'db> ApllodbImmutableSchemaEngine<'db> {
-    /// Starts transaction and get transaction object.
-    pub fn begin_transaction(db: &'db mut ApllodbImmutableSchemaDb) -> ApllodbResult<SqliteTx> {
-        let builder = SqliteTxBuilder::new(db);
-        SqliteTx::begin(builder)
     }
 }

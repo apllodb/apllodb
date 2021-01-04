@@ -1,6 +1,6 @@
 use apllodb_immutable_schema_engine::{ApllodbImmutableSchemaDb, ApllodbImmutableSchemaEngine};
-use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::{Database, StorageEngine};
 
 pub struct TestDatabase(pub ApllodbImmutableSchemaDb);
 

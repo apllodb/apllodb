@@ -1,7 +1,7 @@
 mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
-use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
+use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaTx;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
     ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
@@ -13,7 +13,7 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db.0)?;
+    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = TableName::new("t")?;
 

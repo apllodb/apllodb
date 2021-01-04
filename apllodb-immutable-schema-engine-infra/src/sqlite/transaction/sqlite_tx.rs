@@ -14,7 +14,7 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::UpdateAllUseCaseInput,
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionBuilder};
+use apllodb_storage_engine_interface::{Database, ProjectionQuery, Transaction};
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use self::{
@@ -35,12 +35,6 @@ use apllodb_shared_components::{
 };
 use log::debug;
 use std::{cmp::Ordering, collections::HashMap};
-
-#[derive(Debug, new)]
-pub struct SqliteTxBuilder<'db> {
-    db: &'db mut SqliteDatabase,
-}
-impl<'db> TransactionBuilder for SqliteTxBuilder<'db> {}
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
@@ -69,31 +63,6 @@ impl Ord for SqliteTx<'_> {
 }
 
 impl<'db> SqliteTx<'db> {
-    /// Construct SqliteTx, beginning new transaction at the same time.
-    ///
-    /// # Failures
-    ///
-    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
-    pub fn new(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
-        use apllodb_shared_components::Database;
-
-        let database_name = { db.name().clone() };
-
-        let tx = db.sqlite_conn().transaction().map_err(|e| {
-            map_sqlite_err(
-                e,
-                "backend sqlite3 raised an error on beginning transaction",
-            )
-        })?;
-
-        Ok(Self {
-            id: TxId::new(),
-            database_name,
-            rusqlite_tx: tx,
-        })
-    }
-
     fn vtable_repo(&self) -> VTableRepositoryImpl<'_, 'db> {
         VTableRepositoryImpl::new(self)
     }
@@ -104,6 +73,9 @@ impl<'db> SqliteTx<'db> {
 }
 
 impl<'tx, 'db: 'tx> Transaction<ApllodbImmutableSchemaEngine<'db>> for SqliteTx<'db> {
+    type Db = &'db mut SqliteDatabase;
+    type TID = TxId;
+
     fn id(&self) -> &TxId {
         &self.id
     }
@@ -112,12 +84,10 @@ impl<'tx, 'db: 'tx> Transaction<ApllodbImmutableSchemaEngine<'db>> for SqliteTx<
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(builder: SqliteTxBuilder<'db>) -> ApllodbResult<Self> {
-        use apllodb_shared_components::Database;
+    fn begin(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
+        let database_name = { db.name().clone() };
 
-        let database_name = { builder.db.name().clone() };
-
-        let tx = builder.db.sqlite_conn().transaction().map_err(|e| {
+        let tx = db.sqlite_conn().transaction().map_err(|e| {
             map_sqlite_err(
                 e,
                 "backend sqlite3 raised an error on beginning transaction",
