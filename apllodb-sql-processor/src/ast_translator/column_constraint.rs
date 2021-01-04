@@ -15,7 +15,7 @@ impl AstTranslator {
     }
 
     pub(crate) fn nullable(ast_column_constraints: &[apllodb_ast::ColumnConstraint]) -> bool {
-        ast_column_constraints
+        !ast_column_constraints
             .iter()
             .any(|cc| matches!(cc, apllodb_ast::ColumnConstraint::NotNullVariant))
     }

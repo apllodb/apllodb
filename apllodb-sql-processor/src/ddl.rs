@@ -27,7 +27,7 @@ impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
                 let table_constraints = TableConstraints::default();
 
                 self.tx
-                    .create_table(&table_name, &table_constraints, &column_definitions)
+                    .create_table(&table_name, &table_constraints, column_definitions)
             }
             _ => unimplemented!(),
         }
@@ -71,10 +71,16 @@ mod tests {
             )",
             People::table_name(),
             TableConstraints::default(),
-            vec![ColumnDefinition::new(
-                ColumnDataType::new(People::colref_id(), SqlType::integer(), true),
-                ColumnConstraints::default(),
-            )],
+            vec![
+                ColumnDefinition::new(
+                    ColumnDataType::new(People::colref_id(), SqlType::integer(), true),
+                    ColumnConstraints::default(),
+                ),
+                ColumnDefinition::new(
+                    ColumnDataType::new(People::colref_age(), SqlType::integer(), true),
+                    ColumnConstraints::default(),
+                ),
+            ],
         )];
 
         for test_datum in test_data {
