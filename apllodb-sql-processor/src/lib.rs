@@ -71,6 +71,7 @@
 //! struct MyTx;
 //! impl Transaction<MyStorageEngine> for MyTx {
 //!     type Db = MyDatabase;
+//!     type TID = MyTransactionId;
 //!
 //!     fn id(&self) -> &MyTransactionId {
 //!         unimplemented!()
@@ -147,7 +148,6 @@
 //! impl StorageEngine for MyStorageEngine {
 //!     type Db = MyDatabase;
 //!     type Tx = MyTx;
-//!     type TID = MyTransactionId;
 //!
 //!     fn use_database(_database_name: &DatabaseName) -> ApllodbResult<MyDatabase> {
 //!         Ok(MyDatabase)

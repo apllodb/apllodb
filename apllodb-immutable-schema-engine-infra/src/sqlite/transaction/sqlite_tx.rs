@@ -74,6 +74,7 @@ impl<'db> SqliteTx<'db> {
 
 impl<'tx, 'db: 'tx> Transaction<ApllodbImmutableSchemaEngine<'db>> for SqliteTx<'db> {
     type Db = &'db mut SqliteDatabase;
+    type TID = TxId;
 
     fn id(&self) -> &TxId {
         &self.id

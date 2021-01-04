@@ -21,6 +21,7 @@ mock! {
 
     impl Transaction<TestStorageEngine> for Tx {
         type Db = TestDatabase;
+        type TID = TestTransactionId;
 
         fn id(&self) -> &TestTransactionId;
 

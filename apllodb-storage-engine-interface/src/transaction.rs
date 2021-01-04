@@ -7,7 +7,7 @@ use apllodb_shared_components::{
 };
 use std::{borrow::Borrow, collections::HashMap, fmt::Debug};
 
-use crate::{ProjectionQuery, StorageEngine};
+use crate::{ProjectionQuery, StorageEngine, TransactionId};
 
 /// Transaction interface.
 ///
@@ -22,8 +22,11 @@ pub trait Transaction<Engine: StorageEngine>: Debug {
     /// Database's ownership or reference to generate a transaction.
     type Db: Borrow<Engine::Db>;
 
+    /// Transaction ID.
+    type TID: TransactionId;
+
     /// Transaction ID
-    fn id(&self) -> &Engine::TID;
+    fn id(&self) -> &Self::TID;
 
     /// Begins a transaction.
     fn begin(db: Self::Db) -> ApllodbResult<Self>

@@ -22,7 +22,6 @@ impl TransactionId for TestTransactionId {}
 pub(crate) struct TestStorageEngine;
 impl StorageEngine for TestStorageEngine {
     type Tx = MockTx;
-    type TID = TestTransactionId;
     type Db = TestDatabase;
 
     fn use_database(_database_name: &DatabaseName) -> ApllodbResult<TestDatabase> {

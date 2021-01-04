@@ -74,6 +74,7 @@
 //!         pub struct EmptyTx;
 //!         impl Transaction<EmptyStorageEngine> for EmptyTx {
 //!             type Db = EmptyDatabase;
+//!             type TID = EmptyTransactionId;
 //!
 //!             fn id(&self) -> &EmptyTransactionId {
 //!                 unimplemented!()
@@ -158,7 +159,6 @@
 //!         impl StorageEngine for EmptyStorageEngine {
 //!             type Db = EmptyDatabase;
 //!             type Tx = EmptyTx;
-//!             type TID = EmptyTransactionId;
 //!
 //!             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
 //!                 Ok(EmptyDatabase::new())
@@ -227,9 +227,6 @@ pub trait StorageEngine: Sized + Debug {
 
     /// Transaction.
     type Tx: Transaction<Self>;
-
-    /// Transaction ID.
-    type TID: TransactionId;
 
     /// Specify database to use and return database object.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<Self::Db>;
