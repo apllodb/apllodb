@@ -111,7 +111,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::redundant_clone)]
-    fn test_query_processor_with_sql() -> ApllodbResult<()> {
+    fn test_modification_processor_with_sql() -> ApllodbResult<()> {
         setup();
 
         let t_people_r1 = People::record(1, 13);

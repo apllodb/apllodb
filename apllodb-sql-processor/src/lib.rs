@@ -155,9 +155,11 @@ extern crate derive_new;
 pub(crate) mod ast_translator;
 pub(crate) mod modification;
 pub(crate) mod query;
+pub(crate) mod ddl;
 
 pub use modification::ModificationProcessor;
 pub use query::QueryProcessor;
+pub use ddl::DDLProcessor;
 
 #[cfg(test)]
 pub(crate) mod test_support;
