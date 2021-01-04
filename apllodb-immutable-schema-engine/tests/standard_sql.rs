@@ -36,7 +36,7 @@ fn test_create_table_success() -> ApllodbResult<()> {
                 .as_column_name()
                 .clone()],
         }])?,
-        &[c1_def],
+        vec![c1_def],
     )?;
     tx.abort()?;
 
@@ -71,8 +71,8 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
 
     let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db.0)?;
 
-    tx.create_table(&t_name, &tc, &coldefs)?;
-    match tx.create_table(&t_name, &tc, &coldefs) {
+    tx.create_table(&t_name, &tc, coldefs.clone())?;
+    match tx.create_table(&t_name, &tc, coldefs) {
         // Internally, new record is trying to be INSERTed but it is made wait by tx2.
         // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
         Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),
@@ -116,7 +116,7 @@ fn test_insert() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    tx.create_table(&t_name, &tc, &coldefs)?;
+    tx.create_table(&t_name, &tc, coldefs)?;
 
     tx.insert(
         &t_name,
@@ -186,7 +186,7 @@ fn test_update() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    tx.create_table(&t_name, &tc, &coldefs)?;
+    tx.create_table(&t_name, &tc, coldefs)?;
 
     tx.insert(
         &t_name,
@@ -299,7 +299,7 @@ fn test_delete() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    tx.create_table(&t_name, &tc, &coldefs)?;
+    tx.create_table(&t_name, &tc, coldefs)?;
 
     tx.insert(
         &t_name,

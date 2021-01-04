@@ -166,14 +166,14 @@ impl<'tx, 'db: 'tx> Transaction<ApllodbImmutableSchemaEngine<'db>> for SqliteTx<
         &self,
         table_name: &TableName,
         table_constraints: &TableConstraints,
-        column_definitions: &[ColumnDefinition],
+        column_definitions: Vec<ColumnDefinition>,
     ) -> ApllodbResult<()> {
         let database_name = self.database_name().clone();
         let input = CreateTableUseCaseInput::new(
             &database_name,
             table_name,
             table_constraints,
-            column_definitions,
+            &column_definitions,
         );
         let _ = CreateTableUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &self.vtable_repo(),

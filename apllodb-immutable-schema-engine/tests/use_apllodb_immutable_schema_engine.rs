@@ -35,7 +35,7 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
                 .as_column_name()
                 .clone()],
         }])?,
-        &[c1_def],
+        vec![c1_def],
     )?;
     tx.abort()?;
 
