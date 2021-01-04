@@ -20,36 +20,45 @@ fn main() -> ApllodbResult<()> {
         ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new(database_name_from_client)?)?;
     let tx = ApllodbImmutableSchemaTx::begin(&mut db)?;
 
-    let sql_from_client = "CREATE TABLE people (id INTEGER, age SMALLINT, PRIMARY KEY (id))";
+    let sqls_from_client = vec![
+        "CREATE TABLE people (id INTEGER, age SMALLINT, PRIMARY KEY (id))",
+        "INSERT INTO people (id, age) VALUES (1, 13)",
+        "INSERT INTO people (id, age) VALUES (2, 70)",
+        "INSERT INTO people (id, age) VALUES (3, 35)",
+        // "SELECT id, age FORM people",
+    ];
 
-    match parser.parse(sql_from_client) {
-        Err(e) => Err(ApllodbError::new(
-            ApllodbErrorKind::SyntaxError,
-            format!("failed to parse SQL: {}", sql_from_client),
-            Some(Box::new(e)),
-        )),
-        Ok(ApllodbAst(command)) => match command {
-            apllodb_ast::Command::AlterTableCommandVariant(_)
-            | apllodb_ast::Command::CreateTableCommandVariant(_)
-            | apllodb_ast::Command::DropTableCommandVariant(_) => {
-                let processor = DDLProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
-                processor.run(command)
-            }
-            apllodb_ast::Command::DeleteCommandVariant(_)
-            | apllodb_ast::Command::InsertCommandVariant(_)
-            | apllodb_ast::Command::UpdateCommandVariant(_) => {
-                let processor = ModificationProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
-                processor.run(command)
-            }
-            apllodb_ast::Command::SelectCommandVariant(select_command) => {
-                let processor = QueryProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
-                let records = processor.run(select_command)?;
-                // TODO return records to client
-                log::debug!("SELECT result: {:#?}", records);
-                Ok(())
-            }
-        },
-    }?;
+    for sql in sqls_from_client {
+        match parser.parse(sql) {
+            Err(e) => Err(ApllodbError::new(
+                ApllodbErrorKind::SyntaxError,
+                format!("failed to parse SQL: {}", sql),
+                Some(Box::new(e)),
+            )),
+            Ok(ApllodbAst(command)) => match command {
+                apllodb_ast::Command::AlterTableCommandVariant(_)
+                | apllodb_ast::Command::CreateTableCommandVariant(_)
+                | apllodb_ast::Command::DropTableCommandVariant(_) => {
+                    let processor = DDLProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
+                    processor.run(command)
+                }
+                apllodb_ast::Command::DeleteCommandVariant(_)
+                | apllodb_ast::Command::InsertCommandVariant(_)
+                | apllodb_ast::Command::UpdateCommandVariant(_) => {
+                    let processor =
+                        ModificationProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
+                    processor.run(command)
+                }
+                apllodb_ast::Command::SelectCommandVariant(select_command) => {
+                    let processor = QueryProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
+                    let records = processor.run(select_command)?;
+                    // TODO return records to client
+                    log::debug!("SELECT result: {:#?}", records);
+                    Ok(())
+                }
+            },
+        }?;
+    }
 
     tx.commit()
 }
