@@ -1,7 +1,7 @@
 mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
-use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
+use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaTx;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnName, ColumnReference, Expression, FieldIndex, RecordIterator, SqlType, SqlValue,
@@ -14,7 +14,7 @@ fn test_create_table_success() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db.0)?;
+    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = TableName::new("t")?;
 
@@ -69,7 +69,7 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db.0)?;
+    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     tx.create_table(&t_name, &tc, coldefs.clone())?;
     match tx.create_table(&t_name, &tc, coldefs) {
@@ -86,7 +86,7 @@ fn test_insert() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db.0)?;
+    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = &TableName::new("t")?;
 
@@ -156,7 +156,7 @@ fn test_update() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db.0)?;
+    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = &TableName::new("t")?;
 
@@ -269,7 +269,7 @@ fn test_delete() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaEngine::begin_transaction(&mut db.0)?;
+    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = &TableName::new("t")?;
 

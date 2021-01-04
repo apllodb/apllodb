@@ -9,9 +9,9 @@
 //!
 //! ```
 //! use std::collections::HashMap;
-//! use apllodb_shared_components::{AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, Database, DatabaseName, Expression, Record, RecordIterator, TableConstraints, TableName};
+//! use apllodb_shared_components::{AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName, Expression, Record, RecordIterator, TableConstraints, TableName};
 //! use apllodb_storage_engine_interface::{
-//!     ProjectionQuery, StorageEngine, Transaction, TransactionBuilder, TransactionId,
+//!     Database, ProjectionQuery, StorageEngine, Transaction, TransactionId,
 //! };
 //! use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser, apllodb_ast::Command};
 //! use apllodb_sql_processor::{DDLProcessor, ModificationProcessor, QueryProcessor};
@@ -38,7 +38,9 @@
 //!
 //! fn main() -> ApllodbResult<()> {
 //!     let parser = ApllodbSqlParser::new();
-//!     let tx = MyStorageEngine::begin()?;
+//!
+//!     let db = MyDatabase;
+//!     let tx = MyTx::begin(db)?;
 //!
 //!     process_ast(&tx, parser.parse("CREATE TABLE t (id INTEGER, c INTEGER)").unwrap())?;
 //!     process_ast(&tx, parser.parse("SELECT id, c FROM t").unwrap())?;
@@ -61,10 +63,6 @@
 //!     }
 //! }
 //!
-//! #[derive(Clone, PartialEq, Debug)]
-//! struct MyTxBuilder;
-//! impl TransactionBuilder for MyTxBuilder {}
-//!
 //! #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 //! struct MyTransactionId;
 //! impl TransactionId for MyTransactionId {}
@@ -72,11 +70,13 @@
 //! #[derive(Debug)]
 //! struct MyTx;
 //! impl Transaction<MyStorageEngine> for MyTx {
+//!     type Db = MyDatabase;
+//!
 //!     fn id(&self) -> &MyTransactionId {
 //!         unimplemented!()
 //!     }
 //!
-//!     fn begin(_builder: MyTxBuilder) -> ApllodbResult<Self> {
+//!     fn begin(db: MyDatabase) -> ApllodbResult<Self> {
 //!         Ok(Self)
 //!     }
 //!
@@ -145,18 +145,12 @@
 //! #[derive(Debug)]
 //! struct MyStorageEngine;
 //! impl StorageEngine for MyStorageEngine {
-//!     type Tx = MyTx;
-//!     type TxBuilder = MyTxBuilder;
-//!     type TID = MyTransactionId;
 //!     type Db = MyDatabase;
+//!     type Tx = MyTx;
+//!     type TID = MyTransactionId;
 //!
 //!     fn use_database(_database_name: &DatabaseName) -> ApllodbResult<MyDatabase> {
 //!         Ok(MyDatabase)
-//!     }
-//! }
-//! impl MyStorageEngine {
-//!     fn begin() -> ApllodbResult<MyTx> {
-//!         MyTx::begin(MyTxBuilder)
 //!     }
 //! }
 //! ```

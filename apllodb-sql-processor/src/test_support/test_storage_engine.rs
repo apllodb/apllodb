@@ -1,6 +1,6 @@
 use super::mock_tx::MockTx;
-use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
-use apllodb_storage_engine_interface::{StorageEngine, TransactionBuilder, TransactionId};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::{Database, StorageEngine, TransactionId};
 
 pub(crate) struct TestDatabase;
 impl Database for TestDatabase {
@@ -14,10 +14,6 @@ impl TestDatabase {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, new)]
-pub(crate) struct TestTxBuilder;
-impl TransactionBuilder for TestTxBuilder {}
-
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(crate) struct TestTransactionId;
 impl TransactionId for TestTransactionId {}
@@ -26,7 +22,6 @@ impl TransactionId for TestTransactionId {}
 pub(crate) struct TestStorageEngine;
 impl StorageEngine for TestStorageEngine {
     type Tx = MockTx;
-    type TxBuilder = TestTxBuilder;
     type TID = TestTransactionId;
     type Db = TestDatabase;
 

@@ -1,5 +1,6 @@
 use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
-use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::Database;
 use std::time::Duration;
 
 /// Database context.
@@ -57,6 +58,7 @@ impl SqliteDatabase {
         &mut self.sqlite_conn
     }
 }
+
 
 #[cfg(test)]
 impl Drop for SqliteDatabase {

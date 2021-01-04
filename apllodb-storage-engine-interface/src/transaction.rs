@@ -5,14 +5,9 @@ use apllodb_shared_components::{
     AlterTableAction, ColumnDefinition, ColumnName, DatabaseName, Expression, RecordIterator,
     TableConstraints, TableName,
 };
-use std::{collections::HashMap, fmt::Debug};
+use std::{borrow::Borrow, collections::HashMap, fmt::Debug};
 
 use crate::{ProjectionQuery, StorageEngine};
-
-/// Transaction builder.
-/// Implement this to contain reference type in it.
-/// (Without builder, [Transaction::begin()](crate::Transaction::begin) may take reference type and it should take lifetime parameter although Transaction is a trait.)
-pub trait TransactionBuilder: Debug {}
 
 /// Transaction interface.
 ///
@@ -24,11 +19,14 @@ pub trait TransactionBuilder: Debug {}
 /// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
 /// directly or delegate physical operations to another object.
 pub trait Transaction<Engine: StorageEngine>: Debug {
+    /// Database's ownership or reference to generate a transaction.
+    type Db: Borrow<Engine::Db>;
+
     /// Transaction ID
     fn id(&self) -> &Engine::TID;
 
     /// Begins a transaction.
-    fn begin(builder: Engine::TxBuilder) -> ApllodbResult<Self>
+    fn begin(db: Self::Db) -> ApllodbResult<Self>
     where
         Self: Sized;
 

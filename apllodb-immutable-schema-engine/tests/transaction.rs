@@ -1,7 +1,7 @@
 mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
-use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
+use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaTx;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
@@ -35,8 +35,8 @@ fn test_wait_lock() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1.0)?;
-    let tx2 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db2.0)?;
+    let tx1 = ApllodbImmutableSchemaTx::begin(&mut db1.0)?;
+    let tx2 = ApllodbImmutableSchemaTx::begin(&mut db2.0)?;
 
     // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
     // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
@@ -61,8 +61,8 @@ fn test_tx_id_order() -> ApllodbResult<()> {
     let mut db1 = TestDatabase::new()?;
     let mut db2 = db1.dup()?;
 
-    let tx1 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db1.0)?;
-    let tx2 = ApllodbImmutableSchemaEngine::begin_transaction(&mut db2.0)?;
+    let tx1 = ApllodbImmutableSchemaTx::begin(&mut db1.0)?;
+    let tx2 = ApllodbImmutableSchemaTx::begin(&mut db2.0)?;
 
     assert!(tx1.id() < tx2.id());
 

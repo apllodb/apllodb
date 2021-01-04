@@ -8,7 +8,7 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
 
-use super::test_storage_engine::{TestStorageEngine, TestTransactionId, TestTxBuilder};
+use super::test_storage_engine::{TestDatabase, TestStorageEngine, TestTransactionId};
 
 use mockall::mock;
 
@@ -20,9 +20,11 @@ mock! {
     }
 
     impl Transaction<TestStorageEngine> for Tx {
+        type Db = TestDatabase;
+
         fn id(&self) -> &TestTransactionId;
 
-        fn begin(_builder: TestTxBuilder) -> ApllodbResult<Self>;
+        fn begin(db: TestDatabase) -> ApllodbResult<Self>;
 
         fn commit(self) -> ApllodbResult<()>;
 
