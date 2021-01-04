@@ -177,7 +177,7 @@ pub struct DropColumn {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CreateTableCommand {
     pub table_name: TableName,
-    pub column_definitions: NonEmptyVec<ColumnDefinition>,
+    pub table_elements: NonEmptyVec<TableElement>,
 }
 
 /*
@@ -321,6 +321,19 @@ pub enum Correlation {
 
 /*
  * ----------------------------------------------------------------------------
+ * Table Elements
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum TableElement {
+    ColumnDefinitionVariant(ColumnDefinition),
+    TableConstraintVariant(TableConstraint),
+}
+
+/*
+ * ----------------------------------------------------------------------------
  * Constraints
  * ----------------------------------------------------------------------------
  */
@@ -329,6 +342,12 @@ pub enum Correlation {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ColumnConstraint {
     NotNullVariant,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum TableConstraint {
+    PrimaryKeyVariant(NonEmptyVec<ColumnName>),
 }
 
 /*

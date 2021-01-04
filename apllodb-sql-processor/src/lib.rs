@@ -42,7 +42,7 @@
 //!     let db = MyDatabase;
 //!     let tx = MyTx::begin(db)?;
 //!
-//!     process_ast(&tx, parser.parse("CREATE TABLE t (id INTEGER, c INTEGER)").unwrap())?;
+//!     process_ast(&tx, parser.parse("CREATE TABLE t (id INTEGER, c INTEGER, PRIMARY KEY (id))").unwrap())?;
 //!     process_ast(&tx, parser.parse("SELECT id, c FROM t").unwrap())?;
 //!     process_ast(&tx, parser.parse("INSERT INTO t (id, c) VALUES (1, 13)").unwrap())?;
 //!

@@ -90,7 +90,14 @@ dependencies = [
 name = "apllodb-server"
 version = "0.1.0"
 dependencies = [
+ "apllodb-immutable-schema-engine",
+ "apllodb-shared-components",
  "apllodb-sql-parser",
+ "apllodb-sql-processor",
+ "apllodb-storage-engine-interface",
+ "chrono",
+ "env_logger",
+ "log",
 ]
 
 [[package]]
@@ -112,6 +119,7 @@ version = "0.1.0"
 dependencies = [
  "pest",
  "pest_derive",
+ "pretty_assertions",
  "serde",
  "version-sync",
 ]

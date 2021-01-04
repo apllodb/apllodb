@@ -1,60 +1,49 @@
-use super::super::PestParserImpl;
-use crate::apllodb_ast::NonEmptyVec;
-use crate::apllodb_ast::{
-    ColumnConstraint, ColumnDefinition, ColumnName, Command, CreateTableCommand, DataType,
-    Identifier, IntegerType, TableName,
-};
+use super::{super::PestParserImpl, create_table, te_coldef, te_pk};
+use crate::apllodb_ast::{ColumnConstraint, Command, CreateTableCommand, DataType};
 use crate::parser_interface::ParserLike;
 use crate::ApllodbAst;
-
-macro_rules! create_table {
-    ($table_name: expr, $column_definitions: expr $(,)?) => {
-        CreateTableCommand {
-            table_name: TableName(Identifier($table_name.to_string())),
-            column_definitions: NonEmptyVec::new($column_definitions),
-        }
-    };
-}
-
-macro_rules! coldef {
-    ($column_name: expr, $data_type: expr, $column_constraints: expr $(,)?) => {
-        ColumnDefinition {
-            column_name: ColumnName(Identifier($column_name.to_string())),
-            data_type: $data_type,
-            column_constraints: $column_constraints,
-        }
-    };
-}
+use pretty_assertions::assert_eq;
 
 #[test]
 fn test_create_table_accepted() {
     let sql_vs_expected_ast: Vec<(&str, CreateTableCommand)> = vec![
         (
             "CREATE TABLE t (id INTEGER)",
-            create_table!(
-                "t",
-                vec![coldef!(
-                    "id",
-                    DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
-                    vec![]
-                )]
-            ),
+            create_table("t", vec![te_coldef("id", DataType::integer(), vec![])]),
         ),
         (
             "CREATE TABLE t (id INTEGER NOT NULL, c1 INTEGER)",
-            create_table!(
+            create_table(
                 "t",
                 vec![
-                    coldef!(
+                    te_coldef(
                         "id",
-                        DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
-                        vec![ColumnConstraint::NotNullVariant]
+                        DataType::integer(),
+                        vec![ColumnConstraint::NotNullVariant],
                     ),
-                    coldef!(
-                        "c1",
-                        DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
-                        vec![]
-                    ),
+                    te_coldef("c1", DataType::integer(), vec![]),
+                ],
+            ),
+        ),
+        (
+            "CREATE TABLE t (id INTEGER, c1 INTEGER, PRIMARY KEY (id, c1))",
+            create_table(
+                "t",
+                vec![
+                    te_coldef("id", DataType::integer(), vec![]),
+                    te_coldef("c1", DataType::integer(), vec![]),
+                    te_pk(vec!["id", "c1"]),
+                ],
+            ),
+        ),
+        (
+            "CREATE TABLE t (id INTEGER, PRIMARY KEY (id), c1 INTEGER)",
+            create_table(
+                "t",
+                vec![
+                    te_coldef("id", DataType::integer(), vec![]),
+                    te_pk(vec!["id"]),
+                    te_coldef("c1", DataType::integer(), vec![]),
                 ],
             ),
         ),

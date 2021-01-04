@@ -2,7 +2,7 @@ use super::super::PestParserImpl;
 use crate::apllodb_ast::NonEmptyVec;
 use crate::apllodb_ast::{
     Action, AddColumn, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName, Command,
-    DataType, DropColumn, Identifier, IntegerType, TableName,
+    DataType, DropColumn, Identifier, TableName,
 };
 use crate::parser_interface::ParserLike;
 use crate::ApllodbAst;
@@ -41,14 +41,7 @@ fn test_alter_table_accepted() {
     let sql_vs_expected_ast: Vec<(&str, AlterTableCommand)> = vec![
         (
             "ALTER TABLE t ADD COLUMN c1 INTEGER",
-            alter_table!(
-                "t",
-                vec![add_column!(
-                    "c1",
-                    DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
-                    vec![]
-                )]
-            ),
+            alter_table!("t", vec![add_column!("c1", DataType::integer(), vec![])]),
         ),
         (
             "ALTER TABLE t ADD COLUMN c1 INTEGER NOT NULL, DROP COLUMN c2",
@@ -57,7 +50,7 @@ fn test_alter_table_accepted() {
                 vec![
                     add_column!(
                         "c1",
-                        DataType::IntegerTypeVariant(IntegerType::IntegerVariant),
+                        DataType::integer(),
                         vec![ColumnConstraint::NotNullVariant]
                     ),
                     drop_column!("c2")

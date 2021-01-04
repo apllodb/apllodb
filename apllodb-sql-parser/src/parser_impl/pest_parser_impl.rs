@@ -10,7 +10,7 @@ use crate::{
         ColumnDefinition, ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
         CreateTableCommand, DataType, DeleteCommand, DropColumn, DropTableCommand, Expression,
         FromItem, Identifier, InsertCommand, IntegerConstant, IntegerType, NumericConstant,
-        SelectCommand, SelectField, TableName, UpdateCommand,
+        SelectCommand, SelectField, TableConstraint, TableElement, TableName, UpdateCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     parser_interface::ParserLike,
@@ -336,15 +336,15 @@ impl PestParserImpl {
             Self::parse_table_name,
             identity,
         )?;
-        let column_definitions = parse_child_seq(
+        let table_elements = parse_child_seq(
             &mut params,
-            Rule::column_definition,
-            &Self::parse_column_definition,
+            Rule::table_element,
+            &Self::parse_table_element,
             &identity,
         )?;
         Ok(CreateTableCommand {
             table_name,
-            column_definitions: NonEmptyVec::new(column_definitions),
+            table_elements: NonEmptyVec::new(table_elements),
         })
     }
 
@@ -584,6 +584,33 @@ impl PestParserImpl {
 
     /*
      * ----------------------------------------------------------------------------
+     * Table Elements
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_table_element(mut params: FnParseParams) -> ApllodbSqlParserResult<TableElement> {
+        try_parse_child(
+            &mut params,
+            Rule::column_definition,
+            Self::parse_column_definition,
+            TableElement::ColumnDefinitionVariant,
+        )?
+        .or(try_parse_child(
+            &mut params,
+            Rule::table_constraint,
+            Self::parse_table_constraint,
+            TableElement::TableConstraintVariant,
+        )?)
+        .ok_or_else(|| {
+            ApllodbSqlParserError::new(
+                params.apllodb_sql,
+                "Does not match any child rule of table_element",
+            )
+        })
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
      * Constraints
      * ----------------------------------------------------------------------------
      */
@@ -599,6 +626,20 @@ impl PestParserImpl {
                 unreachable!();
             }
         }
+    }
+
+    fn parse_table_constraint(
+        mut params: FnParseParams,
+    ) -> ApllodbSqlParserResult<TableConstraint> {
+        let primary_key = parse_child_seq(
+            &mut params,
+            Rule::column_name,
+            &Self::parse_column_name,
+            &identity,
+        )?;
+        Ok(TableConstraint::PrimaryKeyVariant(NonEmptyVec::new(
+            primary_key,
+        )))
     }
 
     /*

@@ -1,20 +1,20 @@
 [package]
-name = "apllodb-sql-parser"
-version = "0.1.0"
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
-edition = "2018"
-description = "apllodb-SQL's parser that inputs apllodb-SQL and emit apllodb-AST."
-license = "(TBD)"
-readme = "README.md"
-keywords = ["apllodb", "parser", "sql"]
 categories = ["parser-implementations", "database", "database-implementations"]
+description = "apllodb-SQL's parser that inputs apllodb-SQL and emit apllodb-AST."
+edition = "2018"
+keywords = ["apllodb", "parser", "sql"]
+license = "(TBD)"
+name = "apllodb-sql-parser"
+readme = "README.md"
 repository = "https://github.com/darwin-education/apllodb"
+version = "0.1.0"
 
 [dependencies]
 pest = "2.1.3"
 pest_derive = "2.1.0"
-serde = { version = "1.0", optional = true, features = ["derive"] }
+serde = {version = "1.0", optional = true, features = ["derive"]}
 
 [dev-dependencies]
+pretty_assertions = "0.6"
 version-sync = "0.9"
-
