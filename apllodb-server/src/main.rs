@@ -10,11 +10,12 @@ use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, D
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_sql_processor::{DDLProcessor, ModificationProcessor, QueryProcessor};
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use chrono::Local;
 
 fn main() -> ApllodbResult<()> {
     let parser = ApllodbSqlParser::new();
 
-    let database_name_from_client = "people_db";
+    let database_name_from_client = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
 
     let mut db =
         ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new(database_name_from_client)?)?;
@@ -25,7 +26,7 @@ fn main() -> ApllodbResult<()> {
         "INSERT INTO people (id, age) VALUES (1, 13)",
         "INSERT INTO people (id, age) VALUES (2, 70)",
         "INSERT INTO people (id, age) VALUES (3, 35)",
-        // "SELECT id, age FORM people",
+        "SELECT id, age FROM people",
     ];
 
     for sql in sqls_from_client {
@@ -53,7 +54,7 @@ fn main() -> ApllodbResult<()> {
                     let processor = QueryProcessor::<'_, ApllodbImmutableSchemaEngine>::new(&tx);
                     let records = processor.run(select_command)?;
                     // TODO return records to client
-                    log::debug!("SELECT result: {:#?}", records);
+                    log::info!("SELECT result: {:#?}", records);
                     Ok(())
                 }
             },
