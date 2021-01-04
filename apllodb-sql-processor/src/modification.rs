@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use apllodb_shared_components::{
-    ApllodbResult, ColumnName, ColumnReference, FieldIndex, Record, RecordIterator, SqlValue,
-    TableName,
+    ApllodbResult, ColumnReference, FieldIndex, Record, RecordIterator, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{self, Command};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -43,7 +42,7 @@ impl<'exe, Engine: StorageEngine> ModificationProcessor<'exe, Engine> {
                     unimplemented!();
                 }
 
-                let table_name = TableName::new(ic.table_name.0 .0)?;
+                let table_name = AstTranslator::table_name(ic.table_name)?;
 
                 let column_names = ic.column_names.into_vec();
                 let expressions = ic.expressions.into_vec();
@@ -65,8 +64,10 @@ impl<'exe, Engine: StorageEngine> ModificationProcessor<'exe, Engine> {
                     .zip(constant_values)
                     .into_iter()
                     .map(|(cn, sql_value)| {
-                        let col_ref =
-                            ColumnReference::new(table_name.clone(), ColumnName::new(cn.0 .0)?);
+                        let col_ref = ColumnReference::new(
+                            table_name.clone(),
+                            AstTranslator::column_name(cn)?,
+                        );
                         let field = FieldIndex::InColumnReference(col_ref);
                         Ok((field, sql_value))
                     })

@@ -7,6 +7,8 @@ use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
+use crate::ast_translator::AstTranslator;
+
 use self::query_plan_tree::{
     query_plan_node::{LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf},
     QueryPlanTree,
@@ -44,7 +46,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                 if from_item.alias.is_some() {
                     unimplemented!();
                 }
-                TableName::new(from_item.table_name.0 .0)
+                AstTranslator::table_name(from_item.table_name)
             })
             .collect::<ApllodbResult<_>>()?;
 
@@ -71,7 +73,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                             unimplemented!();
                         }
 
-                        ColumnName::new(colref.column_name.0 .0)
+                        AstTranslator::column_name(colref.column_name)
                     }
                 }
             })
