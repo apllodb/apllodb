@@ -118,6 +118,7 @@ version = "0.1.0"
 dependencies = [
  "pest",
  "pest_derive",
+ "pretty_assertions",
  "serde",
  "version-sync",
 ]

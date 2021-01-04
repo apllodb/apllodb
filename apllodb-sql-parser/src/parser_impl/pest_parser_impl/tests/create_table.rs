@@ -1,26 +1,49 @@
-use super::{super::PestParserImpl, coldef, create_table};
+use super::{super::PestParserImpl, create_table, te_coldef, te_pk};
 use crate::apllodb_ast::{ColumnConstraint, Command, CreateTableCommand, DataType};
 use crate::parser_interface::ParserLike;
 use crate::ApllodbAst;
+use pretty_assertions::assert_eq;
 
 #[test]
 fn test_create_table_accepted() {
     let sql_vs_expected_ast: Vec<(&str, CreateTableCommand)> = vec![
         (
             "CREATE TABLE t (id INTEGER)",
-            create_table("t", vec![coldef("id", DataType::integer(), vec![])]),
+            create_table("t", vec![te_coldef("id", DataType::integer(), vec![])]),
         ),
         (
             "CREATE TABLE t (id INTEGER NOT NULL, c1 INTEGER)",
             create_table(
                 "t",
                 vec![
-                    coldef(
+                    te_coldef(
                         "id",
                         DataType::integer(),
                         vec![ColumnConstraint::NotNullVariant],
                     ),
-                    coldef("c1", DataType::integer(), vec![]),
+                    te_coldef("c1", DataType::integer(), vec![]),
+                ],
+            ),
+        ),
+        (
+            "CREATE TABLE t (id INTEGER, c1 INTEGER, PRIMARY KEY (id, c1))",
+            create_table(
+                "t",
+                vec![
+                    te_coldef("id", DataType::integer(), vec![]),
+                    te_coldef("c1", DataType::integer(), vec![]),
+                    te_pk(vec!["id", "c1"]),
+                ],
+            ),
+        ),
+        (
+            "CREATE TABLE t (id INTEGER, PRIMARY KEY (id), c1 INTEGER)",
+            create_table(
+                "t",
+                vec![
+                    te_coldef("id", DataType::integer(), vec![]),
+                    te_pk(vec!["id"]),
+                    te_coldef("c1", DataType::integer(), vec![]),
                 ],
             ),
         ),
