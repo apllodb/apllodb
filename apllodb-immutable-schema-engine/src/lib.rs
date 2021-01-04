@@ -25,5 +25,5 @@
 //! ![apllodb-immutable-schema-engine Clean Architecture](https://user-images.githubusercontent.com/498788/85363246-5b802e80-b55b-11ea-98ca-a3d97f68a53a.png)
 
 pub use apllodb_immutable_schema_engine_infra::external_interface::{
-    ApllodbImmutableSchemaDb, ApllodbImmutableSchemaEngine,
+    ApllodbImmutableSchemaDb, ApllodbImmutableSchemaEngine, ApllodbImmutableSchemaTx,
 };
