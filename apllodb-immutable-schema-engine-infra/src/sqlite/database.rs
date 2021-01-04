@@ -59,7 +59,6 @@ impl SqliteDatabase {
     }
 }
 
-
 #[cfg(test)]
 impl Drop for SqliteDatabase {
     fn drop(&mut self) {
