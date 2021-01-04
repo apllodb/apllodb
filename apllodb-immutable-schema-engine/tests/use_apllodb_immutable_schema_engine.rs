@@ -14,7 +14,7 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 
     let mut db = TestDatabase::new()?;
     let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
-    
+
     let t_name = TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
