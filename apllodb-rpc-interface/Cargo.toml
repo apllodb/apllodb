@@ -9,14 +9,5 @@ version = "0.1.0"
 [dependencies]
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 
-clap = "2.33"
-env_logger = "0.8"
-futures = "0.3"
 serde = "1.0"
 tarpc = {version = "0.24", features = ["full"]}
-tokio = {version = "1", features = ["full"]}
-tokio-serde = {version = "0.8", features = ["bincode"]}
-
-[lib]
-name = "service"
-path = "src/lib.rs"
