@@ -19,6 +19,7 @@ pub type ApllodbResult<T> = Result<T, ApllodbError>;
 /// Error type commonly used in apllodb workspace.
 #[derive(Debug)]
 pub struct ApllodbError {
+    /// Machine-readable error type.
     kind: ApllodbErrorKind,
 
     /// Human-readable description of each error instance.
@@ -80,6 +81,11 @@ impl ApllodbError {
     /// Use this for error handling with pattern match.
     pub fn kind(&self) -> &ApllodbErrorKind {
         &self.kind
+    }
+
+    /// Human-readable error description.
+    pub fn desc(&self) -> &str {
+        &self.desc
     }
 
     /// [SQLSTATE](https://www.postgresql.org/docs/12/errcodes-appendix.html).

@@ -1,23 +1,19 @@
 [package]
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
-name = "apllodb-server"
+name = "apllodb-client"
 version = "0.1.0"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [dependencies]
-apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
 apllodb-rpc-interface = {path = "../apllodb-rpc-interface"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
-apllodb-sql-parser = {path = "../apllodb-sql-parser"}
-apllodb-sql-processor = {path = "../apllodb-sql-processor"}
-apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
 
 env_logger = "0.8"
 log = "0.4"
 
 clap = "2.33"
-
-derive-new = "0.5"
 
 futures = "0.3"
 serde = {version = "1.0"}
