@@ -35,151 +35,113 @@
 //!
 //! ```rust
 //! // example storage engine implementation.
-//! pub mod empty_storage_engine {
-//!     pub use db::EmptyDatabase;
-//!     pub use engine::EmptyStorageEngine;
-//!     pub use tx::EmptyTx;
 //!
-//!     mod db {
-//!         use apllodb_storage_engine_interface::Database;
+//! # use std::collections::HashMap;
+//! # use apllodb_shared_components::{
+//! #     AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, ColumnReference, DatabaseName,
+//! #     Expression, RecordIterator, SqlType, TableConstraintKind, TableConstraints, TableName,
+//! # };
+//! use apllodb_storage_engine_interface::{Database, ProjectionQuery, StorageEngine, Transaction, TransactionId};
 //!
-//!         pub struct EmptyDatabase;
-//!         impl Database for EmptyDatabase {
-//!             fn name(&self) -> &apllodb_shared_components::DatabaseName {
-//!                 unimplemented!()
-//!             }
-//!         }
-//!         impl EmptyDatabase {
-//!             pub(super) fn new() -> Self {
-//!                 Self
-//!             }
-//!         }
-//!     }
-//!
-//!     mod tx {
-//!         use apllodb_shared_components::{
-//!             AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName,
-//!             Expression, RecordIterator, TableConstraints, TableName,
-//!         };
-//!         use apllodb_storage_engine_interface::{ProjectionQuery, Transaction, TransactionId};
-//!         use std::collections::HashMap;
-//!
-//!         use super::{EmptyDatabase, EmptyStorageEngine};
-//!
-//!         #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-//!         pub struct EmptyTransactionId;
-//!         impl TransactionId for EmptyTransactionId {}
-//!
-//!         #[derive(Debug)]
-//!         pub struct EmptyTx;
-//!         impl Transaction<EmptyStorageEngine> for EmptyTx {
-//!             type Db = EmptyDatabase;
-//!             type TID = EmptyTransactionId;
-//!
-//!             fn id(&self) -> &EmptyTransactionId {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn begin(db: EmptyDatabase) -> ApllodbResult<Self> {
-//!                 Ok(Self)
-//!             }
-//!
-//!             fn commit(self) -> ApllodbResult<()> {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn abort(self) -> ApllodbResult<()> {
-//!                 Ok(())
-//!             }
-//!
-//!             fn database_name(&self) -> &DatabaseName {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn create_table(
-//!                 &self,
-//!                 table_name: &TableName,
-//!                 table_constraints: &TableConstraints,
-//!                 column_definitions: Vec<ColumnDefinition>,
-//!             ) -> ApllodbResult<()> {
-//!                 Ok(())
-//!             }
-//!
-//!             fn alter_table(
-//!                 &self,
-//!                 table_name: &TableName,
-//!                 action: &AlterTableAction,
-//!             ) -> ApllodbResult<()> {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()> {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn select(
-//!                 &self,
-//!                 table_name: &TableName,
-//!                 projection: ProjectionQuery,
-//!             ) -> ApllodbResult<RecordIterator> {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn insert(
-//!                 &self,
-//!                 table_name: &TableName,
-//!                 records: RecordIterator,
-//!             ) -> ApllodbResult<()> {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn update(
-//!                 &self,
-//!                 table_name: &TableName,
-//!                 column_values: HashMap<ColumnName, Expression>,
-//!             ) -> ApllodbResult<()> {
-//!                 unimplemented!()
-//!             }
-//!
-//!             fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
-//!                 unimplemented!()
-//!             }
-//!         }
-//!     }
-//!
-//!     mod engine {
-//!         use super::{
-//!             tx::EmptyTransactionId, EmptyDatabase, EmptyTx,
-//!         };
-//!         use apllodb_shared_components::{ApllodbResult, DatabaseName};
-//!         use apllodb_storage_engine_interface::StorageEngine;
-//!
-//!         #[derive(Debug)]
-//!         pub struct EmptyStorageEngine;
-//!         impl StorageEngine for EmptyStorageEngine {
-//!             type Db = EmptyDatabase;
-//!             type Tx = EmptyTx;
-//!
-//!             fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
-//!                 Ok(EmptyDatabase::new())
-//!             }
-//!         }
+//! struct EmptyDatabase;
+//! impl Database for EmptyDatabase {
+//!     fn name(&self) -> &apllodb_shared_components::DatabaseName {
+//!         unimplemented!()
 //!     }
 //! }
 //!
-//! use apllodb_shared_components::ApllodbResult;
+//! #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+//! struct EmptyTransactionId;
+//! impl TransactionId for EmptyTransactionId {}
+//!
+//! #[derive(Debug)]
+//! struct EmptyTx;
+//! impl Transaction<EmptyStorageEngine> for EmptyTx {
+//!     type Db = EmptyDatabase;
+//!     type TID = EmptyTransactionId;
+//!
+//!     fn id(&self) -> &EmptyTransactionId {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn begin(db: EmptyDatabase) -> ApllodbResult<Self> {
+//!         Ok(Self)
+//!     }
+//!
+//!     fn commit(self) -> ApllodbResult<()> {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn abort(self) -> ApllodbResult<()> {
+//!         Ok(())
+//!     }
+//!
+//!     fn database_name(&self) -> &DatabaseName {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn create_table(
+//!         &self,
+//!         table_name: &TableName,
+//!         table_constraints: &TableConstraints,
+//!         column_definitions: Vec<ColumnDefinition>,
+//!     ) -> ApllodbResult<()> {
+//!         Ok(())
+//!     }
+//!
+//!     fn alter_table(
+//!         &self,
+//!         table_name: &TableName,
+//!         action: &AlterTableAction,
+//!     ) -> ApllodbResult<()> {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()> {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn select(
+//!         &self,
+//!         table_name: &TableName,
+//!         projection: ProjectionQuery,
+//!     ) -> ApllodbResult<RecordIterator> {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn insert(
+//!         &self,
+//!         table_name: &TableName,
+//!         records: RecordIterator,
+//!     ) -> ApllodbResult<()> {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn update(
+//!         &self,
+//!         table_name: &TableName,
+//!         column_values: HashMap<ColumnName, Expression>,
+//!     ) -> ApllodbResult<()> {
+//!         unimplemented!()
+//!     }
+//!
+//!     fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
+//!         unimplemented!()
+//!     }
+//! }
+//!
+//! #[derive(Debug)]
+//! struct EmptyStorageEngine;
+//! impl StorageEngine for EmptyStorageEngine {
+//!     type Db = EmptyDatabase;
+//!     type Tx = EmptyTx;
+//!
+//!     fn use_database(database_name: &DatabaseName) -> ApllodbResult<EmptyDatabase> {
+//!         Ok(EmptyDatabase)
+//!     }
+//! }
 //!
 //! fn main() -> ApllodbResult<()> {
-//!     use apllodb_shared_components::{
-//!         ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, ColumnReference,
-//!         DatabaseName, SqlType, TableConstraintKind, TableConstraints, TableName,
-//!     };
-//!     use apllodb_storage_engine_interface::{StorageEngine, Transaction};
-//!
-//!     // `use` only `EmptyStorageEngine` from `empty_storage_engine`.
-//!     // `EmptyDatabase` and `EmptyTx` are usable without `use`.
-//!     use empty_storage_engine::{EmptyStorageEngine, EmptyTx};
-//!
 //!     let db = EmptyStorageEngine::use_database(&DatabaseName::new("db")?)?;
 //!     let tx = EmptyTx::begin(db)?;
 //!

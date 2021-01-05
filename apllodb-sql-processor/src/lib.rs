@@ -8,13 +8,11 @@
 //! # Examples
 //!
 //! ```
-//! use std::collections::HashMap;
-//! use apllodb_shared_components::{AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName, Expression, Record, RecordIterator, TableConstraints, TableName};
-//! use apllodb_storage_engine_interface::{
-//!     Database, ProjectionQuery, StorageEngine, Transaction, TransactionId,
-//! };
-//! use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser, apllodb_ast::Command};
+//! # use apllodb_shared_components::{AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName, Expression, Record, RecordIterator, TableConstraints, TableName};
+//! # use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser, apllodb_ast::Command};
+//! # use apllodb_storage_engine_interface::{Database, Transaction};
 //! use apllodb_sql_processor::{DDLProcessor, ModificationProcessor, QueryProcessor};
+//! use crate::my_engine::{MyDatabase, MyStorageEngine, MyTx};
 //!
 //! fn process_ast(tx: &MyTx, ast: ApllodbAst) -> ApllodbResult<()> {
 //!     let command = ast.0;
@@ -48,110 +46,112 @@
 //!
 //!     Ok(())
 //! }
-//!     
-//! // simple storage engine implementation follows
 //!
-//! struct MyDatabase;
-//! impl Database for MyDatabase {
-//!     fn name(&self) -> &apllodb_shared_components::DatabaseName {
-//!         unimplemented!()
-//!     }
-//! }
-//! impl MyDatabase {
-//!     fn new() -> Self {
-//!         Self
-//!     }
-//! }
-//!
-//! #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-//! struct MyTransactionId;
-//! impl TransactionId for MyTransactionId {}
-//!
-//! #[derive(Debug)]
-//! struct MyTx;
-//! impl Transaction<MyStorageEngine> for MyTx {
-//!     type Db = MyDatabase;
-//!     type TID = MyTransactionId;
-//!
-//!     fn id(&self) -> &MyTransactionId {
-//!         unimplemented!()
-//!     }
-//!
-//!     fn begin(db: MyDatabase) -> ApllodbResult<Self> {
-//!         Ok(Self)
-//!     }
-//!
-//!     fn commit(self) -> ApllodbResult<()> {
-//!         unimplemented!()
-//!     }
-//!
-//!     fn abort(self) -> ApllodbResult<()> {
-//!         unimplemented!()
-//!     }
-//!
-//!     fn database_name(&self) -> &DatabaseName {
-//!         unimplemented!()
-//!     }
-//!
-//!     fn create_table(
-//!         &self,
-//!         table_name: &TableName,
-//!         table_constraints: &TableConstraints,
-//!         column_definitions: Vec<ColumnDefinition>,
-//!     ) -> ApllodbResult<()> {
-//!         Ok(())
-//!     }
-//!
-//!     fn alter_table(
-//!         &self,
-//!         table_name: &TableName,
-//!         action: &AlterTableAction,
-//!     ) -> ApllodbResult<()> {
-//!         unimplemented!()
-//!     }
-//!
-//!     fn drop_table(&self, table_name: &TableName) -> ApllodbResult<()> {
-//!         unimplemented!()
-//!     }
-//!
-//!     fn select(
-//!         &self,
-//!         table_name: &TableName,
-//!         projection: ProjectionQuery,
-//!     ) -> ApllodbResult<RecordIterator> {
-//!         Ok(RecordIterator::new(Vec::<Record>::new()))
-//!     }
-//!
-//!     fn insert(
-//!         &self,
-//!         table_name: &TableName,
-//!         records: RecordIterator,
-//!     ) -> ApllodbResult<()> {
-//!         Ok(())
-//!     }
-//!
-//!     fn update(
-//!         &self,
-//!         table_name: &TableName,
-//!         column_values: HashMap<ColumnName, Expression>,
-//!     ) -> ApllodbResult<()> {
-//!         unimplemented!()
-//!     }
-//!
-//!     fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
-//!         unimplemented!()
-//!     }
-//! }
-//!
-//! #[derive(Debug)]
-//! struct MyStorageEngine;
-//! impl StorageEngine for MyStorageEngine {
-//!     type Db = MyDatabase;
-//!     type Tx = MyTx;
-//!
-//!     fn use_database(_database_name: &DatabaseName) -> ApllodbResult<MyDatabase> {
-//!         Ok(MyDatabase)
-//!     }
+//! mod my_engine {
+//!     // ...
+//! # use apllodb_shared_components::{
+//! #     AlterTableAction, ApllodbResult, ColumnDefinition, ColumnName, DatabaseName, Expression,
+//! #     Record, RecordIterator, TableConstraints, TableName,
+//! # };
+//! # use apllodb_storage_engine_interface::{
+//! #     Database, ProjectionQuery, StorageEngine, Transaction, TransactionId,
+//! # };
+//! # use std::collections::HashMap;
+//! #
+//! # #[derive(Debug)]
+//! # pub struct MyDatabase;
+//! # impl Database for MyDatabase {
+//! #     fn name(&self) -> &apllodb_shared_components::DatabaseName {
+//! #         unimplemented!()
+//! #     }
+//! # }
+//! #
+//! # #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+//! # pub struct MyTransactionId;
+//! # impl TransactionId for MyTransactionId {}
+//! #
+//! # #[derive(Debug)]
+//! # pub struct MyTx;
+//! # impl Transaction<MyStorageEngine> for MyTx {
+//! #     type Db = MyDatabase;
+//! #     type TID = MyTransactionId;
+//! #
+//! #     fn id(&self) -> &MyTransactionId {
+//! #         unimplemented!()
+//! #     }
+//! #
+//! #     fn begin(_db: MyDatabase) -> ApllodbResult<Self> {
+//! #         Ok(Self)
+//! #     }
+//! #
+//! #     fn commit(self) -> ApllodbResult<()> {
+//! #         unimplemented!()
+//! #     }
+//! #
+//! #     fn abort(self) -> ApllodbResult<()> {
+//! #         unimplemented!()
+//! #     }
+//! #
+//! #     fn database_name(&self) -> &DatabaseName {
+//! #         unimplemented!()
+//! #     }
+//! #
+//! #     fn create_table(
+//! #         &self,
+//! #         _table_name: &TableName,
+//! #         _table_constraints: &TableConstraints,
+//! #         _column_definitions: Vec<ColumnDefinition>,
+//! #     ) -> ApllodbResult<()> {
+//! #         Ok(())
+//! #     }
+//! #
+//! #     fn alter_table(
+//! #         &self,
+//! #         _table_name: &TableName,
+//! #         _action: &AlterTableAction,
+//! #     ) -> ApllodbResult<()> {
+//! #         unimplemented!()
+//! #     }
+//! #
+//! #     fn drop_table(&self, _table_name: &TableName) -> ApllodbResult<()> {
+//! #         unimplemented!()
+//! #     }
+//! #
+//! #     fn select(
+//! #         &self,
+//! #         _table_name: &TableName,
+//! #         _projection: ProjectionQuery,
+//! #     ) -> ApllodbResult<RecordIterator> {
+//! #         Ok(RecordIterator::new(Vec::<Record>::new()))
+//! #     }
+//! #
+//! #     fn insert(&self, _table_name: &TableName, _records: RecordIterator) -> ApllodbResult<()> {
+//! #         Ok(())
+//! #     }
+//! #
+//! #     fn update(
+//! #         &self,
+//! #         _table_name: &TableName,
+//! #         _column_values: HashMap<ColumnName, Expression>,
+//! #     ) -> ApllodbResult<()> {
+//! #         unimplemented!()
+//! #     }
+//! #
+//! #     fn delete(&self, _table_name: &TableName) -> ApllodbResult<()> {
+//! #         unimplemented!()
+//! #     }
+//! # }
+//! #
+//! # #[derive(Debug)]
+//! # pub struct MyStorageEngine;
+//! # impl StorageEngine for MyStorageEngine {
+//! #     type Db = MyDatabase;
+//! #     type Tx = MyTx;
+//! #
+//! #     fn use_database(_database_name: &DatabaseName) -> ApllodbResult<MyDatabase> {
+//! #         Ok(MyDatabase)
+//! #     }
+//! # }
 //! }
 //! ```
 
