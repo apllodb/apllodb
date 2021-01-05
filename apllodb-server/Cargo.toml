@@ -6,6 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
+apllodb-rpc-interface = {path = "../apllodb-rpc-interface"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-sql-parser = {path = "../apllodb-sql-parser"}
 apllodb-sql-processor = {path = "../apllodb-sql-processor"}
@@ -15,3 +16,13 @@ env_logger = "0.8"
 log = "0.4"
 
 chrono = "0.4" # TODO main() で色々やるのを辞めたら消す
+
+clap = "2.33"
+
+derive-new = "0.5"
+
+futures = "0.3"
+serde = {version = "1.0"}
+tarpc = {version = "0.24", features = ["full"]}
+tokio = {version = "1", features = ["full"]}
+tokio-serde = {version = "0.8", features = ["bincode"]}

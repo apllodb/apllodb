@@ -97,13 +97,8 @@ name = "apllodb-rpc-interface"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
- "clap",
- "env_logger",
- "futures",
  "serde",
  "tarpc",
- "tokio",
- "tokio-serde",
 ]
 
 [[package]]
@@ -111,13 +106,21 @@ name = "apllodb-server"
 version = "0.1.0"
 dependencies = [
  "apllodb-immutable-schema-engine",
+ "apllodb-rpc-interface",
  "apllodb-shared-components",
  "apllodb-sql-parser",
  "apllodb-sql-processor",
  "apllodb-storage-engine-interface",
  "chrono",
+ "clap",
+ "derive-new",
  "env_logger",
+ "futures",
  "log",
+ "serde",
+ "tarpc",
+ "tokio",
+ "tokio-serde",
 ]
 
 [[package]]
