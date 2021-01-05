@@ -15,4 +15,5 @@ members = [
 
   "apllodb-rpc-interface",
   "apllodb-server",
+  "apllodb-client",
 ]

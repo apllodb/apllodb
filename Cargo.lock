@@ -31,6 +31,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee67c11feeac938fae061b232e38e0b6d94f97a9df10e6271319325ac4c56a86"
 
 [[package]]
+name = "apllodb-client"
+version = "0.1.0"
+dependencies = [
+ "apllodb-rpc-interface",
+ "apllodb-shared-components",
+ "clap",
+ "env_logger",
+ "futures",
+ "log",
+ "serde",
+ "tarpc",
+ "tokio",
+ "tokio-serde",
+]
+
+[[package]]
 name = "apllodb-immutable-schema-engine"
 version = "0.1.0"
 dependencies = [
