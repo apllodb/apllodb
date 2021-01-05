@@ -6,7 +6,7 @@ RDBMS実装。以下の機能を特徴として持つ予定。
 - 曖昧なデータ（ "大体1000年前" など）
 - 代数的データ型 (apllo-cms のデータモデリングで実現するか、apllodbの機能としてやるかの検討段階)
 
-![MSRV](https://img.shields.io/badge/rustc-1.43+-lightgray.svg)
+![MSRV](https://img.shields.io/badge/rustc-1.48+-lightgray.svg)
 
 ## システム設計
 
