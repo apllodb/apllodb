@@ -39,7 +39,10 @@ async fn main() -> io::Result<()> {
     // args as defined, with the addition of a Context, which is always the first arg. The Context
     // specifies a deadline and trace information which can be helpful in debugging requests.
     let hello = client
-        .command(context::current(), "CREATE TABLE t (id INTEGER, age SMALLINT, PRIMARY KEY (id))".to_string())
+        .command(
+            context::current(),
+            "CREATE TABLE t (id INTEGER, age SMALLINT, PRIMARY KEY (id))".to_string(),
+        )
         .await?;
 
     println!("{:?}", hello);
