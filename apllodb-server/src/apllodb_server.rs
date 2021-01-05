@@ -1,6 +1,7 @@
 mod use_case;
 
 use apllodb_rpc_interface::{ApllodbRpc, ApllodbRpcError, ApllodbRpcResult, ApllodbRpcSuccess};
+use apllodb_shared_components::DatabaseName;
 
 use std::net::SocketAddr;
 use tarpc::context;
@@ -14,8 +15,9 @@ impl ApllodbRpc for ApllodbServer {
     async fn command(
         self,
         _: context::Context,
+        db: DatabaseName,
         sql: String,
     ) -> ApllodbRpcResult<ApllodbRpcSuccess> {
-        UseCase::command(&sql).map_err(ApllodbRpcError::from)
+        UseCase::command(db, &sql).map_err(ApllodbRpcError::from)
     }
 }

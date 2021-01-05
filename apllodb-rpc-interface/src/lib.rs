@@ -2,7 +2,7 @@ mod error;
 
 pub use error::{ApllodbRpcError, ApllodbRpcResult};
 
-use apllodb_shared_components::RecordIterator;
+use apllodb_shared_components::{DatabaseName, RecordIterator};
 use serde::{Deserialize, Serialize};
 
 /// Successful response from apllodb-server
@@ -16,5 +16,5 @@ pub enum ApllodbRpcSuccess {
 #[tarpc::service]
 pub trait ApllodbRpc {
     /// Returns a greeting for name.
-    async fn command(sql: String) -> ApllodbRpcResult<ApllodbRpcSuccess>;
+    async fn command(db: DatabaseName, sql: String) -> ApllodbRpcResult<ApllodbRpcSuccess>;
 }

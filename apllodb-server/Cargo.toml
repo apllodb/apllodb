@@ -15,8 +15,6 @@ apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"
 env_logger = "0.8"
 log = "0.4"
 
-chrono = "0.4" # TODO main() で色々やるのを辞めたら消す
-
 clap = "2.33"
 
 derive-new = "0.5"

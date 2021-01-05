@@ -127,7 +127,6 @@ dependencies = [
  "apllodb-sql-parser",
  "apllodb-sql-processor",
  "apllodb-storage-engine-interface",
- "chrono",
  "clap",
  "derive-new",
  "env_logger",

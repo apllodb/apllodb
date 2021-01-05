@@ -4,20 +4,18 @@ use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, D
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_sql_processor::{DDLProcessor, ModificationProcessor, QueryProcessor};
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
-use chrono::Local;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub(in crate::apllodb_server) struct UseCase;
 
 impl UseCase {
-    pub(in crate::apllodb_server) fn command(sql: &str) -> ApllodbResult<ApllodbRpcSuccess> {
+    pub(in crate::apllodb_server) fn command(
+        db: DatabaseName,
+        sql: &str,
+    ) -> ApllodbResult<ApllodbRpcSuccess> {
         let parser = ApllodbSqlParser::new();
 
-        let database_name_from_client = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-
-        let mut db = ApllodbImmutableSchemaEngine::use_database(&DatabaseName::new(
-            database_name_from_client,
-        )?)?;
+        let mut db = ApllodbImmutableSchemaEngine::use_database(&db)?;
         let tx = ApllodbImmutableSchemaTx::begin(&mut db)?;
 
         let ret: ApllodbResult<ApllodbRpcSuccess> = match parser.parse(sql) {
