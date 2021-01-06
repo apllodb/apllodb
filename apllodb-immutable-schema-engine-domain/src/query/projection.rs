@@ -15,23 +15,10 @@ use crate::{
 };
 
 #[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
-pub struct ProjectionResult<
-    'prj,
-    'db: 'prj,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'prj, 'db, Engine>,
-> {
+pub struct ProjectionResult {
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
-
-    _marker: PhantomData<(&'prj &'db (), Engine, Types)>,
 }
-impl<
-        'prj,
-        'db: 'prj,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'prj, 'db, Engine>,
-    > ProjectionResult<'prj, 'db, Engine, Types>
-{
+impl ProjectionResult {
     pub fn new(
         vtable: &VTable,
         active_versions: ActiveVersions,
@@ -125,10 +112,7 @@ impl<
             result_per_version.insert(version_id.clone(), result_in_version);
         }
 
-        Ok(Self {
-            result_per_version,
-            _marker: PhantomData::default(),
-        })
+        Ok(Self { result_per_version })
     }
 
     pub fn pk_effective_projection(

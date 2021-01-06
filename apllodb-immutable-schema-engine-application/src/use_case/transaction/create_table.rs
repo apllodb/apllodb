@@ -32,18 +32,13 @@ impl UseCaseOutput for CreateTableUseCaseOutput {}
 
 pub struct CreateTableUseCase<
     'usecase,
-    'db: 'usecase,
     Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
 > {
-    _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > TxUseCase<'usecase, 'db, Engine, Types> for CreateTableUseCase<'usecase, 'db, Engine, Types>
+impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+    TxUseCase<Engine, Types> for CreateTableUseCase<'usecase, Engine, Types>
 {
     type In = CreateTableUseCaseInput<'usecase>;
     type Out = CreateTableUseCaseOutput;

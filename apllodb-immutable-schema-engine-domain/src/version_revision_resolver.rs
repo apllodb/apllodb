@@ -15,10 +15,8 @@ use self::{vrr_entries::VRREntries, vrr_entry::VRREntry};
 
 /// Resolves latest revision among rows with the same PK.
 pub trait VersionRevisionResolver<
-    'vrr,
-    'db: 'vrr,
     Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
 >
 {
     fn create_table(&self, vtable: &VTable) -> ApllodbResult<()>;
@@ -28,16 +26,16 @@ pub trait VersionRevisionResolver<
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
-    ) -> ApllodbResult<VRREntries<'vrr, 'db, Engine, Types>>;
+    ) -> ApllodbResult<VRREntries<Engine, Types>>;
 
     /// Returns undefined order of VRREntry
-    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db, Engine, Types>>;
+    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<Engine, Types>>;
 
     fn register(
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
-    ) -> ApllodbResult<VRREntry<'vrr, 'db, Engine, Types>>;
+    ) -> ApllodbResult<VRREntry<Engine, Types>>;
 
     fn deregister(&self, vtable_id: &VTableId, pks: &[ApparentPrimaryKey]) -> ApllodbResult<()>;
 

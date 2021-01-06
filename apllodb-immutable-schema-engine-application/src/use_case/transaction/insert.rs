@@ -31,18 +31,16 @@ impl UseCaseOutput for InsertUseCaseOutput {}
 
 pub struct InsertUseCase<
     'usecase,
-    'db: 'usecase,
     Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
 > {
-    _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
 impl<
         'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > TxUseCase<'usecase, 'db, Engine, Types> for InsertUseCase<'usecase, 'db, Engine, Types>
+            Engine: StorageEngine,
+        Types: ImmutableSchemaAbstractTypes<Engine>,
+    > TxUseCase<Engine, Types> for InsertUseCase<'usecase, Engine, Types>
 {
     type In = InsertUseCaseInput<'usecase>;
     type Out = InsertUseCaseOutput;
