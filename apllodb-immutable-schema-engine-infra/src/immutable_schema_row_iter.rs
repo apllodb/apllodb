@@ -27,7 +27,8 @@ impl Iterator for ImmutableSchemaRowIter {
     }
 }
 
-impl<'tx, 'db: 'tx> ImmutableSchemaRowIterator<ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'tx, 'db>>
+impl<'tx, 'db: 'tx>
+    ImmutableSchemaRowIterator<ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'tx, 'db>>
     for ImmutableSchemaRowIter
 {
     fn chain_versions(iters: impl IntoIterator<Item = SqliteRowIterator>) -> Self {

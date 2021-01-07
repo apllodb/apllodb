@@ -36,11 +36,8 @@ pub struct InsertUseCase<
 > {
     _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
-impl<
-        'usecase,
-            Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<Engine>,
-    > TxUseCase<Engine, Types> for InsertUseCase<'usecase, Engine, Types>
+impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+    TxUseCase<Engine, Types> for InsertUseCase<'usecase, Engine, Types>
 {
     type In = InsertUseCaseInput<'usecase>;
     type Out = InsertUseCaseOutput;
