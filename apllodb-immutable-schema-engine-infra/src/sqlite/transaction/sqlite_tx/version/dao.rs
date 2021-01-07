@@ -2,14 +2,12 @@ pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
 pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
 use crate::sqlite::{
-    row_iterator::SqliteRowIterator,
-    sqlite_rowid::SqliteRowid,
-    sqlite_types::{ProjectionResult, VRREntriesInVersion},
-    to_sql_string::ToSqlString,
-    transaction::sqlite_tx::SqliteTx,
+    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
+    to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
+    query::projection::ProjectionResult,
     row::{immutable_row::ImmutableRow, pk::apparent_pk::ApparentPrimaryKey},
     version::{active_version::ActiveVersion, id::VersionId},
 };
@@ -58,8 +56,8 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn probe_in_version(
         &self,
         version: &ActiveVersion,
-        vrr_entries_in_version: VRREntriesInVersion<'dao, 'db>,
-        projection: &ProjectionResult<'dao, 'db>,
+        vrr_entries_in_version: VRREntriesInVersion<'_, 'db>,
+        projection: &ProjectionResult,
     ) -> ApllodbResult<SqliteRowIterator> {
         if projection
             .non_pk_effective_projection(version.id())?

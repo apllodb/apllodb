@@ -10,14 +10,12 @@ use crate::{
 };
 
 /// Types that must be implemented in an infrastructure layer.
-pub trait ImmutableSchemaAbstractTypes<'repo, 'db: 'repo, Engine: StorageEngine>:
-    Debug + Sized
-{
+pub trait ImmutableSchemaAbstractTypes<Engine: StorageEngine>: Debug + Sized {
     type VRRId: VRRId;
 
-    type ImmutableSchemaRowIter: ImmutableSchemaRowIterator<'repo, 'db, Engine, Self>;
+    type ImmutableSchemaRowIter: ImmutableSchemaRowIterator<Engine, Self>;
     type VersionRowIter: VersionRowIterator;
 
-    type VTableRepo: VTableRepository<'repo, 'db, Engine, Self>;
-    type VersionRepo: VersionRepository<'repo, 'db, Engine>;
+    type VTableRepo: VTableRepository<Engine, Self>;
+    type VersionRepo: VersionRepository<Engine>;
 }

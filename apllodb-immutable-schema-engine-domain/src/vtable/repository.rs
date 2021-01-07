@@ -6,13 +6,7 @@ use crate::{
 use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
 
-pub trait VTableRepository<
-    'repo,
-    'db: 'repo,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'repo, 'db, Engine>,
->
-{
+pub trait VTableRepository<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
     /// Create a new table with VTable.
     /// Do nothing for Version.
     ///
@@ -41,7 +35,7 @@ pub trait VTableRepository<
     fn full_scan(
         &self,
         vtable: &VTable,
-        projection: ProjectionResult<'repo, 'db, Engine, Types>,
+        projection: ProjectionResult,
     ) -> ApllodbResult<Types::ImmutableSchemaRowIter>;
 
     fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;

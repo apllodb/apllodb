@@ -15,25 +15,14 @@ use crate::{
 };
 
 #[derive(PartialEq, Hash, Debug, new)] // Clone here doesn't work. `Engine`'s Clone bound is somehow required. See: https://github.com/rust-lang/rust/issues/41481
-pub struct VRREntry<
-    'vrr,
-    'db: 'vrr,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
-> {
+pub struct VRREntry<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
     id: Types::VRRId,
     pk: ApparentPrimaryKey,
     pub(in crate::version_revision_resolver) version_id: VersionId,
     revision: Revision,
 }
 
-impl<
-        'vrr,
-        'db: 'vrr,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
-    > VRREntry<'vrr, 'db, Engine, Types>
-{
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> VRREntry<Engine, Types> {
     pub fn into_pk(self) -> ApparentPrimaryKey {
         self.pk
     }
@@ -47,12 +36,8 @@ impl<
     }
 }
 
-impl<
-        'vrr,
-        'db: 'vrr,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
-    > Clone for VRREntry<'vrr, 'db, Engine, Types>
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Clone
+    for VRREntry<Engine, Types>
 {
     fn clone(&self) -> Self {
         Self {
@@ -64,12 +49,8 @@ impl<
     }
 }
 
-impl<
-        'vrr,
-        'db: 'vrr,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'vrr, 'db, Engine>,
-    > Entity for VRREntry<'vrr, 'db, Engine, Types>
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Entity
+    for VRREntry<Engine, Types>
 {
     type Id = Types::VRRId;
 
