@@ -13,7 +13,7 @@ pub struct VRREntriesInVersion<Engine: StorageEngine, Types: ImmutableSchemaAbst
     vrr_entries: VRREntries<Engine, Types>,
 }
 
-impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
     VRREntriesInVersion<Engine, Types>
 {
     pub(in crate::version_revision_resolver) fn new(

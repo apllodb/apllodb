@@ -15,9 +15,7 @@ pub struct VRREntries<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes
     inner: VecDeque<VRREntry<Engine, Types>>,
 }
 
-impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    VRREntries<Engine, Types>
-{
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> VRREntries<Engine, Types> {
     /// Order of VRREntry is kept in each group.
     pub fn group_by_version_id(self) -> Vec<VRREntriesInVersion<Engine, Types>> {
         let mut h: HashMap<VersionId, VecDeque<VRREntry<Engine, Types>>> = HashMap::new();
@@ -46,7 +44,7 @@ impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes
     }
 }
 
-impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Iterator
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Iterator
     for VRREntries<Engine, Types>
 {
     type Item = VRREntry<Engine, Types>;

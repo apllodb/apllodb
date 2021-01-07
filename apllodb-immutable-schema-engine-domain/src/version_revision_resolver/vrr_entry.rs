@@ -22,9 +22,7 @@ pub struct VRREntry<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<E
     revision: Revision,
 }
 
-impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    VRREntry<Engine, Types>
-{
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> VRREntry<Engine, Types> {
     pub fn into_pk(self) -> ApparentPrimaryKey {
         self.pk
     }
@@ -38,7 +36,7 @@ impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes
     }
 }
 
-impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Clone
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Clone
     for VRREntry<Engine, Types>
 {
     fn clone(&self) -> Self {
@@ -51,7 +49,7 @@ impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes
     }
 }
 
-impl<'vrr, 'db: 'vrr, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Entity
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Entity
     for VRREntry<Engine, Types>
 {
     type Id = Types::VRRId;
