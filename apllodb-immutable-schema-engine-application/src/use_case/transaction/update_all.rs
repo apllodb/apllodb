@@ -54,18 +54,13 @@ impl UseCaseOutput for UpdateAllUseCaseOutput {}
 
 pub struct UpdateAllUseCase<
     'usecase,
-    'db: 'usecase,
     Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
 > {
-    _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > TxUseCase<'usecase, 'db, Engine, Types> for UpdateAllUseCase<'usecase, 'db, Engine, Types>
+impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+    TxUseCase<Engine, Types> for UpdateAllUseCase<'usecase, Engine, Types>
 {
     type In = UpdateAllUseCaseInput<'usecase>;
     type Out = UpdateAllUseCaseOutput;
@@ -86,7 +81,7 @@ impl<
 
         // Fetch all columns of the latest version rows and update requested columns later.
         // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
-        let projection_result: ProjectionResult<'_, 'db, Engine, Types> =
+        let projection_result: ProjectionResult =
             ProjectionResult::new(&vtable, active_versions, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
 
@@ -115,7 +110,7 @@ impl<
         // DELETE all
         let delete_all_usecase_input =
             DeleteAllUseCaseInput::new(input.database_name, input.table_name);
-        let _ = DeleteAllUseCase::<'_, '_, Engine, Types>::run(
+        let _ = DeleteAllUseCase::<'_, Engine, Types>::run(
             vtable_repo,
             version_repo,
             delete_all_usecase_input,
@@ -141,7 +136,7 @@ impl<
 
         let insert_usecase_input =
             InsertUseCaseInput::new(input.database_name, input.table_name, records);
-        let _ = InsertUseCase::<'_, '_, Engine, Types>::run(
+        let _ = InsertUseCase::<'_, Engine, Types>::run(
             vtable_repo,
             version_repo,
             insert_usecase_input,

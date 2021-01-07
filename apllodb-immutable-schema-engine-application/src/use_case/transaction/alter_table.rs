@@ -26,18 +26,17 @@ impl UseCaseOutput for AlterTableUseCaseOutput {}
 
 pub struct AlterTableUseCase<
     'usecase,
-    'db: 'usecase,
     Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
 > {
-    _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
 impl<
         'usecase,
         'db: 'usecase,
         Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > TxUseCase<'usecase, 'db, Engine, Types> for AlterTableUseCase<'usecase, 'db, Engine, Types>
+        Types: ImmutableSchemaAbstractTypes<Engine>,
+    > TxUseCase<Engine, Types> for AlterTableUseCase<'usecase, Engine, Types>
 {
     type In = AlterTableUseCaseInput<'usecase>;
     type Out = AlterTableUseCaseOutput;

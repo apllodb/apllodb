@@ -8,10 +8,8 @@ use crate::{abstract_types::ImmutableSchemaAbstractTypes, row::immutable_row::Im
 
 /// Row iterator combining VersionRowIter from multiple versions.
 pub trait ImmutableSchemaRowIterator<
-    'repo,
-    'db: 'repo,
     Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'repo, 'db, Engine>,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
 >: Iterator<Item = ImmutableRow> + Debug
 {
     /// Chain iterators from multiple versions.

@@ -22,40 +22,27 @@ impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput<
-    'usecase,
-    'db: 'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-> {
+pub struct FullScanUseCaseOutput<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+{
     pub row_iter: Types::ImmutableSchemaRowIter,
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > UseCaseOutput for FullScanUseCaseOutput<'usecase, 'db, Engine, Types>
+impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> UseCaseOutput
+    for FullScanUseCaseOutput<Engine, Types>
 {
 }
 
 pub struct FullScanUseCase<
     'usecase,
-    'db: 'usecase,
     Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
+    Types: ImmutableSchemaAbstractTypes<Engine>,
 > {
-    _marker: PhantomData<(&'usecase &'db (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<'usecase, 'db, Engine>,
-    > TxUseCase<'usecase, 'db, Engine, Types> for FullScanUseCase<'usecase, 'db, Engine, Types>
+impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+    TxUseCase<Engine, Types> for FullScanUseCase<'usecase, Engine, Types>
 {
     type In = FullScanUseCaseInput<'usecase>;
-    type Out = FullScanUseCaseOutput<'usecase, 'db, Engine, Types>;
+    type Out = FullScanUseCaseOutput<Engine, Types>;
 
     /// # Failures
     ///
@@ -71,7 +58,7 @@ impl<
 
         let active_versions = vtable_repo.active_versions(&vtable)?;
 
-        let projection_result: ProjectionResult<'_, 'db, Engine, Types> =
+        let projection_result: ProjectionResult =
             ProjectionResult::new(&vtable, active_versions, input.projection)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result)?;
         Ok(FullScanUseCaseOutput { row_iter })
