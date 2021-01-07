@@ -1,14 +1,10 @@
-use std::{
-    collections::{HashMap, HashSet},
-    marker::PhantomData,
-};
+use std::collections::{HashMap, HashSet};
 
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName};
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
+use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes,
     entity::Entity,
     version::{active_versions::ActiveVersions, id::VersionId},
     vtable::VTable,
