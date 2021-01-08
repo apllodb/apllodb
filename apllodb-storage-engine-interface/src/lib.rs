@@ -170,17 +170,16 @@
 //! }
 //! ```
 
-mod database;
-mod query;
-mod transaction;
+mod ddl_methods;
+mod dml_methods;
 
+pub use crate::{
+    ddl_methods::DDLMethods,
+    dml_methods::{projection::ProjectionQuery, DMLMethods},
+};
+
+use apllodb_shared_components::{ApllodbResult, Database, DatabaseName, Transaction};
 use std::fmt::Debug;
-
-pub use crate::database::Database;
-pub use crate::query::projection::ProjectionQuery;
-pub use crate::transaction::{transaction_id::TransactionId, Transaction};
-
-use apllodb_shared_components::{ApllodbResult, DatabaseName};
 
 /// An storage engine implementation must implement this trait and included associated-types.
 pub trait StorageEngine: Sized + Debug {
@@ -188,7 +187,13 @@ pub trait StorageEngine: Sized + Debug {
     type Db: Database;
 
     /// Transaction.
-    type Tx: Transaction<Self>;
+    type Tx: Transaction;
+
+    /// DDL access methods.
+    type DDL: DDLMethods;
+
+    /// DML access methods.
+    type DML: DMLMethods;
 
     /// Specify database to use and return database object.
     fn use_database(database_name: &DatabaseName) -> ApllodbResult<Self::Db>;
