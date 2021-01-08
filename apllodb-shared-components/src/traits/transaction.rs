@@ -10,12 +10,6 @@ use super::database::Database;
 /// Transaction interface.
 ///
 /// It has methods to control transaction's lifetime (BEGIN, COMMIT/ABORT)
-/// and storage engine's access methods (like system calls in OS).
-///
-/// Not only DML but also DDL are executed under the transaction context (like PostgreSQL).
-///
-/// Implementation of this trait can either execute physical transaction operations (e.g. locking objects, writing logs to disk, etc...)
-/// directly or delegate physical operations to another object.
 pub trait Transaction: Debug + Sized {
     /// Database's ownership or reference to generate a transaction.
     type Db: Database;
@@ -27,10 +21,7 @@ pub trait Transaction: Debug + Sized {
     fn id(&self) -> &Self::TID;
 
     /// Begins a transaction.
-    ///
-    /// Note that this function takes reference to database in order for a database to begin multiple transactions.
-    /// Implementer may need interior mutability inside Database implementation.
-    fn begin(db: &Self::Db) -> ApllodbResult<Self>;
+    fn begin(db: &mut Self::Db) -> ApllodbResult<Self>;
 
     /// Commit a transaction.
     ///
