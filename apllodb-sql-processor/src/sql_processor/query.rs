@@ -11,13 +11,13 @@ use std::convert::TryFrom;
 
 /// Processes SELECT command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct QueryProcessor<'exe, Engine: StorageEngine> {
+pub(crate) struct QueryProcessor<'exe, Engine: StorageEngine> {
     tx: &'exe Engine::Tx,
 }
 
 impl<'exe, Engine: StorageEngine> QueryProcessor<'exe, Engine> {
     /// Executes parsed SELECT query.
-    pub fn run(&self, select_command: SelectCommand) -> ApllodbResult<RecordIterator> {
+    pub(crate) fn run(&self, select_command: SelectCommand) -> ApllodbResult<RecordIterator> {
         // TODO query rewrite -> SelectCommand
 
         let plan = QueryPlan::try_from(select_command)?;
@@ -36,6 +36,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
+        sql_processor::query::QueryProcessor,
         test_support::{
             mock_tx::mock_tx_select::mock_select_with_models::{
                 mock_select_with_models, ModelsMock,
@@ -45,7 +46,6 @@ mod tests {
             test_storage_engine::TestStorageEngine,
             utility_functions::r_projection,
         },
-        QueryProcessor,
     };
 
     #[derive(Clone, PartialEq, Debug)]

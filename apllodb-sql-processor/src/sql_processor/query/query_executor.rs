@@ -3,7 +3,7 @@ mod plan_node_executor;
 use apllodb_shared_components::{ApllodbResult, RecordIterator};
 use apllodb_storage_engine_interface::StorageEngine;
 
-use crate::query::query_plan::{query_plan_tree::query_plan_node::QueryPlanNode, QueryPlan};
+use crate::sql_processor::query::query_plan::{query_plan_tree::query_plan_node::QueryPlanNode, QueryPlan};
 
 use self::plan_node_executor::PlanNodeExecutor;
 
@@ -52,7 +52,7 @@ mod tests {
     use apllodb_storage_engine_interface::ProjectionQuery;
 
     use crate::{
-        query::query_plan::{
+        sql_processor::query::query_plan::{
             query_plan_tree::{
                 query_plan_node::{
                     BinaryPlanOperation, LeafPlanOperation, QueryPlanNode, QueryPlanNodeBinary,

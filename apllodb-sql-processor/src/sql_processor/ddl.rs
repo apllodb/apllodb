@@ -8,13 +8,13 @@ use crate::ast_translator::AstTranslator;
 
 /// Processes DDL command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct DDLProcessor<'exe, Engine: StorageEngine> {
+pub(crate) struct DDLProcessor<'exe, Engine: StorageEngine> {
     tx: &'exe Engine::Tx,
 }
 
 impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
     /// Executes DDL command.
-    pub fn run(&self, command: Command) -> ApllodbResult<()> {
+    pub(crate) fn run(&self, command: Command) -> ApllodbResult<()> {
         match command {
             Command::CreateTableCommandVariant(cc) => {
                 let table_name = AstTranslator::table_name(cc.table_name)?;
@@ -67,10 +67,9 @@ mod tests {
     use apllodb_sql_parser::ApllodbSqlParser;
     use mockall::predicate::eq;
 
-    use crate::{
-        test_support::{setup, test_models::People, test_storage_engine::TestStorageEngine},
-        DDLProcessor,
-    };
+    use crate::test_support::{setup, test_models::People, test_storage_engine::TestStorageEngine};
+
+    use super::DDLProcessor;
 
     #[derive(Clone, PartialEq, Debug, new)]
     struct TestDatum<'test> {

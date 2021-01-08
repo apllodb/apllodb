@@ -8,7 +8,7 @@ use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
     ast_translator::AstTranslator,
-    query::query_plan::query_plan_tree::query_plan_node::{
+    sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
         LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
     },
 };
@@ -29,13 +29,13 @@ pub(crate) mod modification_plan;
 
 /// Processes ÎNSERT/UPDATE/DELETE command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct ModificationProcessor<'exe, Engine: StorageEngine> {
+pub(crate) struct ModificationProcessor<'exe, Engine: StorageEngine> {
     tx: &'exe Engine::Tx,
 }
 
 impl<'exe, Engine: StorageEngine> ModificationProcessor<'exe, Engine> {
     /// Executes parsed INSERT/UPDATE/DELETE command.
-    pub fn run(&self, command: Command) -> ApllodbResult<()> {
+    pub(crate) fn run(&self, command: Command) -> ApllodbResult<()> {
         match command {
             Command::InsertCommandVariant(ic) => {
                 if ic.alias.is_some() {

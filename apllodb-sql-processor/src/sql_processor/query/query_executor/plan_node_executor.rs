@@ -5,7 +5,7 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
 
-use crate::query::query_plan::query_plan_tree::query_plan_node::{
+use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
 };
 

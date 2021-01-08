@@ -1,7 +1,7 @@
 use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::{StorageEngine, Transaction};
 
-use crate::query::{
+use crate::sql_processor::query::{
     query_executor::QueryExecutor,
     query_plan::{query_plan_tree::QueryPlanTree, QueryPlan},
 };
@@ -39,14 +39,14 @@ mod tests {
     use apllodb_storage_engine_interface::ProjectionQuery;
 
     use crate::{
-        modification::modification_plan::{
+        sql_processor::modification::modification_plan::{
             modification_plan_tree::{
                 modification_plan_node::{InsertNode, ModificationPlanNode},
                 ModificationPlanTree,
             },
             ModificationPlan,
         },
-        query::query_plan::query_plan_tree::query_plan_node::{
+        sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
             LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
         },
         test_support::{
