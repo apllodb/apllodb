@@ -1,20 +1,22 @@
 mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
-use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaTx;
+use apllodb_immutable_schema_engine_infra::external_interface::{
+    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaDML, ApllodbImmutableSchemaTx,
+};
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
     ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind,
-    TableConstraints, TableName,
+    TableConstraints, TableName, Transaction,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
+use apllodb_storage_engine_interface::{DDLMethods, DMLMethods, ProjectionQuery};
 
 #[test]
 fn test_compound_pk() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = &TableName::new("address")?;
 
@@ -51,19 +53,22 @@ fn test_compound_pk() -> ApllodbResult<()> {
         ],
     }])?;
 
-    tx.create_table(&t_name, &tc, coldefs)?;
+    let ddl = ApllodbImmutableSchemaDDL::default();
+    let dml = ApllodbImmutableSchemaDML::default();
 
-    tx.insert(
+    ddl.create_table(&mut tx, &t_name, &tc, coldefs)?;
+
+    dml.insert(
+        &mut tx,
         &t_name,
-        RecordIterator::new(vec![
-            record! {
-                FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::small_int(), &100i16)?,
-                FieldIndex::InColumnReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1000001i32)?
-            }
-        ])
+        RecordIterator::new(vec![record! {
+            FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::small_int(), &100i16)?,
+            FieldIndex::InColumnReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1000001i32)?
+        }]),
     )?;
 
-    let records = tx.select(
+    let records = dml.select(
+        &mut tx,
         &t_name,
         ProjectionQuery::ColumnNames(vec![c_postal_code_def
             .column_data_type()

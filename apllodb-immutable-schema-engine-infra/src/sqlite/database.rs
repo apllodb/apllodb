@@ -1,6 +1,5 @@
 use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
-use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use apllodb_storage_engine_interface::Database;
+use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
 use std::time::Duration;
 
 /// Database context.
@@ -11,29 +10,29 @@ pub struct SqliteDatabase {
 }
 
 impl Database for SqliteDatabase {
+    /// Start using database.
+    ///
+    /// # Failures
+    ///
+    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
+    ///   - rusqlite raises an error.
+    fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
+        let conn = Self::connect_sqlite(&name)?;
+
+        VTableDao::create_table_if_not_exist(&conn)?;
+
+        Ok(Self {
+            name,
+            sqlite_conn: conn,
+        })
+    }
+
     fn name(&self) -> &DatabaseName {
         &self.name
     }
 }
 
 impl SqliteDatabase {
-    /// Constructor.
-    ///
-    /// # Failures
-    ///
-    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
-    pub(crate) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
-        let conn = Self::connect_sqlite(&db_name)?;
-
-        VTableDao::create_table_if_not_exist(&conn)?;
-
-        Ok(Self {
-            name: db_name,
-            sqlite_conn: conn,
-        })
-    }
-
     pub fn sqlite_db_path(&self) -> String {
         Self::_sqlite_db_path(&self.name)
     }
