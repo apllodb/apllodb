@@ -7,12 +7,12 @@ use apllodb_storage_engine_interface::{DDLMethods, StorageEngine};
 use crate::ast_translator::AstTranslator;
 
 /// Processes DDL command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct DDLProcessor<Engine: StorageEngine> {
-    ddl_methods: Engine::DDL,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+pub struct DDLProcessor<'ddl, Engine: StorageEngine> {
+    ddl_methods: &'ddl Engine::DDL,
 }
 
-impl<Engine: StorageEngine> DDLProcessor<Engine> {
+impl<Engine: StorageEngine> DDLProcessor<'_, Engine> {
     /// Executes DDL command.
     pub fn run(&self, tx: &mut Engine::Tx, command: Command) -> ApllodbResult<()> {
         match command {
@@ -67,6 +67,7 @@ mod tests {
     };
     use apllodb_sql_parser::ApllodbSqlParser;
     use mockall::predicate::{always, eq};
+    //use mockall::predicate::{always, eq};
 
     use crate::{
         test_support::{
@@ -136,7 +137,7 @@ mod tests {
                 )
                 .returning(|_, _, _, _| Ok(()));
 
-            let processor = DDLProcessor::<TestStorageEngine>::default();
+            let processor = DDLProcessor::<TestStorageEngine>::new(&ddl);
             processor.run(&mut tx, ast.0)?;
         }
 

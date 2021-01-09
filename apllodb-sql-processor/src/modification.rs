@@ -28,12 +28,12 @@ pub(crate) mod modification_executor;
 pub(crate) mod modification_plan;
 
 /// Processes ÎNSERT/UPDATE/DELETE command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default, Debug)]
-pub struct ModificationProcessor<Engine: StorageEngine> {
-    dml_methods: Engine::DML,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+pub struct ModificationProcessor<'dml, Engine: StorageEngine> {
+    dml_methods: &'dml Engine::DML,
 }
 
-impl<Engine: StorageEngine> ModificationProcessor<Engine> {
+impl<Engine: StorageEngine> ModificationProcessor<'_, Engine> {
     /// Executes parsed INSERT/UPDATE/DELETE command.
     pub fn run(&self, tx: &mut Engine::Tx, command: Command) -> ApllodbResult<()> {
         match command {
@@ -84,7 +84,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
                 });
 
                 let plan = ModificationPlan::new(ModificationPlanTree::new(plan_node));
-                let executor = ModificationExecutor::<Engine>::default();
+                let executor = ModificationExecutor::<Engine>::new(&self.dml_methods);
                 executor.run(tx, plan)
             }
             _ => unimplemented!(),
@@ -146,7 +146,7 @@ mod tests {
                 )
                 .returning(|_, _, _| Ok(()));
 
-            let processor = ModificationProcessor::<TestStorageEngine>::default();
+            let processor = ModificationProcessor::<TestStorageEngine>::new(&dml);
             processor.run(&mut tx, ast.0)?;
         }
 

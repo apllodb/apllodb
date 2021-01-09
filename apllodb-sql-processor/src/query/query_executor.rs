@@ -8,12 +8,12 @@ use crate::query::query_plan::{query_plan_tree::query_plan_node::QueryPlanNode, 
 use self::plan_node_executor::PlanNodeExecutor;
 
 /// Query executor which inputs a [QueryPlan](crate::query_plan::QueryPlan) and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default, Debug)]
-pub(crate) struct QueryExecutor<Engine: StorageEngine> {
-    dml_methods: Engine::DML,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+pub(crate) struct QueryExecutor<'dml, Engine: StorageEngine> {
+    dml_methods: &'dml Engine::DML,
 }
 
-impl<Engine: StorageEngine> QueryExecutor<Engine> {
+impl<Engine: StorageEngine> QueryExecutor<'_, Engine> {
     pub(crate) fn run(
         &self,
         tx: &mut Engine::Tx,
@@ -35,7 +35,7 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
         tx: &mut Engine::Tx,
         node: QueryPlanNode,
     ) -> ApllodbResult<RecordIterator> {
-        let executor = PlanNodeExecutor::<Engine>::default();
+        let executor = PlanNodeExecutor::<Engine>::new(&self.dml_methods);
 
         match node {
             QueryPlanNode::Leaf(node_leaf) => executor.run_leaf(tx, node_leaf.op),
@@ -122,7 +122,7 @@ mod tests {
             },
         );
 
-        let executor = QueryExecutor::<TestStorageEngine>::default();
+        let executor = QueryExecutor::<TestStorageEngine>::new(&dml);
 
         let test_data: Vec<TestDatum> = vec![
             // SeqScan (with storage engine layer projection)

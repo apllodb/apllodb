@@ -9,12 +9,12 @@ use crate::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
 };
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub(super) struct PlanNodeExecutor<Engine: StorageEngine> {
-    dml_methods: Engine::DML,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+pub(super) struct PlanNodeExecutor<'dml, Engine: StorageEngine> {
+    dml_methods: &'dml Engine::DML,
 }
 
-impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
+impl<Engine: StorageEngine> PlanNodeExecutor<'_, Engine> {
     pub(super) fn run_leaf(
         &self,
         tx: &mut Engine::Tx,

@@ -7,7 +7,7 @@ use crate::StorageEngine;
 /// DDL access methods interface.
 ///
 /// Not only DML but also DDL are executed under the transaction context (like PostgreSQL).
-pub trait DDLMethods<Engine: StorageEngine>: Default + Debug {
+pub trait DDLMethods<Engine: StorageEngine>: Debug {
     /// CREATE TABLE command.
     fn create_table(
         &self,

@@ -10,12 +10,12 @@ use self::{query_executor::QueryExecutor, query_plan::QueryPlan};
 use std::convert::TryFrom;
 
 /// Processes SELECT command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct QueryProcessor<Engine: StorageEngine> {
-    dml_methods: Engine::DML,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+pub struct QueryProcessor<'dml, Engine: StorageEngine> {
+    dml_methods: &'dml Engine::DML,
 }
 
-impl<Engine: StorageEngine> QueryProcessor<Engine> {
+impl<Engine: StorageEngine> QueryProcessor<'_, Engine> {
     /// Executes parsed SELECT query.
     pub fn run(
         &self,
@@ -28,7 +28,7 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 
         // TODO plan optimization -> QueryPlan
 
-        let executor = QueryExecutor::<Engine>::default();
+        let executor = QueryExecutor::<Engine>::new(&self.dml_methods);
         executor.run(tx, plan)
     }
 }
@@ -100,7 +100,7 @@ mod tests {
         );
 
         let parser = ApllodbSqlParser::new();
-        let processor = QueryProcessor::<TestStorageEngine>::default();
+        let processor = QueryProcessor::<TestStorageEngine>::new(&dml);
 
         let test_data: Vec<TestDatum> = vec![
             // full scan

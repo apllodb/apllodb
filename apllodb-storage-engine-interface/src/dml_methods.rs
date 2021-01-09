@@ -7,7 +7,7 @@ use std::{collections::HashMap, fmt::Debug};
 use crate::{ProjectionQuery, StorageEngine};
 
 /// DML access methods interface.
-pub trait DMLMethods<Engine: StorageEngine>: Default + Debug {
+pub trait DMLMethods<Engine: StorageEngine>: Debug {
     /// SELECT command.
     ///
     /// Storage engine's SELECT fields are merely ColumnName.

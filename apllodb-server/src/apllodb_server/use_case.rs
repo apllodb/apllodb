@@ -1,5 +1,6 @@
 use apllodb_immutable_schema_engine::{
-    ApllodbImmutableSchemaDb, ApllodbImmutableSchemaEngine, ApllodbImmutableSchemaTx,
+    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaDML, ApllodbImmutableSchemaDb,
+    ApllodbImmutableSchemaEngine, ApllodbImmutableSchemaTx,
 };
 use apllodb_rpc_interface::ApllodbRpcSuccess;
 use apllodb_shared_components::{
@@ -18,6 +19,9 @@ impl UseCase {
     ) -> ApllodbResult<ApllodbRpcSuccess> {
         let parser = ApllodbSqlParser::new();
 
+        let ddl = ApllodbImmutableSchemaDDL::default();
+        let dml = ApllodbImmutableSchemaDML::default();
+
         let mut db = ApllodbImmutableSchemaDb::use_database(db.clone())?;
         let mut tx = ApllodbImmutableSchemaTx::begin(&mut db)?;
 
@@ -31,7 +35,7 @@ impl UseCase {
                 apllodb_ast::Command::AlterTableCommandVariant(_)
                 | apllodb_ast::Command::CreateTableCommandVariant(_)
                 | apllodb_ast::Command::DropTableCommandVariant(_) => {
-                    let processor = DDLProcessor::<ApllodbImmutableSchemaEngine>::default();
+                    let processor = DDLProcessor::<ApllodbImmutableSchemaEngine>::new(&ddl);
                     processor.run(&mut tx, command)?;
                     Ok(ApllodbRpcSuccess::DDLResponse)
                 }
@@ -39,12 +43,12 @@ impl UseCase {
                 | apllodb_ast::Command::InsertCommandVariant(_)
                 | apllodb_ast::Command::UpdateCommandVariant(_) => {
                     let processor =
-                        ModificationProcessor::<ApllodbImmutableSchemaEngine>::default();
+                        ModificationProcessor::<ApllodbImmutableSchemaEngine>::new(&dml);
                     processor.run(&mut tx, command)?;
                     Ok(ApllodbRpcSuccess::ModificationResponse)
                 }
                 apllodb_ast::Command::SelectCommandVariant(select_command) => {
-                    let processor = QueryProcessor::<ApllodbImmutableSchemaEngine>::default();
+                    let processor = QueryProcessor::<ApllodbImmutableSchemaEngine>::new(&dml);
                     let records = processor.run(&mut tx, select_command)?;
                     Ok(ApllodbRpcSuccess::QueryResponse { records })
                 }

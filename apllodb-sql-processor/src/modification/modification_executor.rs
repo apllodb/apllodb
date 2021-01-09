@@ -11,15 +11,15 @@ use super::modification_plan::{
 };
 
 /// Modification (INSERT, UPDATE, and DELETE) executor which inputs a [ModificationPlan](crate::modification_plan::ModificationPlan) and r expected_insert_records: ()equests modification to storage engine.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default, Debug)]
-pub(crate) struct ModificationExecutor<Engine: StorageEngine> {
-    dml_methods: Engine::DML,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+pub(crate) struct ModificationExecutor<'dml, Engine: StorageEngine> {
+    dml_methods: &'dml Engine::DML,
 }
 
-impl<Engine: StorageEngine> ModificationExecutor<Engine> {
+impl<Engine: StorageEngine> ModificationExecutor<'_, Engine> {
     #[allow(dead_code)]
     pub(crate) fn run(&self, tx: &mut Engine::Tx, plan: ModificationPlan) -> ApllodbResult<()> {
-        let query_executor = QueryExecutor::<Engine>::default();
+        let query_executor = QueryExecutor::<Engine>::new(&self.dml_methods);
         let plan_tree = plan.plan_tree;
         match plan_tree.root {
             ModificationPlanNode::Insert(insert_node) => {
@@ -157,7 +157,7 @@ mod tests {
                 )
                 .returning(|_, _, _| Ok(()));
 
-            let executor = ModificationExecutor::<TestStorageEngine>::default();
+            let executor = ModificationExecutor::<TestStorageEngine>::new(&dml);
             executor.run(&mut tx, modification_plan)?;
         }
 
