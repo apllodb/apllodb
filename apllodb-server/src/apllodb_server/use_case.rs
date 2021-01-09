@@ -22,7 +22,7 @@ impl UseCase {
         let ddl = ApllodbImmutableSchemaDDL::default();
         let dml = ApllodbImmutableSchemaDML::default();
 
-        let mut db = ApllodbImmutableSchemaDb::use_database(db.clone())?;
+        let mut db = ApllodbImmutableSchemaDb::use_database(db)?;
         let mut tx = ApllodbImmutableSchemaTx::begin(&mut db)?;
 
         let ret: ApllodbResult<ApllodbRpcSuccess> = match parser.parse(sql) {
