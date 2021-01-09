@@ -10,8 +10,21 @@ pub struct SqliteDatabase {
 }
 
 impl Database for SqliteDatabase {
-    fn use_database(_name: DatabaseName) -> ApllodbResult<Self> {
-        todo!()
+    /// Start using database.
+    ///
+    /// # Failures
+    ///
+    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
+    ///   - rusqlite raises an error.
+    fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
+        let conn = Self::connect_sqlite(&name)?;
+
+        VTableDao::create_table_if_not_exist(&conn)?;
+
+        Ok(Self {
+            name,
+            sqlite_conn: conn,
+        })
     }
 
     fn name(&self) -> &DatabaseName {
@@ -20,23 +33,6 @@ impl Database for SqliteDatabase {
 }
 
 impl SqliteDatabase {
-    /// Constructor.
-    ///
-    /// # Failures
-    ///
-    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
-    pub(crate) fn new(db_name: DatabaseName) -> ApllodbResult<Self> {
-        let conn = Self::connect_sqlite(&db_name)?;
-
-        VTableDao::create_table_if_not_exist(&conn)?;
-
-        Ok(Self {
-            name: db_name,
-            sqlite_conn: conn,
-        })
-    }
-
     pub fn sqlite_db_path(&self) -> String {
         Self::_sqlite_db_path(&self.name)
     }
