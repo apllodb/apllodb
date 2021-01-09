@@ -40,7 +40,11 @@ pub use crate::{
         },
     },
     error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},
-    traits::sql_convertible::SqlConvertible,
+    traits::{
+        database::Database,
+        sql_convertible::SqlConvertible,
+        transaction::{transaction_id::TransactionId, Transaction},
+    },
 };
 
 #[cfg(test)]

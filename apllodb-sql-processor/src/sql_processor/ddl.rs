@@ -2,19 +2,19 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnDefinition, TableConstraintKind, TableConstraints,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, TableElement};
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{DDLMethods, StorageEngine};
 
 use crate::ast_translator::AstTranslator;
 
 /// Processes DDL command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(crate) struct DDLProcessor<'exe, Engine: StorageEngine> {
-    tx: &'exe Engine::Tx,
+pub struct DDLProcessor<'ddl, Engine: StorageEngine> {
+    ddl_methods: &'ddl Engine::DDL,
 }
 
-impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
+impl<Engine: StorageEngine> DDLProcessor<'_, Engine> {
     /// Executes DDL command.
-    pub(crate) fn run(&self, command: Command) -> ApllodbResult<()> {
+    pub fn run(&self, tx: &mut Engine::Tx, command: Command) -> ApllodbResult<()> {
         match command {
             Command::CreateTableCommandVariant(cc) => {
                 let table_name = AstTranslator::table_name(cc.table_name)?;
@@ -47,7 +47,8 @@ impl<'exe, Engine: StorageEngine> DDLProcessor<'exe, Engine> {
                     .map(|tc| AstTranslator::table_constraint(tc.clone()))
                     .collect::<ApllodbResult<_>>()?;
 
-                self.tx.create_table(
+                self.ddl_methods.create_table(
+                    tx,
                     &table_name,
                     &TableConstraints::new(table_constraints)?,
                     column_definitions,
@@ -65,11 +66,18 @@ mod tests {
         TableConstraintKind, TableConstraints, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
-    use mockall::predicate::eq;
+    use mockall::predicate::{always, eq};
+    //use mockall::predicate::{always, eq};
 
-    use crate::test_support::{setup, test_models::People, test_storage_engine::TestStorageEngine};
-
-    use super::DDLProcessor;
+    use crate::{
+        test_support::{
+            mock_ddl::MockDDL,
+            setup,
+            test_models::People,
+            test_storage_engine::{TestStorageEngine, TestTx},
+        },
+        DDLProcessor,
+    };
 
     #[derive(Clone, PartialEq, Debug, new)]
     struct TestDatum<'test> {
@@ -114,21 +122,23 @@ mod tests {
 
             let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
 
-            let mut tx = TestStorageEngine::begin()?;
+            let mut tx = TestTx;
+            let mut ddl = MockDDL::new();
 
             // mocking create_table()
-            tx.expect_create_table()
+            ddl.expect_create_table()
                 .with(
+                    always(),
                     eq(test_datum.expected_table_name),
                     eq(TableConstraints::new(
                         test_datum.expected_table_constraints,
                     )?),
                     eq(test_datum.expected_column_definitions),
                 )
-                .returning(|_, _, _| Ok(()));
+                .returning(|_, _, _, _| Ok(()));
 
-            let processor = DDLProcessor::<'_, TestStorageEngine>::new(&tx);
-            processor.run(ast.0)?;
+            let processor = DDLProcessor::<TestStorageEngine>::new(&ddl);
+            processor.run(&mut tx, ast.0)?;
         }
 
         Ok(())
