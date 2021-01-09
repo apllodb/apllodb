@@ -182,7 +182,7 @@ use apllodb_shared_components::{Database, Transaction};
 use std::fmt::Debug;
 
 /// An storage engine implementation must implement this trait and included associated-types.
-pub trait StorageEngine: Default + Debug + Sized {
+pub trait StorageEngine: Debug + Sized {
     /// Database.
     type Db: Database;
 
