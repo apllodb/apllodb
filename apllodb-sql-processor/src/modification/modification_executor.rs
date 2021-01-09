@@ -1,5 +1,5 @@
 use apllodb_shared_components::ApllodbResult;
-use apllodb_storage_engine_interface::{StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{DMLMethods, StorageEngine};
 
 use crate::query::{
     query_executor::QueryExecutor,
@@ -12,22 +12,24 @@ use super::modification_plan::{
 
 /// Modification (INSERT, UPDATE, and DELETE) executor which inputs a [ModificationPlan](crate::modification_plan::ModificationPlan) and r expected_insert_records: ()equests modification to storage engine.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(crate) struct ModificationExecutor<'exe, Engine: StorageEngine> {
-    tx: &'exe Engine::Tx,
+pub(crate) struct ModificationExecutor<'dml, Engine: StorageEngine> {
+    dml_methods: &'dml Engine::DML,
 }
 
-impl<'exe, Engine: StorageEngine> ModificationExecutor<'exe, Engine> {
+impl<Engine: StorageEngine> ModificationExecutor<'_, Engine> {
     #[allow(dead_code)]
-    pub(crate) fn run(&self, plan: ModificationPlan) -> ApllodbResult<()> {
+    pub(crate) fn run(&self, tx: &mut Engine::Tx, plan: ModificationPlan) -> ApllodbResult<()> {
+        let query_executor = QueryExecutor::<Engine>::new(&self.dml_methods);
         let plan_tree = plan.plan_tree;
         match plan_tree.root {
             ModificationPlanNode::Insert(insert_node) => {
-                let query_executor = QueryExecutor::<'_, Engine>::new(self.tx);
                 let input_query_plan_root = insert_node.child;
-                let input = query_executor
-                    .run(QueryPlan::new(QueryPlanTree::new(input_query_plan_root)))?;
+                let input = query_executor.run(
+                    tx,
+                    QueryPlan::new(QueryPlanTree::new(input_query_plan_root)),
+                )?;
 
-                self.tx.insert(&insert_node.table_name, input)
+                self.dml_methods.insert(tx, &insert_node.table_name, input)
             }
         }
     }
@@ -50,12 +52,13 @@ mod tests {
             LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
         },
         test_support::{
-            mock_tx::mock_tx_select::mock_select_with_models::{
+            mock_dml::mock_tx_select::mock_select_with_models::{
                 mock_select_with_models, ModelsMock,
             },
+            mock_dml::MockDML,
             setup,
             test_models::{People, Pet},
-            test_storage_engine::TestStorageEngine,
+            test_storage_engine::{TestStorageEngine, TestTx},
         },
     };
 
@@ -83,10 +86,10 @@ mod tests {
         let t_pet_r3_1 = Pet::record(3, "dog", 5);
         let t_pet_r3_2 = Pet::record(3, "cat", 3);
 
-        let mut tx = TestStorageEngine::begin()?;
+        let mut dml = MockDML::new();
 
         mock_select_with_models(
-            &mut tx,
+            &mut dml,
             ModelsMock {
                 pet: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
                 ..ModelsMock::default()
@@ -143,16 +146,19 @@ mod tests {
 
             let modification_plan = ModificationPlan::new(test_datum.in_plan_tree.clone());
 
+            let mut tx = TestTx;
+
             // mocking insert()
-            tx.expect_insert()
+            dml.expect_insert()
                 .with(
+                    always(),
                     eq(test_datum.expected_insert_table),
                     eq(RecordIterator::new(test_datum.expected_insert_records)),
                 )
-                .returning(|_, _| Ok(()));
+                .returning(|_, _, _| Ok(()));
 
-            let executor = ModificationExecutor::<'_, TestStorageEngine>::new(&tx);
-            executor.run(modification_plan)?;
+            let executor = ModificationExecutor::<TestStorageEngine>::new(&dml);
+            executor.run(&mut tx, modification_plan)?;
         }
 
         Ok(())

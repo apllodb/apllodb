@@ -1,20 +1,22 @@
 mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
-use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaTx;
+use apllodb_immutable_schema_engine_infra::external_interface::{
+    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaDML, ApllodbImmutableSchemaTx,
+};
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnName, ColumnReference, Expression, FieldIndex, RecordIterator, SqlType, SqlValue,
-    TableConstraintKind, TableConstraints, TableName,
+    TableConstraintKind, TableConstraints, TableName, Transaction,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, Transaction};
+use apllodb_storage_engine_interface::{DDLMethods, DMLMethods, ProjectionQuery};
 
 #[test]
 fn test_create_table_success() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = TableName::new("t")?;
 
@@ -27,7 +29,10 @@ fn test_create_table_success() -> ApllodbResult<()> {
         ColumnConstraints::default(),
     );
 
-    tx.create_table(
+    let ddl = ApllodbImmutableSchemaDDL::default();
+
+    ddl.create_table(
+        &mut tx,
         &t_name,
         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
             column_names: vec![c1_def
@@ -69,10 +74,12 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
-    tx.create_table(&t_name, &tc, coldefs.clone())?;
-    match tx.create_table(&t_name, &tc, coldefs) {
+    let ddl = ApllodbImmutableSchemaDDL::default();
+
+    ddl.create_table(&mut tx, &t_name, &tc, coldefs.clone())?;
+    match ddl.create_table(&mut tx, &t_name, &tc, coldefs) {
         // Internally, new record is trying to be INSERTed but it is made wait by tx2.
         // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
         Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),
@@ -86,7 +93,7 @@ fn test_insert() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = &TableName::new("t")?;
 
@@ -116,19 +123,21 @@ fn test_insert() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    tx.create_table(&t_name, &tc, coldefs)?;
+    let ddl = ApllodbImmutableSchemaDDL::default();
+    let dml = ApllodbImmutableSchemaDML::default();
 
-    tx.insert(
+    ddl.create_table(&mut tx, &t_name, &tc, coldefs)?;
+
+    dml.insert(
+        &mut tx,
         &t_name,
-        RecordIterator::new(vec![
-            record! {
-                FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
-                FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
-            }
-        ])
+        RecordIterator::new(vec![record! {
+            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
+            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
+        }]),
     )?;
 
-    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
+    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
 
     let record = records.next().unwrap();
     assert_eq!(
@@ -156,7 +165,7 @@ fn test_update() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = &TableName::new("t")?;
 
@@ -186,18 +195,20 @@ fn test_update() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    tx.create_table(&t_name, &tc, coldefs)?;
+    let ddl = ApllodbImmutableSchemaDDL::default();
+    let dml = ApllodbImmutableSchemaDML::default();
 
-    tx.insert(
+    ddl.create_table(&mut tx, &t_name, &tc, coldefs)?;
+
+    dml.insert(
+        &mut tx,
         &t_name,
-        RecordIterator::new(vec![
-            record! {
-                FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
-                FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
-            }
-        ])
+        RecordIterator::new(vec![record! {
+            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
+            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
+        }]),
     )?;
-    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
+    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
     let record = records.next().unwrap();
     assert_eq!(
         record.get::<i32>(&FieldIndex::InColumnReference(
@@ -214,13 +225,14 @@ fn test_update() -> ApllodbResult<()> {
     assert!(records.next().is_none());
 
     // update non-PK
-    tx.update(
+    dml.update(
+        &mut tx,
         &t_name,
         hmap! {
             c1_def.column_data_type().column_ref().as_column_name().clone() => Expression::ConstantVariant(SqlValue::pack(SqlType::integer(), &200)?)
         },
     )?;
-    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
+    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
     let record = records.next().unwrap();
     assert_eq!(
         record.get::<i32>(&FieldIndex::InColumnReference(
@@ -237,13 +249,14 @@ fn test_update() -> ApllodbResult<()> {
     assert!(records.next().is_none());
 
     // update PK
-    tx.update(
+    dml.update(
+        &mut tx,
         &t_name,
         hmap! {
             c_id_def.column_data_type().column_ref().as_column_name().clone() => Expression::ConstantVariant(SqlValue::pack(SqlType::integer(), &2)?)
         },
     )?;
-    let mut records = tx.select(&t_name, ProjectionQuery::All)?;
+    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
     let record = records.next().unwrap();
     assert_eq!(
         record.get::<i32>(&FieldIndex::InColumnReference(
@@ -269,7 +282,7 @@ fn test_delete() -> ApllodbResult<()> {
     setup();
 
     let mut db = TestDatabase::new()?;
-    let tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
     let t_name = &TableName::new("t")?;
 
@@ -299,19 +312,22 @@ fn test_delete() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    tx.create_table(&t_name, &tc, coldefs)?;
+    let ddl = ApllodbImmutableSchemaDDL::default();
+    let dml = ApllodbImmutableSchemaDML::default();
 
-    tx.insert(
+    ddl.create_table(&mut tx, &t_name, &tc, coldefs)?;
+
+    dml.insert(
+        &mut tx,
         &t_name,
-        RecordIterator::new(vec![
-            record! {
-                FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
-                FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
-            }
-        ])
+        RecordIterator::new(vec![record! {
+            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
+            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
+        }]),
     )?;
 
-    let rows = tx.select(
+    let rows = dml.select(
+        &mut tx,
         &t_name,
         ProjectionQuery::ColumnNames(vec![c_id_def
             .column_data_type()
@@ -321,8 +337,9 @@ fn test_delete() -> ApllodbResult<()> {
     )?;
     assert_eq!(rows.count(), 1);
 
-    tx.delete(&t_name)?;
-    let rows = tx.select(
+    dml.delete(&mut tx, &t_name)?;
+    let rows = dml.select(
+        &mut tx,
         &t_name,
         ProjectionQuery::ColumnNames(vec![c_id_def
             .column_data_type()

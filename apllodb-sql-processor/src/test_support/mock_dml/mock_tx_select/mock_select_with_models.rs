@@ -1,5 +1,5 @@
 use crate::test_support::{
-    mock_tx::MockTx,
+    mock_dml::MockDML,
     test_models::{Body, People, Pet},
 };
 
@@ -14,9 +14,9 @@ pub(crate) struct ModelsMock {
     pub(crate) pet: Vec<Record>,
 }
 
-pub(crate) fn mock_select_with_models(tx: &mut MockTx, models: ModelsMock) {
+pub(crate) fn mock_select_with_models(dml: &mut MockDML, models: ModelsMock) {
     mock_select(
-        tx,
+        dml,
         MockTxDbDatum {
             tables: vec![
                 MockTxTableDatum {

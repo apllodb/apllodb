@@ -4,6 +4,7 @@
 
 pub mod external_interface;
 
+mod access_methods;
 mod immutable_schema_row_iter;
 mod sqlite;
 

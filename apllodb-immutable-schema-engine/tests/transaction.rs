@@ -1,12 +1,15 @@
 mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
-use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaTx;
+use apllodb_immutable_schema_engine_infra::external_interface::{
+    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaTx,
+};
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
+    Transaction,
 };
-use apllodb_storage_engine_interface::Transaction;
+use apllodb_storage_engine_interface::DDLMethods;
 
 #[test]
 fn test_wait_lock() -> ApllodbResult<()> {
@@ -35,13 +38,15 @@ fn test_wait_lock() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let tx1 = ApllodbImmutableSchemaTx::begin(&mut db1.0)?;
-    let tx2 = ApllodbImmutableSchemaTx::begin(&mut db2.0)?;
+    let mut tx1 = ApllodbImmutableSchemaTx::begin(&mut db1.0)?;
+    let mut tx2 = ApllodbImmutableSchemaTx::begin(&mut db2.0)?;
+
+    let ddl = ApllodbImmutableSchemaDDL::default();
 
     // tx1 is created earlier than tx2 but tx2 issues CREATE TABLE command in prior to tx1.
     // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
-    tx2.create_table(&t_name, &tc, coldefs.clone())?;
-    match tx1.create_table(&t_name, &tc, coldefs) {
+    ddl.create_table(&mut tx2, &t_name, &tc, coldefs.clone())?;
+    match ddl.create_table(&mut tx1, &t_name, &tc, coldefs) {
         // Internally, new record is trying to be INSERTed but it is made wait by tx2.
         // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
         Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DeadlockDetected),

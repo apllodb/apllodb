@@ -9,15 +9,19 @@ use self::plan_node_executor::PlanNodeExecutor;
 
 /// Query executor which inputs a [QueryPlan](crate::query_plan::QueryPlan) and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(crate) struct QueryExecutor<'exe, Engine: StorageEngine> {
-    tx: &'exe Engine::Tx,
+pub(crate) struct QueryExecutor<'dml, Engine: StorageEngine> {
+    dml_methods: &'dml Engine::DML,
 }
 
-impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
-    pub(crate) fn run(&self, plan: QueryPlan) -> ApllodbResult<RecordIterator> {
+impl<Engine: StorageEngine> QueryExecutor<'_, Engine> {
+    pub(crate) fn run(
+        &self,
+        tx: &mut Engine::Tx,
+        plan: QueryPlan,
+    ) -> ApllodbResult<RecordIterator> {
         let plan_tree = plan.plan_tree;
         let root = plan_tree.root;
-        self.run_dfs_post_order(root)
+        self.run_dfs_post_order(tx, root)
     }
 
     /// Runs `node` in post-order and returns `node`'s output.
@@ -26,19 +30,23 @@ impl<'exe, Engine: StorageEngine> QueryExecutor<'exe, Engine> {
     /// 2. Runs left child node and get output if exists.
     /// 3. Runs this `node` using inputs from left & right nodes if exist.
     /// 4. Returns `node`'s output.
-    fn run_dfs_post_order(&self, node: QueryPlanNode) -> ApllodbResult<RecordIterator> {
-        let node_executor = PlanNodeExecutor::<'_, Engine>::new(self.tx);
+    fn run_dfs_post_order(
+        &self,
+        tx: &mut Engine::Tx,
+        node: QueryPlanNode,
+    ) -> ApllodbResult<RecordIterator> {
+        let executor = PlanNodeExecutor::<Engine>::new(&self.dml_methods);
 
         match node {
-            QueryPlanNode::Leaf(node_leaf) => node_executor.run_leaf(node_leaf.op),
+            QueryPlanNode::Leaf(node_leaf) => executor.run_leaf(tx, node_leaf.op),
             QueryPlanNode::Unary(node_unary) => {
-                let left_input = self.run_dfs_post_order(*node_unary.left)?;
-                node_executor.run_unary(node_unary.op, left_input)
+                let left_input = self.run_dfs_post_order(tx, *node_unary.left)?;
+                executor.run_unary(node_unary.op, left_input)
             }
             QueryPlanNode::Binary(node_binary) => {
-                let left_input = self.run_dfs_post_order(*node_binary.left)?;
-                let right_input = self.run_dfs_post_order(*node_binary.right)?;
-                node_executor.run_binary(node_binary.op, left_input, right_input)
+                let left_input = self.run_dfs_post_order(tx, *node_binary.left)?;
+                let right_input = self.run_dfs_post_order(tx, *node_binary.right)?;
+                executor.run_binary(node_binary.op, left_input, right_input)
             }
         }
     }
@@ -63,12 +71,13 @@ mod tests {
             QueryPlan,
         },
         test_support::{
-            mock_tx::mock_tx_select::mock_select_with_models::{
-                mock_select_with_models, ModelsMock,
+            mock_dml::{
+                mock_tx_select::mock_select_with_models::{mock_select_with_models, ModelsMock},
+                MockDML,
             },
             setup,
             test_models::{Body, People, Pet},
-            test_storage_engine::TestStorageEngine,
+            test_storage_engine::{TestStorageEngine, TestTx},
             utility_functions::r_projection,
         },
     };
@@ -97,10 +106,11 @@ mod tests {
         let t_pet_r3_1 = Pet::record(3, "dog", 5);
         let t_pet_r3_2 = Pet::record(3, "cat", 3);
 
-        let mut tx = TestStorageEngine::begin()?;
+        let mut tx = TestTx;
+        let mut dml = MockDML::new();
 
         mock_select_with_models(
-            &mut tx,
+            &mut dml,
             ModelsMock {
                 people: vec![
                     t_people_r1.clone(),
@@ -112,7 +122,7 @@ mod tests {
             },
         );
 
-        let executor = QueryExecutor::<'_, TestStorageEngine>::new(&tx);
+        let executor = QueryExecutor::<TestStorageEngine>::new(&dml);
 
         let test_data: Vec<TestDatum> = vec![
             // SeqScan (with storage engine layer projection)
@@ -308,7 +318,7 @@ mod tests {
             );
 
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
-            let result = executor.run(query_plan)?;
+            let result = executor.run(&mut tx, query_plan)?;
 
             assert_eq!(
                 result.collect::<Vec<Record>>(),
