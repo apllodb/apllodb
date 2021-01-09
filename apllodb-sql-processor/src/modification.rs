@@ -28,14 +28,14 @@ pub(crate) mod modification_executor;
 pub(crate) mod modification_plan;
 
 /// Processes ÎNSERT/UPDATE/DELETE command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct ModificationProcessor<'exe, Engine: StorageEngine> {
-    tx: &'exe Engine::Tx,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default, Debug)]
+pub struct ModificationProcessor<Engine: StorageEngine> {
+    dml_methods: Engine::DML,
 }
 
-impl<'exe, Engine: StorageEngine> ModificationProcessor<'exe, Engine> {
+impl<Engine: StorageEngine> ModificationProcessor<Engine> {
     /// Executes parsed INSERT/UPDATE/DELETE command.
-    pub fn run(&self, command: Command) -> ApllodbResult<()> {
+    pub fn run(&self, tx: &mut Engine::Tx, command: Command) -> ApllodbResult<()> {
         match command {
             Command::InsertCommandVariant(ic) => {
                 if ic.alias.is_some() {
@@ -84,8 +84,8 @@ impl<'exe, Engine: StorageEngine> ModificationProcessor<'exe, Engine> {
                 });
 
                 let plan = ModificationPlan::new(ModificationPlanTree::new(plan_node));
-                let executor = ModificationExecutor::<'_, Engine>::new(self.tx);
-                executor.run(plan)
+                let executor = ModificationExecutor::<Engine>::default();
+                executor.run(tx, plan)
             }
             _ => unimplemented!(),
         }
@@ -96,9 +96,14 @@ impl<'exe, Engine: StorageEngine> ModificationProcessor<'exe, Engine> {
 mod tests {
     use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
     use apllodb_sql_parser::ApllodbSqlParser;
-    use mockall::predicate::eq;
+    use mockall::predicate::{always, eq};
 
-    use crate::test_support::{setup, test_models::People, test_storage_engine::TestStorageEngine};
+    use crate::test_support::{
+        mock_dml::MockDML,
+        setup,
+        test_models::People,
+        test_storage_engine::{TestStorageEngine, TestTx},
+    };
 
     use super::ModificationProcessor;
 
@@ -116,8 +121,6 @@ mod tests {
 
         let t_people_r1 = People::record(1, 13);
 
-        let mut tx = TestStorageEngine::begin()?;
-
         let parser = ApllodbSqlParser::new();
 
         let test_data: Vec<TestDatum> = vec![TestDatum::new(
@@ -131,16 +134,20 @@ mod tests {
 
             let ast = parser.parse(test_datum.in_insert_sql).unwrap();
 
+            let mut tx = TestTx;
+            let mut dml = MockDML::new();
+
             // mocking insert()
-            tx.expect_insert()
+            dml.expect_insert()
                 .with(
+                    always(),
                     eq(test_datum.expected_insert_table),
                     eq(RecordIterator::new(test_datum.expected_insert_records)),
                 )
-                .returning(|_, _| Ok(()));
+                .returning(|_, _, _| Ok(()));
 
-            let processor = ModificationProcessor::<'_, TestStorageEngine>::new(&tx);
-            processor.run(ast.0)?;
+            let processor = ModificationProcessor::<TestStorageEngine>::default();
+            processor.run(&mut tx, ast.0)?;
         }
 
         Ok(())

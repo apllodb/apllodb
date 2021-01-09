@@ -10,22 +10,26 @@ use self::{query_executor::QueryExecutor, query_plan::QueryPlan};
 use std::convert::TryFrom;
 
 /// Processes SELECT command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct QueryProcessor<'exe, Engine: StorageEngine> {
-    tx: &'exe Engine::Tx,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct QueryProcessor<Engine: StorageEngine> {
+    dml_methods: Engine::DML,
 }
 
-impl<'exe, Engine: StorageEngine> QueryProcessor<'exe, Engine> {
+impl<Engine: StorageEngine> QueryProcessor<Engine> {
     /// Executes parsed SELECT query.
-    pub fn run(&self, select_command: SelectCommand) -> ApllodbResult<RecordIterator> {
+    pub fn run(
+        &self,
+        tx: &mut Engine::Tx,
+        select_command: SelectCommand,
+    ) -> ApllodbResult<RecordIterator> {
         // TODO query rewrite -> SelectCommand
 
         let plan = QueryPlan::try_from(select_command)?;
 
         // TODO plan optimization -> QueryPlan
 
-        let executor = QueryExecutor::<'_, Engine>::new(self.tx);
-        executor.run(plan)
+        let executor = QueryExecutor::<Engine>::default();
+        executor.run(tx, plan)
     }
 }
 
@@ -37,12 +41,13 @@ mod tests {
 
     use crate::{
         test_support::{
-            mock_tx::mock_tx_select::mock_select_with_models::{
-                mock_select_with_models, ModelsMock,
+            mock_dml::{
+                mock_tx_select::mock_select_with_models::{mock_select_with_models, ModelsMock},
+                MockDML,
             },
             setup,
             test_models::{Body, People, Pet},
-            test_storage_engine::TestStorageEngine,
+            test_storage_engine::{TestStorageEngine, TestTx},
             utility_functions::r_projection,
         },
         QueryProcessor,
@@ -78,10 +83,11 @@ mod tests {
         let t_pet_r3_1 = Pet::record(3, "dog", 5);
         let t_pet_r3_2 = Pet::record(3, "cat", 3);
 
-        let mut tx = TestStorageEngine::begin()?;
+        let mut tx = TestTx;
+        let mut dml = MockDML::new();
 
         mock_select_with_models(
-            &mut tx,
+            &mut dml,
             ModelsMock {
                 people: vec![
                     t_people_r1.clone(),
@@ -94,7 +100,7 @@ mod tests {
         );
 
         let parser = ApllodbSqlParser::new();
-        let processor = QueryProcessor::<'_, TestStorageEngine>::new(&tx);
+        let processor = QueryProcessor::<TestStorageEngine>::default();
 
         let test_data: Vec<TestDatum> = vec![
             // full scan
@@ -136,7 +142,7 @@ mod tests {
                 }
             };
 
-            let result = processor.run(select_command)?;
+            let result = processor.run(&mut tx, select_command)?;
 
             assert_eq!(
                 result.collect::<Vec<Record>>(),

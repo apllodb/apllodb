@@ -156,7 +156,7 @@
 //!         ColumnConstraints::default(),
 //!     );
 //!
-//!     tx.create_table(
+//!     ApllodbImmutableSchemaDDL::create_table(tx.create_table(mut tx
 //!         &table_name,
 //!         &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
 //!             column_names: vec![c1_def.column_data_type().column_ref().as_column_name().clone()],
@@ -178,11 +178,11 @@ pub use crate::{
     dml_methods::{projection::ProjectionQuery, DMLMethods},
 };
 
-use apllodb_shared_components::{ApllodbResult, Database, DatabaseName, Transaction};
+use apllodb_shared_components::{Database, Transaction};
 use std::fmt::Debug;
 
 /// An storage engine implementation must implement this trait and included associated-types.
-pub trait StorageEngine: Sized + Debug {
+pub trait StorageEngine: Default + Debug + Sized {
     /// Database.
     type Db: Database;
 
@@ -190,11 +190,8 @@ pub trait StorageEngine: Sized + Debug {
     type Tx: Transaction;
 
     /// DDL access methods.
-    type DDL: DDLMethods;
+    type DDL: DDLMethods<Self>;
 
     /// DML access methods.
-    type DML: DMLMethods;
-
-    /// Specify database to use and return database object.
-    fn use_database(database_name: &DatabaseName) -> ApllodbResult<Self::Db>;
+    type DML: DMLMethods<Self>;
 }

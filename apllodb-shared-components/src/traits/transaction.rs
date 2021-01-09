@@ -1,7 +1,7 @@
 pub(crate) mod transaction_id;
 
 use crate::{ApllodbResult, DatabaseName};
-use std::fmt::Debug;
+use std::{borrow::Borrow, fmt::Debug};
 
 use self::transaction_id::TransactionId;
 
@@ -11,8 +11,11 @@ use super::database::Database;
 ///
 /// It has methods to control transaction's lifetime (BEGIN, COMMIT/ABORT)
 pub trait Transaction: Debug + Sized {
-    /// Database's ownership or reference to generate a transaction.
+    /// Database who begins this transaction.
     type Db: Database;
+
+    /// Database's ownership or reference to generate a transaction.
+    type RefDb: Borrow<Self::Db>;
 
     /// Transaction ID.
     type TID: TransactionId;
@@ -21,7 +24,7 @@ pub trait Transaction: Debug + Sized {
     fn id(&self) -> &Self::TID;
 
     /// Begins a transaction.
-    fn begin(db: &mut Self::Db) -> ApllodbResult<Self>;
+    fn begin(db: Self::RefDb) -> ApllodbResult<Self>;
 
     /// Commit a transaction.
     ///

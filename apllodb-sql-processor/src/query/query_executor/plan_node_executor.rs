@@ -3,25 +3,29 @@ use std::collections::{HashMap, HashSet};
 use apllodb_shared_components::{
     ApllodbResult, FieldIndex, Record, RecordIterator, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, Transaction};
+use apllodb_storage_engine_interface::{DMLMethods, ProjectionQuery, StorageEngine};
 
 use crate::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
 };
 
-#[derive(Debug, new)]
-pub(super) struct PlanNodeExecutor<'exe, Engine: StorageEngine> {
-    tx: &'exe Engine::Tx,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub(super) struct PlanNodeExecutor<Engine: StorageEngine> {
+    dml_methods: Engine::DML,
 }
 
-impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
-    pub(super) fn run_leaf(&self, op_leaf: LeafPlanOperation) -> ApllodbResult<RecordIterator> {
+impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
+    pub(super) fn run_leaf(
+        &self,
+        tx: &mut Engine::Tx,
+        op_leaf: LeafPlanOperation,
+    ) -> ApllodbResult<RecordIterator> {
         match op_leaf {
             LeafPlanOperation::DirectInput { records } => Ok(records),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-            } => self.seq_scan(table_name, projection),
+            } => self.seq_scan(tx, table_name, projection),
         }
     }
 
@@ -55,10 +59,11 @@ impl<'exe, Engine: StorageEngine> PlanNodeExecutor<'exe, Engine> {
     /// Failures from [Transaction::select()](apllodb_storage_engine_interface::Transaction::select) implementation.
     fn seq_scan(
         &self,
+        tx: &mut Engine::Tx,
         table_name: TableName,
         projection: ProjectionQuery,
     ) -> ApllodbResult<RecordIterator> {
-        let row_iter = self.tx.select(&table_name, projection)?;
+        let row_iter = self.dml_methods.select(tx, &table_name, projection)?;
         Ok(RecordIterator::new(row_iter))
     }
 

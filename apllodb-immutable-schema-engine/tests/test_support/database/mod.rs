@@ -1,6 +1,5 @@
-use apllodb_immutable_schema_engine::{ApllodbImmutableSchemaDb, ApllodbImmutableSchemaEngine};
-use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use apllodb_storage_engine_interface::{Database, StorageEngine};
+use apllodb_immutable_schema_engine::ApllodbImmutableSchemaDb;
+use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
 
 pub struct TestDatabase(pub ApllodbImmutableSchemaDb);
 
@@ -11,14 +10,14 @@ impl TestDatabase {
         let db_name = format!("{}", Uuid::new_v4());
         let db_name = DatabaseName::new(db_name)?;
 
-        let db = ApllodbImmutableSchemaEngine::use_database(&db_name)?;
+        let db = ApllodbImmutableSchemaDb::use_database(db_name)?;
         Ok(Self(db))
     }
 
     #[allow(dead_code)]
     pub fn dup(&self) -> ApllodbResult<Self> {
         let db_name = self.0.name();
-        let db = ApllodbImmutableSchemaEngine::use_database(&db_name)?;
+        let db = ApllodbImmutableSchemaDb::use_database(db_name.clone())?;
         Ok(Self(db))
     }
 }

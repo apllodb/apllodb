@@ -1,6 +1,5 @@
 use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
-use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use apllodb_storage_engine_interface::Database;
+use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
 use std::time::Duration;
 
 /// Database context.
@@ -11,6 +10,10 @@ pub struct SqliteDatabase {
 }
 
 impl Database for SqliteDatabase {
+    fn use_database(_name: DatabaseName) -> ApllodbResult<Self> {
+        todo!()
+    }
+
     fn name(&self) -> &DatabaseName {
         &self.name
     }
