@@ -37,7 +37,7 @@ impl<'sess> TransactionMethodsImpl<'sess> {
 
 impl<'sess> TransactionMethods for TransactionMethodsImpl<'sess> {
     type Sess = &'sess mut SessionWithDb;
-    type Slf = &'sess mut Self;
+    type RefSelf = &'sess mut Self;
 
     fn begin(slf: &'sess mut Self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
         let sid = { session.get_id().clone() };

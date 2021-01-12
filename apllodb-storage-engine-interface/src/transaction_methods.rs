@@ -7,16 +7,18 @@ pub trait TransactionMethods: Debug {
     /// Reference to session (may take lifetime parameter to generate physical transaction struct).
     type Sess: Borrow<SessionWithDb>;
 
-    /// xx
-    type Slf: Borrow<Self>;
+    /// Reference to Self to take arbitrary lifetime in [begin()](Self::begin) method.
+    type RefSelf: Borrow<Self>;
 
     /// Begins a transaction and calls [SessionWithDb::set_tid()](apllodb-shared-components::SessionWithDb::set_tid()).
+    ///
+    /// Implementation of this trait may contain the some lifetime as `RefSelf`.
     ///
     /// # Failures
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has already begun in this session.
-    fn begin(sel: Self::Slf, session: Self::Sess) -> ApllodbResult<()>;
+    fn begin(sel: Self::RefSelf, session: Self::Sess) -> ApllodbResult<()>;
 
     /// Commit a transaction and calls [SessionWithDb::unset_tid()](apllodb-shared-components::SessionWithDb::unset_tid()).
     ///
