@@ -1,25 +1,27 @@
-use std::collections::HashMap;
+pub(crate) mod tx_repo;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult,  SessionWithDb, TransactionId,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, SessionWithDb, TransactionId,
 };
 use apllodb_storage_engine_interface::TransactionMethods;
 
-use crate::sqlite::{ transaction::sqlite_tx::SqliteTx};
+use crate::sqlite::transaction::sqlite_tx::SqliteTx;
+
+use self::tx_repo::TxRepo;
 
 use super::database_methods_impl::db_repo::DbRepo;
 
 #[derive(Debug)]
 pub struct TransactionMethodsImpl<'sess> {
     db_repo: &'sess DbRepo,
-    tx_repo: HashMap<TransactionId, SqliteTx<'sess>>,
+    tx_repo: TxRepo<'sess>,
 }
 
 impl<'sess> TransactionMethodsImpl<'sess> {
     pub(crate) fn new(db_repo: &'sess DbRepo) -> Self {
         Self {
             db_repo,
-            tx_repo: HashMap::new(),
+            tx_repo: TxRepo::default(),
         }
     }
 
@@ -58,6 +60,5 @@ impl TransactionMethods for TransactionMethodsImpl<'_> {
 
     fn abort_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
         self.remove_sqlite_tx(session)?.abort()
-
     }
 }
