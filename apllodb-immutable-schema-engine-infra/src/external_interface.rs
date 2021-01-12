@@ -18,7 +18,7 @@ pub struct ApllodbImmutableSchemaEngine<'sess> {
 
 impl<'sess> StorageEngine for ApllodbImmutableSchemaEngine<'sess> {
     type Db = DatabaseMethodsImpl;
-    type Tx = TransactionMethodsImpl;
-    type DDL = ApllodbImmutableSchemaDDL;
-    type DML = ApllodbImmutableSchemaDML;
+    type Tx = TransactionMethodsImpl<'sess>;
+    type DDL = ApllodbImmutableSchemaDDL<'sess>;
+    type DML = ApllodbImmutableSchemaDML<'sess>;
 }

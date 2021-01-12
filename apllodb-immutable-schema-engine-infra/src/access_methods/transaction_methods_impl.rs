@@ -1,8 +1,6 @@
 pub(crate) mod tx_repo;
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, SessionWithDb, TransactionId,
-};
+use apllodb_shared_components::{ApllodbResult, SessionWithDb, TransactionId};
 use apllodb_storage_engine_interface::TransactionMethods;
 
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
@@ -26,22 +24,11 @@ impl<'sess> TransactionMethodsImpl<'sess> {
     }
 
     fn remove_sqlite_tx(&mut self, session: &mut SessionWithDb) -> ApllodbResult<SqliteTx> {
-        let tid = session.get_tid().ok_or_else(|| {
-            ApllodbError::new(
-                ApllodbErrorKind::InvalidTransactionState,
-                format!(
-                    "transaction in session id `{:?}` has already closed",
-                    session.get_id()
-                ),
-                None,
-            )
-        })?;
-
+        let tid = session.get_tid()?;
         let sqlite_tx = self.tx_repo.remove(tid).expect(&format!(
             "no one should remove tid `{:?}` from tx_repo",
             tid
         ));
-
         Ok(sqlite_tx)
     }
 }
