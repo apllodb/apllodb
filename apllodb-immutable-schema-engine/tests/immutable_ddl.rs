@@ -2,12 +2,12 @@ mod test_support;
 
 use crate::test_support::{database::TestDatabase, setup};
 use apllodb_immutable_schema_engine_infra::external_interface::{
-    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaDML, ApllodbImmutableSchemaTx,
+    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaDML,
 };
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnName, ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue,
-    TableConstraintKind, TableConstraints, TableName, Transaction,
+    TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{DDLMethods, DMLMethods, ProjectionQuery};
 

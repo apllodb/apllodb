@@ -14,6 +14,7 @@ impl DbRepo {
         self.db_repo.insert(sid, db);
     }
 
+    #[allow(dead_code)]
     pub(crate) fn remove(&mut self, sid: &SessionId) -> ApllodbResult<SqliteDatabase> {
         self.db_repo.remove(sid).ok_or_else(|| {
             ApllodbError::new(

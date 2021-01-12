@@ -1,5 +1,4 @@
-use apllodb_immutable_schema_engine::ApllodbImmutableSchemaDb;
-use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
 
 pub struct TestDatabase(pub ApllodbImmutableSchemaDb);
 

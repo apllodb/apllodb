@@ -30,7 +30,7 @@ pub struct VTableRepositoryImpl<'repo, 'sess: 'repo> {
 }
 
 impl<'repo, 'sess> VTableRepositoryImpl<'repo, 'sess> {
-    pub fn new(tx: &'repo SqliteTx<'sess>) -> Self {
+    pub(crate) fn new(tx: &'repo SqliteTx<'sess>) -> Self {
         Self { tx }
     }
 }

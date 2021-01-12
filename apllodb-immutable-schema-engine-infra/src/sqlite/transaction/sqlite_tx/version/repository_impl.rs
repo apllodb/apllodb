@@ -22,7 +22,7 @@ pub struct VersionRepositoryImpl<'repo, 'sess: 'repo> {
 }
 
 impl<'repo, 'sess> VersionRepositoryImpl<'repo, 'sess> {
-    pub fn new(tx: &'repo SqliteTx<'sess>) -> Self {
+    pub(crate) fn new(tx: &'repo SqliteTx<'sess>) -> Self {
         Self { tx }
     }
 }

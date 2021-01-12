@@ -1,6 +1,6 @@
 pub(crate) mod tx_repo;
 
-use apllodb_shared_components::{ApllodbResult, SessionWithDb, TransactionId};
+use apllodb_shared_components::{ApllodbResult, SessionWithDb};
 use apllodb_storage_engine_interface::TransactionMethods;
 
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
