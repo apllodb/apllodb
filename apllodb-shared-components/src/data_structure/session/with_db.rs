@@ -65,7 +65,7 @@ impl SessionWithDb {
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has not begun in this session.
     #[doc(hidden)]
-    pub fn unset_tx(&mut self) -> ApllodbResult<()> {
+    pub fn unset_tid(&mut self) -> ApllodbResult<()> {
         self.tid.take().map(|_| ()).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::InvalidTransactionState,

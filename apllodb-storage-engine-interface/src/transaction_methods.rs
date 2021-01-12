@@ -1,24 +1,24 @@
-use std::fmt::Debug;
+use std::{borrow::Borrow, fmt::Debug};
 
-use apllodb_shared_components::{ApllodbResult, SessionWithDb, TransactionId};
+use apllodb_shared_components::{ApllodbResult, SessionWithDb};
 
 /// Transaction access methods interface.
 pub trait TransactionMethods: Debug {
-    /// Begins a transaction.
+    /// Reference to session (may take lifetime parameter to generate physical transaction struct).
+    type Sess: Borrow<SessionWithDb>;
+
+    /// xx
+    type Slf: Borrow<Self>;
+
+    /// Begins a transaction and calls [SessionWithDb::set_tid()](apllodb-shared-components::SessionWithDb::set_tid()).
     ///
     /// # Failures
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has already begun in this session.
-    fn begin(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
-        let tid = self.begin_core(session)?;
-        session.set_tid(tid)
-    }
+    fn begin(sel: Self::Slf, session: Self::Sess) -> ApllodbResult<()>;
 
-    #[doc(hidden)]
-    fn begin_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<TransactionId>;
-
-    /// Commit a transaction.
+    /// Commit a transaction and calls [SessionWithDb::unset_tid()](apllodb-shared-components::SessionWithDb::unset_tid()).
     ///
     /// # Failures
     ///
@@ -26,15 +26,9 @@ pub trait TransactionMethods: Debug {
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has not begun in this session.
-    fn commit(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
-        self.commit_core(session)?;
-        session.unset_tx()
-    }
+    fn commit(&mut self, session: Self::Sess) -> ApllodbResult<()>;
 
-    #[doc(hidden)]
-    fn commit_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()>;
-
-    /// Abort (rollback) a transaction.
+    /// Abort (rollback) a transaction and calls [SessionWithDb::unset_tid()](apllodb-shared-components::SessionWithDb::unset_tid())..
     ///
     /// # Failures
     ///
@@ -42,11 +36,5 @@ pub trait TransactionMethods: Debug {
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has not begun in this session.
-    fn abort(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
-        self.abort_core(session)?;
-        session.unset_tx()
-    }
-
-    #[doc(hidden)]
-    fn abort_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()>;
+    fn abort(&mut self, session: Self::Sess) -> ApllodbResult<()>;
 }

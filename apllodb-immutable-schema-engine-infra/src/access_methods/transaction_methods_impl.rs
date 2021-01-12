@@ -24,8 +24,10 @@ impl<'sess> TransactionMethodsImpl<'sess> {
     }
 
     fn remove_sqlite_tx(&mut self, session: &mut SessionWithDb) -> ApllodbResult<SqliteTx> {
-        let tid = session.get_tid()?;
-        let sqlite_tx = self.tx_repo.remove(tid).expect(&format!(
+        let tid = { session.get_tid()?.clone() };
+        session.unset_tid()?;
+
+        let sqlite_tx = self.tx_repo.remove(&tid).expect(&format!(
             "no one should remove tid `{:?}` from tx_repo",
             tid
         ));
@@ -33,20 +35,27 @@ impl<'sess> TransactionMethodsImpl<'sess> {
     }
 }
 
-impl TransactionMethods for TransactionMethodsImpl<'_> {
-    fn begin_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<TransactionId> {
-        let sqlite_db = self.db_repo.get_mut(session.get_id())?;
+impl<'sess> TransactionMethods for TransactionMethodsImpl<'sess> {
+    type Sess = &'sess mut SessionWithDb;
+    type Slf = &'sess mut Self;
+
+    fn begin(slf: &'sess mut Self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
+        let sid = { session.get_id().clone() };
+        let sqlite_db = slf.db_repo.get_mut(&sid)?;
         let sqlite_tx = SqliteTx::begin(sqlite_db)?;
         let tid = { sqlite_tx.tid() };
-        self.tx_repo.insert(tid.clone(), sqlite_tx);
-        Ok(tid)
+
+        session.set_tid(tid.clone())?;
+        slf.tx_repo.insert(tid.clone(), sqlite_tx);
+
+        Ok(())
     }
 
-    fn commit_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
+    fn commit(&mut self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
         self.remove_sqlite_tx(session)?.commit()
     }
 
-    fn abort_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
+    fn abort(&mut self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
         self.remove_sqlite_tx(session)?.abort()
     }
 }
