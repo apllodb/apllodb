@@ -9,3 +9,4 @@ pub trait Database: Debug + Sized {
     /// Ref to [DatabaseName](crate::DatabaseName).
     fn name(&self) -> &DatabaseName;
 }
+
