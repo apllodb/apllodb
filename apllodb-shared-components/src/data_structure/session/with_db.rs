@@ -81,8 +81,19 @@ impl SessionWithDb {
     }
 
     /// Get transaction ID
-    pub fn get_tid(&self) -> Option<&TransactionId> {
-        self.tid.as_ref()
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
+    ///   - transaction has not begun in this session.
+    pub fn get_tid(&self) -> ApllodbResult<&TransactionId> {
+        self.tid.as_ref().ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::InvalidTransactionState,
+                "transaction has not begun: {:#?}",
+                None,
+            )
+        })
     }
 
     /// Get ref to [DatabaseName](apllodb-shared-components::DatabaseName).

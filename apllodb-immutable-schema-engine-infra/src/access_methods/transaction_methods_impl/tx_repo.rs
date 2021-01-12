@@ -27,6 +27,19 @@ impl<'sess> TxRepo<'sess> {
         })
     }
 
+    pub(crate) fn get(&self, tid: &TransactionId) -> ApllodbResult<&SqliteTx<'sess>> {
+        self.tx_repo.get(tid).ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::ConnectionDoesNotExist,
+                format!(
+                    "transaction id `{:?}` does not exist in database repository",
+                    tid
+                ),
+                None,
+            )
+        })
+    }
+
     pub(crate) fn get_mut(&mut self, tid: &TransactionId) -> ApllodbResult<&mut SqliteTx<'sess>> {
         self.tx_repo.get_mut(tid).ok_or_else(|| {
             ApllodbError::new(

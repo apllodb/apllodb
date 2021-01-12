@@ -1,8 +1,8 @@
-use std::convert::TryFrom;
+
 
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::{sqlite_types::SqliteTypes, transaction::sqlite_tx::SqliteTx},
+    sqlite::{sqlite_types::SqliteTypes, },
 };
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
@@ -13,14 +13,15 @@ use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnDefinition, SessionWithDb, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::DDLMethods;
-use serde::{Deserialize, Serialize};
 
-#[derive(
-    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize,
-)]
-pub struct DDLMethodsImpl;
+use super::transaction_methods_impl::tx_repo::TxRepo;
 
-impl DDLMethods for DDLMethodsImpl {
+#[derive(Debug, Default)]
+pub struct DDLMethodsImpl<'sess> {
+    tx_repo: TxRepo<'sess>,
+}
+
+impl DDLMethods for DDLMethodsImpl<'_> {
     fn create_table(
         &self,
         session: &mut SessionWithDb,
@@ -35,7 +36,7 @@ impl DDLMethods for DDLMethodsImpl {
             table_constraints,
             &column_definitions,
         );
-        let tx = SqliteTx::try_from(session)?;
+        let tx = self.tx_repo.get(session.get_tid()?)?;
         let _ = CreateTableUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
@@ -52,7 +53,7 @@ impl DDLMethods for DDLMethodsImpl {
     ) -> ApllodbResult<()> {
         let database_name = session.get_db().clone();
         let input = AlterTableUseCaseInput::new(&database_name, table_name, action);
-        let tx = SqliteTx::try_from(session)?;
+        let tx = self.tx_repo.get(session.get_tid()?)?;
         let _ = AlterTableUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
