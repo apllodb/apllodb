@@ -1,8 +1,6 @@
 pub(crate) mod with_db;
 pub(crate) mod without_db;
 
-use crate::{Database, Transaction};
-
 use self::{with_db::SessionWithDb, without_db::SessionWithoutDb};
 
 /// Session information.
@@ -20,9 +18,9 @@ use self::{with_db::SessionWithDb, without_db::SessionWithoutDb};
 /// Note that session is free from physical connection implementation.
 /// Therefore, for example, client-server's transport is independent from Session and can be any of TCP, direct method call, and so on.
 #[derive(Hash, Debug)]
-pub enum Session<Db: Database, Tx: Transaction> {
+pub enum Session {
     /// Session with open database.
-    WithDb(SessionWithDb<Db, Tx>),
+    WithDb(SessionWithDb),
 
     /// Session without open database.
     WithoutDb(SessionWithoutDb),
