@@ -1,4 +1,6 @@
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName, TransactionId};
+use crate::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName, SessionId, TransactionId,
+};
 use serde::{Deserialize, Serialize};
 
 /// Session with open database.
@@ -6,6 +8,7 @@ use serde::{Deserialize, Serialize};
 /// Most SQL commands are executed via this type of session.
 #[derive(Hash, Debug, Serialize, Deserialize)]
 pub struct SessionWithDb {
+    id: SessionId,
     db: DatabaseName,
     tid: Option<TransactionId>,
 }
@@ -16,7 +19,18 @@ impl SessionWithDb {
     /// A storage engine's implementation must call this after opening a database.
     #[doc(hidden)]
     pub fn new(db: DatabaseName) -> Self {
-        Self { db, tid: None }
+        Self {
+            id: Self::new_sid(),
+            db,
+            tid: None,
+        }
+    }
+
+    // FIXME: Fast unique session ID generation is not a trivial task.
+    // Don't do it in shared-components.
+    fn new_sid() -> SessionId {
+        let r = fastrand::u64(..);
+        SessionId::new(r)
     }
 
     /// Set a TransactionId begun into this session.
@@ -59,6 +73,11 @@ impl SessionWithDb {
                 None,
             )
         })
+    }
+
+    /// Get session ID
+    pub fn get_id(&self) -> &SessionId {
+        &self.id
     }
 
     /// Get ref to [DatabaseName](apllodb-shared-components::DatabaseName).

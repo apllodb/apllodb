@@ -1,5 +1,6 @@
 pub(crate) mod with_db;
 pub(crate) mod without_db;
+pub(crate) mod session_id;
 
 use self::{with_db::SessionWithDb, without_db::SessionWithoutDb};
 use serde::{Deserialize, Serialize};
