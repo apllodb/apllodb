@@ -195,24 +195,27 @@
 //! }
 //! ```
 
+mod database_methods;
 mod ddl_methods;
 mod dml_methods;
+mod transaction_methods;
 
 pub use crate::{
+    database_methods::DatabaseMethods,
     ddl_methods::DDLMethods,
     dml_methods::{projection::ProjectionQuery, DMLMethods},
+    transaction_methods::TransactionMethods,
 };
 
-use apllodb_shared_components::{Database, Transaction};
 use std::fmt::Debug;
 
 /// An storage engine implementation must implement this trait and included associated-types.
 pub trait StorageEngine: Debug + Sized {
     /// Database.
-    type Db: Database;
+    type Db: DatabaseMethods;
 
     /// Transaction.
-    type Tx: Transaction;
+    type Tx: TransactionMethods;
 
     /// DDL access methods.
     type DDL: DDLMethods<Self>;
