@@ -1,4 +1,4 @@
-pub mod database;
+pub(crate) mod database;
 mod macros;
 
 pub(crate) fn setup() {

@@ -18,7 +18,7 @@ pub trait TransactionMethods: Debug {
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has already begun in this session.
-    fn begin(sel: Self::RefSelf, session: Self::Sess) -> ApllodbResult<()>;
+    fn begin(slf: Self::RefSelf, session: Self::Sess) -> ApllodbResult<()>;
 
     /// Commit a transaction and calls [SessionWithDb::unset_tid()](apllodb-shared-components::SessionWithDb::unset_tid()).
     ///
