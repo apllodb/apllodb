@@ -31,7 +31,8 @@ impl<Db: Database, Tx: Transaction> SessionWithDb<Db, Tx> {
             ));
         }
 
-        let tx = Tx::begin(db)?;
+        //let tx = Tx::begin(db)?;
+        let tx: Tx = todo!();
         self.tx.replace(tx);
 
         Ok(())

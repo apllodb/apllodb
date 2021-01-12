@@ -1,4 +1,6 @@
-#![deny(warnings, missing_debug_implementations, missing_docs)]
+#![deny(
+    //warnings,
+     missing_debug_implementations, missing_docs)]
 
 //! Data structures shared with multiple crates in the apllodb workspace.
 
@@ -27,6 +29,7 @@ pub use crate::{
         },
         record::{field_index::FieldIndex, Record},
         record_iterator::RecordIterator,
+        session::{with_db::SessionWithDb, without_db::SessionWithoutDb, Session},
         table::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,

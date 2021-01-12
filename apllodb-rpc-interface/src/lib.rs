@@ -2,7 +2,7 @@ mod error;
 
 pub use error::{ApllodbRpcError, ApllodbRpcResult};
 
-use apllodb_shared_components::{DatabaseName, RecordIterator};
+use apllodb_shared_components::{DatabaseName, RecordIterator, Session};
 use serde::{Deserialize, Serialize};
 
 /// Successful response from apllodb-server
@@ -13,8 +13,16 @@ pub enum ApllodbRpcSuccess {
     DDLResponse,
 }
 
+/// apllodb-server's RPC interface.
 #[tarpc::service]
 pub trait ApllodbRpc {
-    /// Returns a greeting for name.
-    async fn command(db: DatabaseName, sql: String) -> ApllodbRpcResult<ApllodbRpcSuccess>;
+    /// Establish a session.
+    ///
+    /// Session takes two forms: [Session::WithDb](apllodb-shared-components::Session::WithDb) and [Session::WithoutDb](apllodb-shared-components::Session::WithoutDb).
+    /// If you path a valid [DatabaseName](apllodb-shared-components::DatabaseName), `Session::WithDb` is established.
+    /// and otherwise [Session::WithoutDb].
+    async fn establish_session(database_name: Option<DatabaseName>) -> ApllodbRpcResult<Session>;
+
+    /// Runs an SQL (general meaning; including `CREATE DATABASE` and so on).
+    async fn command(session: Session, sql: String) -> ApllodbRpcResult<ApllodbRpcSuccess>;
 }
