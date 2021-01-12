@@ -1,20 +1,20 @@
 pub(crate) mod projection;
 
-use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ApllodbResult, SessionWithDb};
 use apllodb_shared_components::{ColumnName, Expression, RecordIterator, TableName};
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::{ProjectionQuery, StorageEngine};
+use crate::{ProjectionQuery};
 
 /// DML access methods interface.
-pub trait DMLMethods<Engine: StorageEngine>: Debug {
+pub trait DMLMethods: Debug {
     /// SELECT command.
     ///
     /// Storage engine's SELECT fields are merely ColumnName.
     /// Expression fields are not allowed. Calculating expressions is job for query processor.
     fn select(
         &self,
-        tx: &mut Engine::Tx,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         projection: ProjectionQuery,
     ) -> ApllodbResult<RecordIterator>;
@@ -22,7 +22,7 @@ pub trait DMLMethods<Engine: StorageEngine>: Debug {
     /// INSERT command.
     fn insert(
         &self,
-        tx: &mut Engine::Tx,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         records: RecordIterator,
     ) -> ApllodbResult<()>;
@@ -30,11 +30,11 @@ pub trait DMLMethods<Engine: StorageEngine>: Debug {
     /// UPDATE command.
     fn update(
         &self,
-        tx: &mut Engine::Tx,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         column_values: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()>;
 
     /// DELETE command.
-    fn delete(&self, tx: &mut Engine::Tx, table_name: &TableName) -> ApllodbResult<()>;
+    fn delete(&self, session: &mut SessionWithDb, table_name: &TableName) -> ApllodbResult<()>;
 }

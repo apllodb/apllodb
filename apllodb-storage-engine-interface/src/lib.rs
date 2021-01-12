@@ -218,8 +218,8 @@ pub trait StorageEngine: Debug + Sized {
     type Tx: TransactionMethods;
 
     /// DDL access methods.
-    type DDL: DDLMethods<Self>;
+    type DDL: DDLMethods;
 
     /// DML access methods.
-    type DML: DMLMethods<Self>;
+    type DML: DMLMethods;
 }

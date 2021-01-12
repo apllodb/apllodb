@@ -1,17 +1,15 @@
-use apllodb_shared_components::ApllodbResult;
 use apllodb_shared_components::{AlterTableAction, ColumnDefinition, TableConstraints, TableName};
+use apllodb_shared_components::{ApllodbResult, SessionWithDb};
 use std::fmt::Debug;
-
-use crate::StorageEngine;
 
 /// DDL access methods interface.
 ///
-/// Not only DML but also DDL are executed under the transaction context (like PostgreSQL).
-pub trait DDLMethods<Engine: StorageEngine>: Debug {
+/// DDL methods implementations have freedom of choice about whether to realize transactional DDL.
+pub trait DDLMethods: Debug {
     /// CREATE TABLE command.
     fn create_table(
         &self,
-        tx: &mut Engine::Tx,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: Vec<ColumnDefinition>,
@@ -20,11 +18,11 @@ pub trait DDLMethods<Engine: StorageEngine>: Debug {
     /// ALTER TABLE command.
     fn alter_table(
         &self,
-        tx: &mut Engine::Tx,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()>;
 
     /// DROP TABLE command.
-    fn drop_table(&self, tx: &mut Engine::Tx, table_name: &TableName) -> ApllodbResult<()>;
+    fn drop_table(&self, session: &mut SessionWithDb, table_name: &TableName) -> ApllodbResult<()>;
 }
