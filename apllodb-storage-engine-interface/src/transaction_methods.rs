@@ -10,13 +10,13 @@ pub trait TransactionMethods: Debug {
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has already begun in this session.
-    fn begin(&self, session: &mut SessionWithDb) -> ApllodbResult<()> {
+    fn begin(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
         let tid = self.begin_core(session)?;
         session.set_tid(tid)
     }
 
     #[doc(hidden)]
-    fn begin_core(&self, session: &mut SessionWithDb) -> ApllodbResult<TransactionId>;
+    fn begin_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<TransactionId>;
 
     /// Commit a transaction.
     ///
@@ -26,13 +26,13 @@ pub trait TransactionMethods: Debug {
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has not begun in this session.
-    fn commit(&self, session: &mut SessionWithDb) -> ApllodbResult<()> {
-        session.unset_tx()?;
-        self.commit_core(session)
+    fn commit(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
+        self.commit_core(session)?;
+        session.unset_tx()
     }
 
     #[doc(hidden)]
-    fn commit_core(&self, session: &mut SessionWithDb) -> ApllodbResult<()>;
+    fn commit_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()>;
 
     /// Abort (rollback) a transaction.
     ///
@@ -42,11 +42,11 @@ pub trait TransactionMethods: Debug {
     ///
     /// - [InvalidTransactionState](crate::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - transaction has not begun in this session.
-    fn abort(&self, session: &mut SessionWithDb) -> ApllodbResult<()> {
-        session.unset_tx()?;
-        self.abort_core(session)
+    fn abort(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
+        self.abort_core(session)?;
+        session.unset_tx()
     }
 
     #[doc(hidden)]
-    fn abort_core(&self, session: &mut SessionWithDb) -> ApllodbResult<()>;
+    fn abort_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()>;
 }

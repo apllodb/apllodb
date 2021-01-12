@@ -1,4 +1,4 @@
-mod db_repo;
+pub(crate) mod db_repo;
 
 use apllodb_shared_components::{ApllodbResult, SessionWithDb};
 use apllodb_storage_engine_interface::DatabaseMethods;

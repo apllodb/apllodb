@@ -80,6 +80,11 @@ impl SessionWithDb {
         &self.id
     }
 
+    /// Get transaction ID
+    pub fn get_tid(&self) -> Option<&TransactionId> {
+        self.tid.as_ref()
+    }
+
     /// Get ref to [DatabaseName](apllodb-shared-components::DatabaseName).
     pub fn get_db(&self) -> &DatabaseName {
         &self.db
