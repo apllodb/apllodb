@@ -3,8 +3,6 @@ use std::fmt::Debug;
 use apllodb_shared_components::{ApllodbResult, SessionWithDb, TransactionId};
 
 /// Transaction access methods interface.
-///
-/// It has methods to control transaction's lifetime (BEGIN, COMMIT/ABORT)
 pub trait TransactionMethods: Debug {
     /// Begins a transaction.
     ///

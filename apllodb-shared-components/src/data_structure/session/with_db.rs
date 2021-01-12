@@ -13,10 +13,10 @@ pub struct SessionWithDb {
 impl SessionWithDb {
     /// Construct a session with open database.
     ///
-    /// apllodb-server may call this.
+    /// A storage engine's implementation must call this after opening a database.
     #[doc(hidden)]
-    pub fn new(db: DatabaseName) -> ApllodbResult<Self> {
-        Ok(Self { db, tid: None })
+    pub fn new(db: DatabaseName) -> Self {
+        Self { db, tid: None }
     }
 
     /// Set a TransactionId begun into this session.
