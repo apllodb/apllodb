@@ -15,7 +15,7 @@ use crate::sqlite::{
     to_sql_string::ToSqlString,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Database, DatabaseName, Transaction,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, Database, DatabaseName,
 };
 use log::debug;
 use std::cmp::Ordering;

@@ -2,6 +2,7 @@ pub(crate) mod with_db;
 pub(crate) mod without_db;
 
 use self::{with_db::SessionWithDb, without_db::SessionWithoutDb};
+use serde::{Deserialize, Serialize};
 
 /// Session information.
 ///
@@ -17,7 +18,7 @@ use self::{with_db::SessionWithDb, without_db::SessionWithoutDb};
 ///
 /// Note that session is free from physical connection implementation.
 /// Therefore, for example, client-server's transport is independent from Session and can be any of TCP, direct method call, and so on.
-#[derive(Hash, Debug)]
+#[derive(Hash, Debug, Serialize, Deserialize)]
 pub enum Session {
     /// Session with open database.
     WithDb(SessionWithDb),

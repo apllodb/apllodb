@@ -1,9 +1,10 @@
 use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName, TransactionId};
+use serde::{Deserialize, Serialize};
 
 /// Session with open database.
 ///
 /// Most SQL commands are executed via this type of session.
-#[derive(Hash, Debug)]
+#[derive(Hash, Debug, Serialize, Deserialize)]
 pub struct SessionWithDb {
     db: DatabaseName,
     tid: Option<TransactionId>,

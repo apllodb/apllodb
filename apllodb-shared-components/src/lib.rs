@@ -34,6 +34,7 @@ pub use crate::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
         },
+        transaction_id::TransactionId,
         value::{
             sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
             sql_value::{
@@ -43,11 +44,7 @@ pub use crate::{
         },
     },
     error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},
-    traits::{
-        database::Database,
-        sql_convertible::SqlConvertible,
-        transaction::{transaction_id::TransactionId, Transaction},
-    },
+    traits::sql_convertible::SqlConvertible,
 };
 
 #[cfg(test)]
