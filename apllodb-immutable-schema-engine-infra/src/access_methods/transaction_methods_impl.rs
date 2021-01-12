@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{ApllodbResult, SessionId, SessionWithDb, TransactionId};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult,  SessionWithDb, TransactionId,
+};
 use apllodb_storage_engine_interface::TransactionMethods;
 
-use crate::sqlite::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
+use crate::sqlite::{ transaction::sqlite_tx::SqliteTx};
 
 use super::database_methods_impl::db_repo::DbRepo;
 
@@ -20,6 +22,26 @@ impl<'sess> TransactionMethodsImpl<'sess> {
             tx_repo: HashMap::new(),
         }
     }
+
+    fn remove_sqlite_tx(&mut self, session: &mut SessionWithDb) -> ApllodbResult<SqliteTx> {
+        let tid = session.get_tid().ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::InvalidTransactionState,
+                format!(
+                    "transaction in session id `{:?}` has already closed",
+                    session.get_id()
+                ),
+                None,
+            )
+        })?;
+
+        let sqlite_tx = self.tx_repo.remove(tid).expect(&format!(
+            "no one should remove tid `{:?}` from tx_repo",
+            tid
+        ));
+
+        Ok(sqlite_tx)
+    }
 }
 
 impl TransactionMethods for TransactionMethodsImpl<'_> {
@@ -31,10 +53,11 @@ impl TransactionMethods for TransactionMethodsImpl<'_> {
     }
 
     fn commit_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
-        todo!()
+        self.remove_sqlite_tx(session)?.commit()
     }
 
     fn abort_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<()> {
-        todo!()
+        self.remove_sqlite_tx(session)?.abort()
+
     }
 }
