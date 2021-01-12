@@ -5,13 +5,12 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_shared_components::{ApllodbResult, TableName, Transaction};
+use apllodb_shared_components::{ApllodbResult, SessionWithDb, TableName};
 use apllodb_shared_components::{ColumnName, Expression, RecordIterator};
 use apllodb_storage_engine_interface::DMLMethods;
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
-use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
 
 #[derive(
@@ -19,10 +18,10 @@ use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_typ
 )]
 pub struct DMLMethodsImpl;
 
-impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
+impl DMLMethods for DMLMethodsImpl {
     fn select(
         &self,
-        tx: &mut SqliteTx<'_>,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         projection: ProjectionQuery,
     ) -> ApllodbResult<RecordIterator> {
@@ -39,7 +38,7 @@ impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
 
     fn insert(
         &self,
-        tx: &mut SqliteTx<'_>,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         records: RecordIterator,
     ) -> ApllodbResult<()> {
@@ -55,7 +54,7 @@ impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
 
     fn update(
         &self,
-        tx: &mut SqliteTx<'_>,
+        session: &mut SessionWithDb,
         table_name: &TableName,
         column_values: std::collections::HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
@@ -70,7 +69,7 @@ impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
         Ok(())
     }
 
-    fn delete(&self, tx: &mut SqliteTx<'_>, table_name: &TableName) -> ApllodbResult<()> {
+    fn delete(&self, session: &mut SessionWithDb, table_name: &TableName) -> ApllodbResult<()> {
         let database_name = tx.database_name().clone();
         let input = DeleteAllUseCaseInput::new(&database_name, table_name);
         let _ = DeleteAllUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(

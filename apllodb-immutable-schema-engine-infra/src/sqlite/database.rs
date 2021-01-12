@@ -1,22 +1,22 @@
 use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
-use apllodb_shared_components::{ApllodbResult, Database, DatabaseName};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
 use std::time::Duration;
 
 /// Database context.
 #[derive(Debug)]
-pub struct SqliteDatabase {
+pub(crate) struct SqliteDatabase {
     sqlite_conn: rusqlite::Connection,
     name: DatabaseName,
 }
 
-impl Database for SqliteDatabase {
+impl SqliteDatabase {
     /// Start using database.
     ///
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
+    pub(crate) fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
         let conn = Self::connect_sqlite(&name)?;
 
         VTableDao::create_table_if_not_exist(&conn)?;
@@ -27,12 +27,6 @@ impl Database for SqliteDatabase {
         })
     }
 
-    fn name(&self) -> &DatabaseName {
-        &self.name
-    }
-}
-
-impl SqliteDatabase {
     pub fn sqlite_db_path(&self) -> String {
         Self::_sqlite_db_path(&self.name)
     }

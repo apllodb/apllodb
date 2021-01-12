@@ -3,29 +3,26 @@ pub(crate) mod version;
 pub(crate) mod version_revision_resolver;
 pub(crate) mod vtable;
 
+use chrono::{Timelike, Utc};
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use self::{
     version::repository_impl::VersionRepositoryImpl, vtable::repository_impl::VTableRepositoryImpl,
 };
 
-use super::tx_id::TxId;
 use crate::sqlite::{
     database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
     to_sql_string::ToSqlString,
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Database, DatabaseName,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, TransactionId};
 use log::debug;
 use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx<'db> {
-    id: TxId,
-    database_name: DatabaseName,
-    rusqlite_tx: rusqlite::Transaction<'db>,
+pub(crate) struct SqliteTx<'sqcn> {
+    id: TransactionId,
+    rusqlite_tx: rusqlite::Transaction<'sqcn>,
 }
 
 impl PartialEq for SqliteTx<'_> {
@@ -46,32 +43,12 @@ impl Ord for SqliteTx<'_> {
     }
 }
 
-impl<'db> SqliteTx<'db> {
-    pub(crate) fn vtable_repo(&self) -> VTableRepositoryImpl<'_, 'db> {
-        VTableRepositoryImpl::new(self)
-    }
-
-    pub(crate) fn version_repo(&self) -> VersionRepositoryImpl<'_, 'db> {
-        VersionRepositoryImpl::new(self)
-    }
-}
-
-impl<'db> Transaction for SqliteTx<'db> {
-    type Db = SqliteDatabase;
-    type RefDb = &'db mut SqliteDatabase;
-    type TID = TxId;
-
-    fn id(&self) -> &TxId {
-        &self.id
-    }
-
+impl<'sqcn> SqliteTx<'sqcn> {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
-        let database_name = { db.name().clone() };
-
+    pub(crate) fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<Self> {
         let tx = db.sqlite_conn().transaction().map_err(|e| {
             map_sqlite_err(
                 e,
@@ -80,10 +57,22 @@ impl<'db> Transaction for SqliteTx<'db> {
         })?;
 
         Ok(Self {
-            id: TxId::new(),
-            database_name,
+            id: Self::new_tid(),
             rusqlite_tx: tx,
         })
+    }
+
+    fn new_tid() -> TransactionId {
+        let now = Utc::now();
+
+        // FIXME Need Ord value which definitely differ even if `now` is the same.
+
+        let t = now.timestamp() * 10 ^ 9 + (now.nanosecond() as i64);
+        TransactionId::new(t)
+    }
+
+    pub(crate) fn tid(&self) -> TransactionId {
+        self.id.clone()
     }
 
     /// # Failures
@@ -92,7 +81,7 @@ impl<'db> Transaction for SqliteTx<'db> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn commit(self) -> ApllodbResult<()> {
+    pub(crate) fn commit(self) -> ApllodbResult<()> {
         self.rusqlite_tx.commit().map_err(|e| {
             map_sqlite_err(
                 e,
@@ -106,19 +95,21 @@ impl<'db> Transaction for SqliteTx<'db> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn abort(self) -> ApllodbResult<()> {
+    pub(crate) fn abort(self) -> ApllodbResult<()> {
         self.rusqlite_tx.rollback().map_err(|e| {
             map_sqlite_err(e, "backend sqlite3 raised an error on aborting transaction")
         })?;
         Ok(())
     }
 
-    fn database_name(&self) -> &DatabaseName {
-        &self.database_name
+    pub(crate) fn vtable_repo(&self) -> VTableRepositoryImpl<'_, 'sqcn> {
+        VTableRepositoryImpl::new(self)
     }
-}
 
-impl<'db> SqliteTx<'db> {
+    pub(crate) fn version_repo(&self) -> VersionRepositoryImpl<'_, 'sqcn> {
+        VersionRepositoryImpl::new(self)
+    }
+
     pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: AsRef<str>>(
         &self,
         sql: S,
