@@ -17,32 +17,32 @@ use super::{
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct SqliteTypes<'repo, 'db: 'repo> {
-    marker_: PhantomData<&'repo &'db ()>,
+pub struct SqliteTypes<'repo, 'sess: 'repo> {
+    marker_: PhantomData<&'repo &'sess ()>,
 }
 
-impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngine<'db>>
-    for SqliteTypes<'repo, 'db>
+impl<'repo, 'sess: 'repo> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngine<'sess>>
+    for SqliteTypes<'repo, 'sess>
 {
     type VRRId = SqliteRowid;
 
     type ImmutableSchemaRowIter = ImmutableSchemaRowIter;
     type VersionRowIter = SqliteRowIterator;
 
-    type VTableRepo = VTableRepositoryImpl<'repo, 'db>;
-    type VersionRepo = VersionRepositoryImpl<'repo, 'db>;
+    type VTableRepo = VTableRepositoryImpl<'repo, 'sess>;
+    type VersionRepo = VersionRepositoryImpl<'repo, 'sess>;
 }
 
 // Fill structs' type parameters in domain / application layers.
-pub(crate) type VRREntriesInVersion<'vrr, 'db> =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion< ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'vrr, 'db>>;
-pub(crate) type VRREntries<'vrr, 'db> =
+pub(crate) type VRREntriesInVersion<'vrr, 'sess> =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion< ApllodbImmutableSchemaEngine<'sess>, SqliteTypes<'vrr, 'sess>>;
+pub(crate) type VRREntries<'vrr, 'sess> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VRREntries<
-        ApllodbImmutableSchemaEngine<'db>,
-        SqliteTypes<'vrr, 'db>,
+        ApllodbImmutableSchemaEngine<'sess>,
+        SqliteTypes<'vrr, 'sess>,
     >;
-pub(crate) type VRREntry<'vrr, 'db> =
+pub(crate) type VRREntry<'vrr, 'sess> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry<
-        ApllodbImmutableSchemaEngine<'db>,
-        SqliteTypes<'vrr, 'db>,
+        ApllodbImmutableSchemaEngine<'sess>,
+        SqliteTypes<'vrr, 'sess>,
     >;

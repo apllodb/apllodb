@@ -23,18 +23,18 @@ use self::{
 #[derive(Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao<
     'dao,
-    'db: 'dao,
+    'sess: 'dao,
 > {
-    sqlite_tx: &'dao SqliteTx<'db>,
+    sqlite_tx: &'dao SqliteTx<'sess>,
 }
 
 const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
-impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
+impl<'dao, 'sess: 'dao> NaviDao<'dao, 'sess> {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
-        sqlite_tx: &'dao SqliteTx<'db>,
+        sqlite_tx: &'dao SqliteTx<'sess>,
     ) -> Self {
         Self { sqlite_tx }
     }

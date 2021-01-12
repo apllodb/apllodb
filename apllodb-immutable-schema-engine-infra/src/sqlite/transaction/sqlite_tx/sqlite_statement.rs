@@ -5,15 +5,15 @@ use crate::sqlite::{
 use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference};
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction) struct SqliteStatement<'stmt, 'db: 'stmt> {
-    sqlite_tx: &'stmt SqliteTx<'db>,
-    sqlite_stmt: rusqlite::Statement<'db>,
+pub(in crate::sqlite::transaction) struct SqliteStatement<'stmt, 'sess: 'stmt> {
+    sqlite_tx: &'stmt SqliteTx<'sess>,
+    sqlite_stmt: rusqlite::Statement<'sess>,
 }
 
-impl<'stmt, 'db: 'stmt> SqliteStatement<'stmt, 'db> {
+impl<'stmt, 'sess: 'stmt> SqliteStatement<'stmt, 'sess> {
     pub(super) fn new(
-        sqlite_tx: &'stmt SqliteTx<'db>,
-        sqlite_stmt: rusqlite::Statement<'db>,
+        sqlite_tx: &'stmt SqliteTx<'sess>,
+        sqlite_stmt: rusqlite::Statement<'sess>,
     ) -> Self {
         Self {
             sqlite_tx,

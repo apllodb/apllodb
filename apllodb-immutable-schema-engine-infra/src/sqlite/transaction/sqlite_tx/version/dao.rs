@@ -23,8 +23,8 @@ pub(in crate::sqlite::transaction::sqlite_tx) use create_table_sql_for_version::
 use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VersionDao<'dao, 'db: 'dao> {
-    sqlite_tx: &'dao SqliteTx<'db>,
+pub(in crate::sqlite) struct VersionDao<'dao, 'sess: 'dao> {
+    sqlite_tx: &'dao SqliteTx<'sess>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
@@ -38,8 +38,8 @@ impl VersionDao<'_, '_> {
     }
 }
 
-impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
+impl<'dao, 'sess: 'dao> VersionDao<'dao, 'sess> {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'sess>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -56,7 +56,7 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn probe_in_version(
         &self,
         version: &ActiveVersion,
-        vrr_entries_in_version: VRREntriesInVersion<'_, 'db>,
+        vrr_entries_in_version: VRREntriesInVersion<'_, 'sess>,
         projection: &ProjectionResult,
     ) -> ApllodbResult<SqliteRowIterator> {
         if projection

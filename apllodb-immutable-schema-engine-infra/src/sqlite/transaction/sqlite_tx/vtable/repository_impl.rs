@@ -25,18 +25,18 @@ use apllodb_shared_components::ApllodbResult;
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 
 #[derive(Debug)]
-pub struct VTableRepositoryImpl<'repo, 'db: 'repo> {
-    tx: &'repo SqliteTx<'db>,
+pub struct VTableRepositoryImpl<'repo, 'sess: 'repo> {
+    tx: &'repo SqliteTx<'sess>,
 }
 
-impl<'repo, 'db> VTableRepositoryImpl<'repo, 'db> {
-    pub fn new(tx: &'repo SqliteTx<'db>) -> Self {
+impl<'repo, 'sess> VTableRepositoryImpl<'repo, 'sess> {
+    pub fn new(tx: &'repo SqliteTx<'sess>) -> Self {
         Self { tx }
     }
 }
 
-impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'repo, 'db>>
-    for VTableRepositoryImpl<'repo, 'db>
+impl<'repo, 'sess: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'sess>, SqliteTypes<'repo, 'sess>>
+    for VTableRepositoryImpl<'repo, 'sess>
 {
     /// # Failures
     ///
@@ -93,26 +93,26 @@ impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, Sqli
     }
 }
 
-impl<'repo, 'db: 'repo> VTableRepositoryImpl<'repo, 'db> {
+impl<'repo, 'sess: 'repo> VTableRepositoryImpl<'repo, 'sess> {
     fn vrr(&self) -> VersionRevisionResolverImpl {
         VersionRevisionResolverImpl::new(self.tx)
     }
 
-    fn vtable_dao(&self) -> VTableDao<'repo, 'db> {
+    fn vtable_dao(&self) -> VTableDao<'repo, 'sess> {
         VTableDao::new(&self.tx)
     }
 
-    fn version_dao(&self) -> VersionDao<'repo, 'db> {
+    fn version_dao(&self) -> VersionDao<'repo, 'sess> {
         VersionDao::new(&self.tx)
     }
 
-    fn sqlite_master_dao(&self) -> SqliteMasterDao<'repo, 'db> {
+    fn sqlite_master_dao(&self) -> SqliteMasterDao<'repo, 'sess> {
         SqliteMasterDao::new(&self.tx)
     }
 
     fn probe_vrr_entries(
         &self,
-        vrr_entries: VRREntries<'_, 'db>,
+        vrr_entries: VRREntries<'_, 'sess>,
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();

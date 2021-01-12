@@ -33,7 +33,7 @@ pub struct AlterTableUseCase<
 }
 impl<
         'usecase,
-        'db: 'usecase,
+        'sess: 'usecase,
         Engine: StorageEngine,
         Types: ImmutableSchemaAbstractTypes<Engine>,
     > TxUseCase<Engine, Types> for AlterTableUseCase<'usecase, Engine, Types>

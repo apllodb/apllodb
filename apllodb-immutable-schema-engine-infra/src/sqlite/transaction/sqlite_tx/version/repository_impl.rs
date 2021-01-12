@@ -17,18 +17,18 @@ use std::collections::HashMap;
 use super::dao::VersionDao;
 
 #[derive(Debug)]
-pub struct VersionRepositoryImpl<'repo, 'db: 'repo> {
-    tx: &'repo SqliteTx<'db>,
+pub struct VersionRepositoryImpl<'repo, 'sess: 'repo> {
+    tx: &'repo SqliteTx<'sess>,
 }
 
-impl<'repo, 'db> VersionRepositoryImpl<'repo, 'db> {
-    pub fn new(tx: &'repo SqliteTx<'db>) -> Self {
+impl<'repo, 'sess> VersionRepositoryImpl<'repo, 'sess> {
+    pub fn new(tx: &'repo SqliteTx<'sess>) -> Self {
         Self { tx }
     }
 }
 
-impl<'repo, 'db: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'db>>
-    for VersionRepositoryImpl<'repo, 'db>
+impl<'repo, 'sess: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'sess>>
+    for VersionRepositoryImpl<'repo, 'sess>
 {
     /// # Failures
     ///
@@ -58,12 +58,12 @@ impl<'repo, 'db: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'db>>
     }
 }
 
-impl<'repo, 'db: 'repo> VersionRepositoryImpl<'repo, 'db> {
+impl<'repo, 'sess: 'repo> VersionRepositoryImpl<'repo, 'sess> {
     fn vrr(&self) -> VersionRevisionResolverImpl {
         VersionRevisionResolverImpl::new(self.tx)
     }
 
-    fn version_dao(&self) -> VersionDao<'repo, 'db> {
+    fn version_dao(&self) -> VersionDao<'repo, 'sess> {
         VersionDao::new(&self.tx)
     }
 }

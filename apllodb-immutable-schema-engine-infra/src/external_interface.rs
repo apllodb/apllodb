@@ -16,7 +16,7 @@ pub struct ApllodbImmutableSchemaEngine<'sess> {
     _marker: PhantomData<&'sess ()>,
 }
 
-impl<'db> StorageEngine for ApllodbImmutableSchemaEngine<'db> {
+impl<'sess> StorageEngine for ApllodbImmutableSchemaEngine<'sess> {
     type Db = DatabaseMethodsImpl;
     type Tx = TransactionMethodsImpl;
     type DDL = ApllodbImmutableSchemaDDL;
