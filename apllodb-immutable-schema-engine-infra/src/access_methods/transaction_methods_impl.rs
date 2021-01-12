@@ -11,12 +11,12 @@ use super::database_methods_impl::db_repo::DbRepo;
 
 #[derive(Debug)]
 pub struct TransactionMethodsImpl<'sess> {
-    db_repo: &'sess DbRepo,
+    db_repo: &'sess mut DbRepo,
     tx_repo: TxRepo<'sess>,
 }
 
 impl<'sess> TransactionMethodsImpl<'sess> {
-    pub(crate) fn new(db_repo: &'sess DbRepo) -> Self {
+    pub(crate) fn new(db_repo: &'sess mut DbRepo) -> Self {
         Self {
             db_repo,
             tx_repo: TxRepo::default(),
@@ -35,7 +35,8 @@ impl<'sess> TransactionMethodsImpl<'sess> {
 
 impl TransactionMethods for TransactionMethodsImpl<'_> {
     fn begin_core(&mut self, session: &mut SessionWithDb) -> ApllodbResult<TransactionId> {
-        let sqlite_tx = SqliteTx::begin(self.db_repo.get_mut(session.get_id())?)?;
+        let sqlite_db = self.db_repo.get_mut(session.get_id())?;
+        let sqlite_tx = SqliteTx::begin(sqlite_db)?;
         let tid = { sqlite_tx.tid() };
         self.tx_repo.insert(tid.clone(), sqlite_tx);
         Ok(tid)
