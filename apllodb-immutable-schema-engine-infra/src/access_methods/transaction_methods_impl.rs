@@ -10,13 +10,13 @@ use self::tx_repo::TxRepo;
 use super::database_methods_impl::db_repo::DbRepo;
 
 #[derive(Debug)]
-pub struct TransactionMethodsImpl<'acc, 'sess> {
-    db_repo: &'acc mut DbRepo,
-    tx_repo: &'acc mut TxRepo<'sess>,
+pub struct TransactionMethodsImpl<'sess> {
+    db_repo: &'sess mut DbRepo,
+    tx_repo: &'sess mut TxRepo<'sess>,
 }
 
-impl<'acc, 'sess> TransactionMethodsImpl<'acc, 'sess> {
-    pub(crate) fn new(db_repo: &'acc mut DbRepo, tx_repo: &'acc mut TxRepo<'sess>) -> Self {
+impl<'sess> TransactionMethodsImpl<'sess> {
+    pub(crate) fn new(db_repo: &'sess mut DbRepo, tx_repo: &'sess mut TxRepo<'sess>) -> Self {
         Self { db_repo, tx_repo }
     }
 
@@ -32,13 +32,13 @@ impl<'acc, 'sess> TransactionMethodsImpl<'acc, 'sess> {
     }
 }
 
-impl<'acc, 'sess: 'acc> TransactionMethods for TransactionMethodsImpl<'acc, 'sess> {
+impl<'sess> TransactionMethods for TransactionMethodsImpl<'sess> {
     type Sess = &'sess mut SessionWithDb;
-    type RefSelf = &'acc mut Self;
+    type RefSelf = &'sess mut Self;
 
-    fn begin(slf: &'acc mut Self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
+    fn begin(slf: &'sess mut Self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
         let sid = { session.get_id().clone() };
-        let sqlite_db: &'acc mut SqliteDatabase = slf.db_repo.get_mut(&sid)?;
+        let sqlite_db: &'sess mut SqliteDatabase = slf.db_repo.get_mut(&sid)?;
         let sqlite_tx = SqliteTx::begin(sqlite_db)?;
         let tid = { sqlite_tx.tid() };
 

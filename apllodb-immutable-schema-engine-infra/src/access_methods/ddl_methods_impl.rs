@@ -1,9 +1,4 @@
-
-
-use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::{sqlite_types::SqliteTypes, },
-};
+use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
     create_table::{CreateTableUseCase, CreateTableUseCaseInput},
@@ -16,9 +11,15 @@ use apllodb_storage_engine_interface::DDLMethods;
 
 use super::transaction_methods_impl::tx_repo::TxRepo;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct DDLMethodsImpl<'sess> {
-    tx_repo: TxRepo<'sess>,
+    tx_repo: &'sess TxRepo<'sess>,
+}
+
+impl<'sess> DDLMethodsImpl<'sess> {
+    pub(crate) fn new(tx_repo: &'sess mut TxRepo<'sess>) -> Self {
+        Self { tx_repo }
+    }
 }
 
 impl DDLMethods for DDLMethodsImpl<'_> {

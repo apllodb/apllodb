@@ -14,9 +14,15 @@ use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_typ
 
 use super::transaction_methods_impl::tx_repo::TxRepo;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct DMLMethodsImpl<'sess> {
-    tx_repo: TxRepo<'sess>,
+    tx_repo: &'sess TxRepo<'sess>,
+}
+
+impl<'sess> DMLMethodsImpl<'sess> {
+    pub(crate) fn new(tx_repo: &'sess mut TxRepo<'sess>) -> Self {
+        Self { tx_repo }
+    }
 }
 
 impl DMLMethods for DMLMethodsImpl<'_> {

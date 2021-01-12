@@ -8,12 +8,12 @@ use crate::sqlite::database::SqliteDatabase;
 use self::db_repo::DbRepo;
 
 #[derive(Debug)]
-pub struct DatabaseMethodsImpl<'acc> {
-    db_repo: &'acc mut DbRepo, // TODO Call DbRepo::remove
+pub struct DatabaseMethodsImpl<'sess> {
+    db_repo: &'sess mut DbRepo, // TODO Call DbRepo::remove
 }
 
-impl<'acc> DatabaseMethodsImpl<'acc> {
-    pub(crate) fn new(db_repo: &'acc mut DbRepo) -> Self {
+impl<'sess> DatabaseMethodsImpl<'sess> {
+    pub(crate) fn new(db_repo: &'sess mut DbRepo) -> Self {
         Self { db_repo }
     }
 }
