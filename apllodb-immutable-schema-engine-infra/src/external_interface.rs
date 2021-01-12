@@ -12,8 +12,8 @@ pub use crate::access_methods::dml_methods_impl::DMLMethodsImpl as ApllodbImmuta
 
 /// Storage engine implementation.
 #[derive(Hash, Debug, Default)]
-pub struct ApllodbImmutableSchemaEngine<'db> {
-    _marker: PhantomData<&'db ()>,
+pub struct ApllodbImmutableSchemaEngine<'sess> {
+    _marker: PhantomData<&'sess ()>,
 }
 
 impl<'db> StorageEngine for ApllodbImmutableSchemaEngine<'db> {

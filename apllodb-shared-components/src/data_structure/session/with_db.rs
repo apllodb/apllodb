@@ -61,6 +61,11 @@ impl SessionWithDb {
         })
     }
 
+    /// Get ref to [DatabaseName](apllodb-shared-components::DatabaseName).
+    pub fn get_db(&self) -> &DatabaseName {
+        &self.db
+    }
+
     /// Get ref to [TransactionId](apllodb-shared-components::TransactionId).
     ///
     /// # Failures
