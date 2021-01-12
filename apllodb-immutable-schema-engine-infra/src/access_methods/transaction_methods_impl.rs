@@ -3,24 +3,21 @@ pub(crate) mod tx_repo;
 use apllodb_shared_components::{ApllodbResult, SessionWithDb};
 use apllodb_storage_engine_interface::TransactionMethods;
 
-use crate::sqlite::transaction::sqlite_tx::SqliteTx;
+use crate::sqlite::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
 
 use self::tx_repo::TxRepo;
 
 use super::database_methods_impl::db_repo::DbRepo;
 
 #[derive(Debug)]
-pub struct TransactionMethodsImpl<'sess> {
-    db_repo: &'sess mut DbRepo,
-    tx_repo: TxRepo<'sess>,
+pub struct TransactionMethodsImpl<'acc, 'sess> {
+    db_repo: &'acc mut DbRepo,
+    tx_repo: &'acc mut TxRepo<'sess>,
 }
 
-impl<'sess> TransactionMethodsImpl<'sess> {
-    pub(crate) fn new(db_repo: &'sess mut DbRepo) -> Self {
-        Self {
-            db_repo,
-            tx_repo: TxRepo::default(),
-        }
+impl<'acc, 'sess> TransactionMethodsImpl<'acc, 'sess> {
+    pub(crate) fn new(db_repo: &'acc mut DbRepo, tx_repo: &'acc mut TxRepo<'sess>) -> Self {
+        Self { db_repo, tx_repo }
     }
 
     fn remove_sqlite_tx(&mut self, session: &mut SessionWithDb) -> ApllodbResult<SqliteTx> {
@@ -35,13 +32,13 @@ impl<'sess> TransactionMethodsImpl<'sess> {
     }
 }
 
-impl<'sess> TransactionMethods for TransactionMethodsImpl<'sess> {
+impl<'acc, 'sess: 'acc> TransactionMethods for TransactionMethodsImpl<'acc, 'sess> {
     type Sess = &'sess mut SessionWithDb;
-    type RefSelf = &'sess mut Self;
+    type RefSelf = &'acc mut Self;
 
-    fn begin(slf: &'sess mut Self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
+    fn begin(slf: &'acc mut Self, session: &'sess mut SessionWithDb) -> ApllodbResult<()> {
         let sid = { session.get_id().clone() };
-        let sqlite_db = slf.db_repo.get_mut(&sid)?;
+        let sqlite_db: &'acc mut SqliteDatabase = slf.db_repo.get_mut(&sid)?;
         let sqlite_tx = SqliteTx::begin(sqlite_db)?;
         let tid = { sqlite_tx.tid() };
 

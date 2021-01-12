@@ -207,10 +207,10 @@ pub use crate::{
     transaction_methods::TransactionMethods,
 };
 
-use std::fmt::Debug;
+use std::{borrow::Borrow, fmt::Debug};
 
 /// An storage engine implementation must implement this trait and included associated-types.
-pub trait StorageEngine: Debug + Sized {
+pub trait StorageEngine: Default + Debug + Sized {
     /// Database.
     type Db: DatabaseMethods;
 
@@ -222,4 +222,19 @@ pub trait StorageEngine: Debug + Sized {
 
     /// DML access methods.
     type DML: DMLMethods;
+
+    /// Reference to Self to take arbitrary lifetime in methods that return access method implementations.
+    type RefSelf: Borrow<Self>;
+
+    /// Ref to DatabaseMethods implementation.
+    fn db(slf: Self::RefSelf) -> Self::Db;
+
+    /// Ref to TransactionMethods implementation.
+    fn tx(slf: Self::RefSelf) -> Self::Tx;
+
+    /// Ref to DDLMethods implementation.
+    fn ddl(slf: Self::RefSelf) -> Self::DDL;
+
+    /// Ref to DMLMethods implementation.
+    fn dml(slf: Self::RefSelf) -> Self::DML;
 }

@@ -27,7 +27,7 @@ pub(crate) struct VersionRevisionResolverImpl<'vrr, 'sess: 'vrr> {
 }
 
 impl<'vrr, 'sess: 'vrr>
-    VersionRevisionResolver<ApllodbImmutableSchemaEngine<'sess>, SqliteTypes<'vrr, 'sess>>
+    VersionRevisionResolver<ApllodbImmutableSchemaEngine<'vrr, 'sess>, SqliteTypes<'vrr, 'sess>>
     for VersionRevisionResolverImpl<'vrr, 'sess>
 {
     fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
