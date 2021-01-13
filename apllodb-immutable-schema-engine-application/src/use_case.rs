@@ -12,7 +12,12 @@ pub trait UseCaseInput: Debug {
 pub trait UseCaseOutput: Debug {}
 
 /// Usecase using [Transaction](apllodb-storage-engine-interface::Transaction).
-pub trait TxUseCase<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
+pub trait TxUseCase<
+    'sess,
+    Engine: StorageEngine<'sess>,
+    Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
+>
+{
     type In: UseCaseInput;
     type Out: UseCaseOutput;
 

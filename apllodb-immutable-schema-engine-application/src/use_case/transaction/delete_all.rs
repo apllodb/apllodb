@@ -25,13 +25,18 @@ impl UseCaseOutput for DeleteAllUseCaseOutput {}
 
 pub struct DeleteAllUseCase<
     'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
+    'sess: 'usecase,
+    Engine: StorageEngine<'sess>,
+    Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
 > {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase &'sess (), Engine, Types)>,
 }
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for DeleteAllUseCase<'usecase, Engine, Types>
+impl<
+        'usecase,
+        'sess: 'usecase,
+        Engine: StorageEngine<'sess>,
+        Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
+    > TxUseCase<'sess, Engine, Types> for DeleteAllUseCase<'usecase, 'sess, Engine, Types>
 {
     type In = DeleteAllUseCaseInput<'usecase>;
     type Out = DeleteAllUseCaseOutput;

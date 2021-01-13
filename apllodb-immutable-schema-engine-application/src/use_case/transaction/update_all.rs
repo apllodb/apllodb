@@ -54,13 +54,18 @@ impl UseCaseOutput for UpdateAllUseCaseOutput {}
 
 pub struct UpdateAllUseCase<
     'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
+    'sess: 'usecase,
+    Engine: StorageEngine<'sess>,
+    Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
 > {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase &'sess (), Engine, Types)>,
 }
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for UpdateAllUseCase<'usecase, Engine, Types>
+impl<
+        'usecase,
+        'sess: 'usecase,
+        Engine: StorageEngine<'sess>,
+        Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
+    > TxUseCase<'sess, Engine, Types> for UpdateAllUseCase<'sess, 'usecase, Engine, Types>
 {
     type In = UpdateAllUseCaseInput<'usecase>;
     type Out = UpdateAllUseCaseOutput;
@@ -110,7 +115,7 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
         // DELETE all
         let delete_all_usecase_input =
             DeleteAllUseCaseInput::new(input.database_name, input.table_name);
-        let _ = DeleteAllUseCase::<'_, Engine, Types>::run(
+        let _ = DeleteAllUseCase::<'_, 'sess, Engine, Types>::run(
             vtable_repo,
             version_repo,
             delete_all_usecase_input,
@@ -136,7 +141,7 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
 
         let insert_usecase_input =
             InsertUseCaseInput::new(input.database_name, input.table_name, records);
-        let _ = InsertUseCase::<'_, Engine, Types>::run(
+        let _ = InsertUseCase::<'_, 'sess, Engine, Types>::run(
             vtable_repo,
             version_repo,
             insert_usecase_input,

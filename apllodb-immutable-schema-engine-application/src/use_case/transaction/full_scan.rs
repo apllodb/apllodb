@@ -22,27 +22,35 @@ impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-{
+pub struct FullScanUseCaseOutput<
+    'sess,
+    Engine: StorageEngine<'sess>,
+    Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
+> {
     pub row_iter: Types::ImmutableSchemaRowIter,
 }
-impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> UseCaseOutput
-    for FullScanUseCaseOutput<Engine, Types>
+impl<'sess, Engine: StorageEngine<'sess>, Types: ImmutableSchemaAbstractTypes<'sess, Engine>>
+    UseCaseOutput for FullScanUseCaseOutput<'sess, Engine, Types>
 {
 }
 
 pub struct FullScanUseCase<
     'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
+    'sess: 'usecase,
+    Engine: StorageEngine<'sess>,
+    Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
 > {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+    _marker: PhantomData<(&'usecase &'sess (), Engine, Types)>,
 }
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for FullScanUseCase<'usecase, Engine, Types>
+impl<
+        'usecase,
+        'sess: 'usecase,
+        Engine: StorageEngine<'sess>,
+        Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
+    > TxUseCase<'sess, Engine, Types> for FullScanUseCase<'usecase, 'sess, Engine, Types>
 {
     type In = FullScanUseCaseInput<'usecase>;
-    type Out = FullScanUseCaseOutput<Engine, Types>;
+    type Out = FullScanUseCaseOutput<'sess, Engine, Types>;
 
     /// # Failures
     ///
