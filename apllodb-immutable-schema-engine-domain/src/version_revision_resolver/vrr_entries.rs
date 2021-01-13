@@ -10,14 +10,20 @@ use super::{vrr_entries_in_version::VRREntriesInVersion, vrr_entry::VRREntry};
 
 /// Sequence of VRREntry.
 #[derive(Clone, PartialEq, Hash, Debug, new)]
-pub struct VRREntries<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
+pub struct VRREntries<
+    'sess,
+    Engine: StorageEngine<'sess>,
+    Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
+> {
     vtable_id: VTableId,
-    inner: VecDeque<VRREntry<Engine, Types>>,
+    inner: VecDeque<VRREntry<'sess, Engine, Types>>,
 }
 
-impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> VRREntries<Engine, Types> {
+impl<'sess, Engine: StorageEngine<'sess>, Types: ImmutableSchemaAbstractTypes<'sess, Engine>>
+    VRREntries<'sess, Engine, Types>
+{
     /// Order of VRREntry is kept in each group.
-    pub fn group_by_version_id(self) -> Vec<VRREntriesInVersion<Engine, Types>> {
+    pub fn group_by_version_id(self) -> Vec<VRREntriesInVersion<'sess, Engine, Types>> {
         let mut h: HashMap<VersionId, VecDeque<VRREntry<Engine, Types>>> = HashMap::new();
 
         for e in self.inner {
@@ -44,10 +50,10 @@ impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> VRREntr
     }
 }
 
-impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Iterator
-    for VRREntries<Engine, Types>
+impl<'sess, Engine: StorageEngine<'sess>, Types: ImmutableSchemaAbstractTypes<'sess, Engine>>
+    Iterator for VRREntries<'sess, Engine, Types>
 {
-    type Item = VRREntry<Engine, Types>;
+    type Item = VRREntry<'sess, Engine, Types>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.pop_front()

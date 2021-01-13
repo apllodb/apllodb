@@ -5,14 +5,12 @@ use apllodb_shared_components::{ApllodbResult, ColumnName, SqlValue};
 use apllodb_storage_engine_interface::StorageEngine;
 use std::collections::HashMap;
 
-pub trait VersionRepository<Engine: StorageEngine> {
+pub trait VersionRepository<'sess, Engine: StorageEngine<'sess>> {
     /// Create a version.
     fn create(&self, version: &ActiveVersion) -> ApllodbResult<()>;
 
     /// Deactivate a version.
     fn deactivate(&self, version_id: &VersionId) -> ApllodbResult<()>;
-
-    // TODO ここに version scan が現れ、 VerRowIter の型パラメータが入るのが自然
 
     /// # Failures
     ///

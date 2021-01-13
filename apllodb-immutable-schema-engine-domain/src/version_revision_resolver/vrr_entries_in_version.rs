@@ -8,17 +8,21 @@ use super::{vrr_entries::VRREntries, vrr_entry::VRREntry};
 
 /// Sequence of VRREntry in a specific Version.
 #[derive(Clone, PartialEq, Hash, Debug)]
-pub struct VRREntriesInVersion<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
+pub struct VRREntriesInVersion<
+    'sess,
+    Engine: StorageEngine<'sess>,
+    Types: ImmutableSchemaAbstractTypes<'sess, Engine>,
+> {
     version_id: VersionId,
-    vrr_entries: VRREntries<Engine, Types>,
+    vrr_entries: VRREntries<'sess, Engine, Types>,
 }
 
-impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    VRREntriesInVersion<Engine, Types>
+impl<'sess, Engine: StorageEngine<'sess>, Types: ImmutableSchemaAbstractTypes<'sess, Engine>>
+    VRREntriesInVersion<'sess, Engine, Types>
 {
     pub(in crate::version_revision_resolver) fn new(
         version_id: VersionId,
-        vrr_entries_in_version: VecDeque<VRREntry<Engine, Types>>,
+        vrr_entries_in_version: VecDeque<VRREntry<'sess, Engine, Types>>,
     ) -> Self {
         let vtable_id = version_id.vtable_id().clone();
         Self {
@@ -32,10 +36,10 @@ impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
     }
 }
 
-impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> Iterator
-    for VRREntriesInVersion<Engine, Types>
+impl<'sess, Engine: StorageEngine<'sess>, Types: ImmutableSchemaAbstractTypes<'sess, Engine>>
+    Iterator for VRREntriesInVersion<'sess, Engine, Types>
 {
-    type Item = VRREntry<Engine, Types>;
+    type Item = VRREntry<'sess, Engine, Types>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.vrr_entries.next()
