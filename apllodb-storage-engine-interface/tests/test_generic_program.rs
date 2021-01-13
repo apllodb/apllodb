@@ -33,7 +33,6 @@ fn test_generic_program() {
     ) -> ApllodbResult<()> {
         let ddl = engine.ddl(&session);
         ddl.create_table(
-            &session,
             &TableName::new("t")?,
             &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
                 column_names: vec![ColumnName::new("id")?],

@@ -6,7 +6,4 @@ use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb};
 pub trait DatabaseMethods: Debug + Sized {
     /// Start a session with a database open.
     fn use_database(self, database_name: DatabaseName) -> ApllodbResult<SessionWithDb>;
-
-    #[doc(hidden)]
-    fn use_database_core(&mut self, session: &SessionWithDb) -> ApllodbResult<()>;
 }
