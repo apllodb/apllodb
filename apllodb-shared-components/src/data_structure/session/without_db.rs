@@ -19,6 +19,11 @@ impl Default for SessionWithoutDb {
 }
 
 impl SessionWithoutDb {
+    /// Get session ID
+    pub fn get_id(&self) -> &SessionId {
+        &self.id
+    }
+
     /// Upgrade to `SessionWithDb`.
     pub fn upgrade(self, db: DatabaseName) -> SessionWithDb {
         SessionWithDb::new(self.id, db)

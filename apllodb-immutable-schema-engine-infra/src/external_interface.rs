@@ -1,10 +1,13 @@
+use apllodb_shared_components::{SessionWithDb, SessionWithTx, SessionWithoutDb};
 use apllodb_storage_engine_interface::StorageEngine;
 
-use crate::access_methods::{
-    database_methods_impl::{db_repo::DbRepo, DatabaseMethodsImpl},
-    ddl_methods_impl::DDLMethodsImpl,
-    dml_methods_impl::DMLMethodsImpl,
-    transaction_methods_impl::{tx_repo::TxRepo, TransactionMethodsImpl},
+use crate::{
+    access_methods::{
+        methods_with_db_impl::MethodsWithDbImpl, methods_with_tx_impl::MethodsWithTxImpl,
+        methods_without_db_impl::MethodsWithoutDbImpl,
+    },
+    db_repo::DbRepo,
+    tx_repo::TxRepo,
 };
 
 /// Storage engine implementation.
@@ -18,25 +21,20 @@ pub struct ApllodbImmutableSchemaEngine<'sess> {
     tx_repo: TxRepo<'sess>,
 }
 
-impl<'sess> StorageEngine for ApllodbImmutableSchemaEngine<'sess> {
-    type Db = DatabaseMethodsImpl<'sess>;
-    type Tx = TransactionMethodsImpl<'sess>;
-    type DDL = DDLMethodsImpl<'sess>;
-    type DML = DMLMethodsImpl<'sess>;
+impl<'sess> StorageEngine<'sess> for ApllodbImmutableSchemaEngine<'sess> {
+    type MethWithoutDb = MethodsWithoutDbImpl<'sess>;
+    type MethWithDb = MethodsWithDbImpl<'sess>;
+    type MethWithTx = MethodsWithTxImpl<'sess>;
 
-    fn db(&'sess mut self) -> Self::Db {
-        DatabaseMethodsImpl::new(&mut self.db_repo)
+    fn without_db(&'sess self, session: &'sess SessionWithoutDb) -> Self::MethWithoutDb {
+        MethodsWithoutDbImpl::new(session, &mut self.db_repo)
     }
 
-    fn tx<'caller>(&'caller mut self) -> Self::Tx {
-        TransactionMethodsImpl::new(&mut slf.db_repo, &mut slf.tx_repo)
+    fn with_db(&'sess self, session: &'sess SessionWithDb) -> Self::MethWithDb {
+        MethodsWithDbImpl::new(session, &mut self.db_repo, &mut self.tx_repo)
     }
 
-    fn ddl<'caller>(&'caller mut self) -> Self::DDL {
-        DDLMethodsImpl::new(&mut slf.tx_repo)
-    }
-
-    fn dml<'caller>(&'caller mut self) -> Self::DML {
-        DMLMethodsImpl::new(&mut slf.tx_repo)
+    fn with_tx(&'sess self, session: &'sess SessionWithTx) -> Self::MethWithTx {
+        MethodsWithTxImpl::new(session, &mut self.tx_repo)
     }
 }

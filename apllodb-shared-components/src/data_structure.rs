@@ -8,6 +8,5 @@ pub(crate) mod record;
 pub(crate) mod record_iterator;
 pub(crate) mod session;
 pub(crate) mod table;
-pub(crate) mod transaction_id;
 pub(crate) mod validation_helper;
 pub(crate) mod value;

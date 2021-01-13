@@ -27,7 +27,7 @@ impl<'repo, 'sess> VersionRepositoryImpl<'repo, 'sess> {
     }
 }
 
-impl<'repo, 'sess: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'sess>>
+impl<'repo, 'sess: 'repo> VersionRepository<'sess, ApllodbImmutableSchemaEngine<'sess>>
     for VersionRepositoryImpl<'repo, 'sess>
 {
     /// # Failures

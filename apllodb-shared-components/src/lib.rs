@@ -37,7 +37,6 @@ pub use crate::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
         },
-        transaction_id::TransactionId,
         value::{
             sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
             sql_value::{

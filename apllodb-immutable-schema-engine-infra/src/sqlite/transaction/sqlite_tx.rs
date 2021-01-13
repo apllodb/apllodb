@@ -14,33 +14,13 @@ use crate::sqlite::{
     database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
     to_sql_string::ToSqlString,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, TransactionId};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 use log::debug;
-use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
 pub(crate) struct SqliteTx<'sqcn> {
-    id: TransactionId,
     rusqlite_tx: rusqlite::Transaction<'sqcn>,
-}
-
-impl PartialEq for SqliteTx<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-impl Eq for SqliteTx<'_> {}
-
-impl PartialOrd for SqliteTx<'_> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for SqliteTx<'_> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.id.cmp(&other.id)
-    }
 }
 
 impl<'sqcn> SqliteTx<'sqcn> {
@@ -55,24 +35,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
                 "backend sqlite3 raised an error on beginning transaction",
             )
         })?;
-
-        Ok(Self {
-            id: Self::new_tid(),
-            rusqlite_tx: tx,
-        })
-    }
-
-    fn new_tid() -> TransactionId {
-        let now = Utc::now();
-
-        // FIXME Need Ord value which definitely differ even if `now` is the same.
-
-        let t = now.timestamp() * 10 ^ 9 + (now.nanosecond() as i64);
-        TransactionId::new(t)
-    }
-
-    pub(crate) fn tid(&self) -> TransactionId {
-        self.id.clone()
+        Ok(Self { rusqlite_tx: tx })
     }
 
     /// # Failures

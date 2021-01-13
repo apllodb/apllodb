@@ -1,4 +1,3 @@
-pub(crate) mod database_methods_impl;
-pub(crate) mod ddl_methods_impl;
-pub(crate) mod dml_methods_impl;
-pub(crate) mod transaction_methods_impl;
+pub(crate) mod methods_without_db_impl;
+pub(crate) mod methods_with_db_impl;
+pub(crate) mod methods_with_tx_impl;
