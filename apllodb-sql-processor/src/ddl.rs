@@ -2,7 +2,7 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnDefinition, TableConstraintKind, TableConstraints,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, TableElement};
-use apllodb_storage_engine_interface::{DDLMethods, StorageEngine};
+use apllodb_storage_engine_interface::{MethodsWithTx, StorageEngine};
 
 use crate::ast_translator::AstTranslator;
 

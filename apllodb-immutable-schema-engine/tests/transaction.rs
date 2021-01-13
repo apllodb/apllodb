@@ -9,7 +9,7 @@ use apllodb_shared_components::{
     ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
     Transaction,
 };
-use apllodb_storage_engine_interface::DDLMethods;
+use apllodb_storage_engine_interface::MethodsWithTx;
 
 #[test]
 fn test_wait_lock() -> ApllodbResult<()> {

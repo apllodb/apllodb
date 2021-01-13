@@ -1,7 +1,7 @@
 pub(crate) mod db_repo;
 
 use apllodb_shared_components::{ApllodbResult, SessionWithDb};
-use apllodb_storage_engine_interface::DatabaseMethods;
+use apllodb_storage_engine_interface::MethodsWithoutDb;
 
 use crate::sqlite::database::SqliteDatabase;
 
@@ -18,7 +18,7 @@ impl<'sess> DatabaseMethodsImpl<'sess> {
     }
 }
 
-impl DatabaseMethods for DatabaseMethodsImpl<'_> {
+impl MethodsWithoutDb for DatabaseMethodsImpl<'_> {
     fn use_database_core(&mut self, session: &SessionWithDb) -> ApllodbResult<()> {
         let db = SqliteDatabase::use_database(session.get_db().clone())?;
         self.db_repo.insert(session.get_id().clone(), db);

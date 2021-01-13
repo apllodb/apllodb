@@ -1,7 +1,7 @@
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnDefinition, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::DDLMethods;
+use apllodb_storage_engine_interface::MethodsWithTx;
 
 use super::test_storage_engine::{TestStorageEngine, TestTx};
 

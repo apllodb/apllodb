@@ -195,18 +195,14 @@
 //! }
 //! ```
 
-mod database_methods;
-mod ddl_methods;
-mod dml_methods;
-mod transaction_methods;
+pub(crate) mod access_methods;
 
 use apllodb_shared_components::{SessionWithDb, SessionWithTx, SessionWithoutDb};
 
-pub use crate::{
-    database_methods::DatabaseMethods,
-    ddl_methods::DDLMethods,
-    dml_methods::{projection::ProjectionQuery, DMLMethods},
-    transaction_methods::TransactionMethods,
+pub use crate::access_methods::{
+    methods_with_db::MethodsWithDb,
+    methods_with_tx::{projection::ProjectionQuery, MethodsWithTx},
+    methods_without_db::MethodsWithoutDb,
 };
 
 use std::fmt::Debug;
@@ -218,27 +214,21 @@ use std::fmt::Debug;
 /// - `'sess`: shorthand of `'session`. Each access methods returned from this trait's associated functions (like [db()](Self::db))
 ///   knows lifetime of a session from `&'sess self` and returns an instance that may die at `'sess`'s drop.
 pub trait StorageEngine<'sess>: Default + Debug + Sized {
-    /// Database.
-    type Db: DatabaseMethods;
+    /// Access methods without open database.
+    type MethWithoutDb: MethodsWithoutDb;
 
-    /// Transaction.
-    type Tx: TransactionMethods;
+    /// Access methods with open database (without transaction).
+    type MethWithDb: MethodsWithDb;
 
-    /// DDL access methods.
-    type DDL: DDLMethods;
+    /// Access methods with open transaction.
+    type MethWithTx: MethodsWithTx;
 
-    /// DML access methods.
-    type DML: DMLMethods;
+    /// MethodsWithoutDb implementation.
+    fn without_db(&'sess self, session: &'sess SessionWithoutDb) -> Self::MethWithoutDb;
 
-    /// DatabaseMethods implementation.
-    fn db(&'sess self, session: &'sess SessionWithoutDb) -> Self::Db;
+    /// MethodsWithDb implementation.
+    fn with_db(&'sess self, session: &'sess SessionWithDb) -> Self::MethWithDb;
 
-    /// TransactionMethods implementation.
-    fn tx(&'sess self, session: &'sess SessionWithDb) -> Self::Tx;
-
-    /// DDLMethods implementation.
-    fn ddl(&'sess self, session: &'sess SessionWithTx) -> Self::DDL;
-
-    /// DMLMethods implementation.
-    fn dml(&'sess self, session: &'sess SessionWithTx) -> Self::DML;
+    /// MethodsWithTx implementation.
+    fn with_tx(&'sess self, session: &'sess SessionWithTx) -> Self::MethWithTx;
 }

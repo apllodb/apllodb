@@ -1,7 +1,7 @@
 pub(crate) mod tx_repo;
 
 use apllodb_shared_components::{ApllodbResult, SessionWithDb};
-use apllodb_storage_engine_interface::TransactionMethods;
+use apllodb_storage_engine_interface::MethodsWithDb;
 
 use crate::sqlite::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
 
@@ -32,7 +32,7 @@ impl<'sess> TransactionMethodsImpl<'sess> {
     }
 }
 
-impl<'sess> TransactionMethods for TransactionMethodsImpl<'sess> {
+impl<'sess> MethodsWithDb for TransactionMethodsImpl<'sess> {
     type Sess = &'sess mut SessionWithDb;
     type RefSelf = &'sess mut Self;
 

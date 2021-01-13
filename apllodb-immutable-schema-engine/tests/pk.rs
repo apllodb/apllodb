@@ -9,7 +9,7 @@ use apllodb_shared_components::{
     ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind,
     TableConstraints, TableName, 
 };
-use apllodb_storage_engine_interface::{DDLMethods, DMLMethods, ProjectionQuery};
+use apllodb_storage_engine_interface::{MethodsWithTx, DMLMethods, ProjectionQuery};
 
 #[test]
 fn test_compound_pk() -> ApllodbResult<()> {

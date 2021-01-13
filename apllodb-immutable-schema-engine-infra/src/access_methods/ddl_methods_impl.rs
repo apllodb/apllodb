@@ -7,7 +7,7 @@ use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnDefinition, SessionWithDb, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::DDLMethods;
+use apllodb_storage_engine_interface::MethodsWithTx;
 
 use super::transaction_methods_impl::tx_repo::TxRepo;
 
@@ -22,7 +22,7 @@ impl<'sess> DDLMethodsImpl<'sess> {
     }
 }
 
-impl DDLMethods for DDLMethodsImpl<'_> {
+impl MethodsWithTx for DDLMethodsImpl<'_> {
     fn create_table(
         &self,
         session: &SessionWithTx,

@@ -8,7 +8,7 @@ use apllodb_shared_components::{
     TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
-    DDLMethods, DMLMethods, DatabaseMethods, ProjectionQuery, StorageEngine, TransactionMethods,
+    MethodsWithTx, DMLMethods, MethodsWithoutDb, ProjectionQuery, StorageEngine, MethodsWithDb,
 };
 
 use pretty_assertions::assert_eq;
@@ -19,9 +19,9 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     setup();
 
     let mut engine = ApllodbImmutableSchemaEngine::default();
-    let db = ApllodbImmutableSchemaEngine::db(&mut engine);
-    let tx = ApllodbImmutableSchemaEngine::tx(&mut engine);
-    let ddl = ApllodbImmutableSchemaEngine::ddl(&mut engine);
+    let db = ApllodbImmutableSchemaEngine::without_db(&mut engine);
+    let tx = ApllodbImmutableSchemaEngine::with_db(&mut engine);
+    let ddl = ApllodbImmutableSchemaEngine::with_tx(&mut engine);
     let dml = ApllodbImmutableSchemaEngine::dml(&mut engine);
     let mut session = db.use_database(test_database_name())?;
 
