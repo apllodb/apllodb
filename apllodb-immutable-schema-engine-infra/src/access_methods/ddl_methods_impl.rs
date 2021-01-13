@@ -25,7 +25,7 @@ impl<'sess> DDLMethodsImpl<'sess> {
 impl DDLMethods for DDLMethodsImpl<'_> {
     fn create_table(
         &self,
-        session: &mut SessionWithDb,
+        session: &SessionWithTx,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: Vec<ColumnDefinition>,
@@ -35,7 +35,7 @@ impl DDLMethods for DDLMethodsImpl<'_> {
             &database_name,
             table_name,
             table_constraints,
-            &column_definitions,
+            &column_definitins,
         );
         let tx = self.tx_repo.get(session.get_tid()?)?;
         let _ = CreateTableUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
@@ -48,7 +48,7 @@ impl DDLMethods for DDLMethodsImpl<'_> {
 
     fn alter_table(
         &self,
-        session: &mut SessionWithDb,
+        session: &SessionWithTx,
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
@@ -63,11 +63,7 @@ impl DDLMethods for DDLMethodsImpl<'_> {
         Ok(())
     }
 
-    fn drop_table(
-        &self,
-        _session: &mut SessionWithDb,
-        _table_name: &TableName,
-    ) -> ApllodbResult<()> {
+    fn drop_table(&self, _session: &SessionWithTx, _table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
 }

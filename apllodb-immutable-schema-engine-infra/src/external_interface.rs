@@ -23,21 +23,20 @@ impl<'sess> StorageEngine for ApllodbImmutableSchemaEngine<'sess> {
     type Tx = TransactionMethodsImpl<'sess>;
     type DDL = DDLMethodsImpl<'sess>;
     type DML = DMLMethodsImpl<'sess>;
-    type RefSelf = &'sess mut Self;
 
-    fn db(slf: &'sess mut Self) -> Self::Db {
-        DatabaseMethodsImpl::new(&mut slf.db_repo)
+    fn db(&'sess mut self) -> Self::Db {
+        DatabaseMethodsImpl::new(&mut self.db_repo)
     }
 
-    fn tx(slf: &'sess mut Self) -> Self::Tx {
+    fn tx<'caller>(&'caller mut self) -> Self::Tx {
         TransactionMethodsImpl::new(&mut slf.db_repo, &mut slf.tx_repo)
     }
 
-    fn ddl(slf: &'sess mut Self) -> Self::DDL {
+    fn ddl<'caller>(&'caller mut self) -> Self::DDL {
         DDLMethodsImpl::new(&mut slf.tx_repo)
     }
 
-    fn dml(slf: &'sess mut Self) -> Self::DML {
+    fn dml<'caller>(&'caller mut self) -> Self::DML {
         DMLMethodsImpl::new(&mut slf.tx_repo)
     }
 }

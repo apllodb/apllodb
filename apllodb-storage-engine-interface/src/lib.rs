@@ -200,6 +200,8 @@ mod ddl_methods;
 mod dml_methods;
 mod transaction_methods;
 
+use apllodb_shared_components::{SessionWithDb, SessionWithTx, SessionWithoutDb};
+
 pub use crate::{
     database_methods::DatabaseMethods,
     ddl_methods::DDLMethods,
@@ -207,10 +209,15 @@ pub use crate::{
     transaction_methods::TransactionMethods,
 };
 
-use std::{borrow::Borrow, fmt::Debug};
+use std::fmt::Debug;
 
 /// An storage engine implementation must implement this trait and included associated-types.
-pub trait StorageEngine: Default + Debug + Sized {
+///
+/// # Lifetime parameters
+///
+/// - `'sess`: shorthand of `'session`. Each access methods returned from this trait's associated functions (like [db()](Self::db))
+///   knows lifetime of a session from `&'sess self` and returns an instance that may die at `'sess`'s drop.
+pub trait StorageEngine<'sess>: Default + Debug + Sized {
     /// Database.
     type Db: DatabaseMethods;
 
@@ -223,18 +230,15 @@ pub trait StorageEngine: Default + Debug + Sized {
     /// DML access methods.
     type DML: DMLMethods;
 
-    /// Reference to Self to take arbitrary lifetime in methods that return access method implementations.
-    type RefSelf: Borrow<Self>;
+    /// DatabaseMethods implementation.
+    fn db(&'sess self, session: &'sess SessionWithoutDb) -> Self::Db;
 
-    /// Ref to DatabaseMethods implementation.
-    fn db(slf: Self::RefSelf) -> Self::Db;
+    /// TransactionMethods implementation.
+    fn tx(&'sess self, session: &'sess SessionWithDb) -> Self::Tx;
 
-    /// Ref to TransactionMethods implementation.
-    fn tx(slf: Self::RefSelf) -> Self::Tx;
+    /// DDLMethods implementation.
+    fn ddl(&'sess self, session: &'sess SessionWithTx) -> Self::DDL;
 
-    /// Ref to DDLMethods implementation.
-    fn ddl(slf: Self::RefSelf) -> Self::DDL;
-
-    /// Ref to DMLMethods implementation.
-    fn dml(slf: Self::RefSelf) -> Self::DML;
+    /// DMLMethods implementation.
+    fn dml(&'sess self, session: &'sess SessionWithTx) -> Self::DML;
 }
