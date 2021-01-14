@@ -2,12 +2,16 @@ pub(crate) mod projection;
 
 use apllodb_shared_components::{AlterTableAction, ColumnDefinition, TableConstraints, TableName};
 use apllodb_shared_components::{ApllodbResult, ColumnName, Expression, RecordIterator};
-use std::{collections::HashMap, fmt::Debug};
+use std::collections::HashMap;
 
 use crate::ProjectionQuery;
 
+#[cfg(any(test, feature = "test_support"))]
+use mockall::automock;
+
 /// Access methods with open transaction.
-pub trait MethodsWithTx: Debug {
+#[cfg_attr(any(test, feature = "test_support"), automock)]
+pub trait MethodsWithTx {
     /// CREATE TABLE command.
     fn create_table(
         &self,

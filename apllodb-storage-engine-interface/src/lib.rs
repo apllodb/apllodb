@@ -224,11 +224,14 @@ pub trait StorageEngine<'sess>: Default + Debug + Sized {
     type MethWithTx: MethodsWithTx;
 
     /// MethodsWithoutDb implementation.
-    fn without_db(&'sess self, session: &'sess SessionWithoutDb) -> Self::MethWithoutDb;
+    fn without_db(&'sess self) -> Self::MethWithoutDb;
 
     /// MethodsWithDb implementation.
-    fn with_db(&'sess self, session: &'sess SessionWithDb) -> Self::MethWithDb;
+    fn with_db(&'sess self) -> Self::MethWithDb;
 
     /// MethodsWithTx implementation.
-    fn with_tx(&'sess self, session: &'sess SessionWithTx) -> Self::MethWithTx;
+    fn with_tx(&'sess self) -> Self::MethWithTx;
 }
+
+#[cfg(any(test, feature = "test_support"))]
+pub mod test_support;

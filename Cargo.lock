@@ -182,6 +182,7 @@ name = "apllodb-storage-engine-interface"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
+ "mockall",
  "serde",
  "version-sync",
 ]
