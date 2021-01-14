@@ -10,7 +10,7 @@ use apllodb_storage_engine_interface::{
 };
 
 #[test]
-fn test_generic_program() {
+fn test_generic_program() -> ApllodbResult<()> {
     #[allow(dead_code)]
     fn use_database<'sess, Engine: StorageEngine<'sess>>(
         engine: &'sess mut Engine,

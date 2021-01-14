@@ -4,26 +4,46 @@ use crate::test_support::setup;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    ColumnName, ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue,
-    TableConstraintKind, TableConstraints, TableName,
+    ColumnName, ColumnReference, DatabaseName, FieldIndex, RecordIterator, SessionWithDb,
+    SessionWithTx, SessionWithoutDb, SqlType, SqlValue, TableConstraintKind, TableConstraints,
+    TableName,
 };
 use apllodb_storage_engine_interface::{
-    MethodsWithTx, DMLMethods, MethodsWithoutDb, ProjectionQuery, StorageEngine, MethodsWithDb,
+    MethodsWithDb, MethodsWithTx, MethodsWithoutDb, ProjectionQuery, StorageEngine,
 };
 
 use pretty_assertions::assert_eq;
 use test_support::database::test_database_name;
+
+fn use_database<'sess>(
+    engine: &'sess mut ApllodbImmutableSchemaEngine<'sess>,
+    session: SessionWithoutDb,
+) -> ApllodbResult<SessionWithDb> {
+    let no_db = engine.without_db();
+    let session = no_db.use_database(session, test_database_name())?;
+    Ok(session)
+}
+
+fn begin<'sess>(
+    engine: &'sess mut ApllodbImmutableSchemaEngine<'sess>,
+    session: SessionWithDb,
+) -> ApllodbResult<SessionWithTx> {
+    let db = engine.with_db();
+    let session = db.begin(session)?;
+    Ok(session)
+}
 
 #[test]
 fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResult<()> {
     setup();
 
     let mut engine = ApllodbImmutableSchemaEngine::default();
-    let db = ApllodbImmutableSchemaEngine::without_db(&mut engine);
-    let tx = ApllodbImmutableSchemaEngine::with_db(&mut engine);
-    let ddl = ApllodbImmutableSchemaEngine::with_tx(&mut engine);
-    let dml = ApllodbImmutableSchemaEngine::dml(&mut engine);
-    let mut session = db.use_database(test_database_name())?;
+    let session = SessionWithoutDb::default();
+
+    let session = use_database(&mut engine, session)?;
+    let session = begin(&mut engine, session)?;
+
+    let tx = engine.with_tx();
 
     let t_name = &TableName::new("t")?;
 
@@ -53,25 +73,23 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
             .clone()],
     }])?;
 
-    TransactionMethodsImpl::begin(&mut tx, &mut session)?;
-
     // v1
     // | id | c1 |
     // |----|----|
-    ddl.create_table(&mut session, &t_name, &tc, coldefs)?;
+    tx.create_table(&session, &t_name, &tc, coldefs)?;
 
     // v1
     // | id | c1 |
     // |----|----|
     // | 1  | 1  |
-    dml.insert(
-        &mut session,
-        &t_name,
-        RecordIterator::new(vec![record! {
-            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
-            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?
-        }]),
-    )?;
+    tx.insert(
+            & session,
+            &t_name,
+            RecordIterator::new(vec![record! {
+                FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
+                FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?
+            }]),
+        )?;
 
     // v1
     // | id | c1 |
@@ -81,8 +99,8 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     // v2
     // | id |
     // |----|
-    ddl.alter_table(
-        &mut session,
+    tx.alter_table(
+        &session,
         &t_name,
         &AlterTableAction::DropColumn {
             column_name: c1_def
@@ -102,13 +120,13 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     // | id |
     // |----|
     // | 2  |
-    dml.insert(
-        &mut session,
-        &t_name,
-        RecordIterator::new(vec![
-            record! { FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &2i32)? },
-        ]),
-    )?;
+    tx.insert(
+            &session,
+            &t_name,
+            RecordIterator::new(vec![
+                record! { FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &2i32)? },
+            ]),
+        )?;
 
     // v1
     // | id | c1 |
@@ -120,18 +138,18 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
     // | id |
     // |----|
     // | 2  |
-    dml.insert(
-        &mut session,
-        &t_name,
-        RecordIterator::new(vec![record! {
-            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?,
-            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?
-        }]),
-    )?;
+    tx.insert(
+            &session,
+            &t_name,
+            RecordIterator::new(vec![record! {
+                FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?,
+                FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?
+            }]),
+        )?;
 
     // Selects both v1's record (id=1) and v2's record (id=2),
     // although v2 does not have column "c".
-    let records = dml.select(&mut session, &t_name, ProjectionQuery::All)?;
+    let records = tx.select(&session, &t_name, ProjectionQuery::All)?;
 
     assert_eq!(records.clone().count(), 3);
 
@@ -167,7 +185,7 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
         }
     }
 
-    tx.commit(&mut session)?;
+    tx.commit(session)?;
 
     Ok(())
 }
