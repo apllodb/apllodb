@@ -28,11 +28,11 @@ impl<'sess> MethodsWithTxImpl<'sess> {
         Self { tx_repo }
     }
 
-    fn database_name(&self, session: &SessionWithTx) -> &DatabaseName {
+    fn database_name(&self, _session: &SessionWithTx) -> &DatabaseName {
         todo!()
     }
 
-    fn sqlite_tx(&self, session: &SessionWithTx) -> &SqliteTx {
+    fn sqlite_tx(&self, _session: &SessionWithTx) -> &SqliteTx {
         todo!()
     }
 
@@ -86,7 +86,7 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         Ok(())
     }
 
-    fn drop_table(&self, session: &SessionWithTx, _table_name: &TableName) -> ApllodbResult<()> {
+    fn drop_table(&self, _session: &SessionWithTx, _table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
 

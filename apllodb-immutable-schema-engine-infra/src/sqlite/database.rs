@@ -27,16 +27,12 @@ impl SqliteDatabase {
         })
     }
 
-    pub fn sqlite_db_path(&self) -> String {
-        Self::_sqlite_db_path(&self.name)
-    }
-
-    fn _sqlite_db_path(db_name: &DatabaseName) -> String {
+    fn sqlite_db_path(db_name: &DatabaseName) -> String {
         format!("immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
     }
 
     fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<rusqlite::Connection> {
-        let path = Self::_sqlite_db_path(&db_name);
+        let path = Self::sqlite_db_path(db_name);
         let conn = rusqlite::Connection::open(path).map_err(|e| {
             map_sqlite_err(e, "backend sqlite3 raised an error on creating connection")
         })?;
@@ -55,7 +51,7 @@ impl SqliteDatabase {
 #[cfg(test)]
 impl Drop for SqliteDatabase {
     fn drop(&mut self) {
-        let path = self.sqlite_db_path();
+        let path = Self::sqlite_db_path(&self.name);
 
         std::fs::remove_file(&path)
             .or_else(|ioerr| match ioerr.kind() {

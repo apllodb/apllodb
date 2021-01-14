@@ -3,7 +3,6 @@ pub(crate) mod version;
 pub(crate) mod version_revision_resolver;
 pub(crate) mod vtable;
 
-use chrono::{Timelike, Utc};
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
 
 use self::{

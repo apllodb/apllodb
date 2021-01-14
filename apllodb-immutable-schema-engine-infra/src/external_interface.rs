@@ -1,4 +1,3 @@
-use apllodb_shared_components::{SessionWithDb, SessionWithTx, SessionWithoutDb};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
@@ -26,15 +25,15 @@ impl<'sess> StorageEngine<'sess> for ApllodbImmutableSchemaEngine<'sess> {
     type MethWithDb = MethodsWithDbImpl<'sess>;
     type MethWithTx = MethodsWithTxImpl<'sess>;
 
-    fn without_db(&'sess self) -> Self::MethWithoutDb {
+    fn without_db(&'sess mut self) -> Self::MethWithoutDb {
         MethodsWithoutDbImpl::new(&mut self.db_repo)
     }
 
-    fn with_db(&'sess self) -> Self::MethWithDb {
+    fn with_db(&'sess mut self) -> Self::MethWithDb {
         MethodsWithDbImpl::new(&mut self.db_repo, &mut self.tx_repo)
     }
 
-    fn with_tx(&'sess self) -> Self::MethWithTx {
+    fn with_tx(&'sess mut self) -> Self::MethWithTx {
         MethodsWithTxImpl::new(&mut self.tx_repo)
     }
 }
