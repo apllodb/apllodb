@@ -26,15 +26,15 @@ impl<'sess> StorageEngine<'sess> for ApllodbImmutableSchemaEngine<'sess> {
     type MethWithDb = MethodsWithDbImpl<'sess>;
     type MethWithTx = MethodsWithTxImpl<'sess>;
 
-    fn without_db(&'sess self, session: &'sess SessionWithoutDb) -> Self::MethWithoutDb {
-        MethodsWithoutDbImpl::new(session, &mut self.db_repo)
+    fn without_db(&'sess self) -> Self::MethWithoutDb {
+        MethodsWithoutDbImpl::new(&mut self.db_repo)
     }
 
-    fn with_db(&'sess self, session: &'sess SessionWithDb) -> Self::MethWithDb {
-        MethodsWithDbImpl::new(session, &mut self.db_repo, &mut self.tx_repo)
+    fn with_db(&'sess self) -> Self::MethWithDb {
+        MethodsWithDbImpl::new(&mut self.db_repo, &mut self.tx_repo)
     }
 
-    fn with_tx(&'sess self, session: &'sess SessionWithTx) -> Self::MethWithTx {
-        MethodsWithTxImpl::new(session, &mut self.tx_repo)
+    fn with_tx(&'sess self) -> Self::MethWithTx {
+        MethodsWithTxImpl::new(&mut self.tx_repo)
     }
 }

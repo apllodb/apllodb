@@ -46,7 +46,12 @@ pub trait MethodsWithTx {
     ) -> ApllodbResult<RecordIterator>;
 
     /// INSERT command.
-    fn insert(&self, table_name: &TableName, records: RecordIterator) -> ApllodbResult<()>;
+    fn insert(
+        &self,
+        session: &SessionWithTx,
+        table_name: &TableName,
+        records: RecordIterator,
+    ) -> ApllodbResult<()>;
 
     /// UPDATE command.
     fn update(

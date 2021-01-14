@@ -9,38 +9,18 @@ use crate::{
 
 #[derive(Debug)]
 pub struct MethodsWithDbImpl<'sess> {
-    session: &'sess SessionWithDb,
     db_repo: &'sess mut DbRepo,
     tx_repo: &'sess mut TxRepo<'sess>,
 }
 
 impl<'sess> MethodsWithDbImpl<'sess> {
-    pub(crate) fn new(
-        session: &'sess SessionWithDb,
-        db_repo: &'sess mut DbRepo,
-        tx_repo: &'sess mut TxRepo<'sess>,
-    ) -> Self {
-        Self {
-            session,
-            db_repo,
-            tx_repo,
-        }
-    }
-
-    fn remove_sqlite_tx(&mut self, session: &mut SessionWithDb) -> ApllodbResult<SqliteTx> {
-        let sid = { session.get_id().clone() };
-
-        let sqlite_tx = self.tx_repo.remove(&sid).expect(&format!(
-            "no one should remove tid `{:?}` from tx_repo",
-            sid
-        ));
-        Ok(sqlite_tx)
+    pub(crate) fn new(db_repo: &'sess mut DbRepo, tx_repo: &'sess mut TxRepo<'sess>) -> Self {
+        Self { db_repo, tx_repo }
     }
 }
 
 impl<'sess> MethodsWithDb for MethodsWithDbImpl<'sess> {
-    fn begin(self) -> ApllodbResult<SessionWithTx> {
-        let session = self.session;
+    fn begin(self, session: SessionWithDb) -> ApllodbResult<SessionWithTx> {
         let sid = { session.get_id().clone() };
 
         let sqlite_db: &'sess mut SqliteDatabase = self.db_repo.get_mut(&sid)?;

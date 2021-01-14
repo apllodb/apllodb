@@ -20,13 +20,12 @@ use apllodb_storage_engine_interface::{MethodsWithTx, ProjectionQuery};
 
 #[derive(Debug)]
 pub struct MethodsWithTxImpl<'sess> {
-    session: &'sess SessionWithTx,
     tx_repo: &'sess TxRepo<'sess>,
 }
 
 impl<'sess> MethodsWithTxImpl<'sess> {
-    pub(crate) fn new(session: &'sess SessionWithTx, tx_repo: &'sess mut TxRepo<'sess>) -> Self {
-        Self { session, tx_repo }
+    pub(crate) fn new(tx_repo: &'sess mut TxRepo<'sess>) -> Self {
+        Self { tx_repo }
     }
 
     fn database_name(&self) -> &DatabaseName {
@@ -37,8 +36,7 @@ impl<'sess> MethodsWithTxImpl<'sess> {
         todo!()
     }
 
-    fn remove_sqlite_tx(&mut self) -> ApllodbResult<SqliteTx> {
-        let session = self.session;
+    fn remove_sqlite_tx(&mut self, session: &SessionWithTx) -> ApllodbResult<SqliteTx> {
         let sid = { session.get_id().clone() };
 
         let sqlite_tx = self.tx_repo.remove(&sid).expect(&format!(
@@ -52,6 +50,7 @@ impl<'sess> MethodsWithTxImpl<'sess> {
 impl MethodsWithTx for MethodsWithTxImpl<'_> {
     fn create_table(
         &self,
+        session: &SessionWithTx,
         table_name: &TableName,
         table_constraints: &TableConstraints,
         column_definitions: Vec<ColumnDefinition>,
@@ -71,7 +70,12 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         Ok(())
     }
 
-    fn alter_table(&self, table_name: &TableName, action: &AlterTableAction) -> ApllodbResult<()> {
+    fn alter_table(
+        &self,
+        session: &SessionWithTx,
+        table_name: &TableName,
+        action: &AlterTableAction,
+    ) -> ApllodbResult<()> {
         let input = AlterTableUseCaseInput::new(self.database_name(), table_name, action);
         let tx = self.sqlite_tx();
         let _ = AlterTableUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
@@ -82,12 +86,13 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         Ok(())
     }
 
-    fn drop_table(&self, _table_name: &TableName) -> ApllodbResult<()> {
+    fn drop_table(&self, session: &SessionWithTx, _table_name: &TableName) -> ApllodbResult<()> {
         todo!()
     }
 
     fn select(
         &self,
+        session: &SessionWithTx,
         table_name: &TableName,
         projection: ProjectionQuery,
     ) -> ApllodbResult<RecordIterator> {
@@ -102,7 +107,12 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         Ok(RecordIterator::new(output.row_iter))
     }
 
-    fn insert(&self, table_name: &TableName, records: RecordIterator) -> ApllodbResult<()> {
+    fn insert(
+        &self,
+        session: &SessionWithTx,
+        table_name: &TableName,
+        records: RecordIterator,
+    ) -> ApllodbResult<()> {
         let input = InsertUseCaseInput::new(self.database_name(), table_name, records);
         let tx = self.sqlite_tx();
         let _ = InsertUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
@@ -115,6 +125,7 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
 
     fn update(
         &self,
+        session: &SessionWithTx,
         table_name: &TableName,
         column_values: std::collections::HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
@@ -129,7 +140,7 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         Ok(())
     }
 
-    fn delete(&self, table_name: &TableName) -> ApllodbResult<()> {
+    fn delete(&self, session: &SessionWithTx, table_name: &TableName) -> ApllodbResult<()> {
         let input = DeleteAllUseCaseInput::new(self.database_name(), table_name);
         let tx = self.sqlite_tx();
         let _ = DeleteAllUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
@@ -141,11 +152,11 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         Ok(())
     }
 
-    fn commit(mut self) -> ApllodbResult<()> {
-        self.remove_sqlite_tx()?.commit()
+    fn commit(mut self, session: SessionWithTx) -> ApllodbResult<()> {
+        self.remove_sqlite_tx(&session)?.commit()
     }
 
-    fn abort(mut self) -> ApllodbResult<()> {
-        self.remove_sqlite_tx()?.abort()
+    fn abort(mut self, session: SessionWithTx) -> ApllodbResult<()> {
+        self.remove_sqlite_tx(&session)?.abort()
     }
 }
