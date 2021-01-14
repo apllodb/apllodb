@@ -1,11 +1,11 @@
-use apllodb_shared_components::{ApllodbResult, SessionWithTx};
+use apllodb_shared_components::{ApllodbResult, SessionWithDb, SessionWithTx};
 
-#[cfg(any(test, feature = "test_support"))]
+#[cfg(feature = "test-support")]
 use mockall::automock;
 
 /// Access methods with open database (without transaction).
-#[cfg_attr(any(test, feature = "test_support"), automock)]
+#[cfg_attr(feature = "test-support", automock)]
 pub trait MethodsWithDb {
     /// Begins a transaction.
-    fn begin(self) -> ApllodbResult<SessionWithTx>;
+    fn begin(self, session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
 }

@@ -197,8 +197,6 @@
 
 pub(crate) mod access_methods;
 
-use apllodb_shared_components::{SessionWithDb, SessionWithTx, SessionWithoutDb};
-
 pub use crate::access_methods::{
     methods_with_db::MethodsWithDb,
     methods_with_tx::{projection::ProjectionQuery, MethodsWithTx},
@@ -233,5 +231,5 @@ pub trait StorageEngine<'sess>: Default + Debug + Sized {
     fn with_tx(&'sess self) -> Self::MethWithTx;
 }
 
-#[cfg(any(test, feature = "test_support"))]
+#[cfg(feature = "test-support")]
 pub mod test_support;

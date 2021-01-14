@@ -1,11 +1,15 @@
-use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
 
-#[cfg(any(test, feature = "test_support"))]
+#[cfg(feature = "test-support")]
 use mockall::automock;
 
 /// Database access methods interface.
-#[cfg_attr(any(test, feature = "test_support"), automock)]
+#[cfg_attr(feature = "test-support", automock)]
 pub trait MethodsWithoutDb {
     /// Start a session with a database open.
-    fn use_database(self, database_name: DatabaseName) -> ApllodbResult<SessionWithDb>;
+    fn use_database(
+        self,
+        session: SessionWithoutDb,
+        database_name: DatabaseName,
+    ) -> ApllodbResult<SessionWithDb>;
 }
