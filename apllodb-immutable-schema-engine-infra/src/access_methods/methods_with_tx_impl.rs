@@ -20,7 +20,7 @@ use apllodb_storage_engine_interface::{MethodsWithTx, ProjectionQuery};
 
 #[derive(Debug)]
 pub struct MethodsWithTxImpl<'sess> {
-    tx_repo: &'sess TxRepo<'sess>,
+    tx_repo: &'sess mut TxRepo<'sess>,
 }
 
 impl<'sess> MethodsWithTxImpl<'sess> {
@@ -28,11 +28,11 @@ impl<'sess> MethodsWithTxImpl<'sess> {
         Self { tx_repo }
     }
 
-    fn database_name(&self) -> &DatabaseName {
+    fn database_name(&self, session: &SessionWithTx) -> &DatabaseName {
         todo!()
     }
 
-    fn sqlite_tx(&self) -> &SqliteTx {
+    fn sqlite_tx(&self, session: &SessionWithTx) -> &SqliteTx {
         todo!()
     }
 
@@ -56,12 +56,12 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         column_definitions: Vec<ColumnDefinition>,
     ) -> ApllodbResult<()> {
         let input = CreateTableUseCaseInput::new(
-            self.database_name(),
+            self.database_name(session),
             table_name,
             table_constraints,
             &column_definitions,
         );
-        let tx = self.sqlite_tx();
+        let tx = self.sqlite_tx(session);
         let _ = CreateTableUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
@@ -76,8 +76,8 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         table_name: &TableName,
         action: &AlterTableAction,
     ) -> ApllodbResult<()> {
-        let input = AlterTableUseCaseInput::new(self.database_name(), table_name, action);
-        let tx = self.sqlite_tx();
+        let input = AlterTableUseCaseInput::new(self.database_name(session), table_name, action);
+        let tx = self.sqlite_tx(session);
         let _ = AlterTableUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
@@ -96,8 +96,8 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         table_name: &TableName,
         projection: ProjectionQuery,
     ) -> ApllodbResult<RecordIterator> {
-        let input = FullScanUseCaseInput::new(self.database_name(), table_name, projection);
-        let tx = self.sqlite_tx();
+        let input = FullScanUseCaseInput::new(self.database_name(session), table_name, projection);
+        let tx = self.sqlite_tx(session);
         let output = FullScanUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
@@ -113,8 +113,8 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         table_name: &TableName,
         records: RecordIterator,
     ) -> ApllodbResult<()> {
-        let input = InsertUseCaseInput::new(self.database_name(), table_name, records);
-        let tx = self.sqlite_tx();
+        let input = InsertUseCaseInput::new(self.database_name(session), table_name, records);
+        let tx = self.sqlite_tx(session);
         let _ = InsertUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
@@ -129,8 +129,9 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
         table_name: &TableName,
         column_values: std::collections::HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<()> {
-        let input = UpdateAllUseCaseInput::new(self.database_name(), table_name, column_values);
-        let tx = self.sqlite_tx();
+        let input =
+            UpdateAllUseCaseInput::new(self.database_name(session), table_name, column_values);
+        let tx = self.sqlite_tx(session);
         let _ = UpdateAllUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
@@ -141,8 +142,8 @@ impl MethodsWithTx for MethodsWithTxImpl<'_> {
     }
 
     fn delete(&self, session: &SessionWithTx, table_name: &TableName) -> ApllodbResult<()> {
-        let input = DeleteAllUseCaseInput::new(self.database_name(), table_name);
-        let tx = self.sqlite_tx();
+        let input = DeleteAllUseCaseInput::new(self.database_name(session), table_name);
+        let tx = self.sqlite_tx(session);
         let _ = DeleteAllUseCase::<'_, '_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
             &tx.vtable_repo(),
             &tx.version_repo(),
