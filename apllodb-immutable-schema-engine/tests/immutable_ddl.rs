@@ -8,7 +8,7 @@ use apllodb_shared_components::{
     TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
-    MethodsWithTx, DMLMethods, MethodsWithoutDb, ProjectionQuery, StorageEngine, MethodsWithDb,
+    DMLMethods, MethodsWithDb, MethodsWithTx, MethodsWithoutDb, ProjectionQuery, StorageEngine,
 };
 
 use pretty_assertions::assert_eq;
