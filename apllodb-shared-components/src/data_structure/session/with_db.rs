@@ -23,7 +23,7 @@ impl SessionWithDb {
 
     /// Upgrade to `SessionWithTx`.
     pub fn upgrade(self) -> SessionWithTx {
-        SessionWithTx::new(self.id)
+        SessionWithTx::new(self.id, self.db)
     }
 
     /// Get session ID
