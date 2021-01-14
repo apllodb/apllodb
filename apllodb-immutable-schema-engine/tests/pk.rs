@@ -12,8 +12,6 @@ use apllodb_storage_engine_interface::ProjectionQuery;
 fn test_compound_pk() -> ApllodbResult<()> {
     setup();
 
-
-    
     let mut db = TestDatabase::new()?;
     let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
 
