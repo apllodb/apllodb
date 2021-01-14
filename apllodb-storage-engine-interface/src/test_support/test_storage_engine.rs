@@ -17,15 +17,15 @@ impl<'sess> StorageEngine<'sess> for TestStorageEngine {
     type MethWithDb = MockMethodsWithDb;
     type MethWithTx = MockMethodsWithTx;
 
-    fn without_db(&'sess self) -> Self::MethWithoutDb {
+    fn without_db(&'sess mut self) -> Self::MethWithoutDb {
         MockMethodsWithoutDb::new()
     }
 
-    fn with_db(&'sess self) -> Self::MethWithDb {
+    fn with_db(&'sess mut self) -> Self::MethWithDb {
         MockMethodsWithDb::new()
     }
 
-    fn with_tx(&'sess self) -> Self::MethWithTx {
+    fn with_tx(&'sess mut self) -> Self::MethWithTx {
         MockMethodsWithTx::new()
     }
 }

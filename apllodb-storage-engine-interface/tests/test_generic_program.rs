@@ -13,7 +13,7 @@ use apllodb_storage_engine_interface::{
 fn test_generic_program() {
     #[allow(dead_code)]
     fn use_database<'sess, Engine: StorageEngine<'sess>>(
-        engine: &'sess Engine,
+        engine: &'sess mut Engine,
         session: SessionWithoutDb,
     ) -> ApllodbResult<SessionWithDb> {
         let no_db = engine.without_db();
@@ -23,7 +23,7 @@ fn test_generic_program() {
 
     #[allow(dead_code)]
     fn begin<'sess, Engine: StorageEngine<'sess>>(
-        engine: &'sess Engine,
+        engine: &'sess mut Engine,
         session: SessionWithDb,
     ) -> ApllodbResult<SessionWithTx> {
         let db = engine.with_db();
@@ -33,7 +33,7 @@ fn test_generic_program() {
 
     #[allow(dead_code)]
     fn create_table<'sess, Engine: StorageEngine<'sess>>(
-        engine: &'sess Engine,
+        engine: &'sess mut Engine,
         session: &SessionWithTx,
     ) -> ApllodbResult<()> {
         let tx = engine.with_tx();
@@ -57,12 +57,12 @@ fn test_generic_program() {
     #[allow(dead_code)]
     fn server_code() -> ApllodbResult<()> {
         // here injects real impl of StorageEngine
-        let engine = TestStorageEngine::default();
+        let mut engine = TestStorageEngine::default();
         let session = SessionWithoutDb::default();
 
-        let session = use_database(&engine, session)?;
-        let session = begin(&engine, session)?;
-        create_table(&engine, &session)?;
+        let session = use_database(&mut engine, session)?;
+        let session = begin(&mut engine, session)?;
+        create_table(&mut engine, &session)?;
 
         Ok(())
     }
