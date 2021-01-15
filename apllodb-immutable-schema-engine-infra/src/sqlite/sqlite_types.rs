@@ -17,32 +17,32 @@ use super::{
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct SqliteTypes<'repo, 'db: 'repo> {
-    marker_: PhantomData<&'repo &'db ()>,
+pub struct SqliteTypes<'repo, 'sqcn: 'repo> {
+    marker_: PhantomData<&'repo &'sqcn ()>,
 }
 
-impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngine>
-    for SqliteTypes<'repo, 'db>
+impl<'repo, 'sqcn: 'repo> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngine<'sqcn>>
+    for SqliteTypes<'repo, 'sqcn>
 {
     type VRRId = SqliteRowid;
 
     type ImmutableSchemaRowIter = ImmutableSchemaRowIter;
     type VersionRowIter = SqliteRowIterator;
 
-    type VTableRepo = VTableRepositoryImpl<'repo, 'db>;
-    type VersionRepo = VersionRepositoryImpl<'repo, 'db>;
+    type VTableRepo = VTableRepositoryImpl<'repo, 'sqcn>;
+    type VersionRepo = VersionRepositoryImpl<'repo, 'sqcn>;
 }
 
 // Fill structs' type parameters in domain / application layers.
-pub(crate) type VRREntriesInVersion<'vrr, 'db> =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion< ApllodbImmutableSchemaEngine, SqliteTypes<'vrr, 'db>>;
-pub(crate) type VRREntries<'vrr, 'db> =
+pub(crate) type VRREntriesInVersion<'vrr, 'sqcn> =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion<ApllodbImmutableSchemaEngine<'sqcn>, SqliteTypes<'vrr, 'sqcn>>;
+pub(crate) type VRREntries<'vrr, 'sqcn> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VRREntries<
-        ApllodbImmutableSchemaEngine,
-        SqliteTypes<'vrr, 'db>,
+        ApllodbImmutableSchemaEngine<'sqcn>,
+        SqliteTypes<'vrr, 'sqcn>,
     >;
-pub(crate) type VRREntry<'vrr, 'db> =
+pub(crate) type VRREntry<'vrr, 'sqcn> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry<
-        ApllodbImmutableSchemaEngine,
-        SqliteTypes<'vrr, 'db>,
+        ApllodbImmutableSchemaEngine<'sqcn>,
+        SqliteTypes<'vrr, 'sqcn>,
     >;

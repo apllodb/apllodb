@@ -22,10 +22,10 @@ use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx<'db> {
+pub struct SqliteTx<'sqcn> {
     id: TxId,
     database_name: DatabaseName,
-    rusqlite_tx: rusqlite::Transaction<'db>,
+    rusqlite_tx: rusqlite::Transaction<'sqcn>,
 }
 
 impl PartialEq for SqliteTx<'_> {
@@ -46,19 +46,19 @@ impl Ord for SqliteTx<'_> {
     }
 }
 
-impl<'db> SqliteTx<'db> {
-    pub(crate) fn vtable_repo(&self) -> VTableRepositoryImpl<'_, 'db> {
+impl<'sqcn> SqliteTx<'sqcn> {
+    pub(crate) fn vtable_repo(&self) -> VTableRepositoryImpl<'_, 'sqcn> {
         VTableRepositoryImpl::new(self)
     }
 
-    pub(crate) fn version_repo(&self) -> VersionRepositoryImpl<'_, 'db> {
+    pub(crate) fn version_repo(&self) -> VersionRepositoryImpl<'_, 'sqcn> {
         VersionRepositoryImpl::new(self)
     }
 }
 
-impl<'db> Transaction for SqliteTx<'db> {
+impl<'sqcn> Transaction for SqliteTx<'sqcn> {
     type Db = SqliteDatabase;
-    type RefDb = &'db mut SqliteDatabase;
+    type RefDb = &'sqcn mut SqliteDatabase;
     type TID = TxId;
 
     fn id(&self) -> &TxId {
@@ -69,7 +69,7 @@ impl<'db> Transaction for SqliteTx<'db> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
+    fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<Self> {
         let database_name = { db.name().clone() };
 
         let tx = db.sqlite_conn().transaction().map_err(|e| {
@@ -118,7 +118,7 @@ impl<'db> Transaction for SqliteTx<'db> {
     }
 }
 
-impl<'db> SqliteTx<'db> {
+impl<'sqcn> SqliteTx<'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: AsRef<str>>(
         &self,
         sql: S,

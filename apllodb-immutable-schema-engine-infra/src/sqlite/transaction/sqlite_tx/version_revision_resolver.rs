@@ -22,13 +22,13 @@ use self::navi_dao::{navi::Navi, NaviDao};
 use super::SqliteTx;
 
 #[derive(Debug)]
-pub(crate) struct VersionRevisionResolverImpl<'vrr, 'db: 'vrr> {
-    tx: &'vrr SqliteTx<'db>,
+pub(crate) struct VersionRevisionResolverImpl<'vrr, 'sqcn: 'vrr> {
+    tx: &'vrr SqliteTx<'sqcn>,
 }
 
-impl<'vrr, 'db: 'vrr>
-    VersionRevisionResolver<ApllodbImmutableSchemaEngine, SqliteTypes<'vrr, 'db>>
-    for VersionRevisionResolverImpl<'vrr, 'db>
+impl<'vrr, 'sqcn: 'vrr>
+    VersionRevisionResolver<ApllodbImmutableSchemaEngine<'sqcn>, SqliteTypes<'vrr, 'sqcn>>
+    for VersionRevisionResolverImpl<'vrr, 'sqcn>
 {
     fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.navi_dao().create_table(vtable)
@@ -41,7 +41,7 @@ impl<'vrr, 'db: 'vrr>
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
-    ) -> ApllodbResult<VRREntries<'vrr, 'db>> {
+    ) -> ApllodbResult<VRREntries<'vrr, 'sqcn>> {
         let mut entries = VecDeque::<VRREntry>::new();
 
         for pk in pks {
@@ -64,7 +64,7 @@ impl<'vrr, 'db: 'vrr>
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db>> {
+    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'sqcn>> {
         let mut entries = VecDeque::<VRREntry>::new();
 
         for navi in self.navi_dao().full_scan_latest_revision(vtable)? {
@@ -84,7 +84,7 @@ impl<'vrr, 'db: 'vrr>
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
-    ) -> ApllodbResult<VRREntry<'vrr, 'db>> {
+    ) -> ApllodbResult<VRREntry<'vrr, 'sqcn>> {
         let revision = match self
             .navi_dao()
             .probe_latest_revision(version_id.vtable_id(), &pk)?
@@ -111,12 +111,12 @@ impl<'vrr, 'db: 'vrr>
     }
 }
 
-impl<'vrr, 'db: 'vrr> VersionRevisionResolverImpl<'vrr, 'db> {
-    pub(crate) fn new(tx: &'vrr SqliteTx<'db>) -> Self {
+impl<'vrr, 'sqcn: 'vrr> VersionRevisionResolverImpl<'vrr, 'sqcn> {
+    pub(crate) fn new(tx: &'vrr SqliteTx<'sqcn>) -> Self {
         Self { tx }
     }
 
-    fn navi_dao(&self) -> NaviDao<'vrr, 'db> {
+    fn navi_dao(&self) -> NaviDao<'vrr, 'sqcn> {
         NaviDao::new(&self.tx)
     }
 }

@@ -1,16 +1,27 @@
+use std::sync::Arc;
+
 use apllodb_shared_components::{
     ApllodbResult, ColumnDefinition, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
     TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::StorageEngine;
 use tarpc::context;
+use tokio::sync::Mutex;
+
+use crate::sqlite::sqlite_resource_pool::SqliteResourcePool;
 
 /// Storage engine implementation.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct ApllodbImmutableSchemaEngine;
+///
+/// # Lifetime parameters
+///
+/// - `'sqcn`: shorthand of `'sqlite_connection`.
+#[derive(Clone, Debug, Default)]
+pub struct ApllodbImmutableSchemaEngine<'sqcn> {
+    pool: Arc<Mutex<SqliteResourcePool<'sqcn>>>,
+}
 
 #[tarpc::server]
-impl StorageEngine for ApllodbImmutableSchemaEngine {
+impl<'sqcn> StorageEngine for ApllodbImmutableSchemaEngine<'sqcn> {
     async fn use_database(
         self,
         _: context::Context,
