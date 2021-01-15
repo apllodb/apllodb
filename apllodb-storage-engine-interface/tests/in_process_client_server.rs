@@ -1,6 +1,6 @@
-use std::io;
-
-use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
+use apllodb_shared_components::{
+    ApllodbResult, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
+};
 use apllodb_storage_engine_interface::{StorageEngine, StorageEngineClient};
 use futures::{future, prelude::*};
 use tarpc::{
@@ -21,10 +21,26 @@ impl StorageEngine for TestStorageEngine {
     ) -> ApllodbResult<SessionWithDb> {
         Ok(session.upgrade(database))
     }
+
+    async fn begin_transaction(
+        self,
+        _: context::Context,
+        session: SessionWithDb,
+    ) -> ApllodbResult<SessionWithTx> {
+        Ok(session.upgrade())
+    }
+
+    async fn commit(self, _: context::Context, _session: SessionWithTx) -> ApllodbResult<()> {
+        Ok(())
+    }
+
+    async fn abort(self, _: context::Context, _session: SessionWithTx) -> ApllodbResult<()> {
+        Ok(())
+    }
 }
 
 #[tokio::test]
-async fn test_in_process_client() -> io::Result<()> {
+async fn test_in_process_client() -> ApllodbResult<()> {
     let (client_transport, server_transport) = tarpc::transport::channel::unbounded();
 
     let server = server::new(server::Config::default())
@@ -36,13 +52,17 @@ async fn test_in_process_client() -> io::Result<()> {
     let mut client =
         StorageEngineClient::new(client::Config::default(), client_transport).spawn()?;
 
-    let _session = client
+    let session = client
         .use_database(
             context::current(),
             SessionWithoutDb::default(),
             DatabaseName::new("x").unwrap(),
         )
-        .await?;
+        .await??;
+
+    let _session = client
+        .begin_transaction(context::current(), session)
+        .await??;
 
     Ok(())
 }

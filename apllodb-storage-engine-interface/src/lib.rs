@@ -33,11 +33,13 @@
 //!
 //! TODO link to tests/
 
- mod projection_query;
+mod projection_query;
 
- pub use projection_query::ProjectionQuery;
+pub use projection_query::ProjectionQuery;
 
-use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
+use apllodb_shared_components::{
+    ApllodbResult, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
+};
 use std::fmt::Debug;
 
 /// Storage engine interface.
@@ -48,4 +50,13 @@ pub trait StorageEngine {
         session: SessionWithoutDb,
         database: DatabaseName,
     ) -> ApllodbResult<SessionWithDb>;
+
+    /// Begin a transaction.
+    async fn begin_transaction(session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
+
+    /// Commit an open transaction.
+    async fn commit(session: SessionWithTx) -> ApllodbResult<()>;
+
+    /// Abort an open transaction.
+    async fn abort(session: SessionWithTx) -> ApllodbResult<()>;
 }
