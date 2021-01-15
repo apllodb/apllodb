@@ -38,25 +38,45 @@ mod projection_query;
 pub use projection_query::ProjectionQuery;
 
 use apllodb_shared_components::{
-    ApllodbResult, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
+    ApllodbResult, ColumnDefinition, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
+    TableConstraints, TableName,
 };
 use std::fmt::Debug;
 
 /// Storage engine interface.
 #[tarpc::service]
 pub trait StorageEngine {
+    // ========================================================================
+    // Database
+    // ========================================================================
+
     /// Open a database.
     async fn use_database(
         session: SessionWithoutDb,
         database: DatabaseName,
     ) -> ApllodbResult<SessionWithDb>;
 
+    // ========================================================================
+    // Transaction
+    // ========================================================================
+
     /// Begin a transaction.
     async fn begin_transaction(session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
 
     /// Commit an open transaction.
-    async fn commit(session: SessionWithTx) -> ApllodbResult<()>;
+    async fn commit_transaction(session: SessionWithTx) -> ApllodbResult<()>;
 
     /// Abort an open transaction.
-    async fn abort(session: SessionWithTx) -> ApllodbResult<()>;
+    async fn abort_transaction(session: SessionWithTx) -> ApllodbResult<()>;
+
+    // ========================================================================
+    // DDL
+    // ========================================================================
+
+    async fn create_table(
+        session: SessionWithTx,
+        table_name: TableName,
+        table_constraints: TableConstraints,
+        column_definitions: Vec<ColumnDefinition>,
+    ) -> ApllodbResult<SessionWithTx>;
 }
