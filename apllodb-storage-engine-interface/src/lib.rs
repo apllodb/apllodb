@@ -35,6 +35,9 @@
 
 mod projection_query;
 
+#[cfg(feature = "test-support")]
+pub mod test_support;
+
 pub use projection_query::ProjectionQuery;
 
 use apllodb_shared_components::{
