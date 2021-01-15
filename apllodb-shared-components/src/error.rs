@@ -87,7 +87,6 @@ impl std::fmt::Debug for ApllodbError {
             self.source()
                 .map_or_else(|| "None".to_string(), |e| format!("{:?}", e))
         )
-
     }
 }
 
