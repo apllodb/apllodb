@@ -1,15 +1,15 @@
 //! Provides Result type and Error type commonly used in apllodb workspace.
 
 mod aux;
-mod dummy;
 mod from;
 pub(crate) mod kind;
 pub(crate) mod sqlstate;
 
 use aux::ApllodbErrorAux;
-use dummy::DummyError;
 use sqlstate::SqlState;
 use std::{error::Error, fmt::Display};
+
+use serde::{Deserialize, Serialize};
 
 use self::kind::ApllodbErrorKind;
 
@@ -17,6 +17,9 @@ use self::kind::ApllodbErrorKind;
 pub type ApllodbResult<T> = Result<T, ApllodbError>;
 
 /// Error type commonly used in apllodb workspace.
+///
+/// Note that `source` parameter is always serialized into `None`, so that, for example, a client cannot know what's the cause of a server's error.
+#[derive(Serialize, Deserialize)]
 pub struct ApllodbError {
     /// Machine-readable error type.
     kind: ApllodbErrorKind,
@@ -25,12 +28,9 @@ pub struct ApllodbError {
     desc: String,
 
     /// Source of this error if any.
-    ///
-    /// FIXME: Better to wrap by Option but then I don't know how to return `Option<&(dyn Error + 'static)>`
-    /// in [source()](method.source.html).
-    ///
-    /// [DummyError](dummy/struct.DummyError.html) is being used instead to represent no-root-cause case.
-    source: Box<dyn Error + Sync + Send + 'static>,
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
+    source: Option<Box<dyn Error + Sync + Send + 'static>>,
 }
 
 impl ApllodbError {
@@ -45,19 +45,16 @@ impl ApllodbError {
         Self {
             kind,
             desc: desc.into(),
-            source: match source {
-                None => Box::new(DummyError),
-                Some(e) => e,
-            },
+            source,
         }
     }
 }
 
 impl Error for ApllodbError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self.source.downcast_ref::<DummyError>() {
-            Some(_) => None,
-            _ => Some(self.source.as_ref()),
+        match &self.source {
+            Some(s) => Some(s.as_ref()),
+            None => None,
         }
     }
 }
@@ -903,11 +900,5 @@ mod tests {
     fn test_none_source() {
         let e = ApllodbError::new(ApllodbErrorKind::InvalidTableDefinition, "", None);
         assert!(e.source().is_none());
-    }
-
-    #[test]
-    fn test_none_source_debug_display() {
-        let e = ApllodbError::new(ApllodbErrorKind::InvalidTableDefinition, "", None);
-        assert!(!format!("{:?}", e).contains("DummyError"));
     }
 }
