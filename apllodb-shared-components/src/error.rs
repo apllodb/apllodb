@@ -17,7 +17,6 @@ use self::kind::ApllodbErrorKind;
 pub type ApllodbResult<T> = Result<T, ApllodbError>;
 
 /// Error type commonly used in apllodb workspace.
-#[derive(Debug)]
 pub struct ApllodbError {
     /// Machine-readable error type.
     kind: ApllodbErrorKind,
@@ -73,6 +72,20 @@ impl Display for ApllodbError {
             self.desc,
             self.source()
                 .map_or_else(|| "none".to_string(), |e| format!("{}", e))
+        )
+    }
+}
+
+impl std::fmt::Debug for ApllodbError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "errcode: {:?}, sqlstate: {:?} desc: {:?}, source: {}",
+            self.errcode(),
+            self.sqlstate(),
+            self.desc,
+            self.source()
+                .map_or_else(|| "None".to_string(), |e| format!("{:?}", e))
         )
     }
 }
@@ -877,5 +890,24 @@ impl ApllodbError {
                 errcode: "ERRCODE_INVALID_VERSION_ERROR".into(),
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+
+    use crate::{ApllodbError, ApllodbErrorKind};
+
+    #[test]
+    fn test_none_source() {
+        let e = ApllodbError::new(ApllodbErrorKind::InvalidTableDefinition, "", None);
+        assert!(e.source().is_none());
+    }
+
+    #[test]
+    fn test_none_source_debug_display() {
+        let e = ApllodbError::new(ApllodbErrorKind::InvalidTableDefinition, "", None);
+        assert!(!format!("{:?}", e).contains("DummyError"));
     }
 }
