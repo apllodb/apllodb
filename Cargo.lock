@@ -97,6 +97,7 @@ dependencies = [
  "chrono",
  "derive-new",
  "env_logger",
+ "futures",
  "libsqlite3-sys",
  "log",
  "pretty_assertions",
@@ -104,6 +105,9 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_yaml",
+ "tarpc",
+ "tokio",
+ "tokio-serde",
  "uuid",
  "version-sync",
 ]
