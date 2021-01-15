@@ -26,7 +26,7 @@ pub struct FullScanUseCaseOutput<Engine: StorageEngine, Types: ImmutableSchemaAb
 {
     pub row_iter: Types::ImmutableSchemaRowIter,
 }
-impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> UseCaseOutput
+impl<Engine: StorageEngine + Debug, Types: ImmutableSchemaAbstractTypes<Engine>> UseCaseOutput
     for FullScanUseCaseOutput<Engine, Types>
 {
 }
@@ -38,7 +38,7 @@ pub struct FullScanUseCase<
 > {
     _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
+impl<'usecase, Engine: StorageEngine + Debug, Types: ImmutableSchemaAbstractTypes<Engine>>
     TxUseCase<Engine, Types> for FullScanUseCase<'usecase, Engine, Types>
 {
     type In = FullScanUseCaseInput<'usecase>;
