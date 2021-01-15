@@ -36,7 +36,7 @@ async fn test_in_process_client() -> io::Result<()> {
     let mut client =
         StorageEngineClient::new(client::Config::default(), client_transport).spawn()?;
 
-    let session = client
+    let _session = client
         .use_database(
             context::current(),
             SessionWithoutDb::default(),
