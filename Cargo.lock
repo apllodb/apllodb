@@ -183,6 +183,7 @@ version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
  "serde",
+ "tarpc",
  "version-sync",
 ]
 
