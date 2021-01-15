@@ -875,16 +875,3 @@ impl ApllodbError {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use std::error::Error;
-
-    use crate::{ApllodbError, ApllodbErrorKind};
-
-    #[test]
-    fn test_none_source() {
-        let e = ApllodbError::new(ApllodbErrorKind::InvalidTableDefinition, "", None);
-        assert!(e.source().is_none());
-    }
-}
