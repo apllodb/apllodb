@@ -182,8 +182,11 @@ name = "apllodb-storage-engine-interface"
 version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
+ "futures",
  "serde",
  "tarpc",
+ "tokio",
+ "tokio-serde",
  "version-sync",
 ]
 
