@@ -44,7 +44,5 @@ async fn test_in_process_client() -> io::Result<()> {
         )
         .await?;
 
-    println!("{:?}", session);
-
     Ok(())
 }
