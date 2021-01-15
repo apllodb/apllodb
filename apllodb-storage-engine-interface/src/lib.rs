@@ -1,4 +1,4 @@
-#![deny(warnings, missing_docs, missing_debug_implementations)]
+#![deny(warnings, missing_debug_implementations)]
 
 //! apllodb's storage engine interface.
 //!
@@ -195,28 +195,15 @@
 //! }
 //! ```
 
-mod ddl_methods;
-mod dml_methods;
-
-pub use crate::{
-    ddl_methods::DDLMethods,
-    dml_methods::{projection::ProjectionQuery, DMLMethods},
-};
-
-use apllodb_shared_components::{Database, Transaction};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
 use std::fmt::Debug;
 
-/// An storage engine implementation must implement this trait and included associated-types.
-pub trait StorageEngine: Debug + Sized {
-    /// Database.
-    type Db: Database;
-
-    /// Transaction.
-    type Tx: Transaction;
-
-    /// DDL access methods.
-    type DDL: DDLMethods<Self>;
-
-    /// DML access methods.
-    type DML: DMLMethods<Self>;
+/// Storage engine interface.
+#[tarpc::service]
+pub trait StorageEngine {
+    /// Open a database.
+    async fn use_database(
+        session: SessionWithoutDb,
+        database: DatabaseName,
+    ) -> ApllodbResult<SessionWithDb>;
 }
