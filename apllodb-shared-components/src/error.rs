@@ -19,7 +19,7 @@ pub type ApllodbResult<T> = Result<T, ApllodbError>;
 /// Error type commonly used in apllodb workspace.
 ///
 /// Note that `source` parameter is always serialized into `None`, so that, for example, a client cannot know what's the cause of a server's error.
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ApllodbError {
     /// Machine-readable error type.
     kind: ApllodbErrorKind,
@@ -69,20 +69,6 @@ impl Display for ApllodbError {
             self.desc,
             self.source()
                 .map_or_else(|| "none".to_string(), |e| format!("{}", e))
-        )
-    }
-}
-
-impl std::fmt::Debug for ApllodbError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "errcode: {:?}, sqlstate: {:?} desc: {:?}, source: {}",
-            self.errcode(),
-            self.sqlstate(),
-            self.desc,
-            self.source()
-                .map_or_else(|| "None".to_string(), |e| format!("{:?}", e))
         )
     }
 }
