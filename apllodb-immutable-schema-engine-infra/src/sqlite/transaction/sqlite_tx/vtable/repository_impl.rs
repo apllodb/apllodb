@@ -35,7 +35,7 @@ impl<'repo, 'db> VTableRepositoryImpl<'repo, 'db> {
     }
 }
 
-impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'repo, 'db>>
+impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine, SqliteTypes<'repo, 'db>>
     for VTableRepositoryImpl<'repo, 'db>
 {
     /// # Failures

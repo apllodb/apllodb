@@ -21,7 +21,7 @@ pub struct SqliteTypes<'repo, 'db: 'repo> {
     marker_: PhantomData<&'repo &'db ()>,
 }
 
-impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngine<'db>>
+impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngine>
     for SqliteTypes<'repo, 'db>
 {
     type VRRId = SqliteRowid;
@@ -35,14 +35,14 @@ impl<'repo, 'db: 'repo> ImmutableSchemaAbstractTypes<ApllodbImmutableSchemaEngin
 
 // Fill structs' type parameters in domain / application layers.
 pub(crate) type VRREntriesInVersion<'vrr, 'db> =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion< ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'vrr, 'db>>;
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion< ApllodbImmutableSchemaEngine, SqliteTypes<'vrr, 'db>>;
 pub(crate) type VRREntries<'vrr, 'db> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VRREntries<
-        ApllodbImmutableSchemaEngine<'db>,
+        ApllodbImmutableSchemaEngine,
         SqliteTypes<'vrr, 'db>,
     >;
 pub(crate) type VRREntry<'vrr, 'db> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry<
-        ApllodbImmutableSchemaEngine<'db>,
+        ApllodbImmutableSchemaEngine,
         SqliteTypes<'vrr, 'db>,
     >;
