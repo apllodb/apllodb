@@ -195,6 +195,10 @@
 //! }
 //! ```
 
+ mod projection_query;
+
+ pub use projection_query::ProjectionQuery;
+
 use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
 use std::fmt::Debug;
 
