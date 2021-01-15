@@ -9,41 +9,18 @@ use self::{
     version::repository_impl::VersionRepositoryImpl, vtable::repository_impl::VTableRepositoryImpl,
 };
 
-use super::tx_id::TxId;
 use crate::sqlite::{
     database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
     to_sql_string::ToSqlString,
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Database, DatabaseName, Transaction,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName};
 use log::debug;
-use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
 pub struct SqliteTx<'sqcn> {
-    id: TxId,
     database_name: DatabaseName,
     rusqlite_tx: rusqlite::Transaction<'sqcn>,
-}
-
-impl PartialEq for SqliteTx<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-impl Eq for SqliteTx<'_> {}
-
-impl PartialOrd for SqliteTx<'_> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for SqliteTx<'_> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.id.cmp(&other.id)
-    }
 }
 
 impl<'sqcn> SqliteTx<'sqcn> {
@@ -56,15 +33,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
     }
 }
 
-impl<'sqcn> Transaction for SqliteTx<'sqcn> {
-    type Db = SqliteDatabase;
-    type RefDb = &'sqcn mut SqliteDatabase;
-    type TID = TxId;
-
-    fn id(&self) -> &TxId {
-        &self.id
-    }
-
+impl<'sqcn> SqliteTx<'sqcn> {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
@@ -80,7 +49,6 @@ impl<'sqcn> Transaction for SqliteTx<'sqcn> {
         })?;
 
         Ok(Self {
-            id: TxId::new(),
             database_name,
             rusqlite_tx: tx,
         })
@@ -116,9 +84,7 @@ impl<'sqcn> Transaction for SqliteTx<'sqcn> {
     fn database_name(&self) -> &DatabaseName {
         &self.database_name
     }
-}
 
-impl<'sqcn> SqliteTx<'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: AsRef<str>>(
         &self,
         sql: S,
