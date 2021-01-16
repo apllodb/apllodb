@@ -10,9 +10,9 @@ use super::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
 /// Each resource is accessible via [SessionId](apllodb-shared-components::SessionId).
 #[derive(Debug, Default)]
 pub(crate) struct SqliteResourcePool<'sqcn> {
-    db_arena: Arena<SqliteDatabase>,
-    tx_arena: Arena<SqliteTx<'sqcn>>,
+    pub(crate) db_arena: Arena<SqliteDatabase>,
+    pub(crate) tx_arena: Arena<SqliteTx<'sqcn>>,
 
-    sess_db: HashMap<SessionId, Index>,
-    sess_tx: HashMap<SessionId, Index>,
+    pub(crate) sess_db: HashMap<SessionId, Index>,
+    pub(crate) sess_tx: HashMap<SessionId, Index>,
 }

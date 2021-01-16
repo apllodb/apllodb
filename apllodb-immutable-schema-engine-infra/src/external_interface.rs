@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    future::{self, Ready},
+    sync::{Arc, RwLock},
+};
 
 use apllodb_shared_components::{
     ApllodbResult, ColumnDefinition, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
@@ -6,9 +9,8 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::StorageEngine;
 use tarpc::context;
-use tokio::sync::Mutex;
 
-use crate::sqlite::sqlite_resource_pool::SqliteResourcePool;
+use crate::sqlite::{database::SqliteDatabase, sqlite_resource_pool::SqliteResourcePool};
 
 /// Storage engine implementation.
 ///
@@ -17,52 +19,67 @@ use crate::sqlite::sqlite_resource_pool::SqliteResourcePool;
 /// - `'sqcn`: shorthand of `'sqlite_connection`.
 #[derive(Clone, Debug, Default)]
 pub struct ApllodbImmutableSchemaEngine<'sqcn> {
-    pool: Arc<Mutex<SqliteResourcePool<'sqcn>>>,
+    // FIXME Consider sharding by SessionId to avoid writer contention using something like dashmap.
+    // see: <https://tokio.rs/tokio/tutorial/shared-state#tasks-threads-and-contention>
+    pool: Arc<RwLock<SqliteResourcePool<'sqcn>>>,
 }
 
-#[tarpc::server]
 impl<'sqcn> StorageEngine for ApllodbImmutableSchemaEngine<'sqcn> {
-    async fn use_database(
+    type UseDatabaseFut = Ready<ApllodbResult<SessionWithDb>>;
+    type BeginTransactionFut = Ready<ApllodbResult<SessionWithTx>>;
+    type CommitTransactionFut = Ready<ApllodbResult<()>>;
+    type AbortTransactionFut = Ready<ApllodbResult<()>>;
+    type CreateTableFut = Ready<ApllodbResult<SessionWithTx>>;
+
+    fn use_database(
         self,
         _: context::Context,
         session: SessionWithoutDb,
         database: DatabaseName,
-    ) -> ApllodbResult<SessionWithDb> {
-        todo!()
+    ) -> Self::UseDatabaseFut {
+        // FIXME actually not async at all because rusqlite::Connection internally has `RefCell: !Sync`.
+        // So here giving up using `async fn` (whose body must be `Send`).
+
+        let db = SqliteDatabase::use_database(database.clone()).unwrap();
+        let mut pool = self.pool.write().unwrap(); // TODO use ?
+        let db_idx = pool.db_arena.insert(db);
+        pool.sess_db.insert(session.get_id().clone(), db_idx);
+
+        future::ready(Ok(session.upgrade(database)))
     }
 
-    async fn begin_transaction(
+    fn begin_transaction(
         self,
         _: context::Context,
         session: SessionWithDb,
-    ) -> ApllodbResult<SessionWithTx> {
+    ) -> Self::BeginTransactionFut {
         todo!()
     }
 
-    async fn commit_transaction(
+    fn commit_transaction(
         self,
         _: context::Context,
         session: SessionWithTx,
-    ) -> ApllodbResult<()> {
+    ) -> Self::CommitTransactionFut {
         todo!()
     }
 
-    async fn abort_transaction(
+    fn abort_transaction(
         self,
         _: context::Context,
         session: SessionWithTx,
-    ) -> ApllodbResult<()> {
+    ) -> Self::AbortTransactionFut {
         todo!()
     }
 
-    async fn create_table(
+    fn create_table(
         self,
         _: context::Context,
         session: SessionWithTx,
         table_name: TableName,
         table_constraints: TableConstraints,
         column_definitions: Vec<ColumnDefinition>,
-    ) -> ApllodbResult<SessionWithTx> {
+    ) -> Self::CreateTableFut {
         todo!()
     }
 }
