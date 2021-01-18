@@ -25,7 +25,7 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct 
     'dao,
     'sqcn: 'dao,
 > {
-    sqlite_tx: &'dao SqliteTx<'sqcn>,
+    sqlite_tx: &'dao mut SqliteTx<'sqcn>,
 }
 
 const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
@@ -34,17 +34,17 @@ const CNAME_VERSION_NUMBER: &str = "version_number";
 
 impl<'dao, 'sqcn: 'dao> NaviDao<'dao, 'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
-        sqlite_tx: &'dao SqliteTx<'sqcn>,
+        sqlite_tx: &'dao mut SqliteTx<'sqcn>,
     ) -> Self {
         Self { sqlite_tx }
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn create_table(
-        &self,
+        &mut self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForNavi::from(vtable);
-        self.sqlite_tx.execute(sql.as_str(), &[]).await?;
+        self.sqlite_tx.execute(sql.as_str()).await?;
         Ok(())
     }
 
@@ -124,10 +124,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
         let cdt_version_number = self.cdt_version_number(&navi_table_name);
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let mut row_iter = self
-            .sqlite_tx
-            .query(&sql, &[], &column_data_types, &[])
-            .await?;
+        let mut row_iter = self.sqlite_tx.query(&sql, &column_data_types, &[]).await?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {

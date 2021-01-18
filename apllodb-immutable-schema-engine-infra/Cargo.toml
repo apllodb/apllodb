@@ -17,6 +17,8 @@ apllodb-shared-components = {path = "../apllodb-shared-components"}
 # Only SqliteTx uses this to deserialize ActiveVersion from SQLite's sqlite_master table.
 apllodb-sql-parser = {path = "../apllodb-sql-parser"}
 
+async-trait = "0.1"
+
 chrono = "0.4"
 
 derive-new = "0.5"

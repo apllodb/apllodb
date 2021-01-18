@@ -93,7 +93,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
         SqliteRowIterator::new(&mut rows, column_data_types, void_projection)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) async fn execute<'q, A>(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn execute<'q>(
         &mut self,
         sql: &'q str,
     ) -> ApllodbResult<SqliteRowid> {

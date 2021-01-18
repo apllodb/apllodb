@@ -5,7 +5,6 @@ use crate::{
 };
 use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::StorageEngine;
-
 pub trait VTableRepository<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
     /// Create a new table with VTable.
     /// Do nothing for Version.

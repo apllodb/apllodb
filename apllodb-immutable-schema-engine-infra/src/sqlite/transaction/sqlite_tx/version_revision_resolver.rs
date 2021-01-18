@@ -11,6 +11,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use async_trait::async_trait;
 
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
@@ -27,11 +28,12 @@ pub(crate) struct VersionRevisionResolverImpl<'vrr, 'sqcn: 'vrr> {
 }
 
 impl<'vrr, 'sqcn: 'vrr> VersionRevisionResolverImpl<'vrr, 'sqcn> {
-    pub(crate) async fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
+    pub(crate) async fn create_table(&mut self, vtable: &VTable) -> ApllodbResult<()> {
         self.navi_dao().create_table(vtable).await
     }
 }
 
+#[async_trait(?Send)]
 impl<'vrr, 'sqcn: 'vrr>
     VersionRevisionResolver<ApllodbImmutableSchemaEngine, SqliteTypes<'vrr, 'sqcn>>
     for VersionRevisionResolverImpl<'vrr, 'sqcn>
@@ -48,7 +50,10 @@ impl<'vrr, 'sqcn: 'vrr>
 
         for pk in pks {
             // FIXME solve N+1 problem
-            let navi = self.navi_dao().probe_latest_revision(vtable_id, &pk)?;
+            let navi = self
+                .navi_dao()
+                .probe_latest_revision(vtable_id, &pk)
+                .await?;
             if let Navi::Exist(existing_navi) = navi {
                 let version_id = VersionId::new(&vtable_id, &existing_navi.version_number);
                 let entry = VRREntry::new(
@@ -66,10 +71,10 @@ impl<'vrr, 'sqcn: 'vrr>
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'sqcn>> {
+    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'sqcn>> {
         let mut entries = VecDeque::<VRREntry>::new();
 
-        for navi in self.navi_dao().full_scan_latest_revision(vtable)? {
+        for navi in self.navi_dao().full_scan_latest_revision(vtable).await? {
             let version_id = VersionId::new(&vtable.id(), &navi.navi.version_number);
             let entry = VRREntry::new(
                 navi.navi.rowid.clone(),
@@ -82,14 +87,14 @@ impl<'vrr, 'sqcn: 'vrr>
         Ok(VRREntries::new(vtable.id().clone(), entries))
     }
 
-    fn register(
+    async fn register(
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
     ) -> ApllodbResult<VRREntry<'vrr, 'sqcn>> {
         let revision = match self
             .navi_dao()
-            .probe_latest_revision(version_id.vtable_id(), &pk)?
+            .probe_latest_revision(version_id.vtable_id(), &pk).await?
         {
             Navi::Exist { .. } => Err(ApllodbError::new(
                 ApllodbErrorKind::UniqueViolation,
@@ -104,11 +109,15 @@ impl<'vrr, 'sqcn: 'vrr>
         Ok(VRREntry::new(rowid, pk, version_id.clone(), revision))
     }
 
-    fn deregister(&self, _vtable_id: &VTableId, _pks: &[ApparentPrimaryKey]) -> ApllodbResult<()> {
+    async fn deregister(
+        &self,
+        _vtable_id: &VTableId,
+        _pks: &[ApparentPrimaryKey],
+    ) -> ApllodbResult<()> {
         todo!()
     }
 
-    fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()> {
+    async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.navi_dao().insert_deleted_records_all(vtable)
     }
 }
@@ -118,7 +127,7 @@ impl<'vrr, 'sqcn: 'vrr> VersionRevisionResolverImpl<'vrr, 'sqcn> {
         Self { tx }
     }
 
-    fn navi_dao(&self) -> NaviDao<'vrr, 'sqcn> {
-        NaviDao::new(&self.tx)
+    fn navi_dao(&mut self) -> NaviDao<'vrr, 'sqcn> {
+        NaviDao::new(&mut self.tx)
     }
 }
