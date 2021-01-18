@@ -20,9 +20,9 @@ impl SqliteDatabase {
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
-        let conn = Self::connect_sqlite(&name).await?;
+        let mut conn = Self::connect_sqlite(&name).await?;
 
-        VTableDao::create_table_if_not_exist(&conn)?;
+        VTableDao::create_table_if_not_exist(&mut conn).await?;
 
         Ok(Self {
             name,

@@ -27,7 +27,7 @@ impl<'repo, 'sqcn> VersionRepositoryImpl<'repo, 'sqcn> {
     }
 }
 
-impl<'repo, 'sqcn: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'sqcn>>
+impl<'repo, 'sqcn: 'repo> VersionRepository<ApllodbImmutableSchemaEngine>
     for VersionRepositoryImpl<'repo, 'sqcn>
 {
     /// # Failures

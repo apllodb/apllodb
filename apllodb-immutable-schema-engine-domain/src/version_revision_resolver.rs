@@ -19,8 +19,6 @@ pub trait VersionRevisionResolver<
     Types: ImmutableSchemaAbstractTypes<Engine>,
 >
 {
-    fn create_table(&self, vtable: &VTable) -> ApllodbResult<()>;
-
     /// Returns undefined order of VRREntry
     fn probe(
         &self,

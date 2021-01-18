@@ -48,7 +48,7 @@ impl<'dao, 'sqcn: 'dao> VersionDao<'dao, 'sqcn> {
         version: &ActiveVersion,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForVersion::from(version);
-        self.sqlite_tx.execute_named(sql.as_str(), &[])?;
+        self.sqlite_tx.execute(sql.as_str(), &[])?;
         Ok(())
     }
 
@@ -104,7 +104,6 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 version_navi_rowid = CNAME_NAVI_ROWID,
                 navi_rowids=navi_rowids.to_sql_string(),
             );
-            let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
             let mut effective_prj_cdts: Vec<&ColumnDataType> = version
                 .column_data_types()
@@ -117,7 +116,8 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
             prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
-            let row_iter = stmt.query_with(
+            let row_iter = self.sqlite_tx.query(
+                sql,
                 &[],
                 &prj_with_navi_rowid,
                 non_pk_void_projection
@@ -181,7 +181,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             non_pk_column_values = column_values.values().collect::<Vec<_>>().to_sql_string(),
         );
 
-        self.sqlite_tx.execute_named(&sql, &[])?;
+        self.sqlite_tx.execute(&sql, &[])?;
 
         Ok(())
     }

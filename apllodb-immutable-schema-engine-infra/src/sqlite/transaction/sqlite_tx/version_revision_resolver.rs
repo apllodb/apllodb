@@ -26,18 +26,20 @@ pub(crate) struct VersionRevisionResolverImpl<'vrr, 'sqcn: 'vrr> {
     tx: &'vrr SqliteTx<'sqcn>,
 }
 
+impl<'vrr, 'sqcn: 'vrr> VersionRevisionResolverImpl<'vrr, 'sqcn> {
+    pub(crate) async fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
+        self.navi_dao().create_table(vtable).await
+    }
+}
+
 impl<'vrr, 'sqcn: 'vrr>
-    VersionRevisionResolver<ApllodbImmutableSchemaEngine<'sqcn>, SqliteTypes<'vrr, 'sqcn>>
+    VersionRevisionResolver<ApllodbImmutableSchemaEngine, SqliteTypes<'vrr, 'sqcn>>
     for VersionRevisionResolverImpl<'vrr, 'sqcn>
 {
-    fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.navi_dao().create_table(vtable)
-    }
-
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    fn probe(
+    async fn probe(
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,

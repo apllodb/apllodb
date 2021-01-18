@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{ApllodbError, SessionId};
+use apllodb_shared_components::SessionId;
 use generational_arena::{Arena, Index};
 
 use super::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
@@ -26,6 +26,6 @@ pub(crate) struct SqliteResourcePool<'sqcn> {
 impl SqliteResourcePool<'_> {
     pub(crate) fn register_db(sid: &SessionId, db: SqliteDatabase) {
         let db_idx = SQ_POOL.db_arena.insert(db);
-        SQ_POOL.sess_db.insert(sid, db_idx);
+        SQ_POOL.sess_db.insert(sid.clone(), db_idx);
     }
 }

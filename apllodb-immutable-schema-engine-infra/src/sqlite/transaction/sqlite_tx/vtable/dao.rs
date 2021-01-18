@@ -1,4 +1,4 @@
-use crate::sqlite::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::SqliteTx};
+use crate::{error::InfraError, sqlite::transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
@@ -17,8 +17,8 @@ const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
 impl<'dao, 'sqcn: 'dao> VTableDao<'dao, 'sqcn> {
-    pub(in crate::sqlite) fn create_table_if_not_exist(
-        sqlite_conn: &rusqlite::Connection,
+    pub(in crate::sqlite) async fn create_table_if_not_exist(
+        sqlite_conn: &mut sqlx::SqliteConnection,
     ) -> ApllodbResult<()> {
         let sql = format!(
             "
@@ -30,19 +30,10 @@ CREATE TABLE IF NOT EXISTS {} (
             TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
         );
 
-        sqlite_conn
-            .execute(sql.as_str(), rusqlite::params![])
-            .map(|_| ())
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "backend sqlite3 raised an error on creating metadata table `{}`",
-                        TNAME
-                    ),
-                )
-            })?;
-        Ok(())
+        sqlx::query(sql)
+            .execute(&mut sqlite_conn)
+            .await
+            .map_err(InfraError::from)
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'sqcn>) -> Self {
@@ -75,7 +66,7 @@ CREATE TABLE IF NOT EXISTS {} (
             CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS, TNAME, CNAME_TABLE_NAME
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql)?;
+        let mut stmt = self.sqlite_tx.query(&sql)?;
         let mut row_iter = stmt.query_with(
             &[(":table_name", vtable_id.table_name())],
             &[&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
@@ -147,7 +138,7 @@ CREATE TABLE IF NOT EXISTS {} (
             })?;
 
         self.sqlite_tx
-            .execute_named(
+            .execute(
                 &sql,
                 &[
                     (":table_name", vtable.table_name()),

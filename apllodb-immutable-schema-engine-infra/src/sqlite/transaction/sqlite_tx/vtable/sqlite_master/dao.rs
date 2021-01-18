@@ -39,9 +39,9 @@ impl<'dao, 'sqcn: 'dao> SqliteMasterDao<'dao, 'sqcn> {
             vtable.table_name().as_str()
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql)?;
-        let create_table_sqls: Vec<String> = stmt
-            .query_with(&[], &[&self.cdt_create_table_sql()], &[])?
+        let create_table_sqls: Vec<String> = self
+            .sqlite_tx
+            .query(sql, &[], &[&self.cdt_create_table_sql()], &[])?
             .map(|mut row| {
                 let s = row
                     .get::<String>(&ColumnReference::new(
