@@ -39,7 +39,7 @@ impl SqliteRowIterator {
     /// - `non_pk_column_data_types` - Only contains columns `sqlite_rows` have.
     /// - `non_pk_void_projection` - Columns `sqlite_rows` do not have but another version has.
     pub(in crate::sqlite) fn new(
-        sqlite_rows: &mut rusqlite::Rows<'_>,
+        sqlite_rows: &[sqlx::sqlite::SqliteRow],
         column_data_types: &[&ColumnDataType],
         void_projection: &[ColumnReference],
     ) -> ApllodbResult<Self> {

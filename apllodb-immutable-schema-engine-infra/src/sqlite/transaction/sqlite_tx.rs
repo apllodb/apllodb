@@ -20,7 +20,7 @@ use log::debug;
 #[derive(Debug)]
 pub struct SqliteTx<'sqcn> {
     database_name: DatabaseName,
-    rusqlite_tx: rusqlite::Transaction<'sqcn>,
+    sqlx_tx: sqlx::Transaction<'sqcn, sqlx::sqlite::Sqlite>,
 }
 
 impl<'sqcn> SqliteTx<'sqcn> {
@@ -50,7 +50,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
 
         Ok(Self {
             database_name,
-            rusqlite_tx: tx,
+            sqlx_tx: tx,
         })
     }
 
@@ -61,7 +61,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
     fn commit(self) -> ApllodbResult<()> {
-        self.rusqlite_tx.commit().map_err(|e| {
+        self.sqlx_tx.commit().map_err(|e| {
             map_sqlite_err(
                 e,
                 "backend sqlite3 raised an error on committing transaction",
@@ -75,7 +75,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
     fn abort(self) -> ApllodbResult<()> {
-        self.rusqlite_tx.rollback().map_err(|e| {
+        self.sqlx_tx.rollback().map_err(|e| {
             map_sqlite_err(e, "backend sqlite3 raised an error on aborting transaction")
         })?;
         Ok(())
@@ -93,7 +93,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
         debug!("SqliteTx::prepare():\n    {}", sql);
 
         let raw_stmt = self
-            .rusqlite_tx
+            .sqlx_tx
             .prepare(sql)
             .map_err(|e| map_sqlite_err(e, "SQLite raised an error on prepare"))?;
         Ok(SqliteStatement::new(&self, raw_stmt))
@@ -121,7 +121,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
             )
         };
 
-        self.rusqlite_tx
+        self.sqlx_tx
             .execute_named(
                 sql,
                 params
@@ -162,6 +162,6 @@ impl<'sqcn> SqliteTx<'sqcn> {
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn last_insert_rowid(&self) -> SqliteRowid {
-        SqliteRowid(self.rusqlite_tx.last_insert_rowid())
+        SqliteRowid(self.sqlx_tx.last_insert_rowid())
     }
 }

@@ -25,7 +25,7 @@ env_logger = "0.8"
 log = "0.4"
 
 libsqlite3-sys = "0.20"
-rusqlite = {version = "0.24", features = ["bundled"]}
+sqlx = {version = "0.4.1", features = ["sqlite", "runtime-tokio-rustls"]}
 
 serde = {version = "1.0", features = ["derive"]}
 serde_yaml = "0.8"

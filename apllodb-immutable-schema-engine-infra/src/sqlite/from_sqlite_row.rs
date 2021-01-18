@@ -6,10 +6,11 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnDataType, ColumnReference, ColumnValue, I64LooseType,
     NumericComparableType, SqlConvertible, SqlType, SqlValue, StringComparableLoseType,
 };
+use sqlx::Row;
 
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
-        sqlite_row: &rusqlite::Row<'_>,
+        sqlite_row: &sqlx::sqlite::SqliteRow,
         column_data_types: &[&ColumnDataType],
         void_projections: &[ColumnReference],
     ) -> ApllodbResult<ImmutableRow> {
@@ -33,7 +34,7 @@ pub(crate) trait FromSqliteRow {
     }
 
     fn _sql_value(
-        sqlite_row: &rusqlite::Row<'_>,
+        sqlite_row: &sqlx::sqlite::SqliteRow,
         column_data_type: &ColumnDataType,
     ) -> ApllodbResult<SqlValue> {
         let sql_value = match column_data_type.sql_type() {
@@ -60,26 +61,33 @@ pub(crate) trait FromSqliteRow {
         Ok(sql_value)
     }
 
-    fn _sqlite_row_value<T>(
-        sqlite_row: &rusqlite::Row<'_>,
+    fn _sqlite_row_value<'r, T>(
+        sqlite_row: &'r sqlx::sqlite::SqliteRow,
         column_data_type: &ColumnDataType,
     ) -> ApllodbResult<SqlValue>
     where
-        T: rusqlite::types::FromSql + SqlConvertible,
+        T: sqlx::Decode<'r, sqlx::sqlite::Sqlite>
+            + sqlx::Type<sqlx::sqlite::Sqlite>
+            + SqlConvertible,
     {
         let colref = column_data_type.column_ref();
         let sql_type = column_data_type.sql_type();
 
-        let err_conv = |e: rusqlite::Error| {
-            map_sqlite_err(
-                e,
-                format!("failed to get column `{:?}`'s value from SQLite", colref),
-            )
-        };
+        // let err_conv = |e: rusqlite::Error| {
+        //     map_sqlite_err(
+        //         e,
+        //         format!("failed to get column `{:?}`'s value from SQLite", colref),
+        //     )
+        // };
 
         let rust_value: Option<T> = sqlite_row
-            .get(colref.as_column_name().as_str())
-            .map_err(err_conv)?;
+            .try_get(colref.as_column_name().as_str())
+            .map_err(|e| {
+                map_sqlite_err(
+                    e,
+                    format!("failed to get column `{:?}`'s value from SQLite", colref),
+                )
+            })?;
 
         let sql_value = if let Some(rust_value) = rust_value {
             SqlValue::pack(sql_type.clone(), &rust_value)?

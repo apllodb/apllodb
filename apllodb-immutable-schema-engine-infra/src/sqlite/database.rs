@@ -1,11 +1,12 @@
 use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
 use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use std::time::Duration;
+use sqlx::{ConnectOptions, Connection};
+use std::{str::FromStr, time::Duration};
 
 /// Database context.
 #[derive(Debug)]
 pub struct SqliteDatabase {
-    sqlite_conn: rusqlite::Connection,
+    sqlite_conn: sqlx::SqliteConnection,
     name: DatabaseName,
 }
 
@@ -16,8 +17,8 @@ impl SqliteDatabase {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    pub(crate) fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
-        let conn = Self::connect_sqlite(&name)?;
+    pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
+        let conn = Self::connect_sqlite(&name).await?;
 
         VTableDao::create_table_if_not_exist(&conn)?;
 
@@ -39,19 +40,21 @@ impl SqliteDatabase {
         format!("immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
     }
 
-    fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<rusqlite::Connection> {
-        let path = Self::_sqlite_db_path(&db_name);
-        let conn = rusqlite::Connection::open(path).map_err(|e| {
-            map_sqlite_err(e, "backend sqlite3 raised an error on creating connection")
-        })?;
+    async fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<sqlx::SqliteConnection> {
+        let err = |e| map_sqlite_err(e, "backend sqlite3 raised an error on creating connection");
 
-        conn.busy_timeout(Duration::from_secs(1))
-            .map_err(|e| map_sqlite_err(e, "failed to set busy timeout to SQLite"))?;
+        let path = Self::_sqlite_db_path(&db_name);
+        let conn = sqlx::sqlite::SqliteConnectOptions::from_str(&path)
+            .map_err(err)?
+            .busy_timeout(Duration::from_secs(1))
+            .connect()
+            .await
+            .map_err(err)?;
 
         Ok(conn)
     }
 
-    pub(in crate::sqlite) fn sqlite_conn(&mut self) -> &mut rusqlite::Connection {
+    pub(in crate::sqlite) fn sqlite_conn(&mut self) -> &mut sqlx::SqliteConnection {
         &mut self.sqlite_conn
     }
 }

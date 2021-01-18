@@ -24,62 +24,59 @@ pub struct ApllodbImmutableSchemaEngine<'sqcn> {
     pool: Arc<RwLock<SqliteResourcePool<'sqcn>>>,
 }
 
+#[tarpc::server]
 impl<'sqcn> StorageEngine for ApllodbImmutableSchemaEngine<'sqcn> {
-    type UseDatabaseFut = Ready<ApllodbResult<SessionWithDb>>;
-    type BeginTransactionFut = Ready<ApllodbResult<SessionWithTx>>;
-    type CommitTransactionFut = Ready<ApllodbResult<()>>;
-    type AbortTransactionFut = Ready<ApllodbResult<()>>;
-    type CreateTableFut = Ready<ApllodbResult<SessionWithTx>>;
-
-    fn use_database(
+    async fn use_database(
         self,
         _: context::Context,
         session: SessionWithoutDb,
         database: DatabaseName,
-    ) -> Self::UseDatabaseFut {
+    ) -> ApllodbResult<SessionWithDb> {
         // FIXME actually not async at all because rusqlite::Connection internally has `RefCell: !Sync`.
         // So here giving up using `async fn` (whose body must be `Send`).
 
-        let db = SqliteDatabase::use_database(database.clone()).unwrap();
+        let db = SqliteDatabase::use_database(database.clone())
+            .await
+            .unwrap();
         let mut pool = self.pool.write().unwrap(); // TODO use ?
         let db_idx = pool.db_arena.insert(db);
         pool.sess_db.insert(session.get_id().clone(), db_idx);
 
-        future::ready(Ok(session.upgrade(database)))
+        Ok(session.upgrade(database))
     }
 
-    fn begin_transaction(
+    async fn begin_transaction(
         self,
         _: context::Context,
         session: SessionWithDb,
-    ) -> Self::BeginTransactionFut {
+    ) -> ApllodbResult<SessionWithTx> {
         todo!()
     }
 
-    fn commit_transaction(
+    async fn commit_transaction(
         self,
         _: context::Context,
         session: SessionWithTx,
-    ) -> Self::CommitTransactionFut {
+    ) -> ApllodbResult<()> {
         todo!()
     }
 
-    fn abort_transaction(
+    async fn abort_transaction(
         self,
         _: context::Context,
         session: SessionWithTx,
-    ) -> Self::AbortTransactionFut {
+    ) -> ApllodbResult<()> {
         todo!()
     }
 
-    fn create_table(
+    async fn create_table(
         self,
         _: context::Context,
         session: SessionWithTx,
         table_name: TableName,
         table_constraints: TableConstraints,
         column_definitions: Vec<ColumnDefinition>,
-    ) -> Self::CreateTableFut {
+    ) -> ApllodbResult<(SessionWithTx)> {
         todo!()
     }
 }
