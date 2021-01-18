@@ -112,6 +112,7 @@ dependencies = [
  "generational-arena",
  "libsqlite3-sys",
  "log",
+ "once_cell",
  "pretty_assertions",
  "rand 0.8.0",
  "serde",

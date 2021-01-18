@@ -4,14 +4,15 @@ pub(crate) mod version_revision_resolver;
 pub(crate) mod vtable;
 
 pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
+use sqlx::{Connection, Executor};
 
 use self::{
     version::repository_impl::VersionRepositoryImpl, vtable::repository_impl::VTableRepositoryImpl,
 };
 
-use crate::sqlite::{
-    database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
-    to_sql_string::ToSqlString,
+use crate::{
+    error::InfraError,
+    sqlite::{database::SqliteDatabase, sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString},
 };
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName};
 use log::debug;
@@ -38,15 +39,10 @@ impl<'sqcn> SqliteTx<'sqcn> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<Self> {
+    async fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<SqliteTx<'sqcn>> {
         let database_name = { db.name().clone() };
 
-        let tx = db.sqlite_conn().transaction().map_err(|e| {
-            map_sqlite_err(
-                e,
-                "backend sqlite3 raised an error on beginning transaction",
-            )
-        })?;
+        let tx = db.sqlite_conn().begin().await.map_err(InfraError::from)?;
 
         Ok(Self {
             database_name,
@@ -60,13 +56,8 @@ impl<'sqcn> SqliteTx<'sqcn> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn commit(self) -> ApllodbResult<()> {
-        self.sqlx_tx.commit().map_err(|e| {
-            map_sqlite_err(
-                e,
-                "backend sqlite3 raised an error on committing transaction",
-            )
-        })?;
+    async fn commit(self) -> ApllodbResult<()> {
+        self.sqlx_tx.commit().await.map_err(InfraError::from)?;
         Ok(())
     }
 
@@ -74,10 +65,8 @@ impl<'sqcn> SqliteTx<'sqcn> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn abort(self) -> ApllodbResult<()> {
-        self.sqlx_tx.rollback().map_err(|e| {
-            map_sqlite_err(e, "backend sqlite3 raised an error on aborting transaction")
-        })?;
+    async fn abort(self) -> ApllodbResult<()> {
+        self.sqlx_tx.rollback().await.map_err(InfraError::from)?;
         Ok(())
     }
 
@@ -85,34 +74,26 @@ impl<'sqcn> SqliteTx<'sqcn> {
         &self.database_name
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: AsRef<str>>(
-        &self,
-        sql: S,
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn prepare(
+        &mut self,
+        sql: &str,
     ) -> ApllodbResult<SqliteStatement<'_, '_>> {
         let sql = sql.as_ref();
         debug!("SqliteTx::prepare():\n    {}", sql);
 
-        let raw_stmt = self
-            .sqlx_tx
-            .prepare(sql)
-            .map_err(|e| map_sqlite_err(e, "SQLite raised an error on prepare"))?;
-        Ok(SqliteStatement::new(&self, raw_stmt))
+        let raw_stmt = self.sqlx_tx.prepare(sql).await.map_err(InfraError::from)?;
+        Ok(SqliteStatement::new(&mut self, raw_stmt))
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn execute_named<S: AsRef<str>>(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn execute_named(
         &self,
-        sql: S,
-        params: &[(&str, &dyn ToSqlString)],
+        sql: &str,
+        params: sqlx::sqlite::SqliteArguments,
     ) -> ApllodbResult<()> {
         // TODO return ChangedRows(usize)
 
         let sql = sql.as_ref();
         debug!("SqliteTx::execute_named():\n    {}", sql);
-
-        let params = params
-            .iter()
-            .map(|(pname, v)| (*pname, v.to_sql_string()))
-            .collect::<Vec<(&str, String)>>();
 
         let msg = |prefix: &str| {
             format!(
@@ -122,7 +103,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
         };
 
         self.sqlx_tx
-            .execute_named(
+            .execute(
                 sql,
                 params
                     .iter()

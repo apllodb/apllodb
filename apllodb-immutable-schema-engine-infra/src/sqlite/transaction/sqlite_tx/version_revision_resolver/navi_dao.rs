@@ -84,7 +84,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             column_data_types.push(pk_cdt);
         }
 
-        let row_iter = stmt.query_named(&[], &column_data_types, &[])?;
+        let row_iter = stmt.query_with(&[], &column_data_types, &[])?;
 
         let ret: Vec<ExistingNaviWithPK> = row_iter
             .map(|r| ExistingNaviWithPK::from_navi_row(vtable, r))
@@ -125,7 +125,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
         let cdt_version_number = self.cdt_version_number(&navi_table_name);
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let mut row_iter = stmt.query_named(&[], &column_data_types, &[])?;
+        let mut row_iter = stmt.query_with(&[], &column_data_types, &[])?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {

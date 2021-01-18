@@ -1,4 +1,6 @@
-use super::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::vtable::dao::VTableDao};
+use crate::error::InfraError;
+
+use super::transaction::sqlite_tx::vtable::dao::VTableDao;
 use apllodb_shared_components::{ApllodbResult, DatabaseName};
 use sqlx::{ConnectOptions, Connection};
 use std::{str::FromStr, time::Duration};
@@ -41,15 +43,13 @@ impl SqliteDatabase {
     }
 
     async fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<sqlx::SqliteConnection> {
-        let err = |e| map_sqlite_err(e, "backend sqlite3 raised an error on creating connection");
-
         let path = Self::_sqlite_db_path(&db_name);
         let conn = sqlx::sqlite::SqliteConnectOptions::from_str(&path)
-            .map_err(err)?
+            .map_err(InfraError::from)?
             .busy_timeout(Duration::from_secs(1))
             .connect()
             .await
-            .map_err(err)?;
+            .map_err(InfraError::from)?;
 
         Ok(conn)
     }

@@ -1,4 +1,3 @@
-use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::row::immutable_row::{
     builder::ImmutableRowBuilder, ImmutableRow,
 };
@@ -7,6 +6,8 @@ use apllodb_shared_components::{
     NumericComparableType, SqlConvertible, SqlType, SqlValue, StringComparableLoseType,
 };
 use sqlx::Row;
+
+use crate::error::InfraError;
 
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
@@ -73,21 +74,9 @@ pub(crate) trait FromSqliteRow {
         let colref = column_data_type.column_ref();
         let sql_type = column_data_type.sql_type();
 
-        // let err_conv = |e: rusqlite::Error| {
-        //     map_sqlite_err(
-        //         e,
-        //         format!("failed to get column `{:?}`'s value from SQLite", colref),
-        //     )
-        // };
-
         let rust_value: Option<T> = sqlite_row
             .try_get(colref.as_column_name().as_str())
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!("failed to get column `{:?}`'s value from SQLite", colref),
-                )
-            })?;
+            .map_err(InfraError::from)?;
 
         let sql_value = if let Some(rust_value) = rust_value {
             SqlValue::pack(sql_type.clone(), &rust_value)?

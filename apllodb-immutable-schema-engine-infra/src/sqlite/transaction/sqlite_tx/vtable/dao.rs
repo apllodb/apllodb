@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS {} (
         );
 
         let mut stmt = self.sqlite_tx.prepare(&sql)?;
-        let mut row_iter = stmt.query_named(
+        let mut row_iter = stmt.query_with(
             &[(":table_name", vtable_id.table_name())],
             &[&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
             &[],

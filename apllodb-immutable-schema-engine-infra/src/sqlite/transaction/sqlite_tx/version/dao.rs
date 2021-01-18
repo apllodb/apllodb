@@ -117,7 +117,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
             prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
-            let row_iter = stmt.query_named(
+            let row_iter = stmt.query_with(
                 &[],
                 &prj_with_navi_rowid,
                 non_pk_void_projection

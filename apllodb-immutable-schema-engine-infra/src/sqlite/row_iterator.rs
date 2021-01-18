@@ -1,4 +1,3 @@
-use super::sqlite_error::map_sqlite_err;
 use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow, row_iter::version_row_iter::VersionRowIterator,
 };
@@ -46,10 +45,8 @@ impl SqliteRowIterator {
         use crate::sqlite::from_sqlite_row::FromSqliteRow;
 
         let mut rows: VecDeque<ImmutableRow> = VecDeque::new();
-        while let Some(sqlite_row) = sqlite_rows
-            .next()
-            .map_err(|e| map_sqlite_err(e, "failed to get next rusqlite::Row"))?
-        {
+
+        for sqlite_row in sqlite_rows {
             let row =
                 ImmutableRow::from_sqlite_row(sqlite_row, column_data_types, void_projection)?;
             rows.push_back(row);

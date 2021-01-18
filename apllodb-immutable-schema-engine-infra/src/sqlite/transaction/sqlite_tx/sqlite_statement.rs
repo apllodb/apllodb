@@ -1,29 +1,22 @@
-use super::SqliteTx;
-use crate::sqlite::{
-    row_iterator::SqliteRowIterator, sqlite_error::map_sqlite_err, to_sql_string::ToSqlString,
+use crate::{
+    error::InfraError,
+    sqlite::{row_iterator::SqliteRowIterator, to_sql_string::ToSqlString},
 };
 use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference};
+use sqlx::Statement;
 
-#[derive(Debug)]
+use super::SqliteTx;
+
+#[derive(Debug, new)]
 pub(in crate::sqlite::transaction) struct SqliteStatement<'stmt, 'sqcn: 'stmt> {
-    sqlite_tx: &'stmt SqliteTx<'sqcn>,
-    sqlite_stmt: rusqlite::Statement<'sqcn>,
+    sqlite_tx: &'stmt mut SqliteTx<'sqcn>,
+    sqlite_stmt: sqlx::sqlite::SqliteStatement<'sqcn>,
 }
 
 impl<'stmt, 'sqcn: 'stmt> SqliteStatement<'stmt, 'sqcn> {
-    pub(super) fn new(
-        sqlite_tx: &'stmt SqliteTx<'sqcn>,
-        sqlite_stmt: rusqlite::Statement<'sqcn>,
-    ) -> Self {
-        Self {
-            sqlite_tx,
-            sqlite_stmt,
-        }
-    }
-
-    pub(in crate::sqlite::transaction::sqlite_tx) fn query_named(
+    pub(in crate::sqlite::transaction::sqlite_tx) fn query_with(
         &mut self,
-        params: &[(&str, &dyn ToSqlString)],
+        params: sqlx::sqlite::SqliteArguments,
         column_data_types: &[&ColumnDataType],
         void_projection: &[ColumnReference],
     ) -> ApllodbResult<SqliteRowIterator> {
@@ -32,18 +25,13 @@ impl<'stmt, 'sqcn: 'stmt> SqliteStatement<'stmt, 'sqcn> {
             .map(|(pname, v)| (*pname, v.to_sql_string()))
             .collect::<Vec<(&str, String)>>();
 
-        let mut rusqlite_rows = self
+        let mut sqlite_rows = self
             .sqlite_stmt
-            .query_named(
-                params
-                    .iter()
-                    .map(|(pname, s)| (*pname, s as &dyn rusqlite::ToSql))
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            )
-            .map_err(|e| map_sqlite_err(e, "SQLite raised an error on query_named()"))?;
+            .query_with(params)
+            .map_err(InfraError::from)?
+            .execute(self);
 
-        let iter = SqliteRowIterator::new(&mut rusqlite_rows, column_data_types, void_projection)?;
+        let iter = SqliteRowIterator::new(&mut sqlite_rows, column_data_types, void_projection)?;
         Ok(iter)
     }
 }
