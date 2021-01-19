@@ -48,7 +48,7 @@ impl<
         vtable_repo: &Types::VTableRepo,
         version_repo: &Types::VersionRepo,
         input: Self::In,
-    ) -> ApllodbResult<AlterTableUseCaseOutput> {
+    ) -> ApllodbResult<Self::Out> {
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let mut vtable = vtable_repo.read(&vtable_id).await?;
         vtable.alter(input.action)?;
