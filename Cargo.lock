@@ -96,6 +96,7 @@ dependencies = [
  "apllodb-shared-components",
  "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
+ "async-trait",
  "chrono",
  "derive-new",
  "env_logger",
@@ -106,6 +107,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_yaml",
+ "tokio",
  "uuid",
  "version-sync",
 ]
