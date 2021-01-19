@@ -6,6 +6,7 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{AlterTableAction, ApllodbResult, DatabaseName, TableName};
 use apllodb_storage_engine_interface::StorageEngine;
+use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
@@ -31,6 +32,8 @@ pub struct AlterTableUseCase<
 > {
     _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
+
+#[async_trait(?Send)]
 impl<
         'usecase,
         'db: 'usecase,
@@ -41,22 +44,22 @@ impl<
     type In = AlterTableUseCaseInput<'usecase>;
     type Out = AlterTableUseCaseOutput;
 
-    fn run_core(
+    async fn run_core(
         vtable_repo: &Types::VTableRepo,
         version_repo: &Types::VersionRepo,
         input: Self::In,
-    ) -> ApllodbResult<Self::Out> {
+    ) -> ApllodbResult<AlterTableUseCaseOutput> {
         let vtable_id = VTableId::new(input.database_name, input.table_name);
-        let mut vtable = vtable_repo.read(&vtable_id)?;
+        let mut vtable = vtable_repo.read(&vtable_id).await?;
         vtable.alter(input.action)?;
 
-        let active_versions = vtable_repo.active_versions(&vtable)?;
+        let active_versions = vtable_repo.active_versions(&vtable).await?;
         let current_version = active_versions.current_version()?;
         let next_version = current_version.create_next(input.action)?; // TODO こいつの中で、PKの一部のカラムをDROPさせることは一旦UnsupportedErrorにする（他のDBMSは対応していた）
 
         // TODO naviテーブルに、これからinactivateされるVersionNumberが書かれていることの対処を考える
-        vtable_repo.update(&vtable)?;
-        version_repo.create(&next_version)?;
+        vtable_repo.update(&vtable).await?;
+        version_repo.create(&next_version).await?;
 
         Ok(AlterTableUseCaseOutput)
     }
