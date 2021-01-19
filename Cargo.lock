@@ -66,6 +66,7 @@ dependencies = [
  "apllodb-immutable-schema-engine-domain",
  "apllodb-shared-components",
  "apllodb-storage-engine-interface",
+ "async-trait",
  "derive-new",
  "env_logger",
  "log",
