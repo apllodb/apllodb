@@ -66,6 +66,7 @@ dependencies = [
  "apllodb-immutable-schema-engine-domain",
  "apllodb-shared-components",
  "apllodb-storage-engine-interface",
+ "async-trait",
  "derive-new",
  "env_logger",
  "log",
@@ -77,6 +78,7 @@ version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
  "apllodb-storage-engine-interface",
+ "async-trait",
  "derive-new",
  "env_logger",
  "log",
@@ -94,6 +96,7 @@ dependencies = [
  "apllodb-shared-components",
  "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
+ "async-trait",
  "chrono",
  "derive-new",
  "env_logger",
@@ -104,6 +107,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_yaml",
+ "tokio",
  "uuid",
  "version-sync",
 ]
@@ -184,6 +188,17 @@ dependencies = [
  "apllodb-shared-components",
  "serde",
  "version-sync",
+]
+
+[[package]]
+name = "async-trait"
+version = "0.1.42"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d3a45e77e34375a7923b1e8febb049bb011f064714a8e17a1a616fef01da13d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

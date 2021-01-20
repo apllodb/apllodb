@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
     immutable_schema_row_iter::ImmutableSchemaRowIter,
@@ -21,8 +22,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::ApllodbResult;
-
-use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
+use async_trait::async_trait;
 
 #[derive(Debug)]
 pub struct VTableRepositoryImpl<'repo, 'db: 'repo> {
@@ -35,6 +35,7 @@ impl<'repo, 'db> VTableRepositoryImpl<'repo, 'db> {
     }
 }
 
+#[async_trait(?Send)]
 impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'repo, 'db>>
     for VTableRepositoryImpl<'repo, 'db>
 {
@@ -43,9 +44,9 @@ impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, Sqli
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
-    fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
+    async fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.vtable_dao().insert(&vtable)?;
-        self.vrr().create_table(&vtable)?;
+        self.vrr().create_table(&vtable).await?;
         Ok(())
     }
 
@@ -55,7 +56,7 @@ impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, Sqli
     ///   - rusqlite raises an error.
     /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
-    fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
+    async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
         self.vtable_dao().select(&vtable_id)
     }
 
@@ -65,7 +66,7 @@ impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, Sqli
     ///   - Table `table_name` is not visible to this transaction.
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    fn update(&self, _vtable: &VTable) -> ApllodbResult<()> {
+    async fn update(&self, _vtable: &VTable) -> ApllodbResult<()> {
         // TODO update VTable on TableWideConstraints change.
         Ok(())
     }
@@ -73,21 +74,21 @@ impl<'repo, 'db: 'repo> VTableRepository<ApllodbImmutableSchemaEngine<'db>, Sqli
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    fn full_scan(
+    async fn full_scan(
         &self,
         vtable: &VTable,
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
-        let vrr_entries = self.vrr().scan(&vtable)?;
+        let vrr_entries = self.vrr().scan(&vtable).await?;
         self.probe_vrr_entries(vrr_entries, projection)
     }
 
-    fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.vrr().deregister_all(vtable)?;
+    async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
+        self.vrr().deregister_all(vtable).await?;
         Ok(())
     }
 
-    fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
+    async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
         let active_versions = self.sqlite_master_dao().select_active_versions(vtable)?;
         Ok(ActiveVersions::from(active_versions))
     }
