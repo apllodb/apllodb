@@ -18,6 +18,7 @@ use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::{
     cell::RefCell,
     collections::{hash_map::Entry, HashMap, VecDeque},
+    rc::Rc,
 };
 
 #[cfg(test)]
@@ -27,7 +28,7 @@ use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao<'sqcn> {
-    sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+    sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
@@ -43,7 +44,7 @@ impl VersionDao<'_> {
 
 impl<'sqcn> VersionDao<'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn new(
-        sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+        sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
     ) -> Self {
         Self { sqlite_tx }
     }
@@ -53,7 +54,7 @@ impl<'sqcn> VersionDao<'sqcn> {
         version: &ActiveVersion,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForVersion::from(version);
-        self.sqlite_tx.execute(sql.as_str())?;
+        self.sqlite_tx.borrow_mut().execute(sql.as_str()).await?;
         Ok(())
     }
 
@@ -121,18 +122,24 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
             prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
-            let row_iter = self.sqlite_tx.query(
-                sql,
-                &[],
-                &prj_with_navi_rowid,
-                non_pk_void_projection
-                    .iter()
-                    .map(|cn| {
-                        ColumnReference::new(version.vtable_id().table_name().clone(), cn.clone())
-                    })
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            )?;
+            let row_iter = self
+                .sqlite_tx
+                .borrow_mut()
+                .query(
+                    &sql,
+                    &prj_with_navi_rowid,
+                    non_pk_void_projection
+                        .iter()
+                        .map(|cn| {
+                            ColumnReference::new(
+                                version.vtable_id().table_name().clone(),
+                                cn.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .await?;
 
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
             for mut row in row_iter {
@@ -186,7 +193,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             non_pk_column_values = column_values.values().collect::<Vec<_>>().to_sql_string(),
         );
 
-        self.sqlite_tx.execute(&sql, &[])?;
+        self.sqlite_tx.borrow_mut().execute(&sql).await?;
 
         Ok(())
     }

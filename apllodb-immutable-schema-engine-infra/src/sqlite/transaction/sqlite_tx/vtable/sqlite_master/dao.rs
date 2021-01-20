@@ -1,6 +1,6 @@
 mod active_version_deserializer;
 
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
@@ -15,7 +15,7 @@ use apllodb_shared_components::{
 
 #[derive(Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao<'sqcn> {
-    sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+    sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
 }
 
 const TNAME: &str = "sqlite_master";
@@ -23,7 +23,7 @@ const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
 impl<'sqcn> SqliteMasterDao<'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn new(
-        sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+        sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
     ) -> Self {
         Self { sqlite_tx }
     }
@@ -74,7 +74,7 @@ impl<'sqcn> SqliteMasterDao<'sqcn> {
     ) -> ApllodbResult<ActiveVersion> {
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
-        let versions = self.select_active_versions(vtable)?;
+        let versions = self.select_active_versions(vtable).await?;
         versions
             .into_iter()
             .find(|v| v.id() == version_id)

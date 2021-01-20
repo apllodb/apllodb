@@ -1,6 +1,6 @@
 mod navi_dao;
 
-use std::{cell::RefCell, collections::VecDeque};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
@@ -20,7 +20,7 @@ use async_trait::async_trait;
 
 #[derive(Debug)]
 pub(crate) struct VersionRevisionResolverImpl<'sqcn> {
-    tx: RefCell<SqliteTx<'sqcn>>,
+    tx: Rc<RefCell<SqliteTx<'sqcn>>>,
 }
 
 impl<'sqcn> VersionRevisionResolverImpl<'sqcn> {
@@ -99,7 +99,7 @@ impl<'sqcn> VersionRevisionResolver<SqliteTypes<'sqcn>> for VersionRevisionResol
             Navi::Deleted { revision, .. } => Ok(revision.next()),
         }?;
 
-        let rowid = self.navi_dao().insert(&pk, &revision, &version_id)?;
+        let rowid = self.navi_dao().insert(&pk, &revision, &version_id).await?;
         Ok(VRREntry::new(rowid, pk, version_id.clone(), revision))
     }
 
@@ -112,16 +112,16 @@ impl<'sqcn> VersionRevisionResolver<SqliteTypes<'sqcn>> for VersionRevisionResol
     }
 
     async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.navi_dao().insert_deleted_records_all(vtable)
+        self.navi_dao().insert_deleted_records_all(vtable).await
     }
 }
 
 impl<'sqcn> VersionRevisionResolverImpl<'sqcn> {
-    pub(crate) fn new(tx: RefCell<SqliteTx<'sqcn>>) -> Self {
+    pub(crate) fn new(tx: Rc<RefCell<SqliteTx<'sqcn>>>) -> Self {
         Self { tx }
     }
 
-    fn navi_dao(&mut self) -> NaviDao<'sqcn> {
-        NaviDao::new(&mut self.tx)
+    fn navi_dao(&self) -> NaviDao<'sqcn> {
+        NaviDao::new(self.tx.clone())
     }
 }

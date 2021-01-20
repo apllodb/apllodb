@@ -14,15 +14,15 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::ApllodbResult;
 use apllodb_shared_components::{ColumnName, SqlValue};
 use async_trait::async_trait;
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
 pub struct VersionRepositoryImpl<'sqcn> {
-    tx: RefCell<SqliteTx<'sqcn>>,
+    tx: Rc<RefCell<SqliteTx<'sqcn>>>,
 }
 
 impl<'sqcn> VersionRepositoryImpl<'sqcn> {
-    pub fn new(tx: RefCell<SqliteTx<'sqcn>>) -> Self {
+    pub fn new(tx: Rc<RefCell<SqliteTx<'sqcn>>>) -> Self {
         Self { tx }
     }
 }
@@ -35,7 +35,7 @@ impl<'sqcn> VersionRepository for VersionRepositoryImpl<'sqcn> {
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
-        self.version_dao().create_table(&version)?;
+        self.version_dao().create_table(&version).await?;
         Ok(())
     }
 
@@ -52,17 +52,18 @@ impl<'sqcn> VersionRepository for VersionRepositoryImpl<'sqcn> {
         let vrr_entry = self.vrr().register(version_id, apparent_pk).await?;
 
         self.version_dao()
-            .insert(&version_id, vrr_entry.id(), &column_values)?;
+            .insert(&version_id, vrr_entry.id(), &column_values)
+            .await?;
         Ok(())
     }
 }
 
 impl<'sqcn> VersionRepositoryImpl<'sqcn> {
-    fn vrr(&self) -> VersionRevisionResolverImpl {
-        VersionRevisionResolverImpl::new(self.tx)
+    fn vrr(&self) -> VersionRevisionResolverImpl<'sqcn> {
+        VersionRevisionResolverImpl::new(self.tx.clone())
     }
 
     fn version_dao(&self) -> VersionDao<'sqcn> {
-        VersionDao::new(&self.tx)
+        VersionDao::new(self.tx.clone())
     }
 }

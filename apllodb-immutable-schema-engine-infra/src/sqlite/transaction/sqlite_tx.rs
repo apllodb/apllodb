@@ -2,7 +2,7 @@ pub(crate) mod version;
 pub(crate) mod version_revision_resolver;
 pub(crate) mod vtable;
 
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use sqlx::Connection;
 
@@ -27,12 +27,12 @@ pub struct SqliteTx<'sqcn> {
 }
 
 impl<'sqcn> SqliteTx<'sqcn> {
-    pub(crate) fn vtable_repo(slf: RefCell<Self>) -> VTableRepositoryImpl<'sqcn> {
+    pub(crate) fn vtable_repo(slf: Rc<RefCell<Self>>) -> VTableRepositoryImpl<'sqcn> {
         VTableRepositoryImpl::new(slf)
     }
 
-    pub(crate) fn version_repo(slf: RefCell<Self>) -> VersionRepositoryImpl<'sqcn> {
-        VersionRepositoryImpl::new(self)
+    pub(crate) fn version_repo(slf: Rc<RefCell<Self>>) -> VersionRepositoryImpl<'sqcn> {
+        VersionRepositoryImpl::new(slf)
     }
 }
 
@@ -41,15 +41,15 @@ impl<'sqcn> SqliteTx<'sqcn> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    async fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<SqliteTx<'sqcn>> {
+    async fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx<'sqcn>>>> {
         let database_name = { db.name().clone() };
 
         let tx = db.sqlite_conn().begin().await.map_err(InfraError::from)?;
 
-        Ok(Self {
+        Ok(Rc::new(RefCell::new(Self {
             database_name,
             sqlx_tx: tx,
-        })
+        })))
     }
 
     /// # Failures

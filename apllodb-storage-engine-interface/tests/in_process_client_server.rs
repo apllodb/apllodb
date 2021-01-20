@@ -23,7 +23,7 @@ async fn test_in_process_client() -> ApllodbResult<()> {
     let mut client =
         StorageEngineClient::new(client::Config::default(), client_transport).spawn()?;
 
-    let session = client
+    let _session = client
         .use_database(
             context::current(),
             SessionWithoutDb::default(),
@@ -31,23 +31,23 @@ async fn test_in_process_client() -> ApllodbResult<()> {
         )
         .await??;
 
-    let session = client
-        .begin_transaction(context::current(), session)
-        .await??;
+    // let session = client
+    //     .begin_transaction(context::current(), session)
+    //     .await??;
 
-    let session = client
-        .create_table(
-            context::current(),
-            session,
-            TableName::new("t")?,
-            TableConstraints::default(),
-            vec![],
-        )
-        .await??;
+    // let session = client
+    //     .create_table(
+    //         context::current(),
+    //         session,
+    //         TableName::new("t")?,
+    //         TableConstraints::default(),
+    //         vec![],
+    //     )
+    //     .await??;
 
-    client
-        .commit_transaction(context::current(), session)
-        .await??;
+    // client
+    //     .commit_transaction(context::current(), session)
+    //     .await??;
 
     Ok(())
 }

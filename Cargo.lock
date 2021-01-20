@@ -195,6 +195,7 @@ dependencies = [
  "mockall",
  "pretty_assertions",
  "serde",
+ "tarpc",
 ]
 
 [[package]]

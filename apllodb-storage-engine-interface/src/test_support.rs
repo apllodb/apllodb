@@ -1,10 +1,5 @@
-
-
 use crate::StorageEngine;
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDefinition, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
-    TableConstraints, TableName,
-};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
 use tarpc::context;
 
 /// A compile-ready storage engine implementation.
@@ -24,38 +19,38 @@ impl StorageEngine for TestStorageEngineImpl {
         Ok(session.upgrade(database))
     }
 
-    async fn begin_transaction(
-        self,
-        _: context::Context,
-        session: SessionWithDb,
-    ) -> ApllodbResult<SessionWithTx> {
-        Ok(session.upgrade())
-    }
+    // async fn begin_transaction(
+    //     self,
+    //     _: context::Context,
+    //     session: SessionWithDb,
+    // ) -> ApllodbResult<SessionWithTx> {
+    //     Ok(session.upgrade())
+    // }
 
-    async fn commit_transaction(
-        self,
-        _: context::Context,
-        _session: SessionWithTx,
-    ) -> ApllodbResult<()> {
-        Ok(())
-    }
+    // async fn commit_transaction(
+    //     self,
+    //     _: context::Context,
+    //     _session: SessionWithTx,
+    // ) -> ApllodbResult<()> {
+    //     Ok(())
+    // }
 
-    async fn abort_transaction(
-        self,
-        _: context::Context,
-        _session: SessionWithTx,
-    ) -> ApllodbResult<()> {
-        Ok(())
-    }
+    // async fn abort_transaction(
+    //     self,
+    //     _: context::Context,
+    //     _session: SessionWithTx,
+    // ) -> ApllodbResult<()> {
+    //     Ok(())
+    // }
 
-    async fn create_table(
-        self,
-        _: context::Context,
-        session: SessionWithTx,
-        _table_name: TableName,
-        _table_constraints: TableConstraints,
-        _column_definitions: Vec<ColumnDefinition>,
-    ) -> ApllodbResult<SessionWithTx> {
-        Ok(session)
-    }
+    // async fn create_table(
+    //     self,
+    //     _: context::Context,
+    //     session: SessionWithTx,
+    //     _table_name: TableName,
+    //     _table_constraints: TableConstraints,
+    //     _column_definitions: Vec<ColumnDefinition>,
+    // ) -> ApllodbResult<SessionWithTx> {
+    //     Ok(session)
+    // }
 }

@@ -1,23 +1,21 @@
 use std::collections::{HashMap, HashSet};
 
 use apllodb_shared_components::{
-    ApllodbResult, FieldIndex, Record, RecordIterator, SqlValueHashKey, TableName,
+    ApllodbResult, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::{DMLMethods, ProjectionQuery, StorageEngine};
+use apllodb_storage_engine_interface::ProjectionQuery;
 
 use crate::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
 };
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(super) struct PlanNodeExecutor<'dml, Engine: StorageEngine> {
-    dml_methods: &'dml Engine::DML,
-}
+pub(super) struct PlanNodeExecutor;
 
-impl<Engine: StorageEngine> PlanNodeExecutor<'_, Engine> {
+impl PlanNodeExecutor {
     pub(super) fn run_leaf(
         &self,
-        tx: &mut Engine::Tx,
+        session: &SessionWithTx,
         op_leaf: LeafPlanOperation,
     ) -> ApllodbResult<RecordIterator> {
         match op_leaf {
@@ -25,7 +23,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<'_, Engine> {
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-            } => self.seq_scan(tx, table_name, projection),
+            } => self.seq_scan(session, table_name, projection),
         }
     }
 
@@ -59,12 +57,13 @@ impl<Engine: StorageEngine> PlanNodeExecutor<'_, Engine> {
     /// Failures from [Transaction::select()](apllodb_storage_engine_interface::Transaction::select) implementation.
     fn seq_scan(
         &self,
-        tx: &mut Engine::Tx,
-        table_name: TableName,
-        projection: ProjectionQuery,
+        _session: &SessionWithTx,
+        _table_name: TableName,
+        _projection: ProjectionQuery,
     ) -> ApllodbResult<RecordIterator> {
-        let row_iter = self.dml_methods.select(tx, &table_name, projection)?;
-        Ok(RecordIterator::new(row_iter))
+        // let row_iter = self.dml_methods.select(session, &table_name, projection)?;
+        // Ok(RecordIterator::new(row_iter))
+        todo!()
     }
 
     /// # Failures

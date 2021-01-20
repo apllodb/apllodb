@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::VecDeque};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 use crate::{
@@ -29,11 +29,11 @@ pub struct VTableRepositoryImpl<'sqcn> {
     // internal sqlx::Transaction implements `Send` but I suspect it is really safe to send SQLite's transaction
     // to another thread.
     // Fortunately, immutable-schema-engine will remove dependency to SQLite in the future so for now I use RefCell and choose not to use multi-threading model.
-    tx: RefCell<SqliteTx<'sqcn>>,
+    tx: Rc<RefCell<SqliteTx<'sqcn>>>,
 }
 
 impl<'sqcn> VTableRepositoryImpl<'sqcn> {
-    pub fn new(tx: RefCell<SqliteTx<'sqcn>>) -> Self {
+    pub fn new(tx: Rc<RefCell<SqliteTx<'sqcn>>>) -> Self {
         Self { tx }
     }
 }
@@ -46,7 +46,7 @@ impl<'sqcn> VTableRepository<SqliteTypes<'sqcn>> for VTableRepositoryImpl<'sqcn>
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.vtable_dao().insert(&vtable)?;
+        self.vtable_dao().insert(&vtable).await?;
         self.vrr().create_table(&vtable).await?;
         Ok(())
     }
@@ -58,7 +58,7 @@ impl<'sqcn> VTableRepository<SqliteTypes<'sqcn>> for VTableRepositoryImpl<'sqcn>
     /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
     async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
-        self.vtable_dao().select(&vtable_id)
+        self.vtable_dao().select(&vtable_id).await
     }
 
     /// # Failures
@@ -81,7 +81,7 @@ impl<'sqcn> VTableRepository<SqliteTypes<'sqcn>> for VTableRepositoryImpl<'sqcn>
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let vrr_entries = self.vrr().scan(&vtable).await?;
-        self.probe_vrr_entries(vrr_entries, projection)
+        self.probe_vrr_entries(vrr_entries, projection).await
     }
 
     async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
@@ -90,47 +90,50 @@ impl<'sqcn> VTableRepository<SqliteTypes<'sqcn>> for VTableRepositoryImpl<'sqcn>
     }
 
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
-        let active_versions = self.sqlite_master_dao().select_active_versions(vtable)?;
+        let active_versions = self
+            .sqlite_master_dao()
+            .select_active_versions(vtable)
+            .await?;
         Ok(ActiveVersions::from(active_versions))
     }
 }
 
 impl<'sqcn> VTableRepositoryImpl<'sqcn> {
-    fn vrr(&self) -> VersionRevisionResolverImpl {
-        VersionRevisionResolverImpl::new(self.tx)
+    fn vrr(&self) -> VersionRevisionResolverImpl<'sqcn> {
+        VersionRevisionResolverImpl::new(self.tx.clone())
     }
 
     fn vtable_dao(&self) -> VTableDao<'sqcn> {
-        VTableDao::new(&self.tx)
+        VTableDao::new(self.tx.clone())
     }
 
     fn version_dao(&self) -> VersionDao<'sqcn> {
-        VersionDao::new(&self.tx)
+        VersionDao::new(self.tx.clone())
     }
 
     fn sqlite_master_dao(&self) -> SqliteMasterDao<'sqcn> {
-        SqliteMasterDao::new(&self.tx)
+        SqliteMasterDao::new(self.tx.clone())
     }
 
-    fn probe_vrr_entries(
+    async fn probe_vrr_entries(
         &self,
         vrr_entries: VRREntries<'sqcn>,
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
-        let vtable = self.vtable_dao().select(&vrr_entries.vtable_id())?;
+        let vtable = self.vtable_dao().select(&vrr_entries.vtable_id()).await?;
 
         for vrr_entries_in_version in vrr_entries.group_by_version_id() {
             let version = self
                 .sqlite_master_dao()
-                .select_active_version(&vtable, vrr_entries_in_version.version_id())?;
+                .select_active_version(&vtable, vrr_entries_in_version.version_id())
+                .await?;
 
-            let ver_row_iter = self.version_dao().probe_in_version(
-                &version,
-                vrr_entries_in_version,
-                &projection,
-            )?;
+            let ver_row_iter = self
+                .version_dao()
+                .probe_in_version(&version, vrr_entries_in_version, &projection)
+                .await?;
             ver_row_iters.push_back(ver_row_iter);
         }
 

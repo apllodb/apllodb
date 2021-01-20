@@ -5,12 +5,6 @@ use generational_arena::{Arena, Index};
 
 use super::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
 
-use once_cell::sync::Lazy;
-
-// FIXME Consider sharding by SessionId to avoid writer contention using something like dashmap.
-// see: <https://tokio.rs/tokio/tutorial/shared-state#tasks-threads-and-contention>
-static SQ_POOL: Lazy<SqliteResourcePool<'static>> = Lazy::new(|| SqliteResourcePool::default());
-
 /// rusqlite's Connection and Transaction pool.
 ///
 /// Each resource is accessible via [SessionId](apllodb-shared-components::SessionId).
@@ -24,8 +18,8 @@ pub(crate) struct SqliteResourcePool<'sqcn> {
 }
 
 impl SqliteResourcePool<'_> {
-    pub(crate) fn register_db(sid: &SessionId, db: SqliteDatabase) {
-        let db_idx = SQ_POOL.db_arena.insert(db);
-        SQ_POOL.sess_db.insert(sid.clone(), db_idx);
+    pub(crate) fn register_db(&mut self, sid: &SessionId, db: SqliteDatabase) {
+        let db_idx = self.db_arena.insert(db);
+        self.sess_db.insert(sid.clone(), db_idx);
     }
 }

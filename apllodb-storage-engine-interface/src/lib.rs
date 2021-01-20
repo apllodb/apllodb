@@ -40,10 +40,7 @@ pub mod test_support;
 
 pub use projection_query::ProjectionQuery;
 
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDefinition, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
-    TableConstraints, TableName,
-};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
 use std::fmt::Debug;
 
 /// Storage engine interface.
@@ -59,27 +56,27 @@ pub trait StorageEngine {
         database: DatabaseName,
     ) -> ApllodbResult<SessionWithDb>;
 
-    // ========================================================================
-    // Transaction
-    // ========================================================================
+    // // ========================================================================
+    // // Transaction
+    // // ========================================================================
 
-    /// Begin a transaction.
-    async fn begin_transaction(session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
+    // /// Begin a transaction.
+    // async fn begin_transaction(session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
 
-    /// Commit an open transaction.
-    async fn commit_transaction(session: SessionWithTx) -> ApllodbResult<()>;
+    // /// Commit an open transaction.
+    // async fn commit_transaction(session: SessionWithTx) -> ApllodbResult<()>;
 
-    /// Abort an open transaction.
-    async fn abort_transaction(session: SessionWithTx) -> ApllodbResult<()>;
+    // /// Abort an open transaction.
+    // async fn abort_transaction(session: SessionWithTx) -> ApllodbResult<()>;
 
-    // ========================================================================
-    // DDL
-    // ========================================================================
+    // // ========================================================================
+    // // DDL
+    // // ========================================================================
 
-    async fn create_table(
-        session: SessionWithTx,
-        table_name: TableName,
-        table_constraints: TableConstraints,
-        column_definitions: Vec<ColumnDefinition>,
-    ) -> ApllodbResult<SessionWithTx>;
+    // async fn create_table(
+    //     session: SessionWithTx,
+    //     table_name: TableName,
+    //     table_constraints: TableConstraints,
+    //     column_definitions: Vec<ColumnDefinition>,
+    // ) -> ApllodbResult<SessionWithTx>;
 }

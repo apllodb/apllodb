@@ -2,7 +2,7 @@ mod create_table_sql_for_navi;
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) mod navi;
 mod navi_table_name;
 
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
@@ -24,7 +24,7 @@ use self::{
 
 #[derive(Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao<'sqcn> {
-    sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+    sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
 }
 
 const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
@@ -33,7 +33,7 @@ const CNAME_VERSION_NUMBER: &str = "version_number";
 
 impl<'sqcn> NaviDao<'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
-        sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+        sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
     ) -> Self {
         Self { sqlite_tx }
     }
@@ -43,7 +43,7 @@ impl<'sqcn> NaviDao<'sqcn> {
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForNavi::from(vtable);
-        self.sqlite_tx.execute(sql.as_str()).await?;
+        self.sqlite_tx.borrow_mut().execute(sql.as_str()).await?;
         Ok(())
     }
 
@@ -81,7 +81,11 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             column_data_types.push(pk_cdt);
         }
 
-        let row_iter = self.sqlite_tx.query(&sql, &column_data_types, &[]).await?;
+        let row_iter = self
+            .sqlite_tx
+            .borrow_mut()
+            .query(&sql, &column_data_types, &[])
+            .await?;
 
         let ret: Vec<ExistingNaviWithPK> = row_iter
             .map(|r| ExistingNaviWithPK::from_navi_row(vtable, r))
@@ -120,7 +124,11 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
         let cdt_version_number = self.cdt_version_number(&navi_table_name);
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let mut row_iter = self.sqlite_tx.query(&sql, &column_data_types, &[]).await?;
+        let mut row_iter = self
+            .sqlite_tx
+            .borrow_mut()
+            .query(&sql, &column_data_types, &[])
+            .await?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {
@@ -139,25 +147,18 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
     ) -> ApllodbResult<SqliteRowid> {
         let sql = format!(
             "
-            INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, :revision, :version_number);
-            ",
+            INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, {revision}, {version_number});
+            ",  // FIXME SQL-i
             navi_table_name = NaviTableName::from(version_id.vtable_id().table_name().clone()).to_sql_string(),
             pk_column_names = apk.column_names().to_sql_string(),
             cname_revision=CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
             pk_sql_values = apk.sql_values().to_sql_string(),
+            revision = revision.to_sql_string(),
+            version_number = version_id.version_number().to_sql_string(),
         );
 
-        let rowid = self
-            .sqlite_tx
-            .execute(
-                &sql,
-                &[
-                    (":revision", &revision),
-                    (":version_number", version_id.version_number()),
-                ],
-            )
-            .await?;
+        let rowid = self.sqlite_tx.borrow_mut().execute(&sql).await?;
 
         Ok(rowid)
     }
@@ -185,7 +186,7 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
                 .to_sql_string(),
         );
 
-        let _ = self.sqlite_tx.execute(&sql)?;
+        let _ = self.sqlite_tx.borrow_mut().execute(&sql).await?;
 
         Ok(())
     }
