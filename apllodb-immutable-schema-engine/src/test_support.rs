@@ -8,6 +8,7 @@ use tokio::runtime::Builder;
 use tokio_serde::formats::Bincode;
 use portpicker::pick_unused_port;
 use std::time::Duration;
+use apllodb_shared_components::ApllodbResult;
 
 /// Includes server address and JoinHandle
 #[derive(Debug)]
@@ -17,13 +18,13 @@ pub struct TestServerHandler {
 }
 
 /// Spawn a thread to run ApllodbImmutableSchemaEngine server.
-pub async fn spawn_server() -> Result<TestServerHandler, std::io::Error> {
+pub async fn spawn_server() -> ApllodbResult<TestServerHandler> {
     let port = pick_unused_port().expect("no TCP port available");
     let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
     log::info!("starting ApllodbImmutableSchemaEngine server on {}...", socket);
 
-    let rt = Builder::new_multi_thread().enable_all().build().unwrap();
+    let rt = Builder::new_multi_thread().enable_all().build()?;
     let join_handle = std::thread::spawn(move || {
         let local = tokio::task::LocalSet::new();
         local.block_on(&rt, ApllodbImmutableSchemaEngine::serve(socket.clone())).unwrap();
@@ -44,7 +45,7 @@ pub async fn spawn_server() -> Result<TestServerHandler, std::io::Error> {
     }.await
 }
 
-pub async fn make_client(connect_addr: SocketAddr) -> Result<StorageEngineClient, std::io::Error> {
+pub async fn make_client(connect_addr: SocketAddr) -> ApllodbResult<StorageEngineClient> {
     let mut transport = tarpc::serde_transport::tcp::connect(connect_addr, Bincode::default);
     transport.config_mut().max_frame_length(4294967296);
 
