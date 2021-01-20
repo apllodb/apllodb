@@ -7,6 +7,7 @@ use std::{
 use tokio::runtime::Builder;
 use tokio_serde::formats::Bincode;
 use portpicker::pick_unused_port;
+use std::time::Duration;
 
 /// Includes server address and JoinHandle
 #[derive(Debug)]
@@ -16,27 +17,31 @@ pub struct TestServerHandler {
 }
 
 /// Spawn a thread to run ApllodbImmutableSchemaEngine server.
-pub fn spawn_server() -> Result<TestServerHandler, std::io::Error> {
+pub async fn spawn_server() -> Result<TestServerHandler, std::io::Error> {
     let port = pick_unused_port().expect("no TCP port available");
     let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
     log::info!("starting ApllodbImmutableSchemaEngine server on {}...", socket);
 
     let rt = Builder::new_multi_thread().enable_all().build().unwrap();
-
     let join_handle = std::thread::spawn(move || {
         let local = tokio::task::LocalSet::new();
-        local.block_on(&rt, async move {
-            ApllodbImmutableSchemaEngine::serve(socket.clone())
-                .await
-                .unwrap()
-        })
+        local.block_on(&rt, ApllodbImmutableSchemaEngine::serve(socket.clone())).unwrap();
     });
 
-    Ok(TestServerHandler {
-        join_handle,
-        connect_addr: socket,
-    })
+    async move {
+        while let Err(_) = make_client(socket.clone()).await {
+            log::debug!("waiting for server to start...");
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+
+        log::info!("server has started");
+
+        Ok(TestServerHandler {
+            join_handle,
+            connect_addr: socket,
+        })
+    }.await
 }
 
 pub async fn make_client(connect_addr: SocketAddr) -> Result<StorageEngineClient, std::io::Error> {
@@ -44,7 +49,7 @@ pub async fn make_client(connect_addr: SocketAddr) -> Result<StorageEngineClient
     transport.config_mut().max_frame_length(4294967296);
 
     let client =
-        StorageEngineClient::new(tarpc::client::Config::default(), transport.await.unwrap())
+        StorageEngineClient::new(tarpc::client::Config::default(), transport.await?)
             .spawn()?;
     Ok(client)
 }

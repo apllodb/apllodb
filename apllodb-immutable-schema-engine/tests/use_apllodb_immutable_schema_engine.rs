@@ -24,7 +24,7 @@ use tokio::task;
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     setup();
 
-    let h = spawn_server().unwrap();
+    let h = spawn_server().await.unwrap();
 
     let t_name = TableName::new("t")?;
 
@@ -65,7 +65,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     // )?;
     // tx.abort()?;
 
-    h.join_handle.join().expect("server thread panic-ed:");
+    //h.join_handle.join().expect("server thread panic-ed:");
 
     // TODO Kill server thread
 
