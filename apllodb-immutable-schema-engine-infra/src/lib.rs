@@ -10,11 +10,3 @@ mod sqlite;
 
 #[cfg(test)]
 mod test_support;
-
-// TODO remove after infra layer interface becomes async
-fn runtime() -> tokio::runtime::Runtime {
-    tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-}
