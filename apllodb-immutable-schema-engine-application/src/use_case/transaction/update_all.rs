@@ -1,5 +1,9 @@
 use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 
+use super::{
+    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
+    insert::{InsertUseCase, InsertUseCaseInput},
+};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     query::projection::ProjectionResult,
@@ -10,12 +14,8 @@ use apllodb_shared_components::{
     Expression, FieldIndex, Record, RecordIterator, SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
-use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 use async_trait::async_trait;
-use super::{
-    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
-    insert::{InsertUseCase, InsertUseCaseInput},
-};
+use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(PartialEq, Debug, new)]
 pub struct UpdateAllUseCaseInput<'usecase> {
@@ -116,7 +116,8 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
             vtable_repo,
             version_repo,
             delete_all_usecase_input,
-        ).await?;
+        )
+        .await?;
 
         // INSERT all
         let records: Vec<Record> = new_col_vals_to_insert
@@ -142,7 +143,8 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
             vtable_repo,
             version_repo,
             insert_usecase_input,
-        ).await?;
+        )
+        .await?;
 
         Ok(UpdateAllUseCaseOutput)
     }
