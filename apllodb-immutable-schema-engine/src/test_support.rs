@@ -33,7 +33,7 @@ pub async fn spawn_server() -> ApllodbResult<TestServerHandler> {
     async move {
         while let Err(_) = make_client(socket.clone()).await {
             log::debug!("waiting for server to start...");
-            tokio::time::sleep(Duration::from_millis(10)).await;
+            tokio::time::sleep(Duration::from_millis(1000)).await;
         }
 
         log::info!("server has started");
