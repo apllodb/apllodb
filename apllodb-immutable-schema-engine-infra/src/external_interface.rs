@@ -76,9 +76,7 @@ impl StorageEngine for ApllodbImmutableSchemaEngine {
         database: DatabaseName,
     ) -> Self::UseDatabaseFut {
         async move {
-            let db = SqliteDatabase::use_database(database.clone())
-                .await
-                .unwrap();
+            let db = SqliteDatabase::use_database(database.clone()).await?;
             self.pool.borrow_mut().register_db(session.get_id(), db);
 
             Ok(session.upgrade(database))

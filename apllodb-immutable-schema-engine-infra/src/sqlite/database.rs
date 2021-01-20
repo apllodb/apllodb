@@ -39,13 +39,16 @@ impl SqliteDatabase {
     }
 
     fn _sqlite_db_path(db_name: &DatabaseName) -> String {
-        format!("immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
+        format!("sqlite://immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
     }
 
     async fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<sqlx::SqliteConnection> {
         let path = Self::_sqlite_db_path(&db_name);
+        log::debug!("using `{}` as backend db", path);
+
         let conn = sqlx::sqlite::SqliteConnectOptions::from_str(&path)
             .map_err(InfraError::from)?
+            .create_if_missing(true)
             .busy_timeout(Duration::from_secs(1))
             .connect()
             .await

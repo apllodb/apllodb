@@ -43,11 +43,11 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         .use_database(
             context::current(),
             SessionWithoutDb::default(),
-            DatabaseName::new("x")?,
+            DatabaseName::new("xyzw")?,
         )
         .await??;
 
-    println!("session: {:?}", session);
+    log::debug!("session: {:?}", session);
 
     // let ddl = ApllodbImmutableSchemaDDL::default();
 
@@ -64,6 +64,10 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     //     vec![c1_def],
     // )?;
     // tx.abort()?;
+
+    h.join_handle.join().expect("server thread panic-ed:");
+
+    // TODO Kill server thread
 
     Ok(())
 }
