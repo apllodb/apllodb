@@ -1,17 +1,30 @@
+#![cfg(feature = "test-support")]
+
 mod test_support;
 
 use crate::test_support::setup;
+use apllodb_immutable_schema_engine::{
+    test_support::{make_client, spawn_server},
+    ApllodbImmutableSchemaEngine,
+};
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
+    ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
+    TableConstraints, TableName,
 };
+use apllodb_storage_engine_interface::StorageEngine;
+use futures::{future, prelude::*};
+use tarpc::{
+    client, context,
+    server::{self, Handler},
+};
+use tokio::task;
 
-#[test]
-fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
+#[tokio::test]
+async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     setup();
 
-    // let mut db = TestDatabase::new()?;
-    // let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let h = spawn_server().unwrap();
 
     let t_name = TableName::new("t")?;
 
@@ -23,6 +36,18 @@ fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         ),
         ColumnConstraints::default(),
     );
+
+    let mut client = make_client(h.connect_addr).await?;
+
+    let session = client
+        .use_database(
+            context::current(),
+            SessionWithoutDb::default(),
+            DatabaseName::new("x")?,
+        )
+        .await??;
+
+    println!("session: {:?}", session);
 
     // let ddl = ApllodbImmutableSchemaDDL::default();
 

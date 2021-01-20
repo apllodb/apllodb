@@ -6,10 +6,21 @@ version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+test-support = ["tarpc", "tokio", "tokio-serde", "portpicker"]
+
 [dependencies]
 apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
+
+env_logger = "0.8"
+log = "0.4"
+
+portpicker = {version = "0.1", optional = true}
+tarpc = {version = "0.24", features = ["full"], optional = true}
+tokio = {version = "1", features = ["full"], optional = true}
+tokio-serde = {version = "0.8", features = ["bincode"], optional = true}
 
 [dev-dependencies]
 env_logger = "0.8"
@@ -18,3 +29,9 @@ log = "0.4"
 uuid = {version = "0.8", features = ["v4"]}
 
 pretty_assertions = "0.6"
+
+tarpc = {version = "0.24", features = ["full"]}
+
+futures = "0.3"
+tokio = {version = "1", features = ["full"]}
+tokio-serde = {version = "0.8", features = ["bincode"]}
