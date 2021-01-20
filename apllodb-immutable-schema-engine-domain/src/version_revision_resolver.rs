@@ -37,7 +37,11 @@ pub trait VersionRevisionResolver<
         pk: ApparentPrimaryKey,
     ) -> ApllodbResult<VRREntry<Engine, Types>>;
 
-    async fn deregister(&self, vtable_id: &VTableId, pks: &[ApparentPrimaryKey]) -> ApllodbResult<()>;
+    async fn deregister(
+        &self,
+        vtable_id: &VTableId,
+        pks: &[ApparentPrimaryKey],
+    ) -> ApllodbResult<()>;
 
     async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 }

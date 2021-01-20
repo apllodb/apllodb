@@ -19,8 +19,8 @@ use crate::{
 };
 
 use self::navi_dao::{navi::Navi, NaviDao};
-
 use super::SqliteTx;
+use async_trait::async_trait;
 
 #[derive(Debug)]
 pub(crate) struct VersionRevisionResolverImpl<'vrr, 'sqcn: 'vrr> {

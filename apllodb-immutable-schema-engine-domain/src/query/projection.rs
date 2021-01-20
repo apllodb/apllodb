@@ -10,11 +10,14 @@ use crate::{
     vtable::VTable,
 };
 
+/// Has projected columns for each version in a VTable.
 #[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct ProjectionResult {
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
 }
+
 impl ProjectionResult {
+    /// Calculate and construct ProjectionResult
     pub fn new(
         vtable: &VTable,
         active_versions: ActiveVersions,
@@ -111,6 +114,7 @@ impl ProjectionResult {
         Ok(Self { result_per_version })
     }
 
+    /// Columns included in [ProjectionQuery](apllodb-shared-components::ProjectionQuery) and primary key for this version.
     pub fn pk_effective_projection(
         &self,
         version_id: &VersionId,
@@ -120,10 +124,12 @@ impl ProjectionResult {
         })
     }
 
+    /// Columns included in [ProjectionQuery](apllodb-shared-components::ProjectionQuery) but not in the primary key for this version.
     pub fn pk_void_projection(&self, version_id: &VersionId) -> ApllodbResult<&Vec<ColumnName>> {
         self.get_projection_core(version_id, |result_in_version| &result_in_version.pk_void)
     }
 
+    /// Columns included in [ProjectionQuery](apllodb-shared-components::ProjectionQuery) and non-PK for this version.
     pub fn non_pk_effective_projection(
         &self,
         version_id: &VersionId,
@@ -133,6 +139,7 @@ impl ProjectionResult {
         })
     }
 
+    /// Columns included in [ProjectionQuery](apllodb-shared-components::ProjectionQuery) but not in the non-PK for this version.
     pub fn non_pk_void_projection(
         &self,
         version_id: &VersionId,

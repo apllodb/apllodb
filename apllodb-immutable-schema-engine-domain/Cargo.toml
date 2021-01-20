@@ -10,9 +10,9 @@ version = "0.1.0"
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
 
-async-trait = "0.1"
-
 derive-new = "0.5"
+
+async-trait = "0.1"
 
 env_logger = "0.8"
 log = "0.4"
