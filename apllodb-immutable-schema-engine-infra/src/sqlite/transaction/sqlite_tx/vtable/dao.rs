@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use crate::{error::InfraError, sqlite::transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
@@ -8,15 +10,15 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VTableDao<'dao, 'sqcn: 'dao> {
-    sqlite_tx: &'dao SqliteTx<'sqcn>,
+pub(in crate::sqlite) struct VTableDao<'sqcn> {
+    sqlite_tx: RefCell<SqliteTx<'sqcn>>,
 }
 
 const TNAME: &str = "_vtable_metadata";
 const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
-impl<'dao, 'sqcn: 'dao> VTableDao<'dao, 'sqcn> {
+impl<'sqcn> VTableDao<'sqcn> {
     pub(in crate::sqlite) async fn create_table_if_not_exist(
         sqlite_conn: &mut sqlx::SqliteConnection,
     ) -> ApllodbResult<()> {
@@ -30,13 +32,17 @@ CREATE TABLE IF NOT EXISTS {} (
             TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
         );
 
-        sqlx::query(sql)
-            .execute(&mut sqlite_conn)
+        sqlx::query(&sql)
+            .execute(sqlite_conn)
             .await
-            .map_err(InfraError::from)
+            .map_err(InfraError::from)?;
+
+        Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'sqcn>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(
+        sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+    ) -> Self {
         Self { sqlite_tx }
     }
 
@@ -47,7 +53,7 @@ CREATE TABLE IF NOT EXISTS {} (
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
-        self.insert_into_vtable_metadata(vtable)?;
+        self.insert_into_vtable_metadata(vtable).await?;
         Ok(())
     }
 

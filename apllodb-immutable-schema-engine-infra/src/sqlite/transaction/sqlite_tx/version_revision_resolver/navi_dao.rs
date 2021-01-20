@@ -2,6 +2,8 @@ mod create_table_sql_for_navi;
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) mod navi;
 mod navi_table_name;
 
+use std::cell::RefCell;
+
 use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
@@ -21,20 +23,17 @@ use self::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao<
-    'dao,
-    'sqcn: 'dao,
-> {
-    sqlite_tx: &'dao mut SqliteTx<'sqcn>,
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao<'sqcn> {
+    sqlite_tx: RefCell<SqliteTx<'sqcn>>,
 }
 
 const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
-impl<'dao, 'sqcn: 'dao> NaviDao<'dao, 'sqcn> {
+impl<'sqcn> NaviDao<'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
-        sqlite_tx: &'dao mut SqliteTx<'sqcn>,
+        sqlite_tx: RefCell<SqliteTx<'sqcn>>,
     ) -> Self {
         Self { sqlite_tx }
     }
@@ -186,7 +185,7 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
                 .to_sql_string(),
         );
 
-        let _ = self.sqlite_tx.execute(&sql, &[])?;
+        let _ = self.sqlite_tx.execute(&sql)?;
 
         Ok(())
     }

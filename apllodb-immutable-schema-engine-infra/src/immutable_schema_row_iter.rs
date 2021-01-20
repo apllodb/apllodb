@@ -27,9 +27,7 @@ impl Iterator for ImmutableSchemaRowIter {
     }
 }
 
-impl<'repo, 'sqcn: 'repo> ImmutableSchemaRowIterator<SqliteTypes<'repo, 'sqcn>>
-    for ImmutableSchemaRowIter
-{
+impl<'sqcn> ImmutableSchemaRowIterator<SqliteTypes<'sqcn>> for ImmutableSchemaRowIter {
     fn chain_versions(iters: impl IntoIterator<Item = SqliteRowIterator>) -> Self {
         Self(iters.into_iter().collect())
     }

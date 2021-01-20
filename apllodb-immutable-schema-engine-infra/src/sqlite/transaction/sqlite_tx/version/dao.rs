@@ -15,7 +15,10 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnDataType, ColumnName, ColumnReference, SqlType, SqlValue, TableName,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
-use std::collections::{hash_map::Entry, HashMap, VecDeque};
+use std::{
+    cell::RefCell,
+    collections::{hash_map::Entry, HashMap, VecDeque},
+};
 
 #[cfg(test)]
 pub(in crate::sqlite::transaction::sqlite_tx) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
@@ -23,13 +26,13 @@ pub(in crate::sqlite::transaction::sqlite_tx) use create_table_sql_for_version::
 use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VersionDao<'dao, 'sqcn: 'dao> {
-    sqlite_tx: &'dao SqliteTx<'sqcn>,
+pub(in crate::sqlite) struct VersionDao<'sqcn> {
+    sqlite_tx: RefCell<SqliteTx<'sqcn>>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
 
-impl VersionDao<'_, '_> {
+impl VersionDao<'_> {
     pub(in crate::sqlite::transaction::sqlite_tx) fn table_name(
         version_id: &VersionId,
         is_active: bool,
@@ -38,8 +41,10 @@ impl VersionDao<'_, '_> {
     }
 }
 
-impl<'dao, 'sqcn: 'dao> VersionDao<'dao, 'sqcn> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'sqcn>) -> Self {
+impl<'sqcn> VersionDao<'sqcn> {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(
+        sqlite_tx: RefCell<SqliteTx<'sqcn>>,
+    ) -> Self {
         Self { sqlite_tx }
     }
 
@@ -48,7 +53,7 @@ impl<'dao, 'sqcn: 'dao> VersionDao<'dao, 'sqcn> {
         version: &ActiveVersion,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForVersion::from(version);
-        self.sqlite_tx.execute(sql.as_str(), &[])?;
+        self.sqlite_tx.execute(sql.as_str())?;
         Ok(())
     }
 
@@ -56,7 +61,7 @@ impl<'dao, 'sqcn: 'dao> VersionDao<'dao, 'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx) async fn probe_in_version(
         &self,
         version: &ActiveVersion,
-        vrr_entries_in_version: VRREntriesInVersion<'_, 'sqcn>,
+        vrr_entries_in_version: VRREntriesInVersion<'sqcn>,
         projection: &ProjectionResult,
     ) -> ApllodbResult<SqliteRowIterator> {
         if projection
@@ -187,7 +192,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
     }
 }
 
-impl VersionDao<'_, '_> {
+impl VersionDao<'_> {
     fn cdt_navi_rowid(&self, table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
             ColumnReference::new(table_name, ColumnName::new(CNAME_NAVI_ROWID).unwrap()),

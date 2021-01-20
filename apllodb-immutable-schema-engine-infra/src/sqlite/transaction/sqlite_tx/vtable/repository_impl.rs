@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{cell::RefCell, collections::VecDeque};
 
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 use crate::{
@@ -25,20 +25,21 @@ use apllodb_shared_components::ApllodbResult;
 use async_trait::async_trait;
 
 #[derive(Debug)]
-pub struct VTableRepositoryImpl<'repo, 'sqcn: 'repo> {
-    tx: &'repo SqliteTx<'sqcn>,
+pub struct VTableRepositoryImpl<'sqcn> {
+    // internal sqlx::Transaction implements `Send` but I suspect it is really safe to send SQLite's transaction
+    // to another thread.
+    // Fortunately, immutable-schema-engine will remove dependency to SQLite in the future so for now I use RefCell and choose not to use multi-threading model.
+    tx: RefCell<SqliteTx<'sqcn>>,
 }
 
-impl<'repo, 'sqcn> VTableRepositoryImpl<'repo, 'sqcn> {
-    pub fn new(tx: &'repo SqliteTx<'sqcn>) -> Self {
+impl<'sqcn> VTableRepositoryImpl<'sqcn> {
+    pub fn new(tx: RefCell<SqliteTx<'sqcn>>) -> Self {
         Self { tx }
     }
 }
 
 #[async_trait(?Send)]
-impl<'repo, 'sqcn: 'repo> VTableRepository<SqliteTypes<'repo, 'sqcn>>
-    for VTableRepositoryImpl<'repo, 'sqcn>
-{
+impl<'sqcn> VTableRepository<SqliteTypes<'sqcn>> for VTableRepositoryImpl<'sqcn> {
     /// # Failures
     ///
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
@@ -94,26 +95,26 @@ impl<'repo, 'sqcn: 'repo> VTableRepository<SqliteTypes<'repo, 'sqcn>>
     }
 }
 
-impl<'repo, 'sqcn: 'repo> VTableRepositoryImpl<'repo, 'sqcn> {
+impl<'sqcn> VTableRepositoryImpl<'sqcn> {
     fn vrr(&self) -> VersionRevisionResolverImpl {
         VersionRevisionResolverImpl::new(self.tx)
     }
 
-    fn vtable_dao(&self) -> VTableDao<'repo, 'sqcn> {
+    fn vtable_dao(&self) -> VTableDao<'sqcn> {
         VTableDao::new(&self.tx)
     }
 
-    fn version_dao(&self) -> VersionDao<'repo, 'sqcn> {
+    fn version_dao(&self) -> VersionDao<'sqcn> {
         VersionDao::new(&self.tx)
     }
 
-    fn sqlite_master_dao(&self) -> SqliteMasterDao<'repo, 'sqcn> {
+    fn sqlite_master_dao(&self) -> SqliteMasterDao<'sqcn> {
         SqliteMasterDao::new(&self.tx)
     }
 
     fn probe_vrr_entries(
         &self,
-        vrr_entries: VRREntries<'_, 'sqcn>,
+        vrr_entries: VRREntries<'sqcn>,
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();

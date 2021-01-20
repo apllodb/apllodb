@@ -1,5 +1,7 @@
 mod active_version_deserializer;
 
+use std::cell::RefCell;
+
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
@@ -12,16 +14,16 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao<'dao, 'sqcn: 'dao> {
-    sqlite_tx: &'dao SqliteTx<'sqcn>,
+pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao<'sqcn> {
+    sqlite_tx: RefCell<SqliteTx<'sqcn>>,
 }
 
 const TNAME: &str = "sqlite_master";
 const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
-impl<'dao, 'sqcn: 'dao> SqliteMasterDao<'dao, 'sqcn> {
+impl<'sqcn> SqliteMasterDao<'sqcn> {
     pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn new(
-        sqlite_tx: &'dao SqliteTx<'sqcn>,
+        sqlite_tx: RefCell<SqliteTx<'sqcn>>,
     ) -> Self {
         Self { sqlite_tx }
     }
@@ -41,7 +43,9 @@ impl<'dao, 'sqcn: 'dao> SqliteMasterDao<'dao, 'sqcn> {
 
         let create_table_sqls: Vec<String> = self
             .sqlite_tx
-            .query(sql, &[], &[&self.cdt_create_table_sql()], &[])?
+            .borrow_mut()
+            .query(&sql, &[&self.cdt_create_table_sql()], &[])
+            .await?
             .map(|mut row| {
                 let s = row
                     .get::<String>(&ColumnReference::new(

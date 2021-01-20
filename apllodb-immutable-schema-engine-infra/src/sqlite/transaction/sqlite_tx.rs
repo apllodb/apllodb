@@ -2,6 +2,8 @@ pub(crate) mod version;
 pub(crate) mod version_revision_resolver;
 pub(crate) mod vtable;
 
+use std::cell::RefCell;
+
 use sqlx::Connection;
 
 use self::{
@@ -12,7 +14,6 @@ use crate::{
     error::InfraError,
     sqlite::{
         database::SqliteDatabase, row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid,
-        to_sql_string::ToSqlString,
     },
 };
 use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference, DatabaseName};
@@ -26,11 +27,11 @@ pub struct SqliteTx<'sqcn> {
 }
 
 impl<'sqcn> SqliteTx<'sqcn> {
-    pub(crate) fn vtable_repo(&self) -> VTableRepositoryImpl<'_, 'sqcn> {
-        VTableRepositoryImpl::new(self)
+    pub(crate) fn vtable_repo(slf: RefCell<Self>) -> VTableRepositoryImpl<'sqcn> {
+        VTableRepositoryImpl::new(slf)
     }
 
-    pub(crate) fn version_repo(&self) -> VersionRepositoryImpl<'_, 'sqcn> {
+    pub(crate) fn version_repo(slf: RefCell<Self>) -> VersionRepositoryImpl<'sqcn> {
         VersionRepositoryImpl::new(self)
     }
 }

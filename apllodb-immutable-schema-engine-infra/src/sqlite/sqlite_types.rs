@@ -17,28 +17,28 @@ use super::{
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct SqliteTypes<'repo, 'sqcn: 'repo> {
-    marker_: PhantomData<&'repo &'sqcn ()>,
+pub struct SqliteTypes<'sqcn> {
+    marker_: PhantomData<&'sqcn ()>,
 }
 
-impl<'repo, 'sqcn: 'repo> ImmutableSchemaAbstractTypes for SqliteTypes<'repo, 'sqcn> {
+impl<'sqcn> ImmutableSchemaAbstractTypes for SqliteTypes<'sqcn> {
     type VRRId = SqliteRowid;
 
     type ImmutableSchemaRowIter = ImmutableSchemaRowIter;
     type VersionRowIter = SqliteRowIterator;
 
-    type VTableRepo = VTableRepositoryImpl<'repo, 'sqcn>;
-    type VersionRepo = VersionRepositoryImpl<'repo, 'sqcn>;
+    type VTableRepo = VTableRepositoryImpl<'sqcn>;
+    type VersionRepo = VersionRepositoryImpl<'sqcn>;
 }
 
 // Fill structs' type parameters in domain / application layers.
-pub(crate) type VRREntriesInVersion<'vrr, 'sqcn> =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion<SqliteTypes<'vrr, 'sqcn>>;
-pub(crate) type VRREntries<'vrr, 'sqcn> =
+pub(crate) type VRREntriesInVersion<'sqcn> =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion<SqliteTypes< 'sqcn>>;
+pub(crate) type VRREntries<'sqcn> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VRREntries<
-        SqliteTypes<'vrr, 'sqcn>,
+        SqliteTypes<'sqcn>,
     >;
-pub(crate) type VRREntry<'vrr, 'sqcn> =
+pub(crate) type VRREntry<'sqcn> =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry<
-        SqliteTypes<'vrr, 'sqcn>,
+        SqliteTypes<'sqcn>,
     >;
