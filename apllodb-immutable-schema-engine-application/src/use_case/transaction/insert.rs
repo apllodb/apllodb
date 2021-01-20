@@ -30,17 +30,13 @@ impl<'usecase> UseCaseInput for InsertUseCaseInput<'usecase> {
 pub struct InsertUseCaseOutput;
 impl UseCaseOutput for InsertUseCaseOutput {}
 
-pub struct InsertUseCase<
-    'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
-> {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+pub struct InsertUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+    _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for InsertUseCase<'usecase, Engine, Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+    for InsertUseCase<'usecase, Types>
 {
     type In = InsertUseCaseInput<'usecase>;
     type Out = InsertUseCaseOutput;

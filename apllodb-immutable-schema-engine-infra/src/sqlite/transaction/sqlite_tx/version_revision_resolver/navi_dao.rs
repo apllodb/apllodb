@@ -82,10 +82,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             column_data_types.push(pk_cdt);
         }
 
-        let row_iter = self
-            .sqlite_tx
-            .query(&sql, &[], &column_data_types, &[])
-            .await?;
+        let row_iter = self.sqlite_tx.query(&sql, &column_data_types, &[]).await?;
 
         let ret: Vec<ExistingNaviWithPK> = row_iter
             .map(|r| ExistingNaviWithPK::from_navi_row(vtable, r))
@@ -135,7 +132,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
     }
 
     /// Returns lastly inserted row's ROWID.
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn insert(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn insert(
         &self,
         apk: &ApparentPrimaryKey,
         revision: &Revision,
@@ -152,18 +149,21 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
             pk_sql_values = apk.sql_values().to_sql_string(),
         );
 
-        let _ = self.sqlite_tx.execute(
-            &sql,
-            &[
-                (":revision", &revision),
-                (":version_number", version_id.version_number()),
-            ],
-        )?;
+        let rowid = self
+            .sqlite_tx
+            .execute(
+                &sql,
+                &[
+                    (":revision", &revision),
+                    (":version_number", version_id.version_number()),
+                ],
+            )
+            .await?;
 
-        Ok(self.sqlite_tx.last_insert_rowid())
+        Ok(rowid)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn insert_deleted_records_all(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn insert_deleted_records_all(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {

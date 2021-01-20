@@ -11,12 +11,8 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
-use async_trait::async_trait;
 
-use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::sqlite_types::{SqliteTypes, VRREntries, VRREntry},
-};
+use crate::sqlite::sqlite_types::{SqliteTypes, VRREntries, VRREntry};
 
 use self::navi_dao::{navi::Navi, NaviDao};
 use super::SqliteTx;
@@ -34,8 +30,7 @@ impl<'vrr, 'sqcn: 'vrr> VersionRevisionResolverImpl<'vrr, 'sqcn> {
 }
 
 #[async_trait(?Send)]
-impl<'vrr, 'sqcn: 'vrr>
-    VersionRevisionResolver<ApllodbImmutableSchemaEngine, SqliteTypes<'vrr, 'sqcn>>
+impl<'vrr, 'sqcn: 'vrr> VersionRevisionResolver<SqliteTypes<'vrr, 'sqcn>>
     for VersionRevisionResolverImpl<'vrr, 'sqcn>
 {
     /// Every PK column is included in resulting row although it is not specified in `projection`.
@@ -94,7 +89,8 @@ impl<'vrr, 'sqcn: 'vrr>
     ) -> ApllodbResult<VRREntry<'vrr, 'sqcn>> {
         let revision = match self
             .navi_dao()
-            .probe_latest_revision(version_id.vtable_id(), &pk).await?
+            .probe_latest_revision(version_id.vtable_id(), &pk)
+            .await?
         {
             Navi::Exist { .. } => Err(ApllodbError::new(
                 ApllodbErrorKind::UniqueViolation,

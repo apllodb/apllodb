@@ -1,9 +1,8 @@
 pub(crate) mod query_executor;
 pub(crate) mod query_plan;
 
-use apllodb_shared_components::{ApllodbResult, RecordIterator};
+use apllodb_shared_components::{ApllodbResult, RecordIterator, SessionWithTx};
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
-use apllodb_storage_engine_interface::StorageEngine;
 
 use self::{query_executor::QueryExecutor, query_plan::QueryPlan};
 
@@ -11,15 +10,13 @@ use std::convert::TryFrom;
 
 /// Processes SELECT command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct QueryProcessor<'dml, Engine: StorageEngine> {
-    dml_methods: &'dml Engine::DML,
-}
+pub struct QueryProcessor;
 
-impl<Engine: StorageEngine> QueryProcessor<'_, Engine> {
+impl QueryProcessor {
     /// Executes parsed SELECT query.
     pub fn run(
         &self,
-        tx: &mut Engine::Tx,
+        session: &SessionWithTx,
         select_command: SelectCommand,
     ) -> ApllodbResult<RecordIterator> {
         // TODO query rewrite -> SelectCommand
@@ -28,8 +25,9 @@ impl<Engine: StorageEngine> QueryProcessor<'_, Engine> {
 
         // TODO plan optimization -> QueryPlan
 
-        let executor = QueryExecutor::<Engine>::new(&self.dml_methods);
-        executor.run(tx, plan)
+        let executor = QueryExecutor::new(&self.dml_methods);
+        // executor.run(tx, plan)
+        Ok(())
     }
 }
 

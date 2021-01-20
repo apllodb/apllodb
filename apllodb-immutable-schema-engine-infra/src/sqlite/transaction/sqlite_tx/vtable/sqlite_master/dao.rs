@@ -26,7 +26,7 @@ impl<'dao, 'sqcn: 'dao> SqliteMasterDao<'dao, 'sqcn> {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn select_active_versions(
+    pub(in crate::sqlite::transaction::sqlite_tx::vtable) async fn select_active_versions(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<Vec<ActiveVersion>> {
@@ -63,7 +63,7 @@ impl<'dao, 'sqcn: 'dao> SqliteMasterDao<'dao, 'sqcn> {
     }
 
     // TODO 消す
-    pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn select_active_version(
+    pub(in crate::sqlite::transaction::sqlite_tx::vtable) async fn select_active_version(
         &self,
         vtable: &VTable,
         version_id: &VersionId,

@@ -43,7 +43,7 @@ impl<'dao, 'sqcn: 'dao> VersionDao<'dao, 'sqcn> {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn create_table(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn create_table(
         &self,
         version: &ActiveVersion,
     ) -> ApllodbResult<()> {
@@ -53,7 +53,7 @@ impl<'dao, 'sqcn: 'dao> VersionDao<'dao, 'sqcn> {
     }
 
     /// Fetches only existing columns from SQLite, and makes SqliteRowIterator together with ApparentPrimaryKey from VRREntriesInVersion.
-    pub(in crate::sqlite::transaction::sqlite_tx) fn probe_in_version(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn probe_in_version(
         &self,
         version: &ActiveVersion,
         vrr_entries_in_version: VRREntriesInVersion<'_, 'sqcn>,
@@ -160,7 +160,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
         }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn insert(
         &self,
         version_id: &VersionId,
         vrr_id: &SqliteRowid,

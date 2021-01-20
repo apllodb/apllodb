@@ -36,8 +36,7 @@ impl<'repo, 'sqcn> VTableRepositoryImpl<'repo, 'sqcn> {
 }
 
 #[async_trait(?Send)]
-impl<'repo, 'sqcn: 'repo>
-    VTableRepository<ApllodbImmutableSchemaEngine<'sqcn>, SqliteTypes<'repo, 'sqcn>>
+impl<'repo, 'sqcn: 'repo> VTableRepository<SqliteTypes<'repo, 'sqcn>>
     for VTableRepositoryImpl<'repo, 'sqcn>
 {
     /// # Failures

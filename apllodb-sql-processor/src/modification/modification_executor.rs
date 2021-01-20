@@ -1,4 +1,4 @@
-use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ApllodbResult, SessionWithTx};
 use apllodb_storage_engine_interface::{DMLMethods, StorageEngine};
 
 use crate::query::{
@@ -12,24 +12,23 @@ use super::modification_plan::{
 
 /// Modification (INSERT, UPDATE, and DELETE) executor which inputs a [ModificationPlan](crate::modification_plan::ModificationPlan) and r expected_insert_records: ()equests modification to storage engine.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(crate) struct ModificationExecutor<'dml, Engine: StorageEngine> {
-    dml_methods: &'dml Engine::DML,
-}
+pub(crate) struct ModificationExecutor;
 
-impl<Engine: StorageEngine> ModificationExecutor<'_, Engine> {
+impl<Engine: StorageEngine> ModificationExecutor {
     #[allow(dead_code)]
-    pub(crate) fn run(&self, tx: &mut Engine::Tx, plan: ModificationPlan) -> ApllodbResult<()> {
+    pub(crate) fn run(&self, session: &SessionWithTx, plan: ModificationPlan) -> ApllodbResult<()> {
         let query_executor = QueryExecutor::<Engine>::new(&self.dml_methods);
         let plan_tree = plan.plan_tree;
         match plan_tree.root {
             ModificationPlanNode::Insert(insert_node) => {
                 let input_query_plan_root = insert_node.child;
                 let input = query_executor.run(
-                    tx,
+                    session,
                     QueryPlan::new(QueryPlanTree::new(input_query_plan_root)),
                 )?;
 
-                self.dml_methods.insert(tx, &insert_node.table_name, input)
+                // self.dml_methods.insert(tx, &insert_node.table_name, input)
+                Ok(())
             }
         }
     }

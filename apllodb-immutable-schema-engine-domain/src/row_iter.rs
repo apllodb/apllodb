@@ -2,15 +2,11 @@ pub mod version_row_iter;
 
 use std::fmt::Debug;
 
-use apllodb_storage_engine_interface::StorageEngine;
-
 use crate::{abstract_types::ImmutableSchemaAbstractTypes, row::immutable_row::ImmutableRow};
 
 /// Row iterator combining VersionRowIter from multiple versions.
-pub trait ImmutableSchemaRowIterator<
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
->: Iterator<Item = ImmutableRow> + Debug
+pub trait ImmutableSchemaRowIterator<Types: ImmutableSchemaAbstractTypes>:
+    Iterator<Item = ImmutableRow> + Debug
 {
     /// Chain iterators from multiple versions.
     fn chain_versions(iters: impl IntoIterator<Item = Types::VersionRowIter>) -> Self;

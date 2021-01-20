@@ -1,20 +1,17 @@
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDefinition, TableConstraintKind, TableConstraints,
+    ApllodbResult, ColumnDefinition, SessionWithTx, TableConstraintKind,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, TableElement};
-use apllodb_storage_engine_interface::{DDLMethods, StorageEngine};
 
 use crate::ast_translator::AstTranslator;
 
 /// Processes DDL command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct DDLProcessor<'ddl, Engine: StorageEngine> {
-    ddl_methods: &'ddl Engine::DDL,
-}
+pub struct DDLProcessor;
 
-impl<Engine: StorageEngine> DDLProcessor<'_, Engine> {
+impl DDLProcessor {
     /// Executes DDL command.
-    pub fn run(&self, tx: &mut Engine::Tx, command: Command) -> ApllodbResult<()> {
+    pub fn run(&self, session: &SessionWithTx, command: Command) -> ApllodbResult<()> {
         match command {
             Command::CreateTableCommandVariant(cc) => {
                 let table_name = AstTranslator::table_name(cc.table_name)?;
@@ -47,12 +44,13 @@ impl<Engine: StorageEngine> DDLProcessor<'_, Engine> {
                     .map(|tc| AstTranslator::table_constraint(tc.clone()))
                     .collect::<ApllodbResult<_>>()?;
 
-                self.ddl_methods.create_table(
-                    tx,
-                    &table_name,
-                    &TableConstraints::new(table_constraints)?,
-                    column_definitions,
-                )
+                // self.ddl_methods.create_table(
+                //     tx,
+                //     &table_name,
+                //     &TableConstraints::new(table_constraints)?,
+                //     column_definitions,
+                // )
+                Ok(())
             }
             _ => unimplemented!(),
         }

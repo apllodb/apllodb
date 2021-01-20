@@ -1,5 +1,9 @@
 use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 
+use super::{
+    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
+    insert::{InsertUseCase, InsertUseCaseInput},
+};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     query::projection::ProjectionResult,
@@ -10,12 +14,8 @@ use apllodb_shared_components::{
     Expression, FieldIndex, Record, RecordIterator, SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
-use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 use async_trait::async_trait;
-use super::{
-    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
-    insert::{InsertUseCase, InsertUseCaseInput},
-};
+use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(PartialEq, Debug, new)]
 pub struct UpdateAllUseCaseInput<'usecase> {
@@ -52,17 +52,13 @@ impl<'usecase> UpdateAllUseCaseInput<'usecase> {
 pub struct UpdateAllUseCaseOutput;
 impl UseCaseOutput for UpdateAllUseCaseOutput {}
 
-pub struct UpdateAllUseCase<
-    'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
-> {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+pub struct UpdateAllUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+    _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for UpdateAllUseCase<'usecase, Engine, Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+    for UpdateAllUseCase<'usecase, Types>
 {
     type In = UpdateAllUseCaseInput<'usecase>;
     type Out = UpdateAllUseCaseOutput;
@@ -112,11 +108,9 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
         // DELETE all
         let delete_all_usecase_input =
             DeleteAllUseCaseInput::new(input.database_name, input.table_name);
-        let _ = DeleteAllUseCase::<'_, Engine, Types>::run(
-            vtable_repo,
-            version_repo,
-            delete_all_usecase_input,
-        ).await?;
+        let _ =
+            DeleteAllUseCase::<'_, Types>::run(vtable_repo, version_repo, delete_all_usecase_input)
+                .await?;
 
         // INSERT all
         let records: Vec<Record> = new_col_vals_to_insert
@@ -138,11 +132,8 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
 
         let insert_usecase_input =
             InsertUseCaseInput::new(input.database_name, input.table_name, records);
-        let _ = InsertUseCase::<'_, Engine, Types>::run(
-            vtable_repo,
-            version_repo,
-            insert_usecase_input,
-        ).await?;
+        let _ = InsertUseCase::<'_, Types>::run(vtable_repo, version_repo, insert_usecase_input)
+            .await?;
 
         Ok(UpdateAllUseCaseOutput)
     }

@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS {} (
     /// # Failures
     ///
     /// - Errors from insert_into_vtable_metadata()
-    pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn insert(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS {} (
     ///   - `table` is not visible from this transaction.
     /// - [DeserializationError](apllodb_shared_components::ApllodbErrorKind::DeserializationError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
-    pub(in crate::sqlite::transaction::sqlite_tx) fn select(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn select(
         &self,
         vtable_id: &VTableId,
     ) -> ApllodbResult<VTable> {
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS {} (
     ///   - `table` is already created.
     /// - [SerializationError](apllodb_shared_components::ApllodbErrorKind::SerializationError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
-    fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
+    async fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let sql = format!(
             "
             INSERT INTO {} ({}, {}) VALUES (:table_name, :table_wide_constraints);

@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 
 #[async_trait(?Send)]
-pub trait VersionRepository<Engine: StorageEngine> {
+pub trait VersionRepository {
     /// Create a version.
     async fn create(&self, version: &ActiveVersion) -> ApllodbResult<()>;
 

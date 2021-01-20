@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use apllodb_shared_components::{
-    ApllodbResult, ColumnReference, FieldIndex, Record, RecordIterator, SqlValue,
+    ApllodbResult, ColumnReference, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{self, Command};
-use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
     ast_translator::AstTranslator,
@@ -29,13 +28,11 @@ pub(crate) mod modification_plan;
 
 /// Processes ÎNSERT/UPDATE/DELETE command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct ModificationProcessor<'dml, Engine: StorageEngine> {
-    dml_methods: &'dml Engine::DML,
-}
+pub struct ModificationProcessor;
 
-impl<Engine: StorageEngine> ModificationProcessor<'_, Engine> {
+impl ModificationProcessor {
     /// Executes parsed INSERT/UPDATE/DELETE command.
-    pub fn run(&self, tx: &mut Engine::Tx, command: Command) -> ApllodbResult<()> {
+    pub fn run(&self, session: &SessionWithTx, command: Command) -> ApllodbResult<()> {
         match command {
             Command::InsertCommandVariant(ic) => {
                 if ic.alias.is_some() {
@@ -84,8 +81,9 @@ impl<Engine: StorageEngine> ModificationProcessor<'_, Engine> {
                 });
 
                 let plan = ModificationPlan::new(ModificationPlanTree::new(plan_node));
-                let executor = ModificationExecutor::<Engine>::new(&self.dml_methods);
-                executor.run(tx, plan)
+                let executor = ModificationExecutor::new(&self.dml_methods);
+                //executor.run(tx, plan)
+                Ok(())
             }
             _ => unimplemented!(),
         }
