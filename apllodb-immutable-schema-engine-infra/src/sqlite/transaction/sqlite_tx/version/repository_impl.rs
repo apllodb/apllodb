@@ -1,3 +1,4 @@
+use super::dao::VersionDao;
 use crate::{
     external_interface::ApllodbImmutableSchemaEngine,
     sqlite::transaction::sqlite_tx::{
@@ -12,9 +13,8 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::ApllodbResult;
 use apllodb_shared_components::{ColumnName, SqlValue};
+use async_trait::async_trait;
 use std::collections::HashMap;
-
-use super::dao::VersionDao;
 
 #[derive(Debug)]
 pub struct VersionRepositoryImpl<'repo, 'db: 'repo> {
@@ -27,6 +27,7 @@ impl<'repo, 'db> VersionRepositoryImpl<'repo, 'db> {
     }
 }
 
+#[async_trait(?Send)]
 impl<'repo, 'db: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'db>>
     for VersionRepositoryImpl<'repo, 'db>
 {
@@ -35,22 +36,22 @@ impl<'repo, 'db: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'db>>
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
-    fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
+    async fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
         self.version_dao().create_table(&version)?;
         Ok(())
     }
 
-    fn deactivate(&self, _version_id: &VersionId) -> ApllodbResult<()> {
+    async fn deactivate(&self, _version_id: &VersionId) -> ApllodbResult<()> {
         todo!()
     }
 
-    fn insert(
+    async fn insert(
         &self,
         version_id: &VersionId,
         apparent_pk: ApparentPrimaryKey,
         column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<()> {
-        let vrr_entry = self.vrr().register(version_id, apparent_pk)?;
+        let vrr_entry = self.vrr().register(version_id, apparent_pk).await?;
 
         self.version_dao()
             .insert(&version_id, vrr_entry.id(), &column_values)?;

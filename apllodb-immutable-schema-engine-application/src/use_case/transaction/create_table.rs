@@ -10,7 +10,7 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnDataType, ColumnDefinition, DatabaseName, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::StorageEngine;
-
+use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(Eq, PartialEq, Hash, Debug, new)]
@@ -37,13 +37,15 @@ pub struct CreateTableUseCase<
 > {
     _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
+
+#[async_trait(?Send)]
 impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
     TxUseCase<Engine, Types> for CreateTableUseCase<'usecase, Engine, Types>
 {
     type In = CreateTableUseCaseInput<'usecase>;
     type Out = CreateTableUseCaseOutput;
 
-    fn run_core(
+    async fn run_core(
         vtable_repo: &Types::VTableRepo,
         version_repo: &Types::VersionRepo,
         input: Self::In,
@@ -66,8 +68,8 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
 
         let v1 = ActiveVersion::initial(vtable.id(), &column_data_types)?;
 
-        vtable_repo.create(&vtable)?;
-        version_repo.create(&v1)?;
+        vtable_repo.create(&vtable).await?;
+        version_repo.create(&v1).await?;
 
         Ok(CreateTableUseCaseOutput)
     }

@@ -18,26 +18,29 @@ use crate::{
 };
 
 use self::navi_dao::{navi::Navi, NaviDao};
-
 use super::SqliteTx;
+use async_trait::async_trait;
 
 #[derive(Debug)]
 pub(crate) struct VersionRevisionResolverImpl<'vrr, 'db: 'vrr> {
     tx: &'vrr SqliteTx<'db>,
 }
 
+impl VersionRevisionResolverImpl<'_, '_> {
+    pub(crate) async fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
+        self.navi_dao().create_table(vtable)
+    }
+}
+
+#[async_trait(?Send)]
 impl<'vrr, 'db: 'vrr>
     VersionRevisionResolver<ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'vrr, 'db>>
     for VersionRevisionResolverImpl<'vrr, 'db>
 {
-    fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.navi_dao().create_table(vtable)
-    }
-
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    fn probe(
+    async fn probe(
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
@@ -64,7 +67,7 @@ impl<'vrr, 'db: 'vrr>
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db>> {
+    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'vrr, 'db>> {
         let mut entries = VecDeque::<VRREntry>::new();
 
         for navi in self.navi_dao().full_scan_latest_revision(vtable)? {
@@ -80,7 +83,7 @@ impl<'vrr, 'db: 'vrr>
         Ok(VRREntries::new(vtable.id().clone(), entries))
     }
 
-    fn register(
+    async fn register(
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
@@ -102,11 +105,15 @@ impl<'vrr, 'db: 'vrr>
         Ok(VRREntry::new(rowid, pk, version_id.clone(), revision))
     }
 
-    fn deregister(&self, _vtable_id: &VTableId, _pks: &[ApparentPrimaryKey]) -> ApllodbResult<()> {
+    async fn deregister(
+        &self,
+        _vtable_id: &VTableId,
+        _pks: &[ApparentPrimaryKey],
+    ) -> ApllodbResult<()> {
         todo!()
     }
 
-    fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()> {
+    async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.navi_dao().insert_deleted_records_all(vtable)
     }
 }

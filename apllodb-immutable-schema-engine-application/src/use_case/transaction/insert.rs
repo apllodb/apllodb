@@ -10,6 +10,7 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnName, ColumnReference, DatabaseName, RecordIterator, SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::StorageEngine;
+use async_trait::async_trait;
 use std::convert::TryFrom;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
@@ -36,6 +37,8 @@ pub struct InsertUseCase<
 > {
     _marker: PhantomData<(&'usecase (), Engine, Types)>,
 }
+
+#[async_trait(?Send)]
 impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
     TxUseCase<Engine, Types> for InsertUseCase<'usecase, Engine, Types>
 {
@@ -46,13 +49,13 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
     ///
     /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
-    fn run_core(
+    async fn run_core(
         vtable_repo: &Types::VTableRepo,
         version_repo: &Types::VersionRepo,
         input: Self::In,
     ) -> ApllodbResult<Self::Out> {
         let vtable_id = VTableId::new(input.database_name, input.table_name);
-        let vtable = vtable_repo.read(&vtable_id)?;
+        let vtable = vtable_repo.read(&vtable_id).await?;
 
         for record in input.records {
             // Construct ApparentPrimaryKey
@@ -80,11 +83,13 @@ impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine
                 .collect();
 
             // Determine version to insert
-            let active_versions = vtable_repo.active_versions(&vtable)?;
+            let active_versions = vtable_repo.active_versions(&vtable).await?;
             let version_to_insert = active_versions.version_to_insert(&non_pk_col_values)?;
             let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-            version_repo.insert(&version_id, apk, &non_pk_col_values)?;
+            version_repo
+                .insert(&version_id, apk, &non_pk_col_values)
+                .await?;
         }
 
         Ok(InsertUseCaseOutput)

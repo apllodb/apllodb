@@ -12,32 +12,36 @@ use crate::{
 };
 
 use self::{vrr_entries::VRREntries, vrr_entry::VRREntry};
+use async_trait::async_trait;
 
 /// Resolves latest revision among rows with the same PK.
+#[async_trait(?Send)]
 pub trait VersionRevisionResolver<
     Engine: StorageEngine,
     Types: ImmutableSchemaAbstractTypes<Engine>,
 >
 {
-    fn create_table(&self, vtable: &VTable) -> ApllodbResult<()>;
-
     /// Returns undefined order of VRREntry
-    fn probe(
+    async fn probe(
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
     ) -> ApllodbResult<VRREntries<Engine, Types>>;
 
     /// Returns undefined order of VRREntry
-    fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<Engine, Types>>;
+    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<Engine, Types>>;
 
-    fn register(
+    async fn register(
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
     ) -> ApllodbResult<VRREntry<Engine, Types>>;
 
-    fn deregister(&self, vtable_id: &VTableId, pks: &[ApparentPrimaryKey]) -> ApllodbResult<()>;
+    async fn deregister(
+        &self,
+        vtable_id: &VTableId,
+        pks: &[ApparentPrimaryKey],
+    ) -> ApllodbResult<()>;
 
-    fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()>;
+    async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 }

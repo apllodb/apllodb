@@ -11,8 +11,8 @@ use apllodb_storage_engine_interface::DMLMethods;
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
-use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
+use crate::{runtime, sqlite::transaction::sqlite_tx::SqliteTx};
 
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize,
@@ -28,11 +28,13 @@ impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
     ) -> ApllodbResult<RecordIterator> {
         let database_name = tx.database_name().clone();
         let input = FullScanUseCaseInput::new(&database_name, table_name, projection);
-        let output = FullScanUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
-            &tx.vtable_repo(),
-            &tx.version_repo(),
-            input,
-        )?;
+        let output = runtime().block_on(FullScanUseCase::<
+            '_,
+            ApllodbImmutableSchemaEngine,
+            SqliteTypes,
+        >::run(
+            &tx.vtable_repo(), &tx.version_repo(), input
+        ))?;
 
         Ok(RecordIterator::new(output.row_iter))
     }
@@ -45,10 +47,12 @@ impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
     ) -> ApllodbResult<()> {
         let database_name = tx.database_name().clone();
         let input = InsertUseCaseInput::new(&database_name, table_name, records);
-        let _ = InsertUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
-            &tx.vtable_repo(),
-            &tx.version_repo(),
-            input,
+        let _ = runtime().block_on(
+            InsertUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
+                &tx.vtable_repo(),
+                &tx.version_repo(),
+                input,
+            ),
         )?;
         Ok(())
     }
@@ -61,11 +65,11 @@ impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
     ) -> ApllodbResult<()> {
         let database_name = tx.database_name().clone();
         let input = UpdateAllUseCaseInput::new(&database_name, table_name, column_values);
-        let _ = UpdateAllUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
-            &tx.vtable_repo(),
-            &tx.version_repo(),
-            input,
-        )?;
+        let _ = runtime().block_on(UpdateAllUseCase::<
+            '_,
+            ApllodbImmutableSchemaEngine,
+            SqliteTypes,
+        >::run(&tx.vtable_repo(), &tx.version_repo(), input))?;
 
         Ok(())
     }
@@ -73,11 +77,11 @@ impl DMLMethods<ApllodbImmutableSchemaEngine<'_>> for DMLMethodsImpl {
     fn delete(&self, tx: &mut SqliteTx<'_>, table_name: &TableName) -> ApllodbResult<()> {
         let database_name = tx.database_name().clone();
         let input = DeleteAllUseCaseInput::new(&database_name, table_name);
-        let _ = DeleteAllUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
-            &tx.vtable_repo(),
-            &tx.version_repo(),
-            input,
-        )?;
+        let _ = runtime().block_on(DeleteAllUseCase::<
+            '_,
+            ApllodbImmutableSchemaEngine,
+            SqliteTypes,
+        >::run(&tx.vtable_repo(), &tx.version_repo(), input))?;
 
         Ok(())
     }

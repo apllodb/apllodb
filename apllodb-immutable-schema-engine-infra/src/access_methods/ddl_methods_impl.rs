@@ -1,5 +1,5 @@
-use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
+use crate::{runtime, sqlite::transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
     create_table::{CreateTableUseCase, CreateTableUseCaseInput},
@@ -31,11 +31,13 @@ impl DDLMethods<ApllodbImmutableSchemaEngine<'_>> for DDLMethodsImpl {
             table_constraints,
             &column_definitions,
         );
-        let _ = CreateTableUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
-            &tx.vtable_repo(),
-            &tx.version_repo(),
-            input,
-        )?;
+
+        let _ = runtime().block_on(CreateTableUseCase::<
+            '_,
+            ApllodbImmutableSchemaEngine,
+            SqliteTypes,
+        >::run(&tx.vtable_repo(), &tx.version_repo(), input))?;
+
         Ok(())
     }
 
@@ -47,11 +49,11 @@ impl DDLMethods<ApllodbImmutableSchemaEngine<'_>> for DDLMethodsImpl {
     ) -> ApllodbResult<()> {
         let database_name = tx.database_name().clone();
         let input = AlterTableUseCaseInput::new(&database_name, table_name, action);
-        let _ = AlterTableUseCase::<'_, ApllodbImmutableSchemaEngine, SqliteTypes>::run(
-            &tx.vtable_repo(),
-            &tx.version_repo(),
-            input,
-        )?;
+        let _ = runtime().block_on(AlterTableUseCase::<
+            '_,
+            ApllodbImmutableSchemaEngine,
+            SqliteTypes,
+        >::run(&tx.vtable_repo(), &tx.version_repo(), input))?;
         Ok(())
     }
 
