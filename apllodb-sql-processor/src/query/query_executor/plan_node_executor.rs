@@ -52,9 +52,6 @@ impl PlanNodeExecutor {
         }
     }
 
-    /// # Failures
-    ///
-    /// Failures from [Transaction::select()](apllodb_storage_engine_interface::Transaction::select) implementation.
     fn seq_scan(
         &self,
         _session: &SessionWithTx,

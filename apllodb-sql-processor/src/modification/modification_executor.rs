@@ -9,7 +9,7 @@ use super::modification_plan::{
     modification_plan_tree::modification_plan_node::ModificationPlanNode, ModificationPlan,
 };
 
-/// Modification (INSERT, UPDATE, and DELETE) executor which inputs a [ModificationPlan](crate::modification_plan::ModificationPlan) and r expected_insert_records: ()equests modification to storage engine.
+/// Modification (INSERT, UPDATE, and DELETE) executor which inputs a ModificationPlan requests to storage engine.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
 pub(crate) struct ModificationExecutor;
 

@@ -6,7 +6,7 @@ use crate::query::query_plan::{query_plan_tree::query_plan_node::QueryPlanNode, 
 
 use self::plan_node_executor::PlanNodeExecutor;
 
-/// Query executor which inputs a [QueryPlan](crate::query_plan::QueryPlan) and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
+/// Query executor which inputs a QueryPlan and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
 pub(crate) struct QueryExecutor;
 
