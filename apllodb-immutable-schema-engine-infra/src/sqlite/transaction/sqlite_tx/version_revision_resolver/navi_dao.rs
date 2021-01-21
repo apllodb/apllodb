@@ -2,10 +2,17 @@ mod create_table_sql_for_navi;
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) mod navi;
 mod navi_table_name;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
-use crate::sqlite::{
-    sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
+use crate::{
+    error::InfraError,
+    sqlite::{
+        sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
+    },
 };
 use apllodb_immutable_schema_engine_domain::{
     row::pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
@@ -24,7 +31,7 @@ use self::{
 
 #[derive(Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao {
-    sqlite_tx: Rc<RefCell<SqliteTx>>,
+    sqlite_tx: Arc<RwLock<SqliteTx>>,
 }
 
 const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
@@ -33,7 +40,7 @@ const CNAME_VERSION_NUMBER: &str = "version_number";
 
 impl NaviDao {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
-        sqlite_tx: Rc<RefCell<SqliteTx>>,
+        sqlite_tx: Arc<RwLock<SqliteTx>>,
     ) -> Self {
         Self { sqlite_tx }
     }
@@ -43,7 +50,11 @@ impl NaviDao {
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForNavi::from(vtable);
-        self.sqlite_tx.borrow_mut().execute(sql.as_str()).await?;
+        self.sqlite_tx
+            .write()
+            .map_err(InfraError::from)?
+            .execute(sql.as_str())
+            .await?;
         Ok(())
     }
 
@@ -83,7 +94,8 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
 
         let row_iter = self
             .sqlite_tx
-            .borrow_mut()
+            .write()
+            .map_err(InfraError::from)?
             .query(&sql, &column_data_types, &[])
             .await?;
 
@@ -126,7 +138,8 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
 
         let mut row_iter = self
             .sqlite_tx
-            .borrow_mut()
+            .write()
+            .map_err(InfraError::from)?
             .query(&sql, &column_data_types, &[])
             .await?;
         let opt_row = row_iter.next();
@@ -158,7 +171,12 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
             version_number = version_id.version_number().to_sql_string(),
         );
 
-        let rowid = self.sqlite_tx.borrow_mut().execute(&sql).await?;
+        let rowid = self
+            .sqlite_tx
+            .write()
+            .map_err(InfraError::from)?
+            .execute(&sql)
+            .await?;
 
         Ok(rowid)
     }
@@ -186,7 +204,12 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
                 .to_sql_string(),
         );
 
-        let _ = self.sqlite_tx.borrow_mut().execute(&sql).await?;
+        let _ = self
+            .sqlite_tx
+            .write()
+            .map_err(InfraError::from)?
+            .execute(&sql)
+            .await?;
 
         Ok(())
     }

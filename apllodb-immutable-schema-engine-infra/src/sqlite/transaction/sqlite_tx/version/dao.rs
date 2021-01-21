@@ -1,10 +1,10 @@
 pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
 pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
-use crate::sqlite::{
+use crate::{error::InfraError, sqlite::{
     row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
     to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
-};
+}};
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
     query::projection::ProjectionResult,
@@ -19,6 +19,7 @@ use std::{
     cell::RefCell,
     collections::{hash_map::Entry, HashMap, VecDeque},
     rc::Rc,
+    sync::{Arc, RwLock},
 };
 
 #[cfg(test)]
@@ -28,7 +29,7 @@ use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionDao {
-    sqlite_tx: Rc<RefCell<SqliteTx>>,
+    sqlite_tx: Arc<RwLock<SqliteTx>>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
@@ -43,9 +44,7 @@ impl VersionDao {
 }
 
 impl VersionDao {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(
-        sqlite_tx: Rc<RefCell<SqliteTx>>,
-    ) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: Arc<RwLock<SqliteTx>>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -54,7 +53,11 @@ impl VersionDao {
         version: &ActiveVersion,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForVersion::from(version);
-        self.sqlite_tx.borrow_mut().execute(sql.as_str()).await?;
+        self.sqlite_tx
+            .write()
+            .map_err(InfraError::from)?
+            .execute(sql.as_str())
+            .await?;
         Ok(())
     }
 
@@ -124,7 +127,8 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
 
             let row_iter = self
                 .sqlite_tx
-                .borrow_mut()
+                .write()
+                .map_err(InfraError::from)?
                 .query(
                     &sql,
                     &prj_with_navi_rowid,
@@ -193,7 +197,11 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             non_pk_column_values = column_values.values().collect::<Vec<_>>().to_sql_string(),
         );
 
-        self.sqlite_tx.borrow_mut().execute(&sql).await?;
+        self.sqlite_tx
+            .write()
+            .map_err(InfraError::from)?
+            .execute(&sql)
+            .await?;
 
         Ok(())
     }

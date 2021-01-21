@@ -11,15 +11,15 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::ApllodbResult;
 use apllodb_shared_components::{ColumnName, SqlValue};
 use async_trait::async_trait;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::{Arc, RwLock}};
 
 #[derive(Debug)]
 pub struct VersionRepositoryImpl {
-    tx: Rc<RefCell<SqliteTx>>,
+    tx: Arc<RwLock<SqliteTx>>,
 }
 
 impl VersionRepositoryImpl {
-    pub fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
+    pub fn new(tx: Arc<RwLock<SqliteTx>>) -> Self {
         Self { tx }
     }
 }

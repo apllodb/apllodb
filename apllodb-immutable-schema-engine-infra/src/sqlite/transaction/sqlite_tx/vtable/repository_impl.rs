@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc, sync::{Arc, RwLock}};
 
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 use crate::{
@@ -29,11 +29,11 @@ pub struct VTableRepositoryImpl {
     // internal sqlx::Transaction implements `Send` but I suspect it is really safe to send SQLite's transaction
     // to another thread.
     // Fortunately, immutable-schema-engine will remove dependency to SQLite in the future so for now I use RefCell and choose not to use multi-threading model.
-    tx: Rc<RefCell<SqliteTx>>,
+    tx: Arc<RwLock<SqliteTx>>,
 }
 
 impl VTableRepositoryImpl {
-    pub fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
+    pub fn new(tx: Arc<RwLock<SqliteTx>>) -> Self {
         Self { tx }
     }
 }

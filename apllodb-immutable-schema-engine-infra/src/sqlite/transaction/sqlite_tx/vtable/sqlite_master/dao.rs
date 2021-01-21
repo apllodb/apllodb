@@ -1,8 +1,12 @@
 mod active_version_deserializer;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
-use crate::sqlite::transaction::sqlite_tx::SqliteTx;
+use crate::{error::InfraError, sqlite::transaction::sqlite_tx::SqliteTx};
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
@@ -15,7 +19,7 @@ use apllodb_shared_components::{
 
 #[derive(Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao {
-    sqlite_tx: Rc<RefCell<SqliteTx>>,
+    sqlite_tx: Arc<RwLock<SqliteTx>>,
 }
 
 const TNAME: &str = "sqlite_master";
@@ -23,7 +27,7 @@ const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
 impl SqliteMasterDao {
     pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn new(
-        sqlite_tx: Rc<RefCell<SqliteTx>>,
+        sqlite_tx: Arc<RwLock<SqliteTx>>,
     ) -> Self {
         Self { sqlite_tx }
     }
@@ -43,7 +47,8 @@ impl SqliteMasterDao {
 
         let create_table_sqls: Vec<String> = self
             .sqlite_tx
-            .borrow_mut()
+            .write()
+            .map_err(InfraError::from)?
             .query(&sql, &[&self.cdt_create_table_sql()], &[])
             .await?
             .map(|mut row| {

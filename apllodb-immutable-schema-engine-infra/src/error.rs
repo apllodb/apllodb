@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, sync::PoisonError};
 
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind};
 use serde::{Deserialize, Serialize};
@@ -22,6 +22,16 @@ impl Display for InfraError {
 impl From<InfraError> for ApllodbError {
     fn from(e: InfraError) -> Self {
         e.0
+    }
+}
+
+impl<T> From<PoisonError<T>> for InfraError {
+    fn from(e: PoisonError<T>) -> Self {
+        Self(ApllodbError::new(
+            ApllodbErrorKind::SystemError,
+            format!("a thread get poisoned: {}", e),
+            None,
+        ))
     }
 }
 

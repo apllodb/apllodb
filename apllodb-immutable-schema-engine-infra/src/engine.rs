@@ -1,7 +1,10 @@
 mod controller;
 mod server;
 
-use std::{cell::RefCell, net::SocketAddr, rc::Rc};
+use std::{
+    net::SocketAddr,
+    sync::{Arc, RwLock},
+};
 
 use crate::sqlite::sqlite_resource_pool::SqliteResourcePool;
 
@@ -12,5 +15,5 @@ pub struct ApllodbImmutableSchemaEngine {
 
     // FIXME Consider sharding by SessionId to avoid writer contention using something like dashmap.
     // see: <https://tokio.rs/tokio/tutorial/shared-state#tasks-threads-and-contention>
-    pool: Rc<RefCell<SqliteResourcePool>>,
+    pool: Arc<RwLock<SqliteResourcePool>>,
 }

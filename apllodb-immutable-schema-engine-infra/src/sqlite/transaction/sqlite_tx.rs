@@ -2,9 +2,7 @@ pub(crate) mod version;
 pub(crate) mod version_revision_resolver;
 pub(crate) mod vtable;
 
-use std::{cell::RefCell, rc::Rc};
-
-use sqlx::Connection;
+use std::sync::{Arc, RwLock};
 
 use self::{
     version::repository_impl::VersionRepositoryImpl, vtable::repository_impl::VTableRepositoryImpl,
@@ -27,11 +25,11 @@ pub struct SqliteTx {
 }
 
 impl SqliteTx {
-    pub(crate) fn vtable_repo(slf: Rc<RefCell<Self>>) -> VTableRepositoryImpl {
+    pub(crate) fn vtable_repo(slf: Arc<RwLock<Self>>) -> VTableRepositoryImpl {
         VTableRepositoryImpl::new(slf)
     }
 
-    pub(crate) fn version_repo(slf: Rc<RefCell<Self>>) -> VersionRepositoryImpl {
+    pub(crate) fn version_repo(slf: Arc<RwLock<Self>>) -> VersionRepositoryImpl {
         VersionRepositoryImpl::new(slf)
     }
 }
@@ -41,12 +39,12 @@ impl SqliteTx {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    pub(crate) async fn begin(db: &SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
+    pub(crate) async fn begin(db: &SqliteDatabase) -> ApllodbResult<Arc<RwLock<SqliteTx>>> {
         let database_name = { db.name().clone() };
 
         let tx = db.sqlite_pool().begin().await.map_err(InfraError::from)?;
 
-        Ok(Rc::new(RefCell::new(Self {
+        Ok(Arc::new(RwLock::new(Self {
             database_name,
             sqlx_tx: tx,
         })))

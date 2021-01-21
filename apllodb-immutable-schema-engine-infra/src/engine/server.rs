@@ -2,7 +2,12 @@ use super::ApllodbImmutableSchemaEngine;
 
 use apllodb_storage_engine_interface::StorageEngine;
 use futures::prelude::*;
-use std::{cell::RefCell, net::SocketAddr, rc::Rc};
+use std::{
+    cell::RefCell,
+    net::SocketAddr,
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 use tarpc::server::{Channel, Handler};
 use tokio_serde::formats::Bincode;
 
@@ -23,7 +28,7 @@ impl ApllodbImmutableSchemaEngine {
             .map(|channel| {
                 let server = Self {
                     addr: channel.as_ref().as_ref().peer_addr().unwrap(),
-                    pool: Rc::new(RefCell::new(SqliteResourcePool::default())),
+                    pool: Arc::new(RwLock::new(SqliteResourcePool::default())),
                 };
                 channel
                     .respond_with(server.serve())

@@ -2,7 +2,6 @@ use crate::error::InfraError;
 
 use super::transaction::sqlite_tx::vtable::dao::VTableDao;
 use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use sqlx::Connection;
 use std::{str::FromStr, time::Duration};
 
 /// Database context.
