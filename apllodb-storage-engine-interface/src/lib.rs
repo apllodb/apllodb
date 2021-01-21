@@ -40,7 +40,9 @@ pub mod test_support;
 
 pub use projection_query::ProjectionQuery;
 
-use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
+use apllodb_shared_components::{
+    ApllodbResult, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
+};
 use std::fmt::Debug;
 
 /// Storage engine interface.
@@ -56,12 +58,12 @@ pub trait StorageEngine {
         database: DatabaseName,
     ) -> ApllodbResult<SessionWithDb>;
 
-    // // ========================================================================
-    // // Transaction
-    // // ========================================================================
+    // ========================================================================
+    // Transaction
+    // ========================================================================
 
-    // /// Begin a transaction.
-    // async fn begin_transaction(session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
+    /// Begin a transaction.
+    async fn begin_transaction(session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
 
     // /// Commit an open transaction.
     // async fn commit_transaction(session: SessionWithTx) -> ApllodbResult<()>;

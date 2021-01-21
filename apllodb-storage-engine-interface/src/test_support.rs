@@ -1,5 +1,7 @@
 use crate::StorageEngine;
-use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
+use apllodb_shared_components::{
+    ApllodbResult, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
+};
 use tarpc::context;
 
 /// A compile-ready storage engine implementation.
@@ -19,13 +21,13 @@ impl StorageEngine for TestStorageEngineImpl {
         Ok(session.upgrade(database))
     }
 
-    // async fn begin_transaction(
-    //     self,
-    //     _: context::Context,
-    //     session: SessionWithDb,
-    // ) -> ApllodbResult<SessionWithTx> {
-    //     Ok(session.upgrade())
-    // }
+    async fn begin_transaction(
+        self,
+        _: context::Context,
+        session: SessionWithDb,
+    ) -> ApllodbResult<SessionWithTx> {
+        Ok(session.upgrade())
+    }
 
     // async fn commit_transaction(
     //     self,
