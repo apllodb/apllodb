@@ -47,7 +47,13 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         )
         .await??;
 
-    log::debug!("session: {:?}", session);
+    log::debug!("SessionWithDb: {:?}", session);
+
+    let session = client
+        .begin_transaction(context::current(), session)
+        .await??;
+
+    log::debug!("SessionWithTx: {:?}", session);
 
     // let ddl = ApllodbImmutableSchemaDDL::default();
 

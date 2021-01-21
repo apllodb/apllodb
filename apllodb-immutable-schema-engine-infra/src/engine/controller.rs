@@ -26,7 +26,7 @@ impl StorageEngine for ApllodbImmutableSchemaEngine {
     ) -> Self::UseDatabaseFut {
         async move {
             let db = SqliteDatabase::use_database(database.clone()).await?;
-            self.pool.borrow_mut().insert_db(session.get_id(), db);
+            self.pool.borrow_mut().insert_db(session.get_id(), db)?;
 
             Ok(session.upgrade(database))
         }
@@ -39,9 +39,12 @@ impl StorageEngine for ApllodbImmutableSchemaEngine {
         session: SessionWithDb,
     ) -> Self::BeginTransactionFut {
         async move {
-            let db = self.pool.borrow_mut().get_db_mut(session.get_id())?;
+            let mut pool = self.pool.borrow_mut();
+
+            let db = pool.get_db(session.get_id())?;
             let tx = SqliteTx::begin(db).await?;
-            self.pool.borrow_mut().insert_tx(session.get_id(), tx);
+
+            pool.insert_tx(session.get_id(), tx)?;
 
             Ok(session.upgrade())
         }

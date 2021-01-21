@@ -22,7 +22,7 @@ impl SqliteResourcePool {
     ///
     /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
     ///   - this session seems not to open any database.
-    pub(crate) fn get_db_mut(&mut self, sid: &SessionId) -> ApllodbResult<&mut SqliteDatabase> {
+    pub(crate) fn get_db(&self, sid: &SessionId) -> ApllodbResult<&SqliteDatabase> {
         let err = || {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedObject,
@@ -32,7 +32,7 @@ impl SqliteResourcePool {
         };
 
         let db_idx = self.sess_db.get(sid).ok_or_else(err)?.clone();
-        let db = self.db_arena.get_mut(db_idx).ok_or_else(err)?;
+        let db = self.db_arena.get(db_idx).ok_or_else(err)?;
 
         Ok(db)
     }
