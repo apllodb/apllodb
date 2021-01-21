@@ -41,7 +41,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    async fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx<'sqcn>>>> {
+    pub(crate) async fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx<'sqcn>>>> {
         let database_name = { db.name().clone() };
 
         let tx = db.sqlite_conn().begin().await.map_err(InfraError::from)?;
