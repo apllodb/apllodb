@@ -1,9 +1,6 @@
 use super::dao::VersionDao;
-use crate::{
-    engine::ApllodbImmutableSchemaEngine,
-    sqlite::transaction::sqlite_tx::{
-        version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
-    },
+use crate::sqlite::transaction::sqlite_tx::{
+    version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
@@ -17,18 +14,18 @@ use async_trait::async_trait;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
-pub struct VersionRepositoryImpl<'sqcn> {
-    tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+pub struct VersionRepositoryImpl {
+    tx: Rc<RefCell<SqliteTx>>,
 }
 
-impl<'sqcn> VersionRepositoryImpl<'sqcn> {
-    pub fn new(tx: Rc<RefCell<SqliteTx<'sqcn>>>) -> Self {
+impl VersionRepositoryImpl {
+    pub fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { tx }
     }
 }
 
 #[async_trait(?Send)]
-impl<'sqcn> VersionRepository for VersionRepositoryImpl<'sqcn> {
+impl VersionRepository for VersionRepositoryImpl {
     /// # Failures
     ///
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
@@ -58,12 +55,12 @@ impl<'sqcn> VersionRepository for VersionRepositoryImpl<'sqcn> {
     }
 }
 
-impl<'sqcn> VersionRepositoryImpl<'sqcn> {
-    fn vrr(&self) -> VersionRevisionResolverImpl<'sqcn> {
+impl VersionRepositoryImpl {
+    fn vrr(&self) -> VersionRevisionResolverImpl {
         VersionRevisionResolverImpl::new(self.tx.clone())
     }
 
-    fn version_dao(&self) -> VersionDao<'sqcn> {
+    fn version_dao(&self) -> VersionDao {
         VersionDao::new(self.tx.clone())
     }
 }

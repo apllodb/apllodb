@@ -13,17 +13,17 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VTableDao<'sqcn> {
-    sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+pub(in crate::sqlite) struct VTableDao {
+    sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
 const TNAME: &str = "_vtable_metadata";
 const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
-impl<'sqcn> VTableDao<'sqcn> {
+impl VTableDao {
     pub(in crate::sqlite) async fn create_table_if_not_exist(
-        sqlite_conn: &mut sqlx::SqliteConnection,
+        sqlite_pool: &sqlx::SqlitePool,
     ) -> ApllodbResult<()> {
         let sql = format!(
             "
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS {} (
         );
 
         sqlx::query(&sql)
-            .execute(sqlite_conn)
+            .execute(sqlite_pool)
             .await
             .map_err(InfraError::from)?;
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS {} (
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn new(
-        sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+        sqlite_tx: Rc<RefCell<SqliteTx>>,
     ) -> Self {
         Self { sqlite_tx }
     }

@@ -19,18 +19,18 @@ use super::SqliteTx;
 use async_trait::async_trait;
 
 #[derive(Debug)]
-pub(crate) struct VersionRevisionResolverImpl<'sqcn> {
-    tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+pub(crate) struct VersionRevisionResolverImpl {
+    tx: Rc<RefCell<SqliteTx>>,
 }
 
-impl<'sqcn> VersionRevisionResolverImpl<'sqcn> {
+impl VersionRevisionResolverImpl {
     pub(crate) async fn create_table(&mut self, vtable: &VTable) -> ApllodbResult<()> {
         self.navi_dao().create_table(vtable).await
     }
 }
 
 #[async_trait(?Send)]
-impl<'sqcn> VersionRevisionResolver<SqliteTypes<'sqcn>> for VersionRevisionResolverImpl<'sqcn> {
+impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
@@ -38,7 +38,7 @@ impl<'sqcn> VersionRevisionResolver<SqliteTypes<'sqcn>> for VersionRevisionResol
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
-    ) -> ApllodbResult<VRREntries<'sqcn>> {
+    ) -> ApllodbResult<VRREntries> {
         let mut entries = VecDeque::<VRREntry>::new();
 
         for pk in pks {
@@ -64,7 +64,7 @@ impl<'sqcn> VersionRevisionResolver<SqliteTypes<'sqcn>> for VersionRevisionResol
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<'sqcn>> {
+    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries> {
         let mut entries = VecDeque::<VRREntry>::new();
 
         for navi in self.navi_dao().full_scan_latest_revision(vtable).await? {
@@ -84,7 +84,7 @@ impl<'sqcn> VersionRevisionResolver<SqliteTypes<'sqcn>> for VersionRevisionResol
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
-    ) -> ApllodbResult<VRREntry<'sqcn>> {
+    ) -> ApllodbResult<VRREntry> {
         let revision = match self
             .navi_dao()
             .probe_latest_revision(version_id.vtable_id(), &pk)
@@ -116,12 +116,12 @@ impl<'sqcn> VersionRevisionResolver<SqliteTypes<'sqcn>> for VersionRevisionResol
     }
 }
 
-impl<'sqcn> VersionRevisionResolverImpl<'sqcn> {
-    pub(crate) fn new(tx: Rc<RefCell<SqliteTx<'sqcn>>>) -> Self {
+impl VersionRevisionResolverImpl {
+    pub(crate) fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { tx }
     }
 
-    fn navi_dao(&self) -> NaviDao<'sqcn> {
+    fn navi_dao(&self) -> NaviDao {
         NaviDao::new(self.tx.clone())
     }
 }

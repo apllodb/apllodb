@@ -12,5 +12,5 @@ pub struct ApllodbImmutableSchemaEngine {
 
     // FIXME Consider sharding by SessionId to avoid writer contention using something like dashmap.
     // see: <https://tokio.rs/tokio/tutorial/shared-state#tasks-threads-and-contention>
-    pool: Rc<RefCell<SqliteResourcePool<'static>>>,
+    pool: Rc<RefCell<SqliteResourcePool>>,
 }

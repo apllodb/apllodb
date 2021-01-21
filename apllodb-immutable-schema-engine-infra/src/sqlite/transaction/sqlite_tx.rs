@@ -21,30 +21,30 @@ use log::debug;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx<'sqcn> {
+pub struct SqliteTx {
     database_name: DatabaseName,
-    sqlx_tx: sqlx::Transaction<'sqcn, sqlx::sqlite::Sqlite>,
+    sqlx_tx: sqlx::Transaction<'static, sqlx::sqlite::Sqlite>,
 }
 
-impl<'sqcn> SqliteTx<'sqcn> {
-    pub(crate) fn vtable_repo(slf: Rc<RefCell<Self>>) -> VTableRepositoryImpl<'sqcn> {
+impl SqliteTx {
+    pub(crate) fn vtable_repo(slf: Rc<RefCell<Self>>) -> VTableRepositoryImpl {
         VTableRepositoryImpl::new(slf)
     }
 
-    pub(crate) fn version_repo(slf: Rc<RefCell<Self>>) -> VersionRepositoryImpl<'sqcn> {
+    pub(crate) fn version_repo(slf: Rc<RefCell<Self>>) -> VersionRepositoryImpl {
         VersionRepositoryImpl::new(slf)
     }
 }
 
-impl<'sqcn> SqliteTx<'sqcn> {
+impl SqliteTx {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    pub(crate) async fn begin(db: &'sqcn mut SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx<'sqcn>>>> {
+    pub(crate) async fn begin(db: &SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
         let database_name = { db.name().clone() };
 
-        let tx = db.sqlite_conn().begin().await.map_err(InfraError::from)?;
+        let tx = db.sqlite_pool().begin().await.map_err(InfraError::from)?;
 
         Ok(Rc::new(RefCell::new(Self {
             database_name,
@@ -77,7 +77,7 @@ impl<'sqcn> SqliteTx<'sqcn> {
     }
 }
 
-impl<'sqcn> SqliteTx<'sqcn> {
+impl SqliteTx {
     // FIXME should take placeholder argument to prevent SQL-i
     pub(in crate::sqlite::transaction::sqlite_tx) async fn query<'q>(
         &mut self,

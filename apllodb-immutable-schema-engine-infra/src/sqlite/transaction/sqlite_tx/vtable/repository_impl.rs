@@ -25,21 +25,21 @@ use apllodb_shared_components::ApllodbResult;
 use async_trait::async_trait;
 
 #[derive(Debug)]
-pub struct VTableRepositoryImpl<'sqcn> {
+pub struct VTableRepositoryImpl {
     // internal sqlx::Transaction implements `Send` but I suspect it is really safe to send SQLite's transaction
     // to another thread.
     // Fortunately, immutable-schema-engine will remove dependency to SQLite in the future so for now I use RefCell and choose not to use multi-threading model.
-    tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+    tx: Rc<RefCell<SqliteTx>>,
 }
 
-impl<'sqcn> VTableRepositoryImpl<'sqcn> {
-    pub fn new(tx: Rc<RefCell<SqliteTx<'sqcn>>>) -> Self {
+impl VTableRepositoryImpl {
+    pub fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { tx }
     }
 }
 
 #[async_trait(?Send)]
-impl<'sqcn> VTableRepository<SqliteTypes<'sqcn>> for VTableRepositoryImpl<'sqcn> {
+impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     /// # Failures
     ///
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
@@ -98,26 +98,26 @@ impl<'sqcn> VTableRepository<SqliteTypes<'sqcn>> for VTableRepositoryImpl<'sqcn>
     }
 }
 
-impl<'sqcn> VTableRepositoryImpl<'sqcn> {
-    fn vrr(&self) -> VersionRevisionResolverImpl<'sqcn> {
+impl VTableRepositoryImpl {
+    fn vrr(&self) -> VersionRevisionResolverImpl {
         VersionRevisionResolverImpl::new(self.tx.clone())
     }
 
-    fn vtable_dao(&self) -> VTableDao<'sqcn> {
+    fn vtable_dao(&self) -> VTableDao {
         VTableDao::new(self.tx.clone())
     }
 
-    fn version_dao(&self) -> VersionDao<'sqcn> {
+    fn version_dao(&self) -> VersionDao {
         VersionDao::new(self.tx.clone())
     }
 
-    fn sqlite_master_dao(&self) -> SqliteMasterDao<'sqcn> {
+    fn sqlite_master_dao(&self) -> SqliteMasterDao {
         SqliteMasterDao::new(self.tx.clone())
     }
 
     async fn probe_vrr_entries(
         &self,
-        vrr_entries: VRREntries<'sqcn>,
+        vrr_entries: VRREntries,
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();

@@ -9,20 +9,20 @@ use super::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
 ///
 /// Each resource is accessible via [SessionId](apllodb-shared-components::SessionId).
 #[derive(Debug, Default)]
-pub(crate) struct SqliteResourcePool<'sqcn> {
+pub(crate) struct SqliteResourcePool {
     pub(crate) db_arena: Arena<SqliteDatabase>,
-    pub(crate) tx_arena: Arena<Rc<RefCell<SqliteTx<'sqcn>>>>,
+    pub(crate) tx_arena: Arena<Rc<RefCell<SqliteTx>>>,
 
     pub(crate) sess_db: HashMap<SessionId, Index>,
     pub(crate) sess_tx: HashMap<SessionId, Index>,
 }
 
-impl<'sqcn> SqliteResourcePool<'sqcn> {
+impl SqliteResourcePool {
     /// # Failures
     ///
     /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
     ///   - this session seems not to open any database.
-    pub(crate) fn get_db_mut(&'static mut self, sid: &SessionId) -> ApllodbResult<&'sqcn mut SqliteDatabase> {
+    pub(crate) fn get_db_mut(&mut self, sid: &SessionId) -> ApllodbResult<&mut SqliteDatabase> {
         let err = || {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedObject,
@@ -61,7 +61,7 @@ impl<'sqcn> SqliteResourcePool<'sqcn> {
     pub(crate) fn insert_tx(
         &mut self,
         sid: &SessionId,
-        tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+        tx: Rc<RefCell<SqliteTx>>,
     ) -> ApllodbResult<()> {
         let tx_idx = self.tx_arena.insert(tx);
         if self.sess_tx.insert(sid.clone(), tx_idx).is_some() {

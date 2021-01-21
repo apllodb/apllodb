@@ -14,16 +14,16 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao<'sqcn> {
-    sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao {
+    sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
 const TNAME: &str = "sqlite_master";
 const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
-impl<'sqcn> SqliteMasterDao<'sqcn> {
+impl SqliteMasterDao {
     pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn new(
-        sqlite_tx: Rc<RefCell<SqliteTx<'sqcn>>>,
+        sqlite_tx: Rc<RefCell<SqliteTx>>,
     ) -> Self {
         Self { sqlite_tx }
     }
