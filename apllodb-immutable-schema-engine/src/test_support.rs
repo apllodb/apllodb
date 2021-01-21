@@ -1,4 +1,4 @@
-use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaEngine;
+use apllodb_immutable_schema_engine_infra::engine::ApllodbImmutableSchemaEngine;
 use apllodb_storage_engine_interface::StorageEngineClient;
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},

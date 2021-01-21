@@ -2,7 +2,7 @@
 
 //! Infrastructure layer of apllodb-immutable-schema-engine.
 
-pub mod external_interface;
+pub mod engine;
 
 mod error;
 mod immutable_schema_row_iter;

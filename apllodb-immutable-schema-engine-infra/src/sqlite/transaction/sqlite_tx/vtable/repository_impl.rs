@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
+    engine::ApllodbImmutableSchemaEngine,
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         row_iterator::SqliteRowIterator,

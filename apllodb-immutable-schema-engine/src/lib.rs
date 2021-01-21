@@ -30,4 +30,4 @@
 #[cfg(feature = "test-support")]
 pub mod test_support;
 
-pub use apllodb_immutable_schema_engine_infra::external_interface::ApllodbImmutableSchemaEngine;
+pub use apllodb_immutable_schema_engine_infra::engine::ApllodbImmutableSchemaEngine;

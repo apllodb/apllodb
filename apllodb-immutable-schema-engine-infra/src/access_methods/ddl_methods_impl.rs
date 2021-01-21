@@ -1,4 +1,4 @@
-use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
+use crate::{engine::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
 use crate::{runtime, sqlite::transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},

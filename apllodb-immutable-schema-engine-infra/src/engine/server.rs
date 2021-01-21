@@ -1,33 +1,12 @@
-use std::{
-    cell::RefCell,
-    net::{IpAddr, SocketAddr},
-    pin::Pin,
-    rc::Rc,
-};
+use super::ApllodbImmutableSchemaEngine;
 
-use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithDb, SessionWithoutDb};
 use apllodb_storage_engine_interface::StorageEngine;
 use futures::prelude::*;
-use futures::{future::FutureExt, Future};
-use tarpc::{
-    context,
-    server::{Channel, Handler},
-};
+use std::{cell::RefCell, net::SocketAddr, rc::Rc};
+use tarpc::server::{Channel, Handler};
 use tokio_serde::formats::Bincode;
 
-use crate::sqlite::{database::SqliteDatabase, sqlite_resource_pool::SqliteResourcePool};
-
-type BoxFutResult<S> = Pin<Box<dyn Future<Output = ApllodbResult<S>>>>;
-
-/// Storage engine implementation.
-#[derive(Clone, Debug)]
-pub struct ApllodbImmutableSchemaEngine {
-    addr: SocketAddr,
-
-    // FIXME Consider sharding by SessionId to avoid writer contention using something like dashmap.
-    // see: <https://tokio.rs/tokio/tutorial/shared-state#tasks-threads-and-contention>
-    pool: Rc<RefCell<SqliteResourcePool<'static>>>,
-}
+use crate::sqlite::sqlite_resource_pool::SqliteResourcePool;
 
 impl ApllodbImmutableSchemaEngine {
     pub async fn serve(addr: SocketAddr) -> Result<(), std::io::Error> {
@@ -61,24 +40,5 @@ impl ApllodbImmutableSchemaEngine {
             .await;
 
         Ok(())
-    }
-}
-
-impl StorageEngine for ApllodbImmutableSchemaEngine {
-    type UseDatabaseFut = BoxFutResult<SessionWithDb>;
-
-    fn use_database(
-        self,
-        _: context::Context,
-        session: SessionWithoutDb,
-        database: DatabaseName,
-    ) -> Self::UseDatabaseFut {
-        async move {
-            let db = SqliteDatabase::use_database(database.clone()).await?;
-            self.pool.borrow_mut().register_db(session.get_id(), db);
-
-            Ok(session.upgrade(database))
-        }
-        .boxed_local()
     }
 }

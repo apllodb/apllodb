@@ -3,8 +3,7 @@ use std::marker::PhantomData;
 use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 
 use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-    immutable_schema_row_iter::ImmutableSchemaRowIter,
+    engine::ApllodbImmutableSchemaEngine, immutable_schema_row_iter::ImmutableSchemaRowIter,
 };
 
 use super::{

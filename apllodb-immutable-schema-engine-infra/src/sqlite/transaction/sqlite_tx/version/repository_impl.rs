@@ -1,6 +1,6 @@
 use super::dao::VersionDao;
 use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
+    engine::ApllodbImmutableSchemaEngine,
     sqlite::transaction::sqlite_tx::{
         version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
     },

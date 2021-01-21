@@ -5,7 +5,6 @@ use apllodb_immutable_schema_engine_domain::{
 };
 
 use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
     sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes},
 };
 

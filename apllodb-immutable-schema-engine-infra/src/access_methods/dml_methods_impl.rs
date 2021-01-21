@@ -11,7 +11,7 @@ use apllodb_storage_engine_interface::DMLMethods;
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
-use crate::{external_interface::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
+use crate::{engine::ApllodbImmutableSchemaEngine, sqlite::sqlite_types::SqliteTypes};
 use crate::{runtime, sqlite::transaction::sqlite_tx::SqliteTx};
 
 #[derive(
