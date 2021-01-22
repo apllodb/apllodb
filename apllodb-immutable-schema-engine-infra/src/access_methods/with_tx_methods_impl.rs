@@ -4,11 +4,14 @@ use crate::sqlite::{
     sqlite_resource_pool::tx_pool::SqliteTxPool, sqlite_types::SqliteTypes,
     transaction::sqlite_tx::SqliteTx,
 };
-use apllodb_immutable_schema_engine_application::use_case::transaction::create_table::{
-    CreateTableUseCase, CreateTableUseCaseInput,
+use apllodb_immutable_schema_engine_application::use_case::transaction::{
+    alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
+    create_table::{CreateTableUseCase, CreateTableUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_shared_components::{ColumnDefinition, SessionWithTx, TableConstraints, TableName};
+use apllodb_shared_components::{
+    AlterTableAction, ColumnDefinition, SessionWithTx, TableConstraints, TableName,
+};
 use futures::FutureExt;
 
 use super::FutRes;
@@ -78,5 +81,37 @@ impl WithTxMethodsImpl {
             Ok(session)
         }
         .boxed_local()
+    }
+
+    pub fn alter_table(
+        self,
+        session: SessionWithTx,
+        table_name: TableName,
+        action: AlterTableAction,
+    ) -> FutRes<SessionWithTx> {
+        async move {
+            let tx_pool = self.tx_pool.borrow();
+            let tx = tx_pool.get_tx(session.get_id())?;
+
+            let database_name = tx.borrow().database_name().clone();
+            let input = AlterTableUseCaseInput::new(&database_name, &table_name, &action);
+            AlterTableUseCase::<'_, SqliteTypes>::run(
+                &SqliteTx::vtable_repo(tx.clone()),
+                &SqliteTx::version_repo(tx.clone()),
+                input,
+            )
+            .await?;
+
+            Ok(session)
+        }
+        .boxed_local()
+    }
+
+    pub fn drop_table(
+        self,
+        _session: SessionWithTx,
+        _table_name: TableName,
+    ) -> FutRes<SessionWithTx> {
+        async move { todo!() }.boxed_local()
     }
 }
