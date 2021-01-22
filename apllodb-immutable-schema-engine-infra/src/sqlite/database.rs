@@ -34,7 +34,7 @@ impl SqliteDatabase {
     }
 
     fn sqlite_db_path(db_name: &DatabaseName) -> String {
-        format!("sqlite://immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
+        format!("immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
     }
 
     async fn connect_sqlite(db_name: &DatabaseName) -> ApllodbResult<sqlx::SqlitePool> {
@@ -57,11 +57,11 @@ impl SqliteDatabase {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-support"))]
 impl Drop for SqliteDatabase {
     fn drop(&mut self) {
         let path = Self::sqlite_db_path(self.name());
-        log::warn!("removing {}", path);
+        log::debug!("[test] removing database created during test: {}", path);
 
         std::fs::remove_file(&path)
             .or_else(|ioerr| match ioerr.kind() {
