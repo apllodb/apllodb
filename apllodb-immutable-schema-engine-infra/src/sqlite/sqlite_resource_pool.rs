@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{Arc, RwLock},
+    {cell::RefCell, rc::Rc},
 };
 
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SessionId};
@@ -14,7 +14,7 @@ use super::{database::SqliteDatabase, transaction::sqlite_tx::SqliteTx};
 #[derive(Debug, Default)]
 pub(crate) struct SqliteResourcePool {
     pub(crate) db_arena: Arena<SqliteDatabase>,
-    pub(crate) tx_arena: Arena<Arc<RwLock<SqliteTx>>>,
+    pub(crate) tx_arena: Arena<Rc<RefCell<SqliteTx>>>,
 
     pub(crate) sess_db: HashMap<SessionId, Index>,
     pub(crate) sess_tx: HashMap<SessionId, Index>,
@@ -64,7 +64,7 @@ impl SqliteResourcePool {
     pub(crate) fn insert_tx(
         &mut self,
         sid: &SessionId,
-        tx: Arc<RwLock<SqliteTx>>,
+        tx: Rc<RefCell<SqliteTx>>,
     ) -> ApllodbResult<()> {
         let tx_idx = self.tx_arena.insert(tx);
         if self.sess_tx.insert(sid.clone(), tx_idx).is_some() {

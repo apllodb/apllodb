@@ -1,6 +1,6 @@
 mod navi_dao;
 
-use std::{cell::RefCell, collections::VecDeque, rc::Rc, sync::{Arc, RwLock}};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
@@ -20,7 +20,7 @@ use async_trait::async_trait;
 
 #[derive(Debug)]
 pub(crate) struct VersionRevisionResolverImpl {
-    tx: Arc<RwLock<SqliteTx>>,
+    tx: Rc<RefCell<SqliteTx>>,
 }
 
 impl VersionRevisionResolverImpl {
@@ -117,7 +117,7 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
 }
 
 impl VersionRevisionResolverImpl {
-    pub(crate) fn new(tx: Arc<RwLock<SqliteTx>>) -> Self {
+    pub(crate) fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { tx }
     }
 

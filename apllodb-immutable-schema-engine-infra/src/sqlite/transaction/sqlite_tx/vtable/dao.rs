@@ -1,8 +1,4 @@
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     error::InfraError,
@@ -18,7 +14,7 @@ use apllodb_shared_components::{
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao {
-    sqlite_tx: Arc<RwLock<SqliteTx>>,
+    sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
 const TNAME: &str = "_vtable_metadata";
@@ -47,7 +43,7 @@ CREATE TABLE IF NOT EXISTS {} (
         Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: Arc<RwLock<SqliteTx>>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { sqlite_tx }
     }
 
@@ -83,8 +79,7 @@ CREATE TABLE IF NOT EXISTS {} (
 
         let mut row_iter = self
             .sqlite_tx
-            .write()
-            .map_err(InfraError::from)?
+            .borrow_mut()
             .query(
                 &sql,
                 &[&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
@@ -161,8 +156,7 @@ CREATE TABLE IF NOT EXISTS {} (
         );
 
         self.sqlite_tx
-            .write()
-            .map_err(InfraError::from)?
+            .borrow_mut()
             .execute(&sql)
             .await
             .map_err(|e| match e.kind() {
