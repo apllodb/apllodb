@@ -11,7 +11,7 @@ use apllodb_shared_components::{
     ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableName,
 };
 
-#[tokio::test]
+#[async_std::test]
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     setup();
 

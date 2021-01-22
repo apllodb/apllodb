@@ -20,11 +20,3 @@ pub use crate::{
     sqlite::sqlite_resource_pool::db_pool::SqliteDatabasePool,
     sqlite::sqlite_resource_pool::tx_pool::SqliteTxPool,
 };
-
-// TODO remove after infra layer interface becomes async
-fn runtime() -> tokio::runtime::Runtime {
-    tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-}
