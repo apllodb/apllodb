@@ -4,9 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIterator,
 };
 
-use crate::{
-    sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes},
-};
+use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes};
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct ImmutableSchemaRowIter(VecDeque<SqliteRowIterator>);
