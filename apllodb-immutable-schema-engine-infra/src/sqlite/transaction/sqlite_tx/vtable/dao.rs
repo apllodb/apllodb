@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS {} (
         vtable_id: &VTableId,
     ) -> ApllodbResult<VTable> {
         let sql = format!(
-            "SELECT {}, {} FROM {} WHERE {} = {};",
+            "SELECT {}, {} FROM {} WHERE {} = \"{}\";",
             CNAME_TABLE_NAME,
             CNAME_TABLE_WIDE_CONSTRAINTS,
             TNAME,

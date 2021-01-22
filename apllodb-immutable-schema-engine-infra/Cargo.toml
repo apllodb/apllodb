@@ -7,11 +7,11 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-test-support = []
+test-support = ["uuid"]
 
 [dependencies]
 apllodb-immutable-schema-engine-application = {path = "../apllodb-immutable-schema-engine-application"}
-apllodb-immutable-schema-engine-domain = {path = "../apllodb-immutable-schema-engine-domain"}
+apllodb-immutable-schema-engine-domain = {path = "../apllodb-immutable-schema-engine-domain", features = ["test-support"]}
 
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
 
@@ -39,8 +39,11 @@ generational-arena = "0.2.8"
 
 futures = "0.3"
 
+uuid = {version = "0.8", features = ["v4"], optional = true}
+
 [dev-dependencies]
 pretty_assertions = "0.6"
 rand = "0.8"
-uuid = {version = "0.8", features = ["v4"]}
 version-sync = "0.9"
+
+uuid = {version = "0.8", features = ["v4"]}

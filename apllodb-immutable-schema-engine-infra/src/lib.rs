@@ -12,7 +12,7 @@ mod error;
 mod immutable_schema_row_iter;
 mod sqlite;
 
-#[cfg(test)]
-mod test_support;
+#[cfg(any(test, feature = "test-support"))]
+pub mod test_support;
 
 pub use crate::engine::ApllodbImmutableSchemaEngine;
