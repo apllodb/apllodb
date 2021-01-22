@@ -1,13 +1,9 @@
 pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
 pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
-use crate::{
-    error::InfraError,
-    sqlite::{
-        row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid,
-        sqlite_types::VRREntriesInVersion, to_sql_string::ToSqlString,
-        transaction::sqlite_tx::SqliteTx,
-    },
+use crate::sqlite::{
+    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
+    to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,

@@ -4,11 +4,8 @@ mod navi_table_name;
 
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{
-    error::InfraError,
-    sqlite::{
-        sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
-    },
+use crate::sqlite::{
+    sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
     row::pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},

@@ -2,7 +2,7 @@ mod active_version_deserializer;
 
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{error::InfraError, sqlite::transaction::sqlite_tx::SqliteTx};
+use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},

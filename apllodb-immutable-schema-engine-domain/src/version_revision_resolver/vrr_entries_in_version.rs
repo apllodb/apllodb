@@ -1,7 +1,5 @@
 use std::collections::VecDeque;
 
-use apllodb_storage_engine_interface::StorageEngine;
-
 use crate::{abstract_types::ImmutableSchemaAbstractTypes, version::id::VersionId};
 
 use super::{vrr_entries::VRREntries, vrr_entry::VRREntry};

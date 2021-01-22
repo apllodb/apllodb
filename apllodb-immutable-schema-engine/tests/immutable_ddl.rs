@@ -31,9 +31,9 @@ fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResu
         ),
         ColumnConstraints::new(vec![])?,
     );
-    let coldefs = vec![c_id_def.clone(), c1_def.clone()];
+    let _coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
-    let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+    let _tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
         column_names: vec![c_id_def
             .column_data_type()
             .column_ref()

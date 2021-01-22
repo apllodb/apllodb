@@ -9,7 +9,6 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     ApllodbResult, ColumnDataType, ColumnDefinition, DatabaseName, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::StorageEngine;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 

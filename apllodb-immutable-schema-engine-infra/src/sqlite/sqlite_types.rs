@@ -1,10 +1,6 @@
-use std::marker::PhantomData;
-
 use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 
-use crate::{
-    engine::ApllodbImmutableSchemaEngine, immutable_schema_row_iter::ImmutableSchemaRowIter,
-};
+use crate::immutable_schema_row_iter::ImmutableSchemaRowIter;
 
 use super::{
     row_iterator::SqliteRowIterator,

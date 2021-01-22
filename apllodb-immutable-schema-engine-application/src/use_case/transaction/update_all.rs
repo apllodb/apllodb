@@ -13,7 +13,7 @@ use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, ColumnReference, DatabaseName,
     Expression, FieldIndex, Record, RecordIterator, SqlValue, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
+use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 

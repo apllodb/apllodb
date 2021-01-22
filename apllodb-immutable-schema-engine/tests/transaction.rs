@@ -2,8 +2,8 @@ mod test_support;
 
 use crate::test_support::setup;
 use apllodb_shared_components::{
-    ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
+    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
+    ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
 };
 
 #[test]
@@ -23,9 +23,9 @@ fn test_wait_lock() -> ApllodbResult<()> {
         ),
         ColumnConstraints::new(vec![])?,
     );
-    let coldefs = vec![c1_def.clone()];
+    let _coldefs = vec![c1_def.clone()];
 
-    let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+    let _tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
         column_names: vec![c1_def
             .column_data_type()
             .column_ref()

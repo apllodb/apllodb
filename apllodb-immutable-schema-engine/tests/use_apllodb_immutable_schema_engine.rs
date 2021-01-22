@@ -21,7 +21,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 
     let t_name = TableName::new("t")?;
 
-    let c1_def = ColumnDefinition::new(
+    let _c1_def = ColumnDefinition::new(
         ColumnDataType::new(
             ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),

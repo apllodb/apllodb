@@ -1,7 +1,5 @@
 use std::fmt::Debug;
 
-use apllodb_storage_engine_interface::StorageEngine;
-
 use crate::{
     row_iter::{version_row_iter::VersionRowIterator, ImmutableSchemaRowIterator},
     version::repository::VersionRepository,

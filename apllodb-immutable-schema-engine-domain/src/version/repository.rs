@@ -2,7 +2,6 @@ use crate::row::pk::apparent_pk::ApparentPrimaryKey;
 
 use super::{active_version::ActiveVersion, id::VersionId};
 use apllodb_shared_components::{ApllodbResult, ColumnName, SqlValue};
-use apllodb_storage_engine_interface::StorageEngine;
 use async_trait::async_trait;
 use std::collections::HashMap;
 

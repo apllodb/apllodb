@@ -3,10 +3,8 @@ mod test_support;
 use crate::test_support::setup;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind,
-    TableConstraints, TableName,
+    ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
 
 #[test]
 fn test_compound_pk() -> ApllodbResult<()> {
@@ -33,9 +31,9 @@ fn test_compound_pk() -> ApllodbResult<()> {
         ),
         ColumnConstraints::new(vec![])?,
     );
-    let coldefs = vec![c_country_code_def.clone(), c_postal_code_def.clone()];
+    let _coldefs = vec![c_country_code_def.clone(), c_postal_code_def.clone()];
 
-    let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+    let _tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
         column_names: vec![
             c_country_code_def
                 .column_data_type()

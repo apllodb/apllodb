@@ -2,7 +2,6 @@ use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use super::{dao::VTableDao, sqlite_master::dao::SqliteMasterDao};
 use crate::{
-    engine::ApllodbImmutableSchemaEngine,
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         row_iterator::SqliteRowIterator,
@@ -24,18 +23,9 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::ApllodbResult;
 use async_trait::async_trait;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct VTableRepositoryImpl {
-    // internal sqlx::Transaction implements `Send` but I suspect it is really safe to send SQLite's transaction
-    // to another thread.
-    // Fortunately, immutable-schema-engine will remove dependency to SQLite in the future so for now I use RefCell and choose not to use multi-threading model.
     tx: Rc<RefCell<SqliteTx>>,
-}
-
-impl VTableRepositoryImpl {
-    pub fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
-        Self { tx }
-    }
 }
 
 #[async_trait(?Send)]

@@ -1,7 +1,5 @@
 use std::collections::{HashMap, VecDeque};
 
-use apllodb_storage_engine_interface::StorageEngine;
-
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, version::id::VersionId, vtable::id::VTableId,
 };
