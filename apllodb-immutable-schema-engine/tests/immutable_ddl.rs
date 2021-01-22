@@ -15,6 +15,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     setup();
 
     let engine = ApllodbImmutableSchemaEngine::new();
+    let session = session_with_tx(&engine).await?;
 
     let t_name = TableName::new("t")?;
 
@@ -43,8 +44,6 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
             .as_column_name()
             .clone()],
     }])?;
-
-    let session = session_with_tx(&engine).await?;
 
     // v1
     // | id | c1 |
