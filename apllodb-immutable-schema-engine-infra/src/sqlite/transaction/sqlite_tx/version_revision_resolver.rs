@@ -24,7 +24,7 @@ pub(crate) struct VersionRevisionResolverImpl {
 }
 
 impl VersionRevisionResolverImpl {
-    pub(crate) async fn create_table(&mut self, vtable: &VTable) -> ApllodbResult<()> {
+    pub(crate) async fn create_table(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.navi_dao().create_table(vtable).await
     }
 }

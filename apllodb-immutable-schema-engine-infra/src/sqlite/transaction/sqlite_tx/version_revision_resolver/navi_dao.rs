@@ -39,7 +39,7 @@ impl NaviDao {
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn create_table(
-        &mut self,
+        &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForNavi::from(vtable);

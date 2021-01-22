@@ -41,7 +41,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         input: Self::In,
     ) -> ApllodbResult<Self::Out> {
         let vtable_id = VTableId::new(input.database_name, input.table_name);
-        let mut vtable = vtable_repo.read(&vtable_id).await?;
+        let vtable = vtable_repo.read(&vtable_id).await?;
         vtable.alter(input.action)?;
 
         let active_versions = vtable_repo.active_versions(&vtable).await?;
