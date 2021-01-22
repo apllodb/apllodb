@@ -36,6 +36,16 @@ impl WithTxMethodsImpl {
         .boxed_local()
     }
 
+    pub fn abort_transaction(self, session: SessionWithTx) -> FutRes<()> {
+        async move {
+            let mut tx_pool = self.tx_pool.borrow_mut();
+            let tx = tx_pool.remove_tx(session.get_id())?;
+            tx.borrow_mut().abort().await?;
+            Ok(())
+        }
+        .boxed_local()
+    }
+
     // ========================================================================
     // DDL
     // ========================================================================
