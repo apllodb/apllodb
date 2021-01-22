@@ -21,6 +21,25 @@ impl SqliteTxPool {
     /// # Failures
     ///
     /// - [InvalidTransactionState](apllodb-shared-components::ApllodbErrorKind::InvalidTransactionState) when:
+    ///   - this session seems not to open any transaction.
+    pub(crate) fn get_tx(&self, sid: &SessionId) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
+        let err = || {
+            ApllodbError::new(
+                ApllodbErrorKind::InvalidTransactionState,
+                format!("session `{:?}` does not open any transaction", sid),
+                None,
+            )
+        };
+
+        let tx_idx = self.sess_tx.get(sid).ok_or_else(err)?.clone();
+        let tx = self.tx_arena.get(tx_idx).ok_or_else(err)?;
+
+        Ok(tx.clone())
+    }
+
+    /// # Failures
+    ///
+    /// - [InvalidTransactionState](apllodb-shared-components::ApllodbErrorKind::InvalidTransactionState) when:
     ///   - this session seems to open another transaction.
     pub(crate) fn insert_tx(
         &mut self,

@@ -8,7 +8,8 @@ use apllodb_immutable_schema_engine::{
 };
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableName,
+    ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
+    TableConstraints, TableName,
 };
 
 #[async_std::test]
@@ -21,7 +22,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 
     let t_name = TableName::new("t")?;
 
-    let _c1_def = ColumnDefinition::new(
+    let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
             ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
@@ -41,20 +42,22 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 
     log::debug!("SessionWithTx: {:?}", session);
 
-    // let ddl = ApllodbImmutableSchemaDDL::default();
+    engine
+        .with_tx_methods()
+        .create_table(
+            session,
+            t_name,
+            TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+                column_names: vec![c1_def
+                    .column_data_type()
+                    .column_ref()
+                    .as_column_name()
+                    .clone()],
+            }])?,
+            vec![c1_def],
+        )
+        .await?;
 
-    // ddl.create_table(
-    //     &mut tx,
-    //     &t_name,
-    //     &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-    //         column_names: vec![c1_def
-    //             .column_data_type()
-    //             .column_ref()
-    //             .as_column_name()
-    //             .clone()],
-    //     }])?,
-    //     vec![c1_def],
-    // )?;
     // tx.abort()?;
 
     //h.join_handle.join().expect("server thread panic-ed:");

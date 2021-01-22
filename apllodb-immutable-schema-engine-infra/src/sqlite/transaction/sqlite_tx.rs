@@ -70,7 +70,7 @@ impl SqliteTx {
         Ok(())
     }
 
-    fn database_name(&self) -> &DatabaseName {
+    pub(crate) fn database_name(&self) -> &DatabaseName {
         &self.database_name
     }
 }

@@ -2,7 +2,8 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     access_methods::{
-        with_db_methods_impl::WithDbMethodsImpl, without_db_methods_impl::WithoutDbMethodsImpl,
+        with_db_methods_impl::WithDbMethodsImpl, with_tx_methods_impl::WithTxMethodsImpl,
+        without_db_methods_impl::WithoutDbMethodsImpl,
     },
     sqlite::sqlite_resource_pool::{db_pool::SqliteDatabasePool, tx_pool::SqliteTxPool},
 };
@@ -28,5 +29,9 @@ impl ApllodbImmutableSchemaEngine {
 
     pub fn with_db_methods(&self) -> WithDbMethodsImpl {
         WithDbMethodsImpl::new(self.db_pool.clone(), self.tx_pool.clone())
+    }
+
+    pub fn with_tx_methods(&self) -> WithTxMethodsImpl {
+        WithTxMethodsImpl::new(self.tx_pool.clone())
     }
 }
