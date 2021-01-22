@@ -1,7 +1,4 @@
-#![deny(
-    warnings,
-     //missing_docs,
-      missing_debug_implementations)]
+#![deny(warnings, missing_docs, missing_debug_implementations)]
 
 //! apllodb's original storage engine implementation.
 //!
