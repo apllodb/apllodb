@@ -16,10 +16,9 @@ pub struct ApllodbImmutableSchemaEngine {
 }
 
 impl ApllodbImmutableSchemaEngine {
-    pub fn new(
-        db_pool: Rc<RefCell<SqliteDatabasePool>>,
-        tx_pool: Rc<RefCell<SqliteTxPool>>,
-    ) -> Self {
+    pub fn new() -> Self {
+        let db_pool = Rc::new(RefCell::new(SqliteDatabasePool::default()));
+        let tx_pool = Rc::new(RefCell::new(SqliteTxPool::default()));
         Self { db_pool, tx_pool }
     }
 

@@ -6,12 +6,16 @@ use futures::FutureExt;
 
 use super::FutRes;
 
-#[derive(Clone, Debug, Default, new)]
+#[derive(Clone, Debug, Default)]
 pub struct WithoutDbMethodsImpl {
     db_pool: Rc<RefCell<SqliteDatabasePool>>,
 }
 
 impl WithoutDbMethodsImpl {
+    pub(crate) fn new(db_pool: Rc<RefCell<SqliteDatabasePool>>) -> Self {
+        Self { db_pool }
+    }
+
     pub fn use_database(
         self,
         session: SessionWithoutDb,

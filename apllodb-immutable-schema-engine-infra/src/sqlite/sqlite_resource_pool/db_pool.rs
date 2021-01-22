@@ -6,7 +6,7 @@ use generational_arena::{Arena, Index};
 use crate::sqlite::database::SqliteDatabase;
 
 #[derive(Debug, Default)]
-pub struct SqliteDatabasePool {
+pub(crate) struct SqliteDatabasePool {
     pub(crate) db_arena: Arena<SqliteDatabase>,
     pub(crate) sess_db: HashMap<SessionId, Index>,
 }

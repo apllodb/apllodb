@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{
-    sqlite::{sqlite_types::SqliteTypes, transaction::sqlite_tx::SqliteTx},
-    SqliteTxPool,
+use crate::sqlite::{
+    sqlite_resource_pool::tx_pool::SqliteTxPool, sqlite_types::SqliteTypes,
+    transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_application::use_case::transaction::create_table::{
     CreateTableUseCase, CreateTableUseCaseInput,
@@ -13,12 +13,16 @@ use futures::FutureExt;
 
 use super::FutRes;
 
-#[derive(Clone, Debug, Default, new)]
+#[derive(Clone, Debug, Default)]
 pub struct WithTxMethodsImpl {
     tx_pool: Rc<RefCell<SqliteTxPool>>,
 }
 
 impl WithTxMethodsImpl {
+    pub(crate) fn new(tx_pool: Rc<RefCell<SqliteTxPool>>) -> Self {
+        Self { tx_pool }
+    }
+
     // ========================================================================
     // Transaction
     // ========================================================================

@@ -1,11 +1,7 @@
 mod test_support;
 
-use std::{cell::RefCell, rc::Rc};
-
 use crate::test_support::setup;
-use apllodb_immutable_schema_engine::{
-    ApllodbImmutableSchemaEngine, SqliteDatabasePool, SqliteTxPool,
-};
+use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
     ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
@@ -16,9 +12,7 @@ use apllodb_shared_components::{
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     setup();
 
-    let db_pool = Rc::new(RefCell::new(SqliteDatabasePool::default()));
-    let tx_pool = Rc::new(RefCell::new(SqliteTxPool::default()));
-    let engine = ApllodbImmutableSchemaEngine::new(db_pool, tx_pool);
+    let engine = ApllodbImmutableSchemaEngine::new();
 
     let t_name = TableName::new("t")?;
 

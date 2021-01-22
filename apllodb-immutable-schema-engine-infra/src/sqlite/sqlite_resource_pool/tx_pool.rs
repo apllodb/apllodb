@@ -12,7 +12,7 @@ use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 ///
 /// Each resource is accessible via [SessionId](apllodb-shared-components::SessionId).
 #[derive(Debug, Default)]
-pub struct SqliteTxPool {
+pub(crate) struct SqliteTxPool {
     pub(crate) tx_arena: Arena<Rc<RefCell<SqliteTx>>>,
     pub(crate) sess_tx: HashMap<SessionId, Index>,
 }
