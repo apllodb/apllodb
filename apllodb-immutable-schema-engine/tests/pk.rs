@@ -3,7 +3,11 @@ mod test_support;
 use crate::test_support::setup;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
-use apllodb_shared_components::{ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind, TableConstraints, TableName};
+use apllodb_shared_components::{
+    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
+    ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind,
+    TableConstraints, TableName,
+};
 use apllodb_storage_engine_interface::ProjectionQuery;
 
 #[async_std::test]
@@ -48,28 +52,27 @@ async fn test_compound_pk() -> ApllodbResult<()> {
         ],
     }])?;
 
-
     let session = engine
-    .with_tx_methods()
-    .create_table(session, t_name.clone(), tc, coldefs)
-    .await?;
+        .with_tx_methods()
+        .create_table(session, t_name.clone(), tc, coldefs)
+        .await?;
 
-    let session = engine.with_tx_methods().insert(session, t_name.clone(), 
+    let session = engine.with_tx_methods().insert(session, t_name.clone(),
     RecordIterator::new(vec![record! {
         FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::small_int(), &100i16)?,
         FieldIndex::InColumnReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1000001i32)?
     }])).await?;
 
-
     let (records, session) = engine
         .with_tx_methods()
-        .select(session, t_name.clone(), 
-        ProjectionQuery::ColumnNames(vec![c_postal_code_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()]),
-        
+        .select(
+            session,
+            t_name.clone(),
+            ProjectionQuery::ColumnNames(vec![c_postal_code_def
+                .column_data_type()
+                .column_ref()
+                .as_column_name()
+                .clone()]),
         )
         .await?;
 
