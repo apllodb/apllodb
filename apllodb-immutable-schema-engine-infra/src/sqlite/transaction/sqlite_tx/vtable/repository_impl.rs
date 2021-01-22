@@ -23,9 +23,15 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::ApllodbResult;
 use async_trait::async_trait;
 
-#[derive(Debug, new)]
+#[derive(Debug)]
 pub struct VTableRepositoryImpl {
     tx: Rc<RefCell<SqliteTx>>,
+}
+
+impl VTableRepositoryImpl {
+    pub(crate) fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
+        Self { tx }
+    }
 }
 
 #[async_trait(?Send)]

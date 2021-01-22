@@ -6,7 +6,7 @@ use std::{str::FromStr, time::Duration};
 
 /// Database context.
 #[derive(Debug)]
-pub struct SqliteDatabase {
+pub(crate) struct SqliteDatabase {
     sqlite_pool: sqlx::SqlitePool,
     name: DatabaseName,
 }

@@ -13,9 +13,15 @@ use apllodb_shared_components::{ColumnName, SqlValue};
 use async_trait::async_trait;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-#[derive(Debug, new)]
+#[derive(Debug)]
 pub struct VersionRepositoryImpl {
     tx: Rc<RefCell<SqliteTx>>,
+}
+
+impl VersionRepositoryImpl {
+    pub(crate) fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
+        Self { tx }
+    }
 }
 
 #[async_trait(?Send)]

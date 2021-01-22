@@ -19,7 +19,7 @@ use log::debug;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx {
+pub(crate) struct SqliteTx {
     database_name: DatabaseName,
 
     // will be Option::take() -n on commit/abort.
