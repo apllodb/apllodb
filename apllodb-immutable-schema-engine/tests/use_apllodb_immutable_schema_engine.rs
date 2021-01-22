@@ -1,30 +1,23 @@
-#![cfg(feature = "test-support")]
-
 mod test_support;
+
+use std::{cell::RefCell, rc::Rc};
 
 use crate::test_support::setup;
 use apllodb_immutable_schema_engine::{
-    test_support::{make_client, spawn_server},
-    ApllodbImmutableSchemaEngine,
+    ApllodbImmutableSchemaEngine, SqliteDatabasePool, SqliteTxPool,
 };
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
-    TableConstraints, TableName,
+    ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableName,
 };
-use apllodb_storage_engine_interface::StorageEngine;
-use futures::{future, prelude::*};
-use tarpc::{
-    client, context,
-    server::{self, Handler},
-};
-use tokio::task;
 
 #[tokio::test]
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     setup();
 
-    let h = spawn_server().await.unwrap();
+    let db_pool = Rc::new(RefCell::new(SqliteDatabasePool::default()));
+    let tx_pool = Rc::new(RefCell::new(SqliteTxPool::default()));
+    let engine = ApllodbImmutableSchemaEngine::new(db_pool, tx_pool);
 
     let t_name = TableName::new("t")?;
 
@@ -37,15 +30,10 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         ColumnConstraints::default(),
     );
 
-    let mut client = make_client(h.connect_addr).await?;
-
-    let session = client
-        .use_database(
-            context::current(),
-            SessionWithoutDb::default(),
-            DatabaseName::new("xyzw")?,
-        )
-        .await??;
+    let session = engine
+        .without_db_methods()
+        .use_database(SessionWithoutDb::default(), DatabaseName::new("xyzw")?)
+        .await?;
 
     log::debug!("SessionWithDb: {:?}", session);
 

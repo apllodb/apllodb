@@ -1,19 +1,26 @@
-mod controller;
-mod server;
+use std::{cell::RefCell, rc::Rc};
 
-use std::{
-    net::SocketAddr,
-    {cell::RefCell, rc::Rc},
+use crate::{
+    access_methods::without_db_methods_impl::WithoutDbMethodsImpl,
+    sqlite::sqlite_resource_pool::{db_pool::SqliteDatabasePool, tx_pool::SqliteTxPool},
 };
-
-use crate::sqlite::sqlite_resource_pool::SqliteResourcePool;
 
 /// Storage engine implementation.
 #[derive(Clone, Debug)]
 pub struct ApllodbImmutableSchemaEngine {
-    addr: SocketAddr,
+    db_pool: Rc<RefCell<SqliteDatabasePool>>,
+    tx_pool: Rc<RefCell<SqliteTxPool>>,
+}
 
-    // FIXME Consider sharding by SessionId to avoid writer contention using something like dashmap.
-    // see: <https://tokio.rs/tokio/tutorial/shared-state#tasks-threads-and-contention>
-    pool: Rc<RefCell<SqliteResourcePool>>,
+impl ApllodbImmutableSchemaEngine {
+    pub fn new(
+        db_pool: Rc<RefCell<SqliteDatabasePool>>,
+        tx_pool: Rc<RefCell<SqliteTxPool>>,
+    ) -> Self {
+        Self { db_pool, tx_pool }
+    }
+
+    pub fn without_db_methods(&self) -> WithoutDbMethodsImpl {
+        WithoutDbMethodsImpl::new(self.db_pool.clone())
+    }
 }
