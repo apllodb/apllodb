@@ -58,7 +58,7 @@ impl SqliteTx {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    async fn commit(&mut self) -> ApllodbResult<()> {
+    pub(crate) async fn commit(&mut self) -> ApllodbResult<()> {
         self.sqlx_tx
             .take()
             .expect("SqliteTx::commit() / SqliteTx::abort() must be called only once")
@@ -72,7 +72,7 @@ impl SqliteTx {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    async fn abort(&mut self) -> ApllodbResult<()> {
+    pub(crate) async fn abort(&mut self) -> ApllodbResult<()> {
         self.sqlx_tx
             .take()
             .expect("SqliteTx::commit() / SqliteTx::abort() must be called only once")

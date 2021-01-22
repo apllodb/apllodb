@@ -42,7 +42,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 
     log::debug!("SessionWithTx: {:?}", session);
 
-    engine
+    let session = engine
         .with_tx_methods()
         .create_table(
             session,
@@ -57,6 +57,8 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
             vec![c1_def],
         )
         .await?;
+
+    engine.with_tx_methods().commit_transaction(session).await?;
 
     // tx.abort()?;
 

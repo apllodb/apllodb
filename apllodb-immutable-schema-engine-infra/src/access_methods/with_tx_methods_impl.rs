@@ -19,6 +19,22 @@ pub struct WithTxMethodsImpl {
 }
 
 impl WithTxMethodsImpl {
+    // ========================================================================
+    // Transaction
+    // ========================================================================
+    pub fn commit_transaction(self, session: SessionWithTx) -> FutRes<()> {
+        async move {
+            let mut tx_pool = self.tx_pool.borrow_mut();
+            let tx = tx_pool.remove_tx(session.get_id())?;
+            tx.borrow_mut().commit().await?;
+            Ok(())
+        }
+        .boxed_local()
+    }
+
+    // ========================================================================
+    // DDL
+    // ========================================================================
     pub fn create_table(
         self,
         session: SessionWithTx,
