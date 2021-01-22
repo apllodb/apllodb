@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::sqlite::{database::SqliteDatabase, sqlite_resource_pool::db_pool::SqliteDatabasePool};
 use apllodb_shared_components::{DatabaseName, SessionWithDb, SessionWithoutDb};
+use apllodb_storage_engine_interface::WithoutDbMethods;
 use futures::FutureExt;
 
 use super::FutRes;
@@ -15,8 +16,10 @@ impl WithoutDbMethodsImpl {
     pub(crate) fn new(db_pool: Rc<RefCell<SqliteDatabasePool>>) -> Self {
         Self { db_pool }
     }
+}
 
-    pub fn use_database(
+impl WithoutDbMethods for WithoutDbMethodsImpl {
+    fn use_database(
         self,
         session: SessionWithoutDb,
         database: DatabaseName,

@@ -33,52 +33,20 @@
 //!
 //! TODO link to tests/
 
+mod access_methods;
 mod projection_query;
 
-#[cfg(feature = "test-support")]
-pub mod test_support;
-
+pub use access_methods::without_db_methods::WithoutDbMethods;
 pub use projection_query::ProjectionQuery;
 
-use apllodb_shared_components::{
-    ApllodbResult, DatabaseName, SessionWithDb, SessionWithTx, SessionWithoutDb,
-};
-use std::fmt::Debug;
-
 /// Storage engine interface.
-#[tarpc::service]
 pub trait StorageEngine {
-    // ========================================================================
-    // Database
-    // ========================================================================
+    /// Access methods that take [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
+    type WithoutDb: WithoutDbMethods;
 
-    /// Open a database.
-    async fn use_database(
-        session: SessionWithoutDb,
-        database: DatabaseName,
-    ) -> ApllodbResult<SessionWithDb>;
+    // /// Access methods that take [SessionWithDb](apllodb-shared-components::SessionWithDb).
+    // type WithDb: WithDbMethods;
 
-    // ========================================================================
-    // Transaction
-    // ========================================================================
-
-    /// Begin a transaction.
-    async fn begin_transaction(session: SessionWithDb) -> ApllodbResult<SessionWithTx>;
-
-    // /// Commit an open transaction.
-    // async fn commit_transaction(session: SessionWithTx) -> ApllodbResult<()>;
-
-    // /// Abort an open transaction.
-    // async fn abort_transaction(session: SessionWithTx) -> ApllodbResult<()>;
-
-    // // ========================================================================
-    // // DDL
-    // // ========================================================================
-
-    // async fn create_table(
-    //     session: SessionWithTx,
-    //     table_name: TableName,
-    //     table_constraints: TableConstraints,
-    //     column_definitions: Vec<ColumnDefinition>,
-    // ) -> ApllodbResult<SessionWithTx>;
+    // /// Access methods that take [SessionWithTx](apllodb-shared-components::SessionWithTx).
+    // type WithTx: WithTxMethods;
 }

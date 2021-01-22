@@ -1,5 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
+use apllodb_storage_engine_interface::StorageEngine;
+
 use crate::{
     access_methods::{
         with_db_methods_impl::WithDbMethodsImpl, with_tx_methods_impl::WithTxMethodsImpl,
@@ -13,6 +15,10 @@ use crate::{
 pub struct ApllodbImmutableSchemaEngine {
     db_pool: Rc<RefCell<SqliteDatabasePool>>,
     tx_pool: Rc<RefCell<SqliteTxPool>>,
+}
+
+impl StorageEngine for ApllodbImmutableSchemaEngine {
+    type WithoutDb = WithoutDbMethodsImpl;
 }
 
 impl ApllodbImmutableSchemaEngine {

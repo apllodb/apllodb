@@ -204,7 +204,6 @@ dependencies = [
  "apllodb-storage-engine-interface",
  "futures",
  "serde",
- "tarpc",
  "version-sync",
 ]
 
