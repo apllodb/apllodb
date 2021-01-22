@@ -54,11 +54,5 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 
     engine.with_tx_methods().commit_transaction(session).await?;
 
-    // tx.abort()?;
-
-    //h.join_handle.join().expect("server thread panic-ed:");
-
-    // TODO Kill server thread
-
     Ok(())
 }
