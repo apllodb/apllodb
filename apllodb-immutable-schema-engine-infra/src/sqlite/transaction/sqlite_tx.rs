@@ -21,7 +21,9 @@ use log::debug;
 #[derive(Debug)]
 pub struct SqliteTx {
     database_name: DatabaseName,
-    sqlx_tx: sqlx::Transaction<'static, sqlx::sqlite::Sqlite>,
+
+    // will be Option::take() -n on commit/abort.
+    sqlx_tx: Option<sqlx::Transaction<'static, sqlx::sqlite::Sqlite>>,
 }
 
 impl SqliteTx {
@@ -46,7 +48,7 @@ impl SqliteTx {
 
         Ok(Rc::new(RefCell::new(Self {
             database_name,
-            sqlx_tx: tx,
+            sqlx_tx: Some(tx),
         })))
     }
 
@@ -56,8 +58,13 @@ impl SqliteTx {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    async fn commit(self) -> ApllodbResult<()> {
-        self.sqlx_tx.commit().await.map_err(InfraError::from)?;
+    async fn commit(&mut self) -> ApllodbResult<()> {
+        self.sqlx_tx
+            .take()
+            .expect("SqliteTx::commit() / SqliteTx::abort() must be called only once")
+            .commit()
+            .await
+            .map_err(InfraError::from)?;
         Ok(())
     }
 
@@ -65,8 +72,13 @@ impl SqliteTx {
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - rusqlite raises an error.
-    async fn abort(self) -> ApllodbResult<()> {
-        self.sqlx_tx.rollback().await.map_err(InfraError::from)?;
+    async fn abort(&mut self) -> ApllodbResult<()> {
+        self.sqlx_tx
+            .take()
+            .expect("SqliteTx::commit() / SqliteTx::abort() must be called only once")
+            .rollback()
+            .await
+            .map_err(InfraError::from)?;
         Ok(())
     }
 
@@ -86,7 +98,7 @@ impl SqliteTx {
         debug!("SqliteTx::query():\n    {}", sql);
 
         let mut rows = sqlx::query(sql)
-            .fetch_all(&mut self.sqlx_tx)
+            .fetch_all(self.sqlx_tx.as_mut().unwrap())
             .await
             .map_err(InfraError::from)?;
         SqliteRowIterator::new(&mut rows, column_data_types, void_projection)
@@ -99,7 +111,7 @@ impl SqliteTx {
         debug!("SqliteTx::execute_named():\n    {}", sql);
 
         let done = sqlx::query(sql)
-            .execute(&mut self.sqlx_tx)
+            .execute(self.sqlx_tx.as_mut().unwrap())
             .await
             .map_err(InfraError::from)?;
 
