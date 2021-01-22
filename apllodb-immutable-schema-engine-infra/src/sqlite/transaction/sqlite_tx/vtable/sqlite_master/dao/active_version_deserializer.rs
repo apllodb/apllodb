@@ -121,7 +121,9 @@ mod tests {
 
     use super::ActiveVersionDeserializer;
     use crate::sqlite::transaction::sqlite_tx::version::dao::CreateTableSqlForVersionTestWrapper;
-    use apllodb_immutable_schema_engine_domain::{entity::Entity, test_support::setup, version::active_version::ActiveVersion, vtable::VTable};
+    use apllodb_immutable_schema_engine_domain::{
+        entity::Entity, test_support::setup, version::active_version::ActiveVersion, vtable::VTable,
+    };
     use apllodb_shared_components::{
         ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
         ColumnReference, DatabaseName, SqlType, TableConstraintKind, TableConstraints, TableName,
