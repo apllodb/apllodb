@@ -29,7 +29,7 @@ pub struct AlterTableUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
 }
 
 #[async_trait(?Send)]
-impl<'usecase, 'db: 'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
     for AlterTableUseCase<'usecase, Types>
 {
     type In = AlterTableUseCaseInput<'usecase>;
