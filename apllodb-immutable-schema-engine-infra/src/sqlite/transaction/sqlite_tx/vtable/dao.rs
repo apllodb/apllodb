@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS {} (
 
         let sql = format!(
             "
-            INSERT INTO {} ({}, {}) VALUES ({table_name}, {table_wide_constraints});
+            INSERT INTO {} ({}, {}) VALUES (\"{table_name}\", \"{table_wide_constraints}\");
             ",
             TNAME,
             CNAME_TABLE_NAME,
