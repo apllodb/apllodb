@@ -37,10 +37,28 @@ impl<T> From<PoisonError<T>> for InfraError {
 
 impl From<sqlx::Error> for InfraError {
     fn from(e: sqlx::Error) -> Self {
-        Self(ApllodbError::new(
-            ApllodbErrorKind::IoError,
-            "backend sqlx raised an error",
-            Some(Box::new(e)),
-        ))
+        let default = |sqlx_err| {
+            Self(ApllodbError::new(
+                ApllodbErrorKind::IoError,
+                "backend sqlx raised an error",
+                Some(Box::new(sqlx_err)),
+            ))
+        };
+
+        match &e {
+            sqlx::Error::Database(db_err) => {
+                // SQLite's error codes: <https://www.sqlite.org/rescode.html#extended_result_code_list>
+                if db_err.code().unwrap_or_default() == "1555" {
+                    Self(ApllodbError::new(
+                        ApllodbErrorKind::UniqueViolation,
+                        "duplicate value on primary key",
+                        Some(Box::new(e)),
+                    ))
+                } else {
+                    default(e)
+                }
+            }
+            _ => default(e),
+        }
     }
 }

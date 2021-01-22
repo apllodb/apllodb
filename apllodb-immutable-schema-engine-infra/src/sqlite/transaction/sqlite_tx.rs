@@ -108,7 +108,7 @@ impl SqliteTx {
         &mut self,
         sql: &'q str,
     ) -> ApllodbResult<SqliteRowid> {
-        debug!("SqliteTx::execute_named():\n    {}", sql);
+        debug!("SqliteTx::execute():\n    {}", sql);
 
         let done = sqlx::query(sql)
             .execute(self.sqlx_tx.as_mut().unwrap())
