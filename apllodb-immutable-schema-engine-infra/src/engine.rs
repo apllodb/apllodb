@@ -31,6 +31,6 @@ impl ApllodbImmutableSchemaEngine {
     }
 
     pub fn with_tx_methods(&self) -> WithTxMethodsImpl {
-        WithTxMethodsImpl::new(self.tx_pool.clone())
+        WithTxMethodsImpl::new(self.db_pool.clone(), self.tx_pool.clone())
     }
 }

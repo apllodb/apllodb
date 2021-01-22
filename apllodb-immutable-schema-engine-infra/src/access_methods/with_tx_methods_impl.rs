@@ -1,7 +1,8 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::sqlite::{
-    sqlite_resource_pool::tx_pool::SqliteTxPool, sqlite_types::SqliteTypes,
+    sqlite_resource_pool::{db_pool::SqliteDatabasePool, tx_pool::SqliteTxPool},
+    sqlite_types::SqliteTypes,
     transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
@@ -24,12 +25,16 @@ use super::FutRes;
 
 #[derive(Clone, Debug, Default)]
 pub struct WithTxMethodsImpl {
+    db_pool: Rc<RefCell<SqliteDatabasePool>>,
     tx_pool: Rc<RefCell<SqliteTxPool>>,
 }
 
 impl WithTxMethodsImpl {
-    pub(crate) fn new(tx_pool: Rc<RefCell<SqliteTxPool>>) -> Self {
-        Self { tx_pool }
+    pub(crate) fn new(
+        db_pool: Rc<RefCell<SqliteDatabasePool>>,
+        tx_pool: Rc<RefCell<SqliteTxPool>>,
+    ) -> Self {
+        Self { db_pool, tx_pool }
     }
 
     // ========================================================================
@@ -37,6 +42,9 @@ impl WithTxMethodsImpl {
     // ========================================================================
     pub fn commit_transaction(self, session: SessionWithTx) -> FutRes<()> {
         async move {
+            let mut db_pool = self.db_pool.borrow_mut();
+            let _ = db_pool.remove_db(session.get_id())?;
+
             let mut tx_pool = self.tx_pool.borrow_mut();
             let tx = tx_pool.remove_tx(session.get_id())?;
             tx.borrow_mut().commit().await?;
@@ -47,6 +55,9 @@ impl WithTxMethodsImpl {
 
     pub fn abort_transaction(self, session: SessionWithTx) -> FutRes<()> {
         async move {
+            let mut db_pool = self.db_pool.borrow_mut();
+            let _ = db_pool.remove_db(session.get_id())?;
+
             let mut tx_pool = self.tx_pool.borrow_mut();
             let tx = tx_pool.remove_tx(session.get_id())?;
             tx.borrow_mut().abort().await?;

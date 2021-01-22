@@ -61,6 +61,7 @@ impl SqliteDatabase {
 impl Drop for SqliteDatabase {
     fn drop(&mut self) {
         let path = Self::sqlite_db_path(self.name());
+        log::warn!("removing {}", path);
 
         std::fs::remove_file(&path)
             .or_else(|ioerr| match ioerr.kind() {
