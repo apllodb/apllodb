@@ -1,4 +1,8 @@
-use crate::{MockWithDbMethods, MockWithTxMethods, MockWithoutDbMethods, StorageEngine};
+pub use crate::access_methods::{
+    with_db_methods::MockWithDbMethods, with_tx_methods::MockWithTxMethods,
+    without_db_methods::MockWithoutDbMethods,
+};
+use crate::StorageEngine;
 
 #[derive(Debug, Default)]
 pub struct TestStorageEngine;
