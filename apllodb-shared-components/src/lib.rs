@@ -29,7 +29,7 @@ pub use crate::{
         record_iterator::RecordIterator,
         session::{
             session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
-            without_db::SessionWithoutDb,
+            without_db::SessionWithoutDb, Session,
         },
         table::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,

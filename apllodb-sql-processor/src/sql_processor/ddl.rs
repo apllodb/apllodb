@@ -1,22 +1,35 @@
+use std::rc::Rc;
+
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDefinition, SessionWithTx, TableConstraintKind,
+    ApllodbResult, ColumnDefinition, SessionWithTx, TableConstraintKind, TableConstraints,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, TableElement};
+use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 
 use crate::ast_translator::AstTranslator;
 
 /// Processes DDL command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct DDLProcessor;
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct DDLProcessor<Engine: StorageEngine> {
+    engine: Rc<Engine>,
+}
 
-impl DDLProcessor {
+impl<Engine: StorageEngine> DDLProcessor<Engine> {
+    pub(crate) fn new(engine: Rc<Engine>) -> Self {
+        Self { engine }
+    }
+
     /// Executes DDL command.
-    pub fn run(&self, _session: &SessionWithTx, command: Command) -> ApllodbResult<()> {
+    pub async fn run(
+        &self,
+        session: SessionWithTx,
+        command: Command,
+    ) -> ApllodbResult<SessionWithTx> {
         match command {
             Command::CreateTableCommandVariant(cc) => {
                 let table_name = AstTranslator::table_name(cc.table_name)?;
 
-                let _column_definitions: Vec<ColumnDefinition> = cc
+                let column_definitions: Vec<ColumnDefinition> = cc
                     .table_elements
                     .as_vec()
                     .iter()
@@ -30,7 +43,7 @@ impl DDLProcessor {
                     .map(|cd| AstTranslator::column_definition(cd.clone(), table_name.clone()))
                     .collect::<ApllodbResult<_>>()?;
 
-                let _table_constraints: Vec<TableConstraintKind> = cc
+                let table_constraints: Vec<TableConstraintKind> = cc
                     .table_elements
                     .as_vec()
                     .iter()
@@ -44,13 +57,18 @@ impl DDLProcessor {
                     .map(|tc| AstTranslator::table_constraint(tc.clone()))
                     .collect::<ApllodbResult<_>>()?;
 
-                // self.ddl_methods.create_table(
-                //     tx,
-                //     &table_name,
-                //     &TableConstraints::new(table_constraints)?,
-                //     column_definitions,
-                // )
-                Ok(())
+                let session = self
+                    .engine
+                    .with_tx()
+                    .create_table(
+                        session,
+                        table_name,
+                        TableConstraints::new(table_constraints)?,
+                        column_definitions,
+                    )
+                    .await?;
+
+                Ok(session)
             }
             _ => unimplemented!(),
         }

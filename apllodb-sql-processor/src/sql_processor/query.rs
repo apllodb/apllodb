@@ -3,31 +3,37 @@ pub(crate) mod query_plan;
 
 use apllodb_shared_components::{ApllodbResult, RecordIterator, SessionWithTx};
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
+use apllodb_storage_engine_interface::StorageEngine;
 
 use self::{query_executor::QueryExecutor, query_plan::QueryPlan};
 
-use std::convert::TryFrom;
+use std::{convert::TryFrom, rc::Rc};
 
 /// Processes SELECT command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct QueryProcessor;
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct QueryProcessor<Engine: StorageEngine> {
+    engine: Rc<Engine>,
+}
 
-impl QueryProcessor {
+impl<Engine: StorageEngine> QueryProcessor<Engine> {
+    pub(crate) fn new(engine: Rc<Engine>) -> Self {
+        Self { engine }
+    }
+
     /// Executes parsed SELECT query.
-    pub fn run(
+    pub async fn run(
         &self,
-        _session: &SessionWithTx,
+        session: SessionWithTx,
         select_command: SelectCommand,
-    ) -> ApllodbResult<RecordIterator> {
+    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
-        let _plan = QueryPlan::try_from(select_command)?;
+        let plan = QueryPlan::try_from(select_command)?;
 
         // TODO plan optimization -> QueryPlan
 
-        let _executor = QueryExecutor::new();
-        // executor.run(tx, plan)
-        todo!()
+        let executor = QueryExecutor::new(self.engine.clone());
+        executor.run(session, plan).await
     }
 }
 

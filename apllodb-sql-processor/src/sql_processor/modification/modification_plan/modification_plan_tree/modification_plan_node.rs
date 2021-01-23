@@ -1,7 +1,7 @@
 use apllodb_shared_components::TableName;
 use serde::{Deserialize, Serialize};
 
-use crate::query::query_plan::query_plan_tree::query_plan_node::QueryPlanNode;
+use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::QueryPlanNode;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 /// Root node of modification plan tree.

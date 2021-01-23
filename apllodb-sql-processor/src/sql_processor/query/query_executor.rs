@@ -1,24 +1,31 @@
 mod plan_node_executor;
 
-use apllodb_shared_components::{ApllodbResult, RecordIterator, SessionWithTx};
+use std::rc::Rc;
 
-use crate::query::query_plan::{query_plan_tree::query_plan_node::QueryPlanNode, QueryPlan};
+use apllodb_shared_components::{ApllodbResult, RecordIterator, SessionWithTx};
+use apllodb_storage_engine_interface::StorageEngine;
 
 use self::plan_node_executor::PlanNodeExecutor;
+use crate::sql_processor::query::query_plan::{
+    query_plan_tree::query_plan_node::QueryPlanNode, QueryPlan,
+};
+use async_recursion::async_recursion;
 
 /// Query executor which inputs a QueryPlan and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(crate) struct QueryExecutor;
+pub(crate) struct QueryExecutor<Engine: StorageEngine> {
+    engine: Rc<Engine>,
+}
 
-impl QueryExecutor {
-    pub(crate) fn run(
+impl<Engine: StorageEngine> QueryExecutor<Engine> {
+    pub(crate) async fn run(
         &self,
-        session: &SessionWithTx,
+        session: SessionWithTx,
         plan: QueryPlan,
-    ) -> ApllodbResult<RecordIterator> {
+    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
         let plan_tree = plan.plan_tree;
         let root = plan_tree.root;
-        self.run_dfs_post_order(session, root)
+        self.run_dfs_post_order(session, root).await
     }
 
     /// Runs `node` in post-order and returns `node`'s output.
@@ -27,23 +34,29 @@ impl QueryExecutor {
     /// 2. Runs left child node and get output if exists.
     /// 3. Runs this `node` using inputs from left & right nodes if exist.
     /// 4. Returns `node`'s output.
-    fn run_dfs_post_order(
+    #[async_recursion(?Send)]
+    async fn run_dfs_post_order(
         &self,
-        session: &SessionWithTx,
+        session: SessionWithTx,
         node: QueryPlanNode,
-    ) -> ApllodbResult<RecordIterator> {
-        let executor = PlanNodeExecutor::new();
+    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
+        let executor = PlanNodeExecutor::new(self.engine.clone());
 
         match node {
-            QueryPlanNode::Leaf(node_leaf) => executor.run_leaf(session, node_leaf.op),
+            QueryPlanNode::Leaf(node_leaf) => executor.run_leaf(session, node_leaf.op).await,
             QueryPlanNode::Unary(node_unary) => {
-                let left_input = self.run_dfs_post_order(session, *node_unary.left)?;
-                executor.run_unary(node_unary.op, left_input)
+                let (left_input, session) =
+                    self.run_dfs_post_order(session, *node_unary.left).await?;
+                let records = executor.run_unary(node_unary.op, left_input)?;
+                Ok((records, session))
             }
             QueryPlanNode::Binary(node_binary) => {
-                let left_input = self.run_dfs_post_order(session, *node_binary.left)?;
-                let right_input = self.run_dfs_post_order(session, *node_binary.right)?;
-                executor.run_binary(node_binary.op, left_input, right_input)
+                let (left_input, session) =
+                    self.run_dfs_post_order(session, *node_binary.left).await?;
+                let (right_input, session) =
+                    self.run_dfs_post_order(session, *node_binary.right).await?;
+                let records = executor.run_binary(node_binary.op, left_input, right_input)?;
+                Ok((records, session))
             }
         }
     }
@@ -54,7 +67,9 @@ mod tests {
 
     use apllodb_shared_components::{ApllodbResult, Record};
 
-    use crate::{query::query_plan::query_plan_tree::QueryPlanTree, test_support::setup};
+    use crate::{
+        sql_processor::query::query_plan::query_plan_tree::QueryPlanTree, test_support::setup,
+    };
 
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {

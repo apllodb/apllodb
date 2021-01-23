@@ -1,29 +1,38 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 use apllodb_shared_components::{
     ApllodbResult, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
 
-use crate::query::query_plan::query_plan_tree::query_plan_node::{
+use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
 };
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(super) struct PlanNodeExecutor;
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub(super) struct PlanNodeExecutor<Engine: StorageEngine> {
+    engine: Rc<Engine>,
+}
 
-impl PlanNodeExecutor {
-    pub(super) fn run_leaf(
+impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
+    pub(crate) fn new(engine: Rc<Engine>) -> Self {
+        Self { engine }
+    }
+
+    pub(super) async fn run_leaf(
         &self,
-        session: &SessionWithTx,
+        session: SessionWithTx,
         op_leaf: LeafPlanOperation,
-    ) -> ApllodbResult<RecordIterator> {
+    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::DirectInput { records } => Ok(records),
+            LeafPlanOperation::DirectInput { records } => Ok((records, session)),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-            } => self.seq_scan(session, table_name, projection),
+            } => self.seq_scan(session, table_name, projection).await,
         }
     }
 
@@ -52,12 +61,12 @@ impl PlanNodeExecutor {
         }
     }
 
-    fn seq_scan(
+    async fn seq_scan(
         &self,
-        _session: &SessionWithTx,
+        _session: SessionWithTx,
         _table_name: TableName,
         _projection: ProjectionQuery,
-    ) -> ApllodbResult<RecordIterator> {
+    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
         // let row_iter = self.dml_methods.select(session, &table_name, projection)?;
         // Ok(RecordIterator::new(row_iter))
         todo!()

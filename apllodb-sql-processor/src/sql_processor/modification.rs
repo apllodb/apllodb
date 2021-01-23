@@ -1,13 +1,14 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
     ApllodbResult, ColumnReference, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{self, Command};
+use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
     ast_translator::AstTranslator,
-    query::query_plan::query_plan_tree::query_plan_node::{
+    sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
         LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
     },
 };
@@ -27,12 +28,22 @@ pub(crate) mod modification_executor;
 pub(crate) mod modification_plan;
 
 /// Processes ÎNSERT/UPDATE/DELETE command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub struct ModificationProcessor;
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct ModificationProcessor<Engine: StorageEngine> {
+    engine: Rc<Engine>,
+}
 
-impl ModificationProcessor {
+impl<Engine: StorageEngine> ModificationProcessor<Engine> {
+    pub(crate) fn new(engine: Rc<Engine>) -> Self {
+        Self { engine }
+    }
+
     /// Executes parsed INSERT/UPDATE/DELETE command.
-    pub fn run(&self, _session: &SessionWithTx, command: Command) -> ApllodbResult<()> {
+    pub async fn run(
+        &self,
+        session: SessionWithTx,
+        command: Command,
+    ) -> ApllodbResult<SessionWithTx> {
         match command {
             Command::InsertCommandVariant(ic) => {
                 if ic.alias.is_some() {
@@ -80,10 +91,9 @@ impl ModificationProcessor {
                     }),
                 });
 
-                let _plan = ModificationPlan::new(ModificationPlanTree::new(plan_node));
-                let _executor = ModificationExecutor::new();
-                //executor.run(tx, plan)
-                Ok(())
+                let plan = ModificationPlan::new(ModificationPlanTree::new(plan_node));
+                let executor = ModificationExecutor::new(self.engine.clone());
+                executor.run(session, plan).await
             }
             _ => unimplemented!(),
         }

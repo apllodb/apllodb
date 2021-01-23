@@ -1,6 +1,9 @@
-use apllodb_shared_components::{ApllodbResult, SessionWithTx};
+use std::rc::Rc;
 
-use crate::query::{
+use apllodb_shared_components::{ApllodbResult, SessionWithTx};
+use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
+
+use crate::sql_processor::query::{
     query_executor::QueryExecutor,
     query_plan::{query_plan_tree::QueryPlanTree, QueryPlan},
 };
@@ -10,24 +13,40 @@ use super::modification_plan::{
 };
 
 /// Modification (INSERT, UPDATE, and DELETE) executor which inputs a ModificationPlan requests to storage engine.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(crate) struct ModificationExecutor;
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub(crate) struct ModificationExecutor<Engine: StorageEngine> {
+    engine: Rc<Engine>,
+}
 
-impl ModificationExecutor {
-    #[allow(dead_code)]
-    pub(crate) fn run(&self, session: &SessionWithTx, plan: ModificationPlan) -> ApllodbResult<()> {
-        let query_executor = QueryExecutor::new();
+impl<Engine: StorageEngine> ModificationExecutor<Engine> {
+    pub(crate) fn new(engine: Rc<Engine>) -> Self {
+        Self { engine }
+    }
+
+    pub(crate) async fn run(
+        &self,
+        session: SessionWithTx,
+        plan: ModificationPlan,
+    ) -> ApllodbResult<SessionWithTx> {
+        let query_executor = QueryExecutor::new(self.engine.clone());
         let plan_tree = plan.plan_tree;
         match plan_tree.root {
             ModificationPlanNode::Insert(insert_node) => {
                 let input_query_plan_root = insert_node.child;
-                let _input = query_executor.run(
-                    session,
-                    QueryPlan::new(QueryPlanTree::new(input_query_plan_root)),
-                )?;
+                let (input, session) = query_executor
+                    .run(
+                        session,
+                        QueryPlan::new(QueryPlanTree::new(input_query_plan_root)),
+                    )
+                    .await?;
 
-                // self.dml_methods.insert(tx, &insert_node.table_name, input)
-                Ok(())
+                let session = self
+                    .engine
+                    .with_tx()
+                    .insert(session, insert_node.table_name, input)
+                    .await?;
+
+                Ok(session)
             }
         }
     }
@@ -38,7 +57,7 @@ mod tests {
     use apllodb_shared_components::{ApllodbResult, Record, TableName};
 
     use crate::{
-        modification::modification_plan::modification_plan_tree::ModificationPlanTree,
+        sql_processor::modification::modification_plan::modification_plan_tree::ModificationPlanTree,
         test_support::setup,
     };
 
