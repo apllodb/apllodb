@@ -1,4 +1,5 @@
 use apllodb_shared_components::{SessionWithDb, SessionWithTx};
+
 use mockall::automock;
 
 use super::FutRes;

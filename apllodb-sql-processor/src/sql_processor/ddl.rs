@@ -77,14 +77,24 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use apllodb_shared_components::{
         ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, SqlType,
-        TableConstraintKind, TableName,
+        TableConstraintKind, TableConstraints, TableName,
     };
+    use apllodb_sql_parser::ApllodbSqlParser;
+    use apllodb_storage_engine_interface::test_support::{
+        session_with_tx, MockStorageEngine, MockWithTxMethods,
+    };
+    use futures::FutureExt;
+    use mockall::predicate::{always, eq};
 
     //use mockall::predicate::{always, eq};
 
     use crate::test_support::{setup, test_models::People};
+
+    use super::DDLProcessor;
 
     #[derive(Clone, PartialEq, Debug, new)]
     struct TestDatum<'test> {
@@ -94,12 +104,12 @@ mod tests {
         expected_column_definitions: Vec<ColumnDefinition>,
     }
 
-    #[test]
+    #[async_std::test]
     #[allow(clippy::redundant_clone)]
-    fn test_ddl_processor_with_sql() -> ApllodbResult<()> {
+    async fn test_ddl_processor_with_sql() -> ApllodbResult<()> {
         setup();
 
-        // let parser = ApllodbSqlParser::new();
+        let parser = ApllodbSqlParser::new();
 
         let test_data: Vec<TestDatum> = vec![TestDatum::new(
             "
@@ -127,25 +137,24 @@ mod tests {
         for test_datum in test_data {
             log::debug!("testing with SQL: {}", test_datum.in_create_table_sql);
 
-            // let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
+            // mocking create_table()
+            let mut engine = MockStorageEngine::new();
+            let mut with_tx = MockWithTxMethods::new();
+            with_tx
+                .expect_create_table()
+                .with(
+                    always(),
+                    eq(test_datum.expected_table_name),
+                    eq(TableConstraints::new(test_datum.expected_table_constraints).unwrap()),
+                    eq(test_datum.expected_column_definitions),
+                )
+                .returning(|session, _, _, _| async { Ok(session) }.boxed_local());
+            engine.expect_with_tx().return_once(move || with_tx);
 
-            // let mut tx = TestTx;
-            // let mut ddl = MockDDL::new();
-
-            // // mocking create_table()
-            // ddl.expect_create_table()
-            //     .with(
-            //         always(),
-            //         eq(test_datum.expected_table_name),
-            //         eq(TableConstraints::new(
-            //             test_datum.expected_table_constraints,
-            //         )?),
-            //         eq(test_datum.expected_column_definitions),
-            //     )
-            //     .returning(|_, _, _, _| Ok(()));
-
-            // let processor = DDLProcessor::<TestStorageEngine>::new(&ddl);
-            // processor.run(&mut tx, ast.0)?;
+            let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
+            let session = session_with_tx(&engine).await?;
+            let processor = DDLProcessor::new(Rc::new(engine));
+            processor.run(session, ast.0).await?;
         }
 
         Ok(())

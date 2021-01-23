@@ -36,16 +36,33 @@
 mod access_methods;
 mod projection_query;
 
-#[cfg(feature = "test-support")]
-pub mod test_support;
-
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
     without_db_methods::WithoutDbMethods,
 };
 pub use projection_query::ProjectionQuery;
 
+#[cfg(feature = "test-support")]
+pub mod test_support;
+
+#[cfg(feature = "test-support")]
+use mockall::automock;
+
+#[cfg(feature = "test-support")]
+use access_methods::{
+    with_db_methods::MockWithDbMethods, with_tx_methods::MockWithTxMethods,
+    without_db_methods::MockWithoutDbMethods,
+};
+
 /// Storage engine interface.
+#[cfg_attr(
+    feature = "test-support", 
+    automock(
+        type WithoutDb = MockWithoutDbMethods;
+        type WithDb = MockWithDbMethods;
+        type WithTx = MockWithTxMethods;
+    )
+)]
 pub trait StorageEngine {
     /// Access methods that take [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
     type WithoutDb: WithoutDbMethods;
