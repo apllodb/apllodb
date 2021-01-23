@@ -6,7 +6,7 @@ use std::{
 use apllodb_shared_components::{
     ApllodbResult, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
@@ -63,13 +63,14 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
 
     async fn seq_scan(
         &self,
-        _session: SessionWithTx,
-        _table_name: TableName,
-        _projection: ProjectionQuery,
+        session: SessionWithTx,
+        table_name: TableName,
+        projection: ProjectionQuery,
     ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
-        // let row_iter = self.dml_methods.select(session, &table_name, projection)?;
-        // Ok(RecordIterator::new(row_iter))
-        todo!()
+        self.engine
+            .with_tx()
+            .select(session, table_name, projection)
+            .await
     }
 
     /// # Failures

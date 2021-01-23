@@ -1,3 +1,5 @@
+pub(crate) mod mock_select;
+
 pub use crate::access_methods::{
     with_db_methods::MockWithDbMethods, with_tx_methods::MockWithTxMethods,
     without_db_methods::MockWithoutDbMethods,
