@@ -5,6 +5,7 @@ use crate::sqlite::{
     transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_shared_components::{SessionWithDb, SessionWithTx};
+use apllodb_storage_engine_interface::WithDbMethods;
 use futures::FutureExt;
 
 use super::FutRes;
@@ -22,8 +23,10 @@ impl WithDbMethodsImpl {
     ) -> Self {
         Self { db_pool, tx_pool }
     }
+}
 
-    pub fn begin_transaction(self, session: SessionWithDb) -> FutRes<SessionWithTx> {
+impl WithDbMethods for WithDbMethodsImpl {
+    fn begin_transaction(self, session: SessionWithDb) -> FutRes<SessionWithTx> {
         async move {
             let db_pool = self.db_pool.borrow();
 

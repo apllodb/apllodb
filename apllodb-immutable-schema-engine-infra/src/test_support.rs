@@ -1,5 +1,5 @@
 use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithTx, SessionWithoutDb};
-use apllodb_storage_engine_interface::WithoutDbMethods;
+use apllodb_storage_engine_interface::{WithDbMethods, WithoutDbMethods};
 use uuid::Uuid;
 
 use crate::ApllodbImmutableSchemaEngine;
