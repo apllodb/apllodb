@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     ColumnName, ColumnReference, Expression, FieldIndex, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::test_support::session_with_tx;
+use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[async_std::test]

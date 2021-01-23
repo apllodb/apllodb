@@ -1,8 +1,7 @@
 use apllodb_shared_components::{
     ColumnName, ColumnReference, FieldIndex, Record, SqlType, SqlValue, TableName,
 };
-
-use crate::record;
+use apllodb_storage_engine_interface::record;
 
 /// - people:
 ///   - id INTEGER NOT NULL

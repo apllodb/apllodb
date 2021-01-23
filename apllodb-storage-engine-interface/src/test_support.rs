@@ -1,5 +1,6 @@
 mod default_mock;
 mod util;
+mod macros;
 
 pub use crate::access_methods::{
     with_db_methods::MockWithDbMethods, with_tx_methods::MockWithTxMethods,

@@ -42,7 +42,7 @@ pub use access_methods::{
 };
 pub use projection_query::ProjectionQuery;
 
-#[cfg(feature = "test-support")]
+#[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
 
 #[cfg(feature = "test-support")]
