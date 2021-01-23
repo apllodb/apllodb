@@ -5,9 +5,9 @@ use std::{fmt::Debug, hash::Hash};
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct SessionId(u64);
 
-impl SessionId {
+impl Default for SessionId {
     /// Generate session ID.
-    pub fn new() -> Self {
+    fn default() -> Self {
         let r = fastrand::u64(..);
         Self(r)
     }

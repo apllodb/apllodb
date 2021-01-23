@@ -5,17 +5,9 @@ use crate::{DatabaseName, SessionId, SessionWithDb};
 /// Session without open database.
 ///
 /// Only limited SQL commands (`CREATE DATABASE`, for example) are executed via this type of session.
-#[derive(Hash, Debug, Serialize, Deserialize)]
+#[derive(Hash, Debug, Default, Serialize, Deserialize)]
 pub struct SessionWithoutDb {
     id: SessionId,
-}
-
-impl Default for SessionWithoutDb {
-    fn default() -> Self {
-        Self {
-            id: SessionId::new(),
-        }
-    }
 }
 
 impl SessionWithoutDb {
