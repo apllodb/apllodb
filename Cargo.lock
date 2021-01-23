@@ -203,6 +203,7 @@ dependencies = [
  "apllodb-shared-components",
  "apllodb-storage-engine-interface",
  "futures",
+ "mockall",
  "serde",
  "version-sync",
 ]

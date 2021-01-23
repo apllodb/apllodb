@@ -36,11 +36,20 @@
 mod access_methods;
 mod projection_query;
 
+#[cfg(feature = "test-support")]
+pub mod test_support;
+
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
     without_db_methods::WithoutDbMethods,
 };
 pub use projection_query::ProjectionQuery;
+
+#[cfg(feature = "test-support")]
+pub use access_methods::{
+    with_db_methods::MockWithDbMethods, with_tx_methods::MockWithTxMethods,
+    without_db_methods::MockWithoutDbMethods,
+};
 
 /// Storage engine interface.
 pub trait StorageEngine {
