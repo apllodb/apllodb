@@ -8,7 +8,7 @@ use apllodb_shared_components::{
     ColumnName, ColumnReference, Expression, FieldIndex, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[async_std::test]
 async fn test_create_table_success() -> ApllodbResult<()> {
@@ -29,7 +29,7 @@ async fn test_create_table_success() -> ApllodbResult<()> {
     );
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(
             session,
             t_name.clone(),
@@ -44,7 +44,7 @@ async fn test_create_table_success() -> ApllodbResult<()> {
         )
         .await?;
 
-    engine.with_tx_methods().abort_transaction(session).await?;
+    engine.with_tx().abort_transaction(session).await?;
 
     Ok(())
 }
@@ -77,11 +77,11 @@ async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
     }])?;
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session, t_name.clone(), tc.clone(), coldefs.clone())
         .await?;
     match engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session, t_name.clone(), tc, coldefs.clone())
         .await
     {
@@ -130,11 +130,11 @@ async fn test_insert() -> ApllodbResult<()> {
     }])?;
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session, t_name.clone(), tc, coldefs)
         .await?;
 
-    let session = engine.with_tx_methods().insert(
+    let session = engine.with_tx().insert(
         session,
         t_name.clone(),
         RecordIterator::new(vec![record! {
@@ -144,7 +144,7 @@ async fn test_insert() -> ApllodbResult<()> {
     ).await?;
 
     let (mut records, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
 
@@ -164,7 +164,7 @@ async fn test_insert() -> ApllodbResult<()> {
 
     assert!(records.next().is_none());
 
-    engine.with_tx_methods().commit_transaction(session).await?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }
@@ -205,11 +205,11 @@ async fn test_update() -> ApllodbResult<()> {
     }])?;
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session, t_name.clone(), tc.clone(), coldefs)
         .await?;
 
-    let session =     engine.with_tx_methods().insert(
+    let session =     engine.with_tx().insert(
         session,
         t_name.clone(),
         RecordIterator::new(vec![record! {
@@ -218,7 +218,7 @@ async fn test_update() -> ApllodbResult<()> {
         }]),
     ).await?;
     let (mut records, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
     let record = records.next().unwrap();
@@ -237,7 +237,7 @@ async fn test_update() -> ApllodbResult<()> {
     assert!(records.next().is_none());
 
     // update non-PK
-    let session = engine.with_tx_methods().update(
+    let session = engine.with_tx().update(
 session,
 t_name.clone(),
         hmap! {
@@ -245,7 +245,7 @@ t_name.clone(),
         },
     ).await?;
     let (mut records, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
     let record = records.next().unwrap();
@@ -264,7 +264,7 @@ t_name.clone(),
     assert!(records.next().is_none());
 
     // update PK
-    let session =engine.with_tx_methods().
+    let session =engine.with_tx().
 update(
     session,
     t_name.clone(),
@@ -273,7 +273,7 @@ update(
         },
     ).await?;
     let (mut records, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
     let record = records.next().unwrap();
@@ -291,7 +291,7 @@ update(
     );
     assert!(records.next().is_none());
 
-    engine.with_tx_methods().commit_transaction(session).await?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }
@@ -332,11 +332,11 @@ async fn test_delete() -> ApllodbResult<()> {
     }])?;
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session, t_name.clone(), tc.clone(), coldefs)
         .await?;
 
-    let session = engine.with_tx_methods()    .insert(
+    let session = engine.with_tx()    .insert(
 session,
 t_name.clone(),
         RecordIterator::new(vec![record! {
@@ -346,7 +346,7 @@ t_name.clone(),
     ).await?;
 
     let (rows, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(
             session,
             t_name.clone(),
@@ -360,11 +360,11 @@ t_name.clone(),
     assert_eq!(rows.count(), 1);
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .delete(session, t_name.clone())
         .await?;
     let (rows, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(
             session,
             t_name.clone(),
@@ -377,7 +377,7 @@ t_name.clone(),
         .await?;
     assert_eq!(rows.count(), 0);
 
-    engine.with_tx_methods().commit_transaction(session).await?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }

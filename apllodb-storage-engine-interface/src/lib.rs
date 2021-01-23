@@ -52,4 +52,10 @@ pub trait StorageEngine {
 
     /// Access methods that take [SessionWithTx](apllodb-shared-components::SessionWithTx).
     type WithTx: WithTxMethods;
+
+    fn without_db(&self) -> Self::WithoutDb;
+
+    fn with_db(&self) -> Self::WithDb;
+
+    fn with_tx(&self) -> Self::WithTx;
 }

@@ -8,7 +8,7 @@ use apllodb_shared_components::{
     ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[async_std::test]
 async fn test_compound_pk() -> ApllodbResult<()> {
@@ -53,18 +53,18 @@ async fn test_compound_pk() -> ApllodbResult<()> {
     }])?;
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session, t_name.clone(), tc, coldefs)
         .await?;
 
-    let session = engine.with_tx_methods().insert(session, t_name.clone(),
+    let session = engine.with_tx().insert(session, t_name.clone(),
     RecordIterator::new(vec![record! {
         FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::small_int(), &100i16)?,
         FieldIndex::InColumnReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1000001i32)?
     }])).await?;
 
     let (records, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(
             session,
             t_name.clone(),
@@ -86,7 +86,7 @@ async fn test_compound_pk() -> ApllodbResult<()> {
         );
     }
 
-    engine.with_tx_methods().commit_transaction(session).await?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }

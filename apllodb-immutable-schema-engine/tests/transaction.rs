@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     ColumnName, ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{WithDbMethods, WithTxMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods};
 
 #[async_std::test]
 async fn test_wait_lock() -> ApllodbResult<()> {
@@ -17,16 +17,16 @@ async fn test_wait_lock() -> ApllodbResult<()> {
     let db = DatabaseName::new("test_wait_lock")?;
 
     let session1 = engine
-        .without_db_methods()
+        .without_db()
         .use_database(SessionWithoutDb::default(), db.clone())
         .await?;
     let session2 = engine
-        .without_db_methods()
+        .without_db()
         .use_database(SessionWithoutDb::default(), db.clone())
         .await?;
 
-    let session_tx1 = engine.with_db_methods().begin_transaction(session1).await?;
-    let session_tx2 = engine.with_db_methods().begin_transaction(session2).await?;
+    let session_tx1 = engine.with_db().begin_transaction(session1).await?;
+    let session_tx2 = engine.with_db().begin_transaction(session2).await?;
 
     let t_name = &TableName::new("t")?;
 
@@ -51,11 +51,11 @@ async fn test_wait_lock() -> ApllodbResult<()> {
     // tx1 (inside session1) is created earlier than tx2 (inside session2) but tx2 issues CREATE TABLE command in prior to tx1.
     // In this case, tx1 is blocked by tx2, and tx1 gets an error indicating table duplication.
     let session_tx2 = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session_tx2, t_name.clone(), tc.clone(), coldefs.clone())
         .await?;
     match engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session_tx1, t_name.clone(), tc.clone(), coldefs)
         .await
     {
@@ -66,7 +66,7 @@ async fn test_wait_lock() -> ApllodbResult<()> {
     }
 
     engine
-        .with_tx_methods()
+        .with_tx()
         .commit_transaction(session_tx2)
         .await?;
 

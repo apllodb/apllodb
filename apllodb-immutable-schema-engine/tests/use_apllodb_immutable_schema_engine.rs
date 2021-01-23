@@ -7,7 +7,9 @@ use apllodb_shared_components::{
     ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{WithDbMethods, WithTxMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{
+    StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
+};
 
 #[async_std::test]
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
@@ -27,18 +29,18 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     );
 
     let session = engine
-        .without_db_methods()
+        .without_db()
         .use_database(SessionWithoutDb::default(), DatabaseName::new("xyzw")?)
         .await?;
 
     log::debug!("SessionWithDb: {:?}", session);
 
-    let session = engine.with_db_methods().begin_transaction(session).await?;
+    let session = engine.with_db().begin_transaction(session).await?;
 
     log::debug!("SessionWithTx: {:?}", session);
 
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(
             session,
             t_name,
@@ -53,7 +55,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         )
         .await?;
 
-    engine.with_tx_methods().commit_transaction(session).await?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }

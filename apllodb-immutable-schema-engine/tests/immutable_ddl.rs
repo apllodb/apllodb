@@ -8,7 +8,7 @@ use apllodb_shared_components::{
     ColumnName, ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[async_std::test]
 async fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResult<()> {
@@ -49,7 +49,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // | id | c1 |
     // |----|----|
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .create_table(session, t_name.clone(), tc, coldefs)
         .await?;
 
@@ -57,7 +57,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // | id | c1 |
     // |----|----|
     // | 1  | 1  |
-    let session = engine.with_tx_methods().insert(session, t_name.clone(),     RecordIterator::new(vec![record! {
+    let session = engine.with_tx().insert(session, t_name.clone(),     RecordIterator::new(vec![record! {
         FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
         FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?
     }])).await?;
@@ -71,7 +71,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // | id |
     // |----|
     let session = engine
-        .with_tx_methods()
+        .with_tx()
         .alter_table(
             session,
             t_name.clone(),
@@ -94,7 +94,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // | id |
     // |----|
     // | 2  |
-    let session = engine.with_tx_methods().insert(
+    let session = engine.with_tx().insert(
         session,
         t_name.clone(),
         RecordIterator::new(vec![
@@ -112,7 +112,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // | id |
     // |----|
     // | 2  |
-    let session = engine.with_tx_methods().insert(
+    let session = engine.with_tx().insert(
         session,
 t_name.clone(),
         RecordIterator::new(vec![record! {
@@ -124,7 +124,7 @@ t_name.clone(),
     // Selects both v1's record (id=1) and v2's record (id=2),
     // although v2 does not have column "c".
     let (records, session) = engine
-        .with_tx_methods()
+        .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
 
@@ -162,7 +162,7 @@ t_name.clone(),
         }
     }
 
-    engine.with_tx_methods().commit_transaction(session).await?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }

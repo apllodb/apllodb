@@ -21,6 +21,18 @@ impl StorageEngine for ApllodbImmutableSchemaEngine {
     type WithoutDb = WithoutDbMethodsImpl;
     type WithDb = WithDbMethodsImpl;
     type WithTx = WithTxMethodsImpl;
+
+    fn without_db(&self) -> WithoutDbMethodsImpl {
+        WithoutDbMethodsImpl::new(self.db_pool.clone())
+    }
+
+    fn with_db(&self) -> WithDbMethodsImpl {
+        WithDbMethodsImpl::new(self.db_pool.clone(), self.tx_pool.clone())
+    }
+
+    fn with_tx(&self) -> WithTxMethodsImpl {
+        WithTxMethodsImpl::new(self.db_pool.clone(), self.tx_pool.clone())
+    }
 }
 
 impl ApllodbImmutableSchemaEngine {
@@ -28,17 +40,5 @@ impl ApllodbImmutableSchemaEngine {
         let db_pool = Rc::new(RefCell::new(SqliteDatabasePool::default()));
         let tx_pool = Rc::new(RefCell::new(SqliteTxPool::default()));
         Self { db_pool, tx_pool }
-    }
-
-    pub fn without_db_methods(&self) -> WithoutDbMethodsImpl {
-        WithoutDbMethodsImpl::new(self.db_pool.clone())
-    }
-
-    pub fn with_db_methods(&self) -> WithDbMethodsImpl {
-        WithDbMethodsImpl::new(self.db_pool.clone(), self.tx_pool.clone())
-    }
-
-    pub fn with_tx_methods(&self) -> WithTxMethodsImpl {
-        WithTxMethodsImpl::new(self.db_pool.clone(), self.tx_pool.clone())
     }
 }
