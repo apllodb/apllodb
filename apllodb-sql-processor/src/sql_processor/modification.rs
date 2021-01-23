@@ -104,11 +104,11 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use crate::test_support::{setup, test_models::People};
+    use crate::test_support::setup;
     use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
     use apllodb_sql_parser::ApllodbSqlParser;
     use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, session_with_tx, MockWithTxMethods,
+        default_mock_engine, session_with_tx, test_models::People, MockWithTxMethods,
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
