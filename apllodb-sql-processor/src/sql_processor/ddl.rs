@@ -85,7 +85,7 @@ mod tests {
     };
     use apllodb_sql_parser::ApllodbSqlParser;
     use apllodb_storage_engine_interface::test_support::{
-        session_with_tx, MockStorageEngine, MockWithTxMethods,
+        default_mock_engine, session_with_tx, MockWithTxMethods,
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
@@ -138,7 +138,7 @@ mod tests {
             log::debug!("testing with SQL: {}", test_datum.in_create_table_sql);
 
             // mocking create_table()
-            let mut engine = MockStorageEngine::new();
+            let mut engine = default_mock_engine();
             let mut with_tx = MockWithTxMethods::new();
             with_tx
                 .expect_create_table()

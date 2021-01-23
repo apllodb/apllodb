@@ -1,3 +1,4 @@
+mod default_mock;
 mod util;
 
 pub use crate::access_methods::{
@@ -5,4 +6,5 @@ pub use crate::access_methods::{
     without_db_methods::MockWithoutDbMethods,
 };
 pub use crate::MockStorageEngine;
+pub use default_mock::default_mock_engine;
 pub use util::session_with_tx;
