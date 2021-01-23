@@ -102,9 +102,18 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use apllodb_shared_components::{ApllodbResult, Record, TableName};
+    use std::rc::Rc;
 
     use crate::test_support::{setup, test_models::People};
+    use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
+    use apllodb_sql_parser::ApllodbSqlParser;
+    use apllodb_storage_engine_interface::test_support::{
+        default_mock_engine, session_with_tx, MockWithTxMethods,
+    };
+    use futures::FutureExt;
+    use mockall::predicate::{always, eq};
+
+    use super::ModificationProcessor;
 
     #[derive(Clone, PartialEq, Debug, new)]
     struct TestDatum<'test> {
@@ -113,14 +122,14 @@ mod tests {
         expected_insert_records: Vec<Record>,
     }
 
-    #[test]
+    #[async_std::test]
     #[allow(clippy::redundant_clone)]
-    fn test_modification_processor_with_sql() -> ApllodbResult<()> {
+    async fn test_modification_processor_with_sql() -> ApllodbResult<()> {
         setup();
 
-        let t_people_r1 = People::record(1, 13);
+        let parser = ApllodbSqlParser::new();
 
-        // let parser = ApllodbSqlParser::new();
+        let t_people_r1 = People::record(1, 13);
 
         let test_data: Vec<TestDatum> = vec![TestDatum::new(
             "INSERT INTO people (id, age) VALUES (1, 13)",
@@ -131,22 +140,23 @@ mod tests {
         for test_datum in test_data {
             log::debug!("testing with SQL: {}", test_datum.in_insert_sql);
 
-            // let ast = parser.parse(test_datum.in_insert_sql).unwrap();
+            // mocking insert()
+            let mut engine = default_mock_engine();
+            let mut with_tx = MockWithTxMethods::new();
+            with_tx
+                .expect_insert()
+                .with(
+                    always(),
+                    eq(test_datum.expected_insert_table),
+                    eq(RecordIterator::new(test_datum.expected_insert_records)),
+                )
+                .returning(|session, _, _| async { Ok(session) }.boxed_local());
+            engine.expect_with_tx().return_once(move || with_tx);
 
-            // let mut tx = TestTx;
-            // let mut dml = MockDML::new();
-
-            // // mocking insert()
-            // dml.expect_insert()
-            //     .with(
-            //         always(),
-            //         eq(test_datum.expected_insert_table),
-            //         eq(RecordIterator::new(test_datum.expected_insert_records)),
-            //     )
-            //     .returning(|_, _, _| Ok(()));
-
-            // let processor = ModificationProcessor::<TestStorageEngine>::new(&dml);
-            // processor.run(&mut tx, ast.0)?;
+            let ast = parser.parse(test_datum.in_insert_sql).unwrap();
+            let session = session_with_tx(&engine).await?;
+            let processor = ModificationProcessor::new(Rc::new(engine));
+            processor.run(session, ast.0).await?;
         }
 
         Ok(())
