@@ -6,9 +6,7 @@ use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference};
 use std::{collections::VecDeque, fmt::Debug};
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct SqliteRowIterator(
-    VecDeque<ImmutableRow>,
-);
+pub struct SqliteRowIterator(VecDeque<ImmutableRow>);
 
 impl Iterator for SqliteRowIterator {
     type Item = ImmutableRow;
