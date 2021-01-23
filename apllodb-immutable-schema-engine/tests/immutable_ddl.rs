@@ -57,7 +57,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // | id | c1 |
     // |----|----|
     // | 1  | 1  |
-    let session = engine.with_tx().insert(session, t_name.clone(),     RecordIterator::new(vec![record! {
+    let session = engine.with_tx().insert(session, t_name.clone(), RecordIterator::new(vec![record! {
         FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
         FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?
     }])).await?;
@@ -114,7 +114,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // | 2  |
     let session = engine.with_tx().insert(
         session,
-t_name.clone(),
+        t_name.clone(),
         RecordIterator::new(vec![record! {
             FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?,
             FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?
