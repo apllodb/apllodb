@@ -122,7 +122,6 @@ dependencies = [
  "serde",
  "serde_yaml",
  "sqlx",
- "uuid",
  "version-sync",
 ]
 
@@ -205,6 +204,7 @@ dependencies = [
  "futures",
  "mockall",
  "serde",
+ "uuid",
  "version-sync",
 ]
 

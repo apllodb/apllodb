@@ -1,11 +1,9 @@
+use crate::{StorageEngine, WithDbMethods, WithoutDbMethods};
 use apllodb_shared_components::{ApllodbResult, DatabaseName, SessionWithTx, SessionWithoutDb};
-use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithoutDbMethods};
 use uuid::Uuid;
 
-use crate::ApllodbImmutableSchemaEngine;
-
-pub async fn session_with_tx(
-    engine: &ApllodbImmutableSchemaEngine,
+pub async fn session_with_tx<Engine: StorageEngine>(
+    engine: &Engine,
 ) -> ApllodbResult<SessionWithTx> {
     let db_name = format!("{}", Uuid::new_v4());
     let db_name = DatabaseName::new(db_name)?;
