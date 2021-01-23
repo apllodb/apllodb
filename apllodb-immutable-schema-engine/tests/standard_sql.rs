@@ -8,7 +8,7 @@ use apllodb_shared_components::{
     ColumnName, ColumnReference, Expression, FieldIndex, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 
 #[async_std::test]
 async fn test_create_table_success() -> ApllodbResult<()> {

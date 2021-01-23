@@ -36,7 +36,10 @@
 mod access_methods;
 mod projection_query;
 
-pub use access_methods::{with_db_methods::WithDbMethods, without_db_methods::WithoutDbMethods};
+pub use access_methods::{
+    with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
+    without_db_methods::WithoutDbMethods,
+};
 pub use projection_query::ProjectionQuery;
 
 /// Storage engine interface.
@@ -47,6 +50,6 @@ pub trait StorageEngine {
     /// Access methods that take [SessionWithDb](apllodb-shared-components::SessionWithDb).
     type WithDb: WithDbMethods;
 
-    // /// Access methods that take [SessionWithTx](apllodb-shared-components::SessionWithTx).
-    // type WithTx: WithTxMethods;
+    /// Access methods that take [SessionWithTx](apllodb-shared-components::SessionWithTx).
+    type WithTx: WithTxMethods;
 }

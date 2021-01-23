@@ -18,7 +18,7 @@ use apllodb_shared_components::{
     AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithTx,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
 
 use super::FutRes;
@@ -36,11 +36,13 @@ impl WithTxMethodsImpl {
     ) -> Self {
         Self { db_pool, tx_pool }
     }
+}
 
+impl WithTxMethods for WithTxMethodsImpl {
     // ========================================================================
     // Transaction
     // ========================================================================
-    pub fn commit_transaction(self, session: SessionWithTx) -> FutRes<()> {
+    fn commit_transaction(self, session: SessionWithTx) -> FutRes<()> {
         async move {
             let mut db_pool = self.db_pool.borrow_mut();
             let _ = db_pool.remove_db(session.get_id())?;
@@ -53,7 +55,7 @@ impl WithTxMethodsImpl {
         .boxed_local()
     }
 
-    pub fn abort_transaction(self, session: SessionWithTx) -> FutRes<()> {
+    fn abort_transaction(self, session: SessionWithTx) -> FutRes<()> {
         async move {
             let mut db_pool = self.db_pool.borrow_mut();
             let _ = db_pool.remove_db(session.get_id())?;
@@ -69,7 +71,7 @@ impl WithTxMethodsImpl {
     // ========================================================================
     // DDL
     // ========================================================================
-    pub fn create_table(
+    fn create_table(
         self,
         session: SessionWithTx,
         table_name: TableName,
@@ -100,7 +102,7 @@ impl WithTxMethodsImpl {
         .boxed_local()
     }
 
-    pub fn alter_table(
+    fn alter_table(
         self,
         session: SessionWithTx,
         table_name: TableName,
@@ -124,18 +126,14 @@ impl WithTxMethodsImpl {
         .boxed_local()
     }
 
-    pub fn drop_table(
-        self,
-        _session: SessionWithTx,
-        _table_name: TableName,
-    ) -> FutRes<SessionWithTx> {
+    fn drop_table(self, _session: SessionWithTx, _table_name: TableName) -> FutRes<SessionWithTx> {
         async move { todo!() }.boxed_local()
     }
 
     // ========================================================================
     // DML
     // ========================================================================
-    pub fn select(
+    fn select(
         self,
         session: SessionWithTx,
         table_name: TableName,
@@ -159,7 +157,7 @@ impl WithTxMethodsImpl {
         .boxed_local()
     }
 
-    pub fn insert(
+    fn insert(
         self,
         session: SessionWithTx,
         table_name: TableName,
@@ -183,7 +181,7 @@ impl WithTxMethodsImpl {
         .boxed_local()
     }
 
-    pub fn update(
+    fn update(
         self,
         session: SessionWithTx,
         table_name: TableName,
@@ -207,7 +205,7 @@ impl WithTxMethodsImpl {
         .boxed_local()
     }
 
-    pub fn delete(self, session: SessionWithTx, table_name: TableName) -> FutRes<SessionWithTx> {
+    fn delete(self, session: SessionWithTx, table_name: TableName) -> FutRes<SessionWithTx> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(session.get_id())?;

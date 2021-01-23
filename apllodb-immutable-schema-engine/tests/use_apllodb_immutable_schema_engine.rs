@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{WithDbMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{WithDbMethods, WithTxMethods, WithoutDbMethods};
 
 #[async_std::test]
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {

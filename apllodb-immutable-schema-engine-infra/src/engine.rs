@@ -20,6 +20,7 @@ pub struct ApllodbImmutableSchemaEngine {
 impl StorageEngine for ApllodbImmutableSchemaEngine {
     type WithoutDb = WithoutDbMethodsImpl;
     type WithDb = WithDbMethodsImpl;
+    type WithTx = WithTxMethodsImpl;
 }
 
 impl ApllodbImmutableSchemaEngine {
