@@ -7,18 +7,6 @@ use std::{collections::VecDeque, fmt::Debug};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct SqliteRowIterator(
-    // Better to hold rusqlite::Rows or rusqlite::MappedRows (which implements Iterator) inside
-    // to reduce memory consumption but I found it's impossible.
-    //
-    // rusqlite::Row<'stmt> requires rusqlite::Statement has the same or longer lifetime to it.
-    // It seems impossible to have such lifetime and return rusqlite::Row<'stmt> to a caller who makes it.
-    //
-    // rusqlite::MappedRows<'stmt, F> has the same difficulty with rusqlite::Row.
-    // Besides, converting rusqlite::MappedRows into crate::Row requires `&[crate::ColumnDataType]`
-    // so this conversion has to be a closure capturing `&[crate::ColumnDataType]` and an instance
-    // of type `F: FnMut(&rusqlite::Row) -> rusqlite::Result<T>` can be determined only where
-    // the closure is written with `&[crate::ColumnDataType]`.
-    // So type parameter F cannot be passed to a caller who cannot resolve F with the closure instance.
     VecDeque<ImmutableRow>,
 );
 

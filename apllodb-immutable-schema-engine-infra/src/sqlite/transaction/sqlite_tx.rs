@@ -40,7 +40,7 @@ impl SqliteTx {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
+    ///   - sqlx raises an error.
     pub(crate) async fn begin(db: &SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
         let database_name = { db.name().clone() };
 
@@ -57,7 +57,7 @@ impl SqliteTx {
     /// If any of the following error is returned, transaction has already been aborted.
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
+    ///   - sqlx raises an error.
     pub(crate) async fn commit(&mut self) -> ApllodbResult<()> {
         self.sqlx_tx
             .take()
@@ -71,7 +71,7 @@ impl SqliteTx {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
+    ///   - sqlx raises an error.
     pub(crate) async fn abort(&mut self) -> ApllodbResult<()> {
         self.sqlx_tx
             .take()

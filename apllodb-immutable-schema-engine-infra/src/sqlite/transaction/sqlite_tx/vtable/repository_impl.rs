@@ -50,7 +50,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
+    ///   - sqlx raises an error.
     /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
     async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
@@ -62,7 +62,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
+    ///   - sqlx raises an error.
     async fn update(&self, _vtable: &VTable) -> ApllodbResult<()> {
         // TODO update VTable on TableWideConstraints change.
         Ok(())

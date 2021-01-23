@@ -8,7 +8,7 @@ use generational_arena::{Arena, Index};
 
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 
-/// rusqlite's Connection and Transaction pool.
+/// Transaction pool to access transactions in a session across requests to storage engine.
 ///
 /// Each resource is accessible via [SessionId](apllodb-shared-components::SessionId).
 #[derive(Debug, Default)]

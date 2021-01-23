@@ -90,7 +90,6 @@ impl VersionDao {
 SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_if_void_projection}{void_projection} FROM {version_table}
   WHERE {version_navi_rowid} IN ({navi_rowids})
 ", // FIXME prevent SQL injection
-// rusqlite seems not able to get sequence in placeholder...
                 comma_if_non_pk_column = if non_pk_effective_projection.is_empty() {
                     ""
                 } else {

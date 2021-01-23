@@ -17,7 +17,7 @@ impl SqliteDatabase {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
+    ///   - sqlx raises an error.
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
         let mut pool = Self::connect_sqlite(&name).await?;
 
