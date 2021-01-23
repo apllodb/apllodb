@@ -359,10 +359,7 @@ t_name.clone(),
         .await?;
     assert_eq!(rows.count(), 1);
 
-    let session = engine
-        .with_tx()
-        .delete(session, t_name.clone())
-        .await?;
+    let session = engine.with_tx().delete(session, t_name.clone()).await?;
     let (rows, session) = engine
         .with_tx()
         .select(

@@ -7,7 +7,9 @@ use apllodb_shared_components::{
     ColumnName, ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{
+    StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
+};
 
 #[async_std::test]
 async fn test_wait_lock() -> ApllodbResult<()> {
@@ -65,10 +67,7 @@ async fn test_wait_lock() -> ApllodbResult<()> {
         Ok(_) => panic!("should rollback"),
     }
 
-    engine
-        .with_tx()
-        .commit_transaction(session_tx2)
-        .await?;
+    engine.with_tx().commit_transaction(session_tx2).await?;
 
     Ok(())
 }
