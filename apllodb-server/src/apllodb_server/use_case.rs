@@ -2,9 +2,11 @@ mod sql_processor_response;
 
 use std::rc::Rc;
 
-use apllodb_shared_components::{ApllodbResult, DatabaseName, Session, SessionWithTx};
+use apllodb_shared_components::{
+    ApllodbResult, DatabaseName, Session, SessionWithTx, SessionWithoutDb,
+};
 use apllodb_sql_processor::SQLProcessor;
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithoutDbMethods};
 
 use crate::ApllodbSuccess;
 
@@ -18,9 +20,17 @@ pub(in crate::apllodb_server) struct UseCase<Engine: StorageEngine> {
 impl<Engine: StorageEngine> UseCase<Engine> {
     pub(in crate::apllodb_server) async fn begin_transaction(
         &self,
-        _database: DatabaseName,
+        database: DatabaseName,
     ) -> ApllodbResult<SessionWithTx> {
-        todo!()
+        let session = self
+            .engine
+            .without_db()
+            .use_database(SessionWithoutDb::default(), database)
+            .await?;
+
+        let session = self.engine.with_db().begin_transaction(session).await?;
+
+        Ok(session)
     }
 
     pub(in crate::apllodb_server) async fn command(
