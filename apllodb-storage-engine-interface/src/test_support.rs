@@ -10,6 +10,6 @@ pub use crate::access_methods::{
 pub use crate::MockStorageEngine;
 pub use mock::{
     default_mock_engine,
-    mock_select::mock_select_with_models::{mock_select_with_models, ModelsMock},
+    mock_select::{mock_select, ModelsMock},
 };
 pub use util::session_with_tx;

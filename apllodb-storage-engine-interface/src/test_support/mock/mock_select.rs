@@ -1,61 +1,95 @@
-pub(crate) mod mock_select_with_models;
-
 use std::collections::HashSet;
 
 use crate::{
-    test_support::{MockStorageEngine, MockWithTxMethods},
+    test_support::{
+        test_models::{Body, People, Pet},
+        MockStorageEngine, MockWithTxMethods,
+    },
     ProjectionQuery,
 };
 use apllodb_shared_components::{ColumnReference, FieldIndex, Record, RecordIterator, TableName};
 use futures::FutureExt;
 
 #[derive(Clone, PartialEq, Debug)]
-struct MockTxDbDatum {
-    tables: Vec<MockTxTableDatum>,
+pub struct ModelsMock {
+    pub people: Vec<Record>,
+    pub body: Vec<Record>,
+    pub pet: Vec<Record>,
 }
 
 #[derive(Clone, PartialEq, Debug)]
-struct MockTxTableDatum {
+struct MockDatum {
+    tables: Vec<MockDatumInTable>,
+}
+
+impl From<ModelsMock> for MockDatum {
+    fn from(models: ModelsMock) -> Self {
+        MockDatum {
+            tables: vec![
+                MockDatumInTable {
+                    table_name: People::table_name(),
+                    records: models.people,
+                },
+                MockDatumInTable {
+                    table_name: Body::table_name(),
+                    records: models.body,
+                },
+                MockDatumInTable {
+                    table_name: Pet::table_name(),
+                    records: models.pet,
+                },
+            ],
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+struct MockDatumInTable {
     table_name: TableName,
     records: Vec<Record>,
 }
 
-fn mock_select(engine: &mut MockStorageEngine, data: MockTxDbDatum) {
-    let mut with_tx = MockWithTxMethods::new();
-    with_tx
-        .expect_select()
-        .returning(move |session, table_name, projection| {
-            let table = data
-                .tables
-                .iter()
-                .find(|table| table.table_name == table_name)
-                .expect(&format!("table `{:?}` is undefined in MockTx", table_name));
+pub fn mock_select(engine: &mut MockStorageEngine, models: &'static ModelsMock) {
+    engine.expect_with_tx().returning(move || {
+        let mut with_tx = MockWithTxMethods::new();
+        with_tx
+            .expect_select()
+            .returning(move |session, table_name, projection| {
+                let models = models.clone();
+                let datum = MockDatum::from(models);
 
-            let records = table.records.clone();
+                let table = datum
+                    .tables
+                    .iter()
+                    .find(|table| table.table_name == table_name)
+                    .expect(&format!("table `{:?}` is undefined in MockTx", table_name));
 
-            let records = match projection {
-                ProjectionQuery::All => RecordIterator::new(records),
-                ProjectionQuery::ColumnNames(column_names) => {
-                    let fields: HashSet<FieldIndex> = column_names
-                        .into_iter()
-                        .map(|cn| {
-                            FieldIndex::InColumnReference(ColumnReference::new(
-                                table_name.clone(),
-                                cn,
-                            ))
-                        })
-                        .collect();
+                let records = table.records.clone();
 
-                    let projected_records: Vec<Record> = records
-                        .into_iter()
-                        .map(|record| record.projection(&fields).unwrap())
-                        .collect();
+                let records = match projection {
+                    ProjectionQuery::All => RecordIterator::new(records),
+                    ProjectionQuery::ColumnNames(column_names) => {
+                        let fields: HashSet<FieldIndex> = column_names
+                            .into_iter()
+                            .map(|cn| {
+                                FieldIndex::InColumnReference(ColumnReference::new(
+                                    table_name.clone(),
+                                    cn,
+                                ))
+                            })
+                            .collect();
 
-                    RecordIterator::new(projected_records)
-                }
-            };
+                        let projected_records: Vec<Record> = records
+                            .into_iter()
+                            .map(|record| record.projection(&fields).unwrap())
+                            .collect();
 
-            async move { Ok((records, session)) }.boxed_local()
-        });
-    engine.expect_with_tx().return_once(move || with_tx);
+                        RecordIterator::new(projected_records)
+                    }
+                };
+
+                async move { Ok((records, session)) }.boxed_local()
+            });
+        with_tx
+    });
 }

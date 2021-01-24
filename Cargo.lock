@@ -206,6 +206,7 @@ dependencies = [
  "apllodb-storage-engine-interface",
  "futures",
  "mockall",
+ "once_cell",
  "serde",
  "uuid",
  "version-sync",

@@ -69,12 +69,13 @@ mod tests {
     use apllodb_shared_components::{ApllodbResult, FieldIndex, Record};
     use apllodb_storage_engine_interface::{
         test_support::{
-            default_mock_engine, mock_select_with_models, session_with_tx,
+            default_mock_engine, mock_select, session_with_tx,
             test_models::{Body, People, Pet},
             ModelsMock,
         },
         ProjectionQuery,
     };
+    use once_cell::sync::Lazy;
 
     use crate::{
         sql_processor::query::query_plan::{
@@ -103,16 +104,30 @@ mod tests {
     async fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
-        let t_people_r1 = People::record(1, 13);
-        let t_people_r2 = People::record(2, 70);
-        let t_people_r3 = People::record(3, 35);
+        static T_PEOPLE_R1: Lazy<Record> = Lazy::new(|| People::record(1, 13));
+        static T_PEOPLE_R2: Lazy<Record> = Lazy::new(|| People::record(2, 70));
+        static T_PEOPLE_R3: Lazy<Record> = Lazy::new(|| People::record(3, 35));
 
-        let t_body_r1 = Body::record(1, 145);
-        let t_body_r3 = Body::record(3, 175);
+        static T_BODY_R1: Lazy<Record> = Lazy::new(|| Body::record(1, 145));
+        static T_BODY_R3: Lazy<Record> = Lazy::new(|| Body::record(3, 175));
 
-        let t_pet_r1 = Pet::record(1, "dog", 13);
-        let t_pet_r3_1 = Pet::record(3, "dog", 5);
-        let t_pet_r3_2 = Pet::record(3, "cat", 3);
+        static T_PET_R1: Lazy<Record> = Lazy::new(|| Pet::record(1, "dog", 13));
+        static T_PET_R3_1: Lazy<Record> = Lazy::new(|| Pet::record(3, "dog", 5));
+        static T_PET_R3_2: Lazy<Record> = Lazy::new(|| Pet::record(3, "cat", 3));
+
+        // mocking select()
+        static MODELS: Lazy<ModelsMock> = Lazy::new(|| ModelsMock {
+            people: vec![
+                T_PEOPLE_R1.clone(),
+                T_PEOPLE_R2.clone(),
+                T_PEOPLE_R3.clone(),
+            ],
+            body: vec![T_BODY_R1.clone(), T_BODY_R3.clone()],
+            pet: vec![T_PET_R1.clone(), T_PET_R3_1.clone(), T_PET_R3_2.clone()],
+        });
+        let mut engine = default_mock_engine();
+        mock_select(&mut engine, &MODELS);
+        let engine = Rc::new(engine);
 
         let test_data: Vec<TestDatum> = vec![
             // SeqScan (with storage engine layer projection)
@@ -124,9 +139,9 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    t_people_r1.clone(),
-                    t_people_r2.clone(),
-                    t_people_r3.clone(),
+                    T_PEOPLE_R1.clone(),
+                    T_PEOPLE_R2.clone(),
+                    T_PEOPLE_R3.clone(),
                 ],
             },
             TestDatum {
@@ -139,9 +154,9 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![People::colref_id()])?,
-                    r_projection(t_people_r2.clone(), vec![People::colref_id()])?,
-                    r_projection(t_people_r3.clone(), vec![People::colref_id()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::colref_id()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::colref_id()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::colref_id()])?,
                 ],
             },
             TestDatum {
@@ -154,9 +169,9 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![People::colref_age()])?,
-                    r_projection(t_people_r2.clone(), vec![People::colref_age()])?,
-                    r_projection(t_people_r3.clone(), vec![People::colref_age()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::colref_age()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::colref_age()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::colref_age()])?,
                 ],
             },
             // Projection
@@ -175,9 +190,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![People::colref_id()])?,
-                    r_projection(t_people_r2.clone(), vec![People::colref_id()])?,
-                    r_projection(t_people_r3.clone(), vec![People::colref_id()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::colref_id()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::colref_id()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::colref_id()])?,
                 ],
             },
             TestDatum {
@@ -195,9 +210,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(t_people_r1.clone(), vec![People::colref_age()])?,
-                    r_projection(t_people_r2.clone(), vec![People::colref_age()])?,
-                    r_projection(t_people_r3.clone(), vec![People::colref_age()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::colref_age()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::colref_age()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::colref_age()])?,
                 ],
             },
             // HashJoin
@@ -221,8 +236,8 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    t_people_r1.clone().join(t_body_r1.clone())?,
-                    t_people_r3.clone().join(t_body_r3.clone())?,
+                    T_PEOPLE_R1.clone().join(T_BODY_R1.clone())?,
+                    T_PEOPLE_R3.clone().join(T_BODY_R3.clone())?,
                 ],
             },
             TestDatum {
@@ -246,9 +261,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    t_people_r1.clone().join(t_pet_r1.clone())?,
-                    t_people_r3.clone().join(t_pet_r3_1.clone())?,
-                    t_people_r3.clone().join(t_pet_r3_2.clone())?,
+                    T_PEOPLE_R1.clone().join(T_PET_R1.clone())?,
+                    T_PEOPLE_R3.clone().join(T_PET_R3_1.clone())?,
+                    T_PEOPLE_R3.clone().join(T_PET_R3_2.clone())?,
                 ],
             },
             TestDatum {
@@ -272,9 +287,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    t_people_r1.clone().join(t_pet_r1.clone())?,
-                    t_people_r3.clone().join(t_pet_r3_1.clone())?,
-                    t_people_r3.clone().join(t_pet_r3_2.clone())?,
+                    T_PEOPLE_R1.clone().join(T_PET_R1.clone())?,
+                    T_PEOPLE_R3.clone().join(T_PET_R3_1.clone())?,
+                    T_PEOPLE_R3.clone().join(T_PET_R3_2.clone())?,
                 ],
             },
             TestDatum {
@@ -297,7 +312,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_select_records: vec![t_people_r1.clone().join(t_pet_r1.clone())?],
+                expected_select_records: vec![T_PEOPLE_R1.clone().join(T_PET_R1.clone())?],
             },
         ];
 
@@ -307,23 +322,8 @@ mod tests {
                 test_datum.in_plan_tree
             );
 
-            // mocking select()
-            let mut engine = default_mock_engine();
-            mock_select_with_models(
-                &mut engine,
-                ModelsMock {
-                    people: vec![
-                        t_people_r1.clone(),
-                        t_people_r2.clone(),
-                        t_people_r3.clone(),
-                    ],
-                    body: vec![t_body_r1.clone(), t_body_r3.clone()],
-                    pet: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
-                },
-            );
-
-            let session = session_with_tx(&engine).await?;
-            let executor = QueryExecutor::new(Rc::new(engine));
+            let session = session_with_tx(engine.as_ref()).await?;
+            let executor = QueryExecutor::new(engine.clone());
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
             let (result, _) = executor.run(session, query_plan).await?;
 
