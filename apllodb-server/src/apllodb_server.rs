@@ -23,11 +23,11 @@ impl Default for ApllodbServer {
 }
 
 impl ApllodbServer {
-    pub async fn begin_transaction(self, database: DatabaseName) -> ApllodbResult<SessionWithTx> {
+    pub async fn begin_transaction(&self, database: DatabaseName) -> ApllodbResult<SessionWithTx> {
         self.use_case.begin_transaction(database).await
     }
 
-    pub async fn command(self, session: Session, sql: String) -> ApllodbResult<ApllodbSuccess> {
+    pub async fn command(&self, session: Session, sql: String) -> ApllodbResult<ApllodbSuccess> {
         self.use_case.command(session, &sql).await
     }
 }

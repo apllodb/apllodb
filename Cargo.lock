@@ -41,6 +41,7 @@ version = "0.1.0"
 dependencies = [
  "apllodb-server",
  "apllodb-shared-components",
+ "async-std",
  "clap",
  "env_logger",
  "log",
