@@ -4,7 +4,6 @@ pub mod vrr_entry;
 pub mod vrr_id;
 
 use apllodb_shared_components::ApllodbResult;
-use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, row::pk::apparent_pk::ApparentPrimaryKey,
@@ -16,26 +15,22 @@ use async_trait::async_trait;
 
 /// Resolves latest revision among rows with the same PK.
 #[async_trait(?Send)]
-pub trait VersionRevisionResolver<
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
->
-{
+pub trait VersionRevisionResolver<Types: ImmutableSchemaAbstractTypes> {
     /// Returns undefined order of VRREntry
     async fn probe(
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
-    ) -> ApllodbResult<VRREntries<Engine, Types>>;
+    ) -> ApllodbResult<VRREntries<Types>>;
 
     /// Returns undefined order of VRREntry
-    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<Engine, Types>>;
+    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<Types>>;
 
     async fn register(
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
-    ) -> ApllodbResult<VRREntry<Engine, Types>>;
+    ) -> ApllodbResult<VRREntry<Types>>;
 
     async fn deregister(
         &self,

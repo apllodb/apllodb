@@ -5,7 +5,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{ApllodbResult, DatabaseName, TableName};
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine};
+use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -22,29 +22,21 @@ impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-{
+pub struct FullScanUseCaseOutput<Types: ImmutableSchemaAbstractTypes> {
     pub row_iter: Types::ImmutableSchemaRowIter,
 }
-impl<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> UseCaseOutput
-    for FullScanUseCaseOutput<Engine, Types>
-{
-}
+impl<Types: ImmutableSchemaAbstractTypes> UseCaseOutput for FullScanUseCaseOutput<Types> {}
 
-pub struct FullScanUseCase<
-    'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
-> {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+pub struct FullScanUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+    _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for FullScanUseCase<'usecase, Engine, Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+    for FullScanUseCase<'usecase, Types>
 {
     type In = FullScanUseCaseInput<'usecase>;
-    type Out = FullScanUseCaseOutput<Engine, Types>;
+    type Out = FullScanUseCaseOutput<Types>;
 
     /// # Failures
     ///

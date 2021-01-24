@@ -12,7 +12,7 @@ impl ShortName {
     /// (since it should be assured by tokenizer).
     ///
     /// # Failures
-    /// - [NameTooLong](apllodb_shared_components::ApllodbErrorKind::NameTooLong) when:
+    /// - [NameTooLong](apllodb-shared-components::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub(in crate::data_structure) fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
         let name = name.into();

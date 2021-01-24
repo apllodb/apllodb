@@ -1,4 +1,3 @@
-pub mod database;
 mod macros;
 
 pub(crate) fn setup() {

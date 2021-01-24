@@ -4,10 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIterator,
 };
 
-use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes},
-};
+use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes};
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct ImmutableSchemaRowIter(VecDeque<SqliteRowIterator>);
@@ -27,10 +24,7 @@ impl Iterator for ImmutableSchemaRowIter {
     }
 }
 
-impl<'tx, 'db: 'tx>
-    ImmutableSchemaRowIterator<ApllodbImmutableSchemaEngine<'db>, SqliteTypes<'tx, 'db>>
-    for ImmutableSchemaRowIter
-{
+impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
     fn chain_versions(iters: impl IntoIterator<Item = SqliteRowIterator>) -> Self {
         Self(iters.into_iter().collect())
     }

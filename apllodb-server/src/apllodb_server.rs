@@ -1,23 +1,37 @@
+pub(crate) mod response;
 mod use_case;
 
-use apllodb_rpc_interface::{ApllodbRpc, ApllodbRpcSuccess};
-use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
+use apllodb_shared_components::{ApllodbResult, DatabaseName, Session, SessionWithTx};
 
-use std::net::SocketAddr;
-use tarpc::context;
+use std::rc::Rc;
 use use_case::UseCase;
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
-pub(crate) struct ApllodbServer(SocketAddr);
+use crate::ApllodbSuccess;
 
-#[tarpc::server]
-impl ApllodbRpc for ApllodbServer {
-    async fn command(
-        self,
-        _: context::Context,
-        db: DatabaseName,
-        sql: String,
-    ) -> ApllodbResult<ApllodbRpcSuccess> {
-        UseCase::command(db, &sql)
+#[derive(Clone, Debug)]
+pub struct ApllodbServer {
+    use_case: Rc<UseCase<ApllodbImmutableSchemaEngine>>,
+}
+
+impl Default for ApllodbServer {
+    fn default() -> Self {
+        let engine = Rc::new(ApllodbImmutableSchemaEngine::default());
+        let use_case = Rc::new(UseCase::new(engine));
+        Self { use_case }
+    }
+}
+
+impl ApllodbServer {
+    pub async fn begin_transaction(&self, database: DatabaseName) -> ApllodbResult<SessionWithTx> {
+        self.use_case.begin_transaction(database).await
+    }
+
+    pub async fn commit_transaction(&self, session: SessionWithTx) -> ApllodbResult<()> {
+        self.use_case.commit_transaction(session).await
+    }
+
+    pub async fn command(&self, session: Session, sql: String) -> ApllodbResult<ApllodbSuccess> {
+        self.use_case.command(session, &sql).await
     }
 }

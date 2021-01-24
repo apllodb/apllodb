@@ -62,7 +62,7 @@ impl VTable {
         })
     }
 
-    pub fn alter(&mut self, _action: &AlterTableAction) -> ApllodbResult<()> {
+    pub fn alter(&self, _action: &AlterTableAction) -> ApllodbResult<()> {
         // TODO TableWideConstraints に影響のある操作だった場合に、自分自身を変更する
 
         Ok(())

@@ -4,11 +4,10 @@ use crate::{
     version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::ApllodbResult;
-use apllodb_storage_engine_interface::StorageEngine;
 use async_trait::async_trait;
 
 #[async_trait(?Send)]
-pub trait VTableRepository<Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>> {
+pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     /// Create a new table with VTable.
     /// Do nothing for Version.
     ///

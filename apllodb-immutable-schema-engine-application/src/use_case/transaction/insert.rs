@@ -9,7 +9,6 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     ApllodbResult, ColumnName, ColumnReference, DatabaseName, RecordIterator, SqlValue, TableName,
 };
-use apllodb_storage_engine_interface::StorageEngine;
 use async_trait::async_trait;
 use std::convert::TryFrom;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -30,17 +29,13 @@ impl<'usecase> UseCaseInput for InsertUseCaseInput<'usecase> {
 pub struct InsertUseCaseOutput;
 impl UseCaseOutput for InsertUseCaseOutput {}
 
-pub struct InsertUseCase<
-    'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
-> {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+pub struct InsertUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+    _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for InsertUseCase<'usecase, Engine, Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+    for InsertUseCase<'usecase, Types>
 {
     type In = InsertUseCaseInput<'usecase>;
     type Out = InsertUseCaseOutput;

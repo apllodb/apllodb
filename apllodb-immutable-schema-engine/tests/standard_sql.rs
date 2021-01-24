@@ -1,22 +1,21 @@
 mod test_support;
 
-use crate::test_support::{database::TestDatabase, setup};
-use apllodb_immutable_schema_engine_infra::external_interface::{
-    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaDML, ApllodbImmutableSchemaTx,
-};
+use crate::test_support::setup;
+use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnName, ColumnReference, Expression, FieldIndex, RecordIterator, SqlType, SqlValue,
-    TableConstraintKind, TableConstraints, TableName, Transaction,
+    TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{DDLMethods, DMLMethods, ProjectionQuery};
+use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
-#[test]
-fn test_create_table_success() -> ApllodbResult<()> {
+#[async_std::test]
+async fn test_create_table_success() -> ApllodbResult<()> {
     setup();
 
-    let mut db = TestDatabase::new()?;
-    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let engine = ApllodbImmutableSchemaEngine::default();
+    let session = session_with_tx(&engine).await?;
 
     let t_name = TableName::new("t")?;
 
@@ -29,30 +28,33 @@ fn test_create_table_success() -> ApllodbResult<()> {
         ColumnConstraints::default(),
     );
 
-    let ddl = ApllodbImmutableSchemaDDL::default();
+    let session = engine
+        .with_tx()
+        .create_table(
+            session,
+            t_name.clone(),
+            TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
+                column_names: vec![c1_def
+                    .column_data_type()
+                    .column_ref()
+                    .as_column_name()
+                    .clone()],
+            }])?,
+            vec![c1_def],
+        )
+        .await?;
 
-    ddl.create_table(
-        &mut tx,
-        &t_name,
-        &TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-            column_names: vec![c1_def
-                .column_data_type()
-                .column_ref()
-                .as_column_name()
-                .clone()],
-        }])?,
-        vec![c1_def],
-    )?;
-    tx.abort()?;
+    engine.with_tx().abort_transaction(session).await?;
 
     Ok(())
 }
 
-#[test]
-fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
+#[async_std::test]
+async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
     setup();
 
-    let mut db = TestDatabase::new()?;
+    let engine = ApllodbImmutableSchemaEngine::default();
+    let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;
 
@@ -74,26 +76,30 @@ fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
-
-    let ddl = ApllodbImmutableSchemaDDL::default();
-
-    ddl.create_table(&mut tx, &t_name, &tc, coldefs.clone())?;
-    match ddl.create_table(&mut tx, &t_name, &tc, coldefs) {
+    let session = engine
+        .with_tx()
+        .create_table(session, t_name.clone(), tc.clone(), coldefs.clone())
+        .await?;
+    match engine
+        .with_tx()
+        .create_table(session, t_name.clone(), tc, coldefs.clone())
+        .await
+    {
         // Internally, new record is trying to be INSERTed but it is made wait by tx2.
         // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
         Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DuplicateTable),
         Ok(_) => panic!("should rollback"),
     }
+
     Ok(())
 }
 
-#[test]
-fn test_insert() -> ApllodbResult<()> {
+#[async_std::test]
+async fn test_insert() -> ApllodbResult<()> {
     setup();
 
-    let mut db = TestDatabase::new()?;
-    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let engine = ApllodbImmutableSchemaEngine::default();
+    let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;
 
@@ -123,21 +129,24 @@ fn test_insert() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let ddl = ApllodbImmutableSchemaDDL::default();
-    let dml = ApllodbImmutableSchemaDML::default();
+    let session = engine
+        .with_tx()
+        .create_table(session, t_name.clone(), tc, coldefs)
+        .await?;
 
-    ddl.create_table(&mut tx, &t_name, &tc, coldefs)?;
-
-    dml.insert(
-        &mut tx,
-        &t_name,
+    let session = engine.with_tx().insert(
+        session,
+        t_name.clone(),
         RecordIterator::new(vec![record! {
             FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
             FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
         }]),
-    )?;
+    ).await?;
 
-    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
+    let (mut records, session) = engine
+        .with_tx()
+        .select(session, t_name.clone(), ProjectionQuery::All)
+        .await?;
 
     let record = records.next().unwrap();
     assert_eq!(
@@ -155,17 +164,17 @@ fn test_insert() -> ApllodbResult<()> {
 
     assert!(records.next().is_none());
 
-    tx.commit()?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }
 
-#[test]
-fn test_update() -> ApllodbResult<()> {
+#[async_std::test]
+async fn test_update() -> ApllodbResult<()> {
     setup();
 
-    let mut db = TestDatabase::new()?;
-    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let engine = ApllodbImmutableSchemaEngine::default();
+    let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;
 
@@ -195,20 +204,23 @@ fn test_update() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let ddl = ApllodbImmutableSchemaDDL::default();
-    let dml = ApllodbImmutableSchemaDML::default();
+    let session = engine
+        .with_tx()
+        .create_table(session, t_name.clone(), tc.clone(), coldefs)
+        .await?;
 
-    ddl.create_table(&mut tx, &t_name, &tc, coldefs)?;
-
-    dml.insert(
-        &mut tx,
-        &t_name,
+    let session =     engine.with_tx().insert(
+        session,
+        t_name.clone(),
         RecordIterator::new(vec![record! {
             FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
             FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
         }]),
-    )?;
-    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
+    ).await?;
+    let (mut records, session) = engine
+        .with_tx()
+        .select(session, t_name.clone(), ProjectionQuery::All)
+        .await?;
     let record = records.next().unwrap();
     assert_eq!(
         record.get::<i32>(&FieldIndex::InColumnReference(
@@ -225,14 +237,17 @@ fn test_update() -> ApllodbResult<()> {
     assert!(records.next().is_none());
 
     // update non-PK
-    dml.update(
-        &mut tx,
-        &t_name,
+    let session = engine.with_tx().update(
+session,
+t_name.clone(),
         hmap! {
             c1_def.column_data_type().column_ref().as_column_name().clone() => Expression::ConstantVariant(SqlValue::pack(SqlType::integer(), &200)?)
         },
-    )?;
-    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
+    ).await?;
+    let (mut records, session) = engine
+        .with_tx()
+        .select(session, t_name.clone(), ProjectionQuery::All)
+        .await?;
     let record = records.next().unwrap();
     assert_eq!(
         record.get::<i32>(&FieldIndex::InColumnReference(
@@ -249,14 +264,18 @@ fn test_update() -> ApllodbResult<()> {
     assert!(records.next().is_none());
 
     // update PK
-    dml.update(
-        &mut tx,
-        &t_name,
+    let session =engine.with_tx().
+update(
+    session,
+    t_name.clone(),
         hmap! {
             c_id_def.column_data_type().column_ref().as_column_name().clone() => Expression::ConstantVariant(SqlValue::pack(SqlType::integer(), &2)?)
         },
-    )?;
-    let mut records = dml.select(&mut tx, &t_name, ProjectionQuery::All)?;
+    ).await?;
+    let (mut records, session) = engine
+        .with_tx()
+        .select(session, t_name.clone(), ProjectionQuery::All)
+        .await?;
     let record = records.next().unwrap();
     assert_eq!(
         record.get::<i32>(&FieldIndex::InColumnReference(
@@ -272,17 +291,17 @@ fn test_update() -> ApllodbResult<()> {
     );
     assert!(records.next().is_none());
 
-    tx.commit()?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }
 
-#[test]
-fn test_delete() -> ApllodbResult<()> {
+#[async_std::test]
+async fn test_delete() -> ApllodbResult<()> {
     setup();
 
-    let mut db = TestDatabase::new()?;
-    let mut tx = ApllodbImmutableSchemaTx::begin(&mut db.0)?;
+    let engine = ApllodbImmutableSchemaEngine::default();
+    let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;
 
@@ -312,44 +331,50 @@ fn test_delete() -> ApllodbResult<()> {
             .clone()],
     }])?;
 
-    let ddl = ApllodbImmutableSchemaDDL::default();
-    let dml = ApllodbImmutableSchemaDML::default();
+    let session = engine
+        .with_tx()
+        .create_table(session, t_name.clone(), tc.clone(), coldefs)
+        .await?;
 
-    ddl.create_table(&mut tx, &t_name, &tc, coldefs)?;
-
-    dml.insert(
-        &mut tx,
-        &t_name,
+    let session = engine.with_tx()    .insert(
+session,
+t_name.clone(),
         RecordIterator::new(vec![record! {
             FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
             FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &100i32)?
         }]),
-    )?;
+    ).await?;
 
-    let rows = dml.select(
-        &mut tx,
-        &t_name,
-        ProjectionQuery::ColumnNames(vec![c_id_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()]),
-    )?;
+    let (rows, session) = engine
+        .with_tx()
+        .select(
+            session,
+            t_name.clone(),
+            ProjectionQuery::ColumnNames(vec![c_id_def
+                .column_data_type()
+                .column_ref()
+                .as_column_name()
+                .clone()]),
+        )
+        .await?;
     assert_eq!(rows.count(), 1);
 
-    dml.delete(&mut tx, &t_name)?;
-    let rows = dml.select(
-        &mut tx,
-        &t_name,
-        ProjectionQuery::ColumnNames(vec![c_id_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()]),
-    )?;
+    let session = engine.with_tx().delete(session, t_name.clone()).await?;
+    let (rows, session) = engine
+        .with_tx()
+        .select(
+            session,
+            t_name.clone(),
+            ProjectionQuery::ColumnNames(vec![c_id_def
+                .column_data_type()
+                .column_ref()
+                .as_column_name()
+                .clone()]),
+        )
+        .await?;
     assert_eq!(rows.count(), 0);
 
-    tx.commit()?;
+    engine.with_tx().commit_transaction(session).await?;
 
     Ok(())
 }
