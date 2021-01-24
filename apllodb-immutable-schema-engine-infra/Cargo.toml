@@ -7,7 +7,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-test-support = []
+test-support = ["glob"]
 
 [dependencies]
 apllodb-immutable-schema-engine-application = {path = "../apllodb-immutable-schema-engine-application"}
@@ -38,6 +38,8 @@ serde_yaml = "0.8"
 generational-arena = "0.2.8"
 
 futures = "0.3"
+
+glob = {version = "0.3", optional = true}
 
 [dev-dependencies]
 apllodb-test-support = {path = "../apllodb-test-support"}
