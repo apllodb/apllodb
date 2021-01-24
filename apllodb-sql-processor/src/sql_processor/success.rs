@@ -17,7 +17,7 @@ pub enum SQLProcessorSuccess {
         /// Same session with input session
         session: SessionWithTx,
     },
-    
+
     /// Response from DDL command.
     DDLRes {
         /// Same session with input session
