@@ -2,6 +2,8 @@ mod create_table_sql_for_navi;
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) mod navi;
 mod navi_table_name;
 
+use std::{cell::RefCell, rc::Rc};
+
 use crate::sqlite::{
     sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
@@ -21,34 +23,31 @@ use self::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao<
-    'dao,
-    'db: 'dao,
-> {
-    sqlite_tx: &'dao SqliteTx<'db>,
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct NaviDao {
+    sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
 const CNAME_ROWID: &str = "rowid"; // SQLite's keyword
 const CNAME_REVISION: &str = "revision";
 const CNAME_VERSION_NUMBER: &str = "version_number";
 
-impl<'dao, 'db: 'dao> NaviDao<'dao, 'db> {
+impl NaviDao {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn new(
-        sqlite_tx: &'dao SqliteTx<'db>,
+        sqlite_tx: Rc<RefCell<SqliteTx>>,
     ) -> Self {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn create_table(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn create_table(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForNavi::from(vtable);
-        self.sqlite_tx.execute_named(sql.as_str(), &[])?;
+        self.sqlite_tx.borrow_mut().execute(sql.as_str()).await?;
         Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn full_scan_latest_revision(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn full_scan_latest_revision(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<Vec<ExistingNaviWithPK>> {
@@ -73,8 +72,6 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             navi_table_name = navi_table_name.to_sql_string(),
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql)?;
-
         let cdt_rowid = self.cdt_rowid(&navi_table_name);
         let cdt_revision = self.cdt_revision(&navi_table_name);
         let cdt_version_number = self.cdt_version_number(&navi_table_name);
@@ -84,7 +81,11 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             column_data_types.push(pk_cdt);
         }
 
-        let row_iter = stmt.query_named(&[], &column_data_types, &[])?;
+        let row_iter = self
+            .sqlite_tx
+            .borrow_mut()
+            .query(&sql, &column_data_types, &[])
+            .await?;
 
         let ret: Vec<ExistingNaviWithPK> = row_iter
             .map(|r| ExistingNaviWithPK::from_navi_row(vtable, r))
@@ -95,7 +96,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
         Ok(ret)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn probe_latest_revision(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn probe_latest_revision(
         &self,
         vtable_id: &VTableId,
         apk: &ApparentPrimaryKey,
@@ -118,14 +119,16 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
             apk_condition = apk.to_condition_expression()?.to_sql_string(),
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql)?;
-
         let cdt_rowid = self.cdt_rowid(&navi_table_name);
         let cdt_revision = self.cdt_revision(&navi_table_name);
         let cdt_version_number = self.cdt_version_number(&navi_table_name);
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let mut row_iter = stmt.query_named(&[], &column_data_types, &[])?;
+        let mut row_iter = self
+            .sqlite_tx
+            .borrow_mut()
+            .query(&sql, &column_data_types, &[])
+            .await?;
         let opt_row = row_iter.next();
 
         let navi = match opt_row {
@@ -136,7 +139,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
     }
 
     /// Returns lastly inserted row's ROWID.
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn insert(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn insert(
         &self,
         apk: &ApparentPrimaryKey,
         revision: &Revision,
@@ -144,27 +147,23 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
     ) -> ApllodbResult<SqliteRowid> {
         let sql = format!(
             "
-            INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, :revision, :version_number);
-            ",
+            INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision}, {cname_version_number}) VALUES ({pk_sql_values}, {revision}, {version_number});
+            ",  // FIXME SQL-i
             navi_table_name = NaviTableName::from(version_id.vtable_id().table_name().clone()).to_sql_string(),
             pk_column_names = apk.column_names().to_sql_string(),
             cname_revision=CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
             pk_sql_values = apk.sql_values().to_sql_string(),
+            revision = revision.to_sql_string(),
+            version_number = version_id.version_number().to_sql_string(),
         );
 
-        let _ = self.sqlite_tx.execute_named(
-            &sql,
-            &[
-                (":revision", &revision),
-                (":version_number", version_id.version_number()),
-            ],
-        )?;
+        let rowid = self.sqlite_tx.borrow_mut().execute(&sql).await?;
 
-        Ok(self.sqlite_tx.last_insert_rowid())
+        Ok(rowid)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn insert_deleted_records_all(
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn insert_deleted_records_all(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
@@ -187,7 +186,7 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
                 .to_sql_string(),
         );
 
-        let _ = self.sqlite_tx.execute_named(&sql, &[])?;
+        let _ = self.sqlite_tx.borrow_mut().execute(&sql).await?;
 
         Ok(())
     }

@@ -1,7 +1,5 @@
 use std::fmt::Debug;
 
-use apllodb_storage_engine_interface::StorageEngine;
-
 use crate::{
     row_iter::{version_row_iter::VersionRowIterator, ImmutableSchemaRowIterator},
     version::repository::VersionRepository,
@@ -10,12 +8,12 @@ use crate::{
 };
 
 /// Types that must be implemented in an infrastructure layer.
-pub trait ImmutableSchemaAbstractTypes<Engine: StorageEngine>: Debug + Sized {
+pub trait ImmutableSchemaAbstractTypes: Debug + Sized {
     type VRRId: VRRId;
 
-    type ImmutableSchemaRowIter: ImmutableSchemaRowIterator<Engine, Self>;
+    type ImmutableSchemaRowIter: ImmutableSchemaRowIterator<Self>;
     type VersionRowIter: VersionRowIterator;
 
-    type VTableRepo: VTableRepository<Engine, Self>;
-    type VersionRepo: VersionRepository<Engine>;
+    type VTableRepo: VTableRepository<Self>;
+    type VersionRepo: VersionRepository;
 }

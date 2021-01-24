@@ -1,9 +1,6 @@
 use super::dao::VersionDao;
-use crate::{
-    external_interface::ApllodbImmutableSchemaEngine,
-    sqlite::transaction::sqlite_tx::{
-        version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
-    },
+use crate::sqlite::transaction::sqlite_tx::{
+    version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
@@ -14,30 +11,28 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::ApllodbResult;
 use apllodb_shared_components::{ColumnName, SqlValue};
 use async_trait::async_trait;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
-pub struct VersionRepositoryImpl<'repo, 'db: 'repo> {
-    tx: &'repo SqliteTx<'db>,
+pub struct VersionRepositoryImpl {
+    tx: Rc<RefCell<SqliteTx>>,
 }
 
-impl<'repo, 'db> VersionRepositoryImpl<'repo, 'db> {
-    pub fn new(tx: &'repo SqliteTx<'db>) -> Self {
+impl VersionRepositoryImpl {
+    pub(crate) fn new(tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { tx }
     }
 }
 
 #[async_trait(?Send)]
-impl<'repo, 'db: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'db>>
-    for VersionRepositoryImpl<'repo, 'db>
-{
+impl VersionRepository for VersionRepositoryImpl {
     /// # Failures
     ///
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
-        self.version_dao().create_table(&version)?;
+        self.version_dao().create_table(&version).await?;
         Ok(())
     }
 
@@ -54,17 +49,18 @@ impl<'repo, 'db: 'repo> VersionRepository<ApllodbImmutableSchemaEngine<'db>>
         let vrr_entry = self.vrr().register(version_id, apparent_pk).await?;
 
         self.version_dao()
-            .insert(&version_id, vrr_entry.id(), &column_values)?;
+            .insert(&version_id, vrr_entry.id(), &column_values)
+            .await?;
         Ok(())
     }
 }
 
-impl<'repo, 'db: 'repo> VersionRepositoryImpl<'repo, 'db> {
+impl VersionRepositoryImpl {
     fn vrr(&self) -> VersionRevisionResolverImpl {
-        VersionRevisionResolverImpl::new(self.tx)
+        VersionRevisionResolverImpl::new(self.tx.clone())
     }
 
-    fn version_dao(&self) -> VersionDao<'repo, 'db> {
-        VersionDao::new(&self.tx)
+    fn version_dao(&self) -> VersionDao {
+        VersionDao::new(self.tx.clone())
     }
 }

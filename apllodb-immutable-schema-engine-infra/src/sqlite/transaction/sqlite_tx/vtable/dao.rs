@@ -1,4 +1,9 @@
-use crate::sqlite::{sqlite_error::map_sqlite_err, transaction::sqlite_tx::SqliteTx};
+use std::{cell::RefCell, rc::Rc};
+
+use crate::{
+    error::InfraError,
+    sqlite::{to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx},
+};
 use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
@@ -8,17 +13,17 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VTableDao<'dao, 'db: 'dao> {
-    sqlite_tx: &'dao SqliteTx<'db>,
+pub(in crate::sqlite) struct VTableDao {
+    sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
 const TNAME: &str = "_vtable_metadata";
 const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
-impl<'dao, 'db: 'dao> VTableDao<'dao, 'db> {
-    pub(in crate::sqlite) fn create_table_if_not_exist(
-        sqlite_conn: &rusqlite::Connection,
+impl VTableDao {
+    pub(in crate::sqlite) async fn create_table_if_not_exist(
+        sqlite_pool: &sqlx::SqlitePool,
     ) -> ApllodbResult<()> {
         let sql = format!(
             "
@@ -30,33 +35,26 @@ CREATE TABLE IF NOT EXISTS {} (
             TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
         );
 
-        sqlite_conn
-            .execute(sql.as_str(), rusqlite::params![])
-            .map(|_| ())
-            .map_err(|e| {
-                map_sqlite_err(
-                    e,
-                    format!(
-                        "backend sqlite3 raised an error on creating metadata table `{}`",
-                        TNAME
-                    ),
-                )
-            })?;
+        sqlx::query(&sql)
+            .execute(sqlite_pool)
+            .await
+            .map_err(InfraError::from)?;
+
         Ok(())
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { sqlite_tx }
     }
 
     /// # Failures
     ///
     /// - Errors from insert_into_vtable_metadata()
-    pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn insert(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<()> {
-        self.insert_into_vtable_metadata(vtable)?;
+        self.insert_into_vtable_metadata(vtable).await?;
         Ok(())
     }
 
@@ -66,21 +64,28 @@ CREATE TABLE IF NOT EXISTS {} (
     ///   - `table` is not visible from this transaction.
     /// - [DeserializationError](apllodb_shared_components::ApllodbErrorKind::DeserializationError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
-    pub(in crate::sqlite::transaction::sqlite_tx) fn select(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn select(
         &self,
         vtable_id: &VTableId,
     ) -> ApllodbResult<VTable> {
         let sql = format!(
-            "SELECT {}, {} FROM {} WHERE {} = :table_name;",
-            CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS, TNAME, CNAME_TABLE_NAME
+            "SELECT {}, {} FROM {} WHERE {} = \"{}\";",
+            CNAME_TABLE_NAME,
+            CNAME_TABLE_WIDE_CONSTRAINTS,
+            TNAME,
+            CNAME_TABLE_NAME,
+            vtable_id.table_name().to_sql_string(),
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql)?;
-        let mut row_iter = stmt.query_named(
-            &[(":table_name", vtable_id.table_name())],
-            &[&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
-            &[],
-        )?;
+        let mut row_iter = self
+            .sqlite_tx
+            .borrow_mut()
+            .query(
+                &sql,
+                &[&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
+                &[],
+            )
+            .await?;
         let mut row = row_iter.next().ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedTable,
@@ -124,14 +129,7 @@ CREATE TABLE IF NOT EXISTS {} (
     ///   - `table` is already created.
     /// - [SerializationError](apllodb_shared_components::ApllodbErrorKind::SerializationError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
-    fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
-        let sql = format!(
-            "
-            INSERT INTO {} ({}, {}) VALUES (:table_name, :table_wide_constraints);
-            ",
-            TNAME, CNAME_TABLE_NAME, CNAME_TABLE_WIDE_CONSTRAINTS
-        );
-
+    async fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let table_wide_constraints = vtable.table_wide_constraints();
         let table_wide_constraints_str =
             serde_yaml::to_string(table_wide_constraints).map_err(|e| {
@@ -146,14 +144,21 @@ CREATE TABLE IF NOT EXISTS {} (
                 )
             })?;
 
+        let sql = format!(
+            "
+            INSERT INTO {} ({}, {}) VALUES (\"{table_name}\", \"{table_wide_constraints}\");
+            ",
+            TNAME,
+            CNAME_TABLE_NAME,
+            CNAME_TABLE_WIDE_CONSTRAINTS,
+            table_name = vtable.table_name().to_sql_string(),
+            table_wide_constraints = table_wide_constraints_str
+        );
+
         self.sqlite_tx
-            .execute_named(
-                &sql,
-                &[
-                    (":table_name", vtable.table_name()),
-                    (":table_wide_constraints", &table_wide_constraints_str),
-                ],
-            )
+            .borrow_mut()
+            .execute(&sql)
+            .await
             .map_err(|e| match e.kind() {
                 ApllodbErrorKind::UniqueViolation => ApllodbError::new(
                     ApllodbErrorKind::DuplicateTable,

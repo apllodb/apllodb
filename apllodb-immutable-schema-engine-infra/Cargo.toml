@@ -6,9 +6,12 @@ version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+test-support = []
+
 [dependencies]
 apllodb-immutable-schema-engine-application = {path = "../apllodb-immutable-schema-engine-application"}
-apllodb-immutable-schema-engine-domain = {path = "../apllodb-immutable-schema-engine-domain"}
+apllodb-immutable-schema-engine-domain = {path = "../apllodb-immutable-schema-engine-domain", features = ["test-support"]}
 
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
 
@@ -27,15 +30,16 @@ env_logger = "0.8"
 log = "0.4"
 
 libsqlite3-sys = "0.20"
-rusqlite = {version = "0.24", features = ["bundled"]}
+sqlx = {version = "0.4", features = ["sqlite", "runtime-async-std-native-tls"]}
 
 serde = {version = "1.0", features = ["derive"]}
 serde_yaml = "0.8"
 
-tokio = {version = "1", features = ["full"]}
+generational-arena = "0.2.8"
+
+futures = "0.3"
 
 [dev-dependencies]
 pretty_assertions = "0.6"
 rand = "0.8"
-uuid = {version = "0.8", features = ["v4"]}
 version-sync = "0.9"

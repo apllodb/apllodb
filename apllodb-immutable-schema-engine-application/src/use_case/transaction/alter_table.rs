@@ -5,7 +5,6 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{AlterTableAction, ApllodbResult, DatabaseName, TableName};
-use apllodb_storage_engine_interface::StorageEngine;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -25,21 +24,13 @@ impl<'usecase> UseCaseInput for AlterTableUseCaseInput<'usecase> {
 pub struct AlterTableUseCaseOutput;
 impl UseCaseOutput for AlterTableUseCaseOutput {}
 
-pub struct AlterTableUseCase<
-    'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
-> {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+pub struct AlterTableUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+    _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
-impl<
-        'usecase,
-        'db: 'usecase,
-        Engine: StorageEngine,
-        Types: ImmutableSchemaAbstractTypes<Engine>,
-    > TxUseCase<Engine, Types> for AlterTableUseCase<'usecase, Engine, Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+    for AlterTableUseCase<'usecase, Types>
 {
     type In = AlterTableUseCaseInput<'usecase>;
     type Out = AlterTableUseCaseOutput;
@@ -50,7 +41,7 @@ impl<
         input: Self::In,
     ) -> ApllodbResult<Self::Out> {
         let vtable_id = VTableId::new(input.database_name, input.table_name);
-        let mut vtable = vtable_repo.read(&vtable_id).await?;
+        let vtable = vtable_repo.read(&vtable_id).await?;
         vtable.alter(input.action)?;
 
         let active_versions = vtable_repo.active_versions(&vtable).await?;

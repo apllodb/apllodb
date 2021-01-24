@@ -1,62 +1,55 @@
-use apllodb_immutable_schema_engine::{
-    ApllodbImmutableSchemaDDL, ApllodbImmutableSchemaDML, ApllodbImmutableSchemaDb,
-    ApllodbImmutableSchemaEngine, ApllodbImmutableSchemaTx,
-};
-use apllodb_rpc_interface::ApllodbRpcSuccess;
+mod sql_processor_response;
+
+use std::rc::Rc;
+
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Database, DatabaseName, Transaction,
+    ApllodbResult, DatabaseName, Session, SessionWithTx, SessionWithoutDb,
 };
-use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
-use apllodb_sql_processor::{DDLProcessor, ModificationProcessor, QueryProcessor};
+use apllodb_sql_processor::SQLProcessor;
+use apllodb_storage_engine_interface::{
+    StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
+};
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub(in crate::apllodb_server) struct UseCase;
+use crate::ApllodbSuccess;
 
-impl UseCase {
-    pub(in crate::apllodb_server) fn command(
-        db: DatabaseName,
+use self::sql_processor_response::to_server_resp;
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+pub(in crate::apllodb_server) struct UseCase<Engine: StorageEngine> {
+    engine: Rc<Engine>,
+}
+
+impl<Engine: StorageEngine> UseCase<Engine> {
+    pub(in crate::apllodb_server) async fn begin_transaction(
+        &self,
+        database: DatabaseName,
+    ) -> ApllodbResult<SessionWithTx> {
+        let session = self
+            .engine
+            .without_db()
+            .use_database(SessionWithoutDb::default(), database)
+            .await?;
+
+        let session = self.engine.with_db().begin_transaction(session).await?;
+
+        Ok(session)
+    }
+
+    pub(in crate::apllodb_server) async fn commit_transaction(
+        &self,
+        session: SessionWithTx,
+    ) -> ApllodbResult<()> {
+        self.engine.with_tx().commit_transaction(session).await?;
+        Ok(())
+    }
+
+    pub(in crate::apllodb_server) async fn command(
+        &self,
+        session: Session,
         sql: &str,
-    ) -> ApllodbResult<ApllodbRpcSuccess> {
-        let parser = ApllodbSqlParser::new();
-
-        let ddl = ApllodbImmutableSchemaDDL::default();
-        let dml = ApllodbImmutableSchemaDML::default();
-
-        let mut db = ApllodbImmutableSchemaDb::use_database(db)?;
-        let mut tx = ApllodbImmutableSchemaTx::begin(&mut db)?;
-
-        let ret: ApllodbResult<ApllodbRpcSuccess> = match parser.parse(sql) {
-            Err(e) => Err(ApllodbError::new(
-                ApllodbErrorKind::SyntaxError,
-                format!("failed to parse SQL: {}", sql),
-                Some(Box::new(e)),
-            )),
-            Ok(ApllodbAst(command)) => match command {
-                apllodb_ast::Command::AlterTableCommandVariant(_)
-                | apllodb_ast::Command::CreateTableCommandVariant(_)
-                | apllodb_ast::Command::DropTableCommandVariant(_) => {
-                    let processor = DDLProcessor::<ApllodbImmutableSchemaEngine>::new(&ddl);
-                    processor.run(&mut tx, command)?;
-                    Ok(ApllodbRpcSuccess::DDLResponse)
-                }
-                apllodb_ast::Command::DeleteCommandVariant(_)
-                | apllodb_ast::Command::InsertCommandVariant(_)
-                | apllodb_ast::Command::UpdateCommandVariant(_) => {
-                    let processor =
-                        ModificationProcessor::<ApllodbImmutableSchemaEngine>::new(&dml);
-                    processor.run(&mut tx, command)?;
-                    Ok(ApllodbRpcSuccess::ModificationResponse)
-                }
-                apllodb_ast::Command::SelectCommandVariant(select_command) => {
-                    let processor = QueryProcessor::<ApllodbImmutableSchemaEngine>::new(&dml);
-                    let records = processor.run(&mut tx, select_command)?;
-                    Ok(ApllodbRpcSuccess::QueryResponse { records })
-                }
-            },
-        };
-
-        tx.commit()?;
-
-        ret
+    ) -> ApllodbResult<ApllodbSuccess> {
+        let sql_proc = SQLProcessor::new(self.engine.clone());
+        let sql_proc_succ = sql_proc.run(session, sql).await?;
+        Ok(to_server_resp(sql_proc_succ))
     }
 }

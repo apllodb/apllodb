@@ -1,5 +1,7 @@
 mod active_version_deserializer;
 
+use std::{cell::RefCell, rc::Rc};
+
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
 use active_version_deserializer::ActiveVersionDeserializer;
 use apllodb_immutable_schema_engine_domain::{
@@ -12,21 +14,21 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao<'dao, 'db: 'dao> {
-    sqlite_tx: &'dao SqliteTx<'db>,
+pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao {
+    sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
 const TNAME: &str = "sqlite_master";
 const CNAME_CREATE_TABLE_SQL: &str = "sql";
 
-impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
+impl SqliteMasterDao {
     pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn new(
-        sqlite_tx: &'dao SqliteTx<'db>,
+        sqlite_tx: Rc<RefCell<SqliteTx>>,
     ) -> Self {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn select_active_versions(
+    pub(in crate::sqlite::transaction::sqlite_tx::vtable) async fn select_active_versions(
         &self,
         vtable: &VTable,
     ) -> ApllodbResult<Vec<ActiveVersion>> {
@@ -39,9 +41,11 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
             vtable.table_name().as_str()
         );
 
-        let mut stmt = self.sqlite_tx.prepare(&sql)?;
-        let create_table_sqls: Vec<String> = stmt
-            .query_named(&[], &[&self.cdt_create_table_sql()], &[])?
+        let create_table_sqls: Vec<String> = self
+            .sqlite_tx
+            .borrow_mut()
+            .query(&sql, &[&self.cdt_create_table_sql()], &[])
+            .await?
             .map(|mut row| {
                 let s = row
                     .get::<String>(&ColumnReference::new(
@@ -63,14 +67,14 @@ impl<'dao, 'db: 'dao> SqliteMasterDao<'dao, 'db> {
     }
 
     // TODO 消す
-    pub(in crate::sqlite::transaction::sqlite_tx::vtable) fn select_active_version(
+    pub(in crate::sqlite::transaction::sqlite_tx::vtable) async fn select_active_version(
         &self,
         vtable: &VTable,
         version_id: &VersionId,
     ) -> ApllodbResult<ActiveVersion> {
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
-        let versions = self.select_active_versions(vtable)?;
+        let versions = self.select_active_versions(vtable).await?;
         versions
             .into_iter()
             .find(|v| v.id() == version_id)

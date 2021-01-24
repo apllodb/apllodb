@@ -15,7 +15,11 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnDataType, ColumnName, ColumnReference, SqlType, SqlValue, TableName,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
-use std::collections::{hash_map::Entry, HashMap, VecDeque};
+use std::{
+    cell::RefCell,
+    collections::{hash_map::Entry, HashMap, VecDeque},
+    rc::Rc,
+};
 
 #[cfg(test)]
 pub(in crate::sqlite::transaction::sqlite_tx) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
@@ -23,13 +27,13 @@ pub(in crate::sqlite::transaction::sqlite_tx) use create_table_sql_for_version::
 use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VersionDao<'dao, 'db: 'dao> {
-    sqlite_tx: &'dao SqliteTx<'db>,
+pub(in crate::sqlite) struct VersionDao {
+    sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
 pub(in crate::sqlite::transaction::sqlite_tx) const CNAME_NAVI_ROWID: &str = "_navi_rowid";
 
-impl VersionDao<'_, '_> {
+impl VersionDao {
     pub(in crate::sqlite::transaction::sqlite_tx) fn table_name(
         version_id: &VersionId,
         is_active: bool,
@@ -38,25 +42,25 @@ impl VersionDao<'_, '_> {
     }
 }
 
-impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: &'dao SqliteTx<'db>) -> Self {
+impl VersionDao {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(sqlite_tx: Rc<RefCell<SqliteTx>>) -> Self {
         Self { sqlite_tx }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn create_table(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn create_table(
         &self,
         version: &ActiveVersion,
     ) -> ApllodbResult<()> {
         let sql = CreateTableSqlForVersion::from(version);
-        self.sqlite_tx.execute_named(sql.as_str(), &[])?;
+        self.sqlite_tx.borrow_mut().execute(sql.as_str()).await?;
         Ok(())
     }
 
     /// Fetches only existing columns from SQLite, and makes SqliteRowIterator together with ApparentPrimaryKey from VRREntriesInVersion.
-    pub(in crate::sqlite::transaction::sqlite_tx) fn probe_in_version(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn probe_in_version(
         &self,
         version: &ActiveVersion,
-        vrr_entries_in_version: VRREntriesInVersion<'_, 'db>,
+        vrr_entries_in_version: VRREntriesInVersion,
         projection: &ProjectionResult,
     ) -> ApllodbResult<SqliteRowIterator> {
         if projection
@@ -86,7 +90,6 @@ impl<'dao, 'db: 'dao> VersionDao<'dao, 'db> {
 SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_if_void_projection}{void_projection} FROM {version_table}
   WHERE {version_navi_rowid} IN ({navi_rowids})
 ", // FIXME prevent SQL injection
-// rusqlite seems not able to get sequence in placeholder...
                 comma_if_non_pk_column = if non_pk_effective_projection.is_empty() {
                     ""
                 } else {
@@ -104,7 +107,6 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 version_navi_rowid = CNAME_NAVI_ROWID,
                 navi_rowids=navi_rowids.to_sql_string(),
             );
-            let mut stmt = self.sqlite_tx.prepare(&sql)?;
 
             let mut effective_prj_cdts: Vec<&ColumnDataType> = version
                 .column_data_types()
@@ -117,17 +119,24 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
             prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
-            let row_iter = stmt.query_named(
-                &[],
-                &prj_with_navi_rowid,
-                non_pk_void_projection
-                    .iter()
-                    .map(|cn| {
-                        ColumnReference::new(version.vtable_id().table_name().clone(), cn.clone())
-                    })
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            )?;
+            let row_iter = self
+                .sqlite_tx
+                .borrow_mut()
+                .query(
+                    &sql,
+                    &prj_with_navi_rowid,
+                    non_pk_void_projection
+                        .iter()
+                        .map(|cn| {
+                            ColumnReference::new(
+                                version.vtable_id().table_name().clone(),
+                                cn.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .await?;
 
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
             for mut row in row_iter {
@@ -160,7 +169,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
         }
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn insert(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn insert(
         &self,
         version_id: &VersionId,
         vrr_id: &SqliteRowid,
@@ -181,13 +190,13 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             non_pk_column_values = column_values.values().collect::<Vec<_>>().to_sql_string(),
         );
 
-        self.sqlite_tx.execute_named(&sql, &[])?;
+        self.sqlite_tx.borrow_mut().execute(&sql).await?;
 
         Ok(())
     }
 }
 
-impl VersionDao<'_, '_> {
+impl VersionDao {
     fn cdt_navi_rowid(&self, table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
             ColumnReference::new(table_name, ColumnName::new(CNAME_NAVI_ROWID).unwrap()),

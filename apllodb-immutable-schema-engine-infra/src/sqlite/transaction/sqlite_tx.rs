@@ -1,89 +1,55 @@
-mod sqlite_statement;
 pub(crate) mod version;
 pub(crate) mod version_revision_resolver;
 pub(crate) mod vtable;
 
-pub(in crate::sqlite::transaction::sqlite_tx) use sqlite_statement::SqliteStatement;
+use std::{cell::RefCell, rc::Rc};
 
 use self::{
     version::repository_impl::VersionRepositoryImpl, vtable::repository_impl::VTableRepositoryImpl,
 };
 
-use super::tx_id::TxId;
-use crate::sqlite::{
-    database::SqliteDatabase, sqlite_error::map_sqlite_err, sqlite_rowid::SqliteRowid,
-    to_sql_string::ToSqlString,
+use crate::{
+    error::InfraError,
+    sqlite::{
+        database::SqliteDatabase, row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid,
+    },
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Database, DatabaseName, Transaction,
-};
+use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference, DatabaseName};
 use log::debug;
-use std::cmp::Ordering;
 
 /// Many transactions share 1 SQLite connection in `Database`.
 #[derive(Debug)]
-pub struct SqliteTx<'db> {
-    id: TxId,
+pub(crate) struct SqliteTx {
     database_name: DatabaseName,
-    rusqlite_tx: rusqlite::Transaction<'db>,
+
+    // will be Option::take() -n on commit/abort.
+    sqlx_tx: Option<sqlx::Transaction<'static, sqlx::sqlite::Sqlite>>,
 }
 
-impl PartialEq for SqliteTx<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
+impl SqliteTx {
+    pub(crate) fn vtable_repo(slf: Rc<RefCell<Self>>) -> VTableRepositoryImpl {
+        VTableRepositoryImpl::new(slf)
     }
-}
-impl Eq for SqliteTx<'_> {}
 
-impl PartialOrd for SqliteTx<'_> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for SqliteTx<'_> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.id.cmp(&other.id)
+    pub(crate) fn version_repo(slf: Rc<RefCell<Self>>) -> VersionRepositoryImpl {
+        VersionRepositoryImpl::new(slf)
     }
 }
 
-impl<'db> SqliteTx<'db> {
-    pub(crate) fn vtable_repo(&self) -> VTableRepositoryImpl<'_, 'db> {
-        VTableRepositoryImpl::new(self)
-    }
-
-    pub(crate) fn version_repo(&self) -> VersionRepositoryImpl<'_, 'db> {
-        VersionRepositoryImpl::new(self)
-    }
-}
-
-impl<'db> Transaction for SqliteTx<'db> {
-    type Db = SqliteDatabase;
-    type RefDb = &'db mut SqliteDatabase;
-    type TID = TxId;
-
-    fn id(&self) -> &TxId {
-        &self.id
-    }
-
+impl SqliteTx {
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
-    fn begin(db: &'db mut SqliteDatabase) -> ApllodbResult<Self> {
+    ///   - sqlx raises an error.
+    pub(crate) async fn begin(db: &SqliteDatabase) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
         let database_name = { db.name().clone() };
 
-        let tx = db.sqlite_conn().transaction().map_err(|e| {
-            map_sqlite_err(
-                e,
-                "backend sqlite3 raised an error on beginning transaction",
-            )
-        })?;
+        let tx = db.sqlite_pool().begin().await.map_err(InfraError::from)?;
 
-        Ok(Self {
-            id: TxId::new(),
+        Ok(Rc::new(RefCell::new(Self {
             database_name,
-            rusqlite_tx: tx,
-        })
+            sqlx_tx: Some(tx),
+        })))
     }
 
     /// # Failures
@@ -91,111 +57,64 @@ impl<'db> Transaction for SqliteTx<'db> {
     /// If any of the following error is returned, transaction has already been aborted.
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
-    fn commit(self) -> ApllodbResult<()> {
-        self.rusqlite_tx.commit().map_err(|e| {
-            map_sqlite_err(
-                e,
-                "backend sqlite3 raised an error on committing transaction",
-            )
-        })?;
+    ///   - sqlx raises an error.
+    pub(crate) async fn commit(&mut self) -> ApllodbResult<()> {
+        self.sqlx_tx
+            .take()
+            .expect("SqliteTx::commit() / SqliteTx::abort() must be called only once")
+            .commit()
+            .await
+            .map_err(InfraError::from)?;
         Ok(())
     }
 
     /// # Failures
     ///
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
-    ///   - rusqlite raises an error.
-    fn abort(self) -> ApllodbResult<()> {
-        self.rusqlite_tx.rollback().map_err(|e| {
-            map_sqlite_err(e, "backend sqlite3 raised an error on aborting transaction")
-        })?;
+    ///   - sqlx raises an error.
+    pub(crate) async fn abort(&mut self) -> ApllodbResult<()> {
+        self.sqlx_tx
+            .take()
+            .expect("SqliteTx::commit() / SqliteTx::abort() must be called only once")
+            .rollback()
+            .await
+            .map_err(InfraError::from)?;
         Ok(())
     }
 
-    fn database_name(&self) -> &DatabaseName {
+    pub(crate) fn database_name(&self) -> &DatabaseName {
         &self.database_name
     }
 }
 
-impl<'db> SqliteTx<'db> {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn prepare<S: AsRef<str>>(
-        &self,
-        sql: S,
-    ) -> ApllodbResult<SqliteStatement<'_, '_>> {
-        let sql = sql.as_ref();
-        debug!("SqliteTx::prepare():\n    {}", sql);
+impl SqliteTx {
+    // FIXME should take placeholder argument to prevent SQL-i
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn query(
+        &mut self,
+        sql: &str,
+        column_data_types: &[&ColumnDataType],
+        void_projection: &[ColumnReference],
+    ) -> ApllodbResult<SqliteRowIterator> {
+        debug!("SqliteTx::query():\n    {}", sql);
 
-        let raw_stmt = self
-            .rusqlite_tx
-            .prepare(sql)
-            .map_err(|e| map_sqlite_err(e, "SQLite raised an error on prepare"))?;
-        Ok(SqliteStatement::new(&self, raw_stmt))
+        let rows = sqlx::query(sql)
+            .fetch_all(self.sqlx_tx.as_mut().unwrap())
+            .await
+            .map_err(InfraError::from)?;
+        SqliteRowIterator::new(&rows, column_data_types, void_projection)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) fn execute_named<S: AsRef<str>>(
-        &self,
-        sql: S,
-        params: &[(&str, &dyn ToSqlString)],
-    ) -> ApllodbResult<()> {
-        // TODO return ChangedRows(usize)
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn execute(
+        &mut self,
+        sql: &str,
+    ) -> ApllodbResult<SqliteRowid> {
+        debug!("SqliteTx::execute():\n    {}", sql);
 
-        let sql = sql.as_ref();
-        debug!("SqliteTx::execute_named():\n    {}", sql);
+        let done = sqlx::query(sql)
+            .execute(self.sqlx_tx.as_mut().unwrap())
+            .await
+            .map_err(InfraError::from)?;
 
-        let params = params
-            .iter()
-            .map(|(pname, v)| (*pname, v.to_sql_string()))
-            .collect::<Vec<(&str, String)>>();
-
-        let msg = |prefix: &str| {
-            format!(
-                "{} while execute_named() with the following command:\n    {}",
-                prefix, sql
-            )
-        };
-
-        self.rusqlite_tx
-            .execute_named(
-                sql,
-                params
-                    .iter()
-                    .map(|(pname, s)| (*pname, s as &dyn rusqlite::ToSql))
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            )
-            .map_err(|e| match e {
-                rusqlite::Error::SqliteFailure(
-                    libsqlite3_sys::Error {
-                        code: libsqlite3_sys::ErrorCode::DatabaseBusy,
-                        ..
-                    },
-                    _,
-                ) => ApllodbError::new(
-                    ApllodbErrorKind::DeadlockDetected,
-                    msg("deadlock detected"),
-                    Some(Box::new(e)),
-                ),
-
-                rusqlite::Error::SqliteFailure(
-                    libsqlite3_sys::Error {
-                        extended_code: rusqlite::ffi::SQLITE_CONSTRAINT_PRIMARYKEY,
-                        ..
-                    },
-                    _,
-                ) => ApllodbError::new(
-                    ApllodbErrorKind::UniqueViolation,
-                    msg("duplicate value on primary key"),
-                    Some(Box::new(e)),
-                ),
-
-                _ => map_sqlite_err(e, msg("unexpected error")),
-            })?;
-
-        Ok(())
-    }
-
-    pub(in crate::sqlite::transaction::sqlite_tx) fn last_insert_rowid(&self) -> SqliteRowid {
-        SqliteRowid(self.rusqlite_tx.last_insert_rowid())
+        Ok(SqliteRowid(done.last_insert_rowid()))
     }
 }

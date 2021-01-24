@@ -4,7 +4,6 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{ApllodbResult, DatabaseName, TableName};
-use apllodb_storage_engine_interface::StorageEngine;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -23,17 +22,13 @@ impl<'usecase> UseCaseInput for DeleteAllUseCaseInput<'usecase> {
 pub struct DeleteAllUseCaseOutput;
 impl UseCaseOutput for DeleteAllUseCaseOutput {}
 
-pub struct DeleteAllUseCase<
-    'usecase,
-    Engine: StorageEngine,
-    Types: ImmutableSchemaAbstractTypes<Engine>,
-> {
-    _marker: PhantomData<(&'usecase (), Engine, Types)>,
+pub struct DeleteAllUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+    _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Engine: StorageEngine, Types: ImmutableSchemaAbstractTypes<Engine>>
-    TxUseCase<Engine, Types> for DeleteAllUseCase<'usecase, Engine, Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+    for DeleteAllUseCase<'usecase, Types>
 {
     type In = DeleteAllUseCaseInput<'usecase>;
     type Out = DeleteAllUseCaseOutput;

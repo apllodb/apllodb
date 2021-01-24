@@ -14,5 +14,5 @@ pub mod version;
 pub mod version_revision_resolver;
 pub mod vtable;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
