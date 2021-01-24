@@ -134,6 +134,7 @@ dependencies = [
 name = "apllodb-shared-components"
 version = "0.1.0"
 dependencies = [
+ "apllodb-test-support",
  "bincode",
  "derive-new",
  "fastrand",
