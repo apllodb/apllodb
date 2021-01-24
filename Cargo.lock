@@ -141,18 +141,13 @@ dependencies = [
  "apllodb-immutable-schema-engine",
  "apllodb-rpc-interface",
  "apllodb-shared-components",
- "apllodb-sql-parser",
  "apllodb-sql-processor",
  "apllodb-storage-engine-interface",
- "clap",
  "derive-new",
  "env_logger",
  "futures",
  "log",
  "serde",
- "tarpc",
- "tokio",
- "tokio-serde",
 ]
 
 [[package]]

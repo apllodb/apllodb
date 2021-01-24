@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Successful response from apllodb-server
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ApllodbRpcSuccess {
+pub enum ApllodbSuccess {
     QueryResponse {
         session: SessionWithTx,
         records: RecordIterator,
