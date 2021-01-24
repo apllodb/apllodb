@@ -39,7 +39,10 @@ async fn main() -> ApllodbResult<()> {
         .command(Session::WithTx(session), sql.to_string())
         .await?;
     match resp {
-        ApllodbSuccess::QueryResponse { session: _, records } => {
+        ApllodbSuccess::QueryResponse {
+            session: _,
+            records,
+        } => {
             log::info!("query result: {:#?}", records);
         }
         ApllodbSuccess::ModificationResponse { session }

@@ -6,7 +6,9 @@ use apllodb_shared_components::{
     ApllodbResult, DatabaseName, Session, SessionWithTx, SessionWithoutDb,
 };
 use apllodb_sql_processor::SQLProcessor;
-use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{
+    StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
+};
 
 use crate::ApllodbSuccess;
 
