@@ -4,10 +4,6 @@
 //!
 //! Takes subtree of [ApllodbAst](apllodb_sql_parser::ApllodbAst) and executes SQL.
 //! If passed SQL requires access to tables, SQL processor calls storage engine APIs.
-//!
-//! # Examples
-//!
-//! TODO link to tests/*.rs
 
 #[macro_use]
 extern crate derive_new;
