@@ -4,13 +4,12 @@ use apllodb_shared_components::{
     AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithTx,
     TableConstraints, TableName,
 };
-use mockall::automock;
 
 use crate::ProjectionQuery;
 
 use super::FutRes;
 
-#[cfg_attr(feature = "test-support", automock)]
+#[cfg_attr(feature = "test-support", mockall::automock)]
 pub trait WithTxMethods {
     // ========================================================================
     // Transaction
