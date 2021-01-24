@@ -14,7 +14,7 @@ use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMet
 async fn test_success_select_column_available_only_in_1_of_2_versions() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
     let t_name = TableName::new("t")?;

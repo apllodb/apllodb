@@ -14,7 +14,7 @@ use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMet
 async fn test_compound_pk() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("address")?;

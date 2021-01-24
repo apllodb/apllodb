@@ -15,7 +15,7 @@ use apllodb_storage_engine_interface::{
 async fn test_wait_lock() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let db = DatabaseName::new("test_wait_lock")?;
 
     let session1 = engine

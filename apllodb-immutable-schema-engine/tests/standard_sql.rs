@@ -14,7 +14,7 @@ use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMet
 async fn test_create_table_success() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
     let t_name = TableName::new("t")?;
@@ -53,7 +53,7 @@ async fn test_create_table_success() -> ApllodbResult<()> {
 async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;
@@ -98,7 +98,7 @@ async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
 async fn test_insert() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;
@@ -173,7 +173,7 @@ async fn test_insert() -> ApllodbResult<()> {
 async fn test_update() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;
@@ -300,7 +300,7 @@ update(
 async fn test_delete() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
     let t_name = &TableName::new("t")?;

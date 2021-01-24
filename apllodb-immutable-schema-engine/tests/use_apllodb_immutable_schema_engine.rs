@@ -15,7 +15,7 @@ use apllodb_storage_engine_interface::{
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     setup();
 
-    let engine = ApllodbImmutableSchemaEngine::new();
+    let engine = ApllodbImmutableSchemaEngine::default();
 
     let t_name = TableName::new("t")?;
 

@@ -11,7 +11,7 @@ use crate::{
 };
 
 /// Storage engine implementation.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct ApllodbImmutableSchemaEngine {
     db_pool: Rc<RefCell<SqliteDatabasePool>>,
     tx_pool: Rc<RefCell<SqliteTxPool>>,
@@ -32,13 +32,5 @@ impl StorageEngine for ApllodbImmutableSchemaEngine {
 
     fn with_tx(&self) -> WithTxMethodsImpl {
         WithTxMethodsImpl::new(self.db_pool.clone(), self.tx_pool.clone())
-    }
-}
-
-impl ApllodbImmutableSchemaEngine {
-    pub fn new() -> Self {
-        let db_pool = Rc::new(RefCell::new(SqliteDatabasePool::default()));
-        let tx_pool = Rc::new(RefCell::new(SqliteTxPool::default()));
-        Self { db_pool, tx_pool }
     }
 }
