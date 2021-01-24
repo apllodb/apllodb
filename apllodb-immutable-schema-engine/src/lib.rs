@@ -33,12 +33,12 @@
 pub use apllodb_immutable_schema_engine_infra::ApllodbImmutableSchemaEngine;
 
 #[cfg(test)]
-mod tests {
-    use apllodb_test_support::setup::setup_test_logger;
+pub mod tests {
+    use apllodb_immutable_schema_engine_infra::test_support::test_setup;
     use ctor::ctor;
 
-    #[cfg_attr(test, ctor)]
-    fn test_setup() {
-        setup_test_logger();
+    #[ctor]
+    fn setup() {
+        test_setup();
     }
 }

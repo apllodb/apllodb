@@ -16,15 +16,9 @@ pub mod test_support;
 
 #[cfg(test)]
 mod tests {
-    use apllodb_test_support::setup::setup_test_logger;
     use ctor::ctor;
 
-    use crate::test_support::clean_test_sqlite3;
-
-    pub fn test_setup() {
-        setup_test_logger();
-        clean_test_sqlite3();
-    }
+    use crate::test_support::test_setup;
 
     #[ctor]
     fn setup() {
