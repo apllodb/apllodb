@@ -54,12 +54,40 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use apllodb_shared_components::{ApllodbResult, Record, TableName};
+    use std::rc::Rc;
+
+    use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
+    use apllodb_storage_engine_interface::{
+        test_support::{
+            default_mock_engine,
+            fixture::*,
+            mock_select, session_with_tx,
+            test_models::{People, Pet},
+            MockWithTxMethods,
+        },
+        ProjectionQuery,
+    };
+    use futures::FutureExt;
+    use mockall::predicate::{always, eq};
+    use once_cell::sync::Lazy;
 
     use crate::{
-        sql_processor::modification::modification_plan::modification_plan_tree::ModificationPlanTree,
+        sql_processor::{
+            modification::modification_plan::{
+                modification_plan_tree::{
+                    modification_plan_node::{InsertNode, ModificationPlanNode},
+                    ModificationPlanTree,
+                },
+                ModificationPlan,
+            },
+            query::query_plan::query_plan_tree::query_plan_node::{
+                LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
+            },
+        },
         test_support::setup,
     };
+
+    use super::ModificationExecutor;
 
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
@@ -68,93 +96,94 @@ mod tests {
         expected_insert_records: Vec<Record>,
     }
 
-    #[test]
+    #[async_std::test]
     #[allow(clippy::redundant_clone)]
-    fn test_modification_executor() -> ApllodbResult<()> {
+    async fn test_modification_executor() -> ApllodbResult<()> {
         setup();
 
-        // let t_people_r1 = People::record(1, 13);
-        // let t_people_r2 = People::record(2, 70);
-        // let t_people_r3 = People::record(3, 35);
+        static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
+            vec![
+                // input from DirectInput
+                TestDatum {
+                    in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
+                        InsertNode {
+                            table_name: People::table_name(),
+                            child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
+                                op: LeafPlanOperation::DirectInput {
+                                    records: RecordIterator::new(vec![
+                                        T_PEOPLE_R1.clone(),
+                                        T_PEOPLE_R2.clone(),
+                                        T_PEOPLE_R3.clone(),
+                                    ]),
+                                },
+                            }),
+                        },
+                    )),
+                    expected_insert_table: People::table_name(),
+                    expected_insert_records: vec![
+                        T_PEOPLE_R1.clone(),
+                        T_PEOPLE_R2.clone(),
+                        T_PEOPLE_R3.clone(),
+                    ],
+                },
+                // input from same table records (dup)
+                TestDatum {
+                    in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
+                        InsertNode {
+                            table_name: Pet::table_name(),
+                            child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
+                                op: LeafPlanOperation::SeqScan {
+                                    table_name: Pet::table_name(),
+                                    projection: ProjectionQuery::All,
+                                },
+                            }),
+                        },
+                    )),
+                    expected_insert_table: Pet::table_name(),
+                    expected_insert_records: vec![
+                        T_PET_R1.clone(),
+                        T_PET_R3_1.clone(),
+                        T_PET_R3_2.clone(),
+                    ],
+                },
+            ]
+            .into_boxed_slice()
+        });
 
-        // let t_pet_r1 = Pet::record(1, "dog", 13);
-        // let t_pet_r3_1 = Pet::record(3, "dog", 5);
-        // let t_pet_r3_2 = Pet::record(3, "cat", 3);
+        for test_datum in TEST_DATA.iter() {
+            log::debug!(
+                "testing with input plan tree: {:#?}",
+                test_datum.in_plan_tree
+            );
 
-        // let mut dml = MockDML::new();
+            let modification_plan = ModificationPlan::new(test_datum.in_plan_tree.clone());
 
-        // mock_select_with_models(
-        //     &mut dml,
-        //     ModelsMock {
-        //         pet: vec![t_pet_r1.clone(), t_pet_r3_1.clone(), t_pet_r3_2.clone()],
-        //         ..ModelsMock::default()
-        //     },
-        // );
+            let mut engine = default_mock_engine();
 
-        // let test_data: Vec<TestDatum> = vec![
-        //     // input from DirectInput
-        //     TestDatum {
-        //         in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(InsertNode {
-        //             table_name: People::table_name(),
-        //             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-        //                 op: LeafPlanOperation::DirectInput {
-        //                     records: RecordIterator::new(vec![
-        //                         t_people_r1.clone(),
-        //                         t_people_r2.clone(),
-        //                         t_people_r3.clone(),
-        //                     ]),
-        //                 },
-        //             }),
-        //         })),
-        //         expected_insert_table: People::table_name(),
-        //         expected_insert_records: vec![
-        //             t_people_r1.clone(),
-        //             t_people_r2.clone(),
-        //             t_people_r3.clone(),
-        //         ],
-        //     },
-        //     // input from same table records (dup)
-        //     TestDatum {
-        //         in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(InsertNode {
-        //             table_name: Pet::table_name(),
-        //             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-        //                 op: LeafPlanOperation::SeqScan {
-        //                     table_name: Pet::table_name(),
-        //                     projection: ProjectionQuery::All,
-        //                 },
-        //             }),
-        //         })),
-        //         expected_insert_table: Pet::table_name(),
-        //         expected_insert_records: vec![
-        //             t_pet_r1.clone(),
-        //             t_pet_r3_1.clone(),
-        //             t_pet_r3_2.clone(),
-        //         ],
-        //     },
-        // ];
+            // mocking select()
+            mock_select(&mut engine, &PET_MODELS);
 
-        // for test_datum in test_data {
-        //     log::debug!(
-        //         "testing with input plan tree: {:#?}",
-        //         test_datum.in_plan_tree
-        //     );
+            // mocking insert()
+            engine.expect_with_tx().returning(move || {
+                let test_datum = test_datum.clone();
 
-        //     let modification_plan = ModificationPlan::new(test_datum.in_plan_tree.clone());
+                let mut with_tx = MockWithTxMethods::new();
+                with_tx
+                    .expect_insert()
+                    .with(
+                        always(),
+                        eq(test_datum.expected_insert_table),
+                        eq(RecordIterator::new(test_datum.expected_insert_records)),
+                    )
+                    .returning(|session, _, _| async { Ok(session) }.boxed_local());
+                with_tx
+            });
 
-        //     let mut tx = TestTx;
-
-        //     // mocking insert()
-        //     dml.expect_insert()
-        //         .with(
-        //             always(),
-        //             eq(test_datum.expected_insert_table),
-        //             eq(RecordIterator::new(test_datum.expected_insert_records)),
-        //         )
-        //         .returning(|_, _, _| Ok(()));
-
-        //     let executor = ModificationExecutor::<TestStorageEngine>::new(&dml);
-        //     executor.run(&mut tx, modification_plan)?;
-        // }
+            let engine = Rc::new(engine);
+            let session = session_with_tx(engine.as_ref()).await?;
+            let executor = ModificationExecutor::new(engine.clone());
+            executor.run(session, modification_plan).await?;
+        }
 
         Ok(())
     }

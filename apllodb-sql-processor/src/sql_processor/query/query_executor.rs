@@ -106,7 +106,7 @@ mod tests {
 
         // mocking select()
         let mut engine = default_mock_engine();
-        mock_select(&mut engine, &MODELS);
+        mock_select(&mut engine, &FULL_MODELS);
         let engine = Rc::new(engine);
 
         let test_data: Vec<TestDatum> = vec![

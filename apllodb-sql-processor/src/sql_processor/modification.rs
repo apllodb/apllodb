@@ -161,9 +161,9 @@ mod tests {
             });
 
             let ast = parser.parse(test_datum.in_insert_sql).unwrap();
-            let session = session_with_tx(&engine).await.unwrap();
+            let session = session_with_tx(&engine).await?;
             let processor = ModificationProcessor::new(Rc::new(engine));
-            processor.run(session, ast.0).await.unwrap();
+            processor.run(session, ast.0).await?;
         }
 
         Ok(())
