@@ -1,7 +1,8 @@
-use apllodb_rpc_interface::ApllodbSuccess;
 use apllodb_sql_processor::SQLProcessorSuccess;
 
-pub(in crate::apllodb_server::use_case) fn to_rpc_success(
+use crate::ApllodbSuccess;
+
+pub(in crate::apllodb_server::use_case) fn to_server_resp(
     sql_processor_success: SQLProcessorSuccess,
 ) -> ApllodbSuccess {
     match sql_processor_success {

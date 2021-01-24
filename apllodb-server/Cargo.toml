@@ -6,7 +6,6 @@ version = "0.1.0"
 
 [dependencies]
 apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
-apllodb-rpc-interface = {path = "../apllodb-rpc-interface"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-sql-processor = {path = "../apllodb-sql-processor"}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}

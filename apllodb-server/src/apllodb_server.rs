@@ -1,11 +1,13 @@
+pub(crate) mod response;
 mod use_case;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_rpc_interface::ApllodbSuccess;
 use apllodb_shared_components::{ApllodbResult, DatabaseName, Session, SessionWithTx};
 
 use std::rc::Rc;
 use use_case::UseCase;
+
+use crate::ApllodbSuccess;
 
 #[derive(Clone, Debug)]
 pub struct ApllodbServer {

@@ -13,7 +13,6 @@ members = [
   "apllodb-immutable-schema-engine-application",
   "apllodb-immutable-schema-engine-infra",
 
-  "apllodb-rpc-interface",
   "apllodb-server",
   "apllodb-client",
 ]
