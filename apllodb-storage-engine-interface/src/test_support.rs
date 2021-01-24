@@ -1,3 +1,4 @@
+pub mod fixture;
 mod macros;
 mod mock;
 pub mod test_models;
