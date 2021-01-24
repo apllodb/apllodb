@@ -9,9 +9,6 @@ apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-sql-processor = {path = "../apllodb-sql-processor"}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
-apllodb-test-support = {path = "../apllodb-test-support"}
-
-ctor = "0.1"
 
 env_logger = "0.8"
 log = "0.4"
@@ -20,3 +17,8 @@ derive-new = "0.5"
 
 futures = "0.3"
 serde = {version = "1.0"}
+
+[dev-dependencies]
+apllodb-test-support = {path = "../apllodb-test-support"}
+
+ctor = "0.1"
