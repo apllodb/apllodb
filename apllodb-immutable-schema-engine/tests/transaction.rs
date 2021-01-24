@@ -1,6 +1,5 @@
 mod test_support;
 
-
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
@@ -11,22 +10,12 @@ use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
 };
 
-// #[cfg(test)]
-// use apllodb_test_support::setup::setup_test_logger;
-// #[cfg(test)]
-// use ctor::ctor;
+use apllodb_test_support::setup::setup_test_logger;
+use ctor::ctor;
 
-// #[cfg_attr(test, ctor)]
-// fn test_setup() {
-//     setup_test_logger();
-// }
-
-
-#[test]
-fn aaaaaaaaaaaaaaaaa() {
-    // apllodb_test_support::setup::setup_test_logger();
-
-    log::error!("douda!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?");
+#[ctor]
+fn test_setup() {
+    setup_test_logger();
 }
 
 #[async_std::test]

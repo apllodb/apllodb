@@ -9,6 +9,14 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
+use apllodb_test_support::setup::setup_test_logger;
+use ctor::ctor;
+
+#[ctor]
+fn test_setup() {
+    setup_test_logger();
+}
+
 #[async_std::test]
 async fn test_create_table_success() -> ApllodbResult<()> {
     let engine = ApllodbImmutableSchemaEngine::default();

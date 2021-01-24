@@ -10,6 +10,14 @@ use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
 };
 
+use apllodb_test_support::setup::setup_test_logger;
+use ctor::ctor;
+
+#[ctor]
+fn test_setup() {
+    setup_test_logger();
+}
+
 #[async_std::test]
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     let engine = ApllodbImmutableSchemaEngine::default();
