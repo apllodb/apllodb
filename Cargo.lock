@@ -193,6 +193,7 @@ dependencies = [
  "futures",
  "log",
  "mockall",
+ "once_cell",
  "pretty_assertions",
  "serde",
 ]

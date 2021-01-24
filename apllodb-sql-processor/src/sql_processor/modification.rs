@@ -112,12 +112,13 @@ mod tests {
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
+    use once_cell::sync::Lazy;
 
     use super::ModificationProcessor;
 
     #[derive(Clone, PartialEq, Debug, new)]
-    struct TestDatum<'test> {
-        in_insert_sql: &'test str,
+    struct TestDatum {
+        in_insert_sql: &'static str,
         expected_insert_table: TableName,
         expected_insert_records: Vec<Record>,
     }
@@ -129,34 +130,40 @@ mod tests {
 
         let parser = ApllodbSqlParser::new();
 
-        let t_people_r1 = People::record(1, 13);
+        static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
+            vec![TestDatum::new(
+                "INSERT INTO people (id, age) VALUES (1, 13)",
+                People::table_name(),
+                vec![People::record(1, 13)],
+            )]
+            .into_boxed_slice()
+        });
 
-        let test_data: Vec<TestDatum> = vec![TestDatum::new(
-            "INSERT INTO people (id, age) VALUES (1, 13)",
-            People::table_name(),
-            vec![t_people_r1.clone()],
-        )];
-
-        for test_datum in test_data {
+        for test_datum in TEST_DATA.iter() {
             log::debug!("testing with SQL: {}", test_datum.in_insert_sql);
 
             // mocking insert()
             let mut engine = default_mock_engine();
-            let mut with_tx = MockWithTxMethods::new();
-            with_tx
-                .expect_insert()
-                .with(
-                    always(),
-                    eq(test_datum.expected_insert_table),
-                    eq(RecordIterator::new(test_datum.expected_insert_records)),
-                )
-                .returning(|session, _, _| async { Ok(session) }.boxed_local());
-            engine.expect_with_tx().return_once(move || with_tx);
+
+            engine.expect_with_tx().returning(move || {
+                let test_datum = test_datum.clone();
+
+                let mut with_tx = MockWithTxMethods::new();
+                with_tx
+                    .expect_insert()
+                    .with(
+                        always(),
+                        eq(test_datum.expected_insert_table),
+                        eq(RecordIterator::new(test_datum.expected_insert_records)),
+                    )
+                    .returning(|session, _, _| async { Ok(session) }.boxed_local());
+                with_tx
+            });
 
             let ast = parser.parse(test_datum.in_insert_sql).unwrap();
-            let session = session_with_tx(&engine).await?;
+            let session = session_with_tx(&engine).await.unwrap();
             let processor = ModificationProcessor::new(Rc::new(engine));
-            processor.run(session, ast.0).await?;
+            processor.run(session, ast.0).await.unwrap();
         }
 
         Ok(())
