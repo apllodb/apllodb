@@ -19,8 +19,8 @@ pub fn clean_test_sqlite3() -> ApllodbResult<()> {
         cd.display()
     );
 
+    // TODO prevent removing non-test database files
     for entry in glob("./**/*.sqlite3*").unwrap() {
-        // TODO test_* にする？
         if let Ok(path) = entry {
             log::debug!(
                 "clean_test_sqlite3(): found {}. removing...",
