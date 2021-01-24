@@ -56,18 +56,3 @@ impl SqliteDatabase {
         &self.sqlite_pool
     }
 }
-
-#[cfg(any(test, feature = "test-support"))]
-impl Drop for SqliteDatabase {
-    fn drop(&mut self) {
-        let path = Self::sqlite_db_path(self.name());
-        log::debug!("[test] removing database created during test: {}", path);
-
-        std::fs::remove_file(&path)
-            .or_else(|ioerr| match ioerr.kind() {
-                std::io::ErrorKind::NotFound => Ok(()),
-                _ => Err(ioerr),
-            })
-            .unwrap();
-    }
-}

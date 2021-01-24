@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     ApllodbResult, DatabaseName, Session, SessionWithTx, SessionWithoutDb,
 };
 use apllodb_sql_processor::SQLProcessor;
-use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods};
 
 use crate::ApllodbSuccess;
 
@@ -31,6 +31,14 @@ impl<Engine: StorageEngine> UseCase<Engine> {
         let session = self.engine.with_db().begin_transaction(session).await?;
 
         Ok(session)
+    }
+
+    pub(in crate::apllodb_server) async fn commit_transaction(
+        &self,
+        session: SessionWithTx,
+    ) -> ApllodbResult<()> {
+        self.engine.with_tx().commit_transaction(session).await?;
+        Ok(())
     }
 
     pub(in crate::apllodb_server) async fn command(

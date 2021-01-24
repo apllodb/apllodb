@@ -2,7 +2,7 @@
 
 //! apllodb's client bin crate.
 
-use apllodb_server::ApllodbServer;
+use apllodb_server::{ApllodbServer, ApllodbSuccess};
 use apllodb_shared_components::{ApllodbResult, DatabaseName, Session};
 use clap::{App, Arg};
 
@@ -38,8 +38,16 @@ async fn main() -> ApllodbResult<()> {
     let resp = server
         .command(Session::WithTx(session), sql.to_string())
         .await?;
-
-    println!("{:?}", resp);
+    match resp {
+        ApllodbSuccess::QueryResponse { session: _, records } => {
+            log::info!("query result: {:#?}", records);
+        }
+        ApllodbSuccess::ModificationResponse { session }
+        | ApllodbSuccess::DDLResponse { session } => {
+            log::warn!("automatically commits transaction for demo");
+            server.commit_transaction(session).await?;
+        }
+    }
 
     Ok(())
 }
