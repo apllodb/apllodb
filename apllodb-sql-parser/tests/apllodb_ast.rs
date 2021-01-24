@@ -1,3 +1,11 @@
+use apllodb_test_support::setup::setup_test_logger;
+use ctor::ctor;
+
+#[ctor]
+fn test_setup() {
+    setup_test_logger();
+}
+
 // https://rust-lang.github.io/api-guidelines/interoperability.html#data-structures-implement-serdes-serialize-deserialize-c-serde
 #[cfg(feature = "serde")]
 #[test]

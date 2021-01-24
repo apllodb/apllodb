@@ -93,3 +93,14 @@ pub use crate::apllodb_sql_parser::apllodb_ast;
 pub use crate::apllodb_sql_parser::error;
 pub use crate::apllodb_sql_parser::ApllodbAst;
 pub use crate::apllodb_sql_parser::ApllodbSqlParser;
+
+#[cfg(test)]
+mod tests {
+    use apllodb_test_support::setup::setup_test_logger;
+    use ctor::ctor;
+
+    #[cfg_attr(test, ctor)]
+    fn test_setup() {
+        setup_test_logger();
+    }
+}

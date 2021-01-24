@@ -83,7 +83,9 @@ version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
  "apllodb-storage-engine-interface",
+ "apllodb-test-support",
  "async-trait",
+ "ctor",
  "derive-new",
  "env_logger",
  "log",
@@ -101,8 +103,10 @@ dependencies = [
  "apllodb-shared-components",
  "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
+ "apllodb-test-support",
  "async-trait",
  "chrono",
+ "ctor",
  "derive-new",
  "env_logger",
  "futures",
@@ -125,6 +129,8 @@ dependencies = [
  "apllodb-shared-components",
  "apllodb-sql-processor",
  "apllodb-storage-engine-interface",
+ "apllodb-test-support",
+ "ctor",
  "derive-new",
  "env_logger",
  "futures",
@@ -151,6 +157,8 @@ dependencies = [
 name = "apllodb-sql-parser"
 version = "0.1.0"
 dependencies = [
+ "apllodb-test-support",
+ "ctor",
  "pest",
  "pest_derive",
  "pretty_assertions",
@@ -165,8 +173,10 @@ dependencies = [
  "apllodb-shared-components",
  "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
+ "apllodb-test-support",
  "async-recursion",
  "async-std",
+ "ctor",
  "derive-new",
  "env_logger",
  "futures",
@@ -183,6 +193,8 @@ version = "0.1.0"
 dependencies = [
  "apllodb-shared-components",
  "apllodb-storage-engine-interface",
+ "apllodb-test-support",
+ "ctor",
  "futures",
  "mockall",
  "once_cell",
