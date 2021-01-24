@@ -1,7 +1,10 @@
 use apllodb_shared_components::Record;
 use once_cell::sync::Lazy;
 
-use super::{ModelsMock, test_models::{Body, People, Pet}};
+use super::{
+    test_models::{Body, People, Pet},
+    ModelsMock,
+};
 
 pub static T_PEOPLE_R1: Lazy<Record> = Lazy::new(|| People::record(1, 13));
 pub static T_PEOPLE_R2: Lazy<Record> = Lazy::new(|| People::record(2, 70));
