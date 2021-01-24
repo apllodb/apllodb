@@ -151,6 +151,8 @@ mod tests {
 
     #[test]
     fn test_success() {
+        log::warn!("aasdfafsaf");
+
         let testset: Vec<Vec<TableConstraintKind>> = vec![
             vec![t_pk!("c1")],
             vec![t_pk!("c1"), t_unique!("c2")],

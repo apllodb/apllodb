@@ -18,6 +18,10 @@ derive-new = "0.5"
 
 fastrand = "1.4"
 
+ctor = "0.1"
+env_logger = "0.8"
+log = "0.4"
+
 [dev-dependencies]
 apllodb-test-support = {path = "../apllodb-test-support", features = ["setup-all"]}
 
