@@ -60,8 +60,6 @@ mod tests {
 
     #[test]
     fn test_failure_too_long_name() {
-        log::warn!("safijewaiohgawh32ht0832urt0923u5r32qjge");
-
         let names = vec!["a".repeat(65), "あ".repeat(65), "💪".repeat(65)];
 
         for name in &names {

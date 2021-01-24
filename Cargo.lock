@@ -193,7 +193,6 @@ dependencies = [
 name = "apllodb-test-support"
 version = "0.1.0"
 dependencies = [
- "ctor",
  "env_logger",
  "log",
 ]

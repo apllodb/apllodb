@@ -47,19 +47,13 @@ pub use crate::{
     traits::sql_convertible::SqlConvertible,
 };
 
-use ctor::ctor;
-use std::sync::Once;
+#[cfg(test)]
+mod tests {
+    use apllodb_test_support::setup::setup_test_logger;
+    use ctor::ctor;
 
-/// setup env_logger for test.
-#[ctor]
-fn setup_test_logger() {
-    static INIT: Once = Once::new();
-
-    INIT.call_once(|| {
-        let _ = env_logger::builder()
-            .is_test(false) // To enable color. Logs are not captured by test framework.
-            .try_init();
-    });
-
-    log::info!("setup_test_logger(): done");
+    #[cfg_attr(test, ctor)]
+    fn test_setup() {
+        setup_test_logger();
+    }
 }
