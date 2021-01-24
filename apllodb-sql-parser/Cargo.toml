@@ -16,5 +16,9 @@ pest_derive = "2.1.0"
 serde = {version = "1.0", optional = true, features = ["derive"]}
 
 [dev-dependencies]
+apllodb-test-support = {path = "../apllodb-test-support"}
+
 pretty_assertions = "0.6"
 version-sync = "0.9"
+
+ctor = "0.1"

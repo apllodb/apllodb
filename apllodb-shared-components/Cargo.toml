@@ -22,4 +22,8 @@ log = "0.4"
 fastrand = "1.4"
 
 [dev-dependencies]
+apllodb-test-support = {path = "../apllodb-test-support"}
+
+ctor = "0.1"
+
 version-sync = "0.9"

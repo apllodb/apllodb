@@ -1,7 +1,7 @@
 mod test_support;
 
-use crate::test_support::setup;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
+use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
     ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind,
@@ -10,10 +10,13 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
+#[ctor::ctor]
+fn setup() {
+    test_setup();
+}
+
 #[async_std::test]
 async fn test_compound_pk() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 

@@ -89,7 +89,7 @@ mod tests {
             },
             QueryPlan,
         },
-        test_support::{setup, utility_functions::r_projection},
+        test_support::utility_functions::r_projection,
     };
 
     use super::QueryExecutor;
@@ -103,8 +103,6 @@ mod tests {
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
     async fn test_query_executor() -> ApllodbResult<()> {
-        setup();
-
         let mut engine = default_mock_engine();
         engine.expect_with_tx().returning(|| {
             let mut with_tx = MockWithTxMethods::new();

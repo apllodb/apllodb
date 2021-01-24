@@ -14,5 +14,13 @@ pub mod version;
 pub mod version_revision_resolver;
 pub mod vtable;
 
-#[cfg(any(test, feature = "test-support"))]
-pub mod test_support;
+#[cfg(test)]
+mod tests {
+    use apllodb_test_support::setup::setup_test_logger;
+    use ctor::ctor;
+
+    #[cfg_attr(test, ctor)]
+    fn test_setup() {
+        setup_test_logger();
+    }
+}

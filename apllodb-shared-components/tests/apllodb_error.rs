@@ -1,3 +1,11 @@
+use apllodb_test_support::setup::setup_test_logger;
+use ctor::ctor;
+
+#[ctor]
+fn test_setup() {
+    setup_test_logger();
+}
+
 // https://rust-lang.github.io/api-guidelines/interoperability.html#error-types-are-meaningful-and-well-behaved-c-good-err
 #[test]
 fn test_api_guidelines_c_good_err() {

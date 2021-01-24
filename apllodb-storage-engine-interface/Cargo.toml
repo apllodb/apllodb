@@ -27,6 +27,9 @@ uuid = {version = "0.8", features = ["v4"], optional = true}
 
 [dev-dependencies]
 apllodb-storage-engine-interface = {path = ".", features = ["test-support"]}
+apllodb-test-support = {path = "../apllodb-test-support"}
+
+ctor = "0.1"
 
 version-sync = "0.9"
 
