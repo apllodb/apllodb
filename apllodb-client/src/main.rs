@@ -3,14 +3,14 @@
 //! apllodb's client bin crate.
 
 use apllodb_rpc_interface::ApllodbRpcClient;
-use apllodb_shared_components::DatabaseName;
+use apllodb_shared_components::{ApllodbResult, DatabaseName, Session};
 use clap::{App, Arg};
-use std::{io, net::SocketAddr};
+use std::net::SocketAddr;
 use tarpc::{client, context};
 use tokio_serde::formats::Bincode;
 
 #[tokio::main]
-async fn main() -> io::Result<()> {
+async fn main() -> ApllodbResult<()> {
     env_logger::init();
 
     let flags = App::new("apllodb-client")
@@ -58,8 +58,14 @@ async fn main() -> io::Result<()> {
     // The client has an RPC method for each RPC defined in the annotated trait. It takes the same
     // args as defined, with the addition of a Context, which is always the first arg. The Context
     // specifies a deadline and trace information which can be helpful in debugging requests.
+    let session = client.begin_transaction(context::current(), db).await??;
+
     let resp = client
-        .command(context::current(), db, sql.to_string())
+        .command(
+            context::current(),
+            Session::WithTx(session),
+            sql.to_string(),
+        )
         .await?;
 
     println!("{:?}", resp);

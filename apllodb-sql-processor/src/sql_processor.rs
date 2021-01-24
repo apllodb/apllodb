@@ -1,7 +1,7 @@
 pub(crate) mod ddl;
 pub(crate) mod modification;
 pub(crate) mod query;
-mod success;
+pub(crate) mod success;
 
 use std::rc::Rc;
 
@@ -15,7 +15,7 @@ use self::{
 };
 
 /// Processes SQL.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, new)]
 pub struct SQLProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
 }

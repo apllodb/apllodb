@@ -13,15 +13,17 @@
 //! Note that session is free from physical connection implementation.
 //! Therefore, for example, client-server's transport is independent from Session and can be any of TCP, direct method call, and so on.
 
-use crate::{SessionWithDb, SessionWithTx, SessionWithoutDb};
-
 pub(crate) mod session_id;
 pub(crate) mod with_db;
 pub(crate) mod with_tx;
 pub(crate) mod without_db;
 
+use crate::{SessionWithDb, SessionWithTx, SessionWithoutDb};
+
+use serde::{Deserialize, Serialize};
+
 /// Session types
-#[derive(Hash, Debug)]
+#[derive(Hash, Debug, Serialize, Deserialize)]
 pub enum Session {
     /// session without open database
     WithoutDb(SessionWithoutDb),

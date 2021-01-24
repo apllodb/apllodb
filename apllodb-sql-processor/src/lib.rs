@@ -11,7 +11,7 @@ extern crate derive_new;
 pub(crate) mod ast_translator;
 pub(crate) mod sql_processor;
 
-pub use sql_processor::SQLProcessor;
+pub use sql_processor::{success::SQLProcessorSuccess, SQLProcessor};
 
 #[cfg(test)]
 pub(crate) mod test_support;

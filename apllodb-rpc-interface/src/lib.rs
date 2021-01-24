@@ -1,16 +1,13 @@
-use apllodb_shared_components::{ApllodbResult, DatabaseName, RecordIterator};
-use serde::{Deserialize, Serialize};
+mod response;
 
-/// Successful response from apllodb-server
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum ApllodbRpcSuccess {
-    QueryResponse { records: RecordIterator },
-    ModificationResponse,
-    DDLResponse,
-}
+pub use response::ApllodbRpcSuccess;
+
+use apllodb_shared_components::{ApllodbResult, DatabaseName, Session, SessionWithTx};
 
 #[tarpc::service]
 pub trait ApllodbRpc {
-    /// Returns a greeting for name.
-    async fn command(db: DatabaseName, sql: String) -> ApllodbResult<ApllodbRpcSuccess>;
+    /// Just a utility function. TODO remove after introducing standard command to open database.
+    async fn begin_transaction(database: DatabaseName) -> ApllodbResult<SessionWithTx>;
+
+    async fn command(session: Session, sql: String) -> ApllodbResult<ApllodbRpcSuccess>;
 }
