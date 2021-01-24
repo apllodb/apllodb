@@ -46,6 +46,3 @@ pub use crate::{
     error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},
     traits::sql_convertible::SqlConvertible,
 };
-
-#[cfg(any(test, feature = "test-support"))]
-pub mod test_support;

@@ -136,9 +136,7 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "derive-new",
- "env_logger",
  "fastrand",
- "log",
  "serde",
  "version-sync",
 ]
@@ -185,6 +183,15 @@ dependencies = [
  "serde",
  "uuid",
  "version-sync",
+]
+
+[[package]]
+name = "apllodb-test-support"
+version = "0.1.0"
+dependencies = [
+ "ctor",
+ "env_logger",
+ "log",
 ]
 
 [[package]]
