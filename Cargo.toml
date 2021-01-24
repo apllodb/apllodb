@@ -15,4 +15,6 @@ members = [
 
   "apllodb-server",
   "apllodb-client",
+
+  "apllodb-test-support",
 ]

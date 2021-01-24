@@ -31,3 +31,14 @@
 //! This engine internally uses `sqlx::Pool`, which seems not to work with tokio.
 
 pub use apllodb_immutable_schema_engine_infra::ApllodbImmutableSchemaEngine;
+
+#[cfg(test)]
+pub mod tests {
+    use apllodb_immutable_schema_engine_infra::test_support::test_setup;
+    use ctor::ctor;
+
+    #[ctor]
+    fn setup() {
+        test_setup();
+    }
+}

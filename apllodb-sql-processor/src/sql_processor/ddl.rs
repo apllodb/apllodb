@@ -91,10 +91,6 @@ mod tests {
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
 
-    //use mockall::predicate::{always, eq};
-
-    use crate::test_support::setup;
-
     use super::DDLProcessor;
 
     #[derive(Clone, PartialEq, Debug, new)]
@@ -108,8 +104,6 @@ mod tests {
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
     async fn test_ddl_processor_with_sql() -> ApllodbResult<()> {
-        setup();
-
         let parser = ApllodbSqlParser::new();
 
         static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {

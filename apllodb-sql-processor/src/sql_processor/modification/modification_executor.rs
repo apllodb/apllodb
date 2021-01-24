@@ -71,20 +71,17 @@ mod tests {
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
 
-    use crate::{
-        sql_processor::{
-            modification::modification_plan::{
-                modification_plan_tree::{
-                    modification_plan_node::{InsertNode, ModificationPlanNode},
-                    ModificationPlanTree,
-                },
-                ModificationPlan,
+    use crate::sql_processor::{
+        modification::modification_plan::{
+            modification_plan_tree::{
+                modification_plan_node::{InsertNode, ModificationPlanNode},
+                ModificationPlanTree,
             },
-            query::query_plan::query_plan_tree::query_plan_node::{
-                LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
-            },
+            ModificationPlan,
         },
-        test_support::setup,
+        query::query_plan::query_plan_tree::query_plan_node::{
+            LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
+        },
     };
 
     use super::ModificationExecutor;
@@ -99,8 +96,6 @@ mod tests {
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
     async fn test_modification_executor() -> ApllodbResult<()> {
-        setup();
-
         static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
             vec![
                 // input from DirectInput

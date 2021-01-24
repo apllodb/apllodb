@@ -15,3 +15,14 @@ extern crate derive_new;
 mod apllodb_server;
 
 pub use crate::apllodb_server::{response::ApllodbSuccess, ApllodbServer};
+
+#[cfg(test)]
+mod tests {
+    use apllodb_test_support::setup::setup_test_logger;
+    use ctor::ctor;
+
+    #[cfg_attr(test, ctor)]
+    fn test_setup() {
+        setup_test_logger();
+    }
+}

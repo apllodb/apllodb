@@ -44,12 +44,10 @@ impl ShortName {
 #[cfg(test)]
 mod tests {
     use super::ShortName;
-    use crate::{error::kind::ApllodbErrorKind, test_support::setup};
+    use crate::error::kind::ApllodbErrorKind;
 
     #[test]
     fn test_success() {
-        setup();
-
         let names = vec!["a".repeat(64), "あ".repeat(64), "💪".repeat(64)];
 
         for name in &names {
@@ -62,8 +60,6 @@ mod tests {
 
     #[test]
     fn test_failure_too_long_name() {
-        setup();
-
         let names = vec!["a".repeat(65), "あ".repeat(65), "💪".repeat(65)];
 
         for name in &names {

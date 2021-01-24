@@ -62,7 +62,6 @@ impl TableWideConstraints {
 #[cfg(test)]
 mod tests {
     use super::TableWideConstraints;
-    use crate::test_support::setup;
     use apllodb_shared_components::{
         ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
         ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
@@ -70,8 +69,6 @@ mod tests {
 
     #[test]
     fn test_success() -> ApllodbResult<()> {
-        setup();
-
         let c1_def = ColumnDefinition::new(
             ColumnDataType::new(
                 ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
@@ -157,8 +154,6 @@ mod tests {
 
     #[test]
     fn test_failure_invalid_table_definition() -> ApllodbResult<()> {
-        setup();
-
         let c1_def = ColumnDefinition::new(
             ColumnDataType::new(
                 ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),

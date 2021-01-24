@@ -1,7 +1,7 @@
 mod test_support;
 
-use crate::test_support::setup;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
+use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnName, ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
@@ -11,10 +11,13 @@ use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
 };
 
+#[ctor::ctor]
+fn setup() {
+    test_setup();
+}
+
 #[async_std::test]
 async fn test_wait_lock() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let db = DatabaseName::new("test_wait_lock")?;
 
