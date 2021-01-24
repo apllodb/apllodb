@@ -11,7 +11,7 @@ test-support = []
 
 [dependencies]
 apllodb-immutable-schema-engine-application = {path = "../apllodb-immutable-schema-engine-application"}
-apllodb-immutable-schema-engine-domain = {path = "../apllodb-immutable-schema-engine-domain", features = ["test-support"]}
+apllodb-immutable-schema-engine-domain = {path = "../apllodb-immutable-schema-engine-domain"}
 
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
 

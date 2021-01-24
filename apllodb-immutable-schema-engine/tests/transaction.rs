@@ -11,8 +11,28 @@ use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
 };
 
+// #[cfg(test)]
+// use apllodb_test_support::setup::setup_test_logger;
+// #[cfg(test)]
+// use ctor::ctor;
+
+// #[cfg_attr(test, ctor)]
+// fn test_setup() {
+//     setup_test_logger();
+// }
+
+
+#[test]
+fn aaaaaaaaaaaaaaaaa() {
+    // apllodb_test_support::setup::setup_test_logger();
+
+    log::error!("douda!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?");
+}
+
 #[async_std::test]
 async fn test_wait_lock() -> ApllodbResult<()> {
+    //apllodb_test_support::setup::setup_test_logger();
+
     let engine = ApllodbImmutableSchemaEngine::default();
     let db = DatabaseName::new("test_wait_lock")?;
 
