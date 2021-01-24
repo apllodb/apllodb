@@ -18,8 +18,6 @@ fn setup() {
 
 #[async_std::test]
 async fn test_wait_lock() -> ApllodbResult<()> {
-    //apllodb_test_support::setup::setup_test_logger();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let db = DatabaseName::new("test_wait_lock")?;
 
