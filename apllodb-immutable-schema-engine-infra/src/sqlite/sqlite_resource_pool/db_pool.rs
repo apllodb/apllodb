@@ -25,7 +25,7 @@ impl SqliteDatabasePool {
             )
         };
 
-        let db_idx = self.sess_db.get(sid).ok_or_else(err)?.clone();
+        let db_idx = *self.sess_db.get(sid).ok_or_else(err)?;
         let db = self.db_arena.get(db_idx).ok_or_else(err)?;
 
         Ok(db)
@@ -44,7 +44,7 @@ impl SqliteDatabasePool {
             )
         };
 
-        let db_idx = self.sess_db.remove(sid).ok_or_else(err)?.clone();
+        let db_idx = self.sess_db.remove(sid).ok_or_else(err)?;
         let db = self.db_arena.remove(db_idx).ok_or_else(err)?;
 
         Ok(db)
@@ -56,7 +56,7 @@ impl SqliteDatabasePool {
     ///   - this session seems to open another database.
     pub(crate) fn insert_db(&mut self, sid: &SessionId, db: SqliteDatabase) -> ApllodbResult<()> {
         let db_idx = self.db_arena.insert(db);
-        if self.sess_db.insert(sid.clone(), db_idx).is_some() {
+        if self.sess_db.insert(*sid, db_idx).is_some() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateDatabase,
                 format!("session `{:?}` already opens another database", sid),

@@ -89,24 +89,24 @@ impl SqliteTx {
 
 impl SqliteTx {
     // FIXME should take placeholder argument to prevent SQL-i
-    pub(in crate::sqlite::transaction::sqlite_tx) async fn query<'q>(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn query(
         &mut self,
-        sql: &'q str,
+        sql: &str,
         column_data_types: &[&ColumnDataType],
         void_projection: &[ColumnReference],
     ) -> ApllodbResult<SqliteRowIterator> {
         debug!("SqliteTx::query():\n    {}", sql);
 
-        let mut rows = sqlx::query(sql)
+        let rows = sqlx::query(sql)
             .fetch_all(self.sqlx_tx.as_mut().unwrap())
             .await
             .map_err(InfraError::from)?;
-        SqliteRowIterator::new(&mut rows, column_data_types, void_projection)
+        SqliteRowIterator::new(&rows, column_data_types, void_projection)
     }
 
-    pub(in crate::sqlite::transaction::sqlite_tx) async fn execute<'q>(
+    pub(in crate::sqlite::transaction::sqlite_tx) async fn execute(
         &mut self,
-        sql: &'q str,
+        sql: &str,
     ) -> ApllodbResult<SqliteRowid> {
         debug!("SqliteTx::execute():\n    {}", sql);
 

@@ -19,9 +19,9 @@ impl SqliteDatabase {
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - sqlx raises an error.
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
-        let mut pool = Self::connect_sqlite(&name).await?;
+        let pool = Self::connect_sqlite(&name).await?;
 
-        VTableDao::create_table_if_not_exist(&mut pool).await?;
+        VTableDao::create_table_if_not_exist(&pool).await?;
 
         Ok(Self {
             name,

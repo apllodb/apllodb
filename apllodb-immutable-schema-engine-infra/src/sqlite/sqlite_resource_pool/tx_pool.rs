@@ -31,7 +31,7 @@ impl SqliteTxPool {
             )
         };
 
-        let tx_idx = self.sess_tx.get(sid).ok_or_else(err)?.clone();
+        let tx_idx = *self.sess_tx.get(sid).ok_or_else(err)?;
         let tx = self.tx_arena.get(tx_idx).ok_or_else(err)?;
 
         Ok(tx.clone())
@@ -50,7 +50,7 @@ impl SqliteTxPool {
             )
         };
 
-        let tx_idx = self.sess_tx.remove(sid).ok_or_else(err)?.clone();
+        let tx_idx = self.sess_tx.remove(sid).ok_or_else(err)?;
         let tx = self.tx_arena.remove(tx_idx).ok_or_else(err)?;
 
         Ok(tx)
@@ -66,7 +66,7 @@ impl SqliteTxPool {
         tx: Rc<RefCell<SqliteTx>>,
     ) -> ApllodbResult<()> {
         let tx_idx = self.tx_arena.insert(tx);
-        if self.sess_tx.insert(sid.clone(), tx_idx).is_some() {
+        if self.sess_tx.insert(*sid, tx_idx).is_some() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidTransactionState,
                 format!("session `{:?}` already opens another transaction", sid),
