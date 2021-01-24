@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::{
     test_support::{
         test_models::{Body, People, Pet},
-        MockStorageEngine, MockWithTxMethods,
+        MockWithTxMethods,
     },
     ProjectionQuery,
 };
@@ -49,47 +49,43 @@ struct MockDatumInTable {
     records: Vec<Record>,
 }
 
-pub fn mock_select(engine: &mut MockStorageEngine, models: &'static ModelsMock) {
-    engine.expect_with_tx().returning(move || {
-        let mut with_tx = MockWithTxMethods::new();
-        with_tx
-            .expect_select()
-            .returning(move |session, table_name, projection| {
-                let models = models.clone();
-                let datum = MockDatum::from(models);
+pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock) {
+    with_tx
+        .expect_select()
+        .returning(move |session, table_name, projection| {
+            let models = models.clone();
+            let datum = MockDatum::from(models);
 
-                let table = datum
-                    .tables
-                    .iter()
-                    .find(|table| table.table_name == table_name)
-                    .expect(&format!("table `{:?}` is undefined in MockTx", table_name));
+            let table = datum
+                .tables
+                .iter()
+                .find(|table| table.table_name == table_name)
+                .expect(&format!("table `{:?}` is undefined in MockTx", table_name));
 
-                let records = table.records.clone();
+            let records = table.records.clone();
 
-                let records = match projection {
-                    ProjectionQuery::All => RecordIterator::new(records),
-                    ProjectionQuery::ColumnNames(column_names) => {
-                        let fields: HashSet<FieldIndex> = column_names
-                            .into_iter()
-                            .map(|cn| {
-                                FieldIndex::InColumnReference(ColumnReference::new(
-                                    table_name.clone(),
-                                    cn,
-                                ))
-                            })
-                            .collect();
+            let records = match projection {
+                ProjectionQuery::All => RecordIterator::new(records),
+                ProjectionQuery::ColumnNames(column_names) => {
+                    let fields: HashSet<FieldIndex> = column_names
+                        .into_iter()
+                        .map(|cn| {
+                            FieldIndex::InColumnReference(ColumnReference::new(
+                                table_name.clone(),
+                                cn,
+                            ))
+                        })
+                        .collect();
 
-                        let projected_records: Vec<Record> = records
-                            .into_iter()
-                            .map(|record| record.projection(&fields).unwrap())
-                            .collect();
+                    let projected_records: Vec<Record> = records
+                        .into_iter()
+                        .map(|record| record.projection(&fields).unwrap())
+                        .collect();
 
-                        RecordIterator::new(projected_records)
-                    }
-                };
+                    RecordIterator::new(projected_records)
+                }
+            };
 
-                async move { Ok((records, session)) }.boxed_local()
-            });
-        with_tx
-    });
+            async move { Ok((records, session)) }.boxed_local()
+        });
 }

@@ -73,6 +73,7 @@ mod tests {
             fixture::*,
             mock_select, session_with_tx,
             test_models::{Body, People, Pet},
+            MockWithTxMethods,
         },
         ProjectionQuery,
     };
@@ -104,9 +105,13 @@ mod tests {
     async fn test_query_executor() -> ApllodbResult<()> {
         setup();
 
-        // mocking select()
         let mut engine = default_mock_engine();
-        mock_select(&mut engine, &FULL_MODELS);
+        engine.expect_with_tx().returning(|| {
+            let mut with_tx = MockWithTxMethods::new();
+            // mocking select()
+            mock_select(&mut with_tx, &FULL_MODELS);
+            with_tx
+        });
         let engine = Rc::new(engine);
 
         let test_data: Vec<TestDatum> = vec![

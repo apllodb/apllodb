@@ -159,15 +159,15 @@ mod tests {
             let modification_plan = ModificationPlan::new(test_datum.in_plan_tree.clone());
 
             let mut engine = default_mock_engine();
-
-            // mocking select()
-            mock_select(&mut engine, &PET_MODELS);
-
-            // mocking insert()
             engine.expect_with_tx().returning(move || {
                 let test_datum = test_datum.clone();
 
                 let mut with_tx = MockWithTxMethods::new();
+
+                // mocking select()
+                mock_select(&mut with_tx, &PET_MODELS);
+
+                // mocking insert()
                 with_tx
                     .expect_insert()
                     .with(
@@ -176,10 +176,11 @@ mod tests {
                         eq(RecordIterator::new(test_datum.expected_insert_records)),
                     )
                     .returning(|session, _, _| async { Ok(session) }.boxed_local());
+
                 with_tx
             });
-
             let engine = Rc::new(engine);
+
             let session = session_with_tx(engine.as_ref()).await?;
             let executor = ModificationExecutor::new(engine.clone());
             executor.run(session, modification_plan).await?;

@@ -46,6 +46,7 @@ mod tests {
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
     use apllodb_storage_engine_interface::test_support::{
         default_mock_engine, fixture::*, mock_select, session_with_tx, test_models::People,
+        MockWithTxMethods,
     };
 
     use super::QueryProcessor;
@@ -71,9 +72,15 @@ mod tests {
 
         let parser = ApllodbSqlParser::new();
 
-        // mocking select()
         let mut engine = default_mock_engine();
-        mock_select(&mut engine, &FULL_MODELS);
+        engine.expect_with_tx().returning(|| {
+            let mut with_tx = MockWithTxMethods::new();
+
+            // mocking select()
+            mock_select(&mut with_tx, &FULL_MODELS);
+
+            with_tx
+        });
         let engine = Rc::new(engine);
 
         let test_data: Vec<TestDatum> = vec![
