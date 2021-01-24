@@ -60,7 +60,7 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
                 .tables
                 .iter()
                 .find(|table| table.table_name == table_name)
-                .expect(&format!("table `{:?}` is undefined in MockTx", table_name));
+                .unwrap_or_else(|| panic!("table `{:?}` is undefined in ModelsMock", table_name));
 
             let records = table.records.clone();
 
