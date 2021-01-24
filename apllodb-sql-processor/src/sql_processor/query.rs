@@ -41,7 +41,7 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use crate::test_support::{setup, utility_functions::r_projection};
+    use crate::test_support::utility_functions::r_projection;
     use apllodb_shared_components::{ApllodbResult, Record};
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
     use apllodb_storage_engine_interface::test_support::{
@@ -68,8 +68,6 @@ mod tests {
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
     async fn test_query_processor_with_sql() -> ApllodbResult<()> {
-        setup();
-
         let parser = ApllodbSqlParser::new();
 
         let mut engine = default_mock_engine();

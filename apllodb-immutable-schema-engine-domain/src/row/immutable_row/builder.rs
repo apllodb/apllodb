@@ -55,15 +55,12 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::ImmutableRowBuilder;
-    use crate::test_support::setup;
     use apllodb_shared_components::{
         ApllodbResult, ColumnName, ColumnReference, ColumnValue, SqlType, SqlValue, TableName,
     };
 
     #[test]
     fn test_success() -> ApllodbResult<()> {
-        setup();
-
         let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
 
         let mut row1 = ImmutableRowBuilder::default()
@@ -86,8 +83,6 @@ mod tests {
 
     #[test]
     fn test_add_order_does_not_matter() -> ApllodbResult<()> {
-        setup();
-
         let colref1 = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
         let colref2 = ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?);
 

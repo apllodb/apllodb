@@ -183,7 +183,7 @@ impl ActiveVersion {
 #[cfg(test)]
 mod tests {
     use super::ActiveVersion;
-    use crate::{test_support::setup, vtable::id::VTableId};
+    use crate::vtable::id::VTableId;
     use apllodb_shared_components::{
         AlterTableAction, ColumnDataType, ColumnName, ColumnReference, SqlType, TableName,
     };
@@ -191,8 +191,6 @@ mod tests {
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {
-        setup();
-
         let c1_cdt = ColumnDataType::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             SqlType::integer(),
@@ -207,8 +205,6 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
-        setup();
-
         let c1_cdt = ColumnDataType::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             SqlType::integer(),
@@ -244,8 +240,6 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
-        setup();
-
         let c1_cdt = ColumnDataType::new(
             ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             SqlType::integer(),

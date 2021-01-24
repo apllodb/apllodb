@@ -1,6 +1,5 @@
 mod test_support;
 
-use crate::test_support::setup;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
@@ -12,8 +11,6 @@ use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMet
 
 #[async_std::test]
 async fn test_create_table_success() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
@@ -51,8 +48,6 @@ async fn test_create_table_success() -> ApllodbResult<()> {
 
 #[async_std::test]
 async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
@@ -96,8 +91,6 @@ async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
 
 #[async_std::test]
 async fn test_insert() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
@@ -171,8 +164,6 @@ async fn test_insert() -> ApllodbResult<()> {
 
 #[async_std::test]
 async fn test_update() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 
@@ -298,8 +289,6 @@ update(
 
 #[async_std::test]
 async fn test_delete() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 

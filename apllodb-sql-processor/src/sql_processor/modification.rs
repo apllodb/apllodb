@@ -104,7 +104,6 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use crate::test_support::setup;
     use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
     use apllodb_sql_parser::ApllodbSqlParser;
     use apllodb_storage_engine_interface::test_support::{
@@ -126,8 +125,6 @@ mod tests {
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
     async fn test_modification_processor_with_sql() -> ApllodbResult<()> {
-        setup();
-
         let parser = ApllodbSqlParser::new();
 
         static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {

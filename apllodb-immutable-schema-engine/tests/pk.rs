@@ -1,6 +1,5 @@
 mod test_support;
 
-use crate::test_support::setup;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
@@ -12,8 +11,6 @@ use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMet
 
 #[async_std::test]
 async fn test_compound_pk() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
     let session = session_with_tx(&engine).await?;
 

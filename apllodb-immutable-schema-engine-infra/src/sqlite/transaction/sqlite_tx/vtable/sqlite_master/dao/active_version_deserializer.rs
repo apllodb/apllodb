@@ -122,7 +122,7 @@ mod tests {
     use super::ActiveVersionDeserializer;
     use crate::sqlite::transaction::sqlite_tx::version::dao::CreateTableSqlForVersionTestWrapper;
     use apllodb_immutable_schema_engine_domain::{
-        entity::Entity, test_support::setup, version::active_version::ActiveVersion, vtable::VTable,
+        entity::Entity, version::active_version::ActiveVersion, vtable::VTable,
     };
     use apllodb_shared_components::{
         ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
@@ -131,8 +131,6 @@ mod tests {
 
     #[test]
     fn test_from_into() -> ApllodbResult<()> {
-        setup();
-
         let c1_def = ColumnDefinition::new(
             ColumnDataType::new(
                 ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),

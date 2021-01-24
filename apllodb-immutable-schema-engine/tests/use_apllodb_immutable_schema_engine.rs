@@ -1,6 +1,5 @@
 mod test_support;
 
-use crate::test_support::setup;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
@@ -13,8 +12,6 @@ use apllodb_storage_engine_interface::{
 
 #[async_std::test]
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
-    setup();
-
     let engine = ApllodbImmutableSchemaEngine::default();
 
     let t_name = TableName::new("t")?;
