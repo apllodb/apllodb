@@ -84,9 +84,12 @@ mod tests {
         TableConstraintKind, TableConstraints, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
-    use apllodb_storage_engine_interface::test_support::{MockWithTxMethods, default_mock_engine, session_with_tx, test_models::People};
+    use apllodb_storage_engine_interface::test_support::{
+        default_mock_engine, session_with_tx, test_models::People, MockWithTxMethods,
+    };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
+    use once_cell::sync::Lazy;
 
     //use mockall::predicate::{always, eq};
 
@@ -109,45 +112,52 @@ mod tests {
 
         let parser = ApllodbSqlParser::new();
 
-        let test_data: Vec<TestDatum> = vec![TestDatum::new(
-            "
+        static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
+            vec![TestDatum::new(
+                "
             CREATE TABLE people (
                 id INTEGER, 
                 age INTEGER,
                 PRIMARY KEY (id)
             )",
-            People::table_name(),
-            vec![TableConstraintKind::PrimaryKey {
-                column_names: vec![People::colref_id().as_column_name().clone()],
-            }],
-            vec![
-                ColumnDefinition::new(
-                    ColumnDataType::new(People::colref_id(), SqlType::integer(), true),
-                    ColumnConstraints::default(),
-                ),
-                ColumnDefinition::new(
-                    ColumnDataType::new(People::colref_age(), SqlType::integer(), true),
-                    ColumnConstraints::default(),
-                ),
-            ],
-        )];
+                People::table_name(),
+                vec![TableConstraintKind::PrimaryKey {
+                    column_names: vec![People::colref_id().as_column_name().clone()],
+                }],
+                vec![
+                    ColumnDefinition::new(
+                        ColumnDataType::new(People::colref_id(), SqlType::integer(), true),
+                        ColumnConstraints::default(),
+                    ),
+                    ColumnDefinition::new(
+                        ColumnDataType::new(People::colref_age(), SqlType::integer(), true),
+                        ColumnConstraints::default(),
+                    ),
+                ],
+            )]
+            .into_boxed_slice()
+        });
 
-        for test_datum in test_data {
+        for test_datum in TEST_DATA.iter() {
             log::debug!("testing with SQL: {}", test_datum.in_create_table_sql);
 
             // mocking create_table()
             let mut engine = default_mock_engine();
-            let mut with_tx = MockWithTxMethods::new();
-            with_tx
-                .expect_create_table()
-                .with(
-                    always(),
-                    eq(test_datum.expected_table_name),
-                    eq(TableConstraints::new(test_datum.expected_table_constraints).unwrap()),
-                    eq(test_datum.expected_column_definitions),
-                )
-                .returning(|session, _, _, _| async { Ok(session) }.boxed_local());
-            engine.expect_with_tx().return_once(move || with_tx);
+            engine.expect_with_tx().returning(move || {
+                let test_datum = test_datum.clone();
+
+                let mut with_tx = MockWithTxMethods::new();
+                with_tx
+                    .expect_create_table()
+                    .with(
+                        always(),
+                        eq(test_datum.expected_table_name),
+                        eq(TableConstraints::new(test_datum.expected_table_constraints).unwrap()),
+                        eq(test_datum.expected_column_definitions),
+                    )
+                    .returning(|session, _, _, _| async { Ok(session) }.boxed_local());
+                with_tx
+            });
 
             let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
             let session = session_with_tx(&engine).await?;
