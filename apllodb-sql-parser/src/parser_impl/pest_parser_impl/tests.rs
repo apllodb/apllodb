@@ -1,4 +1,3 @@
-mod alter_table;
 mod create_table;
 mod delete;
 mod drop_table;
@@ -8,7 +7,7 @@ mod update;
 
 use crate::apllodb_ast::{
     ColumnConstraint, ColumnDefinition, ColumnName, CreateTableCommand, DataType, Identifier,
-    IntegerType, NonEmptyVec, TableConstraint, TableElement, TableName,
+    NonEmptyVec, TableConstraint, TableElement, TableName,
 };
 
 fn create_table(table_name: &str, table_elements: Vec<TableElement>) -> CreateTableCommand {
@@ -36,10 +35,4 @@ fn te_pk(column_names: Vec<&str>) -> TableElement {
             .map(|s| ColumnName(Identifier(s.to_string())))
             .collect(),
     )))
-}
-
-impl DataType {
-    fn integer() -> Self {
-        DataType::IntegerTypeVariant(IntegerType::IntegerVariant)
-    }
 }

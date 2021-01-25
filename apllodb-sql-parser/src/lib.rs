@@ -94,6 +94,10 @@ pub use crate::apllodb_sql_parser::error;
 pub use crate::apllodb_sql_parser::ApllodbAst;
 pub use crate::apllodb_sql_parser::ApllodbSqlParser;
 
+#[cfg(feature = "test-support")]
+#[allow(missing_docs)]
+pub mod test_support;
+
 #[cfg(test)]
 mod tests {
     use apllodb_test_support::setup::setup_test_logger;
