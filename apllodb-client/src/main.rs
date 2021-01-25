@@ -60,8 +60,8 @@ async fn main() -> ApllodbResult<()> {
                             // TODO use field order in query
                             for (field, value) in r.into_field_values() {
                                 s.push_str(&format!("{}: {}\t", field, value));
-                                println!("{}", s);
                             }
+                            println!("{}", s);
                         }
 
                         println!("\n{} records in total\n", cnt);
