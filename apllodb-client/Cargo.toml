@@ -15,4 +15,8 @@ log = "0.4"
 
 clap = "2.33"
 
+rustyline = "7.1"
+
+dirs = "3.0"
+
 async-std = {version = "1.9", features = ["attributes"]}
