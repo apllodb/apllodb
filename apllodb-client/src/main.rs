@@ -64,7 +64,7 @@ async fn main() -> ApllodbResult<()> {
                             }
                         }
 
-                        println!("\n{} records in total", cnt);
+                        println!("\n{} records in total\n", cnt);
                     }
                     ApllodbSuccess::ModificationResponse { session }
                     | ApllodbSuccess::DDLResponse { session } => {
