@@ -12,7 +12,7 @@ fn test_alter_table_accepted() {
             "ALTER TABLE t ADD COLUMN c1 INTEGER",
             AlterTableCommand::factory(
                 "t",
-                vec![Action::factory_add_column(ColumnDefinition::factory(
+                vec![Action::factory_add_col(ColumnDefinition::factory(
                     "c1",
                     DataType::integer(),
                     vec![],
@@ -24,12 +24,12 @@ fn test_alter_table_accepted() {
             AlterTableCommand::factory(
                 "t",
                 vec![
-                    Action::factory_add_column(ColumnDefinition::factory(
+                    Action::factory_add_col(ColumnDefinition::factory(
                         "c1",
                         DataType::integer(),
                         vec![ColumnConstraint::NotNullVariant],
                     )),
-                    Action::factory_drop_column("c2"),
+                    Action::factory_drop_col("c2"),
                 ],
             ),
         ),
