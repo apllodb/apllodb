@@ -2,11 +2,10 @@
 
 //! apllodb's client bin crate.
 
-use std::io::BufRead;
-
 use apllodb_server::{ApllodbServer, ApllodbSuccess};
 use apllodb_shared_components::{ApllodbResult, DatabaseName, Session};
 use clap::{App, Arg};
+use rustyline::{error::ReadlineError, Editor};
 
 #[async_std::main]
 async fn main() -> ApllodbResult<()> {
@@ -27,32 +26,51 @@ async fn main() -> ApllodbResult<()> {
 
     let server = ApllodbServer::default();
 
-    let stdin = std::io::stdin();
+    let history_path = {
+        let mut p = dirs::home_dir().expect("cannot detect HOME directory to put history file");
+        p.push(".apllodb_history");
+        p
+    };
 
-    eprint!("SQL> ");
-    for line in stdin.lock().lines() {
-        let sql = line?;
+    let mut rl = Editor::<()>::new(); // TODO SQL completion
+    let _ = rl.load_history(&history_path);
 
-        let session = server.begin_transaction(db.clone()).await?;
-        let session = Session::WithTx(session);
+    loop {
+        match rl.readline("SQL> ") {
+            Ok(sql) => {
+                let session = server.begin_transaction(db.clone()).await?;
+                let session = Session::WithTx(session);
 
-        let resp = server.command(session, sql.to_string()).await?;
+                let success = server.command(session, sql.clone()).await?;
 
-        match resp {
-            ApllodbSuccess::QueryResponse {
-                session: _,
-                records,
-            } => {
-                log::info!("query result: {:#?}", records);
+                rl.add_history_entry(sql.as_str());
+                rl.save_history(&history_path).unwrap();
+
+                match success {
+                    ApllodbSuccess::QueryResponse {
+                        session: _,
+                        records,
+                    } => {
+                        println!("query result: {:#?}", records);
+                    }
+                    ApllodbSuccess::ModificationResponse { session }
+                    | ApllodbSuccess::DDLResponse { session } => {
+                        log::warn!("automatically commits transaction for demo");
+                        server.commit_transaction(session).await?;
+                    }
+                };
             }
-            ApllodbSuccess::ModificationResponse { session }
-            | ApllodbSuccess::DDLResponse { session } => {
-                log::warn!("automatically commits transaction for demo");
-                server.commit_transaction(session).await?;
+            Err(ReadlineError::Interrupted) => {
+                continue;
             }
-        };
-
-        eprint!("SQL> ");
+            Err(ReadlineError::Eof) => {
+                break;
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break;
+            }
+        }
     }
 
     Ok(())
