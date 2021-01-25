@@ -1,7 +1,7 @@
 use crate::apllodb_ast::{
-    Action, AddColumn, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName,
-    CreateTableCommand, DataType, DropColumn, DropTableCommand, Identifier, IntegerType,
-    NonEmptyVec, TableConstraint, TableElement, TableName,
+    Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName,
+    Condition, CreateTableCommand, DataType, DeleteCommand, DropColumn, DropTableCommand,
+    Identifier, IntegerType, NonEmptyVec, TableConstraint, TableElement, TableName,
 };
 
 impl AlterTableCommand {
@@ -63,6 +63,20 @@ impl TableConstraint {
     }
 }
 
+impl DeleteCommand {
+    pub fn factory(
+        table_name: &str,
+        alias: Option<&str>,
+        where_condition: Option<Condition>,
+    ) -> Self {
+        Self {
+            table_name: TableName::factory(table_name),
+            alias: alias.map(Alias::factory),
+            where_condition,
+        }
+    }
+}
+
 impl ColumnDefinition {
     pub fn factory(
         column_name: &str,
@@ -80,6 +94,12 @@ impl ColumnDefinition {
 impl TableName {
     pub fn factory(column_name: &str) -> Self {
         Self(Identifier(column_name.to_string()))
+    }
+}
+
+impl Alias {
+    pub fn factory(name: &str) -> Self {
+        Self(Identifier(name.to_string()))
     }
 }
 
