@@ -51,11 +51,25 @@ async fn main() -> ApllodbResult<()> {
                         session: _,
                         records,
                     } => {
-                        println!("query result: {:#?}", records);
+                        let mut cnt = 0;
+
+                        for r in records {
+                            cnt += 1;
+
+                            let mut s = String::new();
+                            // TODO use field order in query
+                            for (field, value) in r.into_field_values() {
+                                s.push_str(&format!("{}: {}\t", field, value));
+                                println!("{}", s);
+                            }
+                        }
+
+                        println!("\n{} records in total", cnt);
                     }
                     ApllodbSuccess::ModificationResponse { session }
                     | ApllodbSuccess::DDLResponse { session } => {
                         log::warn!("automatically commits transaction for demo");
+                        // TODO print "? rows affected"
                         server.commit_transaction(session).await?;
                     }
                 };
