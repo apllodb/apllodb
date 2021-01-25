@@ -1,7 +1,7 @@
 use crate::apllodb_ast::{
     Action, AddColumn, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName,
-    CreateTableCommand, DataType, DropColumn, Identifier, IntegerType, NonEmptyVec,
-    TableConstraint, TableElement, TableName,
+    CreateTableCommand, DataType, DropColumn, DropTableCommand, Identifier, IntegerType,
+    NonEmptyVec, TableConstraint, TableElement, TableName,
 };
 
 impl AlterTableCommand {
@@ -30,6 +30,14 @@ impl CreateTableCommand {
         Self {
             table_name: TableName::factory(table_name),
             table_elements: NonEmptyVec::new(table_elements),
+        }
+    }
+}
+
+impl DropTableCommand {
+    pub fn factory(table_name: &str) -> Self {
+        Self {
+            table_name: TableName::factory(table_name),
         }
     }
 }
