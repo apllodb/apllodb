@@ -7,15 +7,10 @@ use crate::parser_impl::PestParserImpl;
 use error::ApllodbSqlParserResult;
 
 /// The parser from apllodb-SQL into apllodb-AST.
-#[derive(Clone, Hash, Debug)]
+#[derive(Clone, Hash, Debug, Default)]
 pub struct ApllodbSqlParser(PestParserImpl);
 
 impl ApllodbSqlParser {
-    /// Constructor.
-    pub fn new() -> Self {
-        Self(PestParserImpl::new())
-    }
-
     /// Parses apllodb-SQL into apllodb-AST.
     ///
     /// # Panics
@@ -33,7 +28,7 @@ impl ApllodbSqlParser {
     /// ```
     /// use apllodb_sql_parser::ApllodbSqlParser;
     ///
-    /// let parser = ApllodbSqlParser::new();
+    /// let parser = ApllodbSqlParser::default();
     /// match parser.parse("DROP TABLE people") {
     ///     Ok(ast) => println!("Parsed AST: {:?}", ast),
     ///     Err(e) => panic!("{}", e),
@@ -41,11 +36,5 @@ impl ApllodbSqlParser {
     /// ```
     pub fn parse<S: Into<String>>(&self, apllodb_sql: S) -> ApllodbSqlParserResult<ApllodbAst> {
         Ok(self.0.parse(apllodb_sql)?)
-    }
-}
-
-impl Default for ApllodbSqlParser {
-    fn default() -> Self {
-        Self::new()
     }
 }

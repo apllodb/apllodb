@@ -24,7 +24,7 @@
 //! use apllodb_sql_parser::apllodb_ast::{Command, DropTableCommand, Identifier, TableName};
 //! use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser};
 //!
-//! let parser = ApllodbSqlParser::new();
+//! let parser = ApllodbSqlParser::default();
 //! match parser.parse("DROP TABLE people") {
 //!     Ok(ApllodbAst(Command::DropTableCommandVariant(DropTableCommand {
 //!         table_name: TableName(Identifier(table_name)),
@@ -45,7 +45,7 @@
 //! use apllodb_sql_parser::ApllodbSqlParser;
 //! use std::error::Error;
 //!
-//! let parser = ApllodbSqlParser::new();
+//! let parser = ApllodbSqlParser::default();
 //! match parser.parse("DROP TABLE FROM people") {
 //!     Err(e) => {
 //!         assert!(e.source().is_none(), "No root cause. Just a syntax error.");

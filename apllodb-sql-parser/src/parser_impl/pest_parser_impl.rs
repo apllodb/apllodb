@@ -17,14 +17,8 @@ use helper::{parse_child, parse_child_seq, self_as_str, try_parse_child, FnParse
 use pest::{iterators::Pairs, Parser};
 use std::convert::identity;
 
-#[derive(Clone, Hash, Debug)]
+#[derive(Clone, Hash, Debug, Default)]
 pub(crate) struct PestParserImpl;
-
-impl PestParserImpl {
-    pub(crate) fn new() -> Self {
-        Self
-    }
-}
 
 impl PestParserImpl {
     pub(crate) fn parse<S: Into<String>>(

@@ -68,7 +68,7 @@ fn test_select_accepted() {
         ),
     ];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
@@ -93,7 +93,7 @@ fn test_select_rejected() {
         "SELECT id",
     ];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for sql in sqls {
         assert!(parser.parse(sql).is_err());

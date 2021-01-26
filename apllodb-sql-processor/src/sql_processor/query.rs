@@ -68,7 +68,7 @@ mod tests {
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
     async fn test_query_processor_with_sql() -> ApllodbResult<()> {
-        let parser = ApllodbSqlParser::new();
+        let parser = ApllodbSqlParser::default();
 
         let mut engine = default_mock_engine();
         engine.expect_with_tx().returning(|| {

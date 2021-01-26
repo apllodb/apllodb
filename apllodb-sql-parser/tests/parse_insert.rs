@@ -53,7 +53,7 @@ fn test_insert_accepted() {
         ),
     ];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
@@ -76,7 +76,7 @@ fn test_insert_rejected() {
         "INSERT INTO t (id) VALUES 1",
     ];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for sql in sqls {
         assert!(parser.parse(sql).is_err());

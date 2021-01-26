@@ -19,7 +19,7 @@ fn test_delete_accepted() {
         DeleteCommand::factory("long_table_name", Some("t"), None),
     )];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
@@ -42,7 +42,7 @@ fn test_delete_rejected() {
         "DELETE t",
     ];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for sql in sqls {
         assert!(parser.parse(sql).is_err());

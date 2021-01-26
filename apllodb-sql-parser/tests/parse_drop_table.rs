@@ -22,7 +22,7 @@ fn test_drop_table_accepted() {
         ("DROP TABLE drop", DropTableCommand::factory("drop")),
     ];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
@@ -55,7 +55,7 @@ fn test_drop_table_rejected() {
         "DROP TABLE CREATE",
     ];
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
 
     for sql in sqls {
         assert!(parser.parse(sql).is_err());

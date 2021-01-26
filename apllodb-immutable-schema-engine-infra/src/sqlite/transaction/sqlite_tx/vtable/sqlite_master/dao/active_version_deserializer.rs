@@ -34,7 +34,7 @@ impl ActiveVersionDeserializer {
     pub(super) fn to_active_version(&self, vtable: &VTable) -> ApllodbResult<ActiveVersion> {
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
-        let parser = ApllodbSqlParser::new();
+        let parser = ApllodbSqlParser::default();
         let ast = parser.parse(&self.create_version_table_sql).map_err(|e|
             ApllodbError::new(
                 ApllodbErrorKind::IoError,
