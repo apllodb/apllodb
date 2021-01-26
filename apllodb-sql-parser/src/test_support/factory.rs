@@ -3,7 +3,7 @@ use crate::apllodb_ast::{
     ColumnReference, Condition, Constant, Correlation, CreateTableCommand, DataType, DeleteCommand,
     DropColumn, DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
     IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, SelectCommand,
-    SelectField, TableConstraint, TableElement, TableName,
+    SelectField, TableConstraint, TableElement, TableName, UpdateCommand,
 };
 
 impl AlterTableCommand {
@@ -88,6 +88,24 @@ impl InsertCommand {
                 column_names.into_iter().map(ColumnName::factory).collect(),
             ),
             expressions: NonEmptyVec::new(expressions),
+        }
+    }
+}
+
+impl UpdateCommand {
+    pub fn factory(
+        table_name: &str,
+        alias: Option<&str>,
+        column_name: &str,
+        expression: Expression,
+        where_condition: Option<Condition>,
+    ) -> Self {
+        Self {
+            table_name: TableName::factory(table_name),
+            alias: alias.map(Alias::factory),
+            column_name: ColumnName::factory(column_name),
+            expression,
+            where_condition,
         }
     }
 }

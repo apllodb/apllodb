@@ -1,9 +1,6 @@
 mod generated_parser;
 mod helper;
 
-#[cfg(test)]
-mod tests;
-
 use crate::{
     apllodb_ast::{
         types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
