@@ -24,7 +24,7 @@
 //! use apllodb_sql_parser::apllodb_ast::{Command, DropTableCommand, Identifier, TableName};
 //! use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser};
 //!
-//! let parser = ApllodbSqlParser::new();
+//! let parser = ApllodbSqlParser::default();
 //! match parser.parse("DROP TABLE people") {
 //!     Ok(ApllodbAst(Command::DropTableCommandVariant(DropTableCommand {
 //!         table_name: TableName(Identifier(table_name)),
@@ -45,7 +45,7 @@
 //! use apllodb_sql_parser::ApllodbSqlParser;
 //! use std::error::Error;
 //!
-//! let parser = ApllodbSqlParser::new();
+//! let parser = ApllodbSqlParser::default();
 //! match parser.parse("DROP TABLE FROM people") {
 //!     Err(e) => {
 //!         assert!(e.source().is_none(), "No root cause. Just a syntax error.");
@@ -87,12 +87,15 @@
 
 mod apllodb_sql_parser;
 mod parser_impl;
-mod parser_interface;
 
 pub use crate::apllodb_sql_parser::apllodb_ast;
 pub use crate::apllodb_sql_parser::error;
 pub use crate::apllodb_sql_parser::ApllodbAst;
 pub use crate::apllodb_sql_parser::ApllodbSqlParser;
+
+#[cfg(feature = "test-support")]
+#[allow(missing_docs)]
+pub mod test_support;
 
 #[cfg(test)]
 mod tests {

@@ -1,9 +1,6 @@
 mod generated_parser;
 mod helper;
 
-#[cfg(test)]
-mod tests;
-
 use crate::{
     apllodb_ast::{
         types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
@@ -13,7 +10,6 @@ use crate::{
         SelectCommand, SelectField, TableConstraint, TableElement, TableName, UpdateCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
-    parser_interface::ParserLike,
     ApllodbAst,
 };
 use generated_parser::{GeneratedParser, Rule};
@@ -21,17 +17,14 @@ use helper::{parse_child, parse_child_seq, self_as_str, try_parse_child, FnParse
 use pest::{iterators::Pairs, Parser};
 use std::convert::identity;
 
-#[derive(Clone, Hash, Debug)]
+#[derive(Clone, Hash, Debug, Default)]
 pub(crate) struct PestParserImpl;
 
 impl PestParserImpl {
-    pub(crate) fn new() -> Self {
-        Self
-    }
-}
-
-impl ParserLike for PestParserImpl {
-    fn parse<S: Into<String>>(&self, apllodb_sql: S) -> ApllodbSqlParserResult<ApllodbAst> {
+    pub(crate) fn parse<S: Into<String>>(
+        &self,
+        apllodb_sql: S,
+    ) -> ApllodbSqlParserResult<ApllodbAst> {
         let apllodb_sql = apllodb_sql.into();
 
         let pairs: Pairs<Rule> =

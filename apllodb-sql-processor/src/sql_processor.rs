@@ -26,7 +26,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
     /// - [InvalidDatabaseDefinition](apllodb-shared-components::ApllodbErrorKind::InvalidDatabaseDefinition) when:
     ///   - requesting an operation that uses an open database with [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
     pub async fn run(&self, session: Session, sql: &str) -> ApllodbResult<SQLProcessorSuccess> {
-        let parser = ApllodbSqlParser::new();
+        let parser = ApllodbSqlParser::default();
 
         match parser.parse(sql) {
             Err(e) => Err(ApllodbError::new(

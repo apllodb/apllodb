@@ -26,7 +26,7 @@ fn test_none_source() {
     use apllodb_sql_parser::ApllodbSqlParser;
     use std::error::Error;
 
-    let parser = ApllodbSqlParser::new();
+    let parser = ApllodbSqlParser::default();
     match parser.parse("DROP TABLE FROM people") {
         Err(e) => {
             assert!(e.source().is_none(), "No root cause. Just a syntax error.");

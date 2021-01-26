@@ -1,29 +1,28 @@
-use super::super::PestParserImpl;
-use crate::apllodb_ast::{Command, DropTableCommand, Identifier, TableName};
-use crate::parser_interface::ParserLike;
-use crate::ApllodbAst;
+use apllodb_sql_parser::{
+    apllodb_ast::{Command, DropTableCommand},
+    ApllodbAst, ApllodbSqlParser,
+};
 
-macro_rules! drop_table {
-    ($table_name: expr $(,)?) => {
-        DropTableCommand {
-            table_name: TableName(Identifier($table_name.to_string())),
-        }
-    };
+use apllodb_test_support::setup::setup_test_logger;
+
+#[ctor::ctor]
+fn test_setup() {
+    setup_test_logger();
 }
 
 #[test]
 fn test_drop_table_accepted() {
     let sql_vs_expected_ast: Vec<(&str, DropTableCommand)> = vec![
-        ("DROP TABLE t", drop_table!("t")),
-        ("DROP TABLE t;", drop_table!("t")),
-        ("  DROP\tTABLE\nt ", drop_table!("t")),
-        ("DROP TABLE 机", drop_table!("机")),
-        ("DROP TABLE 🍙", drop_table!("🍙")),
+        ("DROP TABLE t", DropTableCommand::factory("t")),
+        ("DROP TABLE t;", DropTableCommand::factory("t")),
+        ("  DROP\tTABLE\nt ", DropTableCommand::factory("t")),
+        ("DROP TABLE 机", DropTableCommand::factory("机")),
+        ("DROP TABLE 🍙", DropTableCommand::factory("🍙")),
         // Keyword is case-sensitive.
-        ("DROP TABLE drop", drop_table!("drop")),
+        ("DROP TABLE drop", DropTableCommand::factory("drop")),
     ];
 
-    let parser = PestParserImpl::new();
+    let parser = ApllodbSqlParser::default();
 
     for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
@@ -56,7 +55,7 @@ fn test_drop_table_rejected() {
         "DROP TABLE CREATE",
     ];
 
-    let parser = PestParserImpl::new();
+    let parser = ApllodbSqlParser::default();
 
     for sql in sqls {
         assert!(parser.parse(sql).is_err());

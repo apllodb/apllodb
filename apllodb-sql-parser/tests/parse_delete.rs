@@ -1,28 +1,25 @@
-use super::super::PestParserImpl;
-use crate::apllodb_ast::{Alias, Command, DeleteCommand, Identifier, TableName};
-use crate::parser_interface::ParserLike;
-use crate::ApllodbAst;
+use apllodb_sql_parser::{
+    apllodb_ast::{Command, DeleteCommand},
+    ApllodbAst, ApllodbSqlParser,
+};
 
-macro_rules! delete {
-    ($table_name: expr, $alias: expr $(,)?) => {
-        DeleteCommand {
-            table_name: TableName(Identifier($table_name.to_string())),
-            alias: $alias.map(|a: &str| Alias(Identifier(a.to_string()))),
-            where_condition: None,
-        }
-    };
+use apllodb_test_support::setup::setup_test_logger;
+
+#[ctor::ctor]
+fn test_setup() {
+    setup_test_logger();
 }
 
 #[test]
 fn test_delete_accepted() {
     let sql_vs_expected_ast: Vec<(&str, DeleteCommand)> =
-        vec![("DELETE FROM t", delete!("t", None))];
+        vec![("DELETE FROM t", DeleteCommand::factory("t", None, None))];
     vec![(
         "DELETE FROM long_table_name AS t",
-        delete!("long_table_name", Some("t")),
+        DeleteCommand::factory("long_table_name", Some("t"), None),
     )];
 
-    let parser = PestParserImpl::new();
+    let parser = ApllodbSqlParser::default();
 
     for (sql, expected_ast) in sql_vs_expected_ast {
         match parser.parse(sql) {
@@ -39,13 +36,13 @@ fn test_delete_accepted() {
 }
 
 #[test]
-fn test_insert_rejected() {
+fn test_delete_rejected() {
     let sqls: Vec<&str> = vec![
         // Lack FROM.
         "DELETE t",
     ];
 
-    let parser = PestParserImpl::new();
+    let parser = ApllodbSqlParser::default();
 
     for sql in sqls {
         assert!(parser.parse(sql).is_err());
