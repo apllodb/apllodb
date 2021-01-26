@@ -29,7 +29,7 @@ fn test_delete_accepted() {
 }
 
 #[test]
-fn test_insert_rejected() {
+fn test_delete_rejected() {
     let sqls: Vec<&str> = vec![
         // Lack FROM.
         "DELETE t",
