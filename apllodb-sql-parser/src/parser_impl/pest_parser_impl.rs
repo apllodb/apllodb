@@ -5,9 +5,10 @@ use crate::{
     apllodb_ast::{
         types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
         ColumnDefinition, ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
-        CreateTableCommand, DataType, DeleteCommand, DropColumn, DropTableCommand, Expression,
-        FromItem, Identifier, InsertCommand, IntegerConstant, IntegerType, NumericConstant,
-        SelectCommand, SelectField, TableConstraint, TableElement, TableName, UpdateCommand,
+        CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand,
+        DropColumn, DropTableCommand, Expression, FromItem, Identifier, InsertCommand,
+        IntegerConstant, IntegerType, NumericConstant, SelectCommand, SelectField, TableConstraint,
+        TableElement, TableName, UpdateCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -202,10 +203,16 @@ impl PestParserImpl {
     fn parse_command(mut params: FnParseParams) -> ApllodbSqlParserResult<Command> {
         try_parse_child(
             &mut params,
+            Rule::create_database_command,
+            Self::parse_create_database_command,
+            Command::CreateDatabaseCommandVariant,
+        )?
+        .or(try_parse_child(
+            &mut params,
             Rule::alter_table_command,
             Self::parse_alter_table_command,
             Command::AlterTableCommandVariant,
-        )?
+        )?)
         .or(try_parse_child(
             &mut params,
             Rule::create_table_command,
@@ -312,6 +319,24 @@ impl PestParserImpl {
                 column_name: inner_ast,
             },
         )
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * CREATE DATABASE
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_create_database_command(
+        mut params: FnParseParams,
+    ) -> ApllodbSqlParserResult<CreateDatabaseCommand> {
+        let database_name = parse_child(
+            &mut params,
+            Rule::database_name,
+            Self::parse_database_name,
+            identity,
+        )?;
+        Ok(CreateDatabaseCommand { database_name })
     }
 
     /*
@@ -531,6 +556,15 @@ impl PestParserImpl {
      * Names
      * ----------------------------------------------------------------------------
      */
+
+    fn parse_database_name(mut params: FnParseParams) -> ApllodbSqlParserResult<DatabaseName> {
+        parse_child(
+            &mut params,
+            Rule::identifier,
+            Self::parse_identifier,
+            DatabaseName,
+        )
+    }
 
     fn parse_table_name(mut params: FnParseParams) -> ApllodbSqlParserResult<TableName> {
         parse_child(
