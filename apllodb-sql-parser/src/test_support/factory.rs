@@ -1,8 +1,9 @@
 use crate::apllodb_ast::{
     Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName,
     ColumnReference, Condition, Constant, Correlation, CreateTableCommand, DataType, DeleteCommand,
-    DropColumn, DropTableCommand, Expression, Identifier, InsertCommand, IntegerConstant,
-    IntegerType, NonEmptyVec, NumericConstant, TableConstraint, TableElement, TableName,
+    DropColumn, DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
+    IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, SelectCommand,
+    SelectField, TableConstraint, TableElement, TableName,
 };
 
 impl AlterTableCommand {
@@ -31,6 +32,44 @@ impl CreateTableCommand {
         Self {
             table_name: TableName::factory(table_name),
             table_elements: NonEmptyVec::new(table_elements),
+        }
+    }
+}
+
+impl SelectCommand {
+    pub fn factory(
+        select_fields: Vec<SelectField>,
+        from_items: Vec<FromItem>,
+        where_condition: Option<Condition>,
+        grouping_elements: Option<Vec<GroupingElement>>,
+        having_conditions: Option<Vec<Condition>>,
+        order_bys: Option<Vec<OrderBy>>,
+    ) -> Self {
+        Self {
+            select_fields: NonEmptyVec::new(select_fields),
+            from_items: NonEmptyVec::new(from_items),
+            where_condition,
+            grouping_elements: grouping_elements.map(NonEmptyVec::new),
+            having_conditions: having_conditions.map(NonEmptyVec::new),
+            order_bys: order_bys.map(NonEmptyVec::new),
+        }
+    }
+}
+
+impl SelectField {
+    pub fn factory(expression: Expression, alias: Option<&str>) -> Self {
+        Self {
+            expression,
+            alias: alias.map(Alias::factory),
+        }
+    }
+}
+
+impl FromItem {
+    pub fn factory(table_name: &str, alias: Option<&str>) -> Self {
+        Self {
+            table_name: TableName::factory(table_name),
+            alias: alias.map(Alias::factory),
         }
     }
 }
