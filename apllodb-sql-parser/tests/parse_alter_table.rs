@@ -5,6 +5,13 @@ use apllodb_sql_parser::{
     ApllodbAst, ApllodbSqlParser,
 };
 
+use apllodb_test_support::setup::setup_test_logger;
+
+#[ctor::ctor]
+fn test_setup() {
+    setup_test_logger();
+}
+
 #[test]
 fn test_alter_table_accepted() {
     let sql_vs_expected_ast: Vec<(&str, AlterTableCommand)> = vec![
