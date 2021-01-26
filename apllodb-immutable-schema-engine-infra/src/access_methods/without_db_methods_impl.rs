@@ -20,7 +20,11 @@ impl WithoutDbMethodsImpl {
 
 impl WithoutDbMethods for WithoutDbMethodsImpl {
     fn create_database(self, session: Session, database: DatabaseName) -> FutRes<Session> {
-        todo!()
+        async move {
+            SqliteDatabase::create_database(database).await?;
+            Ok(session)
+        }
+        .boxed_local()
     }
 
     fn use_database(
