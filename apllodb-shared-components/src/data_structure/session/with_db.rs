@@ -30,4 +30,9 @@ impl SessionWithDb {
     pub fn get_id(&self) -> &SessionId {
         &self.id
     }
+
+    /// Get database name
+    pub fn database_name(&self) -> &DatabaseName {
+        &self.db
+    }
 }

@@ -72,6 +72,7 @@ async fn main() -> ApllodbResult<()> {
                         // TODO print "? rows affected"
                         server.commit_transaction(session).await?;
                     }
+                    ApllodbSuccess::DatabaseResponse { session } => {}
                 };
             }
             Err(ReadlineError::Interrupted) => {
