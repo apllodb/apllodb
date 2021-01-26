@@ -160,6 +160,7 @@ dependencies = [
 name = "apllodb-sql-parser"
 version = "0.1.0"
 dependencies = [
+ "apllodb-sql-parser",
  "apllodb-test-support",
  "ctor",
  "pest",
