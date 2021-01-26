@@ -10,7 +10,6 @@ use crate::{
         SelectCommand, SelectField, TableConstraint, TableElement, TableName, UpdateCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
-    parser_interface::ParserLike,
     ApllodbAst,
 };
 use generated_parser::{GeneratedParser, Rule};
@@ -27,8 +26,11 @@ impl PestParserImpl {
     }
 }
 
-impl ParserLike for PestParserImpl {
-    fn parse<S: Into<String>>(&self, apllodb_sql: S) -> ApllodbSqlParserResult<ApllodbAst> {
+impl PestParserImpl {
+    pub(crate) fn parse<S: Into<String>>(
+        &self,
+        apllodb_sql: S,
+    ) -> ApllodbSqlParserResult<ApllodbAst> {
         let apllodb_sql = apllodb_sql.into();
 
         let pairs: Pairs<Rule> =

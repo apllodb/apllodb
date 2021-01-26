@@ -87,7 +87,6 @@
 
 mod apllodb_sql_parser;
 mod parser_impl;
-mod parser_interface;
 
 pub use crate::apllodb_sql_parser::apllodb_ast;
 pub use crate::apllodb_sql_parser::error;

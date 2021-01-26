@@ -3,7 +3,7 @@ pub mod error;
 
 pub use apllodb_ast::ApllodbAst;
 
-use crate::{parser_impl::PestParserImpl, parser_interface::ParserLike};
+use crate::parser_impl::PestParserImpl;
 use error::ApllodbSqlParserResult;
 
 /// The parser from apllodb-SQL into apllodb-AST.
