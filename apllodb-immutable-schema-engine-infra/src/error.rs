@@ -47,11 +47,16 @@ impl From<sqlx::Error> for InfraError {
 
         match &e {
             sqlx::Error::Database(db_err) => {
-                // SQLite's error codes: <https://www.sqlite.org/rescode.html#extended_result_code_list>
+                // SQLite's error codes: <https://www.sqlite.org/rescode.html#primary_result_code_list>
                 match db_err.code().unwrap_or_default().to_string().as_str() {
                     "5" => Self(ApllodbError::new(
                         ApllodbErrorKind::DeadlockDetected,
                         "deadlock detected",
+                        Some(Box::new(e)),
+                    )),
+                    "14" => Self(ApllodbError::new(
+                        ApllodbErrorKind::UndefinedObject,
+                        "failed to open database file",
                         Some(Box::new(e)),
                     )),
                     "1555" => Self(ApllodbError::new(
