@@ -96,7 +96,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                             .without_db()
                             .create_database(session, database_name)
                             .await?;
-                        Ok(SQLProcessorSuccess::DatabaseRes { session })
+                        Ok(SQLProcessorSuccess::CreateDatabaseRes { session })
                     }
 
                     apllodb_ast::Command::AlterTableCommandVariant(_)

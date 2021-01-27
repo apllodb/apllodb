@@ -24,8 +24,8 @@ pub enum SQLProcessorSuccess {
         session: SessionWithTx,
     },
 
-    /// Response from database command.
-    DatabaseRes {
+    /// Response from CREATE DATABASE command.
+    CreateDatabaseRes {
         /// Same session with input session
         session: Session,
     },

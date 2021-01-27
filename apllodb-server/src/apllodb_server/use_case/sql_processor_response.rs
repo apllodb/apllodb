@@ -13,8 +13,8 @@ pub(in crate::apllodb_server::use_case) fn to_server_resp(
             ApllodbSuccess::ModificationResponse { session }
         }
         SQLProcessorSuccess::DDLRes { session } => ApllodbSuccess::DDLResponse { session },
-        SQLProcessorSuccess::DatabaseRes { session } => {
-            ApllodbSuccess::DatabaseResponse { session }
+        SQLProcessorSuccess::CreateDatabaseRes { session } => {
+            ApllodbSuccess::CreateDatabaseResponse { session }
         }
     }
 }

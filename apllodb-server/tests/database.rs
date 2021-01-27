@@ -12,7 +12,7 @@ async fn test_create_database() -> ApllodbResult<()> {
 
     let sql = "CREATE DATABASE test_create_database";
 
-    if let ApllodbSuccess::DatabaseResponse { session } = server
+    if let ApllodbSuccess::CreateDatabaseResponse { session } = server
         .command(
             Session::WithoutDb(SessionWithoutDb::default()),
             sql.to_string(),

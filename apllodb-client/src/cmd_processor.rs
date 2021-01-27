@@ -35,7 +35,7 @@ impl<'main> CmdProcessor<'main> {
                 // server.commit_transaction(session).await?;
                 Ok(Session::WithTx(session))
             }
-            ApllodbSuccess::DatabaseResponse { session } => Ok(session),
+            ApllodbSuccess::CreateDatabaseResponse { session } => Ok(session),
         }
     }
 }

@@ -14,7 +14,7 @@ pub enum ApllodbSuccess {
     DDLResponse {
         session: SessionWithTx,
     },
-    DatabaseResponse {
+    CreateDatabaseResponse {
         session: Session,
     },
 }
