@@ -3,26 +3,12 @@
 //! apllodb's client bin crate.
 
 use apllodb_server::{ApllodbServer, ApllodbSuccess};
-use apllodb_shared_components::{ApllodbResult, DatabaseName, Session};
-use clap::{App, Arg};
+use apllodb_shared_components::{ApllodbResult, Session, SessionWithoutDb};
 use rustyline::{error::ReadlineError, Editor};
 
 #[async_std::main]
 async fn main() -> ApllodbResult<()> {
     env_logger::init();
-
-    let flags = App::new("apllodb-client")
-        .arg(
-            Arg::with_name("db")
-                .long("db")
-                .value_name("STRING")
-                .help("Database name to use.")
-                .required(true)
-                .takes_value(true),
-        )
-        .get_matches();
-
-    let db = DatabaseName::new(flags.value_of("db").unwrap()).unwrap();
 
     let server = ApllodbServer::default();
 
@@ -35,22 +21,18 @@ async fn main() -> ApllodbResult<()> {
     let mut rl = Editor::<()>::new(); // TODO SQL completion
     let _ = rl.load_history(&history_path);
 
-    loop {
-        match rl.readline("SQL> ") {
-            Ok(sql) => {
-                let session = server.begin_transaction(db.clone()).await?;
-                let session = Session::WithTx(session);
+    let session = Session::WithoutDb(SessionWithoutDb::default());
 
+    loop {
+        let session: Session = match rl.readline("SQL> ") {
+            Ok(sql) => {
                 let success = server.command(session, sql.clone()).await?;
 
                 rl.add_history_entry(sql.as_str());
                 rl.save_history(&history_path).unwrap();
 
                 match success {
-                    ApllodbSuccess::QueryResponse {
-                        session: _,
-                        records,
-                    } => {
+                    ApllodbSuccess::QueryResponse { session, records } => {
                         let mut cnt = 0;
 
                         for r in records {
@@ -65,15 +47,19 @@ async fn main() -> ApllodbResult<()> {
                         }
 
                         println!("\n{} records in total\n", cnt);
+
+                        Session::WithTx(session)
                     }
                     ApllodbSuccess::ModificationResponse { session }
                     | ApllodbSuccess::DDLResponse { session } => {
-                        log::warn!("automatically commits transaction for demo");
-                        // TODO print "? rows affected"
-                        server.commit_transaction(session).await?;
+                        // log::warn!("automatically commits transaction for demo");
+                        // // TODO print "? rows affected"
+                        // server.commit_transaction(session).await?;
+                        Session::WithTx(session)
                     }
-                    ApllodbSuccess::DatabaseResponse { session } => {}
-                };
+
+                    ApllodbSuccess::DatabaseResponse { session } => session,
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 continue;
@@ -85,7 +71,7 @@ async fn main() -> ApllodbResult<()> {
                 println!("Error: {:?}", err);
                 break;
             }
-        }
+        };
     }
 
     Ok(())
