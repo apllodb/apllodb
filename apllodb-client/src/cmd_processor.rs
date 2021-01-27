@@ -29,7 +29,8 @@ impl<'main> CmdProcessor<'main> {
                 Ok(Session::WithTx(session))
             }
             ApllodbSuccess::ModificationResponse { session }
-            | ApllodbSuccess::DDLResponse { session } => Ok(Session::WithTx(session)),
+            | ApllodbSuccess::DDLResponse { session }
+            | ApllodbSuccess::BeginTransactionResponse { session } => Ok(Session::WithTx(session)),
             ApllodbSuccess::CreateDatabaseResponse { session } => Ok(session),
             ApllodbSuccess::UseDatabaseResponse { session } => Ok(Session::WithDb(session)),
         }

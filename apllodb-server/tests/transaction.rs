@@ -1,5 +1,5 @@
 use apllodb_server::{test_support::test_setup, ApllodbServer, ApllodbSuccess};
-use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, Session, SessionWithoutDb};
+use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, Session};
 
 #[ctor::ctor]
 fn setup() {
@@ -17,7 +17,10 @@ async fn test_begin() -> ApllodbResult<()> {
         .command(Session::WithDb(session), sql.to_string())
         .await?
     {
-        let err = server.command(session, sql.to_string()).await.unwrap_err();
+        let err = server
+            .command(Session::WithTx(session), sql.to_string())
+            .await
+            .unwrap_err();
         assert_eq!(err.kind(), &ApllodbErrorKind::InvalidTransactionState);
     } else {
         panic!("must be BeginTransactionResponse")
