@@ -1,3 +1,4 @@
+use apllodb_sql_parser::ApllodbSqlParser;
 use apllodb_test_support::setup::setup_test_logger;
 use ctor::ctor;
 
@@ -30,4 +31,14 @@ fn test_api_guidelines_c_send_sync() {
 
     fn assert_sync<T: Sync>() {}
     assert_sync::<ApllodbAst>();
+}
+
+#[test]
+fn test_case_insensitivity() {
+    let sqls = vec!["SELECT id FROM t", "select id from t"];
+
+    for sql in sqls {
+        let parser = ApllodbSqlParser::default();
+        parser.parse(sql).expect("should be parsed correctly");
+    }
 }
