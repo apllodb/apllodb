@@ -43,6 +43,7 @@ dependencies = [
  "apllodb-shared-components",
  "async-std",
  "clap",
+ "derive-new",
  "dirs",
  "env_logger",
  "log",
