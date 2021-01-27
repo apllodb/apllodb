@@ -45,3 +45,20 @@ async fn test_commit() -> ApllodbResult<()> {
 
     Ok(())
 }
+
+#[async_std::test]
+async fn test_abort() -> ApllodbResult<()> {
+    let server = ApllodbServer::default();
+    let session = server.session_with_tx().await?;
+
+    let sql = "ABORT";
+
+    matches!(
+        server
+            .command(Session::WithTx(session), sql.to_string())
+            .await?,
+        ApllodbSuccess::TransactionEndResponse {..}
+    );
+
+    Ok(())
+}
