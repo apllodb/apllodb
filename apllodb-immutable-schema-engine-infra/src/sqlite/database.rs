@@ -34,9 +34,14 @@ impl SqliteDatabase {
             ))
         } else {
             log::debug!("creates new database file: {}", path);
-            let conn = sqlx::sqlite::SqliteConnection::connect(&path)
+
+            let opt = sqlx::sqlite::SqliteConnectOptions::from_str(&path)
+                .map_err(InfraError::from)?
+                .create_if_missing(true);
+            let conn = sqlx::SqliteConnection::connect_with(&opt)
                 .await
                 .map_err(InfraError::from)?;
+
             conn.close().await.map_err(InfraError::from)?;
             Ok(())
         }
@@ -51,6 +56,7 @@ impl SqliteDatabase {
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
         let pool = Self::connect_existing_sqlite(&name).await?;
 
+        // TODO create に移動
         VTableDao::create_table_if_not_exist(&pool).await?;
 
         Ok(Self {
