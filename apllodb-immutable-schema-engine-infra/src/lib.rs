@@ -1,4 +1,9 @@
-//#![deny(warnings, missing_docs, missing_debug_implementations)]
+#![deny(warnings,
+    // missing_docs,
+    missing_debug_implementations
+)]
+// FIXME <https://github.com/darwin-education/apllodb/issues/90>
+#![allow(clippy::await_holding_refcell_ref)]
 
 //! Infrastructure layer of apllodb-immutable-schema-engine.
 
