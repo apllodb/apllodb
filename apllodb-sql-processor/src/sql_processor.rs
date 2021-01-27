@@ -7,7 +7,9 @@ use std::rc::Rc;
 
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Session};
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_storage_engine_interface::{StorageEngine, WithoutDbMethods};
+
+use crate::ast_translator::AstTranslator;
 
 use self::{
     ddl::DDLProcessor, modification::ModificationProcessor, query::QueryProcessor,
@@ -25,6 +27,8 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
     ///
     /// - [InvalidDatabaseDefinition](apllodb-shared-components::ApllodbErrorKind::InvalidDatabaseDefinition) when:
     ///   - requesting an operation that uses an open database with [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
+    /// - [FeatureNotSupported](apllodb-shared-components::ApllodbErrorKind::FeatureNotSupported) when:
+    ///   - the sql should be processed properly but apllodb currently doesn't
     pub async fn run(&self, session: Session, sql: &str) -> ApllodbResult<SQLProcessorSuccess> {
         let parser = ApllodbSqlParser::default();
 
@@ -58,8 +62,15 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                             records,
                         })
                     }
+                    apllodb_ast::Command::CreateDatabaseCommandVariant(_) => {
+                        Err(ApllodbError::new(
+                            ApllodbErrorKind::FeatureNotSupported,
+                            format!("cannot process the following SQL (database: none, transaction: open): {}",  sql),
+                            None,
+                        ))
+                    }
                 },
-                Session::WithDb(_) => match command {
+                Session::WithDb(sess) => match command {
                     apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
                     | apllodb_ast::Command::DropTableCommandVariant(_)
@@ -70,8 +81,24 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         // TODO auto-commit feature here?
                         todo!()
                     }
+                    apllodb_ast::Command::CreateDatabaseCommandVariant(_) => {
+                        Err(ApllodbError::new(
+                            ApllodbErrorKind::FeatureNotSupported,
+                            format!("cannot process the following SQL (database: {:?}, transaction: none): {}", sess.database_name(), sql),
+                            None,
+                        ))
+                    }
                 },
                 Session::WithoutDb(_) => match command {
+                    apllodb_ast::Command::CreateDatabaseCommandVariant(cmd) => {
+                        let database_name = AstTranslator::database_name(cmd.database_name)?;
+                        let session = self.engine
+                            .without_db()
+                            .create_database(session, database_name)
+                            .await?;
+                        Ok(SQLProcessorSuccess::DatabaseRes { session })
+                    }
+
                     apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
                     | apllodb_ast::Command::DropTableCommandVariant(_)

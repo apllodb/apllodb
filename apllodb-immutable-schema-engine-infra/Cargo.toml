@@ -50,3 +50,5 @@ ctor = "0.1"
 pretty_assertions = "0.6"
 rand = "0.8"
 version-sync = "0.9"
+
+glob = {version = "0.3"}

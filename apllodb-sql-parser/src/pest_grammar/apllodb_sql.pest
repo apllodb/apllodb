@@ -156,6 +156,7 @@ keyword = {
     // | "CYCLE"
     // | "C"
     // | "DATA"
+    | "DATABASE"
     // | "DATETIME_INTERVAL_CODE"
     // | "DATETIME_INTERVAL_PRECISION"
     // | "DATE"
@@ -855,16 +856,30 @@ integer_type = {
 // The entry point of apllodb-SQL.
 command = {
     SOI ~ (
-        alter_table_command
+        create_database_command
+
+        | alter_table_command
         | create_table_command
-        | delete_command
         | drop_table_command
-        | insert_command
+
         | select_command
+        | insert_command
         | update_command
+        | delete_command
     )
     ~ ";"?
     ~ EOI
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * CREATE DATABASE (not originally from PostgreSQL)
+ * ----------------------------------------------------------------------------
+ */
+
+create_database_command = {
+    "CREATE" ~ "DATABASE"
+    ~ database_name
 }
 
 /*
@@ -1008,6 +1023,10 @@ update_command = {
  * Names
  * ----------------------------------------------------------------------------
  */
+
+database_name = {
+    identifier
+}
 
 table_name = {
     identifier

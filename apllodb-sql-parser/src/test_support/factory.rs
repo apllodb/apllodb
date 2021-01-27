@@ -1,9 +1,10 @@
 use crate::apllodb_ast::{
     Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName,
-    ColumnReference, Condition, Constant, Correlation, CreateTableCommand, DataType, DeleteCommand,
-    DropColumn, DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
-    IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, SelectCommand,
-    SelectField, TableConstraint, TableElement, TableName, UpdateCommand,
+    ColumnReference, Condition, Constant, Correlation, CreateDatabaseCommand, CreateTableCommand,
+    DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
+    GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType, NonEmptyVec,
+    NumericConstant, OrderBy, SelectCommand, SelectField, TableConstraint, TableElement, TableName,
+    UpdateCommand,
 };
 
 impl AlterTableCommand {
@@ -24,6 +25,14 @@ impl Action {
         Self::DropColumnVariant(DropColumn {
             column_name: ColumnName::factory(column_name),
         })
+    }
+}
+
+impl CreateDatabaseCommand {
+    pub fn factory(database_name: &str) -> Self {
+        Self {
+            database_name: DatabaseName::factory(database_name),
+        }
     }
 }
 
@@ -179,9 +188,15 @@ impl Expression {
     }
 }
 
+impl DatabaseName {
+    pub fn factory(database_name: &str) -> Self {
+        Self(Identifier(database_name.to_string()))
+    }
+}
+
 impl TableName {
-    pub fn factory(column_name: &str) -> Self {
-        Self(Identifier(column_name.to_string()))
+    pub fn factory(table_name: &str) -> Self {
+        Self(Identifier(table_name.to_string()))
     }
 }
 

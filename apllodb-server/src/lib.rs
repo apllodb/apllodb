@@ -16,13 +16,15 @@ mod apllodb_server;
 
 pub use crate::apllodb_server::{response::ApllodbSuccess, ApllodbServer};
 
+#[cfg(any(test, feature = "test-support"))]
+pub mod test_support;
+
 #[cfg(test)]
 mod tests {
-    use apllodb_test_support::setup::setup_test_logger;
-    use ctor::ctor;
+    use crate::test_support::test_setup;
 
-    #[cfg_attr(test, ctor)]
-    fn test_setup() {
-        setup_test_logger();
+    #[ctor::ctor]
+    fn setup() {
+        test_setup();
     }
 }

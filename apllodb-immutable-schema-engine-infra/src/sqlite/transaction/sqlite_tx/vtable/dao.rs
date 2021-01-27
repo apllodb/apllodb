@@ -22,12 +22,12 @@ const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
 impl VTableDao {
-    pub(in crate::sqlite) async fn create_table_if_not_exist(
-        sqlite_pool: &sqlx::SqlitePool,
+    pub(in crate::sqlite) async fn create_table(
+        sqlite_conn: &mut sqlx::SqliteConnection,
     ) -> ApllodbResult<()> {
         let sql = format!(
             "
-CREATE TABLE IF NOT EXISTS {} (
+CREATE TABLE {} (
   {} TEXT PRIMARY KEY,
   {} TEXT NOT NULL
 )
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS {} (
         );
 
         sqlx::query(&sql)
-            .execute(sqlite_pool)
+            .execute(sqlite_conn)
             .await
             .map_err(InfraError::from)?;
 

@@ -126,13 +126,16 @@ pub enum IntegerType {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Command {
+    CreateDatabaseCommandVariant(CreateDatabaseCommand),
+
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
-    DeleteCommandVariant(DeleteCommand),
     DropTableCommandVariant(DropTableCommand),
-    InsertCommandVariant(InsertCommand),
+
     SelectCommandVariant(SelectCommand),
+    InsertCommandVariant(InsertCommand),
     UpdateCommandVariant(UpdateCommand),
+    DeleteCommandVariant(DeleteCommand),
 }
 
 /*
@@ -165,6 +168,18 @@ pub struct AddColumn {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DropColumn {
     pub column_name: ColumnName,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * CREATE DATABASE
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct CreateDatabaseCommand {
+    pub database_name: DatabaseName,
 }
 
 /*
@@ -299,6 +314,10 @@ pub struct UpdateCommand {
  * Names
  * ----------------------------------------------------------------------------
  */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct DatabaseName(pub Identifier);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

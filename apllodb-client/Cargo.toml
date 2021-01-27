@@ -10,6 +10,8 @@ version = "0.1.0"
 apllodb-server = {path = "../apllodb-server"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 
+derive-new = "0.5"
+
 env_logger = "0.8"
 log = "0.4"
 
