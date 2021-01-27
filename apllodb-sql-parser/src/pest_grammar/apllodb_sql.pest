@@ -24,7 +24,7 @@
 //
 // TODO: Comment-in all. They are commented-out just to make build faster.
 keyword = { 
-    "ABSOLUTE"
+    ^"ABSOLUTE"
     // | "ABS"
     // | "ACOS"
     // | "ACTION"
