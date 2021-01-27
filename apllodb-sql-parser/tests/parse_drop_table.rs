@@ -18,8 +18,6 @@ fn test_drop_table_accepted() {
         ("  DROP\tTABLE\nt ", DropTableCommand::factory("t")),
         ("DROP TABLE 机", DropTableCommand::factory("机")),
         ("DROP TABLE 🍙", DropTableCommand::factory("🍙")),
-        // Keyword is case-sensitive.
-        ("DROP TABLE drop", DropTableCommand::factory("drop")),
     ];
 
     let parser = ApllodbSqlParser::default();
@@ -41,8 +39,6 @@ fn test_drop_table_accepted() {
 #[test]
 fn test_drop_table_rejected() {
     let sqls: Vec<&str> = vec![
-        // Keyword is case-sensitive.
-        "drop table t",
         // Does not accept trailing letter.
         "DROP TABLE t x",
         // Does not accept 2nd statement.

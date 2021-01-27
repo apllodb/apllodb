@@ -7,7 +7,10 @@ fn test_parse_keyword_accepted() -> PestResult<()> {
     let keywords = vec![
         // "A",
         // "ABS",
-        "ABSOLUTE", // "ACOS",
+        "ABSOLUTE", //
+        "absolute", // case-insensitive
+        "AbsOlUtE", // actually too much case-insensitive compared to <http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt>
+        // "ACOS",
         // "ACTION",
         // "ADA",
         "ADD",
