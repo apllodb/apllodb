@@ -60,7 +60,7 @@ keyword = {
     // | ^"BEFORE"
     // | ^"BEGIN_FRAME"
     // | ^"BEGIN_PARTITION"
-    // | ^"BEGIN"
+    | ^"BEGIN"
     // | ^"BERNOULLI"
     // | ^"BETWEEN"
     | ^"BIGINT"
@@ -607,7 +607,7 @@ keyword = {
     // | ^"TRANSACTIONS_COMMITTED"
     // | ^"TRANSACTIONS_ROLLED_BACK"
     // | ^"TRANSACTION_ACTIVE"
-    // | ^"TRANSACTION"
+    | ^"TRANSACTION"
     // | ^"TRANSFORMS"
     // | ^"TRANSFORM"
     // | ^"TRANSLATE_REGEX"
@@ -860,6 +860,8 @@ command = {
         create_database_command
         | use_database_command
 
+        | begin_transaction_command
+
         | alter_table_command
         | create_table_command
         | drop_table_command
@@ -893,6 +895,16 @@ create_database_command = {
 use_database_command = {
     ^"USE" ~ ^"DATABASE"
     ~ database_name
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * BEGIN (https://www.postgresql.org/docs/current/sql-begin.html)
+ * ----------------------------------------------------------------------------
+ */
+
+begin_transaction_command = {
+    ^"BEGIN" ~ ^"TRANSACTION"?
 }
 
 /*

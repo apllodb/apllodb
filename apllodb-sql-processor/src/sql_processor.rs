@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Session};
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
-use apllodb_storage_engine_interface::{StorageEngine, WithoutDbMethods};
+use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithoutDbMethods};
 
 use crate::ast_translator::AstTranslator;
 
@@ -65,12 +65,24 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
                         Err(ApllodbError::new(
                             ApllodbErrorKind::FeatureNotSupported,
-                            format!("cannot process the following SQL (database: none, transaction: open): {}",  sql),
+                            format!("cannot process the following SQL (database: {:?}, transaction: open): {}", sess.get_db_name(), sql),
+                            None,
+                        ))
+                    }
+                    apllodb_ast::Command::BeginTransactionCommandVariant => {
+                        Err(ApllodbError::new(
+                            ApllodbErrorKind::InvalidTransactionState,
+                            format!("transaction is already open (database: {:?}, transaction: open): {}",  sess.get_db_name(), sql),
                             None,
                         ))
                     }
                 },
                 Session::WithDb(sess) => match command {
+                    apllodb_ast::Command::BeginTransactionCommandVariant => {
+                        let session = self.engine.with_db().begin_transaction(sess).await?;
+                        Ok(SQLProcessorSuccess::BeginTransactionRes {session})
+                    }
+
                     apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
                     | apllodb_ast::Command::DropTableCommandVariant(_)
@@ -107,7 +119,8 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         Ok(SQLProcessorSuccess::UseDatabaseRes { session })
                     }
 
-                    apllodb_ast::Command::AlterTableCommandVariant(_)
+                    apllodb_ast::Command::BeginTransactionCommandVariant
+                    | apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
                     | apllodb_ast::Command::DropTableCommandVariant(_)
                     | apllodb_ast::Command::DeleteCommandVariant(_)

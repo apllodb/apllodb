@@ -2,7 +2,7 @@ pub(crate) mod response;
 mod use_case;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::{ApllodbResult, DatabaseName, Session, SessionWithTx};
+use apllodb_shared_components::{ApllodbResult, Session, SessionWithTx};
 
 use std::rc::Rc;
 use use_case::UseCase;
@@ -11,27 +11,41 @@ use crate::ApllodbSuccess;
 
 #[derive(Clone, Debug)]
 pub struct ApllodbServer {
-    use_case: Rc<UseCase<ApllodbImmutableSchemaEngine>>,
+    engine: Rc<ApllodbImmutableSchemaEngine>,
 }
 
 impl Default for ApllodbServer {
     fn default() -> Self {
         let engine = Rc::new(ApllodbImmutableSchemaEngine::default());
-        let use_case = Rc::new(UseCase::new(engine));
-        Self { use_case }
+        Self { engine }
     }
 }
 
 impl ApllodbServer {
-    pub async fn begin_transaction(&self, database: DatabaseName) -> ApllodbResult<SessionWithTx> {
-        self.use_case.begin_transaction(database).await
-    }
-
     pub async fn commit_transaction(&self, session: SessionWithTx) -> ApllodbResult<()> {
-        self.use_case.commit_transaction(session).await
+        self.use_case().commit_transaction(session).await
     }
 
     pub async fn command(&self, session: Session, sql: String) -> ApllodbResult<ApllodbSuccess> {
-        self.use_case.command(session, &sql).await
+        self.use_case().command(session, &sql).await
+    }
+
+    fn use_case(&self) -> UseCase<ApllodbImmutableSchemaEngine> {
+        UseCase::new(self.engine.clone())
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
+use apllodb_shared_components::SessionWithDb;
+#[cfg(any(test, feature = "test-support"))]
+impl ApllodbServer {
+    /// shortcut to CREATE / USE database
+    pub async fn session_with_db(&self) -> ApllodbResult<SessionWithDb> {
+        apllodb_storage_engine_interface::test_support::session_with_db(self.engine.as_ref()).await
+    }
+
+    /// shortcut to CREATE / USE database and BEGIN transaction
+    pub async fn session_with_tx(&self) -> ApllodbResult<SessionWithTx> {
+        apllodb_storage_engine_interface::test_support::session_with_tx(self.engine.as_ref()).await
     }
 }

@@ -20,4 +20,7 @@ pub enum ApllodbSuccess {
     UseDatabaseResponse {
         session: SessionWithDb,
     },
+    BeginTransactionResponse {
+        session: SessionWithTx,
+    },
 }

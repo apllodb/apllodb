@@ -215,6 +215,12 @@ impl PestParserImpl {
         )?)
         .or(try_parse_child(
             &mut params,
+            Rule::begin_transaction_command,
+            |_| Ok(()),
+            |()| Command::BeginTransactionCommandVariant,
+        )?)
+        .or(try_parse_child(
+            &mut params,
             Rule::alter_table_command,
             Self::parse_alter_table_command,
             Command::AlterTableCommandVariant,
@@ -347,7 +353,7 @@ impl PestParserImpl {
 
     /*
      * ----------------------------------------------------------------------------
-     * Use DATABASE
+     * USE DATABASE
      * ----------------------------------------------------------------------------
      */
 
