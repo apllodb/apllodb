@@ -46,6 +46,10 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         let session = self.engine.with_tx().commit_transaction(sess).await?;
                         Ok(SQLProcessorSuccess::TransactionEndRes {session})
                     }
+                    apllodb_ast::Command::AbortTransactionCommandVariant => {
+                        let session = self.engine.with_tx().abort_transaction(sess).await?;
+                        Ok(SQLProcessorSuccess::TransactionEndRes {session})
+                    }
 
                     apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
@@ -108,7 +112,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         ))
                     }
 
-                    apllodb_ast::Command::CommitTransactionCommandVariant => {
+                    apllodb_ast::Command::CommitTransactionCommandVariant |apllodb_ast::Command::AbortTransactionCommandVariant => {
                         Err(ApllodbError::new(
                             ApllodbErrorKind::InvalidTransactionState,
                             format!("transaction is not open (database: {:?}, transaction: none): {}", sess.database_name(), sql),
@@ -135,6 +139,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     }
 
                     apllodb_ast::Command::BeginTransactionCommandVariant
+                    |apllodb_ast::Command::AbortTransactionCommandVariant
                     | apllodb_ast::Command::CommitTransactionCommandVariant
                     | apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
