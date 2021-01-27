@@ -2,9 +2,9 @@ mod sql_processor_response;
 
 use std::rc::Rc;
 
-use apllodb_shared_components::{ApllodbResult, Session, SessionWithTx};
+use apllodb_shared_components::{ApllodbResult, Session};
 use apllodb_sql_processor::SQLProcessor;
-use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::ApllodbSuccess;
 
@@ -16,14 +16,6 @@ pub(in crate::apllodb_server) struct UseCase<Engine: StorageEngine> {
 }
 
 impl<Engine: StorageEngine> UseCase<Engine> {
-    pub(in crate::apllodb_server) async fn commit_transaction(
-        &self,
-        session: SessionWithTx,
-    ) -> ApllodbResult<()> {
-        self.engine.with_tx().commit_transaction(session).await?;
-        Ok(())
-    }
-
     pub(in crate::apllodb_server) async fn command(
         &self,
         session: Session,

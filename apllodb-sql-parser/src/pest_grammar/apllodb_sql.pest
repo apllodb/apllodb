@@ -111,7 +111,7 @@ keyword = {
     // | ^"COMMAND_FUNCTION_CODE"
     // | ^"COMMAND_FUNCTION"
     // | ^"COMMITTED"
-    // | ^"COMMIT"
+    | ^"COMMIT"
     // | ^"CONDITIONAL"
     // | ^"CONDITION_NUMBER"
     // | ^"CONDITION"
@@ -861,6 +861,7 @@ command = {
         | use_database_command
 
         | begin_transaction_command
+        | commit_transaction_command
 
         | alter_table_command
         | create_table_command
@@ -905,6 +906,16 @@ use_database_command = {
 
 begin_transaction_command = {
     ^"BEGIN" ~ ^"TRANSACTION"?
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * COMMIT (https://www.postgresql.org/docs/12/sql-commit.html)
+ * ----------------------------------------------------------------------------
+ */
+
+commit_transaction_command = {
+    ^"COMMIT" ~ ^"TRANSACTION"?
 }
 
 /*

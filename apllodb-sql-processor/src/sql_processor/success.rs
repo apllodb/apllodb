@@ -38,7 +38,13 @@ pub enum SQLProcessorSuccess {
 
     /// Response from BEGIN command.
     BeginTransactionRes {
-        /// session with open tranaction
+        /// session with open transaction
         session: SessionWithTx,
+    },
+
+    /// Response from COMMIT/ABORT command
+    TransactionEndRes {
+        /// session with closed transaction
+        session: SessionWithDb,
     },
 }

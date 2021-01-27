@@ -7,7 +7,9 @@ use std::rc::Rc;
 
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Session};
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
-use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{
+    StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
+};
 
 use crate::ast_translator::AstTranslator;
 
@@ -40,6 +42,11 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
             )),
             Ok(ApllodbAst(command)) => match session {
                 Session::WithTx(sess) => match command {
+                    apllodb_ast::Command::CommitTransactionCommandVariant => {
+                        let session = self.engine.with_tx().commit_transaction(sess).await?;
+                        Ok(SQLProcessorSuccess::TransactionEndRes {session})
+                    }
+
                     apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
                     | apllodb_ast::Command::DropTableCommandVariant(_) => {
@@ -100,6 +107,14 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                             None,
                         ))
                     }
+
+                    apllodb_ast::Command::CommitTransactionCommandVariant => {
+                        Err(ApllodbError::new(
+                            ApllodbErrorKind::InvalidTransactionState,
+                            format!("transaction is not open (database: {:?}, transaction: none): {}", sess.database_name(), sql),
+                            None,
+                        ))
+                    }
                 },
                 Session::WithoutDb(sess) => match command {
                     apllodb_ast::Command::CreateDatabaseCommandVariant(cmd) => {
@@ -120,6 +135,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     }
 
                     apllodb_ast::Command::BeginTransactionCommandVariant
+                    | apllodb_ast::Command::CommitTransactionCommandVariant
                     | apllodb_ast::Command::AlterTableCommandVariant(_)
                     | apllodb_ast::Command::CreateTableCommandVariant(_)
                     | apllodb_ast::Command::DropTableCommandVariant(_)

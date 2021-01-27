@@ -15,8 +15,8 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithTx,
-    TableConstraints, TableName,
+    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithDb,
+    SessionWithTx, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
@@ -42,28 +42,22 @@ impl WithTxMethods for WithTxMethodsImpl {
     // ========================================================================
     // Transaction
     // ========================================================================
-    fn commit_transaction(self, session: SessionWithTx) -> FutRes<()> {
+    fn commit_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
         async move {
-            let mut db_pool = self.db_pool.borrow_mut();
-            let _ = db_pool.remove_db(session.get_id())?;
-
             let mut tx_pool = self.tx_pool.borrow_mut();
             let tx = tx_pool.remove_tx(session.get_id())?;
             tx.borrow_mut().commit().await?;
-            Ok(())
+            Ok(session.downgrade())
         }
         .boxed_local()
     }
 
-    fn abort_transaction(self, session: SessionWithTx) -> FutRes<()> {
+    fn abort_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
         async move {
-            let mut db_pool = self.db_pool.borrow_mut();
-            let _ = db_pool.remove_db(session.get_id())?;
-
             let mut tx_pool = self.tx_pool.borrow_mut();
             let tx = tx_pool.remove_tx(session.get_id())?;
             tx.borrow_mut().abort().await?;
-            Ok(())
+            Ok(session.downgrade())
         }
         .boxed_local()
     }

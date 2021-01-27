@@ -22,5 +22,8 @@ pub(in crate::apllodb_server::use_case) fn to_server_resp(
         SQLProcessorSuccess::BeginTransactionRes { session } => {
             ApllodbSuccess::BeginTransactionResponse { session }
         }
+        SQLProcessorSuccess::TransactionEndRes { session } => {
+            ApllodbSuccess::TransactionEndResponse { session }
+        }
     }
 }
