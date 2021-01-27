@@ -1,6 +1,4 @@
-use apllodb_shared_components::{
-    RecordIterator, Session, SessionWithDb, SessionWithTx, SessionWithoutDb,
-};
+use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
 use serde::{Deserialize, Serialize};
 
 /// Successful response from apllodb-server
@@ -26,6 +24,6 @@ pub enum ApllodbSuccess {
         session: SessionWithTx,
     },
     TransactionEndResponse {
-        session: SessionWithoutDb,
+        session: SessionWithDb,
     },
 }

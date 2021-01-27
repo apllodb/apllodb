@@ -221,6 +221,12 @@ impl PestParserImpl {
         )?)
         .or(try_parse_child(
             &mut params,
+            Rule::commit_transaction_command,
+            |_| Ok(()),
+            |()| Command::CommitTransactionCommandVariant,
+        )?)
+        .or(try_parse_child(
+            &mut params,
             Rule::alter_table_command,
             Self::parse_alter_table_command,
             Command::AlterTableCommandVariant,

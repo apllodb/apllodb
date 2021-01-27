@@ -33,7 +33,7 @@ impl<'main> CmdProcessor<'main> {
             | ApllodbSuccess::BeginTransactionResponse { session } => Ok(Session::WithTx(session)),
             ApllodbSuccess::CreateDatabaseResponse { session } => Ok(session),
             ApllodbSuccess::UseDatabaseResponse { session } => Ok(Session::WithDb(session)),
-            ApllodbSuccess::TransactionEndResponse { session } => Ok(Session::WithoutDb(session)),
+            ApllodbSuccess::TransactionEndResponse { session } => Ok(Session::WithDb(session)),
         }
     }
 }
