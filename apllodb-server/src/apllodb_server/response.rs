@@ -1,4 +1,4 @@
-use apllodb_shared_components::{RecordIterator, Session, SessionWithTx};
+use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
 use serde::{Deserialize, Serialize};
 
 /// Successful response from apllodb-server
@@ -14,7 +14,10 @@ pub enum ApllodbSuccess {
     DDLResponse {
         session: SessionWithTx,
     },
-    DatabaseResponse {
+    CreateDatabaseResponse {
         session: Session,
+    },
+    UseDatabaseResponse {
+        session: SessionWithDb,
     },
 }

@@ -9,18 +9,55 @@ fn setup() {
 #[async_std::test]
 async fn test_create_database() -> ApllodbResult<()> {
     let server = ApllodbServer::default();
-    let session = Session::WithoutDb(SessionWithoutDb::default());
 
     let sql = "CREATE DATABASE test_create_database";
 
-    if let ApllodbSuccess::DatabaseResponse { session } =
-        server.command(session, sql.to_string()).await?
+    if let ApllodbSuccess::CreateDatabaseResponse { session } = server
+        .command(
+            Session::WithoutDb(SessionWithoutDb::default()),
+            sql.to_string(),
+        )
+        .await?
     {
         let err = server.command(session, sql.to_string()).await.unwrap_err();
         assert_eq!(err.kind(), &ApllodbErrorKind::DuplicateDatabase);
     } else {
         panic!("must be DatabaseResponse")
     }
+
+    Ok(())
+}
+
+#[async_std::test]
+async fn test_use_database() -> ApllodbResult<()> {
+    let server = ApllodbServer::default();
+
+    let sql = "USE DATABASE test_use_database";
+
+    // cannot USE before CREATE
+    let err = server
+        .command(
+            Session::WithoutDb(SessionWithoutDb::default()),
+            sql.to_string(),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(err.kind(), &ApllodbErrorKind::UndefinedObject);
+    //
+
+    let _ = server
+        .command(
+            Session::WithoutDb(SessionWithoutDb::default()),
+            "CREATE DATABASE test_use_database".to_string(),
+        )
+        .await?;
+
+    let _ = server
+        .command(
+            Session::WithoutDb(SessionWithoutDb::default()),
+            sql.to_string(),
+        )
+        .await?;
 
     Ok(())
 }

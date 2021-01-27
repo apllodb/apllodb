@@ -23,7 +23,7 @@ fn test_create_database_accepted() {
                 assert_eq!(create_database_command, expected_ast);
             }
             Ok(ast) => panic!(
-                "'{}' should be parsed as CREATE TABLE but is parsed like: {:?}",
+                "'{}' should be parsed as CREATE DATABASE but is parsed like: {:?}",
                 sql, ast
             ),
             Err(e) => panic!("{}", e),
