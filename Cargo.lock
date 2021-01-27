@@ -137,7 +137,6 @@ dependencies = [
  "apllodb-storage-engine-interface",
  "apllodb-test-support",
  "async-std",
- "async-trait",
  "ctor",
  "derive-new",
  "env_logger",
