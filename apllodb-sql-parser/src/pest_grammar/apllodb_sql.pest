@@ -24,7 +24,8 @@
 //
 // TODO: Comment-in all. They are commented-out just to make build faster.
 keyword = { 
-    ^"ABSOLUTE"
+    ^"ABORT"
+    | ^"ABSOLUTE"
     // | ^"ABS"
     // | ^"ACOS"
     // | ^"ACTION"
@@ -862,6 +863,7 @@ command = {
 
         | begin_transaction_command
         | commit_transaction_command
+        | abort_transaction_command
 
         | alter_table_command
         | create_table_command
@@ -916,6 +918,16 @@ begin_transaction_command = {
 
 commit_transaction_command = {
     ^"COMMIT" ~ ^"TRANSACTION"?
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * ABORT (https://www.postgresql.org/docs/12/sql-abort.html)
+ * ----------------------------------------------------------------------------
+ */
+
+abort_transaction_command = {
+    ^"ABORT" ~ ^"TRANSACTION"?
 }
 
 /*

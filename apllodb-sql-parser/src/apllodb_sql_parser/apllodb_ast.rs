@@ -131,6 +131,7 @@ pub enum Command {
 
     BeginTransactionCommandVariant,
     CommitTransactionCommandVariant,
+    AbortTransactionCommandVariant,
 
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
