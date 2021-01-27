@@ -1,12 +1,12 @@
 use crate::{StorageEngine, WithDbMethods, WithoutDbMethods};
 use apllodb_shared_components::{
-    ApllodbResult, DatabaseName, Session, SessionWithTx, SessionWithoutDb,
+    ApllodbResult, DatabaseName, Session, SessionWithDb, SessionWithTx, SessionWithoutDb,
 };
 use uuid::Uuid;
 
-pub async fn session_with_tx<Engine: StorageEngine>(
+pub async fn session_with_db<Engine: StorageEngine>(
     engine: &Engine,
-) -> ApllodbResult<SessionWithTx> {
+) -> ApllodbResult<SessionWithDb> {
     let db_name = format!("{}", Uuid::new_v4());
     let db_name = DatabaseName::new(db_name)?;
 
@@ -22,6 +22,14 @@ pub async fn session_with_tx<Engine: StorageEngine>(
         .without_db()
         .use_database(SessionWithoutDb::default(), db_name)
         .await?;
+
+    Ok(session)
+}
+
+pub async fn session_with_tx<Engine: StorageEngine>(
+    engine: &Engine,
+) -> ApllodbResult<SessionWithTx> {
+    let session = session_with_db(engine).await?;
     let session = engine.with_db().begin_transaction(session).await?;
 
     Ok(session)

@@ -32,7 +32,13 @@ pub enum SQLProcessorSuccess {
 
     /// Response from USE DATABASE command.
     UseDatabaseRes {
-        /// Same session with input session
+        /// session with open database
         session: SessionWithDb,
+    },
+
+    /// Response from BEGIN command.
+    BeginTransactionRes {
+        /// session with open tranaction
+        session: SessionWithTx,
     },
 }
