@@ -2,7 +2,7 @@ pub(crate) mod response;
 mod use_case;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::{ApllodbResult, Session, SessionWithTx};
+use apllodb_shared_components::{ApllodbResult, Session};
 
 use std::rc::Rc;
 use use_case::UseCase;
@@ -32,7 +32,7 @@ impl ApllodbServer {
 }
 
 #[cfg(any(test, feature = "test-support"))]
-use apllodb_shared_components::SessionWithDb;
+use apllodb_shared_components::{SessionWithDb, SessionWithTx};
 #[cfg(any(test, feature = "test-support"))]
 impl ApllodbServer {
     /// shortcut to CREATE / USE database
