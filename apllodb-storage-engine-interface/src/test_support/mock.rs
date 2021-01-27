@@ -13,10 +13,15 @@ pub fn default_mock_engine() -> MockStorageEngine {
 
     engine.expect_without_db().returning(|| {
         let mut without_db = MockWithoutDbMethods::new();
+
+        without_db
+            .expect_create_database()
+            .returning(|session, _| async { Ok(session) }.boxed_local());
         without_db
             .expect_use_database()
             .returning(|session, db| async { Ok(session.upgrade(db)) }.boxed_local());
-        without_db
+
+            without_db
     });
 
     engine.expect_with_db().returning(|| {
