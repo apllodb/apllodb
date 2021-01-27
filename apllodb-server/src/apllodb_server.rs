@@ -11,27 +11,30 @@ use crate::ApllodbSuccess;
 
 #[derive(Clone, Debug)]
 pub struct ApllodbServer {
-    use_case: Rc<UseCase<ApllodbImmutableSchemaEngine>>,
+    engine: Rc<ApllodbImmutableSchemaEngine>,
 }
 
 impl Default for ApllodbServer {
     fn default() -> Self {
         let engine = Rc::new(ApllodbImmutableSchemaEngine::default());
-        let use_case = Rc::new(UseCase::new(engine));
-        Self { use_case }
+        Self { engine }
     }
 }
 
 impl ApllodbServer {
     pub async fn begin_transaction(&self, database: DatabaseName) -> ApllodbResult<SessionWithTx> {
-        self.use_case.begin_transaction(database).await
+        self.use_case().begin_transaction(database).await
     }
 
     pub async fn commit_transaction(&self, session: SessionWithTx) -> ApllodbResult<()> {
-        self.use_case.commit_transaction(session).await
+        self.use_case().commit_transaction(session).await
     }
 
     pub async fn command(&self, session: Session, sql: String) -> ApllodbResult<ApllodbSuccess> {
-        self.use_case.command(session, &sql).await
+        self.use_case().command(session, &sql).await
+    }
+
+    fn use_case(&self) -> UseCase<ApllodbImmutableSchemaEngine> {
+        UseCase::new(self.engine.clone())
     }
 }
