@@ -53,11 +53,12 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
+    /// - [UndefinedObject](apllodb_shared_components::ApllodbErrorKind::UndefinedObject) when:
+    ///   - database named `name` has not been created yet.
     /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
     ///   - sqlx raises an error.
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
         let pool = Self::connect_existing_sqlite(&name).await?;
-
         Ok(Self {
             name,
             sqlite_pool: pool,

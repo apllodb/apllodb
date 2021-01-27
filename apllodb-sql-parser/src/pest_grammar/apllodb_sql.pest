@@ -642,6 +642,7 @@ keyword = {
     // | ^"USER_DEFINED_TYPE_NAME"
     // | ^"USER_DEFINED_TYPE_SCHEMA"
     // | ^"USER"
+    | ^"USE"
     // | ^"USING"
     // | ^"UTF16"
     // | ^"UTF32"
@@ -857,6 +858,7 @@ integer_type = {
 command = {
     SOI ~ (
         create_database_command
+        | use_database_command
 
         | alter_table_command
         | create_table_command
@@ -879,6 +881,17 @@ command = {
 
 create_database_command = {
     ^"CREATE" ~ ^"DATABASE"
+    ~ database_name
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * USE DATABASE (not originally from PostgreSQL)
+ * ----------------------------------------------------------------------------
+ */
+
+use_database_command = {
+    ^"USE" ~ ^"DATABASE"
     ~ database_name
 }
 

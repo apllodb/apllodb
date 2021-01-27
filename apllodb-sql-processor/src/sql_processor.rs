@@ -62,7 +62,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                             records,
                         })
                     }
-                    apllodb_ast::Command::CreateDatabaseCommandVariant(_) => {
+                    apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
                         Err(ApllodbError::new(
                             ApllodbErrorKind::FeatureNotSupported,
                             format!("cannot process the following SQL (database: none, transaction: open): {}",  sql),
@@ -81,7 +81,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         // TODO auto-commit feature here?
                         todo!()
                     }
-                    apllodb_ast::Command::CreateDatabaseCommandVariant(_) => {
+                    apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
                         Err(ApllodbError::new(
                             ApllodbErrorKind::FeatureNotSupported,
                             format!("cannot process the following SQL (database: {:?}, transaction: none): {}", sess.database_name(), sql),
@@ -89,14 +89,22 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         ))
                     }
                 },
-                Session::WithoutDb(_) => match command {
+                Session::WithoutDb(sess) => match command {
                     apllodb_ast::Command::CreateDatabaseCommandVariant(cmd) => {
                         let database_name = AstTranslator::database_name(cmd.database_name)?;
                         let session = self.engine
                             .without_db()
-                            .create_database(session, database_name)
+                            .create_database(Session::WithoutDb(sess), database_name)
                             .await?;
-                        Ok(SQLProcessorSuccess::DatabaseRes { session })
+                        Ok(SQLProcessorSuccess::CreateDatabaseRes { session })
+                    }
+                    apllodb_ast::Command::UseDatabaseCommandVariant(cmd) => {
+                        let database_name = AstTranslator::database_name(cmd.database_name)?;
+                        let session = self.engine
+                            .without_db()
+                            .use_database(sess, database_name)
+                            .await?;
+                        Ok(SQLProcessorSuccess::UseDatabaseRes { session })
                     }
 
                     apllodb_ast::Command::AlterTableCommandVariant(_)

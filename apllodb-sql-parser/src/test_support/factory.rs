@@ -4,7 +4,7 @@ use crate::apllodb_ast::{
     DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
     GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType, NonEmptyVec,
     NumericConstant, OrderBy, SelectCommand, SelectField, TableConstraint, TableElement, TableName,
-    UpdateCommand,
+    UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -29,6 +29,14 @@ impl Action {
 }
 
 impl CreateDatabaseCommand {
+    pub fn factory(database_name: &str) -> Self {
+        Self {
+            database_name: DatabaseName::factory(database_name),
+        }
+    }
+}
+
+impl UseDatabaseCommand {
     pub fn factory(database_name: &str) -> Self {
         Self {
             database_name: DatabaseName::factory(database_name),

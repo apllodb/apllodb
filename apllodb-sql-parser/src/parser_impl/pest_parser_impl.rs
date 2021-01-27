@@ -8,7 +8,7 @@ use crate::{
         CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand,
         DropColumn, DropTableCommand, Expression, FromItem, Identifier, InsertCommand,
         IntegerConstant, IntegerType, NumericConstant, SelectCommand, SelectField, TableConstraint,
-        TableElement, TableName, UpdateCommand,
+        TableElement, TableName, UpdateCommand, UseDatabaseCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -209,6 +209,12 @@ impl PestParserImpl {
         )?
         .or(try_parse_child(
             &mut params,
+            Rule::use_database_command,
+            Self::parse_use_database_command,
+            Command::UseDatabaseCommandVariant,
+        )?)
+        .or(try_parse_child(
+            &mut params,
             Rule::alter_table_command,
             Self::parse_alter_table_command,
             Command::AlterTableCommandVariant,
@@ -337,6 +343,24 @@ impl PestParserImpl {
             identity,
         )?;
         Ok(CreateDatabaseCommand { database_name })
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * Use DATABASE
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_use_database_command(
+        mut params: FnParseParams,
+    ) -> ApllodbSqlParserResult<UseDatabaseCommand> {
+        let database_name = parse_child(
+            &mut params,
+            Rule::database_name,
+            Self::parse_database_name,
+            identity,
+        )?;
+        Ok(UseDatabaseCommand { database_name })
     }
 
     /*
