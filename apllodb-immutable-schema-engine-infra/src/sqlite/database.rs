@@ -3,7 +3,7 @@ use crate::error::InfraError;
 use super::transaction::sqlite_tx::vtable::dao::VTableDao;
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName};
 use sqlx::{migrate::MigrateDatabase, Connection};
-use std::{str::FromStr, time::Duration};
+use std::{path::PathBuf, str::FromStr, time::Duration};
 
 /// Database context.
 #[derive(Debug)]
@@ -21,7 +21,9 @@ impl SqliteDatabase {
     ///   - specified database already exists
     pub(crate) async fn create_database(name: DatabaseName) -> ApllodbResult<()> {
         let path = Self::sqlite_db_path(&name);
-        if sqlx::Sqlite::database_exists(&path)
+        let path = path.to_str().expect("should be valid unicode");
+
+        if sqlx::Sqlite::database_exists(path)
             .await
             .map_err(InfraError::from)?
         {
@@ -31,6 +33,7 @@ impl SqliteDatabase {
                 None,
             ))
         } else {
+            log::debug!("creates new database file: {}", path);
             let conn = sqlx::sqlite::SqliteConnection::connect(&path)
                 .await
                 .map_err(InfraError::from)?;
@@ -60,12 +63,14 @@ impl SqliteDatabase {
         &self.name
     }
 
-    fn sqlite_db_path(db_name: &DatabaseName) -> String {
-        format!("immutable_schema_{}.sqlite3", db_name.as_str()) // FIXME: path from configuration
+    fn sqlite_db_path(db_name: &DatabaseName) -> PathBuf {
+        PathBuf::from(format!("immutable_schema_{}.sqlite3", db_name.as_str())) // FIXME: path from configuration
     }
 
     async fn connect_existing_sqlite(db_name: &DatabaseName) -> ApllodbResult<sqlx::SqlitePool> {
         let path = Self::sqlite_db_path(&db_name);
+        let path = path.to_str().expect("should be valid unicode");
+
         log::debug!("using `{}` as backend db", path);
 
         let opt = sqlx::sqlite::SqliteConnectOptions::from_str(&path)
