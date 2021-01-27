@@ -21,7 +21,7 @@ pub fn default_mock_engine() -> MockStorageEngine {
             .expect_use_database()
             .returning(|session, db| async { Ok(session.upgrade(db)) }.boxed_local());
 
-            without_db
+        without_db
     });
 
     engine.expect_with_db().returning(|| {
