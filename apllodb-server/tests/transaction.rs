@@ -40,7 +40,7 @@ async fn test_commit() -> ApllodbResult<()> {
         server
             .command(Session::WithTx(session), sql.to_string())
             .await?,
-        ApllodbSuccess::TransactionEndResponse
+        ApllodbSuccess::TransactionEndResponse {..}
     );
 
     Ok(())
