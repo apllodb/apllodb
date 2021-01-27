@@ -22,10 +22,6 @@ impl Default for ApllodbServer {
 }
 
 impl ApllodbServer {
-    pub async fn commit_transaction(&self, session: SessionWithTx) -> ApllodbResult<()> {
-        self.use_case().commit_transaction(session).await
-    }
-
     pub async fn command(&self, session: Session, sql: String) -> ApllodbResult<ApllodbSuccess> {
         self.use_case().command(session, &sql).await
     }
