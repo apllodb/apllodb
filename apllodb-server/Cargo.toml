@@ -4,11 +4,17 @@ edition = "2018"
 name = "apllodb-server"
 version = "0.1.0"
 
+[features]
+test-support = ["apllodb-test-support", "apllodb-immutable-schema-engine-infra"]
+
 [dependencies]
 apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-sql-processor = {path = "../apllodb-sql-processor"}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
+
+apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"], optional = true}
+apllodb-test-support = {path = "../apllodb-test-support", optional = true}
 
 env_logger = "0.8"
 log = "0.4"
@@ -19,6 +25,10 @@ futures = "0.3"
 serde = {version = "1.0"}
 
 [dev-dependencies]
+apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"]}
+apllodb-server = {path = ".", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
 
 ctor = "0.1"
+
+async-std = {version = "1.9", features = ["attributes"]}

@@ -130,10 +130,13 @@ name = "apllodb-server"
 version = "0.1.0"
 dependencies = [
  "apllodb-immutable-schema-engine",
+ "apllodb-immutable-schema-engine-infra",
+ "apllodb-server",
  "apllodb-shared-components",
  "apllodb-sql-processor",
  "apllodb-storage-engine-interface",
  "apllodb-test-support",
+ "async-std",
  "ctor",
  "derive-new",
  "env_logger",
