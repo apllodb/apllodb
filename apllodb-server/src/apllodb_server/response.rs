@@ -23,4 +23,5 @@ pub enum ApllodbSuccess {
     BeginTransactionResponse {
         session: SessionWithTx,
     },
+    TransactionEndResponse,
 }

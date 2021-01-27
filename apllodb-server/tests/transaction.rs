@@ -28,3 +28,20 @@ async fn test_begin() -> ApllodbResult<()> {
 
     Ok(())
 }
+
+#[async_std::test]
+async fn test_commit() -> ApllodbResult<()> {
+    let server = ApllodbServer::default();
+    let session = server.session_with_tx().await?;
+
+    let sql = "COMMIT";
+
+    matches!(
+        server
+            .command(Session::WithTx(session), sql.to_string())
+            .await?,
+        ApllodbSuccess::TransactionEndResponse
+    );
+
+    Ok(())
+}
