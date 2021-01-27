@@ -44,9 +44,6 @@ impl WithTxMethods for WithTxMethodsImpl {
     // ========================================================================
     fn commit_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
         async move {
-            let mut db_pool = self.db_pool.borrow_mut();
-            let _ = db_pool.remove_db(session.get_id())?;
-
             let mut tx_pool = self.tx_pool.borrow_mut();
             let tx = tx_pool.remove_tx(session.get_id())?;
             tx.borrow_mut().commit().await?;
@@ -57,9 +54,6 @@ impl WithTxMethods for WithTxMethodsImpl {
 
     fn abort_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
         async move {
-            let mut db_pool = self.db_pool.borrow_mut();
-            let _ = db_pool.remove_db(session.get_id())?;
-
             let mut tx_pool = self.tx_pool.borrow_mut();
             let tx = tx_pool.remove_tx(session.get_id())?;
             tx.borrow_mut().abort().await?;
