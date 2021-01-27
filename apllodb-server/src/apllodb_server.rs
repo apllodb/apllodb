@@ -2,9 +2,7 @@ pub(crate) mod response;
 mod use_case;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::{
-    ApllodbResult, DatabaseName, Session, SessionWithDb, SessionWithTx,
-};
+use apllodb_shared_components::{ApllodbResult, Session, SessionWithDb, SessionWithTx};
 
 use std::rc::Rc;
 use use_case::UseCase;
@@ -24,10 +22,6 @@ impl Default for ApllodbServer {
 }
 
 impl ApllodbServer {
-    pub async fn begin_transaction(&self, database: DatabaseName) -> ApllodbResult<SessionWithTx> {
-        self.use_case().begin_transaction(database).await
-    }
-
     pub async fn commit_transaction(&self, session: SessionWithTx) -> ApllodbResult<()> {
         self.use_case().commit_transaction(session).await
     }
