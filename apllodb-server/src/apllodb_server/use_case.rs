@@ -20,6 +20,7 @@ pub(in crate::apllodb_server) struct UseCase<Engine: StorageEngine> {
 }
 
 impl<Engine: StorageEngine> UseCase<Engine> {
+    // TODO 消す
     pub(in crate::apllodb_server) async fn begin_transaction(
         &self,
         database: DatabaseName,
