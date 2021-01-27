@@ -38,9 +38,11 @@ impl SqliteDatabase {
             let opt = sqlx::sqlite::SqliteConnectOptions::from_str(&path)
                 .map_err(InfraError::from)?
                 .create_if_missing(true);
-            let conn = sqlx::SqliteConnection::connect_with(&opt)
+            let mut conn = sqlx::SqliteConnection::connect_with(&opt)
                 .await
                 .map_err(InfraError::from)?;
+
+            VTableDao::create_table(&mut conn).await?;
 
             conn.close().await.map_err(InfraError::from)?;
             Ok(())
@@ -55,9 +57,6 @@ impl SqliteDatabase {
     ///   - sqlx raises an error.
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
         let pool = Self::connect_existing_sqlite(&name).await?;
-
-        // TODO create に移動
-        VTableDao::create_table_if_not_exist(&pool).await?;
 
         Ok(Self {
             name,
