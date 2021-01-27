@@ -127,6 +127,7 @@ pub enum IntegerType {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Command {
     CreateDatabaseCommandVariant(CreateDatabaseCommand),
+    UseDatabaseCommandVariant(UseDatabaseCommand),
 
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),
@@ -179,6 +180,18 @@ pub struct DropColumn {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CreateDatabaseCommand {
+    pub database_name: DatabaseName,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * USE DATABASE
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct UseDatabaseCommand {
     pub database_name: DatabaseName,
 }
 
