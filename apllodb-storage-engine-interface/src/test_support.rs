@@ -13,4 +13,4 @@ pub use mock::{
     default_mock_engine,
     mock_select::{mock_select, ModelsMock},
 };
-pub use util::session_with_tx;
+pub use util::{session_with_tx, session_with_db};

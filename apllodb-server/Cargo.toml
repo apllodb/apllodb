@@ -5,15 +5,14 @@ name = "apllodb-server"
 version = "0.1.0"
 
 [features]
-test-support = ["apllodb-test-support", "apllodb-immutable-schema-engine-infra"]
+test-support = ["apllodb-test-support", "apllodb-immutable-schema-engine-infra", "async-trait"]
 
 [dependencies]
 apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
+apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"], optional = true}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-sql-processor = {path = "../apllodb-sql-processor"}
-apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
-
-apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"], optional = true}
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support", optional = true}
 
 env_logger = "0.8"
@@ -24,11 +23,16 @@ derive-new = "0.5"
 futures = "0.3"
 serde = {version = "1.0"}
 
+async-trait = {version = "0.1", optional = true}
+
 [dev-dependencies]
 apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"]}
 apllodb-server = {path = ".", features = ["test-support"]}
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
 
 ctor = "0.1"
 
 async-std = {version = "1.9", features = ["attributes"]}
+
+async-trait = "0.1"
