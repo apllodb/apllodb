@@ -16,5 +16,8 @@ pub(in crate::apllodb_server::use_case) fn to_server_resp(
         SQLProcessorSuccess::CreateDatabaseRes { session } => {
             ApllodbSuccess::CreateDatabaseResponse { session }
         }
+        SQLProcessorSuccess::UseDatabaseRes { session } => {
+            ApllodbSuccess::UseDatabaseResponse { session }
+        }
     }
 }

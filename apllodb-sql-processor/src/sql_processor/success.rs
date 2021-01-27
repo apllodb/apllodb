@@ -1,4 +1,4 @@
-use apllodb_shared_components::{RecordIterator, Session, SessionWithTx};
+use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
 use serde::{Deserialize, Serialize};
 
 /// Successful result from [SQLProcessor](crate::SQLProcessor).
@@ -28,5 +28,11 @@ pub enum SQLProcessorSuccess {
     CreateDatabaseRes {
         /// Same session with input session
         session: Session,
+    },
+
+    /// Response from USE DATABASE command.
+    UseDatabaseRes {
+        /// Same session with input session
+        session: SessionWithDb,
     },
 }
