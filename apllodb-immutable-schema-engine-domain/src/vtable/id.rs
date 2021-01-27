@@ -34,7 +34,7 @@ impl VTableId {
             rand::thread_rng()
                 .sample_iter(&rand::distributions::Alphanumeric)
                 .map(char::from)
-                .filter(|&c| 'a' <= c && c <= 'z')
+                .filter(|c| ('a'..='z').contains(c))
                 .take(10)
                 .collect::<String>(),
         )
@@ -43,7 +43,7 @@ impl VTableId {
             rand::thread_rng()
                 .sample_iter(&rand::distributions::Alphanumeric)
                 .map(char::from)
-                .filter(|&c| 'a' <= c && c <= 'z')
+                .filter(|c| ('a'..='z').contains(c))
                 .take(10)
                 .collect::<String>(),
         )
