@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
+    ColumnReference, DatabaseName, Session, SessionWithoutDb, SqlType, TableConstraintKind,
     TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
@@ -20,6 +20,7 @@ fn setup() {
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     let engine = ApllodbImmutableSchemaEngine::default();
 
+    let db_name = DatabaseName::new("db")?;
     let t_name = TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
@@ -31,9 +32,17 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
         ColumnConstraints::default(),
     );
 
+    let _ = engine
+        .without_db()
+        .create_database(
+            Session::WithoutDb(SessionWithoutDb::default()),
+            db_name.clone(),
+        )
+        .await?;
+
     let session = engine
         .without_db()
-        .use_database(SessionWithoutDb::default(), DatabaseName::new("xyzw")?)
+        .use_database(SessionWithoutDb::default(), db_name)
         .await?;
 
     log::debug!("SessionWithDb: {:?}", session);

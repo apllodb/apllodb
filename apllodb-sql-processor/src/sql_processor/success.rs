@@ -1,4 +1,4 @@
-use apllodb_shared_components::{RecordIterator, SessionWithTx};
+use apllodb_shared_components::{RecordIterator, Session, SessionWithTx};
 use serde::{Deserialize, Serialize};
 
 /// Successful result from [SQLProcessor](crate::SQLProcessor).
@@ -22,5 +22,11 @@ pub enum SQLProcessorSuccess {
     DDLRes {
         /// Same session with input session
         session: SessionWithTx,
+    },
+
+    /// Response from database command.
+    DatabaseRes {
+        /// Same session with input session
+        session: Session,
     },
 }

@@ -4,8 +4,8 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    ColumnName, ColumnReference, DatabaseName, SessionWithoutDb, SqlType, TableConstraintKind,
-    TableConstraints, TableName,
+    ColumnName, ColumnReference, DatabaseName, Session, SessionWithoutDb, SqlType,
+    TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
@@ -20,6 +20,11 @@ fn setup() {
 async fn test_wait_lock() -> ApllodbResult<()> {
     let engine = ApllodbImmutableSchemaEngine::default();
     let db = DatabaseName::new("test_wait_lock")?;
+
+    let _ = engine
+        .without_db()
+        .create_database(Session::WithoutDb(SessionWithoutDb::default()), db.clone())
+        .await?;
 
     let session1 = engine
         .without_db()
