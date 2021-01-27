@@ -2,7 +2,7 @@ pub(crate) mod response;
 mod use_case;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::{ApllodbResult, Session, SessionWithTx};
+use apllodb_shared_components::{ApllodbResult, Session};
 
 use std::rc::Rc;
 use use_case::UseCase;
@@ -22,10 +22,6 @@ impl Default for ApllodbServer {
 }
 
 impl ApllodbServer {
-    pub async fn commit_transaction(&self, session: SessionWithTx) -> ApllodbResult<()> {
-        self.use_case().commit_transaction(session).await
-    }
-
     pub async fn command(&self, session: Session, sql: String) -> ApllodbResult<ApllodbSuccess> {
         self.use_case().command(session, &sql).await
     }
@@ -36,7 +32,7 @@ impl ApllodbServer {
 }
 
 #[cfg(any(test, feature = "test-support"))]
-use apllodb_shared_components::SessionWithDb;
+use apllodb_shared_components::{SessionWithDb, SessionWithTx};
 #[cfg(any(test, feature = "test-support"))]
 impl ApllodbServer {
     /// shortcut to CREATE / USE database

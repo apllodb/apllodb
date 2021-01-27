@@ -1,4 +1,4 @@
-use crate::{DatabaseName, SessionId};
+use crate::{DatabaseName, SessionId, SessionWithDb};
 use serde::{Deserialize, Serialize};
 
 /// Session with open transaction.
@@ -16,6 +16,11 @@ impl SessionWithTx {
     /// A storage engine's implementation must call this after opening a database.
     pub(super) fn new(sid: SessionId, db: DatabaseName) -> Self {
         Self { id: sid, db }
+    }
+
+    /// Downgrade to `SessionWithDb`.
+    pub fn downgrade(self) -> SessionWithDb {
+        SessionWithDb::new(self.id, self.db)
     }
 
     /// Get session ID

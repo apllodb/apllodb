@@ -35,6 +35,7 @@ impl SqliteDatabasePool {
     ///
     /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
     ///   - this session seems not to open any database.
+    #[allow(dead_code)]
     pub(crate) fn remove_db(&mut self, sid: &SessionId) -> ApllodbResult<SqliteDatabase> {
         let err = || {
             ApllodbError::new(

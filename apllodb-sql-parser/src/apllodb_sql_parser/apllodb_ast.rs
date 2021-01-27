@@ -130,6 +130,7 @@ pub enum Command {
     UseDatabaseCommandVariant(UseDatabaseCommand),
 
     BeginTransactionCommandVariant,
+    CommitTransactionCommandVariant,
 
     AlterTableCommandVariant(AlterTableCommand),
     CreateTableCommandVariant(CreateTableCommand),

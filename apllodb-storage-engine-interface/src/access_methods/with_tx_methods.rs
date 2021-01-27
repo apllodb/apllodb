@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithTx,
-    TableConstraints, TableName,
+    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithDb,
+    SessionWithTx, TableConstraints, TableName,
 };
 
 use crate::ProjectionQuery;
@@ -14,9 +14,9 @@ pub trait WithTxMethods {
     // ========================================================================
     // Transaction
     // ========================================================================
-    fn commit_transaction(self, session: SessionWithTx) -> FutRes<()>;
+    fn commit_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb>;
 
-    fn abort_transaction(self, session: SessionWithTx) -> FutRes<()>;
+    fn abort_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb>;
 
     // ========================================================================
     // DDL
