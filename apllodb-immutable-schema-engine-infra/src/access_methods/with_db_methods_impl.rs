@@ -4,11 +4,11 @@ use crate::sqlite::{
     sqlite_resource_pool::{db_pool::SqliteDatabasePool, tx_pool::SqliteTxPool},
     transaction::sqlite_tx::SqliteTx,
 };
-use apllodb_shared_components::{SessionWithDb, SessionWithTx};
+use apllodb_shared_components::SessionId;
 use apllodb_storage_engine_interface::WithDbMethods;
 use futures::FutureExt;
 
-use super::FutRes;
+use super::BoxFutRes;
 
 #[derive(Clone, Debug, Default)]
 pub struct WithDbMethodsImpl {
@@ -26,16 +26,16 @@ impl WithDbMethodsImpl {
 }
 
 impl WithDbMethods for WithDbMethodsImpl {
-    fn begin_transaction(self, session: SessionWithDb) -> FutRes<SessionWithTx> {
+    fn begin_transaction_core(self, sid: SessionId) -> BoxFutRes<()> {
         async move {
             let db_pool = self.db_pool.borrow();
 
-            let db = db_pool.get_db(session.get_id())?;
+            let db = db_pool.get_db(&sid)?;
             let tx = SqliteTx::begin(db).await?;
 
-            self.tx_pool.borrow_mut().insert_tx(session.get_id(), tx)?;
+            self.tx_pool.borrow_mut().insert_tx(&sid, tx)?;
 
-            Ok(session.upgrade())
+            Ok(())
         }
         .boxed_local()
     }

@@ -15,13 +15,13 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithDb,
-    SessionWithTx, TableConstraints, TableName,
+    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionId,
+    TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
 
-use super::FutRes;
+use super::BoxFutRes;
 
 #[derive(Clone, Debug, Default)]
 pub struct WithTxMethodsImpl {
@@ -42,22 +42,22 @@ impl WithTxMethods for WithTxMethodsImpl {
     // ========================================================================
     // Transaction
     // ========================================================================
-    fn commit_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
+    fn commit_transaction_core(self, sid: SessionId) -> BoxFutRes<()> {
         async move {
             let mut tx_pool = self.tx_pool.borrow_mut();
-            let tx = tx_pool.remove_tx(session.get_id())?;
+            let tx = tx_pool.remove_tx(&sid)?;
             tx.borrow_mut().commit().await?;
-            Ok(session.downgrade())
+            Ok(())
         }
         .boxed_local()
     }
 
-    fn abort_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
+    fn abort_transaction_core(self, sid: SessionId) -> BoxFutRes<()> {
         async move {
             let mut tx_pool = self.tx_pool.borrow_mut();
-            let tx = tx_pool.remove_tx(session.get_id())?;
+            let tx = tx_pool.remove_tx(&sid)?;
             tx.borrow_mut().abort().await?;
-            Ok(session.downgrade())
+            Ok(())
         }
         .boxed_local()
     }
@@ -65,16 +65,16 @@ impl WithTxMethods for WithTxMethodsImpl {
     // ========================================================================
     // DDL
     // ========================================================================
-    fn create_table(
+    fn create_table_core(
         self,
-        session: SessionWithTx,
+        sid: SessionId,
         table_name: TableName,
         table_constraints: TableConstraints,
         column_definitions: Vec<ColumnDefinition>,
-    ) -> FutRes<SessionWithTx> {
+    ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = CreateTableUseCaseInput::new(
@@ -91,20 +91,20 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(session)
+            Ok(())
         }
         .boxed_local()
     }
 
-    fn alter_table(
+    fn alter_table_core(
         self,
-        session: SessionWithTx,
+        sid: SessionId,
         table_name: TableName,
         action: AlterTableAction,
-    ) -> FutRes<SessionWithTx> {
+    ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = AlterTableUseCaseInput::new(&database_name, &table_name, &action);
@@ -115,27 +115,27 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(session)
+            Ok(())
         }
         .boxed_local()
     }
 
-    fn drop_table(self, _session: SessionWithTx, _table_name: TableName) -> FutRes<SessionWithTx> {
+    fn drop_table_core(self, _sid: SessionId, _table_name: TableName) -> BoxFutRes<()> {
         async move { todo!() }.boxed_local()
     }
 
     // ========================================================================
     // DML
     // ========================================================================
-    fn select(
+    fn select_core(
         self,
-        session: SessionWithTx,
+        sid: SessionId,
         table_name: TableName,
         projection: ProjectionQuery,
-    ) -> FutRes<(RecordIterator, SessionWithTx)> {
+    ) -> BoxFutRes<RecordIterator> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = FullScanUseCaseInput::new(&database_name, &table_name, projection);
@@ -146,20 +146,20 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok((RecordIterator::new(output.row_iter), session))
+            Ok(RecordIterator::new(output.row_iter))
         }
         .boxed_local()
     }
 
-    fn insert(
+    fn insert_core(
         self,
-        session: SessionWithTx,
+        sid: SessionId,
         table_name: TableName,
         records: RecordIterator,
-    ) -> FutRes<SessionWithTx> {
+    ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = InsertUseCaseInput::new(&database_name, &table_name, records);
@@ -170,20 +170,20 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(session)
+            Ok(())
         }
         .boxed_local()
     }
 
-    fn update(
+    fn update_core(
         self,
-        session: SessionWithTx,
+        sid: SessionId,
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
-    ) -> FutRes<SessionWithTx> {
+    ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = UpdateAllUseCaseInput::new(&database_name, &table_name, column_values);
@@ -194,15 +194,15 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(session)
+            Ok(())
         }
         .boxed_local()
     }
 
-    fn delete(self, session: SessionWithTx, table_name: TableName) -> FutRes<SessionWithTx> {
+    fn delete_core(self, sid: SessionId, table_name: TableName) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = DeleteAllUseCaseInput::new(&database_name, &table_name);
@@ -213,7 +213,7 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(session)
+            Ok(())
         }
         .boxed_local()
     }

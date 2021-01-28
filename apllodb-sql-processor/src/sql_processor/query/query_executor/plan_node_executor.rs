@@ -4,7 +4,8 @@ use std::{
 };
 
 use apllodb_shared_components::{
-    ApllodbResult, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordIterator, SessionWithTx,
+    SqlValueHashKey, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
@@ -26,7 +27,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         &self,
         session: SessionWithTx,
         op_leaf: LeafPlanOperation,
-    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         match op_leaf {
             LeafPlanOperation::DirectInput { records } => Ok((records, session)),
             LeafPlanOperation::SeqScan {
@@ -66,7 +67,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         session: SessionWithTx,
         table_name: TableName,
         projection: ProjectionQuery,
-    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         self.engine
             .with_tx()
             .select(session, table_name, projection)

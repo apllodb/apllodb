@@ -2,7 +2,9 @@ mod plan_node_executor;
 
 use std::rc::Rc;
 
-use apllodb_shared_components::{ApllodbResult, RecordIterator, SessionWithTx};
+use apllodb_shared_components::{
+    ApllodbSessionError, ApllodbSessionResult, RecordIterator, Session, SessionWithTx,
+};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use self::plan_node_executor::PlanNodeExecutor;
@@ -22,7 +24,7 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
         &self,
         session: SessionWithTx,
         plan: QueryPlan,
-    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         let plan_tree = plan.plan_tree;
         let root = plan_tree.root;
         self.run_dfs_post_order(session, root).await
@@ -39,7 +41,7 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
         &self,
         session: SessionWithTx,
         node: QueryPlanNode,
-    ) -> ApllodbResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         let executor = PlanNodeExecutor::new(self.engine.clone());
 
         match node {
@@ -47,16 +49,20 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
             QueryPlanNode::Unary(node_unary) => {
                 let (left_input, session) =
                     self.run_dfs_post_order(session, *node_unary.left).await?;
-                let records = executor.run_unary(node_unary.op, left_input)?;
-                Ok((records, session))
+                match executor.run_unary(node_unary.op, left_input) {
+                    Ok(records) => Ok((records, session)),
+                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+                }
             }
             QueryPlanNode::Binary(node_binary) => {
                 let (left_input, session) =
                     self.run_dfs_post_order(session, *node_binary.left).await?;
                 let (right_input, session) =
                     self.run_dfs_post_order(session, *node_binary.right).await?;
-                let records = executor.run_binary(node_binary.op, left_input, right_input)?;
-                Ok((records, session))
+                match executor.run_binary(node_binary.op, left_input, right_input) {
+                    Ok(records) => Ok((records, session)),
+                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+                }
             }
         }
     }
