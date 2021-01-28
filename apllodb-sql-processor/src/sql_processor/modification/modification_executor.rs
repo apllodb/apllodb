@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use apllodb_shared_components::{ApllodbResult, SessionWithTx};
+use apllodb_shared_components::{ApllodbSessionResult, SessionWithTx};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::{
@@ -27,7 +27,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         &self,
         session: SessionWithTx,
         plan: ModificationPlan,
-    ) -> ApllodbResult<SessionWithTx> {
+    ) -> ApllodbSessionResult<SessionWithTx> {
         let query_executor = QueryExecutor::new(self.engine.clone());
         let plan_tree = plan.plan_tree;
         match plan_tree.root {

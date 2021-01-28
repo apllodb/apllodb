@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDefinition, SessionWithTx, TableConstraintKind, TableConstraints,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnDefinition, Session,
+    SessionWithTx, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_sql_parser::apllodb_ast::{Command, TableElement};
+use apllodb_sql_parser::apllodb_ast::{Command, CreateTableCommand, TableElement};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 
 use crate::ast_translator::AstTranslator;
@@ -24,54 +25,60 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
         &self,
         session: SessionWithTx,
         command: Command,
-    ) -> ApllodbResult<SessionWithTx> {
+    ) -> ApllodbSessionResult<SessionWithTx> {
         match command {
-            Command::CreateTableCommandVariant(cc) => {
-                let table_name = AstTranslator::table_name(cc.table_name)?;
-
-                let column_definitions: Vec<ColumnDefinition> = cc
-                    .table_elements
-                    .as_vec()
-                    .iter()
-                    .filter_map(|table_element| {
-                        if let TableElement::ColumnDefinitionVariant(cd) = table_element {
-                            Some(cd)
-                        } else {
-                            None
-                        }
-                    })
-                    .map(|cd| AstTranslator::column_definition(cd.clone(), table_name.clone()))
-                    .collect::<ApllodbResult<_>>()?;
-
-                let table_constraints: Vec<TableConstraintKind> = cc
-                    .table_elements
-                    .as_vec()
-                    .iter()
-                    .filter_map(|table_element| {
-                        if let TableElement::TableConstraintVariant(tc) = table_element {
-                            Some(tc)
-                        } else {
-                            None
-                        }
-                    })
-                    .map(|tc| AstTranslator::table_constraint(tc.clone()))
-                    .collect::<ApllodbResult<_>>()?;
-
-                let session = self
-                    .engine
-                    .with_tx()
-                    .create_table(
-                        session,
-                        table_name,
-                        TableConstraints::new(table_constraints)?,
-                        column_definitions,
-                    )
-                    .await?;
-
-                Ok(session)
-            }
+            Command::CreateTableCommandVariant(cc) => match self.run_helper_create_table(cc) {
+                Ok((table_name, table_constraints, column_definitions)) => {
+                    self.engine
+                        .with_tx()
+                        .create_table(session, table_name, table_constraints, column_definitions)
+                        .await
+                }
+                Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+            },
             _ => unimplemented!(),
         }
+    }
+
+    fn run_helper_create_table(
+        &self,
+        command: CreateTableCommand,
+    ) -> ApllodbResult<(TableName, TableConstraints, Vec<ColumnDefinition>)> {
+        let table_name = AstTranslator::table_name(command.table_name)?;
+
+        let column_definitions: Vec<ColumnDefinition> = command
+            .table_elements
+            .as_vec()
+            .iter()
+            .filter_map(|table_element| {
+                if let TableElement::ColumnDefinitionVariant(cd) = table_element {
+                    Some(cd)
+                } else {
+                    None
+                }
+            })
+            .map(|cd| AstTranslator::column_definition(cd.clone(), table_name.clone()))
+            .collect::<ApllodbResult<_>>()?;
+
+        let table_constraints: Vec<TableConstraintKind> = command
+            .table_elements
+            .as_vec()
+            .iter()
+            .filter_map(|table_element| {
+                if let TableElement::TableConstraintVariant(tc) = table_element {
+                    Some(tc)
+                } else {
+                    None
+                }
+            })
+            .map(|tc| AstTranslator::table_constraint(tc.clone()))
+            .collect::<ApllodbResult<_>>()?;
+
+        Ok((
+            table_name,
+            TableConstraints::new(table_constraints)?,
+            column_definitions,
+        ))
     }
 }
 
