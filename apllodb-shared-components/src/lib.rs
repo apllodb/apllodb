@@ -53,7 +53,6 @@ pub use crate::{
 };
 
 #[cfg(feature = "test-support")]
-#[allow(missing_docs)]
 pub mod test_support;
 
 #[cfg(test)]

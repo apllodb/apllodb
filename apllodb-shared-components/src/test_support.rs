@@ -1,3 +1,5 @@
+//! Test helpers
+
 use crate::{DatabaseName, TableName};
 use rand::Rng;
 
