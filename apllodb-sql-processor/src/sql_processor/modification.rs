@@ -1,9 +1,10 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ColumnReference, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValue,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnReference, FieldIndex, Record,
+    RecordIterator, Session, SessionWithTx, SqlValue,
 };
-use apllodb_sql_parser::apllodb_ast::{self, Command};
+use apllodb_sql_parser::apllodb_ast::{self, Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
@@ -43,60 +44,64 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         &self,
         session: SessionWithTx,
         command: Command,
-    ) -> ApllodbResult<SessionWithTx> {
+    ) -> ApllodbSessionResult<SessionWithTx> {
         match command {
-            Command::InsertCommandVariant(ic) => {
-                if ic.alias.is_some() {
-                    unimplemented!();
+            Command::InsertCommandVariant(ic) => match self.run_helper_insert(ic) {
+                Ok(plan) => {
+                    let executor = ModificationExecutor::new(self.engine.clone());
+                    executor.run(session, plan).await
                 }
-
-                let table_name = AstTranslator::table_name(ic.table_name)?;
-
-                let column_names = ic.column_names.into_vec();
-                let expressions = ic.expressions.into_vec();
-
-                if column_names.len() != expressions.len() {
-                    unimplemented!();
-                }
-
-                let constant_values: Vec<SqlValue> = expressions
-                    .into_iter()
-                    .map(|expression| match expression {
-                        apllodb_ast::Expression::ConstantVariant(c) => AstTranslator::constant(c),
-                        _ => unimplemented!(),
-                    })
-                    .collect::<ApllodbResult<_>>()?;
-
-                let fields: HashMap<FieldIndex, SqlValue> = column_names
-                    .into_iter()
-                    .zip(constant_values)
-                    .into_iter()
-                    .map(|(cn, sql_value)| {
-                        let col_ref = ColumnReference::new(
-                            table_name.clone(),
-                            AstTranslator::column_name(cn)?,
-                        );
-                        let field = FieldIndex::InColumnReference(col_ref);
-                        Ok((field, sql_value))
-                    })
-                    .collect::<ApllodbResult<_>>()?;
-
-                let record = Record::new(fields);
-                let records = RecordIterator::new(vec![record]);
-
-                let plan_node = ModificationPlanNode::Insert(InsertNode {
-                    table_name,
-                    child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-                        op: LeafPlanOperation::DirectInput { records },
-                    }),
-                });
-
-                let plan = ModificationPlan::new(ModificationPlanTree::new(plan_node));
-                let executor = ModificationExecutor::new(self.engine.clone());
-                executor.run(session, plan).await
-            }
+                Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+            },
             _ => unimplemented!(),
         }
+    }
+
+    fn run_helper_insert(&self, command: InsertCommand) -> ApllodbResult<ModificationPlan> {
+        if command.alias.is_some() {
+            unimplemented!();
+        }
+
+        let table_name = AstTranslator::table_name(command.table_name)?;
+
+        let column_names = command.column_names.into_vec();
+        let expressions = command.expressions.into_vec();
+
+        if column_names.len() != expressions.len() {
+            unimplemented!();
+        }
+
+        let constant_values: Vec<SqlValue> = expressions
+            .into_iter()
+            .map(|expression| match expression {
+                apllodb_ast::Expression::ConstantVariant(c) => AstTranslator::constant(c),
+                _ => unimplemented!(),
+            })
+            .collect::<ApllodbResult<_>>()?;
+
+        let fields: HashMap<FieldIndex, SqlValue> = column_names
+            .into_iter()
+            .zip(constant_values)
+            .into_iter()
+            .map(|(cn, sql_value)| {
+                let col_ref =
+                    ColumnReference::new(table_name.clone(), AstTranslator::column_name(cn)?);
+                let field = FieldIndex::InColumnReference(col_ref);
+                Ok((field, sql_value))
+            })
+            .collect::<ApllodbResult<_>>()?;
+
+        let record = Record::new(fields);
+        let records = RecordIterator::new(vec![record]);
+
+        let plan_node = ModificationPlanNode::Insert(InsertNode {
+            table_name,
+            child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
+                op: LeafPlanOperation::DirectInput { records },
+            }),
+        });
+
+        Ok(ModificationPlan::new(ModificationPlanTree::new(plan_node)))
     }
 }
 

@@ -8,7 +8,10 @@ use std::rc::Rc;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, Session,
 };
-use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
+use apllodb_sql_parser::{
+    apllodb_ast,
+    ApllodbAst, ApllodbSqlParser,
+};
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
 };
@@ -82,18 +85,23 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         })
                     }
                     apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
-                        Err(ApllodbError::new(
+                        Err(
+                            ApllodbSessionError::new(
+                                ApllodbError::new(
                             ApllodbErrorKind::FeatureNotSupported,
                             format!("cannot process the following SQL (database: {:?}, transaction: open): {}", sess.get_db_name(), sql),
                             None,
-                        ))
+                        ), Session::from(sess)))
                     }
                     apllodb_ast::Command::BeginTransactionCommandVariant => {
-                        Err(ApllodbError::new(
+                        Err(
+                            ApllodbSessionError::new(
+                            ApllodbError::new(
                             ApllodbErrorKind::InvalidTransactionState,
                             format!("transaction is already open (database: {:?}, transaction: open): {}",  sess.get_db_name(), sql),
                             None,
-                        ))
+                        ), Session::from(sess)
+                    ))
                     }
                 },
                 Session::WithDb(sess) => match command {
@@ -113,37 +121,49 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         todo!()
                     }
                     apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
-                        Err(ApllodbError::new(
+                        Err(
+                            ApllodbSessionError::new(
+                            ApllodbError::new(
                             ApllodbErrorKind::FeatureNotSupported,
                             format!("cannot process the following SQL (database: {:?}, transaction: none): {}", sess.database_name(), sql),
                             None,
-                        ))
+                        ), Session::from(sess)))
                     }
 
                     apllodb_ast::Command::CommitTransactionCommandVariant |apllodb_ast::Command::AbortTransactionCommandVariant => {
-                        Err(ApllodbError::new(
+                        Err(
+                            ApllodbSessionError::new(
+                                ApllodbError::new(
                             ApllodbErrorKind::InvalidTransactionState,
                             format!("transaction is not open (database: {:?}, transaction: none): {}", sess.database_name(), sql),
                             None,
-                        ))
+                        ), Session::from(sess)))
                     }
                 },
                 Session::WithoutDb(sess) => match command {
                     apllodb_ast::Command::CreateDatabaseCommandVariant(cmd) => {
-                        let database_name = AstTranslator::database_name(cmd.database_name)?;
-                        let session = self.engine
-                            .without_db()
-                            .create_database(Session::from(sess), database_name)
-                            .await?;
-                        Ok(SQLProcessorSuccess::CreateDatabaseRes { session })
+                        match AstTranslator::database_name(cmd.database_name) {
+                            Ok(database_name) => {
+                                let session = self.engine
+                                .without_db()
+                                .create_database(Session::from(sess), database_name)
+                                .await?;
+                            Ok(SQLProcessorSuccess::CreateDatabaseRes { session })
+                            }
+                            Err(e) => Err(ApllodbSessionError::new(e, Session::from(Session::from(sess))))
+                        }
+                        
                     }
                     apllodb_ast::Command::UseDatabaseCommandVariant(cmd) => {
-                        let database_name = AstTranslator::database_name(cmd.database_name)?;
-                        let session = self.engine
+                      match AstTranslator::database_name(cmd.database_name) {
+                          Ok(database_name)=>{let session = self.engine
                             .without_db()
                             .use_database(sess, database_name)
                             .await?;
-                        Ok(SQLProcessorSuccess::UseDatabaseRes { session })
+                        Ok(SQLProcessorSuccess::UseDatabaseRes { session })}
+                        Err(e) => Err(ApllodbSessionError::new(e, Session::from(Session::from(sess))))
+                      }
+                        
                     }
 
                     apllodb_ast::Command::BeginTransactionCommandVariant
@@ -155,11 +175,13 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     | apllodb_ast::Command::DeleteCommandVariant(_)
                     | apllodb_ast::Command::InsertCommandVariant(_)
                     | apllodb_ast::Command::UpdateCommandVariant(_)
-                    | apllodb_ast::Command::SelectCommandVariant(_) => Err(ApllodbError::new(
+                    | apllodb_ast::Command::SelectCommandVariant(_) => Err(
+                        ApllodbSessionError::new(
+                        ApllodbError::new(
                         ApllodbErrorKind::InvalidDatabaseDefinition,
                         format!("this command requires open database: {}", sql),
                         None,
-                    )),
+                    ), Session::from(sess))),
                 },
             },
         }

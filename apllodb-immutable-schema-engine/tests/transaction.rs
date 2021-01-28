@@ -3,9 +3,9 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
-    ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    ColumnName, ColumnReference, DatabaseName, Session, SessionWithoutDb, SqlType,
-    TableConstraintKind, TableConstraints, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
+    ColumnDefinition, ColumnName, ColumnReference, DatabaseName, Session, SessionWithoutDb,
+    SqlType, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
@@ -71,7 +71,10 @@ async fn test_wait_lock() -> ApllodbResult<()> {
     {
         // Internally, new record is trying to be INSERTed but it is made wait by tx2.
         // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
-        Err(e) => assert_eq!(*e.kind(), ApllodbErrorKind::DeadlockDetected),
+        Err(e) => assert_eq!(
+            ApllodbError::from(e).kind(),
+            &ApllodbErrorKind::DeadlockDetected
+        ),
         Ok(_) => panic!("should rollback"),
     }
 

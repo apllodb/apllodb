@@ -2,9 +2,7 @@ pub(crate) mod response;
 mod use_case;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, Session,
-};
+use apllodb_shared_components::{ApllodbResult, ApllodbSessionResult, Session};
 
 use std::rc::Rc;
 use use_case::UseCase;
