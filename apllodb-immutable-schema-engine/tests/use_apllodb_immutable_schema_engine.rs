@@ -34,10 +34,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
 
     let _ = engine
         .without_db()
-        .create_database(
-            Session::from(SessionWithoutDb::default()),
-            db_name.clone(),
-        )
+        .create_database(Session::from(SessionWithoutDb::default()), db_name.clone())
         .await?;
 
     let session = engine
