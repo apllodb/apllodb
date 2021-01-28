@@ -20,7 +20,7 @@ pub trait WithTxMethods: Sized + 'static {
         self,
         session: SessionWithTx,
     ) -> BoxFut<ApllodbSessionResult<SessionWithDb>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.commit_transaction_core(sid).await {
                 Ok(_) => Ok(session.downgrade()),
@@ -37,7 +37,7 @@ pub trait WithTxMethods: Sized + 'static {
         self,
         session: SessionWithTx,
     ) -> BoxFut<ApllodbSessionResult<SessionWithDb>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.abort_transaction_core(sid).await {
                 Ok(_) => Ok(session.downgrade()),
@@ -60,7 +60,7 @@ pub trait WithTxMethods: Sized + 'static {
         table_constraints: TableConstraints,
         column_definitions: Vec<ColumnDefinition>,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self
                 .create_table_core(sid, table_name, table_constraints, column_definitions)
@@ -88,7 +88,7 @@ pub trait WithTxMethods: Sized + 'static {
         table_name: TableName,
         action: AlterTableAction,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.alter_table_core(sid, table_name, action).await {
                 Ok(_) => Ok(session),
@@ -111,7 +111,7 @@ pub trait WithTxMethods: Sized + 'static {
         session: SessionWithTx,
         table_name: TableName,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.drop_table_core(sid, table_name).await {
                 Ok(_) => Ok(session),
@@ -133,7 +133,7 @@ pub trait WithTxMethods: Sized + 'static {
         table_name: TableName,
         projection: ProjectionQuery,
     ) -> BoxFut<ApllodbSessionResult<(RecordIterator, SessionWithTx)>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.select_core(sid, table_name, projection).await {
                 Ok(records) => Ok((records, session)),
@@ -157,7 +157,7 @@ pub trait WithTxMethods: Sized + 'static {
         table_name: TableName,
         records: RecordIterator,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.insert_core(sid, table_name, records).await {
                 Ok(_) => Ok(session),
@@ -181,7 +181,7 @@ pub trait WithTxMethods: Sized + 'static {
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.update_core(sid, table_name, column_values).await {
                 Ok(_) => Ok(session),
@@ -204,7 +204,7 @@ pub trait WithTxMethods: Sized + 'static {
         session: SessionWithTx,
         table_name: TableName,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.delete_core(sid, table_name).await {
                 Ok(_) => Ok(session),

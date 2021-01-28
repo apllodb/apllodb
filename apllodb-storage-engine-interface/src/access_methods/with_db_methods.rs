@@ -12,7 +12,7 @@ pub trait WithDbMethods: Sized + 'static {
         self,
         session: SessionWithDb,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.begin_transaction_core(sid).await {
                 Ok(_) => Ok(session.upgrade()),

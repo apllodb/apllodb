@@ -13,11 +13,11 @@ pub trait WithoutDbMethods: Sized + 'static {
         session: Session,
         database: DatabaseName,
     ) -> BoxFut<ApllodbSessionResult<Session>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.create_database_core(sid, database).await {
                 Ok(_) => Ok(session),
-                Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+                Err(e) => Err(ApllodbSessionError::new(e, session)),
             }
         }
         .boxed_local()
@@ -35,7 +35,7 @@ pub trait WithoutDbMethods: Sized + 'static {
         session: SessionWithoutDb,
         database: DatabaseName,
     ) -> BoxFut<ApllodbSessionResult<SessionWithDb>> {
-        let sid = session.get_id().clone();
+        let sid = *session.get_id();
         async move {
             match self.use_database_core(sid, database.clone()).await {
                 Ok(_) => Ok(session.upgrade(database)),
