@@ -22,7 +22,7 @@ async fn main() -> ApllodbResult<()> {
     let mut rl = ReadLine::default();
     let cmd_processor = CmdProcessor::new(&server);
 
-    let mut session = Session::WithoutDb(SessionWithoutDb::default());
+    let mut session = Session::from(SessionWithoutDb::default());
 
     loop {
         match rl.readline() {

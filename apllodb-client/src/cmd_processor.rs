@@ -26,14 +26,17 @@ impl<'main> CmdProcessor<'main> {
 
                 println!("\n{} records in total\n", cnt);
 
-                Ok(Session::WithTx(session))
+                Ok(Session::from(session))
             }
+
             ApllodbSuccess::ModificationResponse { session }
             | ApllodbSuccess::DDLResponse { session }
-            | ApllodbSuccess::BeginTransactionResponse { session } => Ok(Session::WithTx(session)),
+            | ApllodbSuccess::BeginTransactionResponse { session } => Ok(Session::from(session)),
+
             ApllodbSuccess::CreateDatabaseResponse { session } => Ok(session),
-            ApllodbSuccess::UseDatabaseResponse { session } => Ok(Session::WithDb(session)),
-            ApllodbSuccess::TransactionEndResponse { session } => Ok(Session::WithDb(session)),
+
+            ApllodbSuccess::UseDatabaseResponse { session }
+            | ApllodbSuccess::TransactionEndResponse { session } => Ok(Session::from(session)),
         }
     }
 }

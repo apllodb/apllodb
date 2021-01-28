@@ -34,3 +34,19 @@ pub enum Session {
     /// session with open transaction
     WithTx(SessionWithTx),
 }
+
+impl From<SessionWithoutDb> for Session {
+    fn from(s: SessionWithoutDb) -> Self {
+        Session::WithoutDb(s)
+    }
+}
+impl From<SessionWithDb> for Session {
+    fn from(s: SessionWithDb) -> Self {
+        Session::WithDb(s)
+    }
+}
+impl From<SessionWithTx> for Session {
+    fn from(s: SessionWithTx) -> Self {
+        Session::WithTx(s)
+    }
+}
