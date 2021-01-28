@@ -1,5 +1,8 @@
+mod sql_test;
+
 use apllodb_server::{test_support::test_setup, ApllodbServer, ApllodbSuccess};
 use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, Session, SessionWithoutDb};
+use sql_test::SqlTest;
 
 #[ctor::ctor]
 fn setup() {
@@ -8,6 +11,8 @@ fn setup() {
 
 #[async_std::test]
 async fn test_create_database() -> ApllodbResult<()> {
+    let t = SqlTest::default();
+
     let server = ApllodbServer::default();
 
     let sql = "CREATE DATABASE test_create_database";
