@@ -23,17 +23,15 @@ async fn test_begin() {
 
 #[async_std::test]
 async fn test_commit() -> ApllodbResult<()> {
-    let server = ApllodbServer::default();
-    let session = server.session_with_tx().await?;
-
-    let sql = "COMMIT";
-
-    matches!(
-        server
-            .command(Session::from(session), sql.to_string())
-            .await?,
-        ApllodbCommandSuccess::TransactionEndResponse {..}
-    );
+    let mut t = SqlTest::default();
+    t.add_steps(Steps::BeginTransaction);
+    t.add_step(Step::new("COMMIT", StepRes::Ok));
+    t.add_step(Step::new("BEGIN", StepRes::Ok));
+    t.add_step(Step::new(
+        "COMMIT",
+        StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+    ));
+    t.run().await;
 
     Ok(())
 }

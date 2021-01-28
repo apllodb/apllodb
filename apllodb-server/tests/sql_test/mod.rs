@@ -9,7 +9,6 @@ use pretty_assertions::assert_eq;
 pub struct SqlTest {
     server: ApllodbServer,
     steps: Vec<Step>,
-    has_run: bool,
 }
 
 impl SqlTest {
@@ -96,12 +95,5 @@ impl SqlTest {
                 }
             }
         }
-        self.has_run = true;
-    }
-}
-
-impl Drop for SqlTest {
-    fn drop(&mut self) {
-        assert!(self.has_run, "SqlTest::run() has not called")
     }
 }
