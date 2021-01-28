@@ -3,7 +3,10 @@ use std::{
     rc::Rc,
 };
 
-use apllodb_shared_components::{ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValueHashKey, TableName};
+use apllodb_shared_components::{
+    ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordIterator, SessionWithTx,
+    SqlValueHashKey, TableName,
+};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{

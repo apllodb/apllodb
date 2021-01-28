@@ -8,10 +8,7 @@ use std::rc::Rc;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, Session,
 };
-use apllodb_sql_parser::{
-    apllodb_ast,
-    ApllodbAst, ApllodbSqlParser,
-};
+use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
 };
@@ -152,7 +149,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                             }
                             Err(e) => Err(ApllodbSessionError::new(e, Session::from(Session::from(sess))))
                         }
-                        
+
                     }
                     apllodb_ast::Command::UseDatabaseCommandVariant(cmd) => {
                       match AstTranslator::database_name(cmd.database_name) {
@@ -163,7 +160,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         Ok(SQLProcessorSuccess::UseDatabaseRes { session })}
                         Err(e) => Err(ApllodbSessionError::new(e, Session::from(Session::from(sess))))
                       }
-                        
+
                     }
 
                     apllodb_ast::Command::BeginTransactionCommandVariant
