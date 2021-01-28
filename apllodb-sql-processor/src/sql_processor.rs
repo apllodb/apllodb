@@ -147,7 +147,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                                 .await?;
                             Ok(SQLProcessorSuccess::CreateDatabaseRes { session })
                             }
-                            Err(e) => Err(ApllodbSessionError::new(e, Session::from(Session::from(sess))))
+                            Err(e) => Err(ApllodbSessionError::new(e, Session::from(sess)))
                         }
 
                     }
@@ -158,7 +158,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                             .use_database(sess, database_name)
                             .await?;
                         Ok(SQLProcessorSuccess::UseDatabaseRes { session })}
-                        Err(e) => Err(ApllodbSessionError::new(e, Session::from(Session::from(sess))))
+                        Err(e) => Err(ApllodbSessionError::new(e, Session::from(sess)))
                       }
 
                     }
