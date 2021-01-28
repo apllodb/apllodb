@@ -1,14 +1,19 @@
+pub(crate) mod steps;
+
 use apllodb_shared_components::{ApllodbErrorKind, RecordIterator};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Step {
-    sql: &'static str,
+    sql: String,
     expected: StepRes,
 }
 
 impl Step {
-    pub fn new(sql: &'static str, expected: StepRes) -> Self {
-        Self { sql, expected }
+    pub fn new(sql: impl Into<String>, expected: StepRes) -> Self {
+        Self {
+            sql: sql.into(),
+            expected,
+        }
     }
 
     pub(super) fn sql(&self) -> String {

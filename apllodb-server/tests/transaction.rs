@@ -1,5 +1,8 @@
+mod sql_test;
+
 use apllodb_server::{test_support::test_setup, ApllodbCommandSuccess, ApllodbServer};
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Session};
+use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, Session};
+use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
 fn setup() {
@@ -7,29 +10,15 @@ fn setup() {
 }
 
 #[async_std::test]
-async fn test_begin() -> ApllodbResult<()> {
-    let server = ApllodbServer::default();
-    let session = server.session_with_db().await?;
-
-    let sql = "BEGIN";
-
-    if let ApllodbCommandSuccess::BeginTransactionResponse { session } = server
-        .command(Session::from(session), sql.to_string())
-        .await?
-    {
-        let err = server
-            .command(Session::from(session), sql.to_string())
-            .await
-            .unwrap_err();
-        assert_eq!(
-            ApllodbError::from(err).kind(),
-            &ApllodbErrorKind::InvalidTransactionState
-        );
-    } else {
-        panic!("must be BeginTransactionResponse")
-    }
-
-    Ok(())
+async fn test_begin() {
+    let mut t = SqlTest::default();
+    t.add_steps(Steps::UseDatabase);
+    t.add_step(Step::new("BEGIN", StepRes::Ok));
+    t.add_step(Step::new(
+        "BEGIN",
+        StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+    ));
+    t.run().await;
 }
 
 #[async_std::test]

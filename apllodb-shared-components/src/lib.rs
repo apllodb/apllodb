@@ -52,6 +52,10 @@ pub use crate::{
     traits::sql_convertible::SqlConvertible,
 };
 
+#[cfg(feature = "test-support")]
+#[allow(missing_docs)]
+pub mod test_support;
+
 #[cfg(test)]
 mod tests {
     use apllodb_test_support::setup::setup_test_logger;

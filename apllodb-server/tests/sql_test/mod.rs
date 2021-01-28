@@ -1,6 +1,6 @@
 mod step;
 
-pub use self::step::{Step, StepRes};
+pub use self::step::{steps::Steps, Step, StepRes};
 use apllodb_server::{ApllodbCommandSuccess, ApllodbServer};
 use apllodb_shared_components::{Session, SessionWithoutDb};
 use pretty_assertions::assert_eq;
@@ -15,6 +15,13 @@ pub struct SqlTest {
 impl SqlTest {
     pub fn add_step(&mut self, step: Step) {
         self.steps.push(step);
+    }
+
+    pub fn add_steps(&mut self, steps: Steps) {
+        let steps: Vec<Step> = steps.into();
+        for step in steps {
+            self.add_step(step);
+        }
     }
 
     pub async fn run(&mut self) {

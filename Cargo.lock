@@ -157,6 +157,7 @@ dependencies = [
  "env_logger",
  "fastrand",
  "log",
+ "rand 0.8.0",
  "serde",
  "version-sync",
 ]
