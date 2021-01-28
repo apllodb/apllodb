@@ -132,13 +132,13 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --tests --release --all-features
+          args: --tests --all-features
 
       - name: cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --release --all-features
+          args: --all-features
 
   check_rustdoc:
     runs-on: ubuntu-latest
