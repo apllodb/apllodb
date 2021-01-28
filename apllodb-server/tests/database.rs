@@ -14,7 +14,7 @@ async fn test_create_database() -> ApllodbResult<()> {
 
     if let ApllodbSuccess::CreateDatabaseResponse { session } = server
         .command(
-            Session::WithoutDb(SessionWithoutDb::default()),
+            Session::from(SessionWithoutDb::default()),
             sql.to_string(),
         )
         .await?
@@ -37,7 +37,7 @@ async fn test_use_database() -> ApllodbResult<()> {
     // cannot USE before CREATE
     let err = server
         .command(
-            Session::WithoutDb(SessionWithoutDb::default()),
+            Session::from(SessionWithoutDb::default()),
             sql.to_string(),
         )
         .await
@@ -47,14 +47,14 @@ async fn test_use_database() -> ApllodbResult<()> {
 
     let _ = server
         .command(
-            Session::WithoutDb(SessionWithoutDb::default()),
+            Session::from(SessionWithoutDb::default()),
             "CREATE DATABASE test_use_database".to_string(),
         )
         .await?;
 
     let _ = server
         .command(
-            Session::WithoutDb(SessionWithoutDb::default()),
+            Session::from(SessionWithoutDb::default()),
             sql.to_string(),
         )
         .await?;

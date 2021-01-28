@@ -13,7 +13,7 @@ pub async fn session_with_db<Engine: StorageEngine>(
     let _ = engine
         .without_db()
         .create_database(
-            Session::WithoutDb(SessionWithoutDb::default()),
+            Session::from(SessionWithoutDb::default()),
             db_name.clone(),
         )
         .await?;

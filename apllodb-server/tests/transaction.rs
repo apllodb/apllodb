@@ -14,11 +14,11 @@ async fn test_begin() -> ApllodbResult<()> {
     let sql = "BEGIN";
 
     if let ApllodbSuccess::BeginTransactionResponse { session } = server
-        .command(Session::WithDb(session), sql.to_string())
+        .command(Session::from(session), sql.to_string())
         .await?
     {
         let err = server
-            .command(Session::WithTx(session), sql.to_string())
+            .command(Session::from(session), sql.to_string())
             .await
             .unwrap_err();
         assert_eq!(err.kind(), &ApllodbErrorKind::InvalidTransactionState);
@@ -38,7 +38,7 @@ async fn test_commit() -> ApllodbResult<()> {
 
     matches!(
         server
-            .command(Session::WithTx(session), sql.to_string())
+            .command(Session::from(session), sql.to_string())
             .await?,
         ApllodbSuccess::TransactionEndResponse {..}
     );
@@ -55,7 +55,7 @@ async fn test_abort() -> ApllodbResult<()> {
 
     matches!(
         server
-            .command(Session::WithTx(session), sql.to_string())
+            .command(Session::from(session), sql.to_string())
             .await?,
         ApllodbSuccess::TransactionEndResponse {..}
     );

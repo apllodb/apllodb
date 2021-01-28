@@ -125,7 +125,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                         let database_name = AstTranslator::database_name(cmd.database_name)?;
                         let session = self.engine
                             .without_db()
-                            .create_database(Session::WithoutDb(sess), database_name)
+                            .create_database(Session::from(sess), database_name)
                             .await?;
                         Ok(SQLProcessorSuccess::CreateDatabaseRes { session })
                     }
