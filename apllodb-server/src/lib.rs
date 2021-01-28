@@ -14,7 +14,7 @@ extern crate derive_new;
 
 mod apllodb_server;
 
-pub use crate::apllodb_server::{response::ApllodbSuccess, ApllodbServer};
+pub use crate::apllodb_server::{response::success::ApllodbCommandSuccess, ApllodbServer};
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;

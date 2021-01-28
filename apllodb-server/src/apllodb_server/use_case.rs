@@ -2,11 +2,11 @@ mod sql_processor_response;
 
 use std::rc::Rc;
 
-use apllodb_shared_components::{ApllodbResult, Session};
+use apllodb_shared_components::{ApllodbSessionResult, Session};
 use apllodb_sql_processor::SQLProcessor;
 use apllodb_storage_engine_interface::StorageEngine;
 
-use crate::ApllodbSuccess;
+use crate::ApllodbCommandSuccess;
 
 use self::sql_processor_response::to_server_resp;
 
@@ -20,7 +20,7 @@ impl<Engine: StorageEngine> UseCase<Engine> {
         &self,
         session: Session,
         sql: &str,
-    ) -> ApllodbResult<ApllodbSuccess> {
+    ) -> ApllodbSessionResult<ApllodbCommandSuccess> {
         let sql_proc = SQLProcessor::new(self.engine.clone());
         let sql_proc_succ = sql_proc.run(session, sql).await?;
         Ok(to_server_resp(sql_proc_succ))

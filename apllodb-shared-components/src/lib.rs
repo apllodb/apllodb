@@ -43,7 +43,12 @@ pub use crate::{
             },
         },
     },
-    error::{kind::ApllodbErrorKind, sqlstate::SqlState, ApllodbError, ApllodbResult},
+    error::{
+        kind::ApllodbErrorKind,
+        session_error::{ApllodbSessionError, ApllodbSessionResult},
+        sqlstate::SqlState,
+        ApllodbError, ApllodbResult,
+    },
     traits::sql_convertible::SqlConvertible,
 };
 

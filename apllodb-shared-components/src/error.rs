@@ -3,6 +3,7 @@
 mod aux;
 mod from;
 pub(crate) mod kind;
+pub(crate) mod session_error;
 pub(crate) mod sqlstate;
 
 use aux::ApllodbErrorAux;

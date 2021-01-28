@@ -1,8 +1,7 @@
-mod sql_test;
-
-use apllodb_server::{test_support::test_setup, ApllodbServer, ApllodbSuccess};
-use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, Session, SessionWithoutDb};
-use sql_test::SqlTest;
+use apllodb_server::{test_support::test_setup, ApllodbCommandSuccess, ApllodbServer};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, Session, SessionWithoutDb,
+};
 
 #[ctor::ctor]
 fn setup() {
@@ -17,12 +16,15 @@ async fn test_create_database() -> ApllodbResult<()> {
 
     let sql = "CREATE DATABASE test_create_database";
 
-    if let ApllodbSuccess::CreateDatabaseResponse { session } = server
+    if let ApllodbCommandSuccess::CreateDatabaseResponse { session } = server
         .command(Session::from(SessionWithoutDb::default()), sql.to_string())
         .await?
     {
         let err = server.command(session, sql.to_string()).await.unwrap_err();
-        assert_eq!(err.kind(), &ApllodbErrorKind::DuplicateDatabase);
+        assert_eq!(
+            ApllodbError::from(err).kind(),
+            &ApllodbErrorKind::DuplicateDatabase
+        );
     } else {
         panic!("must be DatabaseResponse")
     }
@@ -41,7 +43,10 @@ async fn test_use_database() -> ApllodbResult<()> {
         .command(Session::from(SessionWithoutDb::default()), sql.to_string())
         .await
         .unwrap_err();
-    assert_eq!(err.kind(), &ApllodbErrorKind::UndefinedObject);
+    assert_eq!(
+        ApllodbError::from(err).kind(),
+        &ApllodbErrorKind::UndefinedObject
+    );
     //
 
     let _ = server

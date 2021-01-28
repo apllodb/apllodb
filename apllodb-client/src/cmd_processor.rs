@@ -1,4 +1,4 @@
-use apllodb_server::{ApllodbServer, ApllodbSuccess};
+use apllodb_server::{ApllodbCommandSuccess, ApllodbServer};
 use apllodb_shared_components::{ApllodbResult, Session};
 
 #[derive(Debug, new)]
@@ -10,7 +10,7 @@ impl<'main> CmdProcessor<'main> {
     pub(crate) async fn process(&self, session: Session, cmd: &str) -> ApllodbResult<Session> {
         let success = self.server.command(session, cmd.to_string()).await?;
         match success {
-            ApllodbSuccess::QueryResponse { session, records } => {
+            ApllodbCommandSuccess::QueryResponse { session, records } => {
                 let mut cnt = 0;
 
                 for r in records {
@@ -29,14 +29,18 @@ impl<'main> CmdProcessor<'main> {
                 Ok(Session::from(session))
             }
 
-            ApllodbSuccess::ModificationResponse { session }
-            | ApllodbSuccess::DDLResponse { session }
-            | ApllodbSuccess::BeginTransactionResponse { session } => Ok(Session::from(session)),
+            ApllodbCommandSuccess::ModificationResponse { session }
+            | ApllodbCommandSuccess::DDLResponse { session }
+            | ApllodbCommandSuccess::BeginTransactionResponse { session } => {
+                Ok(Session::from(session))
+            }
 
-            ApllodbSuccess::CreateDatabaseResponse { session } => Ok(session),
+            ApllodbCommandSuccess::CreateDatabaseResponse { session } => Ok(session),
 
-            ApllodbSuccess::UseDatabaseResponse { session }
-            | ApllodbSuccess::TransactionEndResponse { session } => Ok(Session::from(session)),
+            ApllodbCommandSuccess::UseDatabaseResponse { session }
+            | ApllodbCommandSuccess::TransactionEndResponse { session } => {
+                Ok(Session::from(session))
+            }
         }
     }
 }

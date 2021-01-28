@@ -18,7 +18,7 @@ pub(crate) mod with_db;
 pub(crate) mod with_tx;
 pub(crate) mod without_db;
 
-use crate::{SessionWithDb, SessionWithTx, SessionWithoutDb};
+use crate::{SessionId, SessionWithDb, SessionWithTx, SessionWithoutDb};
 
 use serde::{Deserialize, Serialize};
 
@@ -48,5 +48,16 @@ impl From<SessionWithDb> for Session {
 impl From<SessionWithTx> for Session {
     fn from(s: SessionWithTx) -> Self {
         Session::WithTx(s)
+    }
+}
+
+impl Session {
+    /// get session ID
+    pub fn get_id(&self) -> &SessionId {
+        match self {
+            Session::WithoutDb(s) => s.get_id(),
+            Session::WithDb(s) => s.get_id(),
+            Session::WithTx(s) => s.get_id(),
+        }
     }
 }
