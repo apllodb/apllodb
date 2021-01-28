@@ -142,6 +142,7 @@ dependencies = [
  "env_logger",
  "futures",
  "log",
+ "pretty_assertions",
  "serde",
 ]
 
