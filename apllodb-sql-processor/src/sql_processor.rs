@@ -5,7 +5,9 @@ pub(crate) mod success;
 
 use std::rc::Rc;
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Session};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, Session,
+};
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
@@ -31,15 +33,21 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
     ///   - requesting an operation that uses an open database with [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
     /// - [FeatureNotSupported](apllodb-shared-components::ApllodbErrorKind::FeatureNotSupported) when:
     ///   - the sql should be processed properly but apllodb currently doesn't
-    pub async fn run(&self, session: Session, sql: &str) -> ApllodbResult<SQLProcessorSuccess> {
+    pub async fn run(
+        &self,
+        session: Session,
+        sql: &str,
+    ) -> ApllodbSessionResult<SQLProcessorSuccess> {
         let parser = ApllodbSqlParser::default();
 
         match parser.parse(sql) {
-            Err(e) => Err(ApllodbError::new(
+            Err(e) => Err(
+                ApllodbSessionError::new(
+                ApllodbError::new(
                 ApllodbErrorKind::SyntaxError,
                 format!("failed to parse SQL: {}", sql),
                 Some(Box::new(e)),
-            )),
+            ), session)),
             Ok(ApllodbAst(command)) => match session {
                 Session::WithTx(sess) => match command {
                     apllodb_ast::Command::CommitTransactionCommandVariant => {

@@ -1,29 +1,29 @@
 use apllodb_sql_processor::SQLProcessorSuccess;
 
-use crate::ApllodbSuccess;
+use crate::ApllodbCommandSuccess;
 
 pub(in crate::apllodb_server::use_case) fn to_server_resp(
     sql_processor_success: SQLProcessorSuccess,
-) -> ApllodbSuccess {
+) -> ApllodbCommandSuccess {
     match sql_processor_success {
         SQLProcessorSuccess::QueryRes { session, records } => {
-            ApllodbSuccess::QueryResponse { session, records }
+            ApllodbCommandSuccess::QueryResponse { session, records }
         }
         SQLProcessorSuccess::ModificationRes { session } => {
-            ApllodbSuccess::ModificationResponse { session }
+            ApllodbCommandSuccess::ModificationResponse { session }
         }
-        SQLProcessorSuccess::DDLRes { session } => ApllodbSuccess::DDLResponse { session },
+        SQLProcessorSuccess::DDLRes { session } => ApllodbCommandSuccess::DDLResponse { session },
         SQLProcessorSuccess::CreateDatabaseRes { session } => {
-            ApllodbSuccess::CreateDatabaseResponse { session }
+            ApllodbCommandSuccess::CreateDatabaseResponse { session }
         }
         SQLProcessorSuccess::UseDatabaseRes { session } => {
-            ApllodbSuccess::UseDatabaseResponse { session }
+            ApllodbCommandSuccess::UseDatabaseResponse { session }
         }
         SQLProcessorSuccess::BeginTransactionRes { session } => {
-            ApllodbSuccess::BeginTransactionResponse { session }
+            ApllodbCommandSuccess::BeginTransactionResponse { session }
         }
         SQLProcessorSuccess::TransactionEndRes { session } => {
-            ApllodbSuccess::TransactionEndResponse { session }
+            ApllodbCommandSuccess::TransactionEndResponse { session }
         }
     }
 }

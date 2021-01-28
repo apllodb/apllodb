@@ -4,7 +4,9 @@ use crate::sqlite::{
     sqlite_resource_pool::{db_pool::SqliteDatabasePool, tx_pool::SqliteTxPool},
     transaction::sqlite_tx::SqliteTx,
 };
-use apllodb_shared_components::{SessionWithDb, SessionWithTx};
+use apllodb_shared_components::{
+    ApllodbResult, ApllodbSessionError, Session, SessionWithDb, SessionWithTx,
+};
 use apllodb_storage_engine_interface::WithDbMethods;
 use futures::FutureExt;
 
@@ -27,15 +29,23 @@ impl WithDbMethodsImpl {
 
 impl WithDbMethods for WithDbMethodsImpl {
     fn begin_transaction(self, session: SessionWithDb) -> FutRes<SessionWithTx> {
-        async move {
-            let db_pool = self.db_pool.borrow();
+        async fn helper(
+            slf: WithDbMethodsImpl,
+            session: SessionWithDb,
+        ) -> ApllodbResult<SessionWithTx> {
+            let sid = session.get_id().clone();
+            let db_pool = slf.db_pool.borrow();
 
             let db = db_pool.get_db(session.get_id())?;
             let tx = SqliteTx::begin(db).await?;
-
-            self.tx_pool.borrow_mut().insert_tx(session.get_id(), tx)?;
-
+            slf.tx_pool.borrow_mut().insert_tx(&sid, tx)?;
             Ok(session.upgrade())
+        }
+
+        async move {
+            helper(self, session)
+                .await
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))
         }
         .boxed_local()
     }

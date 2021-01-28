@@ -15,8 +15,8 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionWithDb,
-    SessionWithTx, TableConstraints, TableName,
+    AlterTableAction, ApllodbSessionError, ColumnDefinition, ColumnName, Expression,
+    RecordIterator, Session, SessionWithDb, SessionWithTx, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
@@ -45,8 +45,13 @@ impl WithTxMethods for WithTxMethodsImpl {
     fn commit_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
         async move {
             let mut tx_pool = self.tx_pool.borrow_mut();
-            let tx = tx_pool.remove_tx(session.get_id())?;
-            tx.borrow_mut().commit().await?;
+            let tx = tx_pool
+                .remove_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
+            tx.borrow_mut()
+                .commit()
+                .await
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
             Ok(session.downgrade())
         }
         .boxed_local()
@@ -55,8 +60,13 @@ impl WithTxMethods for WithTxMethodsImpl {
     fn abort_transaction(self, session: SessionWithTx) -> FutRes<SessionWithDb> {
         async move {
             let mut tx_pool = self.tx_pool.borrow_mut();
-            let tx = tx_pool.remove_tx(session.get_id())?;
-            tx.borrow_mut().abort().await?;
+            let tx = tx_pool
+                .remove_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
+            tx.borrow_mut()
+                .abort()
+                .await
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
             Ok(session.downgrade())
         }
         .boxed_local()
@@ -74,7 +84,9 @@ impl WithTxMethods for WithTxMethodsImpl {
     ) -> FutRes<SessionWithTx> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool
+                .get_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = CreateTableUseCaseInput::new(
@@ -89,7 +101,8 @@ impl WithTxMethods for WithTxMethodsImpl {
                 &SqliteTx::version_repo(tx.clone()),
                 input,
             )
-            .await?;
+            .await
+            .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             Ok(session)
         }
@@ -104,7 +117,9 @@ impl WithTxMethods for WithTxMethodsImpl {
     ) -> FutRes<SessionWithTx> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool
+                .get_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = AlterTableUseCaseInput::new(&database_name, &table_name, &action);
@@ -113,7 +128,8 @@ impl WithTxMethods for WithTxMethodsImpl {
                 &SqliteTx::version_repo(tx.clone()),
                 input,
             )
-            .await?;
+            .await
+            .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             Ok(session)
         }
@@ -135,7 +151,9 @@ impl WithTxMethods for WithTxMethodsImpl {
     ) -> FutRes<(RecordIterator, SessionWithTx)> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool
+                .get_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = FullScanUseCaseInput::new(&database_name, &table_name, projection);
@@ -144,7 +162,8 @@ impl WithTxMethods for WithTxMethodsImpl {
                 &SqliteTx::version_repo(tx.clone()),
                 input,
             )
-            .await?;
+            .await
+            .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             Ok((RecordIterator::new(output.row_iter), session))
         }
@@ -159,7 +178,9 @@ impl WithTxMethods for WithTxMethodsImpl {
     ) -> FutRes<SessionWithTx> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool
+                .get_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = InsertUseCaseInput::new(&database_name, &table_name, records);
@@ -168,7 +189,8 @@ impl WithTxMethods for WithTxMethodsImpl {
                 &SqliteTx::version_repo(tx.clone()),
                 input,
             )
-            .await?;
+            .await
+            .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             Ok(session)
         }
@@ -183,7 +205,9 @@ impl WithTxMethods for WithTxMethodsImpl {
     ) -> FutRes<SessionWithTx> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool
+                .get_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = UpdateAllUseCaseInput::new(&database_name, &table_name, column_values);
@@ -192,7 +216,8 @@ impl WithTxMethods for WithTxMethodsImpl {
                 &SqliteTx::version_repo(tx.clone()),
                 input,
             )
-            .await?;
+            .await
+            .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             Ok(session)
         }
@@ -202,7 +227,9 @@ impl WithTxMethods for WithTxMethodsImpl {
     fn delete(self, session: SessionWithTx, table_name: TableName) -> FutRes<SessionWithTx> {
         async move {
             let tx_pool = self.tx_pool.borrow();
-            let tx = tx_pool.get_tx(session.get_id())?;
+            let tx = tx_pool
+                .get_tx(session.get_id())
+                .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             let database_name = tx.borrow().database_name().clone();
             let input = DeleteAllUseCaseInput::new(&database_name, &table_name);
@@ -211,7 +238,8 @@ impl WithTxMethods for WithTxMethodsImpl {
                 &SqliteTx::version_repo(tx.clone()),
                 input,
             )
-            .await?;
+            .await
+            .map_err(|e| ApllodbSessionError::new(e, Session::from(session)))?;
 
             Ok(session)
         }
