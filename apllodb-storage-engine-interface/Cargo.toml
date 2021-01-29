@@ -11,7 +11,7 @@ repository = "https://github.com/darwin-education/apllodb"
 version = "0.1.0"
 
 [features]
-test-support = ["mockall", "uuid", "once_cell"]
+test-support = ["mockall", "once_cell"]
 
 [dependencies]
 apllodb-shared-components = {path = "../apllodb-shared-components"}
@@ -23,7 +23,6 @@ futures = "0.3"
 mockall = {version = "0.9", optional = true}
 
 once_cell = {version = "1.5", optional = true}
-uuid = {version = "0.8", features = ["v4"], optional = true}
 
 [dev-dependencies]
 apllodb-storage-engine-interface = {path = ".", features = ["test-support"]}

@@ -28,27 +28,6 @@ impl VTableId {
 #[cfg(test)]
 impl VTableId {
     pub(crate) fn new_for_test() -> Self {
-        use rand::Rng;
-
-        let database_name = DatabaseName::new(
-            rand::thread_rng()
-                .sample_iter(&rand::distributions::Alphanumeric)
-                .map(char::from)
-                .filter(|c| ('a'..='z').contains(c))
-                .take(10)
-                .collect::<String>(),
-        )
-        .unwrap();
-        let table_name = TableName::new(
-            rand::thread_rng()
-                .sample_iter(&rand::distributions::Alphanumeric)
-                .map(char::from)
-                .filter(|c| ('a'..='z').contains(c))
-                .take(10)
-                .collect::<String>(),
-        )
-        .unwrap();
-
-        Self::new(&database_name, &table_name)
+        Self::new(&DatabaseName::random(), &TableName::random())
     }
 }

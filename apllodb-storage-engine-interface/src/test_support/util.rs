@@ -2,13 +2,11 @@ use crate::{StorageEngine, WithDbMethods, WithoutDbMethods};
 use apllodb_shared_components::{
     ApllodbResult, DatabaseName, Session, SessionWithDb, SessionWithTx, SessionWithoutDb,
 };
-use uuid::Uuid;
 
 pub async fn session_with_db<Engine: StorageEngine>(
     engine: &Engine,
 ) -> ApllodbResult<SessionWithDb> {
-    let db_name = format!("{}", Uuid::new_v4());
-    let db_name = DatabaseName::new(db_name)?;
+    let db_name = DatabaseName::random();
 
     let _ = engine
         .without_db()
