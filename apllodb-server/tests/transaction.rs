@@ -1,7 +1,7 @@
 mod sql_test;
 
-use apllodb_server::{test_support::test_setup, ApllodbCommandSuccess, ApllodbServer};
-use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, Session};
+use apllodb_server::test_support::test_setup;
+use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -30,6 +30,7 @@ async fn test_commit() {
         .add_steps(Steps::BeginTransaction)
         .add_step(Step::new("COMMIT", StepRes::Ok))
         .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new("COMMIT", StepRes::Ok))
         .add_step(Step::new(
             "COMMIT",
             StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
@@ -39,18 +40,16 @@ async fn test_commit() {
 }
 
 #[async_std::test]
-async fn test_abort() -> ApllodbResult<()> {
-    let server = ApllodbServer::default();
-    let session = server.session_with_tx().await?;
-
-    let sql = "ABORT";
-
-    matches!(
-        server
-            .command(Session::from(session), sql.to_string())
-            .await?,
-        ApllodbCommandSuccess::TransactionEndResponse {..}
-    );
-
-    Ok(())
+async fn test_abort() {
+    SqlTest::default()
+        .add_steps(Steps::BeginTransaction)
+        .add_step(Step::new("ABORT", StepRes::Ok))
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        // .add_step(Step::new("ABORT", StepRes::Ok))
+        .add_step(Step::new(
+            "ABORT",
+            StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+        ))
+        .run()
+        .await;
 }
