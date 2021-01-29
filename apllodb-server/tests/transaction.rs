@@ -45,7 +45,7 @@ async fn test_abort() {
         .add_steps(Steps::BeginTransaction)
         .add_step(Step::new("ABORT", StepRes::Ok))
         .add_step(Step::new("BEGIN", StepRes::Ok))
-        // .add_step(Step::new("ABORT", StepRes::Ok))
+        .add_step(Step::new("ABORT", StepRes::Ok))
         .add_step(Step::new(
             "ABORT",
             StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
