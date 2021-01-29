@@ -128,6 +128,16 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-features
+
+      - name: checks if client runs quickly
+        run: |
+          echo '' | ./target/debug/apllodb-client
+
       - name: cargo build --tests
         uses: actions-rs/cargo@v1
         with:
