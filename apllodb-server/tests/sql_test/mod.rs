@@ -12,18 +12,21 @@ pub struct SqlTest {
 }
 
 impl SqlTest {
-    pub fn add_step(&mut self, step: Step) {
+    pub fn add_step(mut self, step: Step) -> Self {
         self.steps.push(step);
+        self
     }
 
-    pub fn add_steps(&mut self, steps: Steps) {
+    #[allow(dead_code)] // seemingly every tests/*.rs must call this func not to be `dead_code`
+    pub fn add_steps(mut self, steps: Steps) -> Self {
         let steps: Vec<Step> = steps.into();
         for step in steps {
-            self.add_step(step);
+            self = self.add_step(step);
         }
+        self
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(self) {
         let mut cur_session = Session::from(SessionWithoutDb::default());
 
         for step in &self.steps {

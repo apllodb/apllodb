@@ -10,30 +10,32 @@ fn setup() {
 }
 
 #[async_std::test]
-async fn test_begin() {
-    let mut t = SqlTest::default();
-    t.add_steps(Steps::UseDatabase);
-    t.add_step(Step::new("BEGIN", StepRes::Ok));
-    t.add_step(Step::new(
-        "BEGIN",
-        StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
-    ));
-    t.run().await;
+async fn test_begin() -> ApllodbResult<()> {
+    SqlTest::default()
+        .add_steps(Steps::UseDatabase)
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new(
+            "BEGIN",
+            StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+        ))
+        .run()
+        .await;
+
+    Ok(())
 }
 
 #[async_std::test]
-async fn test_commit() -> ApllodbResult<()> {
-    let mut t = SqlTest::default();
-    t.add_steps(Steps::BeginTransaction);
-    t.add_step(Step::new("COMMIT", StepRes::Ok));
-    t.add_step(Step::new("BEGIN", StepRes::Ok));
-    t.add_step(Step::new(
-        "COMMIT",
-        StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
-    ));
-    t.run().await;
-
-    Ok(())
+async fn test_commit() {
+    SqlTest::default()
+        .add_steps(Steps::BeginTransaction)
+        .add_step(Step::new("COMMIT", StepRes::Ok))
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new(
+            "COMMIT",
+            StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+        ))
+        .run()
+        .await;
 }
 
 #[async_std::test]

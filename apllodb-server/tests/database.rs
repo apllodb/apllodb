@@ -11,26 +11,28 @@ fn setup() {
 
 #[async_std::test]
 async fn test_create_database() {
-    let mut t = SqlTest::default();
-    t.add_step(Step::new(
-        "CREATE DATABASE test_create_database",
-        StepRes::Ok,
-    ));
-    t.add_step(Step::new(
-        "CREATE DATABASE test_create_database",
-        StepRes::Err(ApllodbErrorKind::DuplicateDatabase),
-    ));
-    t.run().await;
+    SqlTest::default()
+        .add_step(Step::new(
+            "CREATE DATABASE test_create_database",
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            "CREATE DATABASE test_create_database",
+            StepRes::Err(ApllodbErrorKind::DuplicateDatabase),
+        ))
+        .run()
+        .await;
 }
 
 #[async_std::test]
 async fn test_use_database() {
-    let mut t = SqlTest::default();
-    t.add_step(Step::new(
-        "USE DATABASE test_use_database",
-        StepRes::Err(ApllodbErrorKind::UndefinedObject),
-    ));
-    t.add_step(Step::new("CREATE DATABASE test_use_database", StepRes::Ok));
-    t.add_step(Step::new("USE DATABASE test_use_database", StepRes::Ok));
-    t.run().await;
+    SqlTest::default()
+        .add_step(Step::new(
+            "USE DATABASE test_use_database",
+            StepRes::Err(ApllodbErrorKind::UndefinedObject),
+        ))
+        .add_step(Step::new("CREATE DATABASE test_use_database", StepRes::Ok))
+        .add_step(Step::new("USE DATABASE test_use_database", StepRes::Ok))
+        .run()
+        .await;
 }
