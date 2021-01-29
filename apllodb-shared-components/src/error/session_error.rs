@@ -12,8 +12,11 @@ pub type ApllodbSessionResult<T> = Result<T, ApllodbSessionError>;
 /// Used for server implementation to keep a session after getting error.
 #[derive(Debug, Serialize, Deserialize, new)]
 pub struct ApllodbSessionError {
-    err: ApllodbError,
-    session: Session,
+    /// Error
+    pub err: ApllodbError,
+
+    /// Session who causes this error
+    pub session: Session,
 }
 
 impl Error for ApllodbSessionError {
