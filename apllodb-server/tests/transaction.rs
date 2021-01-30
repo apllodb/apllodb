@@ -214,3 +214,53 @@ async fn test_transaction_dml_isolation() {
 
     // TODO UPDATE 実装ができたら non-repeatable read のテストを追加
 }
+
+#[async_std::test]
+async fn test_too_long_lock_wait_regarded_as_deadlock() {
+    SqlTestSessionAB::default()
+        .add_steps(SessionAB::A, Steps::CreateTablePeople)
+        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
+        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
+        .add_steps(SessionAB::B, Steps::BeginTransaction)
+        .add_step(
+            SessionAB::A,
+            Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
+        )
+        .add_step(
+            // wait for A's transaction to end
+            SessionAB::B,
+            Step::new(
+                "INSERT INTO people (id, age) VALUES (1, 25)",
+                StepRes::Err(ApllodbErrorKind::DeadlockDetected),
+            ),
+        )
+        .run()
+        .await;
+}
+
+#[async_std::test]
+async fn test_latter_tx_is_waited() {
+    SqlTestSessionAB::default()
+        .add_steps(SessionAB::A, Steps::CreateTablePeople)
+        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
+        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
+        .add_steps(SessionAB::B, Steps::BeginTransaction)
+        .add_step(
+            SessionAB::B,
+            Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
+        )
+        .add_step(
+            // wait for B's transaction to end; then got uniqueness error
+            SessionAB::A,
+            Step::new(
+                "INSERT INTO people (id, age) VALUES (1, 25)",
+                StepRes::Err(ApllodbErrorKind::UniqueViolation),
+            ),
+        )
+        .add_step(
+            SessionAB::B,
+            Step::new("COMMIT", StepRes::Ok),
+        )
+        .run()
+        .await;
+}
