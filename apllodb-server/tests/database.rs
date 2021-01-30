@@ -2,7 +2,7 @@ mod sql_test;
 
 use apllodb_server::test_support::test_setup;
 use apllodb_shared_components::ApllodbErrorKind;
-use sql_test::{SqlTest, Step, StepRes};
+use sql_test::{SessionAB, SqlTest, SqlTestSessionAB, Step, StepRes};
 
 #[ctor::ctor]
 fn setup() {
@@ -20,7 +20,7 @@ async fn test_create_database() {
             "CREATE DATABASE test_create_database",
             StepRes::Err(ApllodbErrorKind::DuplicateDatabase),
         ))
-        .run()
+        .run_with_manual_db_control()
         .await;
 }
 
@@ -33,6 +33,46 @@ async fn test_use_database() {
         ))
         .add_step(Step::new("CREATE DATABASE test_use_database", StepRes::Ok))
         .add_step(Step::new("USE DATABASE test_use_database", StepRes::Ok))
-        .run()
+        .run_with_manual_db_control()
+        .await;
+}
+
+#[async_std::test]
+async fn test_create_database_session_ab() {
+    SqlTestSessionAB::default()
+        .add_step(
+            SessionAB::A,
+            Step::new(
+                "CREATE DATABASE test_create_database_session_ab",
+                StepRes::Ok,
+            ),
+        )
+        .add_step(
+            SessionAB::B,
+            Step::new(
+                "CREATE DATABASE test_create_database_session_ab",
+                StepRes::Err(ApllodbErrorKind::DuplicateDatabase),
+            ),
+        )
+        .run_with_manual_db_control()
+        .await;
+}
+
+#[async_std::test]
+async fn test_use_database_session_ab() {
+    SqlTestSessionAB::default()
+        .add_step(
+            SessionAB::A,
+            Step::new("CREATE DATABASE test_use_database_session_ab", StepRes::Ok),
+        )
+        .add_step(
+            SessionAB::B,
+            Step::new("USE DATABASE test_use_database_session_ab", StepRes::Ok),
+        )
+        .add_step(
+            SessionAB::A,
+            Step::new("USE DATABASE test_use_database_session_ab", StepRes::Ok),
+        )
+        .run_with_manual_db_control()
         .await;
 }
