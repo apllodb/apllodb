@@ -52,6 +52,50 @@ async fn test_abort() {
 }
 
 #[async_std::test]
+async fn test_commit_saves_records() {
+    SqlTest::default()
+        .add_steps(Steps::CreateTablePeople)
+        .add_step(Step::new(
+            "INSERT INTO people (id, age) VALUES (1, 13)",
+            StepRes::Ok,
+        ))
+        .add_step(Step::new("COMMIT", StepRes::Ok))
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new(
+            "SELECT id, age FROM people",
+            StepRes::OkQuery(Box::new(|records| {
+                assert_eq!(records.count(), 1);
+                Ok(())
+            })),
+        ))
+        .run()
+        .await;
+}
+
+#[async_std::test]
+async fn test_abort_discards_records() {
+    SqlTest::default()
+        .add_steps(Steps::CreateTablePeople)
+        .add_step(Step::new("COMMIT", StepRes::Ok))
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new(
+            "INSERT INTO people (id, age) VALUES (1, 13)",
+            StepRes::Ok,
+        ))
+        .add_step(Step::new("ABORT", StepRes::Ok))
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new(
+            "SELECT id, age FROM people",
+            StepRes::OkQuery(Box::new(|records| {
+                assert_eq!(records.count(), 0);
+                Ok(())
+            })),
+        ))
+        .run()
+        .await;
+}
+
+#[async_std::test]
 async fn test_begin_session_ab() {
     SqlTestSessionAB::default()
         .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
