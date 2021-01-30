@@ -1,9 +1,8 @@
 mod step;
 
 pub use self::step::{step_res::StepRes, steps::Steps, Step};
-use apllodb_server::{ApllodbCommandSuccess, ApllodbServer};
+use apllodb_server::ApllodbServer;
 use apllodb_shared_components::{Session, SessionWithoutDb};
-use pretty_assertions::assert_eq;
 
 #[derive(Debug, Default)]
 pub struct SqlTest {
@@ -28,75 +27,8 @@ impl SqlTest {
 
     pub async fn run(self) {
         let mut cur_session = Session::from(SessionWithoutDb::default());
-
         for step in &self.steps {
-            match self.server.command(cur_session, step.sql()).await {
-                Ok(success) => match success {
-                    ApllodbCommandSuccess::QueryResponse {
-                        session: sess,
-                        records,
-                    } => {
-                        cur_session = Session::from(sess);
-                        match step.expected() {
-                            StepRes::OkQuery(expected_records) => {
-                                assert_eq!(expected_records, records);
-                            }
-
-                            StepRes::Ok => {
-                                panic!(
-                                    "use StepRes::OkQuery for Step with SELECT SQL - step: {:#?}",
-                                    step
-                                )
-                            }
-                            StepRes::Err(_) => {
-                                panic!("SELECT SQL has unexpectedly succeeded - step: {:#?}", step)
-                            }
-                        }
-                    }
-
-                    ApllodbCommandSuccess::ModificationResponse { session }
-                    | ApllodbCommandSuccess::DDLResponse { session }
-                    | ApllodbCommandSuccess::BeginTransactionResponse { session } => {
-                        cur_session = Session::from(session);
-                        match step.expected() {
-                            StepRes::Ok => {}
-
-                            StepRes::OkQuery(_) => {
-                                panic!(
-                                    "StepRes::OkQuery is only for SELECT SQL - step: {:#?}",
-                                    step
-                                )
-                            }
-                            StepRes::Err(_) => {
-                                panic!("SQL has unexpectedly succeeded - step: {:#?}", step)
-                            }
-                        }
-                    }
-
-                    ApllodbCommandSuccess::CreateDatabaseResponse { session } => {
-                        cur_session = session;
-                    }
-
-                    ApllodbCommandSuccess::UseDatabaseResponse { session }
-                    | ApllodbCommandSuccess::TransactionEndResponse { session } => {
-                        cur_session = Session::from(session);
-                    }
-                },
-                Err(e) => {
-                    cur_session = e.session;
-                    let e = e.err;
-
-                    match step.expected() {
-                        StepRes::Err(kind) => {
-                            assert_eq!(&kind, e.kind());
-                        }
-                        _ => panic!(
-                            "unexpected error {:#?} on ApllodbServer::command() - step: {:#?}",
-                            e, step
-                        ),
-                    }
-                }
-            }
+            cur_session = step.run(&self.server, cur_session).await;
         }
     }
 }
