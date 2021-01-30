@@ -83,18 +83,17 @@ async fn test_transaction_ddl_isolation() {
             SessionAB::A,
             Step::new("INSERT INTO t (id) VALUES (1)", StepRes::Ok),
         )
-        .add_step( // No "Dirty read"
+        .add_step(
+            // No "Dirty read"
             SessionAB::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
                 StepRes::Err(ApllodbErrorKind::UndefinedTable),
             ),
         )
+        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
         .add_step(
-            SessionAB::A,
-            Step::new("COMMIT", StepRes::Ok),
-        )
-        .add_step( // No "Phantom read"
+            // No "Phantom read"
             SessionAB::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
@@ -104,5 +103,16 @@ async fn test_transaction_ddl_isolation() {
         .run()
         .await;
 
-        // TODO ALTER 実装ができたら non-repeatable read のテストを追加
+    // TODO ALTER 実装ができたら non-repeatable read のテストを追加
+}
+
+#[async_std::test]
+async fn test_transaction_dml_isolation() {
+    SqlTestSessionAB::default()
+        .add_steps(SessionAB::A, Steps::CreateTablePeople)
+        .add_steps(SessionAB::B, Steps::BeginTransaction)
+        .run()
+        .await;
+
+    // TODO UPDATE 実装ができたら non-repeatable read のテストを追加
 }

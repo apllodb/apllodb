@@ -6,6 +6,7 @@ use super::{Step, StepRes};
 pub enum Steps {
     UseDatabase,
     BeginTransaction,
+    CreateTablePeople,
 }
 
 impl From<Steps> for Vec<Step> {
@@ -27,6 +28,11 @@ impl From<Steps> for Vec<Step> {
             Steps::BeginTransaction => {
                 let mut steps = Self::from(Steps::UseDatabase);
                 steps.push(Step::new("BEGIN", StepRes::Ok));
+                steps
+            }
+            Steps::CreateTablePeople => {
+                let mut steps = Self::from(Steps::BeginTransaction);
+                steps.push(Step::new("CREATE TABLE people (id INTEGER NOT NULL, age INTEGER NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
                 steps
             }
         }
