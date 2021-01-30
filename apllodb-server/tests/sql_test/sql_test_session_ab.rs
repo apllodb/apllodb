@@ -79,12 +79,10 @@ impl SqlTestSessionAB {
         for (step, session_ab) in &self.steps {
             match session_ab {
                 SessionAB::A => {
-                    println!("A: step: {:?}", step);
                     let session_a = session_a_fut.await;
                     session_a_fut = step.run(&self.server, session_a).boxed_local();
                 }
                 SessionAB::B => {
-                    println!("B: step: {:?}", step);
                     let session_b = session_b_fut.await;
                     session_b_fut = step.run(&self.server, session_b).boxed_local();
                 }

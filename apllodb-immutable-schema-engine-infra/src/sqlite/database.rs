@@ -2,7 +2,7 @@ use crate::error::InfraError;
 
 use super::transaction::sqlite_tx::vtable::dao::VTableDao;
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName};
-use sqlx::{migrate::MigrateDatabase, sqlite::SqliteJournalMode, Connection, Executor};
+use sqlx::{migrate::MigrateDatabase, Connection};
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
 /// Database context.
@@ -82,13 +82,8 @@ impl SqliteDatabase {
         let opt = sqlx::sqlite::SqliteConnectOptions::from_str(&path)
             .map_err(InfraError::from)?
             .create_if_missing(false)
-            .journal_mode(SqliteJournalMode::Delete) // default WAL mode does not wait for another transaction to end on conflict (busy wait behavior)
             .busy_timeout(Duration::from_secs(1));
         let pool = sqlx::SqlitePool::connect_with(opt)
-            .await
-            .map_err(InfraError::from)?;
-
-        pool.execute("pragma busy_timewait=1000;")
             .await
             .map_err(InfraError::from)?;
 
