@@ -1,7 +1,7 @@
 mod sql_test;
 
 use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::ApllodbErrorKind;
 use sql_test::{SessionAB, SqlTest, SqlTestSessionAB, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -10,7 +10,7 @@ fn setup() {
 }
 
 #[async_std::test]
-async fn test_begin() -> ApllodbResult<()> {
+async fn test_begin() {
     SqlTest::default()
         .add_steps(Steps::UseDatabase)
         .add_step(Step::new("BEGIN", StepRes::Ok))
@@ -20,8 +20,6 @@ async fn test_begin() -> ApllodbResult<()> {
         ))
         .run()
         .await;
-
-    Ok(())
 }
 
 #[async_std::test]
@@ -55,7 +53,7 @@ async fn test_abort() {
 }
 
 #[async_std::test]
-async fn test_begin_session_ab() -> ApllodbResult<()> {
+async fn test_begin_session_ab() {
     SqlTestSessionAB::default()
         .add_steps(SessionAB::A, Steps::UseDatabase)
         .add_steps(SessionAB::B, Steps::UseDatabase)
@@ -70,6 +68,4 @@ async fn test_begin_session_ab() -> ApllodbResult<()> {
         )
         .run()
         .await;
-
-    Ok(())
 }
