@@ -1,5 +1,5 @@
 use apllodb_server::ApllodbServer;
-use apllodb_shared_components::{DatabaseName, Session};
+use apllodb_shared_components::{DatabaseName, Session, SessionWithoutDb};
 
 use super::{session_with_db, Step, Steps};
 
@@ -50,6 +50,23 @@ impl SqlTestSessionAB {
         let mut session_a =
             Session::from(session_with_db(&self.server, database_name.clone()).await);
         let mut session_b = Session::from(session_with_db(&self.server, database_name).await);
+
+        for (step, session_ab) in &self.steps {
+            match session_ab {
+                SessionAB::A => {
+                    session_a = step.run(&self.server, session_a).await;
+                }
+                SessionAB::B => {
+                    session_b = step.run(&self.server, session_b).await;
+                }
+            }
+        }
+    }
+
+    #[allow(dead_code)]
+    pub async fn run_with_manual_db_control(self) {
+        let mut session_a = Session::from(SessionWithoutDb::default());
+        let mut session_b = Session::from(SessionWithoutDb::default());
 
         for (step, session_ab) in &self.steps {
             match session_ab {
