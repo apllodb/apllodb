@@ -69,3 +69,42 @@ async fn test_begin_session_ab() {
         .run()
         .await;
 }
+
+#[async_std::test]
+async fn test_transaction_ddl_isolation() {
+    SqlTestSessionAB::default()
+        .add_steps(SessionAB::A, Steps::UseDatabase)
+        .add_steps(SessionAB::B, Steps::UseDatabase)
+        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
+        .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
+        .add_step(
+            SessionAB::A,
+            Step::new("CREATE TABLE t (id INTEGER, PRIMARY KEY (id))", StepRes::Ok),
+        )
+        .add_step(
+            SessionAB::A,
+            Step::new("INSERT INTO t (id) VALUES (1)", StepRes::Ok),
+        )
+        .add_step( // No "Dirty read"
+            SessionAB::B,
+            Step::new(
+                "INSERT INTO t (id) VALUES (2)",
+                StepRes::Err(ApllodbErrorKind::UndefinedTable),
+            ),
+        )
+        .add_step(
+            SessionAB::A,
+            Step::new("COMMIT", StepRes::Ok),
+        )
+        .add_step( // No "Phantom read"
+            SessionAB::B,
+            Step::new(
+                "INSERT INTO t (id) VALUES (2)",
+                StepRes::Err(ApllodbErrorKind::UndefinedTable),
+            ),
+        )
+        .run()
+        .await;
+
+        // TODO ALTER 実装ができたら non-repeatable read のテストを追加
+}
