@@ -110,6 +110,11 @@ impl SqliteTx {
     ) -> ApllodbResult<SqliteRowid> {
         debug!("SqliteTx::execute():\n    {}", sql);
 
+        sqlx::query("pragma busy_timeout=1000")
+            .execute(self.sqlx_tx.as_mut().unwrap())
+            .await
+            .map_err(InfraError::from)?;
+
         let done = sqlx::query(sql)
             .execute(self.sqlx_tx.as_mut().unwrap())
             .await

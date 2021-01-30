@@ -257,10 +257,7 @@ async fn test_latter_tx_is_waited() {
                 StepRes::Err(ApllodbErrorKind::UniqueViolation),
             ),
         )
-        .add_step(
-            SessionAB::B,
-            Step::new("COMMIT", StepRes::Ok),
-        )
+        .add_step(SessionAB::B, Step::new("COMMIT", StepRes::Ok))
         .run()
         .await;
 }
