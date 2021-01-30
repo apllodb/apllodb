@@ -73,10 +73,8 @@ async fn test_begin_session_ab() {
 #[async_std::test]
 async fn test_transaction_ddl_isolation() {
     SqlTestSessionAB::default()
-        .add_steps(SessionAB::A, Steps::UseDatabase)
-        .add_steps(SessionAB::B, Steps::UseDatabase)
-        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
-        .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
+        .add_steps(SessionAB::A, Steps::BeginTransaction)
+        .add_steps(SessionAB::B, Steps::BeginTransaction)
         .add_step(
             SessionAB::A,
             Step::new("CREATE TABLE t (id INTEGER, PRIMARY KEY (id))", StepRes::Ok),
