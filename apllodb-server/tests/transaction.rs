@@ -2,7 +2,7 @@ mod sql_test;
 
 use apllodb_server::test_support::test_setup;
 use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
-use sql_test::{SqlTest, Step, StepRes, Steps};
+use sql_test::{SessionAB, SqlTest, SqlTestSessionAB, Step, StepRes, Steps};
 
 #[ctor::ctor]
 fn setup() {
@@ -52,4 +52,24 @@ async fn test_abort() {
         ))
         .run()
         .await;
+}
+
+#[async_std::test]
+async fn test_begin_session_ab() -> ApllodbResult<()> {
+    SqlTestSessionAB::default()
+        .add_steps(SessionAB::A, Steps::UseDatabase)
+        .add_steps(SessionAB::B, Steps::UseDatabase)
+        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
+        .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
+        .add_step(
+            SessionAB::A,
+            Step::new(
+                "BEGIN",
+                StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+            ),
+        )
+        .run()
+        .await;
+
+    Ok(())
 }
