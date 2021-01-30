@@ -1,6 +1,7 @@
-pub(crate) mod steps;
+use self::step_res::StepRes;
 
-use apllodb_shared_components::{ApllodbErrorKind, RecordIterator};
+pub(crate) mod step_res;
+pub(crate) mod steps;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Step {
@@ -23,11 +24,4 @@ impl Step {
     pub(super) fn expected(&self) -> StepRes {
         self.expected.clone()
     }
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub enum StepRes {
-    OkQuery(RecordIterator), // TODO レコードまるごとだと比較面倒かも。 |record| ... なクロージャーを取って、assert! を中で書かせるくらいが丁度いい？
-    Ok,
-    Err(ApllodbErrorKind),
 }

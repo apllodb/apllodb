@@ -1,6 +1,6 @@
 mod step;
 
-pub use self::step::{steps::Steps, Step, StepRes};
+pub use self::step::{step_res::StepRes, steps::Steps, Step};
 use apllodb_server::{ApllodbCommandSuccess, ApllodbServer};
 use apllodb_shared_components::{Session, SessionWithoutDb};
 use pretty_assertions::assert_eq;
