@@ -1,4 +1,4 @@
-mod sql_test;
+mod sqltest;
 mod sql_test_session_ab;
 mod step;
 
@@ -6,7 +6,7 @@ use apllodb_server::{ApllodbCommandSuccess, ApllodbServer};
 use apllodb_shared_components::{
     ApllodbErrorKind, DatabaseName, Session, SessionWithDb, SessionWithoutDb,
 };
-pub use sql_test::SqlTest;
+pub use sqltest::SqlTest;
 pub use sql_test_session_ab::{SessionAB, SqlTestSessionAB};
 pub use step::{step_res::StepRes, steps::Steps, Step};
 
