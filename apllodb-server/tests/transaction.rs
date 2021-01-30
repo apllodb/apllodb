@@ -12,7 +12,7 @@ fn setup() {
 #[async_std::test]
 async fn test_begin() {
     SqlTest::default()
-        .add_steps(Steps::UseDatabase)
+
         .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             "BEGIN",
@@ -55,8 +55,6 @@ async fn test_abort() {
 #[async_std::test]
 async fn test_begin_session_ab() {
     SqlTestSessionAB::default()
-        .add_steps(SessionAB::A, Steps::UseDatabase)
-        .add_steps(SessionAB::B, Steps::UseDatabase)
         .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
         .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
         .add_step(
@@ -100,56 +98,62 @@ async fn test_transaction_ddl_isolation() {
                 StepRes::Err(ApllodbErrorKind::UndefinedTable),
             ),
         )
+        .add_step(SessionAB::B, Step::new("COMMIT", StepRes::Ok))
+        .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
+        .add_step(
+            SessionAB::B,
+            Step::new("INSERT INTO t (id) VALUES (2)", StepRes::Ok),
+        )
         .run()
         .await;
 
     // TODO ALTER 実装ができたら non-repeatable read のテストを追加
 }
 
-#[async_std::test]
-async fn test_transaction_dml_isolation() {
-    SqlTestSessionAB::default()
-        .add_steps(SessionAB::A, Steps::CreateTablePeople)
-        .add_steps(SessionAB::B, Steps::BeginTransaction)
-        .add_step(
-            SessionAB::A,
-            Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
-        )
-        .add_step(
-            SessionAB::A,
-            Step::new(
-                "SELECT id, age FROM people",
-                StepRes::OkQuery(Box::new(|records| {
-                    assert_eq!(records.count(), 1);
-                    Ok(())
-                })),
-            ),
-        )
-        .add_step(
-            // No "Dirty read"
-            SessionAB::B,
-            Step::new(
-                "SELECT id, age FROM people",
-                StepRes::OkQuery(Box::new(|records| {
-                    assert_eq!(records.count(), 0);
-                    Ok(())
-                })),
-            ),
-        )
-        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
-        .add_step(
-            // No "Phantom read"
-            SessionAB::B,
-            Step::new(
-                "SELECT id, age FROM people",
-                StepRes::OkQuery(Box::new(|records| {
-                    assert_eq!(records.count(), 0);
-                    Ok(())
-                })),
-            ),
-        )
-        .run()
-        .await;
+// #[async_std::test]
+// async fn test_transaction_dml_isolation() {
+//     SqlTestSessionAB::default()
+//         .add_steps(SessionAB::A, Steps::CreateTablePeople)
+//         .add_steps(SessionAB::B, Steps::BeginTransaction)
+//         .add_step(
+//             SessionAB::A,
+//             Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
+//         )
+//         .add_step(
+//             SessionAB::A,
+//             Step::new(
+//                 "SELECT id, age FROM people",
+//                 StepRes::OkQuery(Box::new(|records| {
+//                     assert_eq!(records.count(), 1);
+//                     Ok(())
+//                 })),
+//             ),
+//         )
+//         .add_step(
+//             // No "Dirty read"
+//             SessionAB::B,
+//             Step::new(
+//                 "SELECT id, age FROM people",
+//                 StepRes::OkQuery(Box::new(|records| {
+//                     assert_eq!(records.count(), 0);
+//                     Ok(())
+//                 })),
+//             ),
+//         )
+//         .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
+//         .add_step(
+//             // No "Phantom read"
+//             SessionAB::B,
+//             Step::new(
+//                 "SELECT id, age FROM people",
+//                 StepRes::OkQuery(Box::new(|records| {
+//                     assert_eq!(records.count(), 0);
+//                     Ok(())
+//                 })),
+//             ),
+//         )
+//         .run()
+//         .await;
 
-    // TODO UPDATE 実装ができたら non-repeatable read のテストを追加
-}
+//     // TODO UPDATE 実装ができたら non-repeatable read のテストを追加
+// }

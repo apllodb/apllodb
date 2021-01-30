@@ -1,7 +1,7 @@
 use apllodb_server::ApllodbServer;
-use apllodb_shared_components::{Session, SessionWithoutDb};
+use apllodb_shared_components::{DatabaseName, Session};
 
-use super::{Step, Steps};
+use super::{session_with_db, Step, Steps};
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
@@ -10,13 +10,26 @@ pub enum SessionAB {
     B,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SqlTestSessionAB {
     server: ApllodbServer,
     steps: Vec<(Step, SessionAB)>,
+    database_name: DatabaseName,
+}
+
+impl Default for SqlTestSessionAB {
+    fn default() -> Self {
+        Self {
+            server: ApllodbServer::default(),
+            steps: vec![],
+            database_name: DatabaseName::random(),
+        }
+    }
 }
 
 impl SqlTestSessionAB {
+    /// NOTE: do not pass database command like "CREATE DATABASE" / "USE DATABASE" / ...
+    /// Database is automatically created / used in run().
     pub fn add_step(mut self, session_ab: SessionAB, step: Step) -> Self {
         self.steps.push((step, session_ab));
         self
@@ -33,8 +46,10 @@ impl SqlTestSessionAB {
 
     #[allow(dead_code)]
     pub async fn run(self) {
-        let mut session_a = Session::from(SessionWithoutDb::default());
-        let mut session_b = Session::from(SessionWithoutDb::default());
+        let database_name = DatabaseName::random();
+        let mut session_a =
+            Session::from(session_with_db(&self.server, database_name.clone()).await);
+        let mut session_b = Session::from(session_with_db(&self.server, database_name).await);
 
         for (step, session_ab) in &self.steps {
             match session_ab {

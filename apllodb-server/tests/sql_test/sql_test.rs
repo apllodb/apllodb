@@ -1,7 +1,7 @@
 use apllodb_server::ApllodbServer;
-use apllodb_shared_components::{Session, SessionWithoutDb};
+use apllodb_shared_components::{DatabaseName, Session};
 
-use super::{Step, Steps};
+use super::{session_with_db, Step, Steps};
 
 #[derive(Debug, Default)]
 pub struct SqlTest {
@@ -10,6 +10,8 @@ pub struct SqlTest {
 }
 
 impl SqlTest {
+    /// NOTE: do not pass database command like "CREATE DATABASE" / "USE DATABASE" / ...
+    /// Database is automatically created / used in run().
     pub fn add_step(mut self, step: Step) -> Self {
         self.steps.push(step);
         self
@@ -25,7 +27,8 @@ impl SqlTest {
     }
 
     pub async fn run(self) {
-        let mut cur_session = Session::from(SessionWithoutDb::default());
+        let mut cur_session =
+            Session::from(session_with_db(&self.server, DatabaseName::random()).await);
         for step in &self.steps {
             cur_session = step.run(&self.server, cur_session).await;
         }
