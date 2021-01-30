@@ -6,7 +6,7 @@ use self::step_res::StepRes;
 pub(crate) mod step_res;
 pub(crate) mod steps;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Debug)]
 pub struct Step {
     sql: String,
     expected: StepRes,
@@ -28,9 +28,9 @@ impl Step {
                     records,
                 } => {
                     match &self.expected {
-                        StepRes::OkQuery(expected_records) => {
-                            assert_eq!(expected_records, &records);
-                        }
+                        StepRes::OkQuery(f) => f(records).unwrap_or_else(|e| {
+                            panic!("closure in StepRes::OkQuery caused error: {:#?}", e)
+                        }),
 
                         StepRes::Ok => {
                             panic!(

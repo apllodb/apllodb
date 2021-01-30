@@ -111,6 +111,43 @@ async fn test_transaction_dml_isolation() {
     SqlTestSessionAB::default()
         .add_steps(SessionAB::A, Steps::CreateTablePeople)
         .add_steps(SessionAB::B, Steps::BeginTransaction)
+        .add_step(
+            SessionAB::A,
+            Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
+        )
+        .add_step(
+            SessionAB::A,
+            Step::new(
+                "SELECT id, age FROM people",
+                StepRes::OkQuery(Box::new(|records| {
+                    assert_eq!(records.count(), 1);
+                    Ok(())
+                })),
+            ),
+        )
+        .add_step(
+            // No "Dirty read"
+            SessionAB::B,
+            Step::new(
+                "SELECT id, age FROM people",
+                StepRes::OkQuery(Box::new(|records| {
+                    assert_eq!(records.count(), 0);
+                    Ok(())
+                })),
+            ),
+        )
+        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
+        .add_step(
+            // No "Phantom read"
+            SessionAB::B,
+            Step::new(
+                "SELECT id, age FROM people",
+                StepRes::OkQuery(Box::new(|records| {
+                    assert_eq!(records.count(), 0);
+                    Ok(())
+                })),
+            ),
+        )
         .run()
         .await;
 
