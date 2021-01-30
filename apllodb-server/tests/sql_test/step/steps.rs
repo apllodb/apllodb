@@ -25,18 +25,9 @@ impl From<Steps> for Vec<Step> {
                 ]
             }
             Steps::BeginTransaction => {
-                let database_name = DatabaseName::random();
-                vec![
-                    Step::new(
-                        format!("CREATE DATABASE {}", database_name.as_str()),
-                        StepRes::Ok,
-                    ),
-                    Step::new(
-                        format!("USE DATABASE {}", database_name.as_str()),
-                        StepRes::Ok,
-                    ),
-                    Step::new("BEGIN", StepRes::Ok),
-                ]
+                let mut steps = Self::from(Steps::UseDatabase);
+                steps.push(Step::new("BEGIN", StepRes::Ok));
+                steps
             }
         }
     }
