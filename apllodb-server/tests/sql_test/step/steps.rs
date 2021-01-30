@@ -1,6 +1,5 @@
 use super::{Step, StepRes};
 
-/// NOTE: `Step`s shares the same DatabaseName given in into_vec()
 #[allow(dead_code)]
 #[derive(Clone, PartialEq, Debug)]
 pub enum Steps {
