@@ -57,3 +57,22 @@ async fn test_create_database_session_ab() {
         .run()
         .await;
 }
+
+#[async_std::test]
+async fn test_use_database_session_ab() {
+    SqlTestSessionAB::default()
+        .add_step(
+            SessionAB::A,
+            Step::new("CREATE DATABASE test_use_database_session_ab", StepRes::Ok),
+        )
+        .add_step(
+            SessionAB::B,
+            Step::new("USE DATABASE test_use_database_session_ab", StepRes::Ok),
+        )
+        .add_step(
+            SessionAB::A,
+            Step::new("USE DATABASE test_use_database_session_ab", StepRes::Ok),
+        )
+        .run()
+        .await;
+}
