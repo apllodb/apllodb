@@ -20,7 +20,7 @@ impl Step {
         }
     }
 
-    pub async fn run(&self, server: &ApllodbServer, session: Session) -> Session {
+    pub(super) async fn run(&self, server: &ApllodbServer, session: Session) -> Session {
         match server.command(session, self.sql.to_string()).await {
             Ok(success) => match success {
                 ApllodbCommandSuccess::QueryResponse {
