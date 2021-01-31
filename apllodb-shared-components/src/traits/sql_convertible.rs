@@ -40,7 +40,7 @@ pub trait SqlConvertible: Sized {
     ///
     /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
     ///   - the type implementing SqlConvertible is not convertible from String
-    fn try_from_string(_: &String) -> ApllodbResult<Self> {
+    fn try_from_string(_: &str) -> ApllodbResult<Self> {
         Self::default_err("String")
     }
 

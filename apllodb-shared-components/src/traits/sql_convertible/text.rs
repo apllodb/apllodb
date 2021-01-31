@@ -7,7 +7,7 @@ impl SqlConvertible for String {
         NNSqlValue::Text(self)
     }
 
-    fn try_from_string(v: &String) -> ApllodbResult<Self> {
+    fn try_from_string(v: &str) -> ApllodbResult<Self> {
         Ok(v.to_string())
     }
 }
