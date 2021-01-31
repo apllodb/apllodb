@@ -760,6 +760,17 @@ integer_constant = @{
 }
 
 /*
+ * ----------------------------------------------------------------------------
+ * Operators
+ * (https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS)
+ * ----------------------------------------------------------------------------
+ */
+
+unary_operator = {
+    "-"
+}
+
+/*
  * ================================================================================================
  * Identifier:
  *
@@ -803,6 +814,7 @@ condition = {
 expression = {
     constant
     | column_reference
+    | unary_operator ~ expression
 }
 
 /*
@@ -815,7 +827,6 @@ expression = {
 column_reference = {
     (correlation ~ ".")? ~ column_name
 }
-
 
 /*
  * ================================================================================================
@@ -1016,7 +1027,7 @@ insert_command = {
 select_command = {
     ^"SELECT"
     ~ select_field ~ ("," ~ select_field)*
-    ~ ^"FROM" ~ from_item ~ ("," ~ from_item)*
+    ~ (^"FROM" ~ from_item ~ ("," ~ from_item)*)?
     ~ (^"WHERE" ~ condition)?
     ~ (^"GROUP" ~ "BY" ~ grouping_element ~ ("," ~ grouping_element)*)?
     ~ (^"HAVING" ~ condition ~ ("," ~ condition)*)?

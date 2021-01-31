@@ -56,7 +56,7 @@ impl CreateTableCommand {
 impl SelectCommand {
     pub fn factory(
         select_fields: Vec<SelectField>,
-        from_items: Vec<FromItem>,
+        from_items: Option<Vec<FromItem>>,
         where_condition: Option<Condition>,
         grouping_elements: Option<Vec<GroupingElement>>,
         having_conditions: Option<Vec<Condition>>,
@@ -64,7 +64,7 @@ impl SelectCommand {
     ) -> Self {
         Self {
             select_fields: NonEmptyVec::new(select_fields),
-            from_items: NonEmptyVec::new(from_items),
+            from_items: from_items.map(NonEmptyVec::new),
             where_condition,
             grouping_elements: grouping_elements.map(NonEmptyVec::new),
             having_conditions: having_conditions.map(NonEmptyVec::new),

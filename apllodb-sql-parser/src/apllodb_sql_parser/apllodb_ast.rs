@@ -263,7 +263,7 @@ pub struct InsertCommand {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SelectCommand {
     pub select_fields: NonEmptyVec<SelectField>,
-    pub from_items: NonEmptyVec<FromItem>,
+    pub from_items: Option<NonEmptyVec<FromItem>>,
     pub where_condition: Option<Condition>,
     pub grouping_elements: Option<NonEmptyVec<GroupingElement>>,
     pub having_conditions: Option<NonEmptyVec<Condition>>,
