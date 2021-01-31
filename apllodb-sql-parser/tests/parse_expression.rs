@@ -12,8 +12,15 @@ fn test_setup() {
 
 #[test]
 fn test_constant_accepted() {
-    let constant_vs_expected_ast: Vec<(&str, Constant)> =
-        vec![("0", Constant::factory_integer("0"))];
+    let constant_vs_expected_ast: Vec<(&str, Constant)> = vec![
+        ("0", Constant::factory_integer("0")),
+        (
+            // u128::MAX + 1
+            "340282366920938463463374607431768211457",
+            Constant::factory_integer("340282366920938463463374607431768211457"),
+        ),
+        // ("-1", Constant::factory_integer("-1")),
+    ];
 
     let parser = ApllodbSqlParser::default();
 
