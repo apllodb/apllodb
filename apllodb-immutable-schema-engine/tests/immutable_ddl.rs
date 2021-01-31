@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    ColumnName, ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue,
+    ColumnName, ColumnReference, FieldIndex, NNSqlValue, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
@@ -61,8 +61,8 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // |----|----|
     // | 1  | 1  |
     let session = engine.with_tx().insert(session, t_name.clone(), RecordIterator::new(vec![record! {
-        FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?,
-        FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1i32)?
+        FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
+        FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1))
     }])).await?;
 
     // v1
@@ -101,7 +101,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
         session,
         t_name.clone(),
         RecordIterator::new(vec![
-            record! { FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &2i32)? },
+            record! { FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(2)) },
         ]),
     ).await?;
 
@@ -119,8 +119,8 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
         session,
         t_name.clone(),
         RecordIterator::new(vec![record! {
-            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?,
-            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &3i32)?
+            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(3)),
+            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(3))
         }]),
     ).await?;
 

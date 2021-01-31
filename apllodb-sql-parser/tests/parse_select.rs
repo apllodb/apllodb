@@ -19,7 +19,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                vec![FromItem::factory("t", None)],
+                Some(vec![FromItem::factory("t", None)]),
                 None,
                 None,
                 None,
@@ -39,7 +39,7 @@ fn test_select_accepted() {
                         None,
                     ),
                 ],
-                vec![FromItem::factory("t", None)],
+                Some(vec![FromItem::factory("t", None)]),
                 None,
                 None,
                 None,
@@ -59,7 +59,24 @@ fn test_select_accepted() {
                         None,
                     ),
                 ],
-                vec![FromItem::factory("t1", None), FromItem::factory("t2", None)],
+                Some(vec![
+                    FromItem::factory("t1", None),
+                    FromItem::factory("t2", None),
+                ]),
+                None,
+                None,
+                None,
+                None,
+            ),
+        ),
+        (
+            "SELECT id", // OK as syntax (but NG for semantically)
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                None,
                 None,
                 None,
                 None,
@@ -89,8 +106,6 @@ fn test_select_rejected() {
     let sqls: Vec<&str> = vec![
         // Lack select_field.
         "SELECT FROM t",
-        // Lack from_item.
-        "SELECT id",
     ];
 
     let parser = ApllodbSqlParser::default();

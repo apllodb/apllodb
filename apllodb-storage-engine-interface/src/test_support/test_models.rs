@@ -1,5 +1,5 @@
 use apllodb_shared_components::{
-    ColumnName, ColumnReference, FieldIndex, Record, SqlType, SqlValue, TableName,
+    ColumnName, ColumnReference, FieldIndex, NNSqlValue, Record, SqlValue, TableName,
 };
 
 use crate::record;
@@ -23,8 +23,8 @@ impl People {
 
     pub fn record(id: i32, age: i32) -> Record {
         record! {
-            FieldIndex::InColumnReference(Self::colref_id()) => SqlValue::pack(SqlType::integer(), &id).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::pack(SqlType::integer(), &age).unwrap()
+            FieldIndex::InColumnReference(Self::colref_id()) => SqlValue::NotNull(NNSqlValue::Integer(id)),
+            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::NotNull(NNSqlValue::Integer(age))
         }
     }
 }
@@ -48,8 +48,8 @@ impl Body {
 
     pub fn record(people_id: i32, height: i32) -> Record {
         record! {
-            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::pack(SqlType::integer(), &people_id).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_height()) => SqlValue::pack(SqlType::integer(), &height).unwrap()
+            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::NotNull(NNSqlValue::Integer(people_id)),
+            FieldIndex::InColumnReference(Self::colref_height()) => SqlValue::NotNull(NNSqlValue::Integer(height))
         }
     }
 }
@@ -77,9 +77,9 @@ impl Pet {
 
     pub fn record(people_id: i32, kind: &str, age: i16) -> Record {
         record! {
-            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::pack(SqlType::integer(), &people_id).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_kind()) => SqlValue::pack(SqlType::text(), &kind.to_string()).unwrap(),
-            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::pack(SqlType::small_int(), &age).unwrap()
+            FieldIndex::InColumnReference(Self::colref_people_id()) => SqlValue::NotNull(NNSqlValue::Integer(people_id)),
+            FieldIndex::InColumnReference(Self::colref_kind()) => SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
+            FieldIndex::InColumnReference(Self::colref_age()) => SqlValue::NotNull(NNSqlValue::SmallInt(age))
         }
     }
 }
