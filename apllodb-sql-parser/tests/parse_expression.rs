@@ -1,4 +1,7 @@
-use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser, apllodb_ast::{Command, Expression, SelectCommand, UnaryOperator}};
+use apllodb_sql_parser::{
+    apllodb_ast::{Command, Expression, SelectCommand, UnaryOperator},
+    ApllodbAst, ApllodbSqlParser,
+};
 
 use apllodb_test_support::setup::setup_test_logger;
 
@@ -19,6 +22,13 @@ fn test_constant_accepted() {
         (
             "-1",
             Expression::factory_uni_op(UnaryOperator::Minus, Expression::factory_integer("1")),
+        ),
+        (
+            "- -1",
+            Expression::factory_uni_op(
+                UnaryOperator::Minus,
+                Expression::factory_uni_op(UnaryOperator::Minus, Expression::factory_integer("1")),
+            ),
         ),
     ];
 
