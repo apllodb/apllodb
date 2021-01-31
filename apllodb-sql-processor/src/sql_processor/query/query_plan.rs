@@ -39,7 +39,10 @@ impl TryFrom<SelectCommand> for QueryPlan {
             unimplemented!();
         }
 
-        let from_items = sc.from_items.into_vec();
+        let from_items = sc
+            .from_items
+            .expect("currently SELECT w/o FROM is unimplemented")
+            .into_vec();
         let table_names: Vec<TableName> = from_items
             .into_iter()
             .map(|from_item| {
@@ -72,8 +75,11 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         if colref.correlation.is_some() {
                             unimplemented!();
                         }
-
                         AstTranslator::column_name(colref.column_name)
+                    }
+                    apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
+                        // TODO このレイヤーで計算しちゃいたい
+                        unimplemented!();
                     }
                 }
             })

@@ -3,11 +3,13 @@
 pub(crate) mod column_constraint;
 pub(crate) mod column_definition;
 pub(crate) mod column_name;
-pub(crate) mod constant;
+pub(crate) mod column_reference;
 pub(crate) mod data_type;
 pub(crate) mod database_name;
+pub(crate) mod expression;
 pub(crate) mod table_constraint;
 pub(crate) mod table_name;
+pub(crate) mod unary_operator;
 
 #[allow(dead_code)]
 /// Holds static translation methods.

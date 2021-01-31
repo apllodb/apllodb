@@ -142,6 +142,23 @@ impl NNSqlValue {
             )),
         }
     }
+
+    /// # Failures
+    ///
+    /// - [InvalidParameterValue](apllodb_shared_components::ApllodbErrorKind::InvalidParameterValue) when:
+    ///   - inner value cannot negate
+    pub(crate) fn negate(self) -> ApllodbResult<Self> {
+        match self {
+            NNSqlValue::SmallInt(v) => Ok(Self::SmallInt(-v)),
+            NNSqlValue::Integer(v) => Ok(Self::Integer(-v)),
+            NNSqlValue::BigInt(v) => Ok(Self::BigInt(-v)),
+            NNSqlValue::Text(_) => Err(ApllodbError::new(
+                ApllodbErrorKind::InvalidParameterValue,
+                "String cannot negate",
+                None,
+            )),
+        }
+    }
 }
 
 #[cfg(test)]

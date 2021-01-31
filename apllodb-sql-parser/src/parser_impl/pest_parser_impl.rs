@@ -8,7 +8,7 @@ use crate::{
         CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand,
         DropColumn, DropTableCommand, Expression, FromItem, Identifier, InsertCommand,
         IntegerConstant, IntegerType, NumericConstant, SelectCommand, SelectField, TableConstraint,
-        TableElement, TableName, UpdateCommand, UseDatabaseCommand,
+        TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -85,6 +85,23 @@ impl PestParserImpl {
     }
 
     /*
+     * ----------------------------------------------------------------------------
+     * Operators
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_unary_operator(mut params: FnParseParams) -> ApllodbSqlParserResult<UnaryOperator> {
+        let s = self_as_str(&mut params);
+        match s {
+            "-" => Ok(UnaryOperator::Minus),
+            _ => Err(ApllodbSqlParserError::new(
+                params.apllodb_sql,
+                "Does not match any child rule of unary_operator.",
+            )),
+        }
+    }
+
+    /*
      * ================================================================================================
      * Identifier:
      * ================================================================================================
@@ -125,6 +142,23 @@ impl PestParserImpl {
             Self::parse_column_reference,
             Expression::ColumnReferenceVariant,
         )?)
+        .or({
+            if let Some(uni_op) = try_parse_child(
+                &mut params,
+                Rule::unary_operator,
+                Self::parse_unary_operator,
+                identity,
+            )? {
+                Some(parse_child(
+                    &mut params,
+                    Rule::expression,
+                    Self::parse_expression,
+                    |expr| Expression::UnaryOperatorVariant(uni_op.clone(), Box::new(expr)),
+                )?)
+            } else {
+                None
+            }
+        })
         .ok_or_else(|| {
             ApllodbSqlParserError::new(
                 params.apllodb_sql,
@@ -501,12 +535,26 @@ impl PestParserImpl {
             &Self::parse_select_field,
             &identity,
         )?;
-        let from_items = parse_child_seq(
-            &mut params,
-            Rule::from_item,
-            &Self::parse_from_item,
-            &identity,
-        )?;
+        let from_items: Option<Vec<FromItem>> = {
+            if let Some(first_item) = try_parse_child(
+                &mut params,
+                Rule::from_item,
+                Self::parse_from_item,
+                identity,
+            )? {
+                let mut items = vec![first_item];
+                let mut rest_items = parse_child_seq(
+                    &mut params,
+                    Rule::from_item,
+                    &Self::parse_from_item,
+                    &identity,
+                )?;
+                items.append(&mut rest_items);
+                Some(items)
+            } else {
+                None
+            }
+        };
         let where_condition = try_parse_child(
             &mut params,
             Rule::condition,
@@ -515,7 +563,7 @@ impl PestParserImpl {
         )?;
         Ok(SelectCommand {
             select_fields: NonEmptyVec::new(select_fields),
-            from_items: NonEmptyVec::new(from_items),
+            from_items: from_items.map(NonEmptyVec::new),
             where_condition,
             // TODO: grouping_elements, having_conditions, order_bys
             grouping_elements: None,

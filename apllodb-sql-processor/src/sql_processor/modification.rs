@@ -1,10 +1,10 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnReference, FieldIndex, Record,
     RecordIterator, Session, SessionWithTx, SqlValue,
 };
-use apllodb_sql_parser::apllodb_ast::{self, Command, InsertCommand};
+use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::{
@@ -73,9 +73,9 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
         let constant_values: Vec<SqlValue> = expressions
             .into_iter()
-            .map(|expression| match expression {
-                apllodb_ast::Expression::ConstantVariant(c) => AstTranslator::constant(c),
-                _ => unimplemented!(),
+            .map(|ast_expression| {
+                let expression = AstTranslator::expression(ast_expression)?;
+                SqlValue::try_from(expression)
             })
             .collect::<ApllodbResult<_>>()?;
 
