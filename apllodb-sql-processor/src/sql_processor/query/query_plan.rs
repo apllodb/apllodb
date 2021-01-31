@@ -75,8 +75,11 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         if colref.correlation.is_some() {
                             unimplemented!();
                         }
-
                         AstTranslator::column_name(colref.column_name)
+                    }
+                    apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
+                        // TODO このレイヤーで計算しちゃいたい
+                        unimplemented!();
                     }
                 }
             })

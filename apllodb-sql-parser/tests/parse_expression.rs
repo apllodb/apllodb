@@ -1,7 +1,4 @@
-use apllodb_sql_parser::{
-    apllodb_ast::{Command, Expression, SelectCommand},
-    ApllodbAst, ApllodbSqlParser,
-};
+use apllodb_sql_parser::{ApllodbAst, ApllodbSqlParser, apllodb_ast::{Command, Expression, SelectCommand, UnaryOperator}};
 
 use apllodb_test_support::setup::setup_test_logger;
 
@@ -19,7 +16,10 @@ fn test_constant_accepted() {
             "340282366920938463463374607431768211457",
             Expression::factory_integer("340282366920938463463374607431768211457"),
         ),
-        // ("-1", Constant::factory_integer("-1")),
+        (
+            "-1",
+            Expression::factory_uni_op(UnaryOperator::Minus, Expression::factory_integer("1")),
+        ),
     ];
 
     let parser = ApllodbSqlParser::default();

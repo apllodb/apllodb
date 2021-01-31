@@ -50,6 +50,18 @@ pub enum NumericConstant {
 pub struct IntegerConstant(pub String);
 
 /*
+ * ----------------------------------------------------------------------------
+ * Operators
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum UnaryOperator {
+    Minus,
+}
+
+/*
  * ================================================================================================
  * Identifier:
  * ================================================================================================
@@ -76,6 +88,7 @@ pub struct Condition {
 pub enum Expression {
     ConstantVariant(Constant),
     ColumnReferenceVariant(ColumnReference),
+    UnaryOperatorVariant(UnaryOperator, Box<Expression>),
 }
 
 /*

@@ -4,7 +4,7 @@ use crate::apllodb_ast::{
     DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
     GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType, NonEmptyVec,
     NumericConstant, OrderBy, SelectCommand, SelectField, TableConstraint, TableElement, TableName,
-    UpdateCommand, UseDatabaseCommand,
+    UnaryOperator, UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -191,6 +191,10 @@ impl Expression {
 
     pub fn factory_colref(column_reference: ColumnReference) -> Self {
         Self::ColumnReferenceVariant(column_reference)
+    }
+
+    pub fn factory_uni_op(unary_operator: UnaryOperator, expression: Expression) -> Self {
+        Self::UnaryOperatorVariant(unary_operator, Box::new(expression))
     }
 }
 
