@@ -72,14 +72,15 @@ pub(crate) trait FromSqliteRow {
             + SqlConvertible,
     {
         let colref = column_data_type.column_ref();
-        let sql_type = column_data_type.sql_type();
 
         let rust_value: Option<T> = sqlite_row
             .try_get(colref.as_column_name().as_str())
             .map_err(InfraError::from)?;
 
         let sql_value = if let Some(rust_value) = rust_value {
-            SqlValue::pack(sql_type.clone(), &rust_value)?
+            let nn_sql_value = rust_value.into_sql_value();
+            debug_assert_eq!(column_data_type.sql_type(), &nn_sql_value.sql_type());
+            SqlValue::NotNull(nn_sql_value)
         } else {
             SqlValue::Null
         };

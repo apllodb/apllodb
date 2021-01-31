@@ -3,8 +3,8 @@
 //! Factory methods for testing
 
 use crate::{
-    ColumnName, ColumnReference, DatabaseName, Expression, FieldIndex, NNSqlValue, SqlType,
-    SqlValue, TableName, UnaryOperator,
+    ColumnName, ColumnReference, DatabaseName, Expression, FieldIndex, NNSqlValue, SqlValue,
+    TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -71,7 +71,7 @@ impl SqlValue {
 
 impl NNSqlValue {
     pub fn factory_integer(integer: i32) -> Self {
-        Self::pack(SqlType::integer(), &integer).unwrap()
+        Self::Integer(integer)
     }
 }
 

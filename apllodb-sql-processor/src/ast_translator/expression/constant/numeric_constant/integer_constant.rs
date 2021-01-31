@@ -1,4 +1,6 @@
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlType, SqlValue};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlValue,
+};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
@@ -14,14 +16,14 @@ impl AstTranslator {
         let s = ast_integer_constant.0;
 
         s.parse::<i16>()
-            .map(|i| SqlValue::pack(SqlType::small_int(), &i).unwrap())
+            .map(|i| SqlValue::NotNull(NNSqlValue::SmallInt(i)))
             .or_else(|_| {
                 s.parse::<i32>()
-                    .map(|i| SqlValue::pack(SqlType::integer(), &i).unwrap())
+                    .map(|i| SqlValue::NotNull(NNSqlValue::Integer(i)))
             })
             .or_else(|_| {
                 s.parse::<i64>()
-                    .map(|i| SqlValue::pack(SqlType::big_int(), &i).unwrap())
+                    .map(|i| SqlValue::NotNull(NNSqlValue::BigInt(i)))
             })
             .map_err(|e| {
                 ApllodbError::new(
@@ -131,10 +133,10 @@ mod test {
             if let SqlValue::NotNull(out_sql_value) =
                 AstTranslator::integer_constant(input_ast_integer_constant)?
             {
-                assert_eq!(*out_sql_value.sql_type(), test_datum.expected_sql_type);
+                assert_eq!(out_sql_value.sql_type(), test_datum.expected_sql_type);
                 assert_eq!(
                     out_sql_value,
-                    NNSqlValue::pack(SqlType::big_int(), &test_datum.expected_rust_value)?
+                    NNSqlValue::BigInt(test_datum.expected_rust_value)
                 );
             } else {
                 unreachable!()
