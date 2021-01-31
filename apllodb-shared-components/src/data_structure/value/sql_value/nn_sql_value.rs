@@ -243,7 +243,7 @@ mod tests {
 
     macro_rules! assert_eq_pack_unpack {
         ($sql_type: expr, $rust_value: expr, $rust_type: ty) => {{
-            let nn_sql_value = crate::NNSqlValue::pack($sql_type, &$rust_value)?;
+            let nn_sql_value = crate::NNSqlValue::pack($sql_type, &($rust_value as $rust_type))?;
             assert_eq!(nn_sql_value.unpack::<$rust_type>()?, $rust_value);
         }};
     }
