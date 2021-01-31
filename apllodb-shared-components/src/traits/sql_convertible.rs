@@ -3,50 +3,53 @@ mod text;
 
 use crate::{
     error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
-    SqlType,
+    NNSqlValue,
 };
-use serde::{de::DeserializeOwned, Serialize};
-use std::{any::type_name, collections::HashSet, hash::Hash};
+use std::any::type_name;
 
-/// Rust values which can be serialized into / deserialized from binary and can have bidirectional mapping to/from SQL [SqlValue](crate::SqlValue).
-pub trait SqlConvertible: Serialize + DeserializeOwned + std::fmt::Debug + Hash {
-    /// Serialize into binary.
-    /// Default implementation should be fast enough.
-    ///
+/// Rust values which can have bidirectional mapping to/from SQL [NNSqlValue](crate::NNSqlValue).
+pub trait SqlConvertible: Sized {
+    /// Convert Rust type into strictly-matching SQL type.
+    fn into_sql_value(self) -> NNSqlValue;
+
     /// # Failures
     ///
-    /// - [SerializationError](crate::ApllodbErrorKind::SerializationError) when:
-    ///   - failed in serialization.
-    fn pack(rust_value: &Self) -> ApllodbResult<Vec<u8>> {
-        bincode::serialize(&rust_value).map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::SerializationError,
-                format!("failed to pack Rust value: {:?}", rust_value),
-                Some(Box::new(e)),
-            )
-        })
+    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - the type implementing SqlConvertible is not convertible from i16
+    fn try_from_i16(_: &i16) -> ApllodbResult<Self> {
+        Self::default_err("i16")
     }
 
-    /// Deserialize from binary.
-    /// Default implementation should be fast enough.
-    ///
     /// # Failures
     ///
-    /// - [DeserializationError](crate::ApllodbErrorKind::DeserializationError) when:
-    ///   - failed in deserialization.
-    fn unpack(raw: &[u8]) -> ApllodbResult<Self> {
-        bincode::deserialize(raw).map_err(|e| {
-            ApllodbError::new(
-                ApllodbErrorKind::DeserializationError,
-                format!("failed to unpack data as {}", type_name::<Self>()),
-                Some(Box::new(e)),
-            )
-        })
+    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - the type implementing SqlConvertible is not convertible from i32
+    fn try_from_i32(_: &i32) -> ApllodbResult<Self> {
+        Self::default_err("i32")
     }
 
-    /// SQL types which can hold all values of Self.
-    fn to_sql_types() -> HashSet<SqlType>;
+    /// # Failures
+    ///
+    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - the type implementing SqlConvertible is not convertible from i64
+    fn try_from_i64(_: &i64) -> ApllodbResult<Self> {
+        Self::default_err("i64")
+    }
 
-    /// SQL types all of whose values can be held by Self.
-    fn from_sql_types() -> HashSet<SqlType>;
+    /// # Failures
+    ///
+    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - the type implementing SqlConvertible is not convertible from String
+    fn try_from_string(_: &String) -> ApllodbResult<Self> {
+        Self::default_err("String")
+    }
+
+    #[doc(hidden)]
+    fn default_err(from_type: &str) -> ApllodbResult<Self> {
+        Err(ApllodbError::new(
+            ApllodbErrorKind::DatatypeMismatch,
+            format!("cannot convert {} -> {}", from_type, type_name::<Self>()),
+            None,
+        ))
+    }
 }

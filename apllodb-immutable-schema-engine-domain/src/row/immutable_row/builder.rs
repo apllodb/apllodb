@@ -56,7 +56,7 @@ mod tests {
 
     use super::ImmutableRowBuilder;
     use apllodb_shared_components::{
-        ApllodbResult, ColumnName, ColumnReference, ColumnValue, SqlType, SqlValue, TableName,
+        ApllodbResult, ColumnName, ColumnReference, ColumnValue, NNSqlValue, SqlValue, TableName,
     };
 
     #[test]
@@ -66,13 +66,13 @@ mod tests {
         let mut row1 = ImmutableRowBuilder::default()
             .add_colval(ColumnValue::new(
                 colref.clone(),
-                SqlValue::pack(SqlType::integer(), &0i32)?,
+                SqlValue::NotNull(NNSqlValue::Integer(0)),
             ))?
             .build()?;
         let mut row2 = ImmutableRowBuilder::default()
             .add_colval(ColumnValue::new(
                 colref.clone(),
-                SqlValue::pack(SqlType::integer(), &0i32)?,
+                SqlValue::NotNull(NNSqlValue::Integer(0)),
             ))?
             .build()?;
 
@@ -89,22 +89,22 @@ mod tests {
         let row1 = ImmutableRowBuilder::default()
             .add_colval(ColumnValue::new(
                 colref1.clone(),
-                SqlValue::pack(SqlType::integer(), &0i32)?,
+                SqlValue::NotNull(NNSqlValue::Integer(0)),
             ))?
             .add_colval(ColumnValue::new(
                 colref2.clone(),
-                SqlValue::pack(SqlType::integer(), &1i32)?,
+                SqlValue::NotNull(NNSqlValue::Integer(1)),
             ))?
             .build()?;
 
         let row2 = ImmutableRowBuilder::default()
             .add_colval(ColumnValue::new(
                 colref2,
-                SqlValue::pack(SqlType::integer(), &1i32)?,
+                SqlValue::NotNull(NNSqlValue::Integer(1)),
             ))?
             .add_colval(ColumnValue::new(
                 colref1,
-                SqlValue::pack(SqlType::integer(), &0i32)?,
+                SqlValue::NotNull(NNSqlValue::Integer(0)),
             ))?
             .build()?;
 
