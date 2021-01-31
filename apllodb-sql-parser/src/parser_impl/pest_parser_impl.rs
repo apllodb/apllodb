@@ -153,7 +153,7 @@ impl PestParserImpl {
                     &mut params,
                     Rule::expression,
                     Self::parse_expression,
-                     |expr| Expression::UnaryOperatorVariant(uni_op.clone(), Box::new(expr)),
+                    |expr| Expression::UnaryOperatorVariant(uni_op.clone(), Box::new(expr)),
                 )?)
             } else {
                 None
