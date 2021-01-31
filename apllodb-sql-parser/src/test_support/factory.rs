@@ -186,13 +186,19 @@ impl ColumnDefinition {
 
 impl Expression {
     pub fn factory_integer(integer: &str) -> Self {
-        Self::ConstantVariant(Constant::NumericConstantVariant(
-            NumericConstant::IntegerConstantVariant(IntegerConstant(integer.to_string())),
-        ))
+        Self::ConstantVariant(Constant::factory_integer(integer))
     }
 
     pub fn factory_colref(column_reference: ColumnReference) -> Self {
         Self::ColumnReferenceVariant(column_reference)
+    }
+}
+
+impl Constant {
+    pub fn factory_integer(integer: &str) -> Self {
+        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(
+            integer.to_string(),
+        )))
     }
 }
 
