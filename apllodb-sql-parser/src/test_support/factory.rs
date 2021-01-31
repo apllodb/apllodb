@@ -4,7 +4,7 @@ use crate::apllodb_ast::{
     DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
     GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType, NonEmptyVec,
     NumericConstant, OrderBy, SelectCommand, SelectField, TableConstraint, TableElement, TableName,
-    UpdateCommand, UseDatabaseCommand,
+    UnaryOperator, UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -56,7 +56,7 @@ impl CreateTableCommand {
 impl SelectCommand {
     pub fn factory(
         select_fields: Vec<SelectField>,
-        from_items: Vec<FromItem>,
+        from_items: Option<Vec<FromItem>>,
         where_condition: Option<Condition>,
         grouping_elements: Option<Vec<GroupingElement>>,
         having_conditions: Option<Vec<Condition>>,
@@ -64,7 +64,7 @@ impl SelectCommand {
     ) -> Self {
         Self {
             select_fields: NonEmptyVec::new(select_fields),
-            from_items: NonEmptyVec::new(from_items),
+            from_items: from_items.map(NonEmptyVec::new),
             where_condition,
             grouping_elements: grouping_elements.map(NonEmptyVec::new),
             having_conditions: having_conditions.map(NonEmptyVec::new),
@@ -186,13 +186,23 @@ impl ColumnDefinition {
 
 impl Expression {
     pub fn factory_integer(integer: &str) -> Self {
-        Self::ConstantVariant(Constant::NumericConstantVariant(
-            NumericConstant::IntegerConstantVariant(IntegerConstant(integer.to_string())),
-        ))
+        Self::ConstantVariant(Constant::factory_integer(integer))
     }
 
     pub fn factory_colref(column_reference: ColumnReference) -> Self {
         Self::ColumnReferenceVariant(column_reference)
+    }
+
+    pub fn factory_uni_op(unary_operator: UnaryOperator, expression: Expression) -> Self {
+        Self::UnaryOperatorVariant(unary_operator, Box::new(expression))
+    }
+}
+
+impl Constant {
+    pub fn factory_integer(integer: &str) -> Self {
+        Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(
+            integer.to_string(),
+        )))
     }
 }
 

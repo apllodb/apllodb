@@ -23,6 +23,7 @@ pub use crate::{
                 comparison_function::ComparisonFunction, logical_function::LogicalFunction,
                 BooleanExpression,
             },
+            operator::UnaryOperator,
             Expression,
         },
         record::{field_index::FieldIndex, Record},
