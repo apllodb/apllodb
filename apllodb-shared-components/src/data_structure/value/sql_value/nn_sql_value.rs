@@ -149,9 +149,9 @@ impl NNSqlValue {
     ///   - inner value cannot negate
     pub(crate) fn negate(self) -> ApllodbResult<Self> {
         match self {
-            NNSqlValue::SmallInt(v) => Ok(Self::SmallInt(-1 * v)),
-            NNSqlValue::Integer(v) => Ok(Self::Integer(-1 * v)),
-            NNSqlValue::BigInt(v) => Ok(Self::BigInt(-1 * v)),
+            NNSqlValue::SmallInt(v) => Ok(Self::SmallInt(-v)),
+            NNSqlValue::Integer(v) => Ok(Self::Integer(-v)),
+            NNSqlValue::BigInt(v) => Ok(Self::BigInt(-v)),
             NNSqlValue::Text(_) => Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidParameterValue,
                 "String cannot negate",
