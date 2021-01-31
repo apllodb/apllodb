@@ -38,7 +38,7 @@ impl TryFrom<Expression> for SqlValue {
 
     /// # Failures
     ///
-    /// - [DataException](apllodb_shared_components::ApllodbErrorKind::DataException) when:
+    /// - [DataException](crate::ApllodbErrorKind::DataException) when:
     ///   - expression cannot be folded into an SqlValue
     fn try_from(expression: Expression) -> ApllodbResult<Self> {
         match expression {
