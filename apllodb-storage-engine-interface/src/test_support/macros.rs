@@ -4,13 +4,13 @@
 ///
 /// ```
 /// use apllodb_storage_engine_interface::record;
-/// use apllodb_shared_components::{ApllodbResult, ColumnName, ColumnReference, FieldIndex, SqlType, SqlValue, TableName};
+/// use apllodb_shared_components::{ApllodbResult, ColumnName, ColumnReference, FieldIndex, NNSqlValue, SqlType, SqlValue, TableName};
 ///
 /// fn main() -> ApllodbResult<()> {
 ///     let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c")?);
 ///
-///     let r1 = record! { FieldIndex::InColumnReference(colref.clone()) => SqlValue::pack(SqlType::integer(), &123i32)? };
-///     let r2 = record! { FieldIndex::InColumnReference(colref.clone()) => SqlValue::pack(SqlType::integer(), &456i32)? };
+///     let r1 = record! { FieldIndex::InColumnReference(colref.clone()) => SqlValue::NotNull(NNSqlValue::Integer(123)) };
+///     let r2 = record! { FieldIndex::InColumnReference(colref.clone()) => SqlValue::NotNull(NNSqlValue::Integer(456)) };
 ///
 ///     assert_ne!(r1, r2);
 ///     Ok(())

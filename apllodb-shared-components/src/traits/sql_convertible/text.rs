@@ -1,14 +1,13 @@
-use crate::SqlType;
+use crate::{ApllodbResult, NNSqlValue};
 
 use super::SqlConvertible;
-use std::collections::HashSet;
 
 impl SqlConvertible for String {
-    fn to_sql_types() -> HashSet<SqlType> {
-        vec![SqlType::text()].into_iter().collect()
+    fn into_sql_value(self) -> NNSqlValue {
+        NNSqlValue::Text(self)
     }
 
-    fn from_sql_types() -> HashSet<SqlType> {
-        vec![SqlType::text()].into_iter().collect()
+    fn try_from_string(v: &str) -> ApllodbResult<Self> {
+        Ok(v.to_string())
     }
 }
