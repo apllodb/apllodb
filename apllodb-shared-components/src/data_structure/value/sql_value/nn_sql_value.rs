@@ -181,6 +181,25 @@ impl NNSqlValue {
         }
     }
 
+    /// # Failures
+    ///
+    /// - [InvalidParameterValue](apllodb_shared_components::ApllodbErrorKind::InvalidParameterValue) when:
+    ///   - inner value cannot negate
+    pub(crate) fn negate(self) -> ApllodbResult<Self> {
+        let sql_type = self.sql_type().clone();
+        for_all_loose_types!(
+            self,
+            |i: i64| { Self::pack(sql_type, &(-1 * i)) },
+            |_: String| {
+                Err(ApllodbError::new(
+                    ApllodbErrorKind::InvalidParameterValue,
+                    "String cannot negate",
+                    None,
+                ))
+            }
+        )
+    }
+
     fn to_i64_loosely(&self) -> ApllodbResult<i64> {
         match &self.sql_type {
             SqlType::NumericComparable(n) => match n {
