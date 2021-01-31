@@ -4,8 +4,8 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, FieldIndex, RecordIterator, SqlType, SqlValue, TableConstraintKind,
-    TableConstraints, TableName,
+    ColumnReference, FieldIndex, NNSqlValue, RecordIterator, SqlType, SqlValue,
+    TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -62,8 +62,8 @@ async fn test_compound_pk() -> ApllodbResult<()> {
 
     let session = engine.with_tx().insert(session, t_name.clone(),
     RecordIterator::new(vec![record! {
-        FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::small_int(), &100i16)?,
-        FieldIndex::InColumnReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::pack(SqlType::integer(), &1000001i32)?
+        FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::SmallInt(100)),
+        FieldIndex::InColumnReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1000001))
     }])).await?;
 
     let (records, session) = engine

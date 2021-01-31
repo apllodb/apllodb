@@ -159,7 +159,7 @@ impl ApparentPrimaryKey {
             .into_iter()
             .map(|(cname, sql_value)| {
                 let column_ref = ColumnReference::new(self.table_name.clone(), cname.clone());
-                ColumnDataType::new(column_ref, sql_value.sql_type().clone(), false)
+                ColumnDataType::new(column_ref, sql_value.sql_type(), false)
             })
             .collect()
     }

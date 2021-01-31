@@ -4,7 +4,7 @@ pub(crate) mod sql_value_hash_key;
 
 use std::{fmt::Display, hash::Hash};
 
-use crate::{error::ApllodbResult, SqlConvertible, SqlType};
+use crate::error::ApllodbResult;
 use serde::{Deserialize, Serialize};
 
 use self::{nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult};
@@ -48,12 +48,12 @@ use self::{nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult};
 ///
 /// ```
 /// use std::collections::HashSet;
-/// use apllodb_shared_components::{ApllodbResult, SqlType, SqlValue, SqlValueHashKey};
+/// use apllodb_shared_components::{ApllodbResult, NNSqlValue, SqlType, SqlValue, SqlValueHashKey};
 ///
 /// fn main() -> ApllodbResult<()> {
-///     let v_integer = SqlValue::pack(SqlType::integer(), &42i32)?;
-///     let v_smallint = SqlValue::pack(SqlType::small_int(), &42i16)?;
-///     let v_bigint = SqlValue::pack(SqlType::big_int(), &42i64)?;
+///     let v_integer = SqlValue::NotNull(NNSqlValue::Integer(42));
+///     let v_smallint = SqlValue::NotNull(NNSqlValue::SmallInt(42));
+///     let v_bigint = SqlValue::NotNull(NNSqlValue::BigInt(42));
 ///     let v_null = SqlValue::Null;
 ///
 ///     assert_eq!(v_integer, v_integer);
@@ -121,14 +121,14 @@ impl SqlValue {
     ///
     /// ```
     /// use std::collections::HashSet;
-    /// use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, SqlCompareResult, SqlType, SqlValue};
+    /// use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlCompareResult, SqlType, SqlValue};
     ///
     /// fn main() -> ApllodbResult<()> {
-    ///     let v_integer = SqlValue::pack(SqlType::integer(), &42i32)?;
-    ///     let v_smallint = SqlValue::pack(SqlType::small_int(), &42i16)?;
-    ///     let v_bigint = SqlValue::pack(SqlType::big_int(), &42i64)?;
-    ///     let v_integer_minus = SqlValue::pack(SqlType::integer(), &-42i32)?;
-    ///     let v_text = SqlValue::pack(SqlType::text(), &"abc".to_string())?;
+    ///     let v_integer = SqlValue::NotNull(NNSqlValue::Integer(42));
+    ///     let v_smallint = SqlValue::NotNull(NNSqlValue::SmallInt(42));
+    ///     let v_bigint = SqlValue::NotNull(NNSqlValue::BigInt(42));
+    ///     let v_integer_minus = SqlValue::NotNull(NNSqlValue::Integer(-42));
+    ///     let v_text = SqlValue::NotNull(NNSqlValue::Text("abc".to_string()));
     ///     let v_null = SqlValue::Null;
     ///
     ///     matches!(v_integer.sql_compare(&v_integer)?, SqlCompareResult::Eq);
@@ -155,10 +155,5 @@ impl SqlValue {
                 nn_self.sql_compare(nn_other)
             }
         }
-    }
-
-    /// Shortcut to [NNSqlValue::pack()](crate::NNSqlValue::pack).
-    pub fn pack<T: SqlConvertible>(into_type: SqlType, rust_value: &T) -> ApllodbResult<Self> {
-        Ok(Self::NotNull(NNSqlValue::pack(into_type, rust_value)?))
     }
 }
