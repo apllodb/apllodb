@@ -814,7 +814,7 @@ condition = {
 expression = {
     constant
     | column_reference
-    | unary_operator ~ expression
+    | (unary_operator ~ expression)
 }
 
 /*

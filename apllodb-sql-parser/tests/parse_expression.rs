@@ -1,5 +1,5 @@
 use apllodb_sql_parser::{
-    apllodb_ast::{Command, Constant, Expression, SelectCommand},
+    apllodb_ast::{Command, Expression, SelectCommand},
     ApllodbAst, ApllodbSqlParser,
 };
 
@@ -12,32 +12,26 @@ fn test_setup() {
 
 #[test]
 fn test_constant_accepted() {
-    let constant_vs_expected_ast: Vec<(&str, Constant)> = vec![
-        ("0", Constant::factory_integer("0")),
+    let expression_vs_expected_ast: Vec<(&str, Expression)> = vec![
+        ("0", Expression::factory_integer("0")),
         (
             // u128::MAX + 1
             "340282366920938463463374607431768211457",
-            Constant::factory_integer("340282366920938463463374607431768211457"),
+            Expression::factory_integer("340282366920938463463374607431768211457"),
         ),
         // ("-1", Constant::factory_integer("-1")),
     ];
 
     let parser = ApllodbSqlParser::default();
 
-    for (constant, expected_ast) in constant_vs_expected_ast {
-        match parser.parse(format!("SELECT {}", constant)) {
+    for (expression, expected_ast) in expression_vs_expected_ast {
+        match parser.parse(format!("SELECT {}", expression)) {
             Ok(ApllodbAst(Command::SelectCommandVariant(SelectCommand {
                 select_fields, ..
             }))) => {
                 let fields = select_fields.into_vec();
                 assert_eq!(fields.len(), 1);
-
-                match &fields[0].expression {
-                    Expression::ConstantVariant(c) => {
-                        assert_eq!(c, &expected_ast);
-                    }
-                    _ => panic!(),
-                }
+                assert_eq!(&fields[0].expression, &expected_ast);
             }
             x => panic!("{:#?}", x),
         }
