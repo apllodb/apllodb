@@ -255,6 +255,7 @@ mod tests {
         assert_eq_pack_unpack!(SqlType::integer(), i32::MAX, i32);
         assert_eq_pack_unpack!(SqlType::integer(), i32::MIN, i32);
         assert_eq_pack_unpack!(SqlType::big_int(), -1, i64);
+        assert_eq_pack_unpack!(SqlType::integer(), 0, i16); // pack/unpack i32 value as INTEGER
         Ok(())
     }
 }
