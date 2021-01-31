@@ -5,9 +5,8 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Expression, I64LooseType,
     LogicalFunction, NNSqlValue, NumericComparableType, SqlType, SqlValue,
-    StringComparableLoseType, TableName,UnaryOperator
+    StringComparableLoseType, TableName, UnaryOperator,
 };
-
 
 pub(in crate::sqlite) trait ToSqlString {
     fn to_sql_string(&self) -> String;
