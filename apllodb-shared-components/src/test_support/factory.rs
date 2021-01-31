@@ -2,7 +2,10 @@
 
 //! Factory methods for testing
 
-use crate::{ColumnName, ColumnReference, DatabaseName, FieldIndex, TableName};
+use crate::{
+    ColumnName, ColumnReference, DatabaseName, Expression, FieldIndex, NNSqlValue, SqlType,
+    SqlValue, TableName, UnaryOperator,
+};
 use rand::Rng;
 
 impl DatabaseName {
@@ -43,6 +46,32 @@ impl TableName {
 impl ColumnName {
     pub fn factory(column_name: &str) -> Self {
         Self::new(column_name).unwrap()
+    }
+}
+
+impl Expression {
+    pub fn factory_null() -> Self {
+        Self::ConstantVariant(SqlValue::Null)
+    }
+
+    pub fn factory_integer(integer: i32) -> Self {
+        Self::ConstantVariant(SqlValue::factory_integer(integer))
+    }
+
+    pub fn factory_uni_op(unary_operator: UnaryOperator, expression: Expression) -> Self {
+        Self::UnaryOperatorVariant(unary_operator, Box::new(expression))
+    }
+}
+
+impl SqlValue {
+    pub fn factory_integer(integer: i32) -> Self {
+        Self::NotNull(NNSqlValue::factory_integer(integer))
+    }
+}
+
+impl NNSqlValue {
+    pub fn factory_integer(integer: i32) -> Self {
+        Self::pack(SqlType::integer(), &integer).unwrap()
     }
 }
 

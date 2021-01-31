@@ -236,3 +236,24 @@ impl NNSqlValue {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{ApllodbResult, SqlType};
+
+    macro_rules! assert_eq_pack_unpack {
+        ($sql_type: expr, $rust_value: expr, $rust_type: ty) => {{
+            let nn_sql_value = crate::NNSqlValue::pack($sql_type, &$rust_value)?;
+            assert_eq!(nn_sql_value.unpack::<$rust_type>()?, $rust_value);
+        }};
+    }
+
+    #[test]
+    fn test_pack_unpack_identity() -> ApllodbResult<()> {
+        assert_eq_pack_unpack!(SqlType::integer(), 0, i32);
+        assert_eq_pack_unpack!(SqlType::integer(), -1, i32);
+        assert_eq_pack_unpack!(SqlType::integer(), i32::MAX, i32);
+        assert_eq_pack_unpack!(SqlType::integer(), i32::MIN, i32);
+        Ok(())
+    }
+}

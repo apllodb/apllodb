@@ -63,3 +63,28 @@ impl TryFrom<Expression> for SqlValue {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::convert::TryFrom;
+
+    use crate::{ApllodbResult, Expression, SqlValue, UnaryOperator};
+
+    #[test]
+    fn test_try_from_success() -> ApllodbResult<()> {
+        let expr_vs_expected_sql_value: Vec<(Expression, SqlValue)> = vec![
+            (Expression::factory_integer(1), SqlValue::factory_integer(1)),
+            (
+                Expression::factory_uni_op(UnaryOperator::Minus, Expression::factory_integer(1)),
+                SqlValue::factory_integer(-1),
+            ),
+        ];
+
+        for (expr, expected_sql_value) in expr_vs_expected_sql_value {
+            let sql_value = SqlValue::try_from(expr)?;
+            assert_eq!(sql_value, expected_sql_value);
+        }
+
+        Ok(())
+    }
+}
