@@ -2,8 +2,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::active_version::ActiveVersion, vtable::VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
-    SqlType,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, AstTranslator, ColumnDataType, ColumnName,
+    ColumnReference,
 };
 use apllodb_sql_parser::{
     apllodb_ast::{self, Command, CreateTableCommand, TableElement},
@@ -81,19 +81,7 @@ impl ActiveVersionDeserializer {
                             .column_constraints
                             .contains(&apllodb_ast::ColumnConstraint::NotNullVariant);
 
-                        let sql_type = {
-                            match cd.data_type {
-                                apllodb_ast::DataType::IntegerTypeVariant(
-                                    apllodb_ast::IntegerType::SmallIntVariant,
-                                ) => SqlType::small_int(),
-                                apllodb_ast::DataType::IntegerTypeVariant(
-                                    apllodb_ast::IntegerType::IntegerVariant,
-                                ) => SqlType::integer(),
-                                apllodb_ast::DataType::IntegerTypeVariant(
-                                    apllodb_ast::IntegerType::BigIntVariant,
-                                ) => SqlType::big_int(),
-                            }
-                        };
+                        let sql_type = AstTranslator::data_type(cd.data_type.clone());
 
                         Ok(ColumnDataType::new(colref, sql_type, !not_null))
                     })
