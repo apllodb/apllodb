@@ -595,6 +595,7 @@ keyword = {
     // | ^"TANH"
     // | ^"TAN"
     // | ^"TEMPORARY"
+    | "TEXT"
     // | ^"THEN"
     // | ^"THROUGH"
     // | ^"TIES"
@@ -839,6 +840,7 @@ column_reference = {
 
 data_type = {
     integer_type
+    | character_type
 }
 
 /*
@@ -852,6 +854,17 @@ integer_type = {
     ^"SMALLINT"
     | ^"INTEGER"
     | ^"BIGINT"
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Character Types
+ * (https://www.postgresql.org/docs/12/datatype-character.html)
+ * ----------------------------------------------------------------------------
+ */
+
+character_type = {
+    ^"TEXT"
 }
 
 /*

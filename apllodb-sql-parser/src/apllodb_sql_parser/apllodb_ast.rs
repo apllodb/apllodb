@@ -114,6 +114,7 @@ pub struct ColumnReference {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DataType {
     IntegerTypeVariant(IntegerType),
+    CharacterTypeVariant(CharacterType),
 }
 
 /*
@@ -128,6 +129,18 @@ pub enum IntegerType {
     SmallIntVariant,
     IntegerVariant,
     BigIntVariant,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Character Types
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum CharacterType {
+    TextVariant,
 }
 
 /*

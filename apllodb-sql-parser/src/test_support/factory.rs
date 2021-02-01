@@ -1,10 +1,10 @@
 use crate::apllodb_ast::{
-    Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint, ColumnDefinition, ColumnName,
-    ColumnReference, Condition, Constant, Correlation, CreateDatabaseCommand, CreateTableCommand,
-    DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
-    GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType, NonEmptyVec,
-    NumericConstant, OrderBy, SelectCommand, SelectField, TableConstraint, TableElement, TableName,
-    UnaryOperator, UpdateCommand, UseDatabaseCommand,
+    Action, AddColumn, Alias, AlterTableCommand, CharacterType, ColumnConstraint, ColumnDefinition,
+    ColumnName, ColumnReference, Condition, Constant, Correlation, CreateDatabaseCommand,
+    CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand,
+    Expression, FromItem, GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType,
+    NonEmptyVec, NumericConstant, OrderBy, SelectCommand, SelectField, TableConstraint,
+    TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -252,5 +252,9 @@ impl Correlation {
 impl DataType {
     pub fn integer() -> Self {
         DataType::IntegerTypeVariant(IntegerType::IntegerVariant)
+    }
+
+    pub fn text() -> Self {
+        DataType::CharacterTypeVariant(CharacterType::TextVariant)
     }
 }
