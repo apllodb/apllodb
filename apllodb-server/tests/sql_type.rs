@@ -1,7 +1,7 @@
 mod sql_test;
 
 use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ColumnReference, FieldIndex};
+use apllodb_shared_components::{ApllodbErrorKind, ColumnReference, FieldIndex};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -27,6 +27,10 @@ async fn test_integer() {
                 let field = FieldIndex::factory_colref(ColumnReference::factory("t", "c"));
 
                 let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i16>(&field).unwrap_err().kind(),
+                    &ApllodbErrorKind::DatatypeMismatch
+                );
                 assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i32::MIN);
                 assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i32::MIN as i64);
                 Ok(())
