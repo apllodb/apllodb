@@ -1,13 +1,11 @@
 use std::rc::Rc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnDefinition, Session,
-    SessionWithTx, TableConstraintKind, TableConstraints, TableName,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnDefinition,
+    Session, SessionWithTx, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, CreateTableCommand, TableElement};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
-
-use crate::ast_translator::AstTranslator;
 
 /// Processes DDL command.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

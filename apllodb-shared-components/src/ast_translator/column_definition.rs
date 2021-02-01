@@ -1,4 +1,4 @@
-use apllodb_shared_components::{
+use crate::{
     ApllodbResult, ColumnConstraintKind, ColumnConstraints, ColumnDataType, ColumnDefinition,
     ColumnReference, TableName,
 };
@@ -7,7 +7,7 @@ use apllodb_sql_parser::apllodb_ast::{self};
 use crate::ast_translator::AstTranslator;
 
 impl AstTranslator {
-    pub(crate) fn column_definition(
+    pub fn column_definition(
         ast_column_definition: apllodb_ast::ColumnDefinition,
         table_name: TableName,
     ) -> ApllodbResult<ColumnDefinition> {

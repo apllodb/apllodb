@@ -1,6 +1,6 @@
 pub(crate) mod integer_constant;
 
-use apllodb_shared_components::{ApllodbResult, SqlValue};
+use crate::{ApllodbResult, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
