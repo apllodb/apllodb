@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 
-//! Module to translate [ApllodbAst](apllodb_sql_parser::ApllodbAst) into [apllodb_shared_components](apllodb_shared_components)' data structures.
+//! Module to translate [ApllodbAst](apllodb_sql_parser::ApllodbAst) into [apllodb_shared_components](crate)' data structures.
 
 pub mod column_constraint;
 pub mod column_definition;
