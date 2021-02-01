@@ -111,7 +111,7 @@ async fn test_text() {
             StepRes::Ok,
         ))
         .add_step(Step::new(
-            format!("INSERT INTO t (c) VALUES ({})", "abcあいうえお🍺"),
+            format!("INSERT INTO t (c) VALUES ('{}')", r#"abcあいうえお🍺"#),
             StepRes::Ok,
         ))
         .add_step(Step::new(
@@ -124,7 +124,10 @@ async fn test_text() {
                     r.get::<i64>(&field).unwrap_err().kind(),
                     &ApllodbErrorKind::DatatypeMismatch
                 );
-                assert_eq!(r.get::<String>(&field).unwrap().unwrap(),  "abcあいうえお🍺");
+                assert_eq!(
+                    r.get::<String>(&field).unwrap().unwrap(),
+                    r#"abcあいうえお🍺"#
+                );
                 Ok(())
             })),
         ))
