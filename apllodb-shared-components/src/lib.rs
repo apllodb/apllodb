@@ -5,11 +5,13 @@
 #[macro_use]
 extern crate derive_new;
 
+pub(crate) mod ast_translator;
 pub(crate) mod data_structure;
 pub(crate) mod error;
 pub(crate) mod traits;
 
 pub use crate::{
+    ast_translator::AstTranslator,
     data_structure::{
         alter_table_action::AlterTableAction,
         column::{

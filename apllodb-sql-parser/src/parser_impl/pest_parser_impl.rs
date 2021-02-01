@@ -3,12 +3,13 @@ mod helper;
 
 use crate::{
     apllodb_ast::{
-        types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, ColumnConstraint,
-        ColumnDefinition, ColumnName, ColumnReference, Command, Condition, Constant, Correlation,
-        CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand,
-        DropColumn, DropTableCommand, Expression, FromItem, Identifier, InsertCommand,
-        IntegerConstant, IntegerType, NumericConstant, SelectCommand, SelectField, TableConstraint,
-        TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
+        types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, CharacterType,
+        ColumnConstraint, ColumnDefinition, ColumnName, ColumnReference, Command, Condition,
+        Constant, Correlation, CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName,
+        DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem, Identifier,
+        InsertCommand, IntegerConstant, IntegerType, NumericConstant, SelectCommand, SelectField,
+        StringConstant, TableConstraint, TableElement, TableName, UnaryOperator, UpdateCommand,
+        UseDatabaseCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -58,12 +59,24 @@ impl PestParserImpl {
      */
 
     fn parse_constant(mut params: FnParseParams) -> ApllodbSqlParserResult<Constant> {
-        parse_child(
+        try_parse_child(
             &mut params,
             Rule::numeric_constant,
             Self::parse_numeric_constant,
             Constant::NumericConstantVariant,
-        )
+        )?
+        .or(try_parse_child(
+            &mut params,
+            Rule::string_constant,
+            Self::parse_string_constant,
+            Constant::StringConstantVariant,
+        )?)
+        .ok_or_else(|| {
+            ApllodbSqlParserError::new(
+                params.apllodb_sql,
+                "Does not match any child rule of constant.",
+            )
+        })
     }
 
     fn parse_numeric_constant(
@@ -82,6 +95,20 @@ impl PestParserImpl {
     ) -> ApllodbSqlParserResult<IntegerConstant> {
         let s = self_as_str(&mut params);
         Ok(IntegerConstant(s.into()))
+    }
+
+    fn parse_string_constant(mut params: FnParseParams) -> ApllodbSqlParserResult<StringConstant> {
+        parse_child(
+            &mut params,
+            Rule::string_content,
+            Self::parse_string_content,
+            identity,
+        )
+    }
+
+    fn parse_string_content(mut params: FnParseParams) -> ApllodbSqlParserResult<StringConstant> {
+        let s = self_as_str(&mut params);
+        Ok(StringConstant(s.into()))
     }
 
     /*
@@ -201,12 +228,24 @@ impl PestParserImpl {
      */
 
     fn parse_data_type(mut params: FnParseParams) -> ApllodbSqlParserResult<DataType> {
-        parse_child(
+        try_parse_child(
             &mut params,
             Rule::integer_type,
             Self::parse_integer_type,
             DataType::IntegerTypeVariant,
-        )
+        )?
+        .or(try_parse_child(
+            &mut params,
+            Rule::character_type,
+            Self::parse_character_type,
+            DataType::CharacterTypeVariant,
+        )?)
+        .ok_or_else(|| {
+            ApllodbSqlParserError::new(
+                params.apllodb_sql,
+                "Does not match any child rule of data type.",
+            )
+        })
     }
 
     /*
@@ -221,6 +260,23 @@ impl PestParserImpl {
             "SMALLINT" => Ok(IntegerType::SmallIntVariant),
             "INTEGER" => Ok(IntegerType::IntegerVariant),
             "BIGINT" => Ok(IntegerType::BigIntVariant),
+            x => {
+                eprintln!("Unexpected data type parsed: {}", x);
+                unreachable!();
+            }
+        }
+    }
+
+    /*
+     * ----------------------------------------------------------------------------
+     * Character Types
+     * ----------------------------------------------------------------------------
+     */
+
+    fn parse_character_type(mut params: FnParseParams) -> ApllodbSqlParserResult<CharacterType> {
+        let s = self_as_str(&mut params);
+        match s {
+            "TEXT" => Ok(CharacterType::TextVariant),
             x => {
                 eprintln!("Unexpected data type parsed: {}", x);
                 unreachable!();

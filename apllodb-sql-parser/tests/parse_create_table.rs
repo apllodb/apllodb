@@ -46,6 +46,17 @@ fn test_create_table_accepted() {
             ),
         ),
         (
+            "CREATE TABLE t (c TEXT)",
+            CreateTableCommand::factory(
+                "t",
+                vec![TableElement::factory_coldef(ColumnDefinition::factory(
+                    "c",
+                    DataType::text(),
+                    vec![],
+                ))],
+            ),
+        ),
+        (
             "CREATE TABLE t (id INTEGER, c1 INTEGER, PRIMARY KEY (id, c1))",
             CreateTableCommand::factory(
                 "t",
