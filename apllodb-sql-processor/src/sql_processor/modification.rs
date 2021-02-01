@@ -1,6 +1,9 @@
 use std::{collections::HashMap, convert::TryFrom, rc::Rc};
 
-use apllodb_shared_components::{ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnReference, FieldIndex, Record, RecordIterator, Session, SessionWithTx, SqlValue};
+use apllodb_shared_components::{
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnReference,
+    FieldIndex, Record, RecordIterator, Session, SessionWithTx, SqlValue,
+};
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
 

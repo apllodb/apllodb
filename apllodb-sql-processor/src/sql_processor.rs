@@ -5,7 +5,10 @@ pub(crate) mod success;
 
 use std::rc::Rc;
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, AstTranslator, Session};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
+    Session,
+};
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,

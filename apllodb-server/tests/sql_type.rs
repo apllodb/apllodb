@@ -111,7 +111,10 @@ async fn test_text() {
             StepRes::Ok,
         ))
         .add_step(Step::new(
-            format!(r#"INSERT INTO t (c) VALUES ("{}")"#, r#"abcあいうえお🍺@'\"#),
+            format!(
+                r#"INSERT INTO t (c) VALUES ("{}")"#,
+                r#"abcあいうえお🍺@'\"#
+            ),
             StepRes::Ok,
         ))
         .add_step(Step::new(
