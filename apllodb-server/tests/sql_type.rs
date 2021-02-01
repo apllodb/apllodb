@@ -111,7 +111,7 @@ async fn test_text() {
             StepRes::Ok,
         ))
         .add_step(Step::new(
-            format!(r#"INSERT INTO t (c) VALUES ("{}")"#, r#"abcあいうえお🍺"#),
+            format!(r#"INSERT INTO t (c) VALUES ("{}")"#, r#"abcあいうえお🍺@'\"#),
             StepRes::Ok,
         ))
         .add_step(Step::new(
@@ -126,7 +126,7 @@ async fn test_text() {
                 );
                 assert_eq!(
                     r.get::<String>(&field).unwrap().unwrap(),
-                    r#"abcあいうえお🍺"#
+                    r#"abcあいうえお🍺@'\"#
                 );
                 Ok(())
             })),
