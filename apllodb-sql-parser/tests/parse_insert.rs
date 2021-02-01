@@ -26,6 +26,15 @@ fn test_insert_accepted() {
             ),
         ),
         (
+            r#"INSERT INTO t (c) VALUES ("abcあいう🍣")"#,
+            InsertCommand::factory(
+                "t",
+                None,
+                vec!["c"],
+                vec![Expression::factory_integer("abcあいう🍣")],
+            ),
+        ),
+        (
             "INSERT INTO long_table_name AS t (id, c1) VALUES (1, 123)",
             InsertCommand::factory(
                 "long_table_name",
