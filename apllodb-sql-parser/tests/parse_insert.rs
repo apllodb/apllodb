@@ -2,6 +2,7 @@ use apllodb_sql_parser::{
     apllodb_ast::{Command, Expression, InsertCommand},
     ApllodbAst, ApllodbSqlParser,
 };
+use pretty_assertions::assert_eq;
 
 use apllodb_test_support::setup::setup_test_logger;
 
@@ -26,12 +27,21 @@ fn test_insert_accepted() {
             ),
         ),
         (
-            r#"INSERT INTO t (c) VALUES ("abcあいう🍣")"#,
+            r#"INSERT INTO t (c) VALUES ('abc')"#,
             InsertCommand::factory(
                 "t",
                 None,
                 vec!["c"],
-                vec![Expression::factory_integer("abcあいう🍣")],
+                vec![Expression::factory_text(r#"abc"#)],
+            ),
+        ),
+        (
+            r#"INSERT INTO t (c) VALUES ('abcあいう🍣 "@\')"#,
+            InsertCommand::factory(
+                "t",
+                None,
+                vec!["c"],
+                vec![Expression::factory_text(r#"abcあいう🍣 "@\"#)],
             ),
         ),
         (

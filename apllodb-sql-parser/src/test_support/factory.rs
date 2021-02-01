@@ -3,8 +3,8 @@ use crate::apllodb_ast::{
     ColumnName, ColumnReference, Condition, Constant, Correlation, CreateDatabaseCommand,
     CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand,
     Expression, FromItem, GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType,
-    NonEmptyVec, NumericConstant, OrderBy, SelectCommand, SelectField, TableConstraint,
-    TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
+    NonEmptyVec, NumericConstant, OrderBy, SelectCommand, SelectField, StringConstant,
+    TableConstraint, TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -189,6 +189,10 @@ impl Expression {
         Self::ConstantVariant(Constant::factory_integer(integer))
     }
 
+    pub fn factory_text(text: &str) -> Self {
+        Self::ConstantVariant(Constant::factory_text(text))
+    }
+
     pub fn factory_colref(column_reference: ColumnReference) -> Self {
         Self::ColumnReferenceVariant(column_reference)
     }
@@ -203,6 +207,10 @@ impl Constant {
         Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(
             integer.to_string(),
         )))
+    }
+
+    pub fn factory_text(text: &str) -> Self {
+        Self::StringConstantVariant(StringConstant(text.to_string()))
     }
 }
 

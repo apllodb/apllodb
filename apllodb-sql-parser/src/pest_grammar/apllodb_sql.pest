@@ -741,6 +741,11 @@ rich_utf8_letter = _{
     )
 }
 
+string_character = _{
+    !"'"
+    ~ ANY
+}
+
 /*
  * ----------------------------------------------------------------------------
  * Constants
@@ -750,6 +755,7 @@ rich_utf8_letter = _{
 
 constant = {
     numeric_constant
+    | string_constant
 }
 
 numeric_constant = {
@@ -758,6 +764,14 @@ numeric_constant = {
 
 integer_constant = @{
     DECIMAL_NUMBER+
+}
+
+string_constant = {
+    "'" ~ string_content ~ "'"
+}
+
+string_content = @{
+    string_character*
 }
 
 /*
