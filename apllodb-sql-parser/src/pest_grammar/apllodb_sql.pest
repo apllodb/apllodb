@@ -742,7 +742,7 @@ rich_utf8_letter = _{
 }
 
 string_character = _{
-    !"'"
+    !"\""
     ~ ANY
 }
 
@@ -767,7 +767,7 @@ integer_constant = @{
 }
 
 string_constant = {
-    "'" ~ string_content ~ "'"
+    "\"" ~ string_content ~ "\""
 }
 
 string_content = @{

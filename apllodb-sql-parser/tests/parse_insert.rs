@@ -27,7 +27,7 @@ fn test_insert_accepted() {
             ),
         ),
         (
-            r#"INSERT INTO t (c) VALUES ('abc')"#,
+            r#"INSERT INTO t (c) VALUES ("abc")"#,
             InsertCommand::factory(
                 "t",
                 None,
@@ -36,12 +36,12 @@ fn test_insert_accepted() {
             ),
         ),
         (
-            r#"INSERT INTO t (c) VALUES ('abcあいう🍣 "@\')"#,
+            r#"INSERT INTO t (c) VALUES ("abcあいう🍣 '@\")"#,
             InsertCommand::factory(
                 "t",
                 None,
                 vec!["c"],
-                vec![Expression::factory_text(r#"abcあいう🍣 "@\"#)],
+                vec![Expression::factory_text(r#"abcあいう🍣 '@\"#)],
             ),
         ),
         (
