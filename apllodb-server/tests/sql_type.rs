@@ -18,7 +18,7 @@ async fn test_small_int() {
             StepRes::Ok,
         ))
         .add_step(Step::new(
-            format!("INSERT INTO t (c) VALUES ({})", i16::MIN),
+            format!("INSERT INTO t (c) VALUES ({})", i16::MAX),
             StepRes::Ok,
         ))
         .add_step(Step::new(
@@ -27,9 +27,9 @@ async fn test_small_int() {
                 let field = FieldIndex::factory_colref(ColumnReference::factory("t", "c"));
 
                 let r = records.next().unwrap();
-                assert_eq!(r.get::<i16>(&field).unwrap().unwrap(), i16::MIN);
-                assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i16::MIN as i32);
-                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i16::MIN as i64);
+                assert_eq!(r.get::<i16>(&field).unwrap().unwrap(), i16::MAX);
+                assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i16::MAX as i32);
+                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i16::MAX as i64);
                 Ok(())
             })),
         ))
@@ -46,7 +46,7 @@ async fn test_integer() {
             StepRes::Ok,
         ))
         .add_step(Step::new(
-            format!("INSERT INTO t (c) VALUES ({})", i32::MIN),
+            format!("INSERT INTO t (c) VALUES ({})", i32::MAX),
             StepRes::Ok,
         ))
         .add_step(Step::new(
@@ -59,8 +59,8 @@ async fn test_integer() {
                     r.get::<i16>(&field).unwrap_err().kind(),
                     &ApllodbErrorKind::DatatypeMismatch
                 );
-                assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i32::MIN);
-                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i32::MIN as i64);
+                assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i32::MAX);
+                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i32::MAX as i64);
                 Ok(())
             })),
         ))
@@ -77,7 +77,7 @@ async fn test_big_int() {
             StepRes::Ok,
         ))
         .add_step(Step::new(
-            format!("INSERT INTO t (c) VALUES ({})", i64::MIN),
+            format!("INSERT INTO t (c) VALUES ({})", i64::MAX),
             StepRes::Ok,
         ))
         .add_step(Step::new(
@@ -94,7 +94,7 @@ async fn test_big_int() {
                     r.get::<i32>(&field).unwrap_err().kind(),
                     &ApllodbErrorKind::DatatypeMismatch
                 );
-                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i64::MIN);
+                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i64::MAX);
                 Ok(())
             })),
         ))
