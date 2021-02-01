@@ -101,3 +101,33 @@ async fn test_big_int() {
         .run()
         .await;
 }
+
+#[async_std::test]
+async fn test_text() {
+    SqlTest::default()
+        .add_steps(Steps::BeginTransaction)
+        .add_step(Step::new(
+            "CREATE TABLE t (c TEXT, PRIMARY KEY (c))",
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            format!("INSERT INTO t (c) VALUES ({})", "abcあいうえお🍺"),
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            "SELECT c FROM t",
+            StepRes::OkQuery(Box::new(|mut records| {
+                let field = FieldIndex::factory_colref(ColumnReference::factory("t", "c"));
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i64>(&field).unwrap_err().kind(),
+                    &ApllodbErrorKind::DatatypeMismatch
+                );
+                assert_eq!(r.get::<String>(&field).unwrap().unwrap(),  "abcあいうえお🍺");
+                Ok(())
+            })),
+        ))
+        .run()
+        .await;
+}
