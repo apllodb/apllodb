@@ -67,3 +67,37 @@ async fn test_integer() {
         .run()
         .await;
 }
+
+#[async_std::test]
+async fn test_big_int() {
+    SqlTest::default()
+        .add_steps(Steps::BeginTransaction)
+        .add_step(Step::new(
+            "CREATE TABLE t (c BIGINT, PRIMARY KEY (c))",
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            format!("INSERT INTO t (c) VALUES ({})", i64::MIN),
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            "SELECT c FROM t",
+            StepRes::OkQuery(Box::new(|mut records| {
+                let field = FieldIndex::factory_colref(ColumnReference::factory("t", "c"));
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i16>(&field).unwrap_err().kind(),
+                    &ApllodbErrorKind::DatatypeMismatch
+                );
+                assert_eq!(
+                    r.get::<i32>(&field).unwrap_err().kind(),
+                    &ApllodbErrorKind::DatatypeMismatch
+                );
+                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i64::MIN);
+                Ok(())
+            })),
+        ))
+        .run()
+        .await;
+}
