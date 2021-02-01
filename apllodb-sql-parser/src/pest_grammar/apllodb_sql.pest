@@ -595,6 +595,7 @@ keyword = {
     // | ^"TANH"
     // | ^"TAN"
     // | ^"TEMPORARY"
+    | "TEXT"
     // | ^"THEN"
     // | ^"THROUGH"
     // | ^"TIES"
@@ -740,6 +741,11 @@ rich_utf8_letter = _{
     )
 }
 
+string_character = _{
+    !"\""
+    ~ ANY
+}
+
 /*
  * ----------------------------------------------------------------------------
  * Constants
@@ -749,6 +755,7 @@ rich_utf8_letter = _{
 
 constant = {
     numeric_constant
+    | string_constant
 }
 
 numeric_constant = {
@@ -757,6 +764,14 @@ numeric_constant = {
 
 integer_constant = @{
     DECIMAL_NUMBER+
+}
+
+string_constant = {
+    "\"" ~ string_content ~ "\""
+}
+
+string_content = @{
+    string_character*
 }
 
 /*
@@ -839,6 +854,7 @@ column_reference = {
 
 data_type = {
     integer_type
+    | character_type
 }
 
 /*
@@ -852,6 +868,17 @@ integer_type = {
     ^"SMALLINT"
     | ^"INTEGER"
     | ^"BIGINT"
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Character Types
+ * (https://www.postgresql.org/docs/12/datatype-character.html)
+ * ----------------------------------------------------------------------------
+ */
+
+character_type = {
+    ^"TEXT"
 }
 
 /*

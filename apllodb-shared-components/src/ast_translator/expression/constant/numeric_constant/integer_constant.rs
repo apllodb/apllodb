@@ -1,6 +1,4 @@
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlValue,
-};
+use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
@@ -42,9 +40,7 @@ impl AstTranslator {
 mod test {
     use pretty_assertions::assert_eq;
 
-    use apllodb_shared_components::{
-        ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlType, SqlValue,
-    };
+    use crate::{ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlType, SqlValue};
     use apllodb_sql_parser::apllodb_ast;
 
     use super::AstTranslator;

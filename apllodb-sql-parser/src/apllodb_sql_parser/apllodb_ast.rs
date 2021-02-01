@@ -37,6 +37,7 @@ pub struct ApllodbAst(pub Command);
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Constant {
     NumericConstantVariant(NumericConstant),
+    StringConstantVariant(StringConstant),
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -48,6 +49,10 @@ pub enum NumericConstant {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct IntegerConstant(pub String);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct StringConstant(pub String);
 
 /*
  * ----------------------------------------------------------------------------
@@ -114,6 +119,7 @@ pub struct ColumnReference {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DataType {
     IntegerTypeVariant(IntegerType),
+    CharacterTypeVariant(CharacterType),
 }
 
 /*
@@ -128,6 +134,18 @@ pub enum IntegerType {
     SmallIntVariant,
     IntegerVariant,
     BigIntVariant,
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ * Character Types
+ * ----------------------------------------------------------------------------
+ */
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum CharacterType {
+    TextVariant,
 }
 
 /*

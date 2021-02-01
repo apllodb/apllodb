@@ -2,12 +2,12 @@ pub(crate) mod query_plan_tree;
 
 use std::convert::TryFrom;
 
-use apllodb_shared_components::{ApllodbError, ApllodbResult, ColumnName, TableName};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbResult, AstTranslator, ColumnName, TableName,
+};
 use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
-
-use crate::ast_translator::AstTranslator;
 
 use self::query_plan_tree::{
     query_plan_node::{LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf},
