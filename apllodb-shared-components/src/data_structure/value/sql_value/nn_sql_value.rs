@@ -76,8 +76,12 @@ impl Hash for NNSqlValue {
 
 impl Display for NNSqlValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let raw_in_s: String = for_all_loose_types!(self, |i: i64| i.to_string(), |s: String| s);
-        write!(f, "{}", raw_in_s)
+        let s: String = for_all_loose_types!(
+            self,
+            |i: i64| i.to_string(),
+            |s: String| format!(r#""{}""#, s)
+        );
+        write!(f, "{}", s)
     }
 }
 
