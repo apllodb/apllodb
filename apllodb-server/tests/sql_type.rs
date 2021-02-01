@@ -10,6 +10,34 @@ fn setup() {
 }
 
 #[async_std::test]
+async fn test_small_int() {
+    SqlTest::default()
+        .add_steps(Steps::BeginTransaction)
+        .add_step(Step::new(
+            "CREATE TABLE t (c SMALLINT, PRIMARY KEY (c))",
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            format!("INSERT INTO t (c) VALUES ({})", i16::MIN),
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            "SELECT c FROM t",
+            StepRes::OkQuery(Box::new(|mut records| {
+                let field = FieldIndex::factory_colref(ColumnReference::factory("t", "c"));
+
+                let r = records.next().unwrap();
+                assert_eq!(r.get::<i16>(&field).unwrap().unwrap(), i16::MIN);
+                assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i16::MIN as i32);
+                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i16::MIN as i64);
+                Ok(())
+            })),
+        ))
+        .run()
+        .await;
+}
+
+#[async_std::test]
 async fn test_integer() {
     SqlTest::default()
         .add_steps(Steps::BeginTransaction)
