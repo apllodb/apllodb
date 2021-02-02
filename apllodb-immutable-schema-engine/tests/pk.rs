@@ -83,8 +83,8 @@ async fn test_compound_pk() -> ApllodbResult<()> {
                 &FieldIndex::InFullFieldReference(
                     ffr_country_code.clone()
                 )
-            )?, 
-            Some(100i16), 
+            )?,
+            Some(100i16),
             "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK"
         );
         assert_eq!(
