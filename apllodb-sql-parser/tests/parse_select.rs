@@ -1,7 +1,6 @@
 use apllodb_sql_parser::{
     apllodb_ast::{
-        Alias, ColumnReference, Command, Correlation, Expression, FromItem, SelectCommand,
-        SelectField, TableName,
+        ColumnReference, Command, Correlation, Expression, FromItem, SelectCommand, SelectField,
     },
     ApllodbAst, ApllodbSqlParser,
 };
@@ -83,7 +82,7 @@ fn test_select_accepted() {
                     ),
                     SelectField::factory(
                         Expression::factory_colref(ColumnReference::factory(
-                            Some(Correlation::TableNameVariant(TableName::factory("t"))),
+                            Some(Correlation::factory("t")),
                             "c1",
                         )),
                         None,
@@ -106,7 +105,7 @@ fn test_select_accepted() {
                     ),
                     SelectField::factory(
                         Expression::factory_colref(ColumnReference::factory(
-                            Some(Correlation::AliasVariant(Alias::factory("s"))),
+                            Some(Correlation::factory("s")),
                             "c1",
                         )),
                         None,
