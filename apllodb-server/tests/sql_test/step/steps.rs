@@ -21,17 +21,17 @@ impl From<Steps> for Vec<Step> {
             }
             Steps::CreateTablePeople => {
                 let mut steps = Self::from(Steps::BeginTransaction);
-                steps.push(Step::new("CREATE TABLE people (id INTEGER NOT NULL, age INTEGER NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
+                steps.push(Step::new("CREATE TABLE people (id BIGINT NOT NULL, age INTEGER NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
                 steps
             }
             Steps::CreateTableBody => {
                 let mut steps = Self::from(Steps::BeginTransaction);
-                steps.push(Step::new("CREATE TABLE body (id INTEGER NOT NULL, people_id INTEGER NOT NULL, height INTEGER NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
+                steps.push(Step::new("CREATE TABLE body (id BIGINT NOT NULL, people_id BIGINT NOT NULL, height INTEGER NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
                 steps
             }
             Steps::CreateTablePet => {
                 let mut steps = Self::from(Steps::BeginTransaction);
-                steps.push(Step::new("CREATE TABLE pet (id INTEGER NOT NULL, people_id INTEGER NOT NULL, kind TEXT NOT NULL, age SMALLINT NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
+                steps.push(Step::new("CREATE TABLE pet (id BIGINT NOT NULL, people_id BIGINT NOT NULL, kind TEXT NOT NULL, age SMALLINT NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
                 steps
             }
             Steps::SetupPeopleDataset => {
@@ -57,7 +57,7 @@ impl From<Steps> for Vec<Step> {
                     StepRes::Ok,
                 ));
                 steps.push(Step::new(
-                    "INSERT INTO body (id, people_id, height) VALUES (2, 2, 175)",
+                    "INSERT INTO body (id, people_id, height) VALUES (2, 3, 175)",
                     StepRes::Ok,
                 ));
                 steps

@@ -10,12 +10,12 @@ pub static T_PEOPLE_R1: Lazy<Record> = Lazy::new(|| People::record(1, 13));
 pub static T_PEOPLE_R2: Lazy<Record> = Lazy::new(|| People::record(2, 70));
 pub static T_PEOPLE_R3: Lazy<Record> = Lazy::new(|| People::record(3, 35));
 
-pub static T_BODY_R1: Lazy<Record> = Lazy::new(|| Body::record(1, 145));
-pub static T_BODY_R3: Lazy<Record> = Lazy::new(|| Body::record(3, 175));
+pub static T_BODY_R1: Lazy<Record> = Lazy::new(|| Body::record(1, 1, 145));
+pub static T_BODY_R3: Lazy<Record> = Lazy::new(|| Body::record(2, 3, 175));
 
-pub static T_PET_R1: Lazy<Record> = Lazy::new(|| Pet::record(1, "dog", 13));
-pub static T_PET_R3_1: Lazy<Record> = Lazy::new(|| Pet::record(3, "dog", 5));
-pub static T_PET_R3_2: Lazy<Record> = Lazy::new(|| Pet::record(3, "cat", 3));
+pub static T_PET_R1: Lazy<Record> = Lazy::new(|| Pet::record(1, 1, "dog", 13));
+pub static T_PET_R3_1: Lazy<Record> = Lazy::new(|| Pet::record(2, 3, "dog", 5));
+pub static T_PET_R3_2: Lazy<Record> = Lazy::new(|| Pet::record(3, 3, "cat", 3));
 
 pub static FULL_MODELS: Lazy<ModelsMock> = Lazy::new(|| ModelsMock {
     people: vec![
