@@ -38,3 +38,10 @@ impl TryFrom<FieldIndex> for FullFieldReference {
         }
     }
 }
+
+impl FullFieldReference {
+    /// Get ref of FieldReference
+    pub fn as_field_reference(&self) -> &FieldReference {
+        &self.field_reference
+    }
+}

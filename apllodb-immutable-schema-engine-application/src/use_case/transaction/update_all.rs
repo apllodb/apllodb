@@ -10,10 +10,10 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FullFieldReference, DatabaseName,
-    Expression, FieldIndex, Record, RecordIterator, SqlValue, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression,
+    FullFieldReference, Record, RecordIterator, SqlValue, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::{ProjectionQuery, TableColumnReference};
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
@@ -121,9 +121,9 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
                     fields
                         .drain()
                         .map(|(cn, sql_value)| {
-                            let colref = FullFieldReference::new(vtable.table_name().clone(), cn);
-                            let field = FieldIndex::InFullFieldReference(colref);
-                            (field, sql_value)
+                            let tcr = TableColumnReference::new(vtable.table_name().clone(), cn);
+                            let ffr = FullFieldReference::from(tcr);
+                            (ffr, sql_value)
                         })
                         .collect(),
                 )
