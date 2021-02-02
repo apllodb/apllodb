@@ -3,7 +3,7 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
-    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,  FieldIndex,
+    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex,
     FullFieldReference, NNSqlValue, RecordIterator, SqlType, SqlValue, TableConstraintKind,
     TableConstraints, TableName,
 };

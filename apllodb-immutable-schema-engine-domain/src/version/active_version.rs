@@ -184,9 +184,7 @@ impl ActiveVersion {
 mod tests {
     use super::ActiveVersion;
     use crate::vtable::id::VTableId;
-    use apllodb_shared_components::{
-        AlterTableAction, ColumnDataType, ColumnName,  SqlType,
-    };
+    use apllodb_shared_components::{AlterTableAction, ColumnDataType, ColumnName, SqlType};
     use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 
     #[test]
