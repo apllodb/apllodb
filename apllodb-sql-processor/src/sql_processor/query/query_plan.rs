@@ -9,7 +9,12 @@ use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
-use self::query_plan_tree::{QueryPlanTree, query_plan_node::{LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation}};
+use self::query_plan_tree::{
+    query_plan_node::{
+        LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
+    },
+    QueryPlanTree,
+};
 
 /// Query plan from which an executor can do its work deterministically.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, new)]
@@ -82,13 +87,11 @@ impl TryFrom<SelectCommand> for QueryPlan {
             })
             .collect::<ApllodbResult<_>>()?;
 
-            let projection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
-                op: UnaryPlanOperation::Projection {
-                    fields
-                }
-            });
+        let projection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
+            op: UnaryPlanOperation::Projection { fields },
+        });
 
-            let seq_scan_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
+        let seq_scan_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
                 table_name,
                 projection: ProjectionQuery::ColumnNames(column_names),
