@@ -32,6 +32,8 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 
         match QueryPlan::try_from(select_command) {
             Ok(plan) => {
+                log::error!("query plan: {:#?}", plan);
+
                 let executor = QueryExecutor::new(self.engine.clone());
                 executor.run(session, plan).await
                 // TODO plan optimization -> QueryPlan
