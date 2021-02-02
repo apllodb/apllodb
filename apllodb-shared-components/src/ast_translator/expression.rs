@@ -12,20 +12,25 @@ impl AstTranslator {
                 let sql_value = Self::constant(c)?;
                 Expression::ConstantVariant(sql_value)
             }
-            apllodb_ast::Expression::ColumnReferenceVariant(colref) => match colref.correlation {
-                Some(corr) => match corr {
-                    apllodb_ast::Correlation::TableNameVariant(tn) => {
-                        let ffr = Self::column_reference_with_table_name(tn, colref.column_name)?;
+            apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
+                match ast_colref.correlation {
+                    Some(corr) => {
+                        // FIXME cannot distinguish whether ast_colref.correlation is table_name / alias.
+                        // Needs more info like:
+                        // - from_item in SELECT
+                        // - table_name in INSERT
+                        let ast_table_name = apllodb_ast::TableName(corr.0);
+                        let ffr = Self::column_reference_with_table_name(
+                            ast_table_name,
+                            ast_colref.column_name,
+                        )?;
                         Expression::FullFieldReferenceVariant(ffr)
                     }
-                    apllodb_ast::Correlation::AliasVariant(_) => {
+                    None => {
                         todo!()
                     }
-                },
-                None => {
-                    todo!()
                 }
-            },
+            }
             apllodb_ast::Expression::UnaryOperatorVariant(uni_op, expr) => {
                 let uni_op = Self::unary_operator(uni_op);
                 let expr = Self::expression(*expr)?;
