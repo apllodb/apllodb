@@ -13,7 +13,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, SqlType,
+    ApllodbResult, ColumnDataType, ColumnName, FullFieldReference, SqlType,
 };
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
@@ -193,7 +193,7 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
 
     fn cdt_rowid(&self, navi_table_name: &NaviTableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
+            FullFieldReference::new(
                 navi_table_name.to_table_name(),
                 ColumnName::new(CNAME_ROWID).unwrap(),
             ),
@@ -203,7 +203,7 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
     }
     fn cdt_revision(&self, navi_table_name: &NaviTableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
+            FullFieldReference::new(
                 navi_table_name.to_table_name(),
                 ColumnName::new(CNAME_REVISION).unwrap(),
             ),
@@ -213,7 +213,7 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
     }
     fn cdt_version_number(&self, navi_table_name: &NaviTableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
+            FullFieldReference::new(
                 navi_table_name.to_table_name(),
                 ColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
             ),

@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, ColumnName, ColumnReference, Expression, FieldIndex, NNSqlValue,
+    ColumnDefinition, ColumnName, FullFieldReference, Expression, FieldIndex, NNSqlValue,
     RecordIterator, SqlType, SqlValue, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
@@ -24,7 +24,7 @@ async fn test_create_table_success() -> ApllodbResult<()> {
 
     let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         ),
@@ -61,7 +61,7 @@ async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
 
     let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         ),
@@ -107,7 +107,7 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let c_id_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("id")?),
             SqlType::integer(),
             false,
         ),
@@ -115,7 +115,7 @@ async fn test_insert() -> ApllodbResult<()> {
     );
     let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         ),
@@ -140,8 +140,8 @@ async fn test_insert() -> ApllodbResult<()> {
         session,
         t_name.clone(),
         RecordIterator::new(vec![record! {
-            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
-            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
+            FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
+            FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
         }]),
     ).await?;
 
@@ -152,13 +152,13 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c_id_def.column_data_type().column_ref().clone()
         ))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c1_def.column_data_type().column_ref().clone()
         ))?,
         Some(100)
@@ -180,7 +180,7 @@ async fn test_update() -> ApllodbResult<()> {
 
     let c_id_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("id")?),
             SqlType::integer(),
             false,
         ),
@@ -188,7 +188,7 @@ async fn test_update() -> ApllodbResult<()> {
     );
     let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         ),
@@ -213,8 +213,8 @@ async fn test_update() -> ApllodbResult<()> {
         session,
         t_name.clone(),
         RecordIterator::new(vec![record! {
-            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
-            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
+            FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
+            FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
         }]),
     ).await?;
     let (mut records, session) = engine
@@ -223,13 +223,13 @@ async fn test_update() -> ApllodbResult<()> {
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c_id_def.column_data_type().column_ref().clone()
         ))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c1_def.column_data_type().column_ref().clone()
         ))?,
         Some(100)
@@ -250,13 +250,13 @@ t_name.clone(),
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c_id_def.column_data_type().column_ref().clone()
         ))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c1_def.column_data_type().column_ref().clone()
         ))?,
         Some(200)
@@ -278,13 +278,13 @@ update(
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c_id_def.column_data_type().column_ref().clone()
         ))?,
         Some(2)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InColumnReference(
+        record.get::<i32>(&FieldIndex::InFullFieldReference(
             c1_def.column_data_type().column_ref().clone()
         ))?,
         Some(200)
@@ -305,7 +305,7 @@ async fn test_delete() -> ApllodbResult<()> {
 
     let c_id_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("id")?),
             SqlType::integer(),
             false,
         ),
@@ -313,7 +313,7 @@ async fn test_delete() -> ApllodbResult<()> {
     );
     let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         ),
@@ -338,8 +338,8 @@ async fn test_delete() -> ApllodbResult<()> {
 session,
 t_name.clone(),
         RecordIterator::new(vec![record! {
-            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
-            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
+            FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
+            FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
         }]),
     ).await?;
 

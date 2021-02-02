@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    ColumnName, ColumnReference, FieldIndex, NNSqlValue, RecordIterator, SqlType, SqlValue,
+    ColumnName, FullFieldReference, FieldIndex, NNSqlValue, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
@@ -24,7 +24,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
 
     let c_id_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("id")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("id")?),
             SqlType::integer(),
             false,
         ),
@@ -32,7 +32,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     );
     let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         ),
@@ -61,8 +61,8 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // |----|----|
     // | 1  | 1  |
     let session = engine.with_tx().insert(session, t_name.clone(), RecordIterator::new(vec![record! {
-        FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
-        FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1))
+        FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
+        FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1))
     }])).await?;
 
     // v1
@@ -101,7 +101,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
         session,
         t_name.clone(),
         RecordIterator::new(vec![
-            record! { FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(2)) },
+            record! { FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(2)) },
         ]),
     ).await?;
 
@@ -119,8 +119,8 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
         session,
         t_name.clone(),
         RecordIterator::new(vec![record! {
-            FieldIndex::InColumnReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(3)),
-            FieldIndex::InColumnReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(3))
+            FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(3)),
+            FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(3))
         }]),
     ).await?;
 
@@ -135,19 +135,19 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
 
     for record in records {
         let id: i32 = record
-            .get(&FieldIndex::InColumnReference(
+            .get(&FieldIndex::InFullFieldReference(
                 c_id_def.column_data_type().column_ref().clone(),
             ))?
             .unwrap();
         match id {
             1 => assert_eq!(
-                record.get::<i32>(&FieldIndex::InColumnReference(
+                record.get::<i32>(&FieldIndex::InFullFieldReference(
                     c1_def.column_data_type().column_ref().clone()
                 ))?,
                 Some(1)
             ),
             3 => assert_eq!(
-                record.get::<i32>(&FieldIndex::InColumnReference(
+                record.get::<i32>(&FieldIndex::InFullFieldReference(
                     c1_def.column_data_type().column_ref().clone()
                 ))?,
                 Some(3)
@@ -155,7 +155,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
             2 => {
                 // Can fetch column `c1` from v2 and it's value is NULL.
                 assert_eq!(
-                    record.get::<i32>(&FieldIndex::InColumnReference(
+                    record.get::<i32>(&FieldIndex::InFullFieldReference(
                         c1_def.column_data_type().column_ref().clone()
                     ))?,
                     None

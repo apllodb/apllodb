@@ -1,14 +1,14 @@
 use super::ImmutableRow;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnReference, ColumnValue, SqlValue,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference, ColumnValue, SqlValue,
 };
 use std::collections::HashMap;
 
 /// Builder for ImmutableRow.
 #[derive(Debug, Default)]
 pub struct ImmutableRowBuilder {
-    col_vals: HashMap<ColumnReference, SqlValue>,
+    col_vals: HashMap<FullFieldReference, SqlValue>,
 }
 
 impl ImmutableRowBuilder {
@@ -19,7 +19,7 @@ impl ImmutableRowBuilder {
     /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
     ///   - Same `ColumnName` added twice.
     pub fn add_colval(mut self, colval: ColumnValue) -> ApllodbResult<Self> {
-        let colref = colval.as_column_ref().clone();
+        let colref = colval.as_column_name().clone();
 
         if self
             .col_vals
@@ -36,7 +36,7 @@ impl ImmutableRowBuilder {
         }
     }
 
-    pub fn add_void_projection(self, colref: &ColumnReference) -> ApllodbResult<Self> {
+    pub fn add_void_projection(self, colref: &FullFieldReference) -> ApllodbResult<Self> {
         self.add_colval(ColumnValue::new(colref.clone(), SqlValue::Null))
     }
 
@@ -56,12 +56,12 @@ mod tests {
 
     use super::ImmutableRowBuilder;
     use apllodb_shared_components::{
-        ApllodbResult, ColumnName, ColumnReference, ColumnValue, NNSqlValue, SqlValue, TableName,
+        ApllodbResult, ColumnName, FullFieldReference, ColumnValue, NNSqlValue, SqlValue, TableName,
     };
 
     #[test]
     fn test_success() -> ApllodbResult<()> {
-        let colref = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
+        let colref = FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?);
 
         let mut row1 = ImmutableRowBuilder::default()
             .add_colval(ColumnValue::new(
@@ -83,8 +83,8 @@ mod tests {
 
     #[test]
     fn test_add_order_does_not_matter() -> ApllodbResult<()> {
-        let colref1 = ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?);
-        let colref2 = ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?);
+        let colref1 = FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?);
+        let colref2 = FullFieldReference::new(TableName::new("t")?, ColumnName::new("c2")?);
 
         let row1 = ImmutableRowBuilder::default()
             .add_colval(ColumnValue::new(

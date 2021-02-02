@@ -64,14 +64,14 @@ mod tests {
     use super::TableWideConstraints;
     use apllodb_shared_components::{
         ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-        ColumnName, ColumnReference, SqlType, TableConstraintKind, TableConstraints, TableName,
+        ColumnName, FullFieldReference, SqlType, TableConstraintKind, TableConstraints, TableName,
     };
 
     #[test]
     fn test_success() -> ApllodbResult<()> {
         let c1_def = ColumnDefinition::new(
             ColumnDataType::new(
-                ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
+                FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?),
                 SqlType::integer(),
                 false,
             ),
@@ -79,7 +79,7 @@ mod tests {
         );
         let c2_def = ColumnDefinition::new(
             ColumnDataType::new(
-                ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
+                FullFieldReference::new(TableName::new("t")?, ColumnName::new("c2")?),
                 SqlType::integer(),
                 false,
             ),
@@ -156,7 +156,7 @@ mod tests {
     fn test_failure_invalid_table_definition() -> ApllodbResult<()> {
         let c1_def = ColumnDefinition::new(
             ColumnDataType::new(
-                ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
+                FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?),
                 SqlType::integer(),
                 false,
             ),

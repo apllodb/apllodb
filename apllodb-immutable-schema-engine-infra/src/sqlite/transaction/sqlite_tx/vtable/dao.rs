@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, FullFieldReference,
     SqlType, TableName,
 };
 
@@ -98,7 +98,7 @@ CREATE TABLE {} (
         })?;
 
         let table_wide_constraints_str: String = row
-            .get(&ColumnReference::new(
+            .get(&FullFieldReference::new(
                 vtable_id.table_name().clone(),
                 ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?,
             ))?
@@ -173,7 +173,7 @@ CREATE TABLE {} (
 
     fn cdt_table_wide_constraints(&self, table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
+            FullFieldReference::new(
                 table_name,
                 ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
             ),

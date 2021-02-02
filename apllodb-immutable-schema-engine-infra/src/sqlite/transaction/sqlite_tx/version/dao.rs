@@ -12,7 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, SqlType, SqlValue, TableName,
+    ApllodbResult, ColumnDataType, ColumnName, FullFieldReference, SqlType, SqlValue, TableName,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::{
@@ -128,7 +128,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                     non_pk_void_projection
                         .iter()
                         .map(|cn| {
-                            ColumnReference::new(
+                            FullFieldReference::new(
                                 version.vtable_id().table_name().clone(),
                                 cn.clone(),
                             )
@@ -141,7 +141,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
             for mut row in row_iter {
                 rowid_vs_row.insert(
-                    row.get(&ColumnReference::new(
+                    row.get(&FullFieldReference::new(
                         sqlite_table_name.clone(),
                         ColumnName::new(CNAME_NAVI_ROWID)?,
                     ))?
@@ -199,7 +199,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
 impl VersionDao {
     fn cdt_navi_rowid(&self, table_name: TableName) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(table_name, ColumnName::new(CNAME_NAVI_ROWID).unwrap()),
+            FullFieldReference::new(table_name, ColumnName::new(CNAME_NAVI_ROWID).unwrap()),
             SqlType::big_int(),
             false,
         )

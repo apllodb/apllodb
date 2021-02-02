@@ -7,7 +7,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnName, ColumnReference, DatabaseName, RecordIterator, SqlValue, TableName,
+    ApllodbResult, ColumnName, FullFieldReference, DatabaseName, RecordIterator, SqlValue, TableName,
 };
 use async_trait::async_trait;
 use std::convert::TryFrom;
@@ -57,10 +57,10 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             let apk = ApparentPrimaryKey::from_table_and_record(&vtable, &record)?;
 
             // Filter Non-PK columns from column_values
-            let colref_values: HashMap<ColumnReference, SqlValue> = record
+            let colref_values: HashMap<FullFieldReference, SqlValue> = record
                 .into_field_values()
                 .into_iter()
-                .map(|(field, v)| Ok((ColumnReference::try_from(field)?, v)))
+                .map(|(field, v)| Ok((FullFieldReference::try_from(field)?, v)))
                 .collect::<ApllodbResult<_>>()?;
             let non_pk_col_values: HashMap<ColumnName, SqlValue> = colref_values
                 .into_iter()

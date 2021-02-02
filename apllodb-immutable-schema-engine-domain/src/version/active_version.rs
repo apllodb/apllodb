@@ -185,14 +185,14 @@ mod tests {
     use super::ActiveVersion;
     use crate::vtable::id::VTableId;
     use apllodb_shared_components::{
-        AlterTableAction, ColumnDataType, ColumnName, ColumnReference, SqlType, TableName,
+        AlterTableAction, ColumnDataType, ColumnName, FullFieldReference, SqlType, TableName,
     };
     use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {
         let c1_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
+            FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         );
@@ -206,12 +206,12 @@ mod tests {
     #[test]
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
         let c1_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
+            FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         );
         let c2_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
+            FullFieldReference::new(TableName::new("t")?, ColumnName::new("c2")?),
             SqlType::integer(),
             false,
         );
@@ -228,7 +228,7 @@ mod tests {
 
         assert_eq!(v2.number().to_u64(), 2);
 
-        let v2_cols: Vec<&ColumnReference> = v2
+        let v2_cols: Vec<&FullFieldReference> = v2
             .column_data_types()
             .iter()
             .map(|cdt| cdt.column_ref())
@@ -241,7 +241,7 @@ mod tests {
     #[test]
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
         let c1_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
+            FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         );

@@ -1,10 +1,10 @@
-use apllodb_shared_components::{ApllodbResult, ColumnReference, FieldIndex, Record};
+use apllodb_shared_components::{ApllodbResult, FullFieldReference, FieldIndex, Record};
 
-pub(crate) fn r_projection(r: Record, fields: Vec<ColumnReference>) -> ApllodbResult<Record> {
+pub(crate) fn r_projection(r: Record, fields: Vec<FullFieldReference>) -> ApllodbResult<Record> {
     r.projection(
         &fields
             .into_iter()
-            .map(FieldIndex::InColumnReference)
+            .map(FieldIndex::InFullFieldReference)
             .collect(),
     )
 }

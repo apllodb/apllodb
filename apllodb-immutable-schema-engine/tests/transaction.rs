@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, ColumnName, ColumnReference, DatabaseName, Session, SessionWithoutDb,
+    ColumnDefinition, ColumnName, FullFieldReference, DatabaseName, Session, SessionWithoutDb,
     SqlType, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
@@ -42,7 +42,7 @@ async fn test_wait_lock() -> ApllodbResult<()> {
 
     let c1_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
             SqlType::integer(),
             false,
         ),

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnReference,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, FullFieldReference,
     FieldIndex, Record, RecordIterator, Session, SessionWithTx, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
@@ -82,8 +82,8 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             .into_iter()
             .map(|(cn, sql_value)| {
                 let col_ref =
-                    ColumnReference::new(table_name.clone(), AstTranslator::column_name(cn)?);
-                let field = FieldIndex::InColumnReference(col_ref);
+                    FullFieldReference::new(table_name.clone(), AstTranslator::column_name(cn)?);
+                let field = FieldIndex::InFullFieldReference(col_ref);
                 Ok((field, sql_value))
             })
             .collect::<ApllodbResult<_>>()?;

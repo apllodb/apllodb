@@ -9,7 +9,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, FullFieldReference,
     SqlType, TableName,
 };
 
@@ -48,7 +48,7 @@ impl SqliteMasterDao {
             .await?
             .map(|mut row| {
                 let s = row
-                    .get::<String>(&ColumnReference::new(
+                    .get::<String>(&FullFieldReference::new(
                         TableName::new(TNAME)?,
                         ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
                     ))?
@@ -92,7 +92,7 @@ impl SqliteMasterDao {
 
     fn cdt_create_table_sql(&self) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
+            FullFieldReference::new(
                 TableName::new(TNAME).unwrap(),
                 ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
             ),

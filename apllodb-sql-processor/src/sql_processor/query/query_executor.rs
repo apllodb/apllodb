@@ -167,7 +167,7 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::InColumnReference(People::colref_id())]
+                        fields: vec![FieldIndex::InFullFieldReference(People::colref_id())]
                             .into_iter()
                             .collect(),
                     },
@@ -187,7 +187,7 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::InColumnReference(People::colref_age())]
+                        fields: vec![FieldIndex::InFullFieldReference(People::colref_age())]
                             .into_iter()
                             .collect(),
                     },
@@ -208,8 +208,8 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(People::colref_id()),
-                        right_field: FieldIndex::InColumnReference(Body::colref_people_id()),
+                        left_field: FieldIndex::InFullFieldReference(People::colref_id()),
+                        right_field: FieldIndex::InFullFieldReference(Body::colref_people_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -233,8 +233,8 @@ mod tests {
                 // right has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(People::colref_id()),
-                        right_field: FieldIndex::InColumnReference(Pet::colref_people_id()),
+                        left_field: FieldIndex::InFullFieldReference(People::colref_id()),
+                        right_field: FieldIndex::InFullFieldReference(Pet::colref_people_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -259,8 +259,8 @@ mod tests {
                 // left has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(Pet::colref_people_id()),
-                        right_field: FieldIndex::InColumnReference(People::colref_id()),
+                        left_field: FieldIndex::InFullFieldReference(Pet::colref_people_id()),
+                        right_field: FieldIndex::InFullFieldReference(People::colref_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -285,8 +285,8 @@ mod tests {
                 // Eq comparison with Integer & SmallInt
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InColumnReference(People::colref_age()),
-                        right_field: FieldIndex::InColumnReference(Pet::colref_age()),
+                        left_field: FieldIndex::InFullFieldReference(People::colref_age()),
+                        right_field: FieldIndex::InFullFieldReference(Pet::colref_age()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {

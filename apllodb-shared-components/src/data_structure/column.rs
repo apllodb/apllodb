@@ -3,5 +3,4 @@ pub(crate) mod column_constraints;
 pub(crate) mod column_data_type;
 pub(crate) mod column_definition;
 pub(crate) mod column_name;
-pub(crate) mod column_reference;
 pub(crate) mod column_value;

@@ -14,7 +14,7 @@ use crate::{
         database::SqliteDatabase, row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid,
     },
 };
-use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnReference, DatabaseName};
+use apllodb_shared_components::{ApllodbResult, ColumnDataType, FullFieldReference, DatabaseName};
 use log::debug;
 
 /// Many transactions share 1 SQLite connection in `Database`.
@@ -93,7 +93,7 @@ impl SqliteTx {
         &mut self,
         sql: &str,
         column_data_types: &[&ColumnDataType],
-        void_projection: &[ColumnReference],
+        void_projection: &[FullFieldReference],
     ) -> ApllodbResult<SqliteRowIterator> {
         debug!("SqliteTx::query():\n    {}", sql);
 

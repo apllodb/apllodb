@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, FieldIndex, NNSqlValue, RecordIterator, SqlType, SqlValue,
+    FullFieldReference, FieldIndex, NNSqlValue, RecordIterator, SqlType, SqlValue,
     TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
@@ -24,7 +24,7 @@ async fn test_compound_pk() -> ApllodbResult<()> {
 
     let c_country_code_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("country_code")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("country_code")?),
             SqlType::small_int(),
             false,
         ),
@@ -32,7 +32,7 @@ async fn test_compound_pk() -> ApllodbResult<()> {
     );
     let c_postal_code_def = ColumnDefinition::new(
         ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("postal_code")?),
+            FullFieldReference::new(t_name.clone(), ColumnName::new("postal_code")?),
             SqlType::integer(),
             false,
         ),
@@ -62,8 +62,8 @@ async fn test_compound_pk() -> ApllodbResult<()> {
 
     let session = engine.with_tx().insert(session, t_name.clone(),
     RecordIterator::new(vec![record! {
-        FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::SmallInt(100)),
-        FieldIndex::InColumnReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1000001))
+        FieldIndex::InFullFieldReference(c_country_code_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::SmallInt(100)),
+        FieldIndex::InFullFieldReference(c_postal_code_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1000001))
     }])).await?;
 
     let (records, session) = engine
@@ -80,9 +80,9 @@ async fn test_compound_pk() -> ApllodbResult<()> {
         .await?;
 
     for record in records {
-        assert_eq!(record.get::<i16>(&FieldIndex::InColumnReference(c_country_code_def.column_data_type().column_ref().clone()))?, Some(100i16), "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
+        assert_eq!(record.get::<i16>(&FieldIndex::InFullFieldReference(c_country_code_def.column_data_type().column_ref().clone()))?, Some(100i16), "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK");
         assert_eq!(
-            record.get::<i32>(&FieldIndex::InColumnReference(
+            record.get::<i32>(&FieldIndex::InFullFieldReference(
                 c_postal_code_def.column_data_type().column_ref().clone()
             ))?,
             Some(1000001i32)

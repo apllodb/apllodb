@@ -1,7 +1,7 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ColumnReference, ColumnValue, ComparisonFunction, Expression, FieldIndex, LogicalFunction,
+    ColumnValue, ComparisonFunction, Expression, FieldIndex, FullFieldReference, LogicalFunction,
     NNSqlValue, Record, SqlConvertible, SqlValue, TableName,
 };
 use serde::{Deserialize, Serialize};
@@ -65,7 +65,7 @@ impl ApparentPrimaryKey {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
-            .map(|cdt| cdt.column_ref().as_column_name().clone())
+            .map(|cdt| cdt.column_name().clone())
             .collect::<Vec<ColumnName>>();
 
         let apk_sql_values = apk_cdts
@@ -96,7 +96,7 @@ impl ApparentPrimaryKey {
             .iter()
             .map(|cdt| {
                 record
-                    .get_sql_value(&FieldIndex::InColumnReference(cdt.column_ref().clone()))
+                    .get_sql_value(&FieldIndex::InFullFieldReference(cdt.column_ref().clone()))
                     // FIXME less clone
                     .map(|sql_value| {
                         if let SqlValue::NotNull(sql_value) =    sql_value {
@@ -147,7 +147,7 @@ impl ApparentPrimaryKey {
             .into_iter()
             .zip(self.sql_values)
             .map(|(cn, nn)| {
-                let colref = ColumnReference::new(table_name.clone(), cn);
+                let colref = FullFieldReference::new(table_name.clone(), cn);
                 let sql_value = SqlValue::NotNull(nn);
                 ColumnValue::new(colref, sql_value)
             })
@@ -158,7 +158,7 @@ impl ApparentPrimaryKey {
         self.zipped()
             .into_iter()
             .map(|(cname, sql_value)| {
-                let column_ref = ColumnReference::new(self.table_name.clone(), cname.clone());
+                let column_ref = FullFieldReference::new(self.table_name.clone(), cname.clone());
                 ColumnDataType::new(column_ref, sql_value.sql_type(), false)
             })
             .collect()
@@ -170,7 +170,7 @@ impl ApparentPrimaryKey {
             .into_iter()
             .map(
                 |(column_name, sql_value)| ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::ColumnNameVariant(column_name.clone())),
+                    left: Box::new(Expression::FullFieldReferenceVariant(column_name.clone())),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),
                     ))),

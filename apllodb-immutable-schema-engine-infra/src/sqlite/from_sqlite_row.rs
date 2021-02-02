@@ -2,7 +2,7 @@ use apllodb_immutable_schema_engine_domain::row::immutable_row::{
     builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnReference, ColumnValue, I64LooseType,
+    ApllodbResult, ColumnDataType, FullFieldReference, ColumnValue, I64LooseType,
     NumericComparableType, SqlConvertible, SqlType, SqlValue, StringComparableLoseType,
 };
 use sqlx::Row;
@@ -13,7 +13,7 @@ pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
         sqlite_row: &sqlx::sqlite::SqliteRow,
         column_data_types: &[&ColumnDataType],
-        void_projections: &[ColumnReference],
+        void_projections: &[FullFieldReference],
     ) -> ApllodbResult<ImmutableRow> {
         let mut builder = ImmutableRowBuilder::default();
 

@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, ColumnReference, DatabaseName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FullFieldReference, DatabaseName,
     Expression, FieldIndex, Record, RecordIterator, SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::ProjectionQuery;
@@ -35,7 +35,7 @@ impl<'usecase> UpdateAllUseCaseInput<'usecase> {
             match expr {
                 Expression::ConstantVariant(_) => {}
                 Expression::UnaryOperatorVariant(_, _) => {}
-                Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
+                Expression::FullFieldReferenceVariant(_) | Expression::BooleanExpressionVariant(_) => {
                     return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
                         format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
                         column_name, expr
@@ -121,8 +121,8 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
                     fields
                         .drain()
                         .map(|(cn, sql_value)| {
-                            let colref = ColumnReference::new(vtable.table_name().clone(), cn);
-                            let field = FieldIndex::InColumnReference(colref);
+                            let colref = FullFieldReference::new(vtable.table_name().clone(), cn);
+                            let field = FieldIndex::InFullFieldReference(colref);
                             (field, sql_value)
                         })
                         .collect(),

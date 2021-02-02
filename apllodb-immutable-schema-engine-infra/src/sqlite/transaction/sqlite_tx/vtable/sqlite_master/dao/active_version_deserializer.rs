@@ -3,7 +3,7 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, AstTranslator, ColumnDataType, ColumnName,
-    ColumnReference,
+    FullFieldReference,
 };
 use apllodb_sql_parser::{
     apllodb_ast::{self, Command, CreateTableCommand, TableElement},
@@ -71,7 +71,7 @@ impl ActiveVersionDeserializer {
                     .map(|cd| {
                         let colref = {
                             let id = &cd.column_name.0;
-                            ColumnReference::new(
+                            FullFieldReference::new(
                                 vtable.table_name().clone(),
                                 ColumnName::new(id.0.as_str())?,
                             )
@@ -114,14 +114,14 @@ mod tests {
     };
     use apllodb_shared_components::{
         ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-        ColumnReference, DatabaseName, SqlType, TableConstraintKind, TableConstraints, TableName,
+        FullFieldReference, DatabaseName, SqlType, TableConstraintKind, TableConstraints, TableName,
     };
 
     #[test]
     fn test_from_into() -> ApllodbResult<()> {
         let c1_def = ColumnDefinition::new(
             ColumnDataType::new(
-                ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
+                FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?),
                 SqlType::integer(),
                 false,
             ),
