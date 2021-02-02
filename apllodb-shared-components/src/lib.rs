@@ -13,11 +13,12 @@ pub(crate) mod traits;
 pub use crate::{
     ast_translator::AstTranslator,
     data_structure::{
+        alias_name::AliasName,
         alter_table_action::AlterTableAction,
         column::{
             column_constraint_kind::ColumnConstraintKind, column_constraints::ColumnConstraints,
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
-            column_name::ColumnName, column_reference::ColumnReference, column_value::ColumnValue,
+            column_name::ColumnName,
         },
         database::database_name::DatabaseName,
         expression::{
@@ -30,6 +31,10 @@ pub use crate::{
         },
         record::{field_index::FieldIndex, Record},
         record_iterator::RecordIterator,
+        reference::{
+            correlation_reference::CorrelationReference, field_reference::FieldReference,
+            full_field_reference::FullFieldReference,
+        },
         session::{
             session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
             without_db::SessionWithoutDb, Session,

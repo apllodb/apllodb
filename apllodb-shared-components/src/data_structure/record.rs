@@ -3,11 +3,13 @@ pub(crate) mod field_index;
 use crate::{
     error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
     traits::sql_convertible::SqlConvertible,
+    FieldIndex, FullFieldReference,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-
-use self::field_index::FieldIndex;
+use std::{
+    collections::{HashMap, HashSet},
+    convert::TryFrom,
+};
 
 use super::value::sql_value::SqlValue;
 
@@ -15,7 +17,7 @@ use super::value::sql_value::SqlValue;
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, new)]
 pub struct Record {
-    fields: HashMap<FieldIndex, SqlValue>,
+    fields: HashMap<FullFieldReference, SqlValue>,
 }
 
 impl Record {
@@ -44,7 +46,8 @@ impl Record {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, index: &FieldIndex) -> ApllodbResult<&SqlValue> {
-        let sql_value = self.fields.get(index).ok_or_else(|| {
+        let ffr = FullFieldReference::try_from(index.clone())?;
+        let sql_value = self.fields.get(&ffr).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
                 format!("invalid field reference: `{:?}`", index),
@@ -60,8 +63,14 @@ impl Record {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(mut self, fields: &HashSet<FieldIndex>) -> ApllodbResult<Self> {
-        if let Some(invalid_field) = fields
+    pub fn projection(mut self, projection: &HashSet<FieldIndex>) -> ApllodbResult<Self> {
+        let projection: HashSet<FullFieldReference> = projection
+            .iter()
+            .cloned()
+            .map(FullFieldReference::try_from)
+            .collect::<ApllodbResult<_>>()?;
+
+        if let Some(invalid_field) = projection
             .difference(&self.fields.keys().cloned().collect())
             .next()
         {
@@ -72,10 +81,10 @@ impl Record {
             ));
         }
 
-        let new_fields: HashMap<FieldIndex, SqlValue> = self
+        let new_fields: HashMap<FullFieldReference, SqlValue> = self
             .fields
             .drain()
-            .filter(|(k, _)| fields.contains(k))
+            .filter(|(k, _)| projection.contains(k))
             .collect();
         self.fields = new_fields;
 
@@ -89,12 +98,8 @@ impl Record {
     /// - [DuplicateObject](crate::ApllodbErrorKind::DuplicateObject) when:
     ///   - `another` has the same field with self.
     pub fn join(mut self, mut another: Record) -> ApllodbResult<Self> {
-        let another_fields: HashSet<&FieldIndex> = another.fields.keys().collect();
-        if let Some(dup_field) = self
-            .fields
-            .keys()
-            .find(|field| another_fields.contains(field))
-        {
+        let another_ffr: HashSet<&FullFieldReference> = another.fields.keys().collect();
+        if let Some(dup_field) = self.fields.keys().find(|field| another_ffr.contains(field)) {
             return Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
                 format!(
@@ -105,7 +110,7 @@ impl Record {
             ));
         }
 
-        let new_fields: HashMap<FieldIndex, SqlValue> =
+        let new_fields: HashMap<FullFieldReference, SqlValue> =
             self.fields.drain().chain(another.fields.drain()).collect();
         self.fields = new_fields;
 
@@ -113,7 +118,7 @@ impl Record {
     }
 
     /// Get raw representation
-    pub fn into_field_values(self) -> HashMap<FieldIndex, SqlValue> {
+    pub fn into_field_values(self) -> HashMap<FullFieldReference, SqlValue> {
         self.fields
     }
 }

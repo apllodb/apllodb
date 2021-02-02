@@ -8,9 +8,9 @@ use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
-    SqlType, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
 };
+use apllodb_storage_engine_interface::TableColumnReference;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao {
@@ -77,14 +77,12 @@ CREATE TABLE {} (
             vtable_id.table_name().to_sql_string(),
         );
 
+        let tname = TableName::new(TNAME)?;
+
         let mut row_iter = self
             .sqlite_tx
             .borrow_mut()
-            .query(
-                &sql,
-                &[&self.cdt_table_wide_constraints(vtable_id.table_name().clone())],
-                &[],
-            )
+            .query(&sql, &tname, &[&self.cdt_table_wide_constraints()], &[])
             .await?;
         let mut row = row_iter.next().ok_or_else(|| {
             ApllodbError::new(
@@ -98,8 +96,8 @@ CREATE TABLE {} (
         })?;
 
         let table_wide_constraints_str: String = row
-            .get(&ColumnReference::new(
-                vtable_id.table_name().clone(),
+            .get(&TableColumnReference::new(
+                tname.clone(),
                 ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?,
             ))?
             .expect("must be NOT NULL");
@@ -171,12 +169,9 @@ CREATE TABLE {} (
         Ok(())
     }
 
-    fn cdt_table_wide_constraints(&self, table_name: TableName) -> ColumnDataType {
+    fn cdt_table_wide_constraints(&self) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
-                table_name,
-                ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
-            ),
+            ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS).unwrap(),
             SqlType::text(),
             false,
         )

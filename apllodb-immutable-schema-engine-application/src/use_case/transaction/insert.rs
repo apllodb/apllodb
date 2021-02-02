@@ -7,10 +7,9 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnName, ColumnReference, DatabaseName, RecordIterator, SqlValue, TableName,
+    ApllodbResult, ColumnName, DatabaseName, FieldReference, RecordIterator, SqlValue, TableName,
 };
 use async_trait::async_trait;
-use std::convert::TryFrom;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 #[derive(PartialEq, Debug, new)]
@@ -57,22 +56,22 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             let apk = ApparentPrimaryKey::from_table_and_record(&vtable, &record)?;
 
             // Filter Non-PK columns from column_values
-            let colref_values: HashMap<ColumnReference, SqlValue> = record
+            let non_pk_col_values: HashMap<ColumnName, SqlValue> = record
                 .into_field_values()
                 .into_iter()
-                .map(|(field, v)| Ok((ColumnReference::try_from(field)?, v)))
-                .collect::<ApllodbResult<_>>()?;
-            let non_pk_col_values: HashMap<ColumnName, SqlValue> = colref_values
-                .into_iter()
-                .filter_map(|(colref, sql_value)| {
-                    if apk
-                        .column_names()
-                        .iter()
-                        .any(|pk_cn| pk_cn == colref.as_column_name())
+                .filter_map(|(ffr, sql_value)| {
+                    let column_name = if let FieldReference::ColumnNameVariant(column_name) =
+                        ffr.as_field_reference()
                     {
+                        column_name
+                    } else {
+                        panic!("INSERT only takes Records with FieldReference::ColumnNameVariant");
+                    };
+
+                    if apk.column_names().iter().any(|pk_cn| pk_cn == column_name) {
                         None
                     } else {
-                        Some((colref.as_column_name().clone(), sql_value))
+                        Some((column_name.clone(), sql_value))
                     }
                 })
                 .collect();

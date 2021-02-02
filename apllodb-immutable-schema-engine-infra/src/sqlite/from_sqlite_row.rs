@@ -2,9 +2,10 @@ use apllodb_immutable_schema_engine_domain::row::immutable_row::{
     builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnReference, ColumnValue, I64LooseType,
-    NumericComparableType, SqlConvertible, SqlType, SqlValue, StringComparableLoseType,
+    ApllodbResult, ColumnDataType, I64LooseType, NumericComparableType, SqlConvertible, SqlType,
+    SqlValue, StringComparableLoseType, TableName,
 };
+use apllodb_storage_engine_interface::TableColumnReference;
 use sqlx::Row;
 
 use crate::error::InfraError;
@@ -12,22 +13,22 @@ use crate::error::InfraError;
 pub(crate) trait FromSqliteRow {
     fn from_sqlite_row(
         sqlite_row: &sqlx::sqlite::SqliteRow,
+        table_name: &TableName,
         column_data_types: &[&ColumnDataType],
-        void_projections: &[ColumnReference],
+        void_projections: &[TableColumnReference],
     ) -> ApllodbResult<ImmutableRow> {
         let mut builder = ImmutableRowBuilder::default();
 
         for cdt in column_data_types {
-            let non_pk_colref = cdt.column_ref();
+            let tcr = TableColumnReference::new(table_name.clone(), cdt.column_name().clone());
             let non_pk_sql_value = Self::_sql_value(sqlite_row, cdt)?;
-            builder =
-                builder.add_colval(ColumnValue::new(non_pk_colref.clone(), non_pk_sql_value))?;
+            builder = builder.append(tcr, non_pk_sql_value)?;
         }
 
         // add requested (specified in projection) columns as NULL.
         // (E.g. v1 has `c1` and v2 does not. This row is for v2 and `c1` is requested.)
         for non_pk_void_projection in void_projections {
-            builder = builder.add_void_projection(non_pk_void_projection)?;
+            builder = builder.add_void_projection(non_pk_void_projection.clone())?;
         }
 
         let row = builder.build()?;
@@ -71,10 +72,8 @@ pub(crate) trait FromSqliteRow {
             + sqlx::Type<sqlx::sqlite::Sqlite>
             + SqlConvertible,
     {
-        let colref = column_data_type.column_ref();
-
         let rust_value: Option<T> = sqlite_row
-            .try_get(colref.as_column_name().as_str())
+            .try_get(column_data_type.column_name().as_str())
             .map_err(InfraError::from)?;
 
         let sql_value = if let Some(rust_value) = rust_value {
