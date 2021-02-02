@@ -1,8 +1,12 @@
 use apllodb_sql_parser::{
-    apllodb_ast::{ColumnReference, Command, Expression, FromItem, SelectCommand, SelectField},
+    apllodb_ast::{
+        Alias, ColumnReference, Command, Correlation, Expression, FromItem, SelectCommand,
+        SelectField, TableName,
+    },
     ApllodbAst, ApllodbSqlParser,
 };
 use apllodb_test_support::setup::setup_test_logger;
+use pretty_assertions::assert_eq;
 
 #[ctor::ctor]
 fn test_setup() {
@@ -63,6 +67,52 @@ fn test_select_accepted() {
                     FromItem::factory("t1", None),
                     FromItem::factory("t2", None),
                 ]),
+                None,
+                None,
+                None,
+                None,
+            ),
+        ),
+        (
+            "SELECT id, t.c1 FROM t",
+            SelectCommand::factory(
+                vec![
+                    SelectField::factory(
+                        Expression::factory_colref(ColumnReference::factory(None, "id")),
+                        None,
+                    ),
+                    SelectField::factory(
+                        Expression::factory_colref(ColumnReference::factory(
+                            Some(Correlation::TableNameVariant(TableName::factory("t"))),
+                            "c1",
+                        )),
+                        None,
+                    ),
+                ],
+                Some(vec![FromItem::factory("t", None)]),
+                None,
+                None,
+                None,
+                None,
+            ),
+        ),
+        (
+            "SELECT id, s.c1 FROM t AS s",
+            SelectCommand::factory(
+                vec![
+                    SelectField::factory(
+                        Expression::factory_colref(ColumnReference::factory(None, "id")),
+                        None,
+                    ),
+                    SelectField::factory(
+                        Expression::factory_colref(ColumnReference::factory(
+                            Some(Correlation::AliasVariant(Alias::factory("s"))),
+                            "c1",
+                        )),
+                        None,
+                    ),
+                ],
+                Some(vec![FromItem::factory("t", Some("s"))]),
                 None,
                 None,
                 None,
