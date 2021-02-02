@@ -8,7 +8,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::version_number::VersionNumber,
     vtable::VTable,
 };
-use apllodb_shared_components::{ApllodbResult, ColumnName, FullFieldReference};
+use apllodb_shared_components::{ApllodbResult, ColumnName};
+use apllodb_storage_engine_interface::TableColumnReference;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Navi {
@@ -29,21 +30,21 @@ impl Navi {
         r: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
         let rowid = SqliteRowid(
-            r.get::<i64>(&FullFieldReference::new(
+            r.get::<i64>(&TableColumnReference::new(
                 navi_table_name.to_table_name(),
                 ColumnName::new(CNAME_ROWID)?,
             ))?
             .expect("must be NOT NULL"),
         );
         let revision = Revision::from(
-            r.get::<i64>(&FullFieldReference::new(
+            r.get::<i64>(&TableColumnReference::new(
                 navi_table_name.to_table_name(),
                 ColumnName::new(CNAME_REVISION)?,
             ))?
             .expect("must be NOT NULL"),
         );
         let opt_version_number = r
-            .get::<i64>(&FullFieldReference::new(
+            .get::<i64>(&TableColumnReference::new(
                 navi_table_name.to_table_name(),
                 ColumnName::new(CNAME_VERSION_NUMBER)?,
             ))?

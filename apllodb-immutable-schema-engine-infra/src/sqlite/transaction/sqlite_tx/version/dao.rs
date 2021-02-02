@@ -14,6 +14,7 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     ApllodbResult, ColumnDataType, ColumnName, SqlType, SqlValue, TableName,
 };
+use apllodb_storage_engine_interface::TableColumnReference;
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::{
     cell::RefCell,
@@ -111,11 +112,9 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut effective_prj_cdts: Vec<&ColumnDataType> = version
                 .column_data_types()
                 .iter()
-                .filter(|cdt| {
-                    non_pk_effective_projection.contains(cdt.column_ref().as_column_name())
-                })
+                .filter(|cdt| non_pk_effective_projection.contains(cdt.column_name()))
                 .collect();
-            let cdt_navi_rowid = self.cdt_navi_rowid(sqlite_table_name.clone());
+            let cdt_navi_rowid = self.cdt_navi_rowid();
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
             prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
@@ -124,6 +123,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 .borrow_mut()
                 .query(
                     &sql,
+                    &sqlite_table_name,
                     &prj_with_navi_rowid,
                     non_pk_void_projection
                         .iter()
@@ -154,7 +154,10 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             for (rowid, pk) in navi_rowids.into_iter().zip(pks) {
                 if let Entry::Occupied(oe) = rowid_vs_row.entry(rowid.clone()) {
                     let (_, mut row_wo_pk) = oe.remove_entry();
-                    row_wo_pk.append(pk.into_colvals())?;
+                    for (column_name, nn_sql_value) in pk.into_zipped() {
+                        let tcr = TableColumnReference::new(sqlite_table_name.clone(), column_name);
+                        row_wo_pk.append(tcr, SqlValue::NotNull(nn_sql_value))?;
+                    }
                     rows_with_pk.push_back(row_wo_pk)
                 } else {
                     panic!(
@@ -197,9 +200,9 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
 }
 
 impl VersionDao {
-    fn cdt_navi_rowid(&self, table_name: TableName) -> ColumnDataType {
+    fn cdt_navi_rowid(&self) -> ColumnDataType {
         ColumnDataType::new(
-            FullFieldReference::new(table_name, ColumnName::new(CNAME_NAVI_ROWID).unwrap()),
+            ColumnName::new(CNAME_NAVI_ROWID).unwrap(),
             SqlType::big_int(),
             false,
         )

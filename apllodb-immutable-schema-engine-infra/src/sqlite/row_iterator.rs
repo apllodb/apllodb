@@ -1,7 +1,7 @@
 use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow, row_iter::version_row_iter::VersionRowIterator,
 };
-use apllodb_shared_components::{ApllodbResult, ColumnDataType};
+use apllodb_shared_components::{ApllodbResult, ColumnDataType, TableName};
 use apllodb_storage_engine_interface::TableColumnReference;
 
 use std::{collections::VecDeque, fmt::Debug};
@@ -26,6 +26,7 @@ impl SqliteRowIterator {
     /// - `non_pk_void_projection` - Columns `sqlite_rows` do not have but another version has.
     pub(in crate::sqlite) fn new(
         sqlite_rows: &[sqlx::sqlite::SqliteRow],
+        table_name: &TableName,
         column_data_types: &[&ColumnDataType],
         void_projection: &[TableColumnReference],
     ) -> ApllodbResult<Self> {
@@ -34,8 +35,12 @@ impl SqliteRowIterator {
         let mut rows: VecDeque<ImmutableRow> = VecDeque::new();
 
         for sqlite_row in sqlite_rows {
-            let row =
-                ImmutableRow::from_sqlite_row(sqlite_row, column_data_types, void_projection)?;
+            let row = ImmutableRow::from_sqlite_row(
+                sqlite_row,
+                table_name,
+                column_data_types,
+                void_projection,
+            )?;
             rows.push_back(row);
         }
         Ok(Self(rows))

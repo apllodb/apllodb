@@ -2,8 +2,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::active_version::ActiveVersion, vtable::VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, AstTranslator, ColumnDataType, ColumnName,
-    FullFieldReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, AstTranslator, ColumnDataType,
 };
 use apllodb_sql_parser::{
     apllodb_ast::{self, Command, CreateTableCommand, TableElement},
@@ -68,22 +67,16 @@ impl ActiveVersionDeserializer {
                             None
                         }
                     })
-                    .map(|cd| {
-                        let colref = {
-                            let id = &cd.column_name.0;
-                            FullFieldReference::new(
-                                vtable.table_name().clone(),
-                                ColumnName::new(id.0.as_str())?,
-                            )
-                        };
+                    .map(|ast_cd| {
+                        let column_name = AstTranslator::column_name(ast_cd.column_name.clone())?;
 
-                        let not_null = cd
+                        let not_null = ast_cd
                             .column_constraints
                             .contains(&apllodb_ast::ColumnConstraint::NotNullVariant);
 
-                        let sql_type = AstTranslator::data_type(cd.data_type.clone());
+                        let sql_type = AstTranslator::data_type(ast_cd.data_type.clone());
 
-                        Ok(ColumnDataType::new(colref, sql_type, !not_null))
+                        Ok(ColumnDataType::new(column_name, sql_type, !not_null))
                     })
                     .collect::<ApllodbResult<Vec<ColumnDataType>>>()?;
 
@@ -113,18 +106,14 @@ mod tests {
         entity::Entity, version::active_version::ActiveVersion, vtable::VTable,
     };
     use apllodb_shared_components::{
-        ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-        FullFieldReference, DatabaseName, SqlType, TableConstraintKind, TableConstraints, TableName,
+        ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, DatabaseName, SqlType,
+        TableConstraintKind, TableConstraints, TableName,
     };
 
     #[test]
     fn test_from_into() -> ApllodbResult<()> {
         let c1_def = ColumnDefinition::new(
-            ColumnDataType::new(
-                FullFieldReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-                SqlType::integer(),
-                false,
-            ),
+            ColumnDataType::factory("c1", SqlType::integer(), false),
             ColumnConstraints::new(vec![])?,
         );
 
@@ -132,11 +121,7 @@ mod tests {
             (
                 vec![c1_def.clone()],
                 TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                    column_names: vec![c1_def
-                        .column_data_type()
-                        .column_ref()
-                        .as_column_name()
-                        .clone()],
+                    column_names: vec![c1_def.column_data_type().column_name().clone()],
                 }])?,
             ), // TODO more samples
         ];
