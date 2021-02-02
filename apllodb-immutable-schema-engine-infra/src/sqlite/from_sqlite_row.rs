@@ -22,7 +22,7 @@ pub(crate) trait FromSqliteRow {
             let non_pk_colref = cdt.column_ref();
             let non_pk_sql_value = Self::_sql_value(sqlite_row, cdt)?;
             builder =
-                builder.add_colval(ColumnValue::new(non_pk_colref.clone(), non_pk_sql_value))?;
+                builder.append(ColumnValue::new(non_pk_colref.clone(), non_pk_sql_value))?;
         }
 
         // add requested (specified in projection) columns as NULL.

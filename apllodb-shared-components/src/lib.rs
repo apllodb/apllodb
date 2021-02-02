@@ -18,7 +18,7 @@ pub use crate::{
         column::{
             column_constraint_kind::ColumnConstraintKind, column_constraints::ColumnConstraints,
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
-            column_name::ColumnName, column_value::ColumnValue,
+            column_name::ColumnName,
         },
         database::database_name::DatabaseName,
         expression::{

@@ -6,8 +6,8 @@ use crate::{
     data_structure::reference::{
         correlation_reference::CorrelationReference, field_reference::FieldReference,
     },
-    ColumnName, DatabaseName, Expression, FieldIndex, FullFieldReference, NNSqlValue, SqlValue,
-    TableName, UnaryOperator,
+    ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex, FullFieldReference,
+    NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -48,6 +48,12 @@ impl TableName {
 impl ColumnName {
     pub fn factory(column_name: &str) -> Self {
         Self::new(column_name).unwrap()
+    }
+}
+
+impl ColumnDataType {
+    pub fn factory(column_name: &str, sql_type: SqlType, nullable: bool) -> Self {
+        Self::new(ColumnName::factory(column_name), sql_type, nullable)
     }
 }
 

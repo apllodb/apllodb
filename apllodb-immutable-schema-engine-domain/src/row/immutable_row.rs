@@ -1,8 +1,8 @@
 pub mod builder;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnValue, FieldIndex, FullFieldReference,
-    Record, SqlConvertible, SqlValue,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference, Record, SqlConvertible,
+    SqlValue,
 };
 use apllodb_storage_engine_interface::TableColumnReference;
 use std::collections::{hash_map::Entry, HashMap};
@@ -22,14 +22,19 @@ impl ImmutableRow {
     ///
     /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - Specified column does not exist in this row.
-    pub fn get_sql_value(&mut self, tcr: &TableColumnReference) -> ApllodbResult<SqlValue> {
-        self.col_vals.remove(&tcr).ok_or_else(|| {
-            ApllodbError::new(
-                ApllodbErrorKind::UndefinedColumn,
-                format!("undefined column: `{:?}`", tcr),
-                None,
-            )
-        })
+    pub fn get_sql_value(
+        &mut self,
+        table_column_reference: &TableColumnReference,
+    ) -> ApllodbResult<SqlValue> {
+        self.col_vals
+            .remove(&table_column_reference)
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedColumn,
+                    format!("undefined column: `{:?}`", table_column_reference),
+                    None,
+                )
+            })
     }
 
     /// Retrieve (and remove) an SqlValue from this row and return it as Rust type.
@@ -39,19 +44,18 @@ impl ImmutableRow {
     /// # Failures
     ///
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
-    ///   - `tcr` is not in this row.
+    ///   - `table_column_reference` is not in this row.
     pub fn get<T: SqlConvertible>(
         &mut self,
-        tcr: &TableColumnReference,
+        table_column_reference: &TableColumnReference,
     ) -> ApllodbResult<Option<T>> {
-        let sql_value = self.get_sql_value(tcr)?;
+        let sql_value = self.get_sql_value(table_column_reference)?;
         match sql_value {
             SqlValue::Null => Ok(None),
             SqlValue::NotNull(nn) => {
                 let v = nn.unpack().or_else(|e| {
                     // write back removed value into row
-                    let colval = ColumnValue::new(tcr.clone(), SqlValue::NotNull(nn));
-                    self.append(vec![colval])?;
+                    self.append(table_column_reference.clone(), SqlValue::NotNull(nn))?;
                     Err(e)
                 })?;
                 Ok(Some(v))
@@ -59,34 +63,28 @@ impl ImmutableRow {
         }
     }
 
-    /// Append column values to this row.
+    /// Append a column value to this row.
     ///
     /// # Failures
     ///
     /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
     ///   - Same [ColumnReference](apllodb_shared_components::ColumnReference) is already in this row.
-    pub fn append(&mut self, colvals: Vec<ColumnValue>) -> ApllodbResult<()> {
-        colvals
-            .into_iter()
-            .map(
-                |colval| match self.col_vals.entry(colval.as_column_name().clone()) {
-                    Entry::Occupied(_) => Err(ApllodbError::new(
-                        ApllodbErrorKind::DuplicateColumn,
-                        format!(
-                            "column `{:?}` is already in this row",
-                            colval.as_column_name()
-                        ),
-                        None,
-                    )),
-                    Entry::Vacant(e) => {
-                        e.insert(colval.into_sql_value());
-                        Ok(())
-                    }
-                },
-            )
-            .collect::<ApllodbResult<Vec<()>>>()?;
-
-        Ok(())
+    pub fn append(
+        &mut self,
+        table_column_reference: TableColumnReference,
+        sql_value: SqlValue,
+    ) -> ApllodbResult<()> {
+        match self.col_vals.entry(table_column_reference.clone()) {
+            Entry::Occupied(_) => Err(ApllodbError::new(
+                ApllodbErrorKind::DuplicateColumn,
+                format!("column `{}` is already in this row", table_column_reference),
+                None,
+            )),
+            Entry::Vacant(e) => {
+                e.insert(sql_value);
+                Ok(())
+            }
+        }
     }
 }
 
