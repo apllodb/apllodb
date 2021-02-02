@@ -12,9 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, ColumnReference, SqlType,
-};
+use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnName, SqlType};
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
 use self::{
@@ -72,9 +70,9 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             navi_table_name = navi_table_name.to_sql_string(),
         );
 
-        let cdt_rowid = self.cdt_rowid(&navi_table_name);
-        let cdt_revision = self.cdt_revision(&navi_table_name);
-        let cdt_version_number = self.cdt_version_number(&navi_table_name);
+        let cdt_rowid = self.cdt_rowid();
+        let cdt_revision = self.cdt_revision();
+        let cdt_version_number = self.cdt_version_number();
 
         let mut column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
         for pk_cdt in vtable.table_wide_constraints().pk_column_data_types() {
@@ -84,7 +82,12 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
         let row_iter = self
             .sqlite_tx
             .borrow_mut()
-            .query(&sql, &column_data_types, &[])
+            .query(
+                &sql,
+                &navi_table_name.to_table_name(),
+                &column_data_types,
+                &[],
+            )
             .await?;
 
         let ret: Vec<ExistingNaviWithPK> = row_iter
@@ -106,7 +109,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
         let sql = format!(
             "
 SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
-  FROM {navi_table_name}
+  FROM {navi_table_name} AS {vtable_name}
   WHERE 
     {apk_condition}
   ORDER BY {cname_revision} DESC
@@ -116,18 +119,24 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
             cname_revision = CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
             navi_table_name = navi_table_name.to_sql_string(),
+            vtable_name = vtable_id.table_name().to_sql_string(),
             apk_condition = apk.to_condition_expression()?.to_sql_string(),
         );
 
-        let cdt_rowid = self.cdt_rowid(&navi_table_name);
-        let cdt_revision = self.cdt_revision(&navi_table_name);
-        let cdt_version_number = self.cdt_version_number(&navi_table_name);
+        let cdt_rowid = self.cdt_rowid();
+        let cdt_revision = self.cdt_revision();
+        let cdt_version_number = self.cdt_version_number();
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
         let mut row_iter = self
             .sqlite_tx
             .borrow_mut()
-            .query(&sql, &column_data_types, &[])
+            .query(
+                &sql,
+                &navi_table_name.to_table_name(),
+                &column_data_types,
+                &[],
+            )
             .await?;
         let opt_row = row_iter.next();
 
@@ -191,32 +200,23 @@ INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
         Ok(())
     }
 
-    fn cdt_rowid(&self, navi_table_name: &NaviTableName) -> ColumnDataType {
+    fn cdt_rowid(&self) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
-                navi_table_name.to_table_name(),
-                ColumnName::new(CNAME_ROWID).unwrap(),
-            ),
+            ColumnName::new(CNAME_ROWID).unwrap(),
             SqlType::big_int(),
             false,
         )
     }
-    fn cdt_revision(&self, navi_table_name: &NaviTableName) -> ColumnDataType {
+    fn cdt_revision(&self) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
-                navi_table_name.to_table_name(),
-                ColumnName::new(CNAME_REVISION).unwrap(),
-            ),
+            ColumnName::new(CNAME_REVISION).unwrap(),
             SqlType::big_int(),
             false,
         )
     }
-    fn cdt_version_number(&self, navi_table_name: &NaviTableName) -> ColumnDataType {
+    fn cdt_version_number(&self) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
-                navi_table_name.to_table_name(),
-                ColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
-            ),
+            ColumnName::new(CNAME_VERSION_NUMBER).unwrap(),
             SqlType::big_int(),
             true,
         )

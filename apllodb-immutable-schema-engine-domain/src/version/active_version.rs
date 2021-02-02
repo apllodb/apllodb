@@ -81,7 +81,7 @@ impl ActiveVersion {
                     .0
                     .column_data_types
                     .iter()
-                    .filter(|c| c.column_ref().as_column_name().as_str() != column_to_drop.as_str())
+                    .filter(|cdt| cdt.column_name().as_str() != column_to_drop.as_str())
                     .cloned()
                     .collect();
 
@@ -120,8 +120,8 @@ impl ActiveVersion {
         let version_not_null_columns = version_column_data_types
             .iter()
             .filter(|cdt| !cdt.nullable());
-        for not_null_column_name in version_not_null_columns.map(|cdt| cdt.column_ref()) {
-            if !column_values.contains_key(not_null_column_name.as_column_name()) {
+        for not_null_column_name in version_not_null_columns.map(|cdt| cdt.column_name()) {
+            if !column_values.contains_key(not_null_column_name) {
                 return Err(ApllodbError::new(
                     ApllodbErrorKind::NotNullViolation,
                     format!(
@@ -135,7 +135,7 @@ impl ActiveVersion {
 
         let version_column_names: Vec<&ColumnName> = version_column_data_types
             .iter()
-            .map(|cdt| cdt.column_ref().as_column_name())
+            .map(|cdt| cdt.column_name())
             .collect();
 
         // Check if all columns in `column_values` are included in version's definition.
@@ -165,7 +165,7 @@ impl ActiveVersion {
         self.0
             .column_data_types
             .iter()
-            .find(|c| c.column_ref().as_column_name() == column_name)
+            .find(|cdt| cdt.column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
                 ApllodbError::new(
@@ -184,18 +184,12 @@ impl ActiveVersion {
 mod tests {
     use super::ActiveVersion;
     use crate::vtable::id::VTableId;
-    use apllodb_shared_components::{
-        AlterTableAction, ColumnDataType, ColumnName, ColumnReference, SqlType, TableName,
-    };
+    use apllodb_shared_components::{AlterTableAction, ColumnDataType, ColumnName, SqlType};
     use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {
-        let c1_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        );
+        let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
 
         let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
         assert_eq!(v.number().to_u64(), 1);
@@ -205,50 +199,38 @@ mod tests {
 
     #[test]
     fn test_create_next_drop_column_success() -> ApllodbResult<()> {
-        let c1_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        );
-        let c2_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c2")?),
-            SqlType::integer(),
-            false,
-        );
+        let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
+        let c2_cdt = ColumnDataType::factory("c2", SqlType::integer(), false);
 
         let column_data_types = vec![c1_cdt.clone(), c2_cdt.clone()];
 
         let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types)?;
 
         let action = AlterTableAction::DropColumn {
-            column_name: c1_cdt.column_ref().as_column_name().clone(),
+            column_name: c1_cdt.column_name().clone(),
         };
 
         let v2 = v1.create_next(&action)?;
 
         assert_eq!(v2.number().to_u64(), 2);
 
-        let v2_cols: Vec<&ColumnReference> = v2
+        let v2_cols: Vec<&ColumnName> = v2
             .column_data_types()
             .iter()
-            .map(|cdt| cdt.column_ref())
+            .map(|cdt| cdt.column_name())
             .collect();
-        assert_eq!(v2_cols, vec![c2_cdt.column_ref()]);
+        assert_eq!(v2_cols, vec![c2_cdt.column_name()]);
 
         Ok(())
     }
 
     #[test]
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
-        let c1_cdt = ColumnDataType::new(
-            ColumnReference::new(TableName::new("t")?, ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        );
+        let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
         let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
 
         let action = AlterTableAction::DropColumn {
-            column_name: ColumnName::new("c404")?,
+            column_name: ColumnName::factory("c404"),
         };
         match v1.create_next(&action) {
             Err(e) => match e.kind() {

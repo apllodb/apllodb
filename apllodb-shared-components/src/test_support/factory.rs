@@ -3,8 +3,11 @@
 //! Factory methods for testing
 
 use crate::{
-    ColumnName, ColumnReference, DatabaseName, Expression, FieldIndex, NNSqlValue, SqlValue,
-    TableName, UnaryOperator,
+    data_structure::reference::{
+        correlation_reference::CorrelationReference, field_reference::FieldReference,
+    },
+    ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex, FullFieldReference,
+    NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -24,16 +27,23 @@ impl TableName {
 
 impl FieldIndex {
     pub fn factory_colref(table_name: &str, column_name: &str) -> Self {
-        Self::InColumnReference(ColumnReference::factory(table_name, column_name))
+        Self::InFullFieldReference(FullFieldReference::factory_table(table_name, column_name))
     }
 }
 
-impl ColumnReference {
-    pub fn factory(table_name: &str, column_name: &str) -> Self {
-        Self::new(
-            TableName::factory(table_name),
-            ColumnName::factory(column_name),
-        )
+impl FullFieldReference {
+    pub fn factory_table(table_name: &str, column_name: &str) -> Self {
+        let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
+        let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
+        Self::new(corr, field)
+    }
+
+    pub fn as_column_name(&self) -> &ColumnName {
+        if let FieldReference::ColumnNameVariant(cn) = self.as_field_reference() {
+            cn
+        } else {
+            panic!()
+        }
     }
 }
 
@@ -46,6 +56,12 @@ impl TableName {
 impl ColumnName {
     pub fn factory(column_name: &str) -> Self {
         Self::new(column_name).unwrap()
+    }
+}
+
+impl ColumnDataType {
+    pub fn factory(column_name: &str, sql_type: SqlType, nullable: bool) -> Self {
+        Self::new(ColumnName::factory(column_name), sql_type, nullable)
     }
 }
 
