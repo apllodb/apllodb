@@ -55,6 +55,7 @@ async fn test_abort() {
 async fn test_commit_saves_records() {
     SqlTest::default()
         .add_steps(Steps::CreateTablePeople)
+        .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             "INSERT INTO people (id, age) VALUES (1, 13)",
             StepRes::Ok,
@@ -76,7 +77,6 @@ async fn test_commit_saves_records() {
 async fn test_abort_discards_records() {
     SqlTest::default()
         .add_steps(Steps::CreateTablePeople)
-        .add_step(Step::new("COMMIT", StepRes::Ok))
         .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             "INSERT INTO people (id, age) VALUES (1, 13)",
@@ -157,7 +157,6 @@ async fn test_transaction_ddl_isolation() {
 async fn test_transaction_dml_isolation() {
     SqlTestSessionAB::default()
         .add_steps(SessionAB::A, Steps::CreateTablePeople)
-        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
         .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
         .add_steps(SessionAB::B, Steps::BeginTransaction)
         .add_step(
@@ -219,7 +218,6 @@ async fn test_transaction_dml_isolation() {
 async fn test_too_long_lock_wait_regarded_as_deadlock() {
     SqlTestSessionAB::default()
         .add_steps(SessionAB::A, Steps::CreateTablePeople)
-        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
         .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
         .add_steps(SessionAB::B, Steps::BeginTransaction)
         .add_step(
