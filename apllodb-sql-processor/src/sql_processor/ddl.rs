@@ -55,7 +55,7 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
                     None
                 }
             })
-            .map(|cd| AstTranslator::column_definition(cd.clone(), table_name.clone()))
+            .map(|cd| AstTranslator::column_definition(cd.clone()))
             .collect::<ApllodbResult<_>>()?;
 
         let table_constraints: Vec<TableConstraintKind> = command
@@ -121,15 +121,23 @@ mod tests {
             )",
                 People::table_name(),
                 vec![TableConstraintKind::PrimaryKey {
-                    column_names: vec![People::colref_id().as_column_name().clone()],
+                    column_names: vec![People::ffr_id().as_column_name().clone()],
                 }],
                 vec![
                     ColumnDefinition::new(
-                        ColumnDataType::new(People::colref_id(), SqlType::integer(), true),
+                        ColumnDataType::new(
+                            People::ffr_id().as_column_name().clone(),
+                            SqlType::integer(),
+                            true,
+                        ),
                         ColumnConstraints::default(),
                     ),
                     ColumnDefinition::new(
-                        ColumnDataType::new(People::colref_age(), SqlType::integer(), true),
+                        ColumnDataType::new(
+                            People::ffr_age().as_column_name().clone(),
+                            SqlType::integer(),
+                            true,
+                        ),
                         ColumnConstraints::default(),
                     ),
                 ],

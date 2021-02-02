@@ -5,11 +5,11 @@ use std::convert::TryFrom;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference};
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
 
-use super::{column::column_name::ColumnName, value::sql_value::SqlValue};
+use super::value::sql_value::SqlValue;
 
 /// Expression.
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
@@ -17,8 +17,8 @@ pub enum Expression {
     /// Constant
     ConstantVariant(SqlValue),
 
-    /// Reference to column value
-    ColumnNameVariant(ColumnName),
+    /// Reference to field
+    FullFieldReferenceVariant(FullFieldReference),
 
     /// With unary operator
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
@@ -43,9 +43,9 @@ impl TryFrom<Expression> for SqlValue {
     fn try_from(expression: Expression) -> ApllodbResult<Self> {
         match expression {
             Expression::ConstantVariant(sql_value) => Ok(sql_value),
-            Expression::ColumnNameVariant(c) => Err(ApllodbError::new(
+            Expression::FullFieldReferenceVariant(ffr) => Err(ApllodbError::new(
                 ApllodbErrorKind::DataException,
-                format!("column name `{}` cannot folded into SqlValue", c.as_str()),
+                format!("field `{}` cannot be into SqlValue", ffr),
                 None,
             )),
             Expression::UnaryOperatorVariant(uni_op, child) => {

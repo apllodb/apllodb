@@ -36,7 +36,7 @@ impl ProjectionResult {
                 active_version
                     .column_data_types()
                     .iter()
-                    .map(|cdt| cdt.column_ref().as_column_name())
+                    .map(|cdt| cdt.column_name())
             })
             .flatten()
             .cloned()
@@ -90,7 +90,7 @@ impl ProjectionResult {
             let version_columns: HashSet<&ColumnName> = active_version
                 .column_data_types()
                 .iter()
-                .map(|cdt| cdt.column_ref().as_column_name())
+                .map(|cdt| cdt.column_name())
                 .collect();
 
             let (non_pk_effective_columns, non_pk_void_columns): (

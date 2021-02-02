@@ -9,9 +9,9 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, ColumnReference,
-    SqlType, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
 };
+use apllodb_storage_engine_interface::TableColumnReference;
 
 #[derive(Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao {
@@ -41,15 +41,17 @@ impl SqliteMasterDao {
             vtable.table_name().as_str()
         );
 
+        let tname = TableName::new(TNAME)?;
+
         let create_table_sqls: Vec<String> = self
             .sqlite_tx
             .borrow_mut()
-            .query(&sql, &[&self.cdt_create_table_sql()], &[])
+            .query(&sql, &tname, &[&self.cdt_create_table_sql()], &[])
             .await?
             .map(|mut row| {
                 let s = row
-                    .get::<String>(&ColumnReference::new(
-                        TableName::new(TNAME)?,
+                    .get::<String>(&TableColumnReference::new(
+                        tname.clone(),
                         ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
                     ))?
                     .expect("must be NOT NULL");
@@ -92,10 +94,7 @@ impl SqliteMasterDao {
 
     fn cdt_create_table_sql(&self) -> ColumnDataType {
         ColumnDataType::new(
-            ColumnReference::new(
-                TableName::new(TNAME).unwrap(),
-                ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
-            ),
+            ColumnName::new(CNAME_CREATE_TABLE_SQL).unwrap(),
             SqlType::text(),
             false,
         )

@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use crate::data_structure::value::sql_type::SqlType;
+use crate::{data_structure::value::sql_type::SqlType, ColumnName};
 
-use super::{column_definition::ColumnDefinition, column_reference::ColumnReference};
+use super::column_definition::ColumnDefinition;
 
 /// Column with data type.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct ColumnDataType {
-    column: ColumnReference,
+    column: ColumnName,
     sql_type: SqlType,
     nullable: bool,
 }
@@ -19,8 +19,8 @@ impl From<&ColumnDefinition> for ColumnDataType {
 }
 
 impl ColumnDataType {
-    /// Ref to column reference.
-    pub fn column_ref(&self) -> &ColumnReference {
+    /// Ref to column name.
+    pub fn column_name(&self) -> &ColumnName {
         &self.column
     }
 

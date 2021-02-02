@@ -3,9 +3,8 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
-    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName,
-    ColumnReference, DatabaseName, Session, SessionWithoutDb, SqlType, TableConstraintKind,
-    TableConstraints, TableName,
+    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, DatabaseName, Session,
+    SessionWithoutDb, SqlType, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
@@ -24,11 +23,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     let t_name = TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            ColumnReference::new(t_name.clone(), ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("c1", SqlType::integer(), false),
         ColumnConstraints::default(),
     );
 
@@ -54,11 +49,7 @@ async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
             session,
             t_name,
             TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                column_names: vec![c1_def
-                    .column_data_type()
-                    .column_ref()
-                    .as_column_name()
-                    .clone()],
+                column_names: vec![c1_def.column_data_type().column_name().clone()],
             }])?,
             vec![c1_def],
         )

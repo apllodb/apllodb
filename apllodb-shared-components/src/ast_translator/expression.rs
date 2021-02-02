@@ -12,10 +12,20 @@ impl AstTranslator {
                 let sql_value = Self::constant(c)?;
                 Expression::ConstantVariant(sql_value)
             }
-            apllodb_ast::Expression::ColumnReferenceVariant(colref) => {
-                let colref = Self::column_reference(colref)?;
-                Expression::ColumnNameVariant(colref.as_column_name().clone())
-            }
+            apllodb_ast::Expression::ColumnReferenceVariant(colref) => match colref.correlation {
+                Some(corr) => match corr {
+                    apllodb_ast::Correlation::TableNameVariant(tn) => {
+                        let ffr = Self::column_reference_with_table_name(tn, colref.column_name)?;
+                        Expression::FullFieldReferenceVariant(ffr)
+                    }
+                    apllodb_ast::Correlation::AliasVariant(_) => {
+                        todo!()
+                    }
+                },
+                None => {
+                    todo!()
+                }
+            },
             apllodb_ast::Expression::UnaryOperatorVariant(uni_op, expr) => {
                 let uni_op = Self::unary_operator(uni_op);
                 let expr = Self::expression(*expr)?;

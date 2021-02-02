@@ -10,10 +10,10 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, ColumnReference, DatabaseName,
-    Expression, FieldIndex, Record, RecordIterator, SqlValue, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression,
+    FullFieldReference, Record, RecordIterator, SqlValue, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::{ProjectionQuery, TableColumnReference};
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
@@ -35,7 +35,7 @@ impl<'usecase> UpdateAllUseCaseInput<'usecase> {
             match expr {
                 Expression::ConstantVariant(_) => {}
                 Expression::UnaryOperatorVariant(_, _) => {}
-                Expression::ColumnNameVariant(_) | Expression::BooleanExpressionVariant(_) => {
+                Expression::FullFieldReferenceVariant(_) | Expression::BooleanExpressionVariant(_) => {
                     return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
                         format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
                         column_name, expr
@@ -121,9 +121,9 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
                     fields
                         .drain()
                         .map(|(cn, sql_value)| {
-                            let colref = ColumnReference::new(vtable.table_name().clone(), cn);
-                            let field = FieldIndex::InColumnReference(colref);
-                            (field, sql_value)
+                            let tcr = TableColumnReference::new(vtable.table_name().clone(), cn);
+                            let ffr = FullFieldReference::from(tcr);
+                            (ffr, sql_value)
                         })
                         .collect(),
                 )
