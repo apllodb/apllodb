@@ -41,33 +41,58 @@ async fn test_projection() {
     SqlTest::default()
         .add_steps(Steps::SetupPeopleDataset)
         .add_step(Step::new("BEGIN", StepRes::Ok))
-        .add_step(Step::new(
+        .add_step(
             // projection to PK
-            "SELECT id FROM people",
-            StepRes::OkQuery(Box::new(|records| {
-                let mut records = records.sorted_by_key(|r| {
-                    r.get::<i64>(&FieldIndex::factory_colref("people", "id"))
-                        .unwrap()
-                        .unwrap()
-                });
+            Step::new(
+                "SELECT id FROM people",
+                StepRes::OkQuery(Box::new(|records| {
+                    let id_field = FieldIndex::factory_colref("people", "id");
 
-                let id_field = FieldIndex::factory_colref("people", "id");
+                    let mut records =
+                        records.sorted_by_key(|r| r.get::<i64>(&id_field).unwrap().unwrap());
 
-                let r = records.next().unwrap();
-                assert_eq!(
-                    r.get::<i64>(&id_field).unwrap(),
-                    T_PEOPLE_R1.get::<i64>(&id_field).unwrap()
-                );
-                assert_eq!(
-                    r.get::<i32>(&FieldIndex::factory_colref("people", "age"))
-                        .unwrap_err()
-                        .kind(),
-                    &ApllodbErrorKind::InvalidColumnReference
-                );
+                    let r = records.next().unwrap();
+                    assert_eq!(
+                        r.get::<i64>(&id_field).unwrap(),
+                        T_PEOPLE_R1.get::<i64>(&id_field).unwrap()
+                    );
+                    assert_eq!(
+                        r.get::<i32>(&FieldIndex::factory_colref("people", "age"))
+                            .unwrap_err()
+                            .kind(),
+                        &ApllodbErrorKind::InvalidColumnReference
+                    );
 
-                Ok(())
-            })),
-        ))
+                    Ok(())
+                })),
+            ),
+        )
+        .add_step(
+            // projection to non-PK
+            Step::new(
+                "SELECT age FROM people",
+                StepRes::OkQuery(Box::new(|records| {
+                    let age_field = FieldIndex::factory_colref("people", "age");
+
+                    let mut records =
+                        records.sorted_by_key(|r| r.get::<i32>(&age_field).unwrap().unwrap());
+
+                    let r = records.next().unwrap();
+                    assert_eq!(
+                        r.get::<i32>(&age_field).unwrap(),
+                        T_PEOPLE_R1.get::<i32>(&age_field).unwrap()
+                    );
+                    assert_eq!(
+                        r.get::<i64>(&FieldIndex::factory_colref("people", "id"))
+                            .unwrap_err()
+                            .kind(),
+                        &ApllodbErrorKind::InvalidColumnReference
+                    );
+
+                    Ok(())
+                })),
+            ),
+        )
         .run()
         .await;
 }
