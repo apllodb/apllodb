@@ -23,8 +23,8 @@ impl TableName {
 }
 
 impl FieldIndex {
-    pub fn factory_colref(column_reference: ColumnReference) -> Self {
-        Self::InColumnReference(column_reference)
+    pub fn factory_colref(table_name: &str, column_name: &str) -> Self {
+        Self::InColumnReference(ColumnReference::factory(table_name, column_name))
     }
 }
 

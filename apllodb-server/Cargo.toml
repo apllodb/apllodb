@@ -35,3 +35,5 @@ ctor = "0.1"
 async-std = {version = "1.9", features = ["attributes"]}
 
 pretty_assertions = "0.6"
+
+itertools = "0.10"
