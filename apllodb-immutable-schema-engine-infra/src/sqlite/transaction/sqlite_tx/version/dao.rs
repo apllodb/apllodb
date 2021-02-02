@@ -12,7 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, FullFieldReference, SqlType, SqlValue, TableName,
+    ApllodbResult, ColumnDataType, ColumnName, SqlType, SqlValue, TableName,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::{
@@ -128,7 +128,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                     non_pk_void_projection
                         .iter()
                         .map(|cn| {
-                            FullFieldReference::new(
+                            TableColumnReference::new(
                                 version.vtable_id().table_name().clone(),
                                 cn.clone(),
                             )
@@ -141,7 +141,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
             for mut row in row_iter {
                 rowid_vs_row.insert(
-                    row.get(&FullFieldReference::new(
+                    row.get(&TableColumnReference::new(
                         sqlite_table_name.clone(),
                         ColumnName::new(CNAME_NAVI_ROWID)?,
                     ))?

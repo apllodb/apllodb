@@ -4,13 +4,14 @@ use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnValue, FieldIndex, FullFieldReference,
     Record, SqlConvertible, SqlValue,
 };
+use apllodb_storage_engine_interface::TableColumnReference;
 use std::collections::{hash_map::Entry, HashMap};
 
 /// Immutable row which is never updated or deleted by any transaction.
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
 #[derive(Clone, PartialEq, Debug)]
 pub struct ImmutableRow {
-    col_vals: HashMap<FullFieldReference, SqlValue>,
+    col_vals: HashMap<TableColumnReference, SqlValue>,
     // TODO have TransactionId to enable time-machine (TODO naming...) feature.
 }
 
@@ -21,11 +22,11 @@ impl ImmutableRow {
     ///
     /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - Specified column does not exist in this row.
-    pub fn get_sql_value(&mut self, ffr: &FullFieldReference) -> ApllodbResult<SqlValue> {
-        self.col_vals.remove(&ffr).ok_or_else(|| {
+    pub fn get_sql_value(&mut self, tcr: &TableColumnReference) -> ApllodbResult<SqlValue> {
+        self.col_vals.remove(&tcr).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
-                format!("undefined column: `{:?}`", ffr),
+                format!("undefined column: `{:?}`", tcr),
                 None,
             )
         })
@@ -38,18 +39,18 @@ impl ImmutableRow {
     /// # Failures
     ///
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
-    ///   - `column_name` is not in this row.
+    ///   - `tcr` is not in this row.
     pub fn get<T: SqlConvertible>(
         &mut self,
-        colref: &FullFieldReference,
+        tcr: &TableColumnReference,
     ) -> ApllodbResult<Option<T>> {
-        let sql_value = self.get_sql_value(colref)?;
+        let sql_value = self.get_sql_value(tcr)?;
         match sql_value {
             SqlValue::Null => Ok(None),
             SqlValue::NotNull(nn) => {
                 let v = nn.unpack().or_else(|e| {
                     // write back removed value into row
-                    let colval = ColumnValue::new(colref.clone(), SqlValue::NotNull(nn));
+                    let colval = ColumnValue::new(tcr.clone(), SqlValue::NotNull(nn));
                     self.append(vec![colval])?;
                     Err(e)
                 })?;
@@ -90,7 +91,7 @@ impl ImmutableRow {
 }
 
 impl ImmutableRow {
-    pub fn into_col_vals(self) -> HashMap<FullFieldReference, SqlValue> {
+    pub fn into_col_vals(self) -> HashMap<TableColumnReference, SqlValue> {
         self.col_vals
     }
 }
@@ -98,9 +99,9 @@ impl ImmutableRow {
 impl Into<Record> for ImmutableRow {
     fn into(self) -> Record {
         let mut col_vals = self.col_vals;
-        let fields: HashMap<FieldIndex, SqlValue> = col_vals
+        let fields: HashMap<FullFieldReference, SqlValue> = col_vals
             .drain()
-            .map(|(colref, sql_value)| (FieldIndex::InFullFieldReference(colref), sql_value))
+            .map(|(tcr, sql_value)| (FullFieldReference::from(tcr), sql_value))
             .collect();
         Record::new(fields)
     }

@@ -1,6 +1,4 @@
-use apllodb_shared_components::{
-    FieldIndex, FullFieldReference, NNSqlValue, Record, SqlValue, TableName,
-};
+use apllodb_shared_components::{FullFieldReference, NNSqlValue, Record, SqlValue, TableName};
 
 use crate::record;
 
@@ -23,8 +21,8 @@ impl People {
 
     pub fn record(id: i64, age: i32) -> Record {
         record! {
-            FieldIndex::InFullFieldReference(Self::colref_id()) => SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            FieldIndex::InFullFieldReference(Self::colref_age()) => SqlValue::NotNull(NNSqlValue::Integer(age))
+            Self::colref_id() => SqlValue::NotNull(NNSqlValue::BigInt(id)),
+            Self::colref_age() => SqlValue::NotNull(NNSqlValue::Integer(age))
         }
     }
 }
@@ -52,9 +50,9 @@ impl Body {
 
     pub fn record(id: i64, people_id: i64, height: i32) -> Record {
         record! {
-            FieldIndex::InFullFieldReference(Self::colref_id()) => SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            FieldIndex::InFullFieldReference(Self::colref_people_id()) => SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            FieldIndex::InFullFieldReference(Self::colref_height()) => SqlValue::NotNull(NNSqlValue::Integer(height))
+            Self::colref_id() => SqlValue::NotNull(NNSqlValue::BigInt(id)),
+            Self::colref_people_id() => SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+            Self::colref_height() => SqlValue::NotNull(NNSqlValue::Integer(height))
         }
     }
 }
@@ -86,10 +84,10 @@ impl Pet {
 
     pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Record {
         record! {
-            FieldIndex::InFullFieldReference(Self::colref_id()) => SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            FieldIndex::InFullFieldReference(Self::colref_people_id()) => SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            FieldIndex::InFullFieldReference(Self::colref_kind()) => SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
-            FieldIndex::InFullFieldReference(Self::colref_age()) => SqlValue::NotNull(NNSqlValue::SmallInt(age))
+            Self::colref_id() => SqlValue::NotNull(NNSqlValue::BigInt(id)),
+            Self::colref_people_id() => SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+            Self::colref_kind() => SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
+            Self::colref_age() => SqlValue::NotNull(NNSqlValue::SmallInt(age))
         }
     }
 }

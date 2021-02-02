@@ -1,14 +1,15 @@
 use super::ImmutableRow;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference, ColumnValue, SqlValue,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnValue, FullFieldReference, SqlValue,
 };
+use apllodb_storage_engine_interface::TableColumnReference;
 use std::collections::HashMap;
 
 /// Builder for ImmutableRow.
 #[derive(Debug, Default)]
 pub struct ImmutableRowBuilder {
-    col_vals: HashMap<FullFieldReference, SqlValue>,
+    col_vals: HashMap<TableColumnReference, SqlValue>,
 }
 
 impl ImmutableRowBuilder {
@@ -56,7 +57,7 @@ mod tests {
 
     use super::ImmutableRowBuilder;
     use apllodb_shared_components::{
-        ApllodbResult, ColumnName, FullFieldReference, ColumnValue, NNSqlValue, SqlValue, TableName,
+        ApllodbResult, ColumnName, ColumnValue, FullFieldReference, NNSqlValue, SqlValue, TableName,
     };
 
     #[test]

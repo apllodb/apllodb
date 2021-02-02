@@ -57,22 +57,22 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             let apk = ApparentPrimaryKey::from_table_and_record(&vtable, &record)?;
 
             // Filter Non-PK columns from column_values
-            let colref_values: HashMap<FullFieldReference, SqlValue> = record
+            let field_values: HashMap<FullFieldReference, SqlValue> = record
                 .into_field_values()
                 .into_iter()
                 .map(|(field, v)| Ok((FullFieldReference::try_from(field)?, v)))
                 .collect::<ApllodbResult<_>>()?;
-            let non_pk_col_values: HashMap<ColumnName, SqlValue> = colref_values
+            let non_pk_col_values: HashMap<ColumnName, SqlValue> = field_values
                 .into_iter()
-                .filter_map(|(colref, sql_value)| {
+                .filter_map(|(ffr, sql_value)| {
                     if apk
                         .column_names()
                         .iter()
-                        .any(|pk_cn| pk_cn == colref.as_column_name())
+                        .any(|pk_cn| pk_cn == ffr.as_column_name())
                     {
                         None
                     } else {
-                        Some((colref.as_column_name().clone(), sql_value))
+                        Some((ffr.as_column_name().clone(), sql_value))
                     }
                 })
                 .collect();

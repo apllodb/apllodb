@@ -30,11 +30,11 @@ impl TryFrom<FieldIndex> for FullFieldReference {
     ///
     /// # Failures
     ///
-    /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
-    ///   - this field index does not represent a column reference.
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    ///   - this field index does not represent a valid field.
     fn try_from(field: FieldIndex) -> ApllodbResult<Self> {
         match field {
-            FieldIndex::InFullFieldReference(colref) => Ok(colref),
+            FieldIndex::InFullFieldReference(ffr) => Ok(ffr),
         }
     }
 }

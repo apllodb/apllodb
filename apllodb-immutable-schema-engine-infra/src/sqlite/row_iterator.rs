@@ -1,7 +1,8 @@
 use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow, row_iter::version_row_iter::VersionRowIterator,
 };
-use apllodb_shared_components::{ApllodbResult, ColumnDataType, FullFieldReference};
+use apllodb_shared_components::{ApllodbResult, ColumnDataType};
+use apllodb_storage_engine_interface::TableColumnReference;
 
 use std::{collections::VecDeque, fmt::Debug};
 
@@ -26,7 +27,7 @@ impl SqliteRowIterator {
     pub(in crate::sqlite) fn new(
         sqlite_rows: &[sqlx::sqlite::SqliteRow],
         column_data_types: &[&ColumnDataType],
-        void_projection: &[FullFieldReference],
+        void_projection: &[TableColumnReference],
     ) -> ApllodbResult<Self> {
         use crate::sqlite::from_sqlite_row::FromSqliteRow;
 

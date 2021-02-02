@@ -207,6 +207,7 @@ dependencies = [
  "apllodb-storage-engine-interface",
  "apllodb-test-support",
  "ctor",
+ "derive-new",
  "futures",
  "mockall",
  "once_cell",
