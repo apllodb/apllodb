@@ -118,12 +118,12 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
             let mut prj_with_navi_rowid = vec![&cdt_navi_rowid];
             prj_with_navi_rowid.append(&mut effective_prj_cdts);
 
-            let row_iter = self
+            let row_iter_from_version = self
                 .sqlite_tx
                 .borrow_mut()
                 .query(
                     &sql,
-                    &sqlite_table_name,
+                    version.vtable_id().table_name(),
                     &prj_with_navi_rowid,
                     non_pk_void_projection
                         .iter()
@@ -139,15 +139,15 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 .await?;
 
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
-            for mut row in row_iter {
-                rowid_vs_row.insert(
-                    row.get(&TableColumnReference::new(
-                        sqlite_table_name.clone(),
+            for mut row in row_iter_from_version {
+                let rowid = row
+                    .get(&TableColumnReference::new(
+                        version.vtable_id().table_name().clone(),
                         ColumnName::new(CNAME_NAVI_ROWID)?,
                     ))?
-                    .expect("must be NOT NULL"),
-                    row,
-                );
+                    .expect("must be NOT NULL");
+
+                rowid_vs_row.insert(rowid, row);
             }
 
             let mut rows_with_pk = VecDeque::<ImmutableRow>::new();
@@ -155,8 +155,11 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 if let Entry::Occupied(oe) = rowid_vs_row.entry(rowid.clone()) {
                     let (_, mut row_wo_pk) = oe.remove_entry();
                     for (column_name, nn_sql_value) in pk.into_zipped() {
-                        let tcr = TableColumnReference::new(sqlite_table_name.clone(), column_name);
-                        row_wo_pk.append(tcr, SqlValue::NotNull(nn_sql_value))?;
+                        let pk_tcr = TableColumnReference::new(
+                            version.vtable_id().table_name().clone(),
+                            column_name,
+                        );
+                        row_wo_pk.append(pk_tcr, SqlValue::NotNull(nn_sql_value))?;
                     }
                     rows_with_pk.push_back(row_wo_pk)
                 } else {

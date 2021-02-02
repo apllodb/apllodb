@@ -4,8 +4,8 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, ColumnName, FullFieldReference, DatabaseName, Session, SessionWithoutDb,
-    SqlType, TableConstraintKind, TableConstraints, TableName,
+    ColumnDefinition, DatabaseName, Session, SessionWithoutDb, SqlType, TableConstraintKind,
+    TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
@@ -41,21 +41,13 @@ async fn test_wait_lock() -> ApllodbResult<()> {
     let t_name = &TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("c1", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c1_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()],
+        column_names: vec![c1_def.column_data_type().column_name().clone()],
     }])?;
 
     // tx1 (inside session1) is created earlier than tx2 (inside session2) but tx2 issues CREATE TABLE command in prior to tx1.

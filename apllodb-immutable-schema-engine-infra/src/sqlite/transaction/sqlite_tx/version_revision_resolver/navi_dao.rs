@@ -109,7 +109,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
         let sql = format!(
             "
 SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
-  FROM {navi_table_name}
+  FROM {navi_table_name} AS {vtable_name}
   WHERE 
     {apk_condition}
   ORDER BY {cname_revision} DESC
@@ -119,6 +119,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
             cname_revision = CNAME_REVISION,
             cname_version_number = CNAME_VERSION_NUMBER,
             navi_table_name = navi_table_name.to_sql_string(),
+            vtable_name = vtable_id.table_name().to_sql_string(),
             apk_condition = apk.to_condition_expression()?.to_sql_string(),
         );
 

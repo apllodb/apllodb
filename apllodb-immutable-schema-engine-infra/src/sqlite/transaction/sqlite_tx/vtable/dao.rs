@@ -77,15 +77,12 @@ CREATE TABLE {} (
             vtable_id.table_name().to_sql_string(),
         );
 
+        let tname = TableName::new(TNAME)?;
+
         let mut row_iter = self
             .sqlite_tx
             .borrow_mut()
-            .query(
-                &sql,
-                &TableName::new(TNAME)?,
-                &[&self.cdt_table_wide_constraints()],
-                &[],
-            )
+            .query(&sql, &tname, &[&self.cdt_table_wide_constraints()], &[])
             .await?;
         let mut row = row_iter.next().ok_or_else(|| {
             ApllodbError::new(
@@ -100,7 +97,7 @@ CREATE TABLE {} (
 
         let table_wide_constraints_str: String = row
             .get(&TableColumnReference::new(
-                vtable_id.table_name().clone(),
+                tname.clone(),
                 ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?,
             ))?
             .expect("must be NOT NULL");

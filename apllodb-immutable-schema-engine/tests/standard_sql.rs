@@ -4,8 +4,8 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, ColumnName, FullFieldReference, Expression, FieldIndex, NNSqlValue,
-    RecordIterator, SqlType, SqlValue, TableConstraintKind, TableConstraints, TableName,
+    ColumnDefinition, Expression, FieldIndex, FullFieldReference, NNSqlValue, RecordIterator,
+    SqlType, SqlValue, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{record, test_support::session_with_tx};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -23,11 +23,7 @@ async fn test_create_table_success() -> ApllodbResult<()> {
     let t_name = TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("c1", SqlType::integer(), false),
         ColumnConstraints::default(),
     );
 
@@ -37,11 +33,7 @@ async fn test_create_table_success() -> ApllodbResult<()> {
             session,
             t_name.clone(),
             TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-                column_names: vec![c1_def
-                    .column_data_type()
-                    .column_ref()
-                    .as_column_name()
-                    .clone()],
+                column_names: vec![c1_def.column_data_type().column_name().clone()],
             }])?,
             vec![c1_def],
         )
@@ -60,21 +52,13 @@ async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
     let t_name = &TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("c1", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c1_def.clone()];
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c1_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()],
+        column_names: vec![c1_def.column_data_type().column_name().clone()],
     }])?;
 
     let session = engine
@@ -106,29 +90,26 @@ async fn test_insert() -> ApllodbResult<()> {
     let t_name = &TableName::new("t")?;
 
     let c_id_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("id")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("id", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let c1_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("c1", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
+    let ffr_id = FullFieldReference::factory_table(
+        t_name.as_str(),
+        c_id_def.column_data_type().column_name().as_str(),
+    );
+    let ffr_c1 = FullFieldReference::factory_table(
+        t_name.as_str(),
+        c1_def.column_data_type().column_name().as_str(),
+    );
+
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c_id_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()],
+        column_names: vec![c_id_def.column_data_type().column_name().clone()],
     }])?;
 
     let session = engine
@@ -136,14 +117,17 @@ async fn test_insert() -> ApllodbResult<()> {
         .create_table(session, t_name.clone(), tc, coldefs)
         .await?;
 
-    let session = engine.with_tx().insert(
-        session,
-        t_name.clone(),
-        RecordIterator::new(vec![record! {
-            FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
-            FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
-        }]),
-    ).await?;
+    let session = engine
+        .with_tx()
+        .insert(
+            session,
+            t_name.clone(),
+            RecordIterator::new(vec![record! {
+                ffr_id.clone() => SqlValue::NotNull(NNSqlValue::Integer(1)),
+                ffr_c1.clone() => SqlValue::NotNull(NNSqlValue::Integer(100))
+            }]),
+        )
+        .await?;
 
     let (mut records, session) = engine
         .with_tx()
@@ -152,15 +136,11 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c_id_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c1_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
         Some(100)
     );
 
@@ -179,29 +159,26 @@ async fn test_update() -> ApllodbResult<()> {
     let t_name = &TableName::new("t")?;
 
     let c_id_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("id")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("id", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let c1_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("c1", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
+    let ffr_id = FullFieldReference::factory_table(
+        t_name.as_str(),
+        c_id_def.column_data_type().column_name().as_str(),
+    );
+    let ffr_c1 = FullFieldReference::factory_table(
+        t_name.as_str(),
+        c1_def.column_data_type().column_name().as_str(),
+    );
+
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c_id_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()],
+        column_names: vec![c_id_def.column_data_type().column_name().clone()],
     }])?;
 
     let session = engine
@@ -209,29 +186,28 @@ async fn test_update() -> ApllodbResult<()> {
         .create_table(session, t_name.clone(), tc.clone(), coldefs)
         .await?;
 
-    let session =     engine.with_tx().insert(
-        session,
-        t_name.clone(),
-        RecordIterator::new(vec![record! {
-            FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
-            FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
-        }]),
-    ).await?;
+    let session = engine
+        .with_tx()
+        .insert(
+            session,
+            t_name.clone(),
+            RecordIterator::new(vec![record! {
+                ffr_id.clone() => SqlValue::NotNull(NNSqlValue::Integer(1)),
+                ffr_c1.clone() => SqlValue::NotNull(NNSqlValue::Integer(100))
+            }]),
+        )
+        .await?;
     let (mut records, session) = engine
         .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c_id_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c1_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
         Some(100)
     );
     assert!(records.next().is_none());
@@ -241,7 +217,7 @@ async fn test_update() -> ApllodbResult<()> {
 session,
 t_name.clone(),
         hmap! {
-            c1_def.column_data_type().column_ref().as_column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(200)))
+            c1_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(200)))
         },
     ).await?;
     let (mut records, session) = engine
@@ -250,15 +226,11 @@ t_name.clone(),
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c_id_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c1_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
         Some(200)
     );
     assert!(records.next().is_none());
@@ -269,7 +241,7 @@ update(
     session,
     t_name.clone(),
         hmap! {
-            c_id_def.column_data_type().column_ref().as_column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(2)))
+            c_id_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(2)))
         },
     ).await?;
     let (mut records, session) = engine
@@ -278,15 +250,11 @@ update(
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c_id_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
         Some(2)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(
-            c1_def.column_data_type().column_ref().clone()
-        ))?,
+        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
         Some(200)
     );
     assert!(records.next().is_none());
@@ -304,29 +272,26 @@ async fn test_delete() -> ApllodbResult<()> {
     let t_name = &TableName::new("t")?;
 
     let c_id_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("id")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("id", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let c1_def = ColumnDefinition::new(
-        ColumnDataType::new(
-            FullFieldReference::new(t_name.clone(), ColumnName::new("c1")?),
-            SqlType::integer(),
-            false,
-        ),
+        ColumnDataType::factory("c1", SqlType::integer(), false),
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
+    let ffr_id = FullFieldReference::factory_table(
+        t_name.as_str(),
+        c_id_def.column_data_type().column_name().as_str(),
+    );
+    let ffr_c1 = FullFieldReference::factory_table(
+        t_name.as_str(),
+        c1_def.column_data_type().column_name().as_str(),
+    );
+
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
-        column_names: vec![c_id_def
-            .column_data_type()
-            .column_ref()
-            .as_column_name()
-            .clone()],
+        column_names: vec![c_id_def.column_data_type().column_name().clone()],
     }])?;
 
     let session = engine
@@ -334,25 +299,24 @@ async fn test_delete() -> ApllodbResult<()> {
         .create_table(session, t_name.clone(), tc.clone(), coldefs)
         .await?;
 
-    let session = engine.with_tx()    .insert(
-session,
-t_name.clone(),
-        RecordIterator::new(vec![record! {
-            FieldIndex::InFullFieldReference(c_id_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(1)),
-            FieldIndex::InFullFieldReference(c1_def.column_data_type().column_ref().clone()) => SqlValue::NotNull(NNSqlValue::Integer(100))
-        }]),
-    ).await?;
+    let session = engine
+        .with_tx()
+        .insert(
+            session,
+            t_name.clone(),
+            RecordIterator::new(vec![record! {
+                ffr_id.clone() => SqlValue::NotNull(NNSqlValue::Integer(1)),
+                ffr_c1.clone() => SqlValue::NotNull(NNSqlValue::Integer(100))
+            }]),
+        )
+        .await?;
 
     let (rows, session) = engine
         .with_tx()
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::ColumnNames(vec![c_id_def
-                .column_data_type()
-                .column_ref()
-                .as_column_name()
-                .clone()]),
+            ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
         )
         .await?;
     assert_eq!(rows.count(), 1);
@@ -363,11 +327,7 @@ t_name.clone(),
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::ColumnNames(vec![c_id_def
-                .column_data_type()
-                .column_ref()
-                .as_column_name()
-                .clone()]),
+            ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
         )
         .await?;
     assert_eq!(rows.count(), 0);
