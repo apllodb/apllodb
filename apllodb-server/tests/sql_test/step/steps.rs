@@ -26,12 +26,12 @@ impl From<Steps> for Vec<Step> {
             }
             Steps::CreateTableBody => {
                 let mut steps = Self::from(Steps::BeginTransaction);
-                steps.push(Step::new("CREATE TABLE body (people_id INTEGER NOT NULL, height INTEGER NOT NULL, PRIMARY KEY (people_id))", StepRes::Ok));
+                steps.push(Step::new("CREATE TABLE body (id INTEGER NOT NULL, people_id INTEGER NOT NULL, height INTEGER NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
                 steps
             }
             Steps::CreateTablePet => {
                 let mut steps = Self::from(Steps::BeginTransaction);
-                steps.push(Step::new("CREATE TABLE pet (people_id INTEGER NOT NULL, kind TEXT NOT NULL, age SMALLINT NOT NULL, PRIMARY KEY (people_id))", StepRes::Ok));
+                steps.push(Step::new("CREATE TABLE pet (id INTEGER NOT NULL, people_id INTEGER NOT NULL, kind TEXT NOT NULL, age SMALLINT NOT NULL, PRIMARY KEY (id))", StepRes::Ok));
                 steps
             }
             Steps::SetupPeopleDataset => {
@@ -53,11 +53,11 @@ impl From<Steps> for Vec<Step> {
             Steps::SetupBodyDataset => {
                 let mut steps = Self::from(Steps::CreateTableBody);
                 steps.push(Step::new(
-                    "INSERT INTO body (people_id, height) VALUES (1, 145)",
+                    "INSERT INTO body (id, people_id, height) VALUES (1, 1, 145)",
                     StepRes::Ok,
                 ));
                 steps.push(Step::new(
-                    "INSERT INTO body (people_id, height) VALUES (2, 175)",
+                    "INSERT INTO body (id, people_id, height) VALUES (2, 2, 175)",
                     StepRes::Ok,
                 ));
                 steps
@@ -65,15 +65,15 @@ impl From<Steps> for Vec<Step> {
             Steps::SetupPetDataset => {
                 let mut steps = Self::from(Steps::CreateTablePet);
                 steps.push(Step::new(
-                    r#"INSERT INTO pet (people_id, kind, age) VALUES (1, "dog", 13)"#,
+                    r#"INSERT INTO pet (id, people_id, kind, age) VALUES (1, 1, "dog", 13)"#,
                     StepRes::Ok,
                 ));
                 steps.push(Step::new(
-                    r#"INSERT INTO pet (people_id, kind, age) VALUES (3, "dog", 5)"#,
+                    r#"INSERT INTO pet (id, people_id, kind, age) VALUES (2, 3, "dog", 5)"#,
                     StepRes::Ok,
                 ));
                 steps.push(Step::new(
-                    r#"INSERT INTO pet (people_id, kind, age) VALUES (3, "cat", 3)"#,
+                    r#"INSERT INTO pet (id, people_id, kind, age) VALUES (3, 3, "cat", 3)"#,
                     StepRes::Ok,
                 ));
                 steps
