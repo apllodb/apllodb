@@ -13,6 +13,7 @@ fn setup() {
 async fn test_error_on_dup_pk() {
     SqlTest::default()
         .add_steps(Steps::CreateTablePeople)
+        .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             "INSERT INTO people (id, age) VALUES (1, 10)",
             StepRes::Ok,

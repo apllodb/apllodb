@@ -16,6 +16,7 @@ fn setup() {
 async fn test_fullscan() {
     SqlTest::default()
         .add_steps(Steps::SetupPeopleBodyPetDataset)
+        .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             "SELECT id, age FROM people",
             StepRes::OkQuery(Box::new(|records| {
