@@ -37,6 +37,14 @@ impl FullFieldReference {
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(corr, field)
     }
+
+    pub fn as_column_name(&self) -> &ColumnName {
+        if let FieldReference::ColumnNameVariant(cn) = self.as_field_reference() {
+            cn
+        } else {
+            panic!()
+        }
+    }
 }
 
 impl TableName {

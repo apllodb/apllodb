@@ -2,10 +2,10 @@ use std::{collections::HashMap, convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, FullFieldReference,
-    FieldIndex, Record, RecordIterator, Session, SessionWithTx, SqlValue,
+    Record, RecordIterator, Session, SessionWithTx, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
-use apllodb_storage_engine_interface::StorageEngine;
+use apllodb_storage_engine_interface::{StorageEngine, TableColumnReference};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
@@ -76,15 +76,15 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             })
             .collect::<ApllodbResult<_>>()?;
 
-        let fields: HashMap<FieldIndex, SqlValue> = column_names
+        let fields: HashMap<FullFieldReference, SqlValue> = column_names
             .into_iter()
             .zip(constant_values)
             .into_iter()
             .map(|(cn, sql_value)| {
-                let col_ref =
-                    FullFieldReference::new(table_name.clone(), AstTranslator::column_name(cn)?);
-                let field = FieldIndex::InFullFieldReference(col_ref);
-                Ok((field, sql_value))
+                let tcr =
+                    TableColumnReference::new(table_name.clone(), AstTranslator::column_name(cn)?);
+                let ffr = FullFieldReference::from(tcr);
+                Ok((ffr, sql_value))
             })
             .collect::<ApllodbResult<_>>()?;
 
