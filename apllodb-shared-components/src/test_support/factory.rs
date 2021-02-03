@@ -6,8 +6,8 @@ use crate::{
     data_structure::reference::{
         correlation_reference::CorrelationReference, field_reference::FieldReference,
     },
-    AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex,
-    FullFieldReference, NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
+    AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FullFieldReference,
+    NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -40,10 +40,6 @@ impl FullFieldReference {
     pub fn with_field_alias(mut self, field_alias: &str) -> Self {
         self.set_field_alias(AliasName::factory(field_alias));
         self
-    }
-
-    pub fn into_field_index(self) -> FieldIndex {
-        FieldIndex::InFullFieldReference(self)
     }
 }
 
