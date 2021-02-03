@@ -101,14 +101,11 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let tcr = TableColumnReference::new(
-                    vtable.table_name().clone(),
-                    cdt.column_name().clone(),
-                );
-                let ffr = FullFieldReference::from(tcr);
+                let index = FieldIndex::from(format!("{}.{}", vtable.table_name().as_str(),
+                cdt.column_name().as_str()));
 
                 record
-                    .get_sql_value(&FieldIndex::InFullFieldReference(ffr))
+                    .get_sql_value(&index)
                     // FIXME less clone
                     .map(|sql_value| {
                         if let SqlValue::NotNull(sql_value) =    sql_value {

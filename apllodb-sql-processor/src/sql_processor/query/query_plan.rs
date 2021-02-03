@@ -90,7 +90,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                             select_field,
                             from_items.clone(),
                         )
-                        .map(FieldIndex::InFullFieldReference)
+                        .map(FieldIndex::from)
                     })
                     .collect::<ApllodbResult<_>>()?,
             },

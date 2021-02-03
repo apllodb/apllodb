@@ -7,10 +7,7 @@ use crate::{
     },
     ProjectionQuery,
 };
-use apllodb_shared_components::{
-    CorrelationReference, FieldIndex, FieldReference, FullFieldReference, Record, RecordIterator,
-    TableName,
-};
+use apllodb_shared_components::{FieldIndex, Record, RecordIterator, TableName};
 use futures::FutureExt;
 
 #[derive(Clone, PartialEq, Debug)]
@@ -73,10 +70,7 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
                     let fields: HashSet<FieldIndex> = column_names
                         .into_iter()
                         .map(|cn| {
-                            FieldIndex::InFullFieldReference(FullFieldReference::new(
-                                CorrelationReference::TableNameVariant(table_name.clone()),
-                                FieldReference::ColumnNameVariant(cn),
-                            ))
+                            FieldIndex::from(format!("{}.{}", table_name.as_str(), cn.as_str()))
                         })
                         .collect();
 

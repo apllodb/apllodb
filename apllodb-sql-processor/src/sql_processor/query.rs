@@ -99,17 +99,17 @@ mod tests {
             TestDatum::new(
                 "SELECT id FROM people",
                 vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id().into()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id().into()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id().into()])?,
                 ],
             ),
             TestDatum::new(
                 "SELECT age FROM people",
                 vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age().into()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age().into()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age().into()])?,
                 ],
             ),
         ];

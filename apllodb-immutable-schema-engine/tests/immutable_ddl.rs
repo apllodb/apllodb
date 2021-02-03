@@ -141,21 +141,21 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
 
     for record in records {
         let id: i32 = record
-            .get(&FieldIndex::InFullFieldReference(ffr_id.clone()))?
+            .get(&FieldIndex::from(ffr_id.clone()))?
             .unwrap();
         match id {
             1 => assert_eq!(
-                record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
+                record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
                 Some(1)
             ),
             3 => assert_eq!(
-                record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
+                record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
                 Some(3)
             ),
             2 => {
                 // Can fetch column `c1` from v2 and it's value is NULL.
                 assert_eq!(
-                    record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
+                    record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
                     None
                 );
             }
