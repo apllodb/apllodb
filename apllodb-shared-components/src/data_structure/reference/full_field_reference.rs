@@ -23,6 +23,11 @@ impl Display for FullFieldReference {
 }
 
 impl FullFieldReference {
+    /// Get ref of CorrelationReference
+    pub fn as_correlation_reference(&self) -> &CorrelationReference {
+        &self.correlation_reference
+    }
+
     /// Get ref of TableName
     pub fn as_table_name(&self) -> &TableName {
         match &self.correlation_reference {

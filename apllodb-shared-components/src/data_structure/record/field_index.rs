@@ -2,7 +2,10 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbResult, FullFieldReference};
+use crate::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference,
+    FullFieldReference,
+};
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
 /// Used to get a value from a record.
@@ -40,9 +43,116 @@ impl FieldIndex {
     ///   - more than 1 of `full_field_references` match to this FieldIndex.
     pub fn peek<'a>(
         &self,
-        _full_field_references: impl IntoIterator<Item = &'a FullFieldReference>,
-    ) -> ApllodbResult<&FullFieldReference> {
-        todo!()
+        full_field_references: impl IntoIterator<Item = &'a FullFieldReference>,
+    ) -> ApllodbResult<&'a FullFieldReference> {
+        let full_field_references: Vec<&'a FullFieldReference> = full_field_references
+            .into_iter()
+            .filter(|ffr| self.matches(ffr))
+            .collect();
+
+        match full_field_references.len() {
+            0 => Err(ApllodbError::new(
+                ApllodbErrorKind::InvalidName,
+                format!(
+                    "field index `{}` does not match any of full_field_references",
+                    self
+                ),
+                None,
+            )),
+            1 => Ok(full_field_references.get(0).unwrap()),
+            _ => Err(ApllodbError::new(
+                ApllodbErrorKind::AmbiguousColumn,
+                format!(
+                    "field index `{}` match to more than 1 of full_field_references",
+                    self
+                ),
+                None,
+            )),
+        }
+    }
+
+    fn matches(&self, full_field_reference: &FullFieldReference) -> bool {
+        match (
+            &self.correlation_name,
+            full_field_reference.as_correlation_reference(),
+            full_field_reference.as_field_reference(),
+        ) {
+            (
+                // index: c
+                // ffr: T.C
+                None,
+                CorrelationReference::TableNameVariant(_),
+                FieldReference::ColumnNameVariant(cn),
+            )
+            | (
+                // index: c
+                // ffr: (T AS TA).C
+                None,
+                CorrelationReference::TableAliasVariant { .. },
+                FieldReference::ColumnNameVariant(cn),
+            ) => self.field_name == cn.as_str(),
+
+            (
+                // index: c
+                // ffr: T.C AS CA
+                None,
+                CorrelationReference::TableNameVariant(_),
+                FieldReference::ColumnAliasVariant {
+                    alias_name,
+                    column_name,
+                },
+            )
+            | (
+                // index: c
+                // ffr: (T AS TA).C AS CA
+                None,
+                CorrelationReference::TableAliasVariant { .. },
+                FieldReference::ColumnAliasVariant {
+                    alias_name,
+                    column_name,
+                },
+            ) => self.field_name == column_name.as_str() || self.field_name == alias_name.as_str(),
+
+            (
+                // index: t.c
+                // ffr: T.C
+                Some(self_correlation_name),
+                CorrelationReference::TableNameVariant(tn),
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                // index: t.c
+                // ffr: T.C AS CA
+                Some(self_correlation_name),
+                CorrelationReference::TableNameVariant(tn),
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
+
+            (
+                // index: t.c
+                // ffr: (T AS TA).C
+                Some(self_correlation_name),
+                CorrelationReference::TableAliasVariant {
+                    alias_name,
+                    table_name,
+                },
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                // index: t.c
+                // ffr: (T AS TA).C AS CA
+                Some(self_correlation_name),
+                CorrelationReference::TableAliasVariant {
+                    alias_name,
+                    table_name,
+                },
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            ) => {
+                (self_correlation_name == table_name.as_str()
+                    || self_correlation_name == alias_name.as_str())
+                    && self.field_name == column_name.as_str()
+            }
+        }
     }
 }
 
