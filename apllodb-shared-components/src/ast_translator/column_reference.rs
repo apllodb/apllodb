@@ -1,6 +1,10 @@
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference, data_structure::reference::{
+use crate::{
+    data_structure::reference::{
         correlation_reference::CorrelationReference, field_reference::FieldReference,
-    }};
+    },
+    AliasName, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FullFieldReference,
+    TableName,
+};
 use apllodb_sql_parser::apllodb_ast::{self};
 
 use crate::ast_translator::AstTranslator;
@@ -13,52 +17,108 @@ impl AstTranslator {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [InvalidColumnReference](apllodb_shared_components::ApllodbErrorKind::InvalidColumnReference) when:
     ///   - `ast_from_items` is empty.
+    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - none of `ast_from_item` has field named `ast_column_reference.column_name`
     /// - [UndefinedObject](apllodb_shared_components::ApllodbErrorKind::UndefinedObject) when:
     ///   - `ast_column_reference` has a correlation but it is not any of `ast_from_items`.
-    pub fn column_reference_with_table_name(
+    pub fn column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
         ast_from_items: Vec<apllodb_ast::FromItem>,
     ) -> ApllodbResult<FullFieldReference> {
         match ast_from_items.len() {
             0 => {
-                return Err(ApllodbError::new(
-                    ApllodbErrorKind::UndefinedColumn,
-                    format!("no FROM item. cannot detect where `{:?}` field is from", ast_column_reference),
-                    None
+                // SELECT (ta.)?C;
+                // -> InvalidColumnReference
+                Err(ApllodbError::new(
+                    ApllodbErrorKind::InvalidColumnReference,
+                    format!(
+                        "no FROM item. cannot detect where `{:?}` field is from",
+                        ast_column_reference
+                    ),
+                    None,
                 ))
             }
             1 => {
-                let correlation_reference: CorrelationReference = match ast_column_reference.correlation {
-                    Some(apllodb_ast::Correlation::TableNameVariant(ast_table_name)) => {
-                        
-                    }
-                    Some(apllodb_ast::Correlation::AliasVariant(ast_alias)) => {
+                // SELECT (ta.)?C FROM T (AS a)?;
+                let ast_from_item = &ast_from_items[0];
 
-                    }
+                let correlation_reference: CorrelationReference = match &ast_column_reference
+                    .correlation
+                {
                     None => {
-        
+                        // SELECT C FROM T (AS a)?;
+                        // -> C is from T
+                        Ok(CorrelationReference::TableNameVariant(TableName::new(
+                            ast_from_item.table_name.0 .0.clone(),
+                        )?))
                     }
-                }
-        
+                    Some(apllodb_ast::Correlation(apllodb_ast::Identifier(colref_corr))) => {
+                        // SELECT ta.C FROM T (AS a)?;
+                        if colref_corr == &ast_from_item.table_name.0 .0 {
+                            // SELECT T.C FROM T (AS a)?;
+                            // -> C is from T
+                            Ok(CorrelationReference::TableNameVariant(TableName::new(
+                                colref_corr,
+                            )?))
+                        } else {
+                            // SELECT a1.C FROM T (AS a2)?;
+                            match &ast_from_item.alias {
+                                None => {
+                                    // SELECT a_not_T.C FROM T;
+                                    // -> UndefinedColumn
+                                    Err(ApllodbError::new(
+                                        ApllodbErrorKind::UndefinedColumn,
+                                        format!(
+                                            "correlation of column reference `{:?}` is not the same as FROM item `{:?}`",
+                                            ast_column_reference, ast_from_item
+                                        ),
+                                        None,
+                                    ))
+                                }
+                                Some(apllodb_ast::Alias(apllodb_ast::Identifier(
+                                    from_item_alias,
+                                ))) => {
+                                    // SELECT a_not_T.C FROM T AS A;
+                                    if colref_corr == from_item_alias {
+                                        // SELECT A.C FROM T AS A;
+                                        // -> C is FROM T aliased as A
+                                        Ok(CorrelationReference::TableAliasVariant {
+                                            alias_name: AliasName::new(colref_corr)?,
+                                            table_name: TableName::new(
+                                                ast_from_item.table_name.0 .0.clone(),
+                                            )?,
+                                        })
+                                    } else {
+                                        // SELECT not_a_t.C FROM T AS A;
+                                        // -> UndefinedColumn
+                                        Err(ApllodbError::new(
+                                            ApllodbErrorKind::UndefinedColumn,
+                                            format!(
+                                                "correlation of column reference `{:?}` is not the same as FROM item `{:?}`",
+                                                ast_column_reference, ast_from_item
+                                            ),
+                                            None,
+                                        ))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }?;
+
+                let field_reference = FieldReference::ColumnNameVariant(ColumnName::new(
+                    ast_column_reference.column_name.0 .0,
+                )?);
+
+                Ok(FullFieldReference::new(
+                    correlation_reference,
+                    field_reference,
+                ))
             }
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
-
-
-
-        let table_name = Self::table_name(ast_table_name)?;
-        let column_name = Self::column_name(ast_column_name)?;
-
-        let correlation_reference = CorrelationReference::TableNameVariant(table_name);
-        let field_reference = FieldReference::ColumnNameVariant(column_name);
-
-        Ok(FullFieldReference::new(
-            correlation_reference,
-            field_reference,
-        ))
     }
 
     // TODO column_reference_with_table_alias, ...
