@@ -17,11 +17,11 @@ impl AstTranslator {
     ///
     /// # Failures
     ///
-    /// - [InvalidColumnReference](apllodb_shared_components::ApllodbErrorKind::InvalidColumnReference) when:
+    /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
     ///   - `ast_from_items` is empty.
-    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
     ///   - none of `ast_from_item` has field named `ast_column_reference.column_name`
-    /// - [UndefinedObject](apllodb_shared_components::ApllodbErrorKind::UndefinedObject) when:
+    /// - [UndefinedObject](crate::ApllodbErrorKind::UndefinedObject) when:
     ///   - `ast_column_reference` has a correlation but it is not any of `ast_from_items`.
     pub fn column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
