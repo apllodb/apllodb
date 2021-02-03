@@ -56,19 +56,16 @@ impl TryFrom<SelectCommand> for QueryPlan {
         let column_names: Vec<ColumnName> = select_fields
             .iter()
             .map(|select_field| {
-                if select_field.alias.is_some() {
-                    unimplemented!();
-                }
-
                 match &select_field.expression {
                     apllodb_ast::Expression::ConstantVariant(_) => {
                         unimplemented!();
                     }
-                    apllodb_ast::Expression::ColumnReferenceVariant(colref) => {
-                        if colref.correlation.is_some() {
-                            unimplemented!();
-                        }
-                        AstTranslator::column_name(colref.column_name.clone())
+                    apllodb_ast::Expression::ColumnReferenceVariant(_) => {
+                        let ffr = AstTranslator::select_field_column_reference(
+                            select_field.clone(),
+                            from_items.clone(),
+                        )?;
+                        Ok(ffr.as_column_name().clone())
                     }
                     apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
                         // TODO このレイヤーで計算しちゃいたい

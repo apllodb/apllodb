@@ -1,7 +1,7 @@
 mod sql_test;
 
 use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ApllodbErrorKind, FieldIndex};
+use apllodb_shared_components::{ApllodbErrorKind, FullFieldReference};
 use apllodb_storage_engine_interface::test_support::fixture::*;
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
@@ -21,7 +21,7 @@ async fn test_fullscan() {
             "SELECT id, age FROM people",
             StepRes::OkQuery(Box::new(|records| {
                 let mut records = records.sorted_by_key(|r| {
-                    r.get::<i64>(&FieldIndex::factory_colref("people", "id"))
+                    r.get::<i64>(&FullFieldReference::factory("people", "id").into_field_index())
                         .unwrap()
                         .unwrap()
                 });
@@ -46,7 +46,7 @@ async fn test_projection() {
             Step::new(
                 "SELECT id FROM people",
                 StepRes::OkQuery(Box::new(|records| {
-                    let id_field = FieldIndex::factory_colref("people", "id");
+                    let id_field = FullFieldReference::factory("people", "id").into_field_index();
 
                     let mut records =
                         records.sorted_by_key(|r| r.get::<i64>(&id_field).unwrap().unwrap());
@@ -57,9 +57,11 @@ async fn test_projection() {
                         T_PEOPLE_R1.get::<i64>(&id_field).unwrap()
                     );
                     assert_eq!(
-                        r.get::<i32>(&FieldIndex::factory_colref("people", "age"))
-                            .unwrap_err()
-                            .kind(),
+                        r.get::<i32>(
+                            &FullFieldReference::factory("people", "age").into_field_index()
+                        )
+                        .unwrap_err()
+                        .kind(),
                         &ApllodbErrorKind::InvalidName
                     );
 
@@ -72,7 +74,7 @@ async fn test_projection() {
             Step::new(
                 "SELECT age FROM people",
                 StepRes::OkQuery(Box::new(|records| {
-                    let age_field = FieldIndex::factory_colref("people", "age");
+                    let age_field = FullFieldReference::factory("people", "age").into_field_index();
                     let mut records =
                         records.sorted_by_key(|r| r.get::<i32>(&age_field).unwrap().unwrap());
                     let r = records.next().unwrap();
@@ -81,9 +83,11 @@ async fn test_projection() {
                         T_PEOPLE_R1.get::<i32>(&age_field).unwrap()
                     );
                     assert_eq!(
-                        r.get::<i64>(&FieldIndex::factory_colref("people", "id"))
-                            .unwrap_err()
-                            .kind(),
+                        r.get::<i64>(
+                            &FullFieldReference::factory("people", "id").into_field_index()
+                        )
+                        .unwrap_err()
+                        .kind(),
                         &ApllodbErrorKind::InvalidName
                     );
                     Ok(())
