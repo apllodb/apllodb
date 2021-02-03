@@ -40,9 +40,9 @@ async fn test_select_with_various_field_spec() {
             expected_result: Ok(()),
         },
         TestDatum {
-            sql: "SELECT xxx.id FROM people",
-            ffr: FullFieldReference::factory("people", "id"),
-            expected_result: Err(ApllodbErrorKind::InvalidName),
+            sql: "SELECT id FROM people p",
+            ffr: FullFieldReference::factory("people", "id").with_corr_alias("p"),
+            expected_result: Ok(()),
         },
     ];
 
