@@ -25,12 +25,6 @@ impl TableName {
     }
 }
 
-impl FieldIndex {
-    pub fn factory_colref(table_name: &str, column_name: &str) -> Self {
-        Self::InFullFieldReference(FullFieldReference::factory(table_name, column_name))
-    }
-}
-
 impl FullFieldReference {
     pub fn factory(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
@@ -46,6 +40,10 @@ impl FullFieldReference {
     pub fn with_field_alias(mut self, field_alias: &str) -> Self {
         self.set_field_alias(AliasName::factory(field_alias));
         self
+    }
+
+    pub fn into_field_index(self) -> FieldIndex {
+        FieldIndex::InFullFieldReference(self)
     }
 
     pub fn as_column_name(&self) -> &ColumnName {
