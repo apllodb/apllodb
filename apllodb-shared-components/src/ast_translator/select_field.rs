@@ -124,17 +124,6 @@ mod tests {
                     .with_corr_alias("corr_alias")
                     .with_field_alias("field_alias")),
             ),
-            TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(
-                        Some(Correlation::factory("t")),
-                        "c",
-                    )),
-                    Some("field_alias"),
-                ),
-                vec![FromItem::factory("t", Some("corr_alias"))],
-                Ok(FullFieldReference::factory("t", "c").with_field_alias("field_alias")),
-            ),
         ];
 
         for test_datum in test_data {
