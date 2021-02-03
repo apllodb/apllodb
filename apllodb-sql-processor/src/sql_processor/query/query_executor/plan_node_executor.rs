@@ -3,7 +3,10 @@ use std::{
     rc::Rc,
 };
 
-use apllodb_shared_components::{ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Record, RecordIterator, SessionWithTx, SqlValueHashKey, TableName};
+use apllodb_shared_components::{
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Record, RecordIterator,
+    SessionWithTx, SqlValueHashKey, TableName,
+};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
@@ -41,7 +44,9 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ) -> ApllodbResult<RecordIterator> {
         match op_unary {
             UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
-            UnaryPlanOperation::Selection { condition } => {}
+            UnaryPlanOperation::Selection { condition: _ } => {
+                todo!()
+            }
         }
     }
 
@@ -88,18 +93,24 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         Ok(it)
     }
 
-    /// # Failures
-    ///
-    /// Failures from [Record::selection()](apllodb_shared_components::Record::selection).
-    fn selection(
+    fn _selection(
         &self,
         input_left: RecordIterator,
         condition: Expression,
     ) -> ApllodbResult<RecordIterator> {
         let it = RecordIterator::new(
             input_left
-                .filter(|record| record.selection(&condition))
-                .collect::<ApllodbResult<_>>()?,
+                .filter_map(|record| match record.selection(&condition) {
+                    Err(e) => Some(Err(e)),
+                    Ok(b) => {
+                        if b {
+                            Some(Ok(record))
+                        } else {
+                            None
+                        }
+                    }
+                })
+                .collect::<ApllodbResult<Vec<Record>>>()?,
         );
         Ok(it)
     }

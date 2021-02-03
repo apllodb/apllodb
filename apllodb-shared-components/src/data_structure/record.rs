@@ -3,9 +3,8 @@ pub(crate) mod field_index;
 use crate::{
     error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
     traits::sql_convertible::SqlConvertible,
-    FieldIndex, FullFieldReference,
+    Expression, FieldIndex, FullFieldReference,
 };
-use apllodb_sql_parser::apllodb_ast::Expression;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -93,6 +92,11 @@ impl Record {
     }
 
     /// Check if whether this record satisfies selection condition.
+    ///
+    /// # Failures
+    ///
+    /// - [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - `condition` is not evaluated as BOOLEAN type.
     pub fn selection(&self, _condition: &Expression) -> ApllodbResult<bool> {
         todo!()
     }
