@@ -170,14 +170,14 @@ impl Display for FieldIndex {
 impl<S: Into<String>> From<S> for FieldIndex {
     fn from(s: S) -> Self {
         let s: String = s.into();
-        let parts: Vec<&str> = s.split(".").collect();
+        let parts: Vec<&str> = s.split('.').collect();
 
-        debug_assert!(parts.len() > 0);
+        debug_assert!(!parts.is_empty());
         assert!(parts.len() <= 2, "too many dots (.) !");
 
         parts.iter().for_each(|part| {
             assert!(
-                part.len() > 0,
+                !part.is_empty(),
                 "correlation name nor field name must not be empty string"
             )
         });
