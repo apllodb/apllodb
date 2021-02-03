@@ -49,18 +49,18 @@ impl TryFrom<SelectCommand> for QueryPlan {
         let from_item = if from_items.len() != 1 {
             unimplemented!()
         } else {
-            from_item.first().unwrap().clone()
+            from_items.first().unwrap().clone()
         };
 
         let select_fields = sc.select_fields.into_vec();
         let column_names: Vec<ColumnName> = select_fields
-            .into_iter()
+            .iter()
             .map(|select_field| {
                 if select_field.alias.is_some() {
                     unimplemented!();
                 }
 
-                match select_field.expression {
+                match &select_field.expression {
                     apllodb_ast::Expression::ConstantVariant(_) => {
                         unimplemented!();
                     }
@@ -68,7 +68,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         if colref.correlation.is_some() {
                             unimplemented!();
                         }
-                        AstTranslator::column_name(colref.column_name)
+                        AstTranslator::column_name(colref.column_name.clone())
                     }
                     apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
                         // TODO このレイヤーで計算しちゃいたい
@@ -80,7 +80,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let seq_scan_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
-                table_name,
+                table_name: AstTranslator::table_name(from_item.table_name)?,
                 projection: ProjectionQuery::ColumnNames(column_names),
             },
         });
@@ -89,11 +89,13 @@ impl TryFrom<SelectCommand> for QueryPlan {
                 fields: select_fields
                     .into_iter()
                     .map(|select_field| {
-                        let ffr =
-                            AstTranslator::select_field_ffr(select_field, from_items.clone())?;
-                        FieldIndex::InFullFieldReference(ffr)
+                        AstTranslator::select_field_column_reference(
+                            select_field,
+                            from_items.clone(),
+                        )
+                        .map(FieldIndex::InFullFieldReference)
                     })
-                    .collect(),
+                    .collect::<ApllodbResult<_>>()?,
             },
             left: Box::new(seq_scan_node),
         });
