@@ -123,3 +123,84 @@ impl AstTranslator {
 
     // TODO column_reference_with_table_alias, ...
 }
+
+#[cfg(test)]
+mod tests {
+    use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation, FromItem};
+
+    use crate::{ApllodbErrorKind, ApllodbResult, AstTranslator, FullFieldReference};
+
+    #[derive(new)]
+    struct TestDatum {
+        ast_column_reference: ColumnReference,
+        ast_from_items: Vec<FromItem>,
+        expected_result: Result<FullFieldReference, ApllodbErrorKind>,
+    }
+
+    #[test]
+    fn test_column_reference() -> ApllodbResult<()> {
+        let test_data: Vec<TestDatum> = vec![
+            TestDatum::new(
+                ColumnReference::factory(None, "c"),
+                vec![],
+                Err(ApllodbErrorKind::InvalidColumnReference),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                vec![],
+                Err(ApllodbErrorKind::InvalidColumnReference),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(None, "c"),
+                vec![FromItem::factory("t", None)],
+                Ok(FullFieldReference::factory_table("t", "c")),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                vec![FromItem::factory("t", None)],
+                Ok(FullFieldReference::factory_table("t", "c")),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(Some(Correlation::factory("t1")), "c"),
+                vec![FromItem::factory("t2", None)],
+                Err(ApllodbErrorKind::UndefinedColumn),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(None, "c"),
+                vec![FromItem::factory("t", Some("a"))],
+                Ok(FullFieldReference::factory_table("t", "c")),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                vec![FromItem::factory("t", Some("a"))],
+                Ok(FullFieldReference::factory_table("t", "c")),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(Some(Correlation::factory("a")), "c"),
+                vec![FromItem::factory("t", Some("a"))],
+                Ok(FullFieldReference::factory_alias("t", "a", "c")),
+            ),
+            TestDatum::new(
+                ColumnReference::factory(Some(Correlation::factory("x")), "c"),
+                vec![FromItem::factory("t", Some("a"))],
+                Err(ApllodbErrorKind::UndefinedColumn),
+            ),
+        ];
+
+        for test_datum in test_data {
+            match AstTranslator::column_reference(
+                test_datum.ast_column_reference,
+                test_datum.ast_from_items,
+            ) {
+                Ok(ffr) => {
+                    assert_eq!(ffr, test_datum.expected_result.unwrap())
+                }
+                Err(e) => {
+                    assert_eq!(e.kind(), &test_datum.expected_result.unwrap_err())
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
