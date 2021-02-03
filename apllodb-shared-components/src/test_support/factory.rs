@@ -45,14 +45,6 @@ impl FullFieldReference {
     pub fn into_field_index(self) -> FieldIndex {
         FieldIndex::InFullFieldReference(self)
     }
-
-    pub fn as_column_name(&self) -> &ColumnName {
-        if let FieldReference::ColumnNameVariant(cn) = self.as_field_reference() {
-            cn
-        } else {
-            panic!()
-        }
-    }
 }
 
 impl TableName {
