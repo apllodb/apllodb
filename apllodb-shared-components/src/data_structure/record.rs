@@ -43,7 +43,7 @@ impl Record {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, index: &FieldIndex) -> ApllodbResult<&SqlValue> {
-        let ffr = index.peek(self.fields.keys().collect())?;
+        let ffr = index.peek(self.fields.keys())?;
         let sql_value = self.fields.get(&ffr).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
@@ -64,7 +64,7 @@ impl Record {
         let projection: HashSet<FullFieldReference> = projection
             .iter()
             .map(|index| {
-                let ffr = index.peek(self.fields.keys().collect())?;
+                let ffr = index.peek(self.fields.keys())?;
                 Ok(ffr.clone())
             })
             .collect::<ApllodbResult<_>>()?;
