@@ -1,7 +1,7 @@
 mod sql_test;
 
 use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ApllodbErrorKind, FieldIndex, };
+use apllodb_shared_components::{ApllodbErrorKind, FieldIndex};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]

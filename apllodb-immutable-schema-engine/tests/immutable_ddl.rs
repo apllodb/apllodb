@@ -140,9 +140,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     assert_eq!(records.clone().count(), 3);
 
     for record in records {
-        let id: i32 = record
-            .get(&FieldIndex::from(ffr_id.clone()))?
-            .unwrap();
+        let id: i32 = record.get(&FieldIndex::from(ffr_id.clone()))?.unwrap();
         match id {
             1 => assert_eq!(
                 record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
@@ -154,10 +152,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
             ),
             2 => {
                 // Can fetch column `c1` from v2 and it's value is NULL.
-                assert_eq!(
-                    record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
-                    None
-                );
+                assert_eq!(record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?, None);
             }
             _ => unreachable!(),
         }
