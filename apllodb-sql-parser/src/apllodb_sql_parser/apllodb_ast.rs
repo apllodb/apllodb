@@ -381,10 +381,7 @@ pub struct Alias(pub Identifier);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Correlation {
-    TableNameVariant(TableName),
-    AliasVariant(Alias),
-}
+pub struct Correlation(pub Identifier);
 
 /*
  * ----------------------------------------------------------------------------
