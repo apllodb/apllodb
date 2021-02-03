@@ -6,8 +6,8 @@ use crate::{
     data_structure::reference::{
         correlation_reference::CorrelationReference, field_reference::FieldReference,
     },
-    ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex, FullFieldReference,
-    NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
+    AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex,
+    FullFieldReference, NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -27,15 +27,25 @@ impl TableName {
 
 impl FieldIndex {
     pub fn factory_colref(table_name: &str, column_name: &str) -> Self {
-        Self::InFullFieldReference(FullFieldReference::factory_table(table_name, column_name))
+        Self::InFullFieldReference(FullFieldReference::factory(table_name, column_name))
     }
 }
 
 impl FullFieldReference {
-    pub fn factory_table(table_name: &str, column_name: &str) -> Self {
+    pub fn factory(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(corr, field)
+    }
+
+    pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {
+        self.set_correlation_alias(AliasName::factory(correlation_alias));
+        self
+    }
+
+    pub fn with_field_alias(mut self, field_alias: &str) -> Self {
+        self.set_field_alias(AliasName::factory(field_alias));
+        self
     }
 
     pub fn as_column_name(&self) -> &ColumnName {
@@ -56,6 +66,12 @@ impl TableName {
 impl ColumnName {
     pub fn factory(column_name: &str) -> Self {
         Self::new(column_name).unwrap()
+    }
+}
+
+impl AliasName {
+    pub fn factory(alias_name: &str) -> Self {
+        Self::new(alias_name).unwrap()
     }
 }
 

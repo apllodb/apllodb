@@ -13,10 +13,10 @@ impl People {
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "id")
+        FullFieldReference::factory(Self::table_name().as_str(), "id")
     }
     pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "age")
+        FullFieldReference::factory(Self::table_name().as_str(), "age")
     }
 
     pub fn record(id: i64, age: i32) -> Record {
@@ -39,13 +39,13 @@ impl Body {
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "id")
+        FullFieldReference::factory(Self::table_name().as_str(), "id")
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "people_id")
+        FullFieldReference::factory(Self::table_name().as_str(), "people_id")
     }
     pub fn ffr_height() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "height")
+        FullFieldReference::factory(Self::table_name().as_str(), "height")
     }
 
     pub fn record(id: i64, people_id: i64, height: i32) -> Record {
@@ -70,16 +70,16 @@ impl Pet {
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "id")
+        FullFieldReference::factory(Self::table_name().as_str(), "id")
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "people_id")
+        FullFieldReference::factory(Self::table_name().as_str(), "people_id")
     }
     pub fn ffr_kind() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "kind")
+        FullFieldReference::factory(Self::table_name().as_str(), "kind")
     }
     pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory_table(Self::table_name().as_str(), "age")
+        FullFieldReference::factory(Self::table_name().as_str(), "age")
     }
 
     pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Record {

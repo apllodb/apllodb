@@ -3,14 +3,16 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, TableName,
+    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex,
 };
 use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 use self::query_plan_tree::{
-    query_plan_node::{LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf},
+    query_plan_node::{
+        LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
+    },
     QueryPlanTree,
 };
 
@@ -43,31 +45,22 @@ impl TryFrom<SelectCommand> for QueryPlan {
             .from_items
             .expect("currently SELECT w/o FROM is unimplemented")
             .into_vec();
-        let table_names: Vec<TableName> = from_items
-            .into_iter()
-            .map(|from_item| {
-                if from_item.alias.is_some() {
-                    unimplemented!();
-                }
-                AstTranslator::table_name(from_item.table_name)
-            })
-            .collect::<ApllodbResult<_>>()?;
 
-        let table_name = if table_names.len() != 1 {
+        let from_item = if from_items.len() != 1 {
             unimplemented!()
         } else {
-            table_names.first().unwrap().clone()
+            from_items.first().unwrap().clone()
         };
 
         let select_fields = sc.select_fields.into_vec();
         let column_names: Vec<ColumnName> = select_fields
-            .into_iter()
+            .iter()
             .map(|select_field| {
                 if select_field.alias.is_some() {
                     unimplemented!();
                 }
 
-                match select_field.expression {
+                match &select_field.expression {
                     apllodb_ast::Expression::ConstantVariant(_) => {
                         unimplemented!();
                     }
@@ -75,7 +68,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         if colref.correlation.is_some() {
                             unimplemented!();
                         }
-                        AstTranslator::column_name(colref.column_name)
+                        AstTranslator::column_name(colref.column_name.clone())
                     }
                     apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
                         // TODO このレイヤーで計算しちゃいたい
@@ -87,11 +80,26 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let seq_scan_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
-                table_name,
+                table_name: AstTranslator::table_name(from_item.table_name)?,
                 projection: ProjectionQuery::ColumnNames(column_names),
             },
         });
+        let projection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
+            op: UnaryPlanOperation::Projection {
+                fields: select_fields
+                    .into_iter()
+                    .map(|select_field| {
+                        AstTranslator::select_field_column_reference(
+                            select_field,
+                            from_items.clone(),
+                        )
+                        .map(FieldIndex::InFullFieldReference)
+                    })
+                    .collect::<ApllodbResult<_>>()?,
+            },
+            left: Box::new(seq_scan_node),
+        });
 
-        Ok(QueryPlan::new(QueryPlanTree::new(seq_scan_node)))
+        Ok(QueryPlan::new(QueryPlanTree::new(projection_node)))
     }
 }

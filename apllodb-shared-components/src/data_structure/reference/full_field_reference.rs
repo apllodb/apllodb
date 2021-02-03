@@ -4,8 +4,8 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data_structure::reference::correlation_reference::CorrelationReference, ApllodbError,
-    ApllodbResult, FieldIndex,
+    data_structure::reference::correlation_reference::CorrelationReference, AliasName,
+    ApllodbError, ApllodbResult, FieldIndex,
 };
 
 use super::field_reference::FieldReference;
@@ -43,5 +43,29 @@ impl FullFieldReference {
     /// Get ref of FieldReference
     pub fn as_field_reference(&self) -> &FieldReference {
         &self.field_reference
+    }
+
+    /// Set correlation reference
+    pub fn set_correlation_alias(&mut self, correlation_alias: AliasName) {
+        let cur_table_name = match &self.correlation_reference {
+            CorrelationReference::TableNameVariant(tn) => tn,
+            CorrelationReference::TableAliasVariant { table_name, .. } => table_name,
+        };
+        self.correlation_reference = CorrelationReference::TableAliasVariant {
+            alias_name: correlation_alias,
+            table_name: cur_table_name.clone(),
+        };
+    }
+
+    /// Set field reference
+    pub fn set_field_alias(&mut self, field_alias: AliasName) {
+        let cur_column_name = match &self.field_reference {
+            FieldReference::ColumnNameVariant(cn) => cn,
+            FieldReference::ColumnAliasVariant { column_name, .. } => column_name,
+        };
+        self.field_reference = FieldReference::ColumnAliasVariant {
+            alias_name: field_alias,
+            column_name: cur_column_name.clone(),
+        };
     }
 }
