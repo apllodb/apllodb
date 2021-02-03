@@ -12,6 +12,7 @@ pub mod expression;
 pub mod table_constraint;
 pub mod table_name;
 pub mod unary_operator;
+pub mod select_field;
 
 /// Holds static translation methods.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]

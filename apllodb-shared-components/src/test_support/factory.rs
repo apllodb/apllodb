@@ -2,9 +2,13 @@
 
 //! Factory methods for testing
 
-use crate::{AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex, FullFieldReference, NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator, data_structure::reference::{
+use crate::{
+    data_structure::reference::{
         correlation_reference::CorrelationReference, field_reference::FieldReference,
-    }};
+    },
+    AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex,
+    FullFieldReference, NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
+};
 use rand::Rng;
 
 impl DatabaseName {
@@ -23,24 +27,25 @@ impl TableName {
 
 impl FieldIndex {
     pub fn factory_colref(table_name: &str, column_name: &str) -> Self {
-        Self::InFullFieldReference(FullFieldReference::factory_table(table_name, column_name))
+        Self::InFullFieldReference(FullFieldReference::factory(table_name, column_name))
     }
 }
 
 impl FullFieldReference {
-    pub fn factory_table(table_name: &str, column_name: &str) -> Self {
+    pub fn factory(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(corr, field)
     }
 
-    pub fn factory_alias(table_name: &str, alias_name: &str, column_name: &str) -> Self {
-        let corr = CorrelationReference::TableAliasVariant {
-            alias_name: AliasName::factory(alias_name),
-            table_name: TableName::factory(table_name),
-        };
-        let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        Self::new(corr, field)
+    pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {
+        self.set_correlation_alias(AliasName::factory(correlation_alias));
+        self
+    }
+
+    pub fn with_field_alias(mut self, field_alias: &str) -> Self {
+        self.set_field_alias(AliasName::factory(field_alias));
+        self
     }
 
     pub fn as_column_name(&self) -> &ColumnName {

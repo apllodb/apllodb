@@ -3,7 +3,7 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex, TableName,
+    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex,
 };
 use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
@@ -45,20 +45,11 @@ impl TryFrom<SelectCommand> for QueryPlan {
             .from_items
             .expect("currently SELECT w/o FROM is unimplemented")
             .into_vec();
-        let table_names: Vec<TableName> = from_items
-            .into_iter()
-            .map(|from_item| {
-                if from_item.alias.is_some() {
-                    unimplemented!();
-                }
-                AstTranslator::table_name(from_item.table_name)
-            })
-            .collect::<ApllodbResult<_>>()?;
 
-        let table_name = if table_names.len() != 1 {
+        let from_item = if from_items.len() != 1 {
             unimplemented!()
         } else {
-            table_names.first().unwrap().clone()
+            from_item.first().unwrap().clone()
         };
 
         let select_fields = sc.select_fields.into_vec();
@@ -98,7 +89,8 @@ impl TryFrom<SelectCommand> for QueryPlan {
                 fields: select_fields
                     .into_iter()
                     .map(|select_field| {
-                        let ffr = AstTranslator::select_field(select_field)?;
+                        let ffr =
+                            AstTranslator::select_field_ffr(select_field, from_items.clone())?;
                         FieldIndex::InFullFieldReference(ffr)
                     })
                     .collect(),
