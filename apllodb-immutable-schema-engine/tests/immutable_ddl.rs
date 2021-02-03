@@ -32,11 +32,11 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
-    let ffr_id = FullFieldReference::factory_table(
+    let ffr_id = FullFieldReference::factory(
         t_name.as_str(),
         c_id_def.column_data_type().column_name().as_str(),
     );
-    let ffr_c1 = FullFieldReference::factory_table(
+    let ffr_c1 = FullFieldReference::factory(
         t_name.as_str(),
         c1_def.column_data_type().column_name().as_str(),
     );

@@ -59,7 +59,8 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             unimplemented!();
         }
 
-        let table_name = AstTranslator::table_name(command.table_name)?;
+        let ast_table_name = command.table_name;
+        let table_name = AstTranslator::table_name(ast_table_name.clone())?;
 
         let column_names = command.column_names.into_vec();
         let expressions = command.expressions.into_vec();
@@ -71,7 +72,10 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         let constant_values: Vec<SqlValue> = expressions
             .into_iter()
             .map(|ast_expression| {
-                let expression = AstTranslator::expression(ast_expression)?;
+                let expression = AstTranslator::expression_in_non_select(
+                    ast_expression,
+                    vec![ast_table_name.clone()],
+                )?;
                 SqlValue::try_from(expression)
             })
             .collect::<ApllodbResult<_>>()?;

@@ -32,11 +32,11 @@ async fn test_compound_pk() -> ApllodbResult<()> {
     );
     let coldefs = vec![c_country_code_def.clone(), c_postal_code_def.clone()];
 
-    let ffr_country_code = FullFieldReference::factory_table(
+    let ffr_country_code = FullFieldReference::factory(
         t_name.as_str(),
         c_country_code_def.column_data_type().column_name().as_str(),
     );
-    let ffr_postal_code = FullFieldReference::factory_table(
+    let ffr_postal_code = FullFieldReference::factory(
         t_name.as_str(),
         c_postal_code_def.column_data_type().column_name().as_str(),
     );
