@@ -25,9 +25,24 @@ async fn test_select_with_various_field_spec() {
             expected_result: Ok(()),
         },
         TestDatum {
+            sql: "SELECT id FROM people",
+            ffr: FullFieldReference::factory("people", "xxx"),
+            expected_result: Err(ApllodbErrorKind::InvalidName),
+        },
+        TestDatum {
+            sql: "SELECT id FROM people",
+            ffr: FullFieldReference::factory("xxx", "id"),
+            expected_result: Err(ApllodbErrorKind::InvalidName),
+        },
+        TestDatum {
             sql: "SELECT people.id FROM people",
             ffr: FullFieldReference::factory("people", "id"),
             expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT xxx.id FROM people",
+            ffr: FullFieldReference::factory("people", "id"),
+            expected_result: Err(ApllodbErrorKind::InvalidName),
         },
     ];
 
@@ -50,7 +65,13 @@ async fn test_select_with_various_field_spec() {
                         )
                     ),
                     Err(e) => {
-                        assert_eq!(e.kind(), &test_datum.clone().expected_result.unwrap_err())
+                        assert_eq!(
+                            e.kind(),
+                            &test_datum.clone().expected_result.unwrap_err(),
+                            "FieldIndex: `{:?}`, SQL: {}",
+                            test_datum.ffr,
+                            test_datum.sql
+                        )
                     }
                 }
 
