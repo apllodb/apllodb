@@ -143,9 +143,9 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id().into()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id().into()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id().into()])?,
                 ],
             },
             TestDatum {
@@ -158,16 +158,16 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age().into()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age().into()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age().into()])?,
                 ],
             },
             // Projection
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::InFullFieldReference(People::ffr_id())]
+                        fields: vec![FieldIndex::from(People::ffr_id())]
                             .into_iter()
                             .collect(),
                     },
@@ -179,15 +179,15 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id().into()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id().into()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id().into()])?,
                 ],
             },
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Unary(QueryPlanNodeUnary {
                     op: UnaryPlanOperation::Projection {
-                        fields: vec![FieldIndex::InFullFieldReference(People::ffr_age())]
+                        fields: vec![FieldIndex::from(People::ffr_age())]
                             .into_iter()
                             .collect(),
                     },
@@ -199,17 +199,17 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age()])?,
+                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age().into()])?,
+                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age().into()])?,
+                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age().into()])?,
                 ],
             },
             // HashJoin
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InFullFieldReference(People::ffr_id()),
-                        right_field: FieldIndex::InFullFieldReference(Body::ffr_people_id()),
+                        left_field: FieldIndex::from(People::ffr_id()),
+                        right_field: FieldIndex::from(Body::ffr_people_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -233,8 +233,8 @@ mod tests {
                 // right has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InFullFieldReference(People::ffr_id()),
-                        right_field: FieldIndex::InFullFieldReference(Pet::ffr_people_id()),
+                        left_field: FieldIndex::from(People::ffr_id()),
+                        right_field: FieldIndex::from(Pet::ffr_people_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -259,8 +259,8 @@ mod tests {
                 // left has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InFullFieldReference(Pet::ffr_people_id()),
-                        right_field: FieldIndex::InFullFieldReference(People::ffr_id()),
+                        left_field: FieldIndex::from(Pet::ffr_people_id()),
+                        right_field: FieldIndex::from(People::ffr_id()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
@@ -285,8 +285,8 @@ mod tests {
                 // Eq comparison with Integer & SmallInt
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        left_field: FieldIndex::InFullFieldReference(People::ffr_age()),
-                        right_field: FieldIndex::InFullFieldReference(Pet::ffr_age()),
+                        left_field: FieldIndex::from(People::ffr_age()),
+                        right_field: FieldIndex::from(Pet::ffr_age()),
                     },
                     left: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {

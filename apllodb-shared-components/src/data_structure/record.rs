@@ -6,10 +6,7 @@ use crate::{
     FieldIndex, FullFieldReference,
 };
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, HashSet},
-    convert::TryFrom,
-};
+use std::collections::{HashMap, HashSet};
 
 use super::value::sql_value::SqlValue;
 
@@ -46,7 +43,7 @@ impl Record {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, index: &FieldIndex) -> ApllodbResult<&SqlValue> {
-        let ffr = FullFieldReference::try_from(index.clone())?;
+        let ffr = index.peek(self.fields.keys())?;
         let sql_value = self.fields.get(&ffr).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
@@ -66,20 +63,11 @@ impl Record {
     pub fn projection(mut self, projection: &HashSet<FieldIndex>) -> ApllodbResult<Self> {
         let projection: HashSet<FullFieldReference> = projection
             .iter()
-            .cloned()
-            .map(FullFieldReference::try_from)
+            .map(|index| {
+                let ffr = index.peek(self.fields.keys())?;
+                Ok(ffr.clone())
+            })
             .collect::<ApllodbResult<_>>()?;
-
-        if let Some(invalid_field) = projection
-            .difference(&self.fields.keys().cloned().collect())
-            .next()
-        {
-            return Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidName,
-                format!("invalid field reference: `{:?}`", invalid_field),
-                None,
-            ));
-        }
 
         let new_fields: HashMap<FullFieldReference, SqlValue> = self
             .fields

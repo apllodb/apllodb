@@ -80,7 +80,7 @@ async fn test_compound_pk() -> ApllodbResult<()> {
     for record in records {
         assert_eq!(
             record.get::<i16>(
-                &FieldIndex::InFullFieldReference(
+                &FieldIndex::from(
                     ffr_country_code.clone()
                 )
             )?,
@@ -88,7 +88,7 @@ async fn test_compound_pk() -> ApllodbResult<()> {
             "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK"
         );
         assert_eq!(
-            record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_postal_code.clone()))?,
+            record.get::<i32>(&FieldIndex::from(ffr_postal_code.clone()))?,
             Some(1000001i32),
         );
     }

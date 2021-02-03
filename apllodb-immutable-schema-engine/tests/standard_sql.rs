@@ -136,11 +136,11 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_id.clone()))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
         Some(100)
     );
 
@@ -203,11 +203,11 @@ async fn test_update() -> ApllodbResult<()> {
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_id.clone()))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
         Some(100)
     );
     assert!(records.next().is_none());
@@ -226,11 +226,11 @@ t_name.clone(),
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_id.clone()))?,
         Some(1)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
         Some(200)
     );
     assert!(records.next().is_none());
@@ -250,11 +250,11 @@ update(
         .await?;
     let record = records.next().unwrap();
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_id.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_id.clone()))?,
         Some(2)
     );
     assert_eq!(
-        record.get::<i32>(&FieldIndex::InFullFieldReference(ffr_c1.clone()))?,
+        record.get::<i32>(&FieldIndex::from(ffr_c1.clone()))?,
         Some(200)
     );
     assert!(records.next().is_none());
