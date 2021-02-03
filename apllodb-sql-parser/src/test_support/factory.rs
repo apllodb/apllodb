@@ -248,12 +248,8 @@ impl ColumnReference {
 }
 
 impl Correlation {
-    pub fn factory_tn(table_name: &str) -> Self {
-        Self::TableNameVariant(TableName::factory(table_name))
-    }
-
-    pub fn factory_alias(alias: &str) -> Self {
-        Self::AliasVariant(Alias::factory(alias))
+    pub fn factory(correlation_name: &str) -> Self {
+        Self(Identifier(correlation_name.to_string()))
     }
 }
 

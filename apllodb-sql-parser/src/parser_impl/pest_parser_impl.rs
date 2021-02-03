@@ -735,24 +735,12 @@ impl PestParserImpl {
     }
 
     fn parse_correlation(mut params: FnParseParams) -> ApllodbSqlParserResult<Correlation> {
-        try_parse_child(
+        parse_child(
             &mut params,
-            Rule::table_name,
-            Self::parse_table_name,
-            Correlation::TableNameVariant,
-        )?
-        .or(try_parse_child(
-            &mut params,
-            Rule::alias,
-            Self::parse_alias,
-            Correlation::AliasVariant,
-        )?)
-        .ok_or_else(|| {
-            ApllodbSqlParserError::new(
-                params.apllodb_sql,
-                "Does not match any child rule of correlation.",
-            )
-        })
+            Rule::identifier,
+            Self::parse_identifier,
+            Correlation,
+        )
     }
 
     /*
