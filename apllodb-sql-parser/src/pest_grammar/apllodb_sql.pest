@@ -1127,8 +1127,7 @@ alias = {
 }
 
 correlation = {
-    table_name
-    | alias
+    identifier
 }
 
 /*
