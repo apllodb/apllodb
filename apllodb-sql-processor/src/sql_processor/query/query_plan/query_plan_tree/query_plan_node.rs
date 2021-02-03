@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use apllodb_shared_components::{FieldIndex, RecordIterator, TableName};
+use apllodb_shared_components::{Expression, FieldIndex, RecordIterator, TableName};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
@@ -45,9 +45,14 @@ pub(crate) enum LeafPlanOperation {
 }
 
 /// Unary operations, which inputs [RecordIterator](apllodb-shared-components::RecordIterator) and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) enum UnaryPlanOperation {
     Projection { fields: HashSet<FieldIndex> },
+    Selection { 
+        /// Expression here must be evaluated as BOOLEAN (NULL is FALSE in BOOLEAN context).
+        /// Otherwise [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch).
+        condition: Expression 
+    },
     // TODO extend.
     // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
 }

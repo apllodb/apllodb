@@ -5,6 +5,7 @@ use crate::{
     traits::sql_convertible::SqlConvertible,
     FieldIndex, FullFieldReference,
 };
+use apllodb_sql_parser::apllodb_ast::Expression;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -89,6 +90,11 @@ impl Record {
         self.fields = new_fields;
 
         Ok(self)
+    }
+
+    /// Check if whether this record satisfies selection condition.
+    pub fn selection(&self, _condition: &Expression) -> ApllodbResult<bool> {
+        todo!()
     }
 
     /// Joins another record into this record.
