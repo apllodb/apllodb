@@ -39,11 +39,6 @@ async fn test_select_with_various_field_spec() {
             ffr: FullFieldReference::factory("people", "id"),
             expected_result: Ok(()),
         },
-        TestDatum {
-            sql: "SELECT id FROM people p",
-            ffr: FullFieldReference::factory("people", "id").with_corr_alias("p"),
-            expected_result: Ok(()),
-        },
     ];
 
     let mut sql_test = SqlTest::default()
