@@ -10,13 +10,7 @@ use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 use self::query_plan_tree::{
-<<<<<<< HEAD
     query_plan_node::{LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf},
-=======
-    query_plan_node::{
-        LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
-    },
->>>>>>> 05bcbffecac7b8e624c8d08e920278fc6cc64c3c
     QueryPlanTree,
 };
 
