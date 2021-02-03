@@ -3,14 +3,16 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, TableName,
+    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex, TableName,
 };
 use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 use self::query_plan_tree::{
-    query_plan_node::{LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf},
+    query_plan_node::{
+        LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
+    },
     QueryPlanTree,
 };
 
@@ -85,19 +87,25 @@ impl TryFrom<SelectCommand> for QueryPlan {
             })
             .collect::<ApllodbResult<_>>()?;
 
-        // let projection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
-        //     op: UnaryPlanOperation::Projection {
-        //         fields
-        //     }
-        // });
-
         let seq_scan_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
                 table_name,
                 projection: ProjectionQuery::ColumnNames(column_names),
             },
         });
+        let projection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
+            op: UnaryPlanOperation::Projection {
+                fields: select_fields
+                    .into_iter()
+                    .map(|select_field| {
+                        let ffr = AstTranslator::select_field(select_field)?;
+                        FieldIndex::InFullFieldReference(ffr)
+                    })
+                    .collect(),
+            },
+            left: Box::new(seq_scan_node),
+        });
 
-        Ok(QueryPlan::new(QueryPlanTree::new(seq_scan_node)))
+        Ok(QueryPlan::new(QueryPlanTree::new(projection_node)))
     }
 }
