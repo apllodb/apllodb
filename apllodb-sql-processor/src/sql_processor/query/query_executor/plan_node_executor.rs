@@ -29,7 +29,9 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         op_leaf: LeafPlanOperation,
     ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::DirectInput { records } => Ok((records, session)),
+            LeafPlanOperation::Values { values_vec: _ } => {
+                todo!("InsertValuesの列からRecordIteratorつくる")
+            }
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,

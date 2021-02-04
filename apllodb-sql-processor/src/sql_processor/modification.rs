@@ -1,8 +1,8 @@
-use std::{collections::HashMap, convert::TryFrom, rc::Rc};
+use std::{convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, CorrelationReference,
-    FieldReference, FullFieldReference, Record, RecordIterator, Session, SessionWithTx, SqlValue,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, InsertValues, Session,
+    SessionWithTx, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -80,26 +80,14 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             })
             .collect::<ApllodbResult<_>>()?;
 
-        let fields: HashMap<FullFieldReference, SqlValue> = column_names
-            .into_iter()
-            .zip(constant_values)
-            .into_iter()
-            .map(|(cn, sql_value)| {
-                let ffr = FullFieldReference::new(
-                    CorrelationReference::TableNameVariant(table_name.clone()),
-                    FieldReference::ColumnNameVariant(AstTranslator::column_name(cn)?),
-                );
-                Ok((ffr, sql_value))
-            })
-            .collect::<ApllodbResult<_>>()?;
-
-        let record = Record::new(fields);
-        let records = RecordIterator::new(vec![record]);
+        let insert_values = InsertValues::new(constant_values);
 
         let plan_node = ModificationPlanNode::Insert(InsertNode {
             table_name,
             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-                op: LeafPlanOperation::DirectInput { records },
+                op: LeafPlanOperation::Values {
+                    values_vec: vec![insert_values],
+                },
             }),
         });
 

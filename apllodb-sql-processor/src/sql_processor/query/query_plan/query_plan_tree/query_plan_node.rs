@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use apllodb_shared_components::{FieldIndex, RecordIterator, TableName};
+use apllodb_shared_components::{FieldIndex, InsertValues, TableName};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
@@ -33,8 +33,8 @@ pub(crate) struct QueryPlanNodeBinary {
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) enum LeafPlanOperation {
-    DirectInput {
-        records: RecordIterator,
+    Values {
+        values_vec: Vec<InsertValues>,
     },
     SeqScan {
         table_name: TableName,
