@@ -7,7 +7,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnName, DatabaseName, FieldReference, SqlValue, SqlValues, TableName,
+    ApllodbResult, ColumnName, DatabaseName, SqlValue, SqlValues, TableName,
 };
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
