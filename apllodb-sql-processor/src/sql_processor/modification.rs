@@ -1,7 +1,7 @@
 use std::{convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, InsertValues, Session,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, SqlValues, Session,
     SessionWithTx, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
@@ -80,7 +80,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             })
             .collect::<ApllodbResult<_>>()?;
 
-        let insert_values = InsertValues::new(constant_values);
+        let insert_values = SqlValues::new(constant_values);
 
         let plan_node = ModificationPlanNode::Insert(InsertNode {
             table_name,

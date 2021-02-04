@@ -2,7 +2,6 @@
 
 pub(crate) mod alias_name;
 pub(crate) mod alter_table_action;
-pub(crate) mod insert_values;
 pub(crate) mod column;
 pub(crate) mod database;
 pub(crate) mod expression;

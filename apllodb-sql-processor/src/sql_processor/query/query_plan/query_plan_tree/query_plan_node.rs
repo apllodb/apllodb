@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use apllodb_shared_components::{FieldIndex, InsertValues, TableName};
+use apllodb_shared_components::{FieldIndex, SqlValues, TableName};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
@@ -34,7 +34,7 @@ pub(crate) struct QueryPlanNodeBinary {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) enum LeafPlanOperation {
     Values {
-        values_vec: Vec<InsertValues>,
+        values_vec: Vec<SqlValues>,
     },
     SeqScan {
         table_name: TableName,
