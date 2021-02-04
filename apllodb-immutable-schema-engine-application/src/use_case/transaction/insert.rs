@@ -56,39 +56,28 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             // Construct ApparentPrimaryKey
             let apk = ApparentPrimaryKey::from_table_pk_def(&vtable, &input.columns, &sql_values)?;
 
-            for (column_name, sql_value) in input.columns.into_iter().zip(sql_values) {
-                // Filter Non-PK columns from column_values
-                let non_pk_col_values: HashMap<ColumnName, SqlValue> = record
-                    .into_values()
-                    .into_iter()
-                    .filter_map(|(ffr, sql_value)| {
-                        let column_name = if let FieldReference::ColumnNameVariant(column_name) =
-                            ffr.as_field_reference()
-                        {
-                            column_name
-                        } else {
-                            panic!(
-                                "INSERT only takes Records with FieldReference::ColumnNameVariant"
-                            );
-                        };
+            let non_pk_col_vals: HashMap<ColumnName, SqlValue> = input
+                .columns
+                .into_iter()
+                .cloned()
+                .zip(sql_values)
+                .filter_map(|(column_name, sql_value)| {
+                    if apk.column_names().iter().any(|pk_cn| pk_cn == &column_name) {
+                        None
+                    } else {
+                        Some((column_name.clone(), sql_value))
+                    }
+                })
+                .collect();
 
-                        if apk.column_names().iter().any(|pk_cn| pk_cn == column_name) {
-                            None
-                        } else {
-                            Some((column_name.clone(), sql_value))
-                        }
-                    })
-                    .collect();
+            // Determine version to insert
+            let active_versions = vtable_repo.active_versions(&vtable).await?;
+            let version_to_insert = active_versions.version_to_insert(&non_pk_col_vals)?;
+            let version_id = VersionId::new(&vtable_id, version_to_insert.number());
 
-                // Determine version to insert
-                let active_versions = vtable_repo.active_versions(&vtable).await?;
-                let version_to_insert = active_versions.version_to_insert(&non_pk_col_values)?;
-                let version_id = VersionId::new(&vtable_id, version_to_insert.number());
-
-                version_repo
-                    .insert(&version_id, apk, &non_pk_col_values)
-                    .await?;
-            }
+            version_repo
+                .insert(&version_id, apk, &non_pk_col_vals)
+                .await?;
         }
 
         Ok(InsertUseCaseOutput)
