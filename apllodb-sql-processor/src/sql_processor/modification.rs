@@ -1,7 +1,7 @@
 use std::{convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, SqlValues, Session,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, Session,
     SessionWithTx, SqlValue,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};

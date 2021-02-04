@@ -22,7 +22,7 @@ impl ImmutableRow {
     /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - Specified column does not exist in this row.
     pub fn get_sql_value(&mut self, field_index: &FieldIndex) -> ApllodbResult<SqlValue> {
-        let ffr = field_index.peek(self.col_vals.keys())?.clone();
+        let ffr = field_index.peek(self.col_vals.keys())?.1.clone();
         self.col_vals.remove(&ffr).ok_or_else(|| {
             ApllodbError::new(
                 ApllodbErrorKind::UndefinedColumn,
@@ -41,7 +41,7 @@ impl ImmutableRow {
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `table_column_reference` is not in this row.
     pub fn get<T: SqlConvertible>(&mut self, field_index: &FieldIndex) -> ApllodbResult<Option<T>> {
-        let ffr = field_index.peek(self.col_vals.keys())?.clone();
+        let ffr = field_index.peek(self.col_vals.keys())?.1.clone();
         let sql_value = self.get_sql_value(field_index)?;
 
         match sql_value {

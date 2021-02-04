@@ -44,31 +44,42 @@ impl FieldIndex {
     pub fn peek<'a>(
         &self,
         full_field_references: impl IntoIterator<Item = &'a FullFieldReference>,
-    ) -> ApllodbResult<&'a FullFieldReference> {
-        let full_field_references: Vec<&'a FullFieldReference> = full_field_references
-            .into_iter()
-            .filter(|ffr| self.matches(ffr))
-            .collect();
+    ) -> ApllodbResult<(usize, &'a FullFieldReference)> {
+        let mut ret_idx: usize = 0;
+        let mut ret_ffr: Option<&'a FullFieldReference> = None;
 
-        match full_field_references.len() {
-            0 => Err(ApllodbError::new(
+        for ffr in full_field_references {
+            if self.matches(ffr) {
+                if ret_ffr.is_some() {
+                    return Err(ApllodbError::new(
+                        ApllodbErrorKind::AmbiguousColumn,
+                        format!(
+                            "field index `{}` match to more than 1 of full_field_references",
+                            self
+                        ),
+                        None,
+                    ));
+                } else {
+                    ret_ffr = Some(ffr);
+                }
+            }
+            if let None = ret_ffr {
+                ret_idx += 1;
+            }
+        }
+
+        if ret_ffr.is_none() {
+            return Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
                 format!(
                     "field index `{}` does not match any of full_field_references",
                     self
                 ),
                 None,
-            )),
-            1 => Ok(full_field_references.get(0).unwrap()),
-            _ => Err(ApllodbError::new(
-                ApllodbErrorKind::AmbiguousColumn,
-                format!(
-                    "field index `{}` match to more than 1 of full_field_references",
-                    self
-                ),
-                None,
-            )),
+            ));
         }
+
+        Ok((ret_idx, ret_ffr.unwrap()))
     }
 
     fn matches(&self, full_field_reference: &FullFieldReference) -> bool {
@@ -410,10 +421,11 @@ mod tests {
         for test_datum in test_data {
             let field_index = FieldIndex::from(test_datum.field_index);
             match field_index.peek(test_datum.full_field_references.iter().as_ref()) {
-                Ok(ffr) => {
-                    let idx = test_datum
+                Ok((idx, ffr)) => {
+                    let expected_idx = test_datum
                         .expected_result
                         .expect("succeeded in peeking, should expect Ok()");
+                    assert_eq!(idx, expected_idx);
                     assert_eq!(ffr, test_datum.full_field_references.get(idx).unwrap());
                 }
                 Err(e) => {
