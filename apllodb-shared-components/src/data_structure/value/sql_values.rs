@@ -79,3 +79,75 @@ impl SqlValues {
         Self(new_inner)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{NNSqlValue, SqlValue, SqlValues};
+
+    #[test]
+    fn test_projection() {
+        struct TestDatum {
+            input: Vec<NNSqlValue>,
+            projection: Vec<usize>,
+            output: Vec<NNSqlValue>,
+        }
+
+        let test_data = vec![
+            TestDatum {
+                input: vec![
+                    NNSqlValue::SmallInt(0),
+                    NNSqlValue::SmallInt(100),
+                    NNSqlValue::SmallInt(200),
+                ],
+                projection: vec![0, 1, 2],
+                output: vec![
+                    NNSqlValue::SmallInt(0),
+                    NNSqlValue::SmallInt(100),
+                    NNSqlValue::SmallInt(200),
+                ],
+            },
+            TestDatum {
+                input: vec![
+                    NNSqlValue::SmallInt(0),
+                    NNSqlValue::SmallInt(100),
+                    NNSqlValue::SmallInt(200),
+                ],
+                projection: vec![2, 0, 1],
+                output: vec![
+                    NNSqlValue::SmallInt(200),
+                    NNSqlValue::SmallInt(0),
+                    NNSqlValue::SmallInt(100),
+                ],
+            },
+            TestDatum {
+                input: vec![
+                    NNSqlValue::SmallInt(0),
+                    NNSqlValue::SmallInt(100),
+                    NNSqlValue::SmallInt(200),
+                ],
+                projection: vec![1],
+                output: vec![NNSqlValue::SmallInt(100)],
+            },
+        ];
+
+        for test_datum in test_data {
+            let input = SqlValues::new(
+                test_datum
+                    .input
+                    .into_iter()
+                    .map(SqlValue::NotNull)
+                    .collect(),
+            );
+            assert_eq!(
+                input.projection(&test_datum.projection),
+                SqlValues::new(
+                    test_datum
+                        .output
+                        .into_iter()
+                        .map(SqlValue::NotNull)
+                        .collect(),
+                )
+            );
+        }
+    }
+}
