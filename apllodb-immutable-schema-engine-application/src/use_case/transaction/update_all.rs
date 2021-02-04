@@ -10,8 +10,8 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference, DatabaseName,
-    Expression, FieldReference, FullFieldReference, Record, RecordIterator, SqlValue, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression,
+    FullFieldReference, Record, RecordIterator, SqlValue, TableName,
 };
 use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
@@ -84,23 +84,23 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             ProjectionResult::new(&vtable, active_versions, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
 
-        let mut new_col_vals_to_insert: Vec<HashMap<ColumnName, SqlValue>> = Vec::new();
+        let mut new_col_vals_to_insert: Vec<HashMap<FullFieldReference, SqlValue>> = Vec::new();
         for row in row_iter {
             let col_vals_before = row.into_col_vals();
-            let mut col_vals_after: HashMap<ColumnName, SqlValue> = HashMap::new();
+            let mut col_vals_after: HashMap<FullFieldReference, SqlValue> = HashMap::new();
 
-            for (colref, val_before) in col_vals_before {
-                let val_after =
-                    if let Some(expr) = input.column_values.remove(colref.as_column_name()) {
-                        if let Expression::ConstantVariant(sql_value) = expr {
-                            sql_value
-                        } else {
-                            todo!("only ConstantVariant is acceptable for now")
-                        }
+            for (ffr, val_before) in col_vals_before {
+                let val_after = if let Some(expr) = input.column_values.remove(ffr.as_column_name())
+                {
+                    if let Expression::ConstantVariant(sql_value) = expr {
+                        sql_value
                     } else {
-                        val_before
-                    };
-                col_vals_after.insert(colref.as_column_name().clone(), val_after);
+                        todo!("only ConstantVariant is acceptable for now")
+                    }
+                } else {
+                    val_before
+                };
+                col_vals_after.insert(ffr, val_after);
             }
 
             new_col_vals_to_insert.push(col_vals_after);
@@ -116,20 +116,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         // INSERT all
         let records: Vec<Record> = new_col_vals_to_insert
             .into_iter()
-            .map(|mut fields| {
-                Record::new(
-                    fields
-                        .drain()
-                        .map(|(cn, sql_value)| {
-                            let ffr = FullFieldReference::new(
-                                CorrelationReference::TableNameVariant(vtable.table_name().clone()),
-                                FieldReference::ColumnNameVariant(cn),
-                            );
-                            (ffr, sql_value)
-                        })
-                        .collect(),
-                )
-            })
+            .map(Record::new)
             .collect();
         let records = RecordIterator::new(records);
 
