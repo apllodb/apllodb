@@ -19,24 +19,54 @@ async fn test_select_with_various_field_spec() {
     }
 
     let test_data = vec![
+        // TestDatum {
+        //     sql: "SELECT id FROM people",
+        //     index: FieldIndex::from("id"),
+        //     expected_result: Ok(()),
+        // },
+        // TestDatum {
+        //     sql: "SELECT id FROM people",
+        //     index: FieldIndex::from("people.id"),
+        //     expected_result: Ok(()),
+        // },
+        // TestDatum {
+        //     sql: "SELECT id FROM people",
+        //     index: FieldIndex::from("xxx"),
+        //     expected_result: Err(ApllodbErrorKind::InvalidName),
+        // },
+        // TestDatum {
+        //     sql: "SELECT id FROM people",
+        //     index: FieldIndex::from("people.xxx"),
+        //     expected_result: Err(ApllodbErrorKind::InvalidName),
+        // },
+        // TestDatum {
+        //     sql: "SELECT id FROM people",
+        //     index: FieldIndex::from("xxx.id"),
+        //     expected_result: Err(ApllodbErrorKind::InvalidName),
+        // },
+        // TestDatum {
+        //     sql: "SELECT people.id FROM people",
+        //     index: FieldIndex::from("id"),
+        //     expected_result: Ok(()),
+        // },
+        // TestDatum {
+        //     sql: "SELECT people.id FROM people",
+        //     index: FieldIndex::from("people.id"),
+        //     expected_result: Ok(()),
+        // },
+        // TestDatum {
+        //     sql: "SELECT id FROM people t_alias",
+        //     index: FieldIndex::from("id"),
+        //     expected_result: Ok(()),
+        // },
+        // TestDatum {
+        //     sql: "SELECT id FROM people t_alias",
+        //     index: FieldIndex::from("people.id"),
+        //     expected_result: Ok(()),
+        // },
         TestDatum {
-            sql: "SELECT id FROM people",
-            index: FieldIndex::from("id"),
-            expected_result: Ok(()),
-        },
-        TestDatum {
-            sql: "SELECT id FROM people",
-            index: FieldIndex::from("xxx"),
-            expected_result: Err(ApllodbErrorKind::InvalidName),
-        },
-        TestDatum {
-            sql: "SELECT id FROM people",
-            index: FieldIndex::from("xxx.id"),
-            expected_result: Err(ApllodbErrorKind::InvalidName),
-        },
-        TestDatum {
-            sql: "SELECT people.id FROM people",
-            index: FieldIndex::from("people.id"),
+            sql: "SELECT id FROM people t_alias",
+            index: FieldIndex::from("t_alias.id"),
             expected_result: Ok(()),
         },
     ];
@@ -60,6 +90,7 @@ async fn test_select_with_various_field_spec() {
                         )
                     ),
                     Err(e) => {
+                        println!("{}",e);
                         assert_eq!(
                             e.kind(),
                             &test_datum.clone().expected_result.unwrap_err(),

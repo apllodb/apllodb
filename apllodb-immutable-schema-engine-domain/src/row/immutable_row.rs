@@ -11,7 +11,7 @@ use std::collections::{hash_map::Entry, HashMap};
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
 #[derive(Clone, PartialEq, Debug)]
 pub struct ImmutableRow {
-    col_vals: HashMap<TableColumnReference, SqlValue>,
+    col_vals: HashMap<TableColumnReference, SqlValue>,  // これ普通にFFRもてばいいかも
     // TODO have TransactionId to enable time-machine (TODO naming...) feature.
 }
 
@@ -24,7 +24,7 @@ impl ImmutableRow {
     ///   - Specified column does not exist in this row.
     pub fn get_sql_value(
         &mut self,
-        table_column_reference: &TableColumnReference,
+        table_column_reference: &TableColumnReference,  // FieldIndexがいいかな
     ) -> ApllodbResult<SqlValue> {
         self.col_vals
             .remove(&table_column_reference)
