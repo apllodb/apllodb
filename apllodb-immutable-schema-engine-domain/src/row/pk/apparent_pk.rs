@@ -1,10 +1,5 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ComparisonFunction, Expression, FieldIndex, FullFieldReference, LogicalFunction, NNSqlValue,
-    Record, SqlConvertible, SqlValue, TableName,
-};
-use apllodb_storage_engine_interface::TableColumnReference;
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, CorrelationReference, Expression, FieldIndex, FieldReference, FullFieldReference, LogicalFunction, NNSqlValue, Record, SqlConvertible, SqlValue, TableName};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
@@ -72,12 +67,9 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let tcr = TableColumnReference::new(
-                    vtable.table_name().clone(),
-                    cdt.column_name().clone(),
-                );
+                let index = FieldIndex::from(cdt.column_name().as_str());
 
-                if let SqlValue::NotNull(sql_value) = row.get_sql_value(&tcr)? {
+                if let SqlValue::NotNull(sql_value) = row.get_sql_value(&index)? {
                     Ok(sql_value)
                 } else {
                     panic!("primary key's column must be NOT NULL")
@@ -174,10 +166,13 @@ impl ApparentPrimaryKey {
             .zipped()
             .into_iter()
             .map(|(column_name, sql_value)| {
-                let tcr = TableColumnReference::new(self.table_name.clone(), column_name.clone());
+                let ffr = FullFieldReference::new(
+                    CorrelationReference::TableNameVariant(self.table_name.clone()),
+                    FieldReference::ColumnNameVariant(column_name.clone()),
+                );
                 ComparisonFunction::EqualVariant {
                     left: Box::new(Expression::FullFieldReferenceVariant(
-                        FullFieldReference::from(tcr),
+                        FullFieldReference::from(ffr),
                     )),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),

@@ -1,17 +1,16 @@
 pub mod builder;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference, Record, SqlConvertible,
-    SqlValue,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, FieldIndex, FullFieldReference, Record,
+    SqlConvertible, SqlValue,
 };
-use apllodb_storage_engine_interface::TableColumnReference;
 use std::collections::{hash_map::Entry, HashMap};
 
 /// Immutable row which is never updated or deleted by any transaction.
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
 #[derive(Clone, PartialEq, Debug)]
 pub struct ImmutableRow {
-    col_vals: HashMap<TableColumnReference, SqlValue>,  // これ普通にFFRもてばいいかも
+    col_vals: HashMap<FullFieldReference, SqlValue>,
     // TODO have TransactionId to enable time-machine (TODO naming...) feature.
 }
 
@@ -22,19 +21,15 @@ impl ImmutableRow {
     ///
     /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - Specified column does not exist in this row.
-    pub fn get_sql_value(
-        &mut self,
-        table_column_reference: &TableColumnReference,  // FieldIndexがいいかな
-    ) -> ApllodbResult<SqlValue> {
-        self.col_vals
-            .remove(&table_column_reference)
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::UndefinedColumn,
-                    format!("undefined column: `{:?}`", table_column_reference),
-                    None,
-                )
-            })
+    pub fn get_sql_value(&mut self, field_index: &FieldIndex) -> ApllodbResult<SqlValue> {
+        let ffr = field_index.peek(self.col_vals.keys())?.clone();
+        self.col_vals.remove(&ffr).ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::UndefinedColumn,
+                format!("undefined column: `{:?}`", field_index),
+                None,
+            )
+        })
     }
 
     /// Retrieve (and remove) an SqlValue from this row and return it as Rust type.
@@ -45,17 +40,16 @@ impl ImmutableRow {
     ///
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `table_column_reference` is not in this row.
-    pub fn get<T: SqlConvertible>(
-        &mut self,
-        table_column_reference: &TableColumnReference,
-    ) -> ApllodbResult<Option<T>> {
-        let sql_value = self.get_sql_value(table_column_reference)?;
+    pub fn get<T: SqlConvertible>(&mut self, field_index: &FieldIndex) -> ApllodbResult<Option<T>> {
+        let ffr = field_index.peek(self.col_vals.keys())?.clone();
+        let sql_value = self.get_sql_value(field_index)?;
+
         match sql_value {
             SqlValue::Null => Ok(None),
             SqlValue::NotNull(nn) => {
                 let v = nn.unpack().or_else(|e| {
                     // write back removed value into row
-                    self.append(table_column_reference.clone(), SqlValue::NotNull(nn))?;
+                    self.append(ffr.clone(), SqlValue::NotNull(nn))?;
                     Err(e)
                 })?;
                 Ok(Some(v))
@@ -71,13 +65,13 @@ impl ImmutableRow {
     ///   - Same [ColumnReference](apllodb_shared_components::ColumnReference) is already in this row.
     pub fn append(
         &mut self,
-        table_column_reference: TableColumnReference,
+        full_field_reference: FullFieldReference,
         sql_value: SqlValue,
     ) -> ApllodbResult<()> {
-        match self.col_vals.entry(table_column_reference.clone()) {
+        match self.col_vals.entry(full_field_reference.clone()) {
             Entry::Occupied(_) => Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
-                format!("column `{}` is already in this row", table_column_reference),
+                format!("column `{}` is already in this row", full_field_reference),
                 None,
             )),
             Entry::Vacant(e) => {
@@ -89,7 +83,7 @@ impl ImmutableRow {
 }
 
 impl ImmutableRow {
-    pub fn into_col_vals(self) -> HashMap<TableColumnReference, SqlValue> {
+    pub fn into_col_vals(self) -> HashMap<FullFieldReference, SqlValue> {
         self.col_vals
     }
 }

@@ -1,4 +1,3 @@
-pub mod factory;
 pub mod fixture;
 mod macros;
 mod mock;

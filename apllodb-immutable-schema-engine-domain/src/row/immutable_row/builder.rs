@@ -1,13 +1,14 @@
 use super::ImmutableRow;
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlValue};
-use apllodb_storage_engine_interface::TableColumnReference;
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference, SqlValue,
+};
 use std::collections::HashMap;
 
 /// Builder for ImmutableRow.
 #[derive(Debug, Default)]
 pub struct ImmutableRowBuilder {
-    col_vals: HashMap<TableColumnReference, SqlValue>,
+    col_vals: HashMap<FullFieldReference, SqlValue>,
 }
 
 impl ImmutableRowBuilder {
@@ -19,19 +20,19 @@ impl ImmutableRowBuilder {
     ///   - Same `ColumnName` added twice.
     pub fn append(
         mut self,
-        table_column_reference: TableColumnReference,
+        full_field_reference: FullFieldReference,
         sql_value: SqlValue,
     ) -> ApllodbResult<Self> {
         if self
             .col_vals
-            .insert(table_column_reference.clone(), sql_value)
+            .insert(full_field_reference.clone(), sql_value)
             .is_some()
         {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
                 format!(
                     "column `{}` is already added to this row",
-                    table_column_reference
+                    full_field_reference
                 ),
                 None,
             ))
@@ -42,9 +43,9 @@ impl ImmutableRowBuilder {
 
     pub fn add_void_projection(
         self,
-        table_column_reference: TableColumnReference,
+        full_field_reference: FullFieldReference,
     ) -> ApllodbResult<Self> {
-        self.append(table_column_reference, SqlValue::Null)
+        self.append(full_field_reference, SqlValue::Null)
     }
 
     /// Finalize.
@@ -59,41 +60,43 @@ impl ImmutableRowBuilder {
 
 #[cfg(test)]
 mod tests {
-    use apllodb_storage_engine_interface::TableColumnReference;
     use pretty_assertions::assert_eq;
 
     use super::ImmutableRowBuilder;
-    use apllodb_shared_components::{ApllodbResult, NNSqlValue, SqlValue};
+    use apllodb_shared_components::{ApllodbResult, FullFieldReference, NNSqlValue, SqlValue};
 
     #[test]
     fn test_success() -> ApllodbResult<()> {
-        let tcr = TableColumnReference::factory("t", "c1");
+        let ffr = FullFieldReference::factory("t", "c1");
 
         let mut row1 = ImmutableRowBuilder::default()
-            .append(tcr.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
+            .append(ffr.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
             .build()?;
         let mut row2 = ImmutableRowBuilder::default()
-            .append(tcr.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
+            .append(ffr.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
             .build()?;
 
-        assert_eq!(row1.get::<i32>(&tcr)?, row2.get::<i32>(&tcr)?);
+        assert_eq!(
+            row1.get::<i32>(&ffr.clone().into())?,
+            row2.get::<i32>(&ffr.clone().into())?
+        );
 
         Ok(())
     }
 
     #[test]
     fn test_add_order_does_not_matter() -> ApllodbResult<()> {
-        let tcr1 = TableColumnReference::factory("t", "c1");
-        let tcr2 = TableColumnReference::factory("t", "c2");
+        let ffr1 = FullFieldReference::factory("t", "c1");
+        let ffr2 = FullFieldReference::factory("t", "c2");
 
         let row1 = ImmutableRowBuilder::default()
-            .append(tcr1.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
-            .append(tcr2.clone(), SqlValue::NotNull(NNSqlValue::Integer(1)))?
+            .append(ffr1.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
+            .append(ffr2.clone(), SqlValue::NotNull(NNSqlValue::Integer(1)))?
             .build()?;
 
         let row2 = ImmutableRowBuilder::default()
-            .append(tcr2, SqlValue::NotNull(NNSqlValue::Integer(1)))?
-            .append(tcr1, SqlValue::NotNull(NNSqlValue::Integer(0)))?
+            .append(ffr2, SqlValue::NotNull(NNSqlValue::Integer(1)))?
+            .append(ffr1, SqlValue::NotNull(NNSqlValue::Integer(0)))?
             .build()?;
 
         assert_eq!(row1, row2);

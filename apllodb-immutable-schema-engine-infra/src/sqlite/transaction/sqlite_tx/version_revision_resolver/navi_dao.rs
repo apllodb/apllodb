@@ -142,7 +142,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
 
         let navi = match opt_row {
             None => Navi::NotExist,
-            Some(mut r) => Navi::from_navi_row(&navi_table_name, &mut r)?,
+            Some(mut r) => Navi::from_navi_row(&mut r)?,
         };
         Ok(navi)
     }
