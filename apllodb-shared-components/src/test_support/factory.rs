@@ -2,12 +2,16 @@
 
 //! Factory methods for testing
 
+use std::sync::Arc;
+
 use crate::{
-    data_structure::reference::{
-        correlation_reference::CorrelationReference, field_reference::FieldReference,
+    data_structure::{
+        record_iterator::record_field_ref_schema::RecordFieldRefSchema,
+        reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
     AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex,
-    FullFieldReference, NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
+    FullFieldReference, NNSqlValue, Record, RecordIterator, SqlType, SqlValue, SqlValues,
+    TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -116,6 +120,29 @@ impl SqlValue {
 impl NNSqlValue {
     pub fn factory_integer(integer: i32) -> Self {
         Self::Integer(integer)
+    }
+}
+
+impl Record {
+    pub fn factory(fields: Vec<(FullFieldReference, SqlValue)>) -> Self {
+        let ffrs: Vec<FullFieldReference> = fields.iter().map(|f| f.0.clone()).collect();
+        let sql_values: Vec<SqlValue> = fields.into_iter().map(|f| f.1).collect();
+
+        let schema = RecordFieldRefSchema::new(ffrs);
+
+        Self::new(Arc::new(schema), SqlValues::new(sql_values))
+    }
+}
+
+impl RecordIterator {
+    pub fn factory(schema: RecordFieldRefSchema, records: Vec<Record>) -> Self {
+        Self::new(schema, records)
+    }
+}
+
+impl RecordFieldRefSchema {
+    pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
+        Self::new(full_field_references)
     }
 }
 

@@ -26,15 +26,15 @@ impl From<ModelsMock> for MockDatum {
             tables: vec![
                 MockDatumInTable {
                     table_name: People::table_name(),
-                    records: models.people,
+                    records: RecordIterator::factory(People::schema(), models.people),
                 },
                 MockDatumInTable {
                     table_name: Body::table_name(),
-                    records: models.body,
+                    records: RecordIterator::factory(Body::schema(), models.body),
                 },
                 MockDatumInTable {
                     table_name: Pet::table_name(),
-                    records: models.pet,
+                    records: RecordIterator::factory(Pet::schema(), models.pet),
                 },
             ],
         }

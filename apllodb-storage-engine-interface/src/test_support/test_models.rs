@@ -1,6 +1,6 @@
-use apllodb_shared_components::{FullFieldReference, NNSqlValue, Record, SqlValue, TableName};
-
-use crate::record;
+use apllodb_shared_components::{
+    FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
+};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
@@ -19,11 +19,15 @@ impl People {
         FullFieldReference::factory(Self::table_name().as_str(), "age")
     }
 
+    pub fn schema() -> RecordFieldRefSchema {
+        RecordFieldRefSchema::factory(vec![Self::ffr_id(), Self::ffr_age()])
+    }
+
     pub fn record(id: i64, age: i32) -> Record {
-        record! {
-            Self::ffr_id() => SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            Self::ffr_age() => SqlValue::NotNull(NNSqlValue::Integer(age))
-        }
+        Record::factory(vec![
+            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
+            (Self::ffr_age(), SqlValue::NotNull(NNSqlValue::Integer(age))),
+        ])
     }
 }
 
@@ -48,12 +52,26 @@ impl Body {
         FullFieldReference::factory(Self::table_name().as_str(), "height")
     }
 
+    pub fn schema() -> RecordFieldRefSchema {
+        RecordFieldRefSchema::factory(vec![
+            Self::ffr_id(),
+            Self::ffr_people_id(),
+            Self::ffr_height(),
+        ])
+    }
+
     pub fn record(id: i64, people_id: i64, height: i32) -> Record {
-        record! {
-            Self::ffr_id() => SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            Self::ffr_people_id() => SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            Self::ffr_height() => SqlValue::NotNull(NNSqlValue::Integer(height))
-        }
+        Record::factory(vec![
+            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
+            (
+                Self::ffr_people_id(),
+                SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+            ),
+            (
+                Self::ffr_height(),
+                SqlValue::NotNull(NNSqlValue::Integer(height)),
+            ),
+        ])
     }
 }
 
@@ -82,12 +100,30 @@ impl Pet {
         FullFieldReference::factory(Self::table_name().as_str(), "age")
     }
 
+    pub fn schema() -> RecordFieldRefSchema {
+        RecordFieldRefSchema::factory(vec![
+            Self::ffr_id(),
+            Self::ffr_people_id(),
+            Self::ffr_kind(),
+            Self::ffr_age(),
+        ])
+    }
+
     pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Record {
-        record! {
-            Self::ffr_id() => SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            Self::ffr_people_id() => SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            Self::ffr_kind() => SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
-            Self::ffr_age() => SqlValue::NotNull(NNSqlValue::SmallInt(age))
-        }
+        Record::factory(vec![
+            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
+            (
+                Self::ffr_people_id(),
+                SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+            ),
+            (
+                Self::ffr_kind(),
+                SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
+            ),
+            (
+                Self::ffr_age(),
+                SqlValue::NotNull(NNSqlValue::SmallInt(age)),
+            ),
+        ])
     }
 }
