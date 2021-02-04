@@ -29,6 +29,7 @@ pub use crate::{
             operator::UnaryOperator,
             Expression,
         },
+        insert_values::InsertValues,
         record::{field_index::FieldIndex, Record},
         record_iterator::RecordIterator,
         reference::{
