@@ -1,8 +1,8 @@
 pub mod builder;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, FieldIndex, FullFieldReference, Record,
-    SqlConvertible, SqlValue,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, FieldIndex, FullFieldReference, SqlConvertible,
+    SqlValue,
 };
 use std::collections::{hash_map::Entry, HashMap};
 
@@ -85,16 +85,5 @@ impl ImmutableRow {
 impl ImmutableRow {
     pub fn into_col_vals(self) -> HashMap<FullFieldReference, SqlValue> {
         self.col_vals
-    }
-}
-
-impl Into<Record> for ImmutableRow {
-    fn into(self) -> Record {
-        let mut col_vals = self.col_vals;
-        let fields: HashMap<FullFieldReference, SqlValue> = col_vals
-            .drain()
-            .map(|(tcr, sql_value)| (FullFieldReference::from(tcr), sql_value))
-            .collect();
-        Record::new(fields)
     }
 }
