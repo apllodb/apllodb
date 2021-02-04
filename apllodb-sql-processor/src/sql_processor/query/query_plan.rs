@@ -65,7 +65,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                             select_field.clone(),
                             from_items.clone(),
                         )?;
-                        Ok(ffr.as_column_name().clone())  // field alias情報が消えている
+                        Ok(ffr.as_column_name().clone()) // field alias情報が消えている
                     }
                     apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
                         // TODO このレイヤーで計算しちゃいたい
@@ -77,7 +77,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let seq_scan_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
-                table_name: AstTranslator::table_name(from_item.table_name)?,  // correlation alias情報が消えている
+                table_name: AstTranslator::table_name(from_item.table_name)?, // correlation alias情報が消えている
                 projection: ProjectionQuery::ColumnNames(column_names),
             },
         });

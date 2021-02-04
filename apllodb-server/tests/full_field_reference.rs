@@ -90,7 +90,7 @@ async fn test_select_with_various_field_spec() {
                         )
                     ),
                     Err(e) => {
-                        println!("{}",e);
+                        println!("{}", e);
                         assert_eq!(
                             e.kind(),
                             &test_datum.clone().expected_result.unwrap_err(),

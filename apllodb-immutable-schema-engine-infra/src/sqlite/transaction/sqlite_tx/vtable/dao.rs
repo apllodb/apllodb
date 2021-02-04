@@ -7,7 +7,10 @@ use crate::{
 use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, FieldIndex, SqlType, TableName};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, FieldIndex, SqlType,
+    TableName,
+};
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao {

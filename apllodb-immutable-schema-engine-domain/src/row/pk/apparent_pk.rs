@@ -1,5 +1,9 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, CorrelationReference, Expression, FieldIndex, FieldReference, FullFieldReference, LogicalFunction, NNSqlValue, Record, SqlConvertible, SqlValue, TableName};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
+    ComparisonFunction, CorrelationReference, Expression, FieldIndex, FieldReference,
+    FullFieldReference, LogicalFunction, NNSqlValue, Record, SqlConvertible, SqlValue, TableName,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
