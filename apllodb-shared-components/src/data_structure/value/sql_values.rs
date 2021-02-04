@@ -23,6 +23,18 @@ impl Index<usize> for SqlValues {
     }
 }
 
+impl Iterator for SqlValues {
+    type Item = SqlValue;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0.is_empty() {
+            None
+        } else {
+            Some(self.0.remove(0))
+        }
+    }
+}
+
 impl SqlValues {
     /// If SqlValues is like this:
     ///

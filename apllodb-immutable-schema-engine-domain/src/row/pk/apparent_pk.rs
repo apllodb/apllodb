@@ -2,10 +2,11 @@ use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
     ComparisonFunction, CorrelationReference, Expression, FieldIndex, FieldReference,
-    FullFieldReference, LogicalFunction, NNSqlValue, Record, SqlConvertible, SqlValue, TableName,
+    FullFieldReference, LogicalFunction, NNSqlValue, SqlConvertible, SqlValue, SqlValues,
+    TableName,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
+use std::{collections::VecDeque, ops::Index};
 
 /// Primary key which other components than Storage Engine observes.
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
@@ -88,7 +89,11 @@ impl ApparentPrimaryKey {
         ))
     }
 
-    pub fn from_table_and_record(vtable: &VTable, record: &Record) -> ApllodbResult<Self> {
+    pub fn from_table_pk_def(
+        vtable: &VTable,
+        column_names: &[ColumnName],
+        sql_values: &SqlValues,
+    ) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
@@ -97,34 +102,22 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let index = FieldIndex::from(format!("{}.{}", vtable.table_name().as_str(),
-                cdt.column_name().as_str()));
-
-                record
-                    .get_sql_value(&index)
-                    // FIXME less clone
-                    .map(|sql_value| {
-                        if let SqlValue::NotNull(sql_value) =    sql_value {
-                            sql_value.clone()
-                        }else {
-                            panic!("primary key's column must be NOT NULL")
-                        }
-                    }
-                    )
-                    .map_err(|e| {
-                        ApllodbError::new(
-                            ApllodbErrorKind::NotNullViolation,
-                            format!(
-                                "primary key column `{:?}` is not held in this record: `{:#?}` (table `{:#?}`)",
-                                cdt.column_name(),
-                                record,
-                                vtable.table_name()
-                            ),
-                            Some(Box::new(e)),
-                        )
-                    })
+                let idx = column_names
+                    .iter()
+                    .position(|cn| cn == cdt.column_name())
+                    .expect(&format!(
+                        "primary key's column `{}` is not inclueded in PK's columns=`{:#?}`",
+                        cdt.column_name().as_str(),
+                        apk_cdts
+                    ));
+                let sql_value = sql_values.index(idx).clone();
+                if let SqlValue::NotNull(nn_sql_value) = sql_value {
+                    nn_sql_value
+                } else {
+                    panic!("primary key's column must be NOT NULL")
+                }
             })
-            .collect::<ApllodbResult<Vec<NNSqlValue>>>()?;
+            .collect::<Vec<NNSqlValue>>();
 
         Ok(Self::new(
             vtable.table_name().clone(),
