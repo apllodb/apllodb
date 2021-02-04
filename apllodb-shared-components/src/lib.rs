@@ -49,6 +49,7 @@ pub use crate::{
                 nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult,
                 sql_value_hash_key::SqlValueHashKey, SqlValue,
             },
+            sql_values::SqlValues,
         },
     },
     error::{

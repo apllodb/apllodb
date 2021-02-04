@@ -57,7 +57,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
             // Filter Non-PK columns from column_values
             let non_pk_col_values: HashMap<ColumnName, SqlValue> = record
-                .into_field_values()
+                .into_values()
                 .into_iter()
                 .filter_map(|(ffr, sql_value)| {
                     let column_name = if let FieldReference::ColumnNameVariant(column_name) =
