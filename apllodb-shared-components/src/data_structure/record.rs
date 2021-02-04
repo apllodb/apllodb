@@ -1,7 +1,7 @@
 pub(crate) mod field_index;
 
 use crate::{error::ApllodbResult, traits::sql_convertible::SqlConvertible, FieldIndex, SqlValues};
-use std::{collections::HashSet, ops::Index, sync::Arc};
+use std::{ops::Index, sync::Arc};
 
 use super::{
     record_iterator::record_field_ref_schema::RecordFieldRefSchema, value::sql_value::SqlValue,
@@ -59,7 +59,7 @@ impl Record {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(mut self, projection: &HashSet<FieldIndex>) -> ApllodbResult<Self> {
+    pub fn projection(mut self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
         let idxs: Vec<usize> = projection
             .iter()
             .map(|index| self.schema.resolve_index(index))

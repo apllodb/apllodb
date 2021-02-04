@@ -2,7 +2,7 @@ pub(crate) mod record_field_ref_schema;
 
 use std::{collections::VecDeque, sync::Arc};
 
-use crate::{Record, SqlValues};
+use crate::{ApllodbResult, FieldIndex, Record, SqlValues};
 
 use self::record_field_ref_schema::RecordFieldRefSchema;
 
@@ -14,6 +14,7 @@ pub struct RecordIterator {
     schema: Arc<RecordFieldRefSchema>,
     inner: VecDeque<SqlValues>,
 }
+
 impl RecordIterator {
     /// Constructor
     pub fn new<IntoValues: Into<SqlValues>, I: IntoIterator<Item = IntoValues>>(
@@ -27,6 +28,29 @@ impl RecordIterator {
                 .map(|into_values| into_values.into())
                 .collect(),
         }
+    }
+
+    /// Shrink records into record with specified `fields`.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    ///   - Specified field does not exist in this record.
+    pub fn projection(self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
+        let projection_idxs = projection
+            .iter()
+            .map(|index| self.schema.resolve_index(index))
+            .collect::<ApllodbResult<Vec<usize>>>()?;
+
+        let new_schema = self.schema.projection(projection)?;
+
+        let new_inner: VecDeque<SqlValues> = self
+            .inner
+            .into_iter()
+            .map(|sql_values| sql_values.projection(&projection_idxs))
+            .collect();
+
+        Ok(Self::new(new_schema, new_inner))
     }
 }
 

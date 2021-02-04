@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::{
     test_support::{
         test_models::{Body, People, Pet},
@@ -46,7 +44,7 @@ impl From<ModelsMock> for MockDatum {
 #[derive(Clone, PartialEq, Debug)]
 struct MockDatumInTable {
     table_name: TableName,
-    records: Vec<Record>,
+    records: RecordIterator,
 }
 
 pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock) {
@@ -65,21 +63,16 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
             let records = table.records.clone();
 
             let records = match projection {
-                ProjectionQuery::All => RecordIterator::new(records),
+                ProjectionQuery::All => records,
                 ProjectionQuery::ColumnNames(column_names) => {
-                    let fields: HashSet<FieldIndex> = column_names
+                    let fields: Vec<FieldIndex> = column_names
                         .into_iter()
                         .map(|cn| {
                             FieldIndex::from(format!("{}.{}", table_name.as_str(), cn.as_str()))
                         })
                         .collect();
 
-                    let projected_records: Vec<Record> = records
-                        .into_iter()
-                        .map(|record| record.projection(&fields).unwrap())
-                        .collect();
-
-                    RecordIterator::new(projected_records)
+                    records.projection(&fields).unwrap()
                 }
             };
 
