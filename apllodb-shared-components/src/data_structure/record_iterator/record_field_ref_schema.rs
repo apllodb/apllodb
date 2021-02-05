@@ -7,7 +7,8 @@ use crate::{ApllodbResult, FieldIndex, FullFieldReference};
 pub struct RecordFieldRefSchema(Vec<FullFieldReference>);
 
 impl RecordFieldRefSchema {
-    pub(crate) fn new(full_field_references: Vec<FullFieldReference>) -> Self {
+    /// Constructor
+    pub fn new(full_field_references: Vec<FullFieldReference>) -> Self {
         Self(full_field_references)
     }
 
