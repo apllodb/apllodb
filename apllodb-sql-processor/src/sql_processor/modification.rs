@@ -1,8 +1,9 @@
-use std::{convert::TryFrom, rc::Rc};
+use std::{convert::TryFrom, rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, Session,
-    SessionWithTx, SqlValue, SqlValues,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
+    CorrelationReference, FieldReference, FullFieldReference, Record, RecordFieldRefSchema,
+    Session, SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -62,12 +63,27 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         let ast_table_name = command.table_name;
         let table_name = AstTranslator::table_name(ast_table_name.clone())?;
 
-        let column_names = command.column_names.into_vec();
+        let ast_column_names = command.column_names.into_vec();
+        let column_names: Vec<ColumnName> = ast_column_names
+            .into_iter()
+            .map(AstTranslator::column_name)
+            .collect::<ApllodbResult<_>>()?;
         let expressions = command.expressions.into_vec();
 
         if column_names.len() != expressions.len() {
             unimplemented!();
         }
+
+        let ffrs: Vec<FullFieldReference> = column_names
+            .into_iter()
+            .map(|cn| {
+                FullFieldReference::new(
+                    CorrelationReference::TableNameVariant(table_name.clone()),
+                    FieldReference::ColumnNameVariant(cn),
+                )
+            })
+            .collect();
+        let schema = RecordFieldRefSchema::new(ffrs);
 
         let constant_values: Vec<SqlValue> = expressions
             .into_iter()
@@ -86,7 +102,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             table_name,
             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                 op: LeafPlanOperation::Values {
-                    values_vec: vec![insert_values],
+                    records: vec![Record::new(Arc::new(schema), insert_values)],
                 },
             }),
         });

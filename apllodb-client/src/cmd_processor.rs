@@ -17,7 +17,7 @@ impl<'main> CmdProcessor<'main> {
                     cnt += 1;
 
                     let mut s = String::new();
-                    for (ffr, value) in r.into_col_vals() {
+                    for (ffr, value) in r.into_ffr_vals() {
                         s.push_str(&format!("{}: {}\t", ffr, value));
                     }
                     println!("{}", s);

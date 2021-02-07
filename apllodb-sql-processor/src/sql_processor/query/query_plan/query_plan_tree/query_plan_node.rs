@@ -1,27 +1,29 @@
-use apllodb_shared_components::{FieldIndex, SqlValues, TableName};
+use apllodb_shared_components::{FieldIndex, Record, TableName};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 /// Node of query plan tree.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub(crate) enum QueryPlanNode {
     Leaf(QueryPlanNodeLeaf),
     Unary(QueryPlanNodeUnary),
+
+    #[allow(dead_code)]
     Binary(QueryPlanNodeBinary),
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub(crate) struct QueryPlanNodeLeaf {
     pub(crate) op: LeafPlanOperation,
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub(crate) struct QueryPlanNodeUnary {
     pub(crate) op: UnaryPlanOperation,
     pub(crate) left: Box<QueryPlanNode>,
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub(crate) struct QueryPlanNodeBinary {
     pub(crate) op: BinaryPlanOperation,
     pub(crate) left: Box<QueryPlanNode>,
@@ -29,10 +31,10 @@ pub(crate) struct QueryPlanNodeBinary {
 }
 
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub(crate) enum LeafPlanOperation {
     Values {
-        values_vec: Vec<SqlValues>,
+        records: Vec<Record>,
     },
     SeqScan {
         table_name: TableName,

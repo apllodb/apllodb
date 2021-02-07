@@ -1,8 +1,8 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordFieldRefSchema, RecordIterator,
-    SessionWithTx, SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordIterator, SessionWithTx,
+    SqlValueHashKey, TableName,
 };
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
 
@@ -26,9 +26,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         op_leaf: LeafPlanOperation,
     ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::Values { values_vec: _ } => {
-                todo!("InsertValuesの列からRecordIteratorつくる")
-            }
+            LeafPlanOperation::Values { records } => Ok((RecordIterator::from(records), session)),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
@@ -81,13 +79,10 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         input_left: RecordIterator,
         fields: Vec<FieldIndex>,
     ) -> ApllodbResult<RecordIterator> {
-        let it = RecordIterator::new(
-            input_left.as_schema().clone(),
-            input_left
-                .map(|record| record.projection(&fields))
-                .collect::<ApllodbResult<Vec<Record>>>()?,
-        );
-        Ok(it)
+        let records = input_left
+            .map(|record| record.projection(&fields))
+            .collect::<ApllodbResult<Vec<Record>>>()?;
+        Ok(RecordIterator::from(records))
     }
 
     /// Join algorithm using hash table.
@@ -131,12 +126,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             }
         }
 
-        if ret.is_empty() {
-            Ok(RecordIterator::new(RecordFieldRefSchema::new(vec![]), ret))
-        } else {
-            let r = ret.first().unwrap();
-            let schema = r.schema().clone();
-            Ok(RecordIterator::new(schema, ret))
-        }
+        Ok(RecordIterator::from(ret))
     }
 }

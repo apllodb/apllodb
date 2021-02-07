@@ -115,10 +115,10 @@ mod tests {
                             table_name: People::table_name(),
                             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::Values {
-                                    values_vec: vec![
-                                        T_PEOPLE_R1.clone().into(),
-                                        T_PEOPLE_R2.clone().into(),
-                                        T_PEOPLE_R3.clone().into(),
+                                    records: vec![
+                                        T_PEOPLE_R1.clone(),
+                                        T_PEOPLE_R2.clone(),
+                                        T_PEOPLE_R3.clone(),
                                     ],
                                 },
                             }),

@@ -1,15 +1,14 @@
 use apllodb_shared_components::TableName;
-use serde::{Deserialize, Serialize};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::QueryPlanNode;
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 /// Root node of modification plan tree.
 pub(crate) enum ModificationPlanNode {
     Insert(InsertNode),
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub(crate) struct InsertNode {
     pub(crate) table_name: TableName,
 

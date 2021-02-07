@@ -12,7 +12,7 @@ use self::record_field_ref_schema::RecordFieldRefSchema;
 #[derive(Clone, PartialEq, Debug)]
 pub struct RecordIterator {
     schema: Arc<RecordFieldRefSchema>,
-    inner: VecDeque<SqlValues>,
+    inner: Vec<SqlValues>,
 }
 
 impl RecordIterator {
@@ -73,8 +73,24 @@ impl Iterator for RecordIterator {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner
-            .pop_front()
-            .map(|values| Record::new(self.schema.clone(), values))
+        if self.inner.is_empty() {
+            None
+        } else {
+            let values = self.inner.remove(0);
+            Some(Record::new(self.schema.clone(), values))
+        }
+    }
+}
+
+impl From<Vec<Record>> for RecordIterator {
+    fn from(rs: Vec<Record>) -> Self {
+        let schema = if rs.is_empty() {
+            RecordFieldRefSchema::new(vec![])
+        } else {
+            let r = rs.first().unwrap();
+            r.schema().clone()
+        };
+
+        Self::new(schema, rs)
     }
 }

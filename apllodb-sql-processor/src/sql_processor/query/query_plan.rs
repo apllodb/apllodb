@@ -7,7 +7,6 @@ use apllodb_shared_components::{
 };
 use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
-use serde::{Deserialize, Serialize};
 
 use self::query_plan_tree::{
     query_plan_node::{
@@ -17,7 +16,7 @@ use self::query_plan_tree::{
 };
 
 /// Query plan from which an executor can do its work deterministically.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, new)]
+#[derive(Clone, PartialEq, Debug, new)]
 pub(crate) struct QueryPlan {
     pub(crate) plan_tree: QueryPlanTree,
     // TODO evaluated cost, etc...

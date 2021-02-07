@@ -22,7 +22,8 @@ pub struct Record {
 }
 
 impl Record {
-    pub(crate) fn new(schema: Arc<RecordFieldRefSchema>, values: SqlValues) -> Self {
+    /// Constructor
+    pub fn new(schema: Arc<RecordFieldRefSchema>, values: SqlValues) -> Self {
         Self { schema, values }
     }
 
@@ -86,7 +87,7 @@ impl Record {
     }
 
     /// Get raw representation
-    pub fn into_col_vals(self) -> Vec<(FullFieldReference, SqlValue)> {
+    pub fn into_ffr_vals(self) -> Vec<(FullFieldReference, SqlValue)> {
         self.schema
             .as_full_field_references()
             .iter()

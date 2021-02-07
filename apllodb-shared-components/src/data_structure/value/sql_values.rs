@@ -10,8 +10,8 @@ pub struct SqlValues(Vec<SqlValue>);
 
 /// used for `INSERT INTO t (a, b, c) SELECT x, y, z FROM s;`, for example.
 impl From<Record> for SqlValues {
-    fn from(_r: Record) -> Self {
-        todo!()
+    fn from(r: Record) -> Self {
+        r.into_values()
     }
 }
 
