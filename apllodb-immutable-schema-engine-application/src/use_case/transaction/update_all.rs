@@ -91,12 +91,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             ProjectionResult::new(&vtable, active_versions, ProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
 
-        let new_columns_to_insert: Vec<ColumnName> = row_iter
-            .schema()
-            .as_column_names()
-            .iter()
-            .cloned()
-            .collect();
+        let new_columns_to_insert: Vec<ColumnName> = row_iter.schema().as_column_names().to_vec();
         let mut new_values_to_insert: Vec<SqlValues> = vec![];
 
         for row in row_iter {

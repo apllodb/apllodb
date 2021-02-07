@@ -58,14 +58,14 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
             let non_pk_col_vals: HashMap<ColumnName, SqlValue> = input
                 .columns
-                .into_iter()
+                .iter()
                 .cloned()
                 .zip(sql_values)
                 .filter_map(|(column_name, sql_value)| {
                     if apk.column_names().iter().any(|pk_cn| pk_cn == &column_name) {
                         None
                     } else {
-                        Some((column_name.clone(), sql_value))
+                        Some((column_name, sql_value))
                     }
                 })
                 .collect();

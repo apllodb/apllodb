@@ -60,7 +60,7 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
                 sql_values.append(&mut vs);
             }
 
-            RecordIterator::new(record_schema.clone(), sql_values)
+            RecordIterator::new(record_schema, sql_values)
         }
     }
 

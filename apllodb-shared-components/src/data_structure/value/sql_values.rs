@@ -80,7 +80,7 @@ impl SqlValues {
     /// ```
     pub fn projection(mut self, idxs: &[usize]) -> Self {
         let mut sorted_idxs = idxs.to_vec();
-        sorted_idxs.sort();
+        sorted_idxs.sort_unstable();
 
         let mut cnt_moved = 0;
 

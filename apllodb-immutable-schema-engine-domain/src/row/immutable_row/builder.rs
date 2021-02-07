@@ -83,6 +83,7 @@ mod tests {
     use apllodb_shared_components::{ApllodbResult, ColumnName, NNSqlValue, SqlValue, TableName};
 
     #[test]
+    #[allow(clippy::redundant_clone)]
     fn test_success() -> ApllodbResult<()> {
         let cn = ColumnName::factory("c1");
 
@@ -93,10 +94,7 @@ mod tests {
             .append(cn.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
             .build()?;
 
-        assert_eq!(
-            row1.get::<i32>(&cn.clone().into())?,
-            row2.get::<i32>(&cn.clone().into())?
-        );
+        assert_eq!(row1.get::<i32>(&cn.clone())?, row2.get::<i32>(&cn.clone())?);
 
         Ok(())
     }

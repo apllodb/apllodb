@@ -66,12 +66,7 @@ impl RowColumnRefSchema {
     /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
     ///   - Same [ColumnReference](apllodb_shared_components::ColumnReference) is already in this row.
     pub(crate) fn append(&mut self, column_name: ColumnName) -> ApllodbResult<()> {
-        if self
-            .column_names
-            .iter()
-            .find(|cn| cn == &&column_name)
-            .is_some()
-        {
+        if self.column_names.iter().any(|cn| cn == &column_name) {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
                 format!("column `{}` is already in this row", column_name.as_str()),

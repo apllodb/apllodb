@@ -63,7 +63,7 @@ impl FieldIndex {
                     ret_ffr = Some(ffr);
                 }
             }
-            if let None = ret_ffr {
+            if ret_ffr.is_none() {
                 ret_idx += 1;
             }
         }

@@ -102,11 +102,13 @@ impl ApparentPrimaryKey {
                 let idx = column_names
                     .iter()
                     .position(|cn| cn == cdt.column_name())
-                    .expect(&format!(
-                        "primary key's column `{}` is not inclueded in PK's columns=`{:#?}`",
-                        cdt.column_name().as_str(),
-                        apk_cdts
-                    ));
+                    .unwrap_or_else(|| {
+                        panic!(format!(
+                            "primary key's column `{}` is not inclueded in PK's columns=`{:#?}`",
+                            cdt.column_name().as_str(),
+                            apk_cdts
+                        ))
+                    });
                 let sql_value = sql_values.index(idx).clone();
                 if let SqlValue::NotNull(nn_sql_value) = sql_value {
                     nn_sql_value
@@ -165,9 +167,7 @@ impl ApparentPrimaryKey {
                     FieldReference::ColumnNameVariant(column_name.clone()),
                 );
                 ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::FullFieldReferenceVariant(
-                        FullFieldReference::from(ffr),
-                    )),
+                    left: Box::new(Expression::FullFieldReferenceVariant(ffr)),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),
                     ))),
