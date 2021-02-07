@@ -72,6 +72,8 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
 mod tests {
     use std::rc::Rc;
 
+    use pretty_assertions::assert_eq;
+
     use apllodb_shared_components::{ApllodbResult, FieldIndex, Record};
     use apllodb_storage_engine_interface::{
         test_support::{

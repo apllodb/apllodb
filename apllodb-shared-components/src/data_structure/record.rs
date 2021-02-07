@@ -64,6 +64,8 @@ impl Record {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn projection(mut self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
+        self.schema = Arc::new(self.schema.projection(projection)?);
+
         let idxs: Vec<usize> = projection
             .iter()
             .map(|index| self.schema.resolve_index(index))
