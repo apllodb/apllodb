@@ -3,10 +3,10 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex,
+    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex, FullFieldReference,
 };
 use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
 
 use self::query_plan_tree::{
     query_plan_node::{
@@ -52,7 +52,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
         };
 
         let select_fields = sc.select_fields.into_vec();
-        let column_names: Vec<ColumnName> = select_fields
+        let ffrs: Vec<FullFieldReference> = select_fields
             .iter()
             .map(|select_field| {
                 match &select_field.expression {
@@ -60,11 +60,10 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         unimplemented!();
                     }
                     apllodb_ast::Expression::ColumnReferenceVariant(_) => {
-                        let ffr = AstTranslator::select_field_column_reference(
+                        AstTranslator::select_field_column_reference(
                             select_field.clone(),
                             from_items.clone(),
-                        )?;
-                        Ok(ffr.as_column_name().clone()) // field alias情報が消えている
+                        )
                     }
                     apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
                         // TODO このレイヤーで計算しちゃいたい
@@ -74,10 +73,19 @@ impl TryFrom<SelectCommand> for QueryPlan {
             })
             .collect::<ApllodbResult<_>>()?;
 
+        let column_names: Vec<ColumnName> = ffrs
+            .iter()
+            .map(|ffr| ffr.as_column_name())
+            .cloned()
+            .collect();
+
+        let alias_def = AliasDef::from(ffrs);
+
         let seq_scan_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
                 table_name: AstTranslator::table_name(from_item.table_name)?, // correlation alias情報が消えている
                 projection: ProjectionQuery::ColumnNames(column_names),
+                alias_def,
             },
         });
         let projection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {

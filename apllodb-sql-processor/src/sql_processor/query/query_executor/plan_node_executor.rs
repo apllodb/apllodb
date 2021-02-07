@@ -30,7 +30,8 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-            } => self.seq_scan(session, table_name, projection).await,
+                alias_def,
+            } => self.seq_scan(session, table_name, projection, alias_def).await,
         }
     }
 
@@ -64,10 +65,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         session: SessionWithTx,
         table_name: TableName,
         projection: ProjectionQuery,
+        alias_def: AliasDef,
     ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         self.engine
             .with_tx()
-            .select(session, table_name, projection, AliasDef::default())
+            .select(session, table_name, projection, alias_def)
             .await
     }
 

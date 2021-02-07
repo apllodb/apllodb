@@ -83,7 +83,7 @@ mod tests {
             test_models::{Body, People, Pet},
             MockWithTxMethods,
         },
-        ProjectionQuery,
+        AliasDef, ProjectionQuery,
     };
 
     use crate::{
@@ -127,6 +127,7 @@ mod tests {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
                         projection: ProjectionQuery::All,
+                        alias_def: AliasDef::default(),
                     },
                 })),
                 expected_select_records: vec![
@@ -142,6 +143,7 @@ mod tests {
                         projection: ProjectionQuery::ColumnNames(vec![People::ffr_id()
                             .as_column_name()
                             .clone()]),
+                        alias_def: AliasDef::default(),
                     },
                 })),
                 expected_select_records: vec![
@@ -157,6 +159,7 @@ mod tests {
                         projection: ProjectionQuery::ColumnNames(vec![People::ffr_age()
                             .as_column_name()
                             .clone()]),
+                        alias_def: AliasDef::default(),
                     },
                 })),
                 expected_select_records: vec![
@@ -177,6 +180,7 @@ mod tests {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                 })),
@@ -197,6 +201,7 @@ mod tests {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                 })),
@@ -217,12 +222,14 @@ mod tests {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Body::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                 })),
@@ -242,12 +249,14 @@ mod tests {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Pet::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                 })),
@@ -268,12 +277,14 @@ mod tests {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Pet::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                 })),
@@ -294,12 +305,14 @@ mod tests {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                     right: Box::new(QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Pet::table_name(),
                             projection: ProjectionQuery::All,
+                            alias_def: AliasDef::default(),
                         },
                     })),
                 })),
