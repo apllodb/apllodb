@@ -9,8 +9,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, FieldIndex, SqlType,
-    TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
 };
 
 #[derive(Debug)]
@@ -50,7 +49,7 @@ impl SqliteMasterDao {
             .await?
             .map(|mut row| {
                 let s = row
-                    .get::<String>(&FieldIndex::from(CNAME_CREATE_TABLE_SQL))?
+                    .get::<String>(&ColumnName::new(CNAME_CREATE_TABLE_SQL)?)?
                     .expect("must be NOT NULL");
                 Ok(s)
             })

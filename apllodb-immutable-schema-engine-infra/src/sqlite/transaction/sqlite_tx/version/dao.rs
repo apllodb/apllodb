@@ -12,8 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, CorrelationReference, FieldIndex, FieldReference,
-    FullFieldReference, SqlType, SqlValue, TableName,
+    ApllodbResult, ColumnDataType, ColumnName, SqlType, SqlValue, TableName,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::{
@@ -125,25 +124,14 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                     &sql,
                     version.vtable_id().table_name(),
                     &prj_with_navi_rowid,
-                    non_pk_void_projection
-                        .iter()
-                        .map(|cn| {
-                            FullFieldReference::new(
-                                CorrelationReference::TableNameVariant(
-                                    version.vtable_id().table_name().clone(),
-                                ),
-                                FieldReference::ColumnNameVariant(cn.clone()),
-                            )
-                        })
-                        .collect::<Vec<_>>()
-                        .as_slice(),
+                    non_pk_void_projection,
                 )
                 .await?;
 
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
             for mut row in row_iter_from_version {
                 let rowid = row
-                    .get(&FieldIndex::from(CNAME_NAVI_ROWID))?
+                    .get(&ColumnName::new(CNAME_NAVI_ROWID)?)?
                     .expect("must be NOT NULL");
 
                 rowid_vs_row.insert(rowid, row);
@@ -154,13 +142,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 if let Entry::Occupied(oe) = rowid_vs_row.entry(rowid.clone()) {
                     let (_, mut row_wo_pk) = oe.remove_entry();
                     for (column_name, nn_sql_value) in pk.into_zipped() {
-                        let pk_ffr = FullFieldReference::new(
-                            CorrelationReference::TableNameVariant(
-                                version.vtable_id().table_name().clone(),
-                            ),
-                            FieldReference::ColumnNameVariant(column_name),
-                        );
-                        row_wo_pk.append(pk_ffr, SqlValue::NotNull(nn_sql_value))?;
+                        row_wo_pk.append(column_name, SqlValue::NotNull(nn_sql_value))?;
                     }
                     rows_with_pk.push_back(row_wo_pk)
                 } else {

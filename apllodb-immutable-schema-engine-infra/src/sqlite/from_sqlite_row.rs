@@ -2,9 +2,8 @@ use apllodb_immutable_schema_engine_domain::row::immutable_row::{
     builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, CorrelationReference, FieldReference, FullFieldReference,
-    I64LooseType, NumericComparableType, SqlConvertible, SqlType, SqlValue,
-    StringComparableLoseType, TableName,
+    ApllodbResult, ColumnDataType, ColumnName, I64LooseType, NumericComparableType, SqlConvertible,
+    SqlType, SqlValue, StringComparableLoseType, TableName,
 };
 use sqlx::Row;
 
@@ -15,17 +14,13 @@ pub(crate) trait FromSqliteRow {
         sqlite_row: &sqlx::sqlite::SqliteRow,
         table_name: &TableName,
         column_data_types: &[&ColumnDataType],
-        void_projections: &[FullFieldReference],
+        void_projections: &[ColumnName],
     ) -> ApllodbResult<ImmutableRow> {
-        let mut builder = ImmutableRowBuilder::default();
+        let mut builder = ImmutableRowBuilder::new(table_name.clone());
 
         for cdt in column_data_types {
-            let ffr = FullFieldReference::new(
-                CorrelationReference::TableNameVariant(table_name.clone()),
-                FieldReference::ColumnNameVariant(cdt.column_name().clone()),
-            );
             let non_pk_sql_value = Self::_sql_value(sqlite_row, cdt)?;
-            builder = builder.append(ffr, non_pk_sql_value)?;
+            builder = builder.append(cdt.column_name().clone(), non_pk_sql_value)?;
         }
 
         // add requested (specified in projection) columns as NULL.

@@ -8,8 +8,7 @@ use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, FieldIndex, SqlType,
-    TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
 };
 
 #[derive(Debug)]
@@ -96,7 +95,7 @@ CREATE TABLE {} (
         })?;
 
         let table_wide_constraints_str: String = row
-            .get(&FieldIndex::from(CNAME_TABLE_WIDE_CONSTRAINTS))?
+            .get(&ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?)?
             .expect("must be NOT NULL");
 
         let table_wide_constraints: TableWideConstraints =

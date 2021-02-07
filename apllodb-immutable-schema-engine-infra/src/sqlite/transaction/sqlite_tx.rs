@@ -15,7 +15,7 @@ use crate::{
     },
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, DatabaseName, FullFieldReference, TableName,
+    ApllodbResult, ColumnDataType, ColumnName, DatabaseName, TableName,
 };
 use log::debug;
 
@@ -96,7 +96,7 @@ impl SqliteTx {
         sql: &str,
         table_name: &TableName,
         column_data_types: &[&ColumnDataType],
-        void_projection: &[FullFieldReference],
+        void_projection: &[ColumnName],
     ) -> ApllodbResult<SqliteRowIterator> {
         debug!("SqliteTx::query():\n    {}", sql);
 

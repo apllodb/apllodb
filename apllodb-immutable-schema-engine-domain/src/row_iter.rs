@@ -1,8 +1,9 @@
 pub mod version_row_iter;
 
-use std::{collections::HashMap, fmt::Debug};
+use std::fmt::Debug;
 
-use apllodb_shared_components::{AliasName, ColumnName, RecordIterator};
+use apllodb_shared_components::RecordIterator;
+use apllodb_storage_engine_interface::AliasDef;
 
 use crate::{abstract_types::ImmutableSchemaAbstractTypes, row::immutable_row::ImmutableRow};
 
@@ -14,9 +15,5 @@ pub trait ImmutableSchemaRowIterator<Types: ImmutableSchemaAbstractTypes>:
     fn chain_versions(iters: impl IntoIterator<Item = Types::VersionRowIter>) -> Self;
 
     ///  Into<RecordIterator>.
-    fn into_record_iterator(
-        self,
-        table_alias: Option<AliasName>,
-        column_aliases: HashMap<&ColumnName, AliasName>,
-    ) -> RecordIterator;
+    fn into_record_iterator(self, alias_def: AliasDef) -> RecordIterator;
 }
