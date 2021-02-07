@@ -46,12 +46,14 @@
 //! See [test_support module level doc](crate::test_support) for detail.
 
 mod access_methods;
+mod alias_def;
 mod projection_query;
 
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
     without_db_methods::WithoutDbMethods,
 };
+pub use alias_def::AliasDef;
 pub use projection_query::ProjectionQuery;
 
 #[cfg(any(test, feature = "test-support"))]

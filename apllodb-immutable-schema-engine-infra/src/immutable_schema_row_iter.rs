@@ -1,8 +1,9 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIterator,
 };
+use apllodb_shared_components::{AliasName, ColumnName, RecordIterator};
 
 use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes};
 
@@ -27,5 +28,13 @@ impl Iterator for ImmutableSchemaRowIter {
 impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
     fn chain_versions(iters: impl IntoIterator<Item = SqliteRowIterator>) -> Self {
         Self(iters.into_iter().collect())
+    }
+
+    fn into_record_iterator(
+        self,
+        table_alias: Option<AliasName>,
+        column_aliases: HashMap<&ColumnName, AliasName>,
+    ) -> RecordIterator {
+        todo!()
     }
 }

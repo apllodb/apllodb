@@ -14,10 +14,8 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionId,
-    TableConstraints, TableName,
-};
+use apllodb_immutable_schema_engine_domain::row_iter::ImmutableSchemaRowIterator;
+use apllodb_shared_components::{AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionId, SqlValues, TableConstraints, TableName};
 use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
 
@@ -146,7 +144,7 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(RecordIterator::new(output.schema, output.row_iter))
+            Ok(output.row_iter.into_record_iterator())
         }
         .boxed_local()
     }
@@ -155,14 +153,15 @@ impl WithTxMethods for WithTxMethodsImpl {
         self,
         sid: SessionId,
         table_name: TableName,
-        records: RecordIterator,
+        column_names: Vec<ColumnName>,
+        values: Vec<SqlValues>,
     ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = InsertUseCaseInput::new(&database_name, &table_name, records);
+            let input = InsertUseCaseInput::new(&database_name, &table_name, &column_names, values);
             InsertUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
