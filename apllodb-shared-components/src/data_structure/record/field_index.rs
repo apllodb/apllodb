@@ -130,14 +130,21 @@ impl FieldIndex {
                 Some(self_correlation_name),
                 CorrelationReference::TableNameVariant(tn),
                 FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
+            ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
+            (
                 // index: t.c
                 // ffr: T.C AS CA
                 Some(self_correlation_name),
                 CorrelationReference::TableNameVariant(tn),
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
+                FieldReference::ColumnAliasVariant {
+                    column_name,
+                    alias_name,
+                },
+            ) => {
+                self_correlation_name == tn.as_str()
+                    && (self.field_name == column_name.as_str()
+                        || self.field_name == alias_name.as_str())
+            }
 
             (
                 // index: t.c
@@ -148,20 +155,28 @@ impl FieldIndex {
                     table_name,
                 },
                 FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                // index: t.c
-                // ffr: (T AS TA).C AS CA
-                Some(self_correlation_name),
-                CorrelationReference::TableAliasVariant {
-                    alias_name,
-                    table_name,
-                },
-                FieldReference::ColumnAliasVariant { column_name, .. },
             ) => {
                 (self_correlation_name == table_name.as_str()
                     || self_correlation_name == alias_name.as_str())
                     && self.field_name == column_name.as_str()
+            }
+            (
+                // index: t.c
+                // ffr: (T AS TA).C AS CA
+                Some(self_correlation_name),
+                CorrelationReference::TableAliasVariant {
+                    alias_name: table_alias,
+                    table_name,
+                },
+                FieldReference::ColumnAliasVariant {
+                    column_name,
+                    alias_name: column_alias,
+                },
+            ) => {
+                (self_correlation_name == table_name.as_str()
+                    || self_correlation_name == table_alias.as_str())
+                    && (self.field_name == column_name.as_str()
+                        || self.field_name == column_alias.as_str())
             }
         }
     }
@@ -302,7 +317,7 @@ mod tests {
                 full_field_references: vec![
                     FullFieldReference::factory("t", "c").with_field_alias("ca")
                 ],
-                expected_result: Err(ApllodbErrorKind::InvalidName),
+                expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
@@ -375,14 +390,14 @@ mod tests {
                 full_field_references: vec![FullFieldReference::factory("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
-                expected_result: Err(ApllodbErrorKind::InvalidName),
+                expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.ca",
                 full_field_references: vec![FullFieldReference::factory("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
-                expected_result: Err(ApllodbErrorKind::InvalidName),
+                expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c2",
