@@ -146,7 +146,7 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(RecordIterator::new(output.row_iter))
+            Ok(RecordIterator::new(output.schema, output.row_iter))
         }
         .boxed_local()
     }
