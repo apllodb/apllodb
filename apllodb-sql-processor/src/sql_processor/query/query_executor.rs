@@ -278,9 +278,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.clone().join(T_PET_R1.clone()),
-                    T_PEOPLE_R3.clone().join(T_PET_R3_1.clone()),
-                    T_PEOPLE_R3.clone().join(T_PET_R3_2.clone()),
+                    T_PET_R1.clone().join(T_PEOPLE_R1.clone()),
+                    T_PET_R3_1.clone().join(T_PEOPLE_R3.clone()),
+                    T_PET_R3_2.clone().join(T_PEOPLE_R3.clone()),
                 ],
             },
             TestDatum {
