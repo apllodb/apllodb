@@ -1,6 +1,6 @@
 pub(crate) mod record_field_ref_schema;
 
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use crate::{ApllodbResult, FieldIndex, FullFieldReference, Record, SqlValues};
 
