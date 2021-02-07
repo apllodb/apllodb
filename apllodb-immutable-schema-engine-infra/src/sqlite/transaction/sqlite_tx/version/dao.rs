@@ -14,7 +14,6 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     ApllodbResult, ColumnDataType, ColumnName, SqlType, SqlValue, TableName,
 };
-use apllodb_storage_engine_interface::TableColumnReference;
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::{
     cell::RefCell,
@@ -125,26 +124,14 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                     &sql,
                     version.vtable_id().table_name(),
                     &prj_with_navi_rowid,
-                    non_pk_void_projection
-                        .iter()
-                        .map(|cn| {
-                            TableColumnReference::new(
-                                version.vtable_id().table_name().clone(),
-                                cn.clone(),
-                            )
-                        })
-                        .collect::<Vec<_>>()
-                        .as_slice(),
+                    non_pk_void_projection,
                 )
                 .await?;
 
             let mut rowid_vs_row = HashMap::<SqliteRowid, ImmutableRow>::new();
             for mut row in row_iter_from_version {
                 let rowid = row
-                    .get(&TableColumnReference::new(
-                        version.vtable_id().table_name().clone(),
-                        ColumnName::new(CNAME_NAVI_ROWID)?,
-                    ))?
+                    .get(&ColumnName::new(CNAME_NAVI_ROWID)?)?
                     .expect("must be NOT NULL");
 
                 rowid_vs_row.insert(rowid, row);
@@ -155,11 +142,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
                 if let Entry::Occupied(oe) = rowid_vs_row.entry(rowid.clone()) {
                     let (_, mut row_wo_pk) = oe.remove_entry();
                     for (column_name, nn_sql_value) in pk.into_zipped() {
-                        let pk_tcr = TableColumnReference::new(
-                            version.vtable_id().table_name().clone(),
-                            column_name,
-                        );
-                        row_wo_pk.append(pk_tcr, SqlValue::NotNull(nn_sql_value))?;
+                        row_wo_pk.append(column_name, SqlValue::NotNull(nn_sql_value))?;
                     }
                     rows_with_pk.push_back(row_wo_pk)
                 } else {

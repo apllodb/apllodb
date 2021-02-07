@@ -1,11 +1,12 @@
-use std::{collections::HashMap, convert::TryFrom, rc::Rc};
+use std::{convert::TryFrom, rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, FullFieldReference,
-    Record, RecordIterator, Session, SessionWithTx, SqlValue,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
+    CorrelationReference, FieldReference, FullFieldReference, Record, RecordFieldRefSchema,
+    Session, SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
-use apllodb_storage_engine_interface::{StorageEngine, TableColumnReference};
+use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
@@ -62,12 +63,27 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         let ast_table_name = command.table_name;
         let table_name = AstTranslator::table_name(ast_table_name.clone())?;
 
-        let column_names = command.column_names.into_vec();
+        let ast_column_names = command.column_names.into_vec();
+        let column_names: Vec<ColumnName> = ast_column_names
+            .into_iter()
+            .map(AstTranslator::column_name)
+            .collect::<ApllodbResult<_>>()?;
         let expressions = command.expressions.into_vec();
 
         if column_names.len() != expressions.len() {
             unimplemented!();
         }
+
+        let ffrs: Vec<FullFieldReference> = column_names
+            .into_iter()
+            .map(|cn| {
+                FullFieldReference::new(
+                    CorrelationReference::TableNameVariant(table_name.clone()),
+                    FieldReference::ColumnNameVariant(cn),
+                )
+            })
+            .collect();
+        let schema = RecordFieldRefSchema::new(ffrs);
 
         let constant_values: Vec<SqlValue> = expressions
             .into_iter()
@@ -80,25 +96,14 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             })
             .collect::<ApllodbResult<_>>()?;
 
-        let fields: HashMap<FullFieldReference, SqlValue> = column_names
-            .into_iter()
-            .zip(constant_values)
-            .into_iter()
-            .map(|(cn, sql_value)| {
-                let tcr =
-                    TableColumnReference::new(table_name.clone(), AstTranslator::column_name(cn)?);
-                let ffr = FullFieldReference::from(tcr);
-                Ok((ffr, sql_value))
-            })
-            .collect::<ApllodbResult<_>>()?;
-
-        let record = Record::new(fields);
-        let records = RecordIterator::new(vec![record]);
+        let insert_values = SqlValues::new(constant_values);
 
         let plan_node = ModificationPlanNode::Insert(InsertNode {
             table_name,
             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-                op: LeafPlanOperation::DirectInput { records },
+                op: LeafPlanOperation::Values {
+                    records: vec![Record::new(Arc::new(schema), insert_values)],
+                },
             }),
         });
 
@@ -110,7 +115,9 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
+    use apllodb_shared_components::{
+        ApllodbResult, ColumnName, NNSqlValue, SqlValue, SqlValues, TableName,
+    };
     use apllodb_sql_parser::ApllodbSqlParser;
     use apllodb_storage_engine_interface::test_support::{
         default_mock_engine, session_with_tx, test_models::People, MockWithTxMethods,
@@ -125,7 +132,8 @@ mod tests {
     struct TestDatum {
         in_insert_sql: &'static str,
         expected_insert_table: TableName,
-        expected_insert_records: Vec<Record>,
+        expected_insert_columns: Vec<ColumnName>,
+        expected_insert_values: Vec<SqlValues>,
     }
 
     #[async_std::test]
@@ -137,7 +145,14 @@ mod tests {
             vec![TestDatum::new(
                 "INSERT INTO people (id, age) VALUES (1, 13)",
                 People::table_name(),
-                vec![People::record(1, 13)],
+                vec![
+                    People::ffr_id().as_column_name().clone(),
+                    People::ffr_age().as_column_name().clone(),
+                ],
+                vec![SqlValues::new(vec![
+                    SqlValue::NotNull(NNSqlValue::Integer(1)),
+                    SqlValue::NotNull(NNSqlValue::Integer(13)),
+                ])],
             )]
             .into_boxed_slice()
         });
@@ -157,9 +172,10 @@ mod tests {
                     .with(
                         always(),
                         eq(test_datum.expected_insert_table),
-                        eq(RecordIterator::new(test_datum.expected_insert_records)),
+                        eq(test_datum.expected_insert_columns),
+                        eq(test_datum.expected_insert_values),
                     )
-                    .returning(|session, _, _| async { Ok(session) }.boxed_local());
+                    .returning(|session, _, _, _| async { Ok(session) }.boxed_local());
                 with_tx
             });
 

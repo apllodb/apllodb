@@ -1,40 +1,28 @@
 pub mod builder;
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference, Record, SqlConvertible,
-    SqlValue,
-};
-use apllodb_storage_engine_interface::TableColumnReference;
-use std::collections::{hash_map::Entry, HashMap};
+use apllodb_shared_components::{ApllodbResult, ColumnName, SqlConvertible, SqlValue, SqlValues};
+
+use crate::row_iter::version_row_iter::row_column_ref_schema::RowColumnRefSchema;
 
 /// Immutable row which is never updated or deleted by any transaction.
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
 #[derive(Clone, PartialEq, Debug)]
 pub struct ImmutableRow {
-    col_vals: HashMap<TableColumnReference, SqlValue>,
+    schema: RowColumnRefSchema, // TODO wrap into Arc, own raw data in ImmutableRowIterator
+    values: SqlValues,
     // TODO have TransactionId to enable time-machine (TODO naming...) feature.
 }
 
 impl ImmutableRow {
-    /// Retrieve (and remove) an [NNSqlValue](apllodb_shared_components::NNSqlValue) from this row.
+    /// Retrieve (and remove) an [SqlValue](apllodb_shared_components::SqlValue) from this row.
     ///
     /// # Failures
     ///
     /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - Specified column does not exist in this row.
-    pub fn get_sql_value(
-        &mut self,
-        table_column_reference: &TableColumnReference,
-    ) -> ApllodbResult<SqlValue> {
-        self.col_vals
-            .remove(&table_column_reference)
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::UndefinedColumn,
-                    format!("undefined column: `{:?}`", table_column_reference),
-                    None,
-                )
-            })
+    pub fn get_sql_value(&mut self, column_name: &ColumnName) -> ApllodbResult<SqlValue> {
+        let idx = self.schema.resolve_index_with_rm(column_name)?;
+        Ok(self.values.remove(idx))
     }
 
     /// Retrieve (and remove) an SqlValue from this row and return it as Rust type.
@@ -45,17 +33,15 @@ impl ImmutableRow {
     ///
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `table_column_reference` is not in this row.
-    pub fn get<T: SqlConvertible>(
-        &mut self,
-        table_column_reference: &TableColumnReference,
-    ) -> ApllodbResult<Option<T>> {
-        let sql_value = self.get_sql_value(table_column_reference)?;
+    pub fn get<T: SqlConvertible>(&mut self, column_name: &ColumnName) -> ApllodbResult<Option<T>> {
+        let sql_value = self.get_sql_value(column_name)?;
+
         match sql_value {
             SqlValue::Null => Ok(None),
             SqlValue::NotNull(nn) => {
                 let v = nn.unpack().or_else(|e| {
                     // write back removed value into row
-                    self.append(table_column_reference.clone(), SqlValue::NotNull(nn))?;
+                    self.append(column_name.clone(), SqlValue::NotNull(nn))?;
                     Err(e)
                 })?;
                 Ok(Some(v))
@@ -69,38 +55,21 @@ impl ImmutableRow {
     ///
     /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
     ///   - Same [ColumnReference](apllodb_shared_components::ColumnReference) is already in this row.
-    pub fn append(
-        &mut self,
-        table_column_reference: TableColumnReference,
-        sql_value: SqlValue,
-    ) -> ApllodbResult<()> {
-        match self.col_vals.entry(table_column_reference.clone()) {
-            Entry::Occupied(_) => Err(ApllodbError::new(
-                ApllodbErrorKind::DuplicateColumn,
-                format!("column `{}` is already in this row", table_column_reference),
-                None,
-            )),
-            Entry::Vacant(e) => {
-                e.insert(sql_value);
-                Ok(())
-            }
-        }
+    pub fn append(&mut self, column_name: ColumnName, sql_value: SqlValue) -> ApllodbResult<()> {
+        self.schema.append(column_name)?;
+        self.values.append(sql_value);
+        Ok(())
     }
-}
 
-impl ImmutableRow {
-    pub fn into_col_vals(self) -> HashMap<TableColumnReference, SqlValue> {
-        self.col_vals
+    pub fn into_zipped(self) -> Vec<(ColumnName, SqlValue)> {
+        self.schema
+            .into_column_names()
+            .into_iter()
+            .zip(self.values)
+            .collect()
     }
-}
 
-impl Into<Record> for ImmutableRow {
-    fn into(self) -> Record {
-        let mut col_vals = self.col_vals;
-        let fields: HashMap<FullFieldReference, SqlValue> = col_vals
-            .drain()
-            .map(|(tcr, sql_value)| (FullFieldReference::from(tcr), sql_value))
-            .collect();
-        Record::new(fields)
+    pub fn schema(&self) -> &RowColumnRefSchema {
+        &self.schema
     }
 }

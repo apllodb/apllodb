@@ -30,7 +30,7 @@ pub use crate::{
             Expression,
         },
         record::{field_index::FieldIndex, Record},
-        record_iterator::RecordIterator,
+        record_iterator::{record_field_ref_schema::RecordFieldRefSchema, RecordIterator},
         reference::{
             correlation_reference::CorrelationReference, field_reference::FieldReference,
             full_field_reference::FullFieldReference,
@@ -49,6 +49,7 @@ pub use crate::{
                 nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult,
                 sql_value_hash_key::SqlValueHashKey, SqlValue,
             },
+            sql_values::SqlValues,
         },
     },
     error::{

@@ -1,4 +1,4 @@
-use super::{navi_table_name::NaviTableName, CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
+use super::{CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
 use crate::sqlite::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
     row::{
@@ -9,7 +9,6 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::VTable,
 };
 use apllodb_shared_components::{ApllodbResult, ColumnName};
-use apllodb_storage_engine_interface::TableColumnReference;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Navi {
@@ -26,28 +25,18 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Na
 
 impl Navi {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn from_navi_row(
-        navi_table_name: &NaviTableName,
         r: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
         let rowid = SqliteRowid(
-            r.get::<i64>(&TableColumnReference::new(
-                navi_table_name.to_table_name(),
-                ColumnName::new(CNAME_ROWID)?,
-            ))?
-            .expect("must be NOT NULL"),
+            r.get::<i64>(&ColumnName::new(CNAME_ROWID)?)?
+                .expect("must be NOT NULL"),
         );
         let revision = Revision::from(
-            r.get::<i64>(&TableColumnReference::new(
-                navi_table_name.to_table_name(),
-                ColumnName::new(CNAME_REVISION)?,
-            ))?
-            .expect("must be NOT NULL"),
+            r.get::<i64>(&ColumnName::new(CNAME_REVISION)?)?
+                .expect("must be NOT NULL"),
         );
         let opt_version_number = r
-            .get::<i64>(&TableColumnReference::new(
-                navi_table_name.to_table_name(),
-                ColumnName::new(CNAME_VERSION_NUMBER)?,
-            ))?
+            .get::<i64>(&ColumnName::new(CNAME_VERSION_NUMBER)?)?
             .map(VersionNumber::from);
         match opt_version_number {
             None => Ok(Navi::Deleted { rowid, revision }),
@@ -81,9 +70,7 @@ impl ExistingNaviWithPK {
         vtable: &VTable,
         mut r: ImmutableRow,
     ) -> ApllodbResult<Option<Self>> {
-        let ret = if let Navi::Exist(existing_navi) =
-            Navi::from_navi_row(&NaviTableName::from(vtable.table_name().clone()), &mut r)?
-        {
+        let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(&mut r)? {
             Some(ExistingNaviWithPK {
                 navi: existing_navi,
                 pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, &mut r)?,

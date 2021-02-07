@@ -24,12 +24,12 @@ async fn test_small_int() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let field = FieldIndex::factory_colref("t", "c");
+                let index = FieldIndex::from("c");
 
                 let r = records.next().unwrap();
-                assert_eq!(r.get::<i16>(&field).unwrap().unwrap(), i16::MAX);
-                assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i16::MAX as i32);
-                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i16::MAX as i64);
+                assert_eq!(r.get::<i16>(&index).unwrap().unwrap(), i16::MAX);
+                assert_eq!(r.get::<i32>(&index).unwrap().unwrap(), i16::MAX as i32);
+                assert_eq!(r.get::<i64>(&index).unwrap().unwrap(), i16::MAX as i64);
                 Ok(())
             })),
         ))
@@ -52,15 +52,15 @@ async fn test_integer() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let field = FieldIndex::factory_colref("t", "c");
+                let index = FieldIndex::from("c");
 
                 let r = records.next().unwrap();
                 assert_eq!(
-                    r.get::<i16>(&field).unwrap_err().kind(),
+                    r.get::<i16>(&index).unwrap_err().kind(),
                     &ApllodbErrorKind::DatatypeMismatch
                 );
-                assert_eq!(r.get::<i32>(&field).unwrap().unwrap(), i32::MAX);
-                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i32::MAX as i64);
+                assert_eq!(r.get::<i32>(&index).unwrap().unwrap(), i32::MAX);
+                assert_eq!(r.get::<i64>(&index).unwrap().unwrap(), i32::MAX as i64);
                 Ok(())
             })),
         ))
@@ -83,18 +83,18 @@ async fn test_big_int() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let field = FieldIndex::factory_colref("t", "c");
+                let index = FieldIndex::from("c");
 
                 let r = records.next().unwrap();
                 assert_eq!(
-                    r.get::<i16>(&field).unwrap_err().kind(),
+                    r.get::<i16>(&index).unwrap_err().kind(),
                     &ApllodbErrorKind::DatatypeMismatch
                 );
                 assert_eq!(
-                    r.get::<i32>(&field).unwrap_err().kind(),
+                    r.get::<i32>(&index).unwrap_err().kind(),
                     &ApllodbErrorKind::DatatypeMismatch
                 );
-                assert_eq!(r.get::<i64>(&field).unwrap().unwrap(), i64::MAX);
+                assert_eq!(r.get::<i64>(&index).unwrap().unwrap(), i64::MAX);
                 Ok(())
             })),
         ))
@@ -120,15 +120,15 @@ async fn test_text() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let field = FieldIndex::factory_colref("t", "c");
+                let index = FieldIndex::from("c");
 
                 let r = records.next().unwrap();
                 assert_eq!(
-                    r.get::<i64>(&field).unwrap_err().kind(),
+                    r.get::<i64>(&index).unwrap_err().kind(),
                     &ApllodbErrorKind::DatatypeMismatch
                 );
                 assert_eq!(
-                    r.get::<String>(&field).unwrap().unwrap(),
+                    r.get::<String>(&index).unwrap().unwrap(),
                     r#"abcあいうえお🍺@'\"#
                 );
                 Ok(())

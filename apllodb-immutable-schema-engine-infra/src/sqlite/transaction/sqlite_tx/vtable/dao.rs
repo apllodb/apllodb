@@ -10,7 +10,6 @@ use apllodb_immutable_schema_engine_domain::vtable::{
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
 };
-use apllodb_storage_engine_interface::TableColumnReference;
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableDao {
@@ -96,10 +95,7 @@ CREATE TABLE {} (
         })?;
 
         let table_wide_constraints_str: String = row
-            .get(&TableColumnReference::new(
-                tname.clone(),
-                ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?,
-            ))?
+            .get(&ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?)?
             .expect("must be NOT NULL");
 
         let table_wide_constraints: TableWideConstraints =

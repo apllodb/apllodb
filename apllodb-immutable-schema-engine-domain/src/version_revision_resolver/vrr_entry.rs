@@ -1,7 +1,6 @@
 use std::{fmt::Debug, hash::Hash};
 
 use apllodb_shared_components::{ApllodbResult, SqlValue};
-use apllodb_storage_engine_interface::TableColumnReference;
 
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes,
@@ -30,10 +29,9 @@ impl<Types: ImmutableSchemaAbstractTypes> VRREntry<Types> {
     pub fn into_pk_only_row(self) -> ApllodbResult<ImmutableRow> {
         let table_name = self.pk.table_name().clone();
 
-        let mut builder = ImmutableRowBuilder::default();
+        let mut builder = ImmutableRowBuilder::new(table_name);
         for (column_name, nn_sql_value) in self.pk.into_zipped() {
-            let tcr = TableColumnReference::new(table_name.clone(), column_name);
-            builder = builder.append(tcr, SqlValue::NotNull(nn_sql_value))?;
+            builder = builder.append(column_name, SqlValue::NotNull(nn_sql_value))?;
         }
         builder.build()
     }

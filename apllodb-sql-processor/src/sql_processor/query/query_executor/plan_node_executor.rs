@@ -1,13 +1,10 @@
-use std::{
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Record, RecordIterator,
     SessionWithTx, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
@@ -29,11 +26,15 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         op_leaf: LeafPlanOperation,
     ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::DirectInput { records } => Ok((records, session)),
+            LeafPlanOperation::Values { records } => Ok((RecordIterator::from(records), session)),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-            } => self.seq_scan(session, table_name, projection).await,
+                alias_def,
+            } => {
+                self.seq_scan(session, table_name, projection, alias_def)
+                    .await
+            }
         }
     }
 
@@ -70,10 +71,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         session: SessionWithTx,
         table_name: TableName,
         projection: ProjectionQuery,
+        alias_def: AliasDef,
     ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         self.engine
             .with_tx()
-            .select(session, table_name, projection)
+            .select(session, table_name, projection, alias_def)
             .await
     }
 
@@ -83,14 +85,12 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     fn projection(
         &self,
         input_left: RecordIterator,
-        fields: HashSet<FieldIndex>,
+        fields: Vec<FieldIndex>,
     ) -> ApllodbResult<RecordIterator> {
-        let it = RecordIterator::new(
-            input_left
-                .map(|record| record.projection(&fields))
-                .collect::<ApllodbResult<Vec<Record>>>()?,
-        );
-        Ok(it)
+        let records = input_left
+            .map(|record| record.projection(&fields))
+            .collect::<ApllodbResult<Vec<Record>>>()?;
+        Ok(RecordIterator::from(records))
     }
 
     fn _selection(
@@ -151,10 +151,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                     &mut left_records
                         .iter()
                         .map(|left_record| left_record.clone().join(right_record.clone()))
-                        .collect::<ApllodbResult<Vec<Record>>>()?,
+                        .collect::<Vec<Record>>(),
                 );
             }
         }
-        Ok(RecordIterator::new(ret))
+
+        Ok(RecordIterator::from(ret))
     }
 }

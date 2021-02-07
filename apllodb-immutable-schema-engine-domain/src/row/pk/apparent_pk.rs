@@ -1,12 +1,11 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ComparisonFunction, Expression, FieldIndex, FullFieldReference, LogicalFunction, NNSqlValue,
-    Record, SqlConvertible, SqlValue, TableName,
+    ComparisonFunction, CorrelationReference, Expression, FieldReference, FullFieldReference,
+    LogicalFunction, NNSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
 };
-use apllodb_storage_engine_interface::TableColumnReference;
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
+use std::{collections::VecDeque, ops::Index};
 
 /// Primary key which other components than Storage Engine observes.
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
@@ -72,12 +71,7 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let tcr = TableColumnReference::new(
-                    vtable.table_name().clone(),
-                    cdt.column_name().clone(),
-                );
-
-                if let SqlValue::NotNull(sql_value) = row.get_sql_value(&tcr)? {
+                if let SqlValue::NotNull(sql_value) = row.get_sql_value(cdt.column_name())? {
                     Ok(sql_value)
                 } else {
                     panic!("primary key's column must be NOT NULL")
@@ -92,7 +86,11 @@ impl ApparentPrimaryKey {
         ))
     }
 
-    pub fn from_table_and_record(vtable: &VTable, record: &Record) -> ApllodbResult<Self> {
+    pub fn from_table_pk_def(
+        vtable: &VTable,
+        column_names: &[ColumnName],
+        sql_values: &SqlValues,
+    ) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
             .iter()
@@ -101,37 +99,24 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let tcr = TableColumnReference::new(
-                    vtable.table_name().clone(),
-                    cdt.column_name().clone(),
-                );
-                let ffr = FullFieldReference::from(tcr);
-
-                record
-                    .get_sql_value(&FieldIndex::InFullFieldReference(ffr))
-                    // FIXME less clone
-                    .map(|sql_value| {
-                        if let SqlValue::NotNull(sql_value) =    sql_value {
-                            sql_value.clone()
-                        }else {
-                            panic!("primary key's column must be NOT NULL")
-                        }
-                    }
-                    )
-                    .map_err(|e| {
-                        ApllodbError::new(
-                            ApllodbErrorKind::NotNullViolation,
-                            format!(
-                                "primary key column `{:?}` is not held in this record: `{:#?}` (table `{:#?}`)",
-                                cdt.column_name(),
-                                record,
-                                vtable.table_name()
-                            ),
-                            Some(Box::new(e)),
-                        )
-                    })
+                let idx = column_names
+                    .iter()
+                    .position(|cn| cn == cdt.column_name())
+                    .unwrap_or_else(|| {
+                        panic!(format!(
+                            "primary key's column `{}` is not inclueded in PK's columns=`{:#?}`",
+                            cdt.column_name().as_str(),
+                            apk_cdts
+                        ))
+                    });
+                let sql_value = sql_values.index(idx).clone();
+                if let SqlValue::NotNull(nn_sql_value) = sql_value {
+                    nn_sql_value
+                } else {
+                    panic!("primary key's column must be NOT NULL")
+                }
             })
-            .collect::<ApllodbResult<Vec<NNSqlValue>>>()?;
+            .collect::<Vec<NNSqlValue>>();
 
         Ok(Self::new(
             vtable.table_name().clone(),
@@ -177,11 +162,12 @@ impl ApparentPrimaryKey {
             .zipped()
             .into_iter()
             .map(|(column_name, sql_value)| {
-                let tcr = TableColumnReference::new(self.table_name.clone(), column_name.clone());
+                let ffr = FullFieldReference::new(
+                    CorrelationReference::TableNameVariant(self.table_name.clone()),
+                    FieldReference::ColumnNameVariant(column_name.clone()),
+                );
                 ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::FullFieldReferenceVariant(
-                        FullFieldReference::from(tcr),
-                    )),
+                    left: Box::new(Expression::FullFieldReferenceVariant(ffr)),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),
                     ))),

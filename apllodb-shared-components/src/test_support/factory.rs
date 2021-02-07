@@ -2,12 +2,16 @@
 
 //! Factory methods for testing
 
+use std::sync::Arc;
+
 use crate::{
-    data_structure::reference::{
-        correlation_reference::CorrelationReference, field_reference::FieldReference,
+    data_structure::{
+        record_iterator::record_field_ref_schema::RecordFieldRefSchema,
+        reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
     AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex,
-    FullFieldReference, NNSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
+    FullFieldReference, NNSqlValue, Record, RecordIterator, SqlType, SqlValue, SqlValues,
+    TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -22,12 +26,6 @@ impl TableName {
     /// randomly generate a table name
     pub fn random() -> Self {
         Self::new(random_id()).unwrap()
-    }
-}
-
-impl FieldIndex {
-    pub fn factory_colref(table_name: &str, column_name: &str) -> Self {
-        Self::InFullFieldReference(FullFieldReference::factory(table_name, column_name))
     }
 }
 
@@ -47,12 +45,30 @@ impl FullFieldReference {
         self.set_field_alias(AliasName::factory(field_alias));
         self
     }
+}
 
-    pub fn as_column_name(&self) -> &ColumnName {
-        if let FieldReference::ColumnNameVariant(cn) = self.as_field_reference() {
-            cn
-        } else {
-            panic!()
+impl From<FullFieldReference> for FieldIndex {
+    fn from(full_field_reference: FullFieldReference) -> Self {
+        match (
+            full_field_reference.as_correlation_reference(),
+            full_field_reference.as_field_reference(),
+        ) {
+            (
+                CorrelationReference::TableNameVariant(table_name),
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                CorrelationReference::TableNameVariant(table_name),
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            )
+            | (
+                CorrelationReference::TableAliasVariant { table_name, .. },
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                CorrelationReference::TableAliasVariant { table_name, .. },
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
         }
     }
 }
@@ -104,6 +120,38 @@ impl SqlValue {
 impl NNSqlValue {
     pub fn factory_integer(integer: i32) -> Self {
         Self::Integer(integer)
+    }
+}
+
+impl Record {
+    pub fn factory(fields: Vec<(FullFieldReference, SqlValue)>) -> Self {
+        let ffrs: Vec<FullFieldReference> = fields.iter().map(|f| f.0.clone()).collect();
+        let sql_values: Vec<SqlValue> = fields.into_iter().map(|f| f.1).collect();
+
+        let schema = RecordFieldRefSchema::new(ffrs);
+
+        Self::new(Arc::new(schema), SqlValues::new(sql_values))
+    }
+
+    pub fn as_column_names(&self) -> Vec<ColumnName> {
+        self.schema()
+            .as_full_field_references()
+            .iter()
+            .map(|ffr| ffr.as_column_name())
+            .cloned()
+            .collect()
+    }
+}
+
+impl RecordIterator {
+    pub fn factory(schema: RecordFieldRefSchema, records: Vec<Record>) -> Self {
+        Self::new(schema, records)
+    }
+}
+
+impl RecordFieldRefSchema {
+    pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
+        Self::new(full_field_references)
     }
 }
 
