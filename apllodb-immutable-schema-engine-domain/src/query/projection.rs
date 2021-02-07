@@ -1,6 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference,
+    FieldReference, FullFieldReference, RecordFieldRefSchema,
+};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
@@ -174,4 +177,36 @@ struct ProjectionResultInVersion {
 
     non_pk_effective: Vec<ColumnName>,
     non_pk_void: Vec<ColumnName>,
+}
+
+impl From<ProjectionResult> for RecordFieldRefSchema {
+    fn from(pr: ProjectionResult) -> Self {
+        if pr.result_per_version.is_empty() {
+            RecordFieldRefSchema::new(vec![])
+        } else {
+            let (version_id, _) = pr.result_per_version.iter().next().unwrap();
+            let table_name = version_id.vtable_id().table_name().clone();
+
+            let mut all_column_names: Vec<ColumnName> = vec![];
+
+            for (_, mut projection_result_in_version) in pr.result_per_version {
+                all_column_names.append(&mut projection_result_in_version.pk_effective);
+                all_column_names.append(&mut projection_result_in_version.pk_void);
+                all_column_names.append(&mut projection_result_in_version.non_pk_effective);
+                all_column_names.append(&mut projection_result_in_version.non_pk_void);
+            }
+
+            let ffrs: Vec<FullFieldReference> = all_column_names
+                .into_iter()
+                .map(|cn| {
+                    FullFieldReference::new(
+                        CorrelationReference::TableNameVariant(table_name.clone()),
+                        FieldReference::ColumnNameVariant(cn),
+                    )
+                })
+                .collect();
+
+            RecordFieldRefSchema::new(ffrs)
+        }
+    }
 }

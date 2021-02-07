@@ -35,11 +35,11 @@ impl AstTranslator {
 
 #[cfg(test)]
 mod tests {
+    use crate::{ApllodbErrorKind, ApllodbResult, AstTranslator, FullFieldReference};
     use apllodb_sql_parser::apllodb_ast::{
         ColumnReference, Correlation, Expression, FromItem, SelectField,
     };
-
-    use crate::{ApllodbErrorKind, ApllodbResult, AstTranslator, FullFieldReference};
+    use pretty_assertions::assert_eq;
 
     #[derive(new)]
     struct TestDatum {
@@ -68,7 +68,7 @@ mod tests {
                     None,
                 ),
                 vec![FromItem::factory("t", Some("corr_alias"))],
-                Ok(FullFieldReference::factory("t", "c")),
+                Ok(FullFieldReference::factory("t", "c").with_corr_alias("corr_alias")),
             ),
             TestDatum::new(
                 SelectField::factory(
@@ -109,7 +109,9 @@ mod tests {
                     Some("field_alias"),
                 ),
                 vec![FromItem::factory("t", Some("corr_alias"))],
-                Ok(FullFieldReference::factory("t", "c").with_field_alias("field_alias")),
+                Ok(FullFieldReference::factory("t", "c")
+                    .with_corr_alias("corr_alias")
+                    .with_field_alias("field_alias")),
             ),
             TestDatum::new(
                 SelectField::factory(

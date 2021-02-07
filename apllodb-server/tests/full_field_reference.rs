@@ -26,7 +26,17 @@ async fn test_select_with_various_field_spec() {
         },
         TestDatum {
             sql: "SELECT id FROM people",
+            index: FieldIndex::from("people.id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id FROM people",
             index: FieldIndex::from("xxx"),
+            expected_result: Err(ApllodbErrorKind::InvalidName),
+        },
+        TestDatum {
+            sql: "SELECT id FROM people",
+            index: FieldIndex::from("people.xxx"),
             expected_result: Err(ApllodbErrorKind::InvalidName),
         },
         TestDatum {
@@ -36,7 +46,62 @@ async fn test_select_with_various_field_spec() {
         },
         TestDatum {
             sql: "SELECT people.id FROM people",
+            index: FieldIndex::from("id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT people.id FROM people",
             index: FieldIndex::from("people.id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id FROM people t_alias",
+            index: FieldIndex::from("id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id FROM people t_alias",
+            index: FieldIndex::from("people.id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id FROM people t_alias",
+            index: FieldIndex::from("t_alias.id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id c_alias FROM people",
+            index: FieldIndex::from("id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id c_alias FROM people",
+            index: FieldIndex::from("c_alias"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id c_alias FROM people",
+            index: FieldIndex::from("people.id"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id c_alias FROM people",
+            index: FieldIndex::from("people.c_alias"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id c_alias FROM people t_alias",
+            index: FieldIndex::from("c_alias"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id c_alias FROM people t_alias",
+            index: FieldIndex::from("people.c_alias"),
+            expected_result: Ok(()),
+        },
+        TestDatum {
+            sql: "SELECT id c_alias FROM people t_alias",
+            index: FieldIndex::from("t_alias.c_alias"),
             expected_result: Ok(()),
         },
     ];
@@ -60,6 +125,7 @@ async fn test_select_with_various_field_spec() {
                         )
                     ),
                     Err(e) => {
+                        println!("{}", e);
                         assert_eq!(
                             e.kind(),
                             &test_datum.clone().expected_result.unwrap_err(),

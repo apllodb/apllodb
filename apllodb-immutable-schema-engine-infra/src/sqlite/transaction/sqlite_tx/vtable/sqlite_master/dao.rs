@@ -11,7 +11,6 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
 };
-use apllodb_storage_engine_interface::TableColumnReference;
 
 #[derive(Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::vtable) struct SqliteMasterDao {
@@ -50,10 +49,7 @@ impl SqliteMasterDao {
             .await?
             .map(|mut row| {
                 let s = row
-                    .get::<String>(&TableColumnReference::new(
-                        tname.clone(),
-                        ColumnName::new(CNAME_CREATE_TABLE_SQL)?,
-                    ))?
+                    .get::<String>(&ColumnName::new(CNAME_CREATE_TABLE_SQL)?)?
                     .expect("must be NOT NULL");
                 Ok(s)
             })

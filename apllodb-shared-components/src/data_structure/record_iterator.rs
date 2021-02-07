@@ -1,24 +1,71 @@
-use std::collections::VecDeque;
+pub(crate) mod record_field_ref_schema;
 
-use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
-use crate::Record;
+use crate::{ApllodbResult, FieldIndex, FullFieldReference, Record, SqlValues};
+
+use self::record_field_ref_schema::RecordFieldRefSchema;
 
 /// Iterator of [Record](crate::Record)s.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+///
+/// Note that Record is always generated from RecordIterator, who has ownership to [RecordFieldRefSchema](crate::RecordFieldRefSchema).
+#[derive(Clone, PartialEq, Debug)]
 pub struct RecordIterator {
-    // TODO use batched Records for memory reduction?
-    inner: VecDeque<Record>,
+    schema: Arc<RecordFieldRefSchema>,
+    inner: Vec<SqlValues>,
 }
+
 impl RecordIterator {
     /// Constructor
-    pub fn new<IntoRecord: Into<Record>, I: IntoIterator<Item = IntoRecord>>(it: I) -> Self {
+    pub fn new<IntoValues: Into<SqlValues>, I: IntoIterator<Item = IntoValues>>(
+        schema: RecordFieldRefSchema,
+        it: I,
+    ) -> Self {
         Self {
+            schema: Arc::new(schema),
             inner: it
                 .into_iter()
-                .map(|into_record| into_record.into())
+                .map(|into_values| into_values.into())
                 .collect(),
         }
+    }
+
+    /// get FullFieldReferences
+    pub fn as_full_field_references(&self) -> &[FullFieldReference] {
+        self.schema.as_full_field_references()
+    }
+
+    /// ref to schema
+    pub fn as_schema(&self) -> &RecordFieldRefSchema {
+        self.schema.as_ref()
+    }
+
+    /// makes SqlValues
+    pub fn into_sql_values(self) -> Vec<SqlValues> {
+        self.inner.into_iter().collect()
+    }
+
+    /// Shrink records into record with specified `fields`.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    ///   - Specified field does not exist in this record.
+    pub fn projection(self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
+        let projection_idxs = projection
+            .iter()
+            .map(|index| self.schema.resolve_index(index))
+            .collect::<ApllodbResult<Vec<usize>>>()?;
+
+        let new_schema = self.schema.projection(projection)?;
+
+        let new_inner: Vec<SqlValues> = self
+            .inner
+            .into_iter()
+            .map(|sql_values| sql_values.projection(&projection_idxs))
+            .collect();
+
+        Ok(Self::new(new_schema, new_inner))
     }
 }
 
@@ -26,6 +73,24 @@ impl Iterator for RecordIterator {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.pop_front()
+        if self.inner.is_empty() {
+            None
+        } else {
+            let values = self.inner.remove(0);
+            Some(Record::new(self.schema.clone(), values))
+        }
+    }
+}
+
+impl From<Vec<Record>> for RecordIterator {
+    fn from(rs: Vec<Record>) -> Self {
+        let schema = if rs.is_empty() {
+            RecordFieldRefSchema::new(vec![])
+        } else {
+            let r = rs.first().unwrap();
+            r.schema().clone()
+        };
+
+        Self::new(schema, rs)
     }
 }

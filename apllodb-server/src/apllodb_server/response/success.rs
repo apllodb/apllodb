@@ -1,8 +1,7 @@
 use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
-use serde::{Deserialize, Serialize};
 
 /// Successful response from apllodb-server's [command()](crate::ApllodbServer::command).
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub enum ApllodbCommandSuccess {
     QueryResponse {
         session: SessionWithTx,

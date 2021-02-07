@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnDefinition,
     ColumnName, Expression, RecordIterator, Session, SessionId, SessionWithDb, SessionWithTx,
-    TableConstraints, TableName,
+    SqlValues, TableConstraints, TableName,
 };
 use futures::FutureExt;
 
-use crate::ProjectionQuery;
+use crate::{AliasDef, ProjectionQuery};
 
 use super::BoxFut;
 
@@ -132,10 +132,14 @@ pub trait WithTxMethods: Sized + 'static {
         session: SessionWithTx,
         table_name: TableName,
         projection: ProjectionQuery,
+        alias_def: AliasDef,
     ) -> BoxFut<ApllodbSessionResult<(RecordIterator, SessionWithTx)>> {
         let sid = *session.get_id();
         async move {
-            match self.select_core(sid, table_name, projection).await {
+            match self
+                .select_core(sid, table_name, projection, alias_def)
+                .await
+            {
                 Ok(records) => Ok((records, session)),
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             }
@@ -149,17 +153,22 @@ pub trait WithTxMethods: Sized + 'static {
         sid: SessionId,
         table_name: TableName,
         projection: ProjectionQuery,
+        alias_def: AliasDef,
     ) -> BoxFut<ApllodbResult<RecordIterator>>;
 
     fn insert(
         self,
         session: SessionWithTx,
         table_name: TableName,
-        records: RecordIterator,
+        column_names: Vec<ColumnName>,
+        values: Vec<SqlValues>,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
         let sid = *session.get_id();
         async move {
-            match self.insert_core(sid, table_name, records).await {
+            match self
+                .insert_core(sid, table_name, column_names, values)
+                .await
+            {
                 Ok(_) => Ok(session),
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             }
@@ -172,7 +181,8 @@ pub trait WithTxMethods: Sized + 'static {
         self,
         sid: SessionId,
         table_name: TableName,
-        records: RecordIterator,
+        column_names: Vec<ColumnName>,
+        values: Vec<SqlValues>,
     ) -> BoxFut<ApllodbResult<()>>;
 
     fn update(
