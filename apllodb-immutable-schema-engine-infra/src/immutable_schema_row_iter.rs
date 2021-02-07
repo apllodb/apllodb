@@ -1,7 +1,10 @@
 use std::collections::VecDeque;
 
 use apllodb_immutable_schema_engine_domain::{
-    row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIterator,
+    row::immutable_row::ImmutableRow,
+    row_iter::{
+        version_row_iter::row_column_ref_schema::RowColumnRefSchema, ImmutableSchemaRowIterator,
+    },
 };
 use apllodb_shared_components::{RecordFieldRefSchema, RecordIterator, SqlValues};
 use apllodb_storage_engine_interface::AliasDef;
@@ -58,6 +61,15 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
             }
 
             RecordIterator::new(record_schema.clone(), sql_values)
+        }
+    }
+
+    fn schema(&self) -> RowColumnRefSchema {
+        if self.0.is_empty() {
+            RowColumnRefSchema::empty()
+        } else {
+            let row_iter = self.0.front().unwrap();
+            row_iter.schema().clone()
         }
     }
 }

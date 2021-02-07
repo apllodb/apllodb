@@ -21,6 +21,14 @@ impl RowColumnRefSchema {
         }
     }
 
+    pub fn empty() -> Self {
+        Self::new(TableName::new("from_empty_rows").unwrap(), vec![])
+    }
+
+    pub fn as_column_names(&self) -> &[ColumnName] {
+        &self.column_names
+    }
+
     pub fn into_column_names(self) -> Vec<ColumnName> {
         self.column_names
     }

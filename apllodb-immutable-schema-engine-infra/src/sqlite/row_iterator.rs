@@ -65,7 +65,7 @@ impl SqliteRowIterator {
 
     pub(crate) fn empty() -> Self {
         Self {
-            schema: RowColumnRefSchema::new(TableName::new("from_empty_rows").unwrap(), vec![]),
+            schema: RowColumnRefSchema::empty(),
             rows: VecDeque::new(),
         }
     }
