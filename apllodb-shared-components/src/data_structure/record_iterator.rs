@@ -1,6 +1,6 @@
 pub(crate) mod record_field_ref_schema;
 
-use std::{collections::VecDeque, sync::Arc};
+use std::{sync::Arc};
 
 use crate::{ApllodbResult, FieldIndex, FullFieldReference, Record, SqlValues};
 
@@ -59,7 +59,7 @@ impl RecordIterator {
 
         let new_schema = self.schema.projection(projection)?;
 
-        let new_inner: VecDeque<SqlValues> = self
+        let new_inner: Vec<SqlValues> = self
             .inner
             .into_iter()
             .map(|sql_values| sql_values.projection(&projection_idxs))
