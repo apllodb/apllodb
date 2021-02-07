@@ -36,6 +36,16 @@ impl Iterator for SqlValues {
 }
 
 impl SqlValues {
+    /// add SqlValue to list
+    pub fn append(&mut self, sql_value: SqlValue) {
+        self.0.push(sql_value)
+    }
+
+    /// extract SqlValue and remove from list
+    pub fn remove(&mut self, index: usize) -> SqlValue {
+        self.0.remove(index)
+    }
+
     /// If SqlValues is like this:
     ///
     /// ```text
