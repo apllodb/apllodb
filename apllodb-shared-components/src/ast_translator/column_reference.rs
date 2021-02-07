@@ -168,12 +168,12 @@ mod tests {
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
                 vec![FromItem::factory("t", Some("a"))],
-                Ok(FullFieldReference::factory("t", "c")),
+                Ok(FullFieldReference::factory("t", "c").with_corr_alias("t")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
                 vec![FromItem::factory("t", Some("a"))],
-                Ok(FullFieldReference::factory("t", "c")),
+                Ok(FullFieldReference::factory("t", "c").with_corr_alias("t")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("a")), "c"),
