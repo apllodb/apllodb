@@ -23,7 +23,7 @@ impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
 
 #[derive(Debug)]
 pub struct FullScanUseCaseOutput<Types: ImmutableSchemaAbstractTypes> {
-    pub schema: RecordFieldRefSchema, // TODO RowIter から RecordIterator へのストレートな変換
+    pub schema: RecordFieldRefSchema,
     pub row_iter: Types::ImmutableSchemaRowIter,
 }
 impl<Types: ImmutableSchemaAbstractTypes> UseCaseOutput for FullScanUseCaseOutput<Types> {}
