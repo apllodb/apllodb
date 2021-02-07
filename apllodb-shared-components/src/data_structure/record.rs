@@ -1,6 +1,9 @@
 pub(crate) mod field_index;
 
-use crate::{error::ApllodbResult, traits::sql_convertible::SqlConvertible, FieldIndex, SqlValues};
+use crate::{
+    error::ApllodbResult, traits::sql_convertible::SqlConvertible, FieldIndex, FullFieldReference,
+    SqlValues,
+};
 use std::{ops::Index, sync::Arc};
 
 use super::{
@@ -71,14 +74,29 @@ impl Record {
     }
 
     /// Joins another record after this record.
-    pub fn join(mut self, new_schema: Arc<RecordFieldRefSchema>, right: Self) -> Self {
+    pub fn join(mut self, right: Self) -> Self {
+        self.schema = Arc::new(self.schema.joined(right.schema()));
         self.values.join(right.values);
-        self.schema = new_schema;
         self
     }
 
     /// Get raw representation
     pub fn into_values(self) -> SqlValues {
         self.values
+    }
+
+    /// Get raw representation
+    pub fn into_col_vals(self) -> Vec<(FullFieldReference, SqlValue)> {
+        self.schema
+            .as_full_field_references()
+            .iter()
+            .cloned()
+            .zip(self.values)
+            .collect()
+    }
+
+    /// ref to schema
+    pub fn schema(&self) -> &RecordFieldRefSchema {
+        self.schema.as_ref()
     }
 }

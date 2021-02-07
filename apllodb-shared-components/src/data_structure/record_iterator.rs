@@ -2,7 +2,7 @@ pub(crate) mod record_field_ref_schema;
 
 use std::{collections::VecDeque, sync::Arc};
 
-use crate::{ApllodbResult, FieldIndex, Record, SqlValues};
+use crate::{ApllodbResult, FieldIndex, FullFieldReference, Record, SqlValues};
 
 use self::record_field_ref_schema::RecordFieldRefSchema;
 
@@ -28,6 +28,21 @@ impl RecordIterator {
                 .map(|into_values| into_values.into())
                 .collect(),
         }
+    }
+
+    /// get FullFieldReferences
+    pub fn as_full_field_references(&self) -> &[FullFieldReference] {
+        self.schema.as_full_field_references()
+    }
+
+    /// ref to schema
+    pub fn as_schema(&self) -> &RecordFieldRefSchema {
+        self.schema.as_ref()
+    }
+
+    /// makes SqlValues
+    pub fn into_sql_values(self) -> Vec<SqlValues> {
+        self.inner.into_iter().collect()
     }
 
     /// Shrink records into record with specified `fields`.

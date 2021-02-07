@@ -1,13 +1,10 @@
-use std::{
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordIterator, SessionWithTx,
-    SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordFieldRefSchema, RecordIterator,
+    SessionWithTx, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
@@ -72,7 +69,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         self.engine
             .with_tx()
-            .select(session, table_name, projection)
+            .select(session, table_name, projection, AliasDef::default())
             .await
     }
 
@@ -82,9 +79,10 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     fn projection(
         &self,
         input_left: RecordIterator,
-        fields: HashSet<FieldIndex>,
+        fields: Vec<FieldIndex>,
     ) -> ApllodbResult<RecordIterator> {
         let it = RecordIterator::new(
+            input_left.as_schema().clone(),
             input_left
                 .map(|record| record.projection(&fields))
                 .collect::<ApllodbResult<Vec<Record>>>()?,
@@ -128,10 +126,17 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                     &mut left_records
                         .iter()
                         .map(|left_record| left_record.clone().join(right_record.clone()))
-                        .collect::<ApllodbResult<Vec<Record>>>()?,
+                        .collect::<Vec<Record>>(),
                 );
             }
         }
-        Ok(RecordIterator::new(ret))
+
+        if ret.is_empty() {
+            Ok(RecordIterator::new(RecordFieldRefSchema::new(vec![]), ret))
+        } else {
+            let r = ret.first().unwrap();
+            let schema = r.schema().clone();
+            Ok(RecordIterator::new(schema, ret))
+        }
     }
 }

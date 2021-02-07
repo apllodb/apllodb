@@ -43,7 +43,17 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
                 let session = self
                     .engine
                     .with_tx()
-                    .insert(session, insert_node.table_name, input)
+                    .insert(
+                        session,
+                        insert_node.table_name,
+                        input
+                            .as_full_field_references()
+                            .iter()
+                            .map(|ffr| ffr.as_column_name())
+                            .cloned()
+                            .collect(),
+                        input.into_sql_values(),
+                    )
                     .await?;
 
                 Ok(session)
@@ -56,7 +66,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
+    use apllodb_shared_components::{ApllodbResult, Record, SqlValues, TableName};
     use apllodb_storage_engine_interface::{
         test_support::{
             default_mock_engine,
@@ -168,9 +178,18 @@ mod tests {
                     .with(
                         always(),
                         eq(test_datum.expected_insert_table),
-                        eq(RecordIterator::new(test_datum.expected_insert_records)),
+                        eq(test_datum
+                            .expected_insert_records
+                            .first()
+                            .unwrap()
+                            .as_column_names()),
+                        eq(test_datum
+                            .expected_insert_records
+                            .into_iter()
+                            .map(|r| r.into_values())
+                            .collect::<Vec<SqlValues>>()),
                     )
-                    .returning(|session, _, _| async { Ok(session) }.boxed_local());
+                    .returning(|session, _, _, _| async { Ok(session) }.boxed_local());
 
                 with_tx
             });

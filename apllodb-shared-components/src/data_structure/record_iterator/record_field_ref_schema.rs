@@ -30,4 +30,15 @@ impl RecordFieldRefSchema {
             .collect::<ApllodbResult<_>>()?;
         Ok(Self(new_ffrs))
     }
+
+    pub(crate) fn joined(&self, right: &Self) -> Self {
+        let mut left = self.0.clone();
+        let mut right = right.0.clone();
+        left.append(&mut right);
+        Self(left)
+    }
+
+    pub(crate) fn as_full_field_references(&self) -> &[FullFieldReference] {
+        &self.0
+    }
 }

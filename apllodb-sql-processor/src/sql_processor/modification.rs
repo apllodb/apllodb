@@ -2,7 +2,7 @@ use std::{convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, Session,
-    SessionWithTx, SqlValue,
+    SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -99,7 +99,9 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use apllodb_shared_components::{ApllodbResult, Record, RecordIterator, TableName};
+    use apllodb_shared_components::{
+        ApllodbResult, ColumnName, NNSqlValue, SqlValue, SqlValues, TableName,
+    };
     use apllodb_sql_parser::ApllodbSqlParser;
     use apllodb_storage_engine_interface::test_support::{
         default_mock_engine, session_with_tx, test_models::People, MockWithTxMethods,
@@ -114,7 +116,8 @@ mod tests {
     struct TestDatum {
         in_insert_sql: &'static str,
         expected_insert_table: TableName,
-        expected_insert_records: Vec<Record>,
+        expected_insert_columns: Vec<ColumnName>,
+        expected_insert_values: Vec<SqlValues>,
     }
 
     #[async_std::test]
@@ -126,7 +129,14 @@ mod tests {
             vec![TestDatum::new(
                 "INSERT INTO people (id, age) VALUES (1, 13)",
                 People::table_name(),
-                vec![People::record(1, 13)],
+                vec![
+                    People::ffr_id().as_column_name().clone(),
+                    People::ffr_age().as_column_name().clone(),
+                ],
+                vec![SqlValues::new(vec![
+                    SqlValue::NotNull(NNSqlValue::Integer(1)),
+                    SqlValue::NotNull(NNSqlValue::Integer(13)),
+                ])],
             )]
             .into_boxed_slice()
         });
@@ -146,9 +156,10 @@ mod tests {
                     .with(
                         always(),
                         eq(test_datum.expected_insert_table),
-                        eq(RecordIterator::new(test_datum.expected_insert_records)),
+                        eq(test_datum.expected_insert_columns),
+                        eq(test_datum.expected_insert_values),
                     )
-                    .returning(|session, _, _| async { Ok(session) }.boxed_local());
+                    .returning(|session, _, _, _| async { Ok(session) }.boxed_local());
                 with_tx
             });
 

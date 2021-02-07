@@ -132,6 +132,15 @@ impl Record {
 
         Self::new(Arc::new(schema), SqlValues::new(sql_values))
     }
+
+    pub fn as_column_names(&self) -> Vec<ColumnName> {
+        self.schema()
+            .as_full_field_references()
+            .iter()
+            .map(|ffr| ffr.as_column_name())
+            .cloned()
+            .collect()
+    }
 }
 
 impl RecordIterator {

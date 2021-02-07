@@ -17,9 +17,8 @@ impl<'main> CmdProcessor<'main> {
                     cnt += 1;
 
                     let mut s = String::new();
-                    // TODO use field order in query
-                    for (field, value) in r.into_values() {
-                        s.push_str(&format!("{}: {}\t", field, value));
+                    for (ffr, value) in r.into_col_vals() {
+                        s.push_str(&format!("{}: {}\t", ffr, value));
                     }
                     println!("{}", s);
                 }
