@@ -19,10 +19,6 @@ impl RowColumnRefSchema {
         }
     }
 
-    pub(crate) fn table_name(&self) -> &TableName {
-        &self.table_name
-    }
-
     pub fn into_column_names(self) -> Vec<ColumnName> {
         self.column_names
     }

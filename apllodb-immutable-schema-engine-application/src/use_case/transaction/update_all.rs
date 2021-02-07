@@ -91,7 +91,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         //     // rowへのupdate。domainで定義したい
         //     for row in row_iter {
-        //         let col_vals_before = row.into_col_vals();
+        //         let col_vals_before = row.into_zipped();
         //         let mut col_vals_after: HashMap<FullFieldReference, SqlValue> = HashMap::new();
 
         //         for (ffr, val_before) in col_vals_before {

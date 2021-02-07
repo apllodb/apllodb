@@ -1,10 +1,6 @@
 pub mod builder;
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FieldIndex, FullFieldReference,
-    SqlConvertible, SqlValue, SqlValues,
-};
-use std::collections::{hash_map::Entry, HashMap};
+use apllodb_shared_components::{ApllodbResult, ColumnName, SqlConvertible, SqlValue, SqlValues};
 
 use crate::row_iter::version_row_iter::row_column_ref_schema::RowColumnRefSchema;
 
@@ -12,7 +8,7 @@ use crate::row_iter::version_row_iter::row_column_ref_schema::RowColumnRefSchema
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).
 #[derive(Clone, PartialEq, Debug)]
 pub struct ImmutableRow {
-    schema: RowColumnRefSchema,
+    schema: RowColumnRefSchema, // TODO wrap into Arc, own raw data in ImmutableRowIterator
     values: SqlValues,
     // TODO have TransactionId to enable time-machine (TODO naming...) feature.
 }
