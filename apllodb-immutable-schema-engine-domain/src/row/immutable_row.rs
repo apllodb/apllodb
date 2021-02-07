@@ -68,4 +68,8 @@ impl ImmutableRow {
             .zip(self.values)
             .collect()
     }
+
+    pub fn schema(&self) -> &RowColumnRefSchema {
+        &self.schema
+    }
 }

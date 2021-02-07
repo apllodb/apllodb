@@ -10,6 +10,16 @@ pub struct AliasDef {
 }
 
 impl AliasDef {
+    /// get table alias
+    pub fn table_alias(&self) -> Option<&AliasName> {
+        self.table_alias.as_ref()
+    }
+
+    /// get column alias
+    pub fn column_aliases(&self) -> &HashMap<ColumnName, AliasName> {
+        &self.column_aliases
+    }
+
     /// set table alias
     pub fn set_table_alias(mut self, table_alias: AliasName) -> Self {
         self.table_alias = Some(table_alias);
