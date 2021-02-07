@@ -1,8 +1,7 @@
 use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
-use serde::{Deserialize, Serialize};
 
 /// Successful result from [SQLProcessor](crate::SQLProcessor).
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub enum SQLProcessorSuccess {
     /// Response from SELECT command.
     QueryRes {

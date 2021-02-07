@@ -50,18 +50,36 @@ impl AstTranslator {
                     None => {
                         // SELECT C FROM T (AS a)?;
                         // -> C is from T
-                        Ok(CorrelationReference::TableNameVariant(TableName::new(
-                            ast_from_item.table_name.0 .0.clone(),
-                        )?))
+                        if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(alias))) =
+                            &ast_from_item.alias
+                        {
+                            Ok(CorrelationReference::TableAliasVariant {
+                                table_name: TableName::new(ast_from_item.table_name.0 .0.clone())?,
+                                alias_name: AliasName::new(alias)?,
+                            })
+                        } else {
+                            Ok(CorrelationReference::TableNameVariant(TableName::new(
+                                ast_from_item.table_name.0 .0.clone(),
+                            )?))
+                        }
                     }
                     Some(apllodb_ast::Correlation(apllodb_ast::Identifier(colref_corr))) => {
                         // SELECT ta.C FROM T (AS a)?;
                         if colref_corr == &ast_from_item.table_name.0 .0 {
                             // SELECT T.C FROM T (AS a)?;
                             // -> C is from T
-                            Ok(CorrelationReference::TableNameVariant(TableName::new(
-                                colref_corr,
-                            )?))
+                            if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(alias))) =
+                                &ast_from_item.alias
+                            {
+                                Ok(CorrelationReference::TableAliasVariant {
+                                    table_name: TableName::new(colref_corr)?,
+                                    alias_name: AliasName::new(alias)?,
+                                })
+                            } else {
+                                Ok(CorrelationReference::TableNameVariant(TableName::new(
+                                    colref_corr,
+                                )?))
+                            }
                         } else {
                             // SELECT a1.C FROM T (AS a2)?;
                             match &ast_from_item.alias {
@@ -126,9 +144,9 @@ impl AstTranslator {
 
 #[cfg(test)]
 mod tests {
-    use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation, FromItem};
-
     use crate::{ApllodbErrorKind, ApllodbResult, AstTranslator, FullFieldReference};
+    use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation, FromItem};
+    use pretty_assertions::assert_eq;
 
     #[derive(new)]
     struct TestDatum {
@@ -168,12 +186,12 @@ mod tests {
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
                 vec![FromItem::factory("t", Some("a"))],
-                Ok(FullFieldReference::factory("t", "c")),
+                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
                 vec![FromItem::factory("t", Some("a"))],
-                Ok(FullFieldReference::factory("t", "c")),
+                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("a")), "c"),

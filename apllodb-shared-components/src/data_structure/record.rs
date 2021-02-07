@@ -1,23 +1,32 @@
 pub(crate) mod field_index;
 
 use crate::{
-    error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
-    traits::sql_convertible::SqlConvertible,
-    FieldIndex, FullFieldReference,
+    error::ApllodbResult, traits::sql_convertible::SqlConvertible, FieldIndex, FullFieldReference,
+    SqlValues,
 };
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::{ops::Index, sync::Arc};
 
-use super::value::sql_value::SqlValue;
+use super::{
+    record_iterator::record_field_ref_schema::RecordFieldRefSchema, value::sql_value::SqlValue,
+};
 
 /// Record representation used in client and query processor.
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, new)]
+///
+/// Record is meant to be read-only data.
+/// It is created while SELECT by a storage engine or query processor.
+#[derive(Clone, PartialEq, Debug)]
 pub struct Record {
-    fields: HashMap<FullFieldReference, SqlValue>,
+    schema: Arc<RecordFieldRefSchema>,
+    values: SqlValues,
 }
 
 impl Record {
+    /// Constructor
+    pub fn new(schema: Arc<RecordFieldRefSchema>, values: SqlValues) -> Self {
+        Self { schema, values }
+    }
+
     /// Get Rust value from record's field.
     ///
     /// Returns `None` if matching [SqlValue](crate::SqlValue) is NULL.
@@ -43,14 +52,8 @@ impl Record {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, index: &FieldIndex) -> ApllodbResult<&SqlValue> {
-        let ffr = index.peek(self.fields.keys())?;
-        let sql_value = self.fields.get(&ffr).ok_or_else(|| {
-            ApllodbError::new(
-                ApllodbErrorKind::InvalidName,
-                format!("invalid field reference: `{:?}`", index),
-                None,
-            )
-        })?;
+        let idx = self.schema.resolve_index(index)?;
+        let sql_value = self.values.index(idx);
         Ok(sql_value)
     }
 
@@ -60,53 +63,42 @@ impl Record {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(mut self, projection: &HashSet<FieldIndex>) -> ApllodbResult<Self> {
-        let projection: HashSet<FullFieldReference> = projection
+    pub fn projection(mut self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
+        let idxs: Vec<usize> = projection
             .iter()
-            .map(|index| {
-                let ffr = index.peek(self.fields.keys())?;
-                Ok(ffr.clone())
-            })
+            .map(|index| self.schema.resolve_index(index))
             .collect::<ApllodbResult<_>>()?;
 
-        let new_fields: HashMap<FullFieldReference, SqlValue> = self
-            .fields
-            .drain()
-            .filter(|(k, _)| projection.contains(k))
-            .collect();
-        self.fields = new_fields;
+        self.schema = Arc::new(self.schema.projection(projection)?);
+        self.values = self.values.projection(&idxs);
 
         Ok(self)
     }
 
-    /// Joins another record into this record.
-    ///
-    /// # Failures
-    ///
-    /// - [DuplicateObject](crate::ApllodbErrorKind::DuplicateObject) when:
-    ///   - `another` has the same field with self.
-    pub fn join(mut self, mut another: Record) -> ApllodbResult<Self> {
-        let another_ffr: HashSet<&FullFieldReference> = another.fields.keys().collect();
-        if let Some(dup_field) = self.fields.keys().find(|field| another_ffr.contains(field)) {
-            return Err(ApllodbError::new(
-                ApllodbErrorKind::DuplicateColumn,
-                format!(
-                    "joining two records with duplicate field: `{:?}`",
-                    dup_field
-                ),
-                None,
-            ));
-        }
-
-        let new_fields: HashMap<FullFieldReference, SqlValue> =
-            self.fields.drain().chain(another.fields.drain()).collect();
-        self.fields = new_fields;
-
-        Ok(self)
+    /// Joins another record after this record.
+    pub fn join(mut self, right: Self) -> Self {
+        self.schema = Arc::new(self.schema.joined(right.schema()));
+        self.values.join(right.values);
+        self
     }
 
     /// Get raw representation
-    pub fn into_field_values(self) -> HashMap<FullFieldReference, SqlValue> {
-        self.fields
+    pub fn into_values(self) -> SqlValues {
+        self.values
+    }
+
+    /// Get raw representation
+    pub fn into_ffr_vals(self) -> Vec<(FullFieldReference, SqlValue)> {
+        self.schema
+            .as_full_field_references()
+            .iter()
+            .cloned()
+            .zip(self.values)
+            .collect()
+    }
+
+    /// ref to schema
+    pub fn schema(&self) -> &RecordFieldRefSchema {
+        self.schema.as_ref()
     }
 }

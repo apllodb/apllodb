@@ -45,19 +45,16 @@
 //!
 //! See [test_support module level doc](crate::test_support) for detail.
 
-#[macro_use]
-extern crate derive_new;
-
 mod access_methods;
+mod alias_def;
 mod projection_query;
-mod table_column_reference;
 
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
     without_db_methods::WithoutDbMethods,
 };
+pub use alias_def::AliasDef;
 pub use projection_query::ProjectionQuery;
-pub use table_column_reference::TableColumnReference;
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;

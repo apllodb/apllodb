@@ -44,31 +44,42 @@ impl FieldIndex {
     pub fn peek<'a>(
         &self,
         full_field_references: impl IntoIterator<Item = &'a FullFieldReference>,
-    ) -> ApllodbResult<&'a FullFieldReference> {
-        let full_field_references: Vec<&'a FullFieldReference> = full_field_references
-            .into_iter()
-            .filter(|ffr| self.matches(ffr))
-            .collect();
+    ) -> ApllodbResult<(usize, &'a FullFieldReference)> {
+        let mut ret_idx: usize = 0;
+        let mut ret_ffr: Option<&'a FullFieldReference> = None;
 
-        match full_field_references.len() {
-            0 => Err(ApllodbError::new(
+        for ffr in full_field_references {
+            if self.matches(ffr) {
+                if ret_ffr.is_some() {
+                    return Err(ApllodbError::new(
+                        ApllodbErrorKind::AmbiguousColumn,
+                        format!(
+                            "field index `{}` match to more than 1 of full_field_references",
+                            self
+                        ),
+                        None,
+                    ));
+                } else {
+                    ret_ffr = Some(ffr);
+                }
+            }
+            if ret_ffr.is_none() {
+                ret_idx += 1;
+            }
+        }
+
+        if ret_ffr.is_none() {
+            return Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
                 format!(
                     "field index `{}` does not match any of full_field_references",
                     self
                 ),
                 None,
-            )),
-            1 => Ok(full_field_references.get(0).unwrap()),
-            _ => Err(ApllodbError::new(
-                ApllodbErrorKind::AmbiguousColumn,
-                format!(
-                    "field index `{}` match to more than 1 of full_field_references",
-                    self
-                ),
-                None,
-            )),
+            ));
         }
+
+        Ok((ret_idx, ret_ffr.unwrap()))
     }
 
     fn matches(&self, full_field_reference: &FullFieldReference) -> bool {
@@ -119,14 +130,21 @@ impl FieldIndex {
                 Some(self_correlation_name),
                 CorrelationReference::TableNameVariant(tn),
                 FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
+            ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
+            (
                 // index: t.c
                 // ffr: T.C AS CA
                 Some(self_correlation_name),
                 CorrelationReference::TableNameVariant(tn),
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
+                FieldReference::ColumnAliasVariant {
+                    column_name,
+                    alias_name,
+                },
+            ) => {
+                self_correlation_name == tn.as_str()
+                    && (self.field_name == column_name.as_str()
+                        || self.field_name == alias_name.as_str())
+            }
 
             (
                 // index: t.c
@@ -137,20 +155,28 @@ impl FieldIndex {
                     table_name,
                 },
                 FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                // index: t.c
-                // ffr: (T AS TA).C AS CA
-                Some(self_correlation_name),
-                CorrelationReference::TableAliasVariant {
-                    alias_name,
-                    table_name,
-                },
-                FieldReference::ColumnAliasVariant { column_name, .. },
             ) => {
                 (self_correlation_name == table_name.as_str()
                     || self_correlation_name == alias_name.as_str())
                     && self.field_name == column_name.as_str()
+            }
+            (
+                // index: t.c
+                // ffr: (T AS TA).C AS CA
+                Some(self_correlation_name),
+                CorrelationReference::TableAliasVariant {
+                    alias_name: table_alias,
+                    table_name,
+                },
+                FieldReference::ColumnAliasVariant {
+                    column_name,
+                    alias_name: column_alias,
+                },
+            ) => {
+                (self_correlation_name == table_name.as_str()
+                    || self_correlation_name == table_alias.as_str())
+                    && (self.field_name == column_name.as_str()
+                        || self.field_name == column_alias.as_str())
             }
         }
     }
@@ -291,7 +317,7 @@ mod tests {
                 full_field_references: vec![
                     FullFieldReference::factory("t", "c").with_field_alias("ca")
                 ],
-                expected_result: Err(ApllodbErrorKind::InvalidName),
+                expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
@@ -364,14 +390,14 @@ mod tests {
                 full_field_references: vec![FullFieldReference::factory("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
-                expected_result: Err(ApllodbErrorKind::InvalidName),
+                expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.ca",
                 full_field_references: vec![FullFieldReference::factory("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
-                expected_result: Err(ApllodbErrorKind::InvalidName),
+                expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c2",
@@ -410,10 +436,11 @@ mod tests {
         for test_datum in test_data {
             let field_index = FieldIndex::from(test_datum.field_index);
             match field_index.peek(test_datum.full_field_references.iter().as_ref()) {
-                Ok(ffr) => {
-                    let idx = test_datum
+                Ok((idx, ffr)) => {
+                    let expected_idx = test_datum
                         .expected_result
                         .expect("succeeded in peeking, should expect Ok()");
+                    assert_eq!(idx, expected_idx);
                     assert_eq!(ffr, test_datum.full_field_references.get(idx).unwrap());
                 }
                 Err(e) => {

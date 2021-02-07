@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
     query::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{ApllodbResult, DatabaseName, TableName};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, RecordFieldRefSchema, TableName};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
@@ -23,6 +23,7 @@ impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
 
 #[derive(Debug)]
 pub struct FullScanUseCaseOutput<Types: ImmutableSchemaAbstractTypes> {
+    pub schema: RecordFieldRefSchema,
     pub row_iter: Types::ImmutableSchemaRowIter,
 }
 impl<Types: ImmutableSchemaAbstractTypes> UseCaseOutput for FullScanUseCaseOutput<Types> {}
@@ -54,7 +55,8 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result: ProjectionResult =
             ProjectionResult::new(&vtable, active_versions, input.projection)?;
+        let schema = RecordFieldRefSchema::from(projection_result.clone());
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
-        Ok(FullScanUseCaseOutput { row_iter })
+        Ok(FullScanUseCaseOutput { schema, row_iter })
     }
 }
