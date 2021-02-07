@@ -67,13 +67,16 @@ mod tests {
     use std::rc::Rc;
 
     use apllodb_shared_components::{ApllodbResult, Record, SqlValues, TableName};
-    use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, test_support::{
+    use apllodb_storage_engine_interface::{
+        test_support::{
             default_mock_engine,
             fixture::*,
             mock_select, session_with_tx,
             test_models::{People, Pet},
             MockWithTxMethods,
-        }};
+        },
+        AliasDef, ProjectionQuery,
+    };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
