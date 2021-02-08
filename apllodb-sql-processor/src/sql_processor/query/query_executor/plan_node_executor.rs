@@ -45,9 +45,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ) -> ApllodbResult<RecordIterator> {
         match op_unary {
             UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
-            UnaryPlanOperation::Selection { condition: _ } => {
-                todo!()
-            }
+            UnaryPlanOperation::Selection { condition } => self.selection(input_left, condition),
         }
     }
 
@@ -93,7 +91,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         Ok(RecordIterator::from(records))
     }
 
-    fn _selection(
+    fn selection(
         &self,
         input_left: RecordIterator,
         condition: Expression,
