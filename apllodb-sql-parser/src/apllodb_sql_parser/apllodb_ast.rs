@@ -66,6 +66,13 @@ pub enum UnaryOperator {
     Minus,
 }
 
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum BinaryOperator {
+    Equal,
+    And,
+}
+
 /*
  * ================================================================================================
  * Identifier:
@@ -94,6 +101,7 @@ pub enum Expression {
     ConstantVariant(Constant),
     ColumnReferenceVariant(ColumnReference),
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
+    BinaryOperatorVariant(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
 /*

@@ -832,8 +832,7 @@ condition = {
 }
 
 expression = {
-    (sub_expression ~ binary_operator ~ expression)
-    | sub_expression
+    sub_expression ~ (binary_operator ~ expression)?
 }
 
 // To avoid left-recursion
