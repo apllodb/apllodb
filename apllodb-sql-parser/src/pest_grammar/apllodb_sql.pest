@@ -785,6 +785,11 @@ unary_operator = {
     "-"
 }
 
+binary_operator = {
+    "="
+    | ^"AND"
+}
+
 /*
  * ================================================================================================
  * Identifier:
@@ -827,6 +832,12 @@ condition = {
 }
 
 expression = {
+    sub_expression
+    | (sub_expression ~ binary_operator ~ expression)
+}
+
+// To avoid left-recursion
+sub_expression = _{
     constant
     | column_reference
     | (unary_operator ~ expression)
