@@ -111,3 +111,32 @@ impl Record {
         self.schema.as_ref()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{test_support::fixture::T_PEOPLE_R1, ApllodbErrorKind, Expression, Record};
+
+    #[test]
+    fn test_selection() {
+        struct TestDatum {
+            in_record: Record,
+            in_condition: Expression,
+            expected_result: Result<bool, ApllodbErrorKind>,
+        }
+
+        let test_data: Vec<TestDatum> = vec![TestDatum {
+            in_record: T_PEOPLE_R1.clone(),
+            in_condition: Expression::factory_null(),
+            expected_result: Ok(false),
+        }];
+
+        for test_datum in test_data {
+            let result = test_datum.in_record.selection(&test_datum.in_condition);
+            match (result, test_datum.expected_result) {
+                (Ok(b), Ok(b_expected)) => assert_eq!(b, b_expected),
+                (Err(e), Err(e_expected)) => assert_eq!(e.kind(), &e_expected),
+                (r, r_expected) => panic!("expected: {:#?}, got: {:#?}", r_expected, r),
+            }
+        }
+    }
+}
