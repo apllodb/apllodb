@@ -1,8 +1,9 @@
 pub(crate) mod field_index;
 
 use crate::{
-    error::ApllodbResult, traits::sql_convertible::SqlConvertible, Expression, FieldIndex,
-    FullFieldReference, SqlValues,
+    error::ApllodbResult, traits::sql_convertible::SqlConvertible, ApllodbError, ApllodbErrorKind,
+    BooleanExpression, ComparisonFunction, Expression, FieldIndex, FullFieldReference,
+    LogicalFunction, SqlValues, UnaryOperator,
 };
 use std::{ops::Index, sync::Arc};
 
@@ -81,9 +82,61 @@ impl Record {
     ///
     /// - [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch) when:
     ///   - `condition` is not evaluated as BOOLEAN type.
-    pub fn selection(&self, _condition: &Expression) -> ApllodbResult<bool> {
-        todo!()
+    pub fn selection(&self, condition: &Expression) -> ApllodbResult<bool> {
+        match condition {
+            Expression::ConstantVariant(_) | Expression::FullFieldReferenceVariant(_) => {
+                let sql_value = self.eval_to_sql_value(condition)?;
+                self.selection_sql_value(&sql_value)
+            }
+            Expression::UnaryOperatorVariant(_, _) => Err(ApllodbError::new(
+                ApllodbErrorKind::DatatypeMismatch,
+                "-(Expression) cannot be evaluated as BOOLEAN",
+                None,
+            )),
+            Expression::BooleanExpressionVariant(boolean_expr) => {
+                self.selection_boolean_expression(boolean_expr)
+            }
+        }
     }
+
+    fn selection_sql_value(&self, sql_value: &SqlValue) -> ApllodbResult<bool> {
+        match sql_value {
+            SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
+            SqlValue::NotNull(nn_sql_value) => Err(ApllodbError::new(
+                ApllodbErrorKind::DatatypeMismatch,
+                format!(
+                    "{:?} cannot be evaluated as BOOLEAN",
+                    nn_sql_value.sql_type()
+                ),
+                None,
+            )),
+        }
+    }
+
+    fn selection_boolean_expression(
+        &self,
+        boolean_expr: &BooleanExpression,
+    ) -> ApllodbResult<bool> {
+        match boolean_expr {
+            BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
+                match comparison_function {
+                    ComparisonFunction::EqualVariant { left, right } => {
+                        let left_sql_value = self.eval_to_sql_value(left)?;
+                        let right_sql_value = self.eval_to_sql_value(right)?;
+                        Ok(left_sql_value == right_sql_value)
+                    }
+                }
+            }
+            BooleanExpression::LogicalFunctionVariant(logical_function) => match logical_function {
+                LogicalFunction::AndVariant { left, right } => {
+                    let left_b = self.selection_boolean_expression(left)?;
+                    let right_b = self.selection_boolean_expression(right)?;
+                    Ok(left_b && right_b)
+                }
+            },
+        }
+    }
+
     /// Joins another record after this record.
     pub fn join(mut self, right: Self) -> Self {
         self.schema = Arc::new(self.schema.joined(right.schema()));
@@ -110,11 +163,47 @@ impl Record {
     pub fn schema(&self) -> &RecordFieldRefSchema {
         self.schema.as_ref()
     }
+
+    /// # Failures
+    ///
+    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - failed to evaluate as SqlValue.
+    ///
+    /// TODO no clone()
+    fn eval_to_sql_value(&self, expr: &Expression) -> ApllodbResult<SqlValue> {
+        match expr {
+            Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
+            Expression::FullFieldReferenceVariant(ffr) => {
+                let index = FieldIndex::from(ffr.clone());
+                let sql_value = self.get_sql_value(&index)?;
+                Ok(sql_value.clone())
+            }
+            Expression::UnaryOperatorVariant(op, expr) => {
+                let sql_value = self.eval_to_sql_value(expr)?;
+                match op {
+                    UnaryOperator::Minus => match sql_value {
+                        SqlValue::Null => Ok(sql_value),
+                        SqlValue::NotNull(nn_sql_value) => {
+                            Ok(SqlValue::NotNull(nn_sql_value.negate()?))
+                        }
+                    },
+                }
+            }
+            Expression::BooleanExpressionVariant(_) => Err(ApllodbError::new(
+                ApllodbErrorKind::DatatypeMismatch,
+                "BooleanExpression cannot be evaluated as SqlValue",
+                None,
+            )),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, BooleanExpression, Expression, Record, test_support::{fixture::T_PEOPLE_R1, test_models::People}};
+    use crate::{
+        test_support::{fixture::T_PEOPLE_R1, test_models::People},
+        ApllodbErrorKind, BooleanExpression, Expression, Record,
+    };
 
     #[test]
     fn test_selection() {
