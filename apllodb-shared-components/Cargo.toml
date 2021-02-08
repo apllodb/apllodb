@@ -11,7 +11,7 @@ repository = "https://github.com/darwin-education/apllodb"
 version = "0.1.0"
 
 [features]
-test-support = ["rand"]
+test-support = ["rand", "once_cell"]
 
 [dependencies]
 apllodb-sql-parser = {path = "../apllodb-sql-parser", features = ["test-support"]}
@@ -26,6 +26,8 @@ log = "0.4"
 fastrand = "1.4"
 
 rand = {version = "0.8", optional = true}
+
+once_cell = {version = "1.5", optional = true}
 
 [dev-dependencies]
 apllodb-shared-components = {path = ".", features = ["test-support"]}

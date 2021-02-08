@@ -115,12 +115,10 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use apllodb_shared_components::{
-        ApllodbResult, ColumnName, NNSqlValue, SqlValue, SqlValues, TableName,
-    };
+    use apllodb_shared_components::{ApllodbResult, ColumnName, NNSqlValue, SqlValue, SqlValues, TableName, test_support::test_models::People};
     use apllodb_sql_parser::ApllodbSqlParser;
     use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, session_with_tx, test_models::People, MockWithTxMethods,
+        default_mock_engine, session_with_tx, MockWithTxMethods,
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};

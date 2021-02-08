@@ -66,15 +66,15 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use apllodb_shared_components::{ApllodbResult, Record, SqlValues, TableName};
-    use apllodb_storage_engine_interface::{
+    use apllodb_shared_components::{
         test_support::{
-            default_mock_engine,
             fixture::*,
-            mock_select, session_with_tx,
             test_models::{People, Pet},
-            MockWithTxMethods,
         },
+        ApllodbResult, Record, SqlValues, TableName,
+    };
+    use apllodb_storage_engine_interface::{
+        test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
         AliasDef, ProjectionQuery,
     };
     use futures::FutureExt;

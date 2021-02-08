@@ -1,8 +1,7 @@
 mod sql_test;
 
 use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ApllodbErrorKind, FieldIndex};
-use apllodb_storage_engine_interface::test_support::fixture::*;
+use apllodb_shared_components::{test_support::fixture::*, ApllodbErrorKind, FieldIndex};
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
 use sql_test::{SqlTest, Step, StepRes, Steps};
