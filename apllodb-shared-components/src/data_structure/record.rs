@@ -114,7 +114,7 @@ impl Record {
 
 #[cfg(test)]
 mod tests {
-    use crate::{test_support::fixture::T_PEOPLE_R1, ApllodbErrorKind, Expression, Record};
+    use crate::{ApllodbErrorKind, BooleanExpression, Expression, Record, test_support::{fixture::T_PEOPLE_R1, test_models::People}};
 
     #[test]
     fn test_selection() {
@@ -124,11 +124,64 @@ mod tests {
             expected_result: Result<bool, ApllodbErrorKind>,
         }
 
-        let test_data: Vec<TestDatum> = vec![TestDatum {
-            in_record: T_PEOPLE_R1.clone(),
-            in_condition: Expression::factory_null(),
-            expected_result: Ok(false),
-        }];
+        let test_data: Vec<TestDatum> = vec![
+            // constants
+            TestDatum {
+                in_record: T_PEOPLE_R1.clone(),
+                in_condition: Expression::factory_null(),
+                expected_result: Ok(false),
+            },
+            TestDatum {
+                in_record: T_PEOPLE_R1.clone(),
+                in_condition: Expression::factory_integer(123),
+                expected_result: Err(ApllodbErrorKind::DatatypeMismatch),
+            },
+            // FullFieldReference
+            TestDatum {
+                in_record: T_PEOPLE_R1.clone(),
+                in_condition: Expression::FullFieldReferenceVariant(People::ffr_id()),
+                expected_result: Err(ApllodbErrorKind::DatatypeMismatch),
+            },
+            // BooleanExpression
+            TestDatum {
+                in_record: T_PEOPLE_R1.clone(),
+                in_condition: Expression::factory_eq(
+                    Expression::factory_null(),
+                    Expression::factory_null(),
+                ),
+                expected_result: Ok(false),
+            },
+            TestDatum {
+                in_record: T_PEOPLE_R1.clone(),
+                in_condition: Expression::factory_eq(
+                    Expression::factory_integer(123),
+                    Expression::factory_integer(123),
+                ),
+                expected_result: Ok(true),
+            },
+            TestDatum {
+                in_record: T_PEOPLE_R1.clone(),
+                in_condition: Expression::factory_eq(
+                    Expression::factory_integer(123),
+                    Expression::factory_integer(-123),
+                ),
+                expected_result: Ok(false),
+            },
+            TestDatum {
+                in_record: T_PEOPLE_R1.clone(),
+                in_condition: Expression::factory_and(
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(123),
+                        Expression::factory_integer(123),
+                    ),
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(456),
+                        Expression::factory_integer(456),
+                    ),
+                ),
+                expected_result: Ok(true),
+            },
+        ];
 
         for test_datum in test_data {
             let result = test_datum.in_record.selection(&test_datum.in_condition);
