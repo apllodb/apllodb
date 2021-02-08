@@ -98,21 +98,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         input_left: RecordIterator,
         condition: Expression,
     ) -> ApllodbResult<RecordIterator> {
-        let it = RecordIterator::new(
-            input_left
-                .filter_map(|record| match record.selection(&condition) {
-                    Err(e) => Some(Err(e)),
-                    Ok(b) => {
-                        if b {
-                            Some(Ok(record))
-                        } else {
-                            None
-                        }
-                    }
-                })
-                .collect::<ApllodbResult<Vec<Record>>>()?,
-        );
-        Ok(it)
+        input_left.selection(&condition)
     }
 
     /// Join algorithm using hash table.
