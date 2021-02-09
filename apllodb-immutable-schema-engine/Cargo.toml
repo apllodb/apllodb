@@ -7,9 +7,9 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"]}
+apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra"}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
-apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
 
 env_logger = "0.8"
 log = "0.4"
