@@ -1,6 +1,5 @@
 use apllodb_sql_parser::apllodb_ast;
 
-
 use crate::{ast_translator::AstTranslator, data_structure::expression::operator::BinaryOperator};
 
 impl AstTranslator {

@@ -91,11 +91,10 @@ impl TryFrom<SelectCommand> for QueryPlan {
             let selection_op = UnaryPlanOperation::Selection {
                 condition: AstTranslator::condition_in_select(condition, from_items.clone())?,
             };
-            let selection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
+            QueryPlanNode::Unary(QueryPlanNodeUnary {
                 op: selection_op,
                 left: Box::new(seq_scan_node),
-            });
-            selection_node
+            })
         } else {
             seq_scan_node
         };
