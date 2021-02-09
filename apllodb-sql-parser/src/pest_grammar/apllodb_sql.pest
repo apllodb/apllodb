@@ -37,7 +37,7 @@ keyword = {
     // | ^"ALL"
     | ^"ALTER"
     // | ^"ALWAYS"
-    | ^"AND"
+    // | ^"AND"
     // | ^"ANY"
     // | ^"ARE"
     // | ^"ARRAY_AGG"
@@ -394,7 +394,7 @@ keyword = {
     // | ^"NULLABLE"
     // | ^"NULLIF"
     // | ^"NULLS"
-    // | ^"NULL"
+    | ^"NULL"
     // | ^"NUMBER"
     // | ^"NUMERIC"
     // | ^"OBJECT"
@@ -754,8 +754,13 @@ string_character = _{
  */
 
 constant = {
-    numeric_constant
+    null_constant
+    | numeric_constant
     | string_constant
+}
+
+null_constant = {
+    ^"NULL"
 }
 
 numeric_constant = {
@@ -783,6 +788,10 @@ string_content = @{
 
 unary_operator = {
     "-"
+}
+
+binary_operator = {
+    "="
 }
 
 /*
@@ -827,6 +836,11 @@ condition = {
 }
 
 expression = {
+    sub_expression ~ (binary_operator ~ expression)?
+}
+
+// To avoid left-recursion
+sub_expression = {
     constant
     | column_reference
     | (unary_operator ~ expression)

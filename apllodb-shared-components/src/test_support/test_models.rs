@@ -1,6 +1,4 @@
-use apllodb_shared_components::{
-    FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
-};
+use crate::{FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
@@ -126,4 +124,11 @@ impl Pet {
             ),
         ])
     }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct ModelsMock {
+    pub people: Vec<Record>,
+    pub body: Vec<Record>,
+    pub pet: Vec<Record>,
 }

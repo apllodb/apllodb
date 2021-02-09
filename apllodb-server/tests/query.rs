@@ -1,8 +1,7 @@
 mod sql_test;
 
 use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ApllodbErrorKind, FieldIndex};
-use apllodb_storage_engine_interface::test_support::fixture::*;
+use apllodb_shared_components::{test_support::fixture::*, ApllodbErrorKind, FieldIndex};
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
 use sql_test::{SqlTest, Step, StepRes, Steps};
@@ -81,6 +80,62 @@ async fn test_projection() {
                     );
                     Ok(())
                 })),
+            ),
+        )
+        .run()
+        .await;
+}
+
+#[async_std::test]
+async fn test_selection() {
+    SqlTest::default()
+        .add_steps(Steps::SetupPeopleDataset)
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(
+            // selection to PK
+            Step::new(
+                "SELECT id, age FROM people WHERE id = 2",
+                StepRes::OkQuery(Box::new(|mut records| {
+                    let id_index = FieldIndex::from("id");
+
+                    let r = records.next().unwrap();
+                    assert_eq!(r.get::<i64>(&id_index).unwrap(), Some(2));
+                    assert!(records.next().is_none());
+
+                    Ok(())
+                })),
+            ),
+        )
+        .add_step(
+            // selection to non-PK
+            Step::new(
+                "SELECT id, age FROM people WHERE age = 35",
+                StepRes::OkQuery(Box::new(|mut records| {
+                    let age_index = FieldIndex::from("age");
+
+                    let r = records.next().unwrap();
+                    assert_eq!(r.get::<i32>(&age_index).unwrap(), Some(35));
+                    assert!(records.next().is_none());
+
+                    Ok(())
+                })),
+            ),
+        )
+        .add_step(
+            // NULL is evaluated as FALSE
+            Step::new(
+                "SELECT id, age FROM people WHERE NULL",
+                StepRes::OkQuery(Box::new(|records| {
+                    assert_eq!(records.count(), 0);
+                    Ok(())
+                })),
+            ),
+        )
+        .add_step(
+            // DatatypeMismatch
+            Step::new(
+                "SELECT id, age FROM people WHERE 1",
+                StepRes::Err(ApllodbErrorKind::DatatypeMismatch),
             ),
         )
         .run()

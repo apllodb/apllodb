@@ -2,7 +2,7 @@ pub(crate) mod record_field_ref_schema;
 
 use std::sync::Arc;
 
-use crate::{ApllodbResult, FieldIndex, FullFieldReference, Record, SqlValues};
+use crate::{ApllodbResult, Expression, FieldIndex, FullFieldReference, Record, SqlValues};
 
 use self::record_field_ref_schema::RecordFieldRefSchema;
 
@@ -43,6 +43,20 @@ impl RecordIterator {
     /// makes SqlValues
     pub fn into_sql_values(self) -> Vec<SqlValues> {
         self.inner.into_iter().collect()
+    }
+
+    /// Filter records that satisfy the given `condition`.
+    pub fn selection(self, condition: &Expression) -> ApllodbResult<Self> {
+        let records: Vec<Record> = self
+            .into_iter()
+            .filter_map(|record| match record.selection(condition) {
+                Ok(false) => None,
+                Ok(true) => Some(Ok(record)),
+                Err(e) => Some(Err(e)),
+            })
+            .collect::<ApllodbResult<_>>()?;
+
+        Ok(Self::from(records))
     }
 
     /// Shrink records into record with specified `fields`.

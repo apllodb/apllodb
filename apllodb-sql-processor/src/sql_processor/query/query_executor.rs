@@ -74,15 +74,15 @@ mod tests {
 
     use pretty_assertions::assert_eq;
 
-    use apllodb_shared_components::{ApllodbResult, FieldIndex, Record};
-    use apllodb_storage_engine_interface::{
+    use apllodb_shared_components::{
         test_support::{
-            default_mock_engine,
             fixture::*,
-            mock_select, session_with_tx,
             test_models::{Body, People, Pet},
-            MockWithTxMethods,
         },
+        ApllodbResult, FieldIndex, Record,
+    };
+    use apllodb_storage_engine_interface::{
+        test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
         AliasDef, ProjectionQuery,
     };
 

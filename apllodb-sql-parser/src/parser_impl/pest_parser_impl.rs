@@ -3,13 +3,13 @@ mod helper;
 
 use crate::{
     apllodb_ast::{
-        types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, CharacterType,
-        ColumnConstraint, ColumnDefinition, ColumnName, ColumnReference, Command, Condition,
-        Constant, Correlation, CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName,
-        DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem, Identifier,
-        InsertCommand, IntegerConstant, IntegerType, NumericConstant, SelectCommand, SelectField,
-        StringConstant, TableConstraint, TableElement, TableName, UnaryOperator, UpdateCommand,
-        UseDatabaseCommand,
+        types::NonEmptyVec, Action, AddColumn, Alias, AlterTableCommand, BinaryOperator,
+        CharacterType, ColumnConstraint, ColumnDefinition, ColumnName, ColumnReference, Command,
+        Condition, Constant, Correlation, CreateDatabaseCommand, CreateTableCommand, DataType,
+        DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
+        Identifier, InsertCommand, IntegerConstant, IntegerType, NumericConstant, SelectCommand,
+        SelectField, StringConstant, TableConstraint, TableElement, TableName, UnaryOperator,
+        UpdateCommand, UseDatabaseCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -61,10 +61,16 @@ impl PestParserImpl {
     fn parse_constant(mut params: FnParseParams) -> ApllodbSqlParserResult<Constant> {
         try_parse_child(
             &mut params,
+            Rule::null_constant,
+            |_| Ok(Constant::NullVariant),
+            identity,
+        )?
+        .or(try_parse_child(
+            &mut params,
             Rule::numeric_constant,
             Self::parse_numeric_constant,
             Constant::NumericConstantVariant,
-        )?
+        )?)
         .or(try_parse_child(
             &mut params,
             Rule::string_constant,
@@ -128,6 +134,17 @@ impl PestParserImpl {
         }
     }
 
+    fn parse_binary_operator(mut params: FnParseParams) -> ApllodbSqlParserResult<BinaryOperator> {
+        let s = self_as_str(&mut params);
+        match s.to_lowercase().as_str() {
+            "=" => Ok(BinaryOperator::Equal),
+            _ => Err(ApllodbSqlParserError::new(
+                params.apllodb_sql,
+                "Does not match any child rule of binary_operator.",
+            )),
+        }
+    }
+
     /*
      * ================================================================================================
      * Identifier:
@@ -157,6 +174,36 @@ impl PestParserImpl {
     }
 
     fn parse_expression(mut params: FnParseParams) -> ApllodbSqlParserResult<Expression> {
+        let expr = parse_child(
+            &mut params,
+            Rule::sub_expression,
+            Self::parse_sub_expression,
+            identity,
+        )?;
+
+        if let Some(bin_op) = try_parse_child(
+            &mut params,
+            Rule::binary_operator,
+            Self::parse_binary_operator,
+            identity,
+        )? {
+            let right_expr = parse_child(
+                &mut params,
+                Rule::expression,
+                Self::parse_expression,
+                identity,
+            )?;
+            Ok(Expression::BinaryOperatorVariant(
+                bin_op,
+                Box::new(expr),
+                Box::new(right_expr),
+            ))
+        } else {
+            Ok(expr)
+        }
+    }
+
+    fn parse_sub_expression(mut params: FnParseParams) -> ApllodbSqlParserResult<Expression> {
         try_parse_child(
             &mut params,
             Rule::constant,
@@ -189,7 +236,7 @@ impl PestParserImpl {
         .ok_or_else(|| {
             ApllodbSqlParserError::new(
                 params.apllodb_sql,
-                "Does not match any child rule of expression.",
+                "Does not match any child rule of sub_expression.",
             )
         })
     }

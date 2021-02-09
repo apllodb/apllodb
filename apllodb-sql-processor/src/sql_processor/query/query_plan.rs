@@ -27,9 +27,6 @@ impl TryFrom<SelectCommand> for QueryPlan {
     type Error = ApllodbError;
 
     fn try_from(sc: SelectCommand) -> ApllodbResult<Self> {
-        if sc.where_condition.is_some() {
-            unimplemented!();
-        }
         if sc.grouping_elements.is_some() {
             unimplemented!();
         }
@@ -65,7 +62,8 @@ impl TryFrom<SelectCommand> for QueryPlan {
                             from_items.clone(),
                         )
                     }
-                    apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
+                    apllodb_ast::Expression::UnaryOperatorVariant(_, _)
+                    | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
                         // TODO このレイヤーで計算しちゃいたい
                         unimplemented!();
                     }
@@ -88,6 +86,19 @@ impl TryFrom<SelectCommand> for QueryPlan {
                 alias_def,
             },
         });
+
+        let projection_child_node = if let Some(condition) = sc.where_condition {
+            let selection_op = UnaryPlanOperation::Selection {
+                condition: AstTranslator::condition_in_select(condition, from_items.clone())?,
+            };
+            QueryPlanNode::Unary(QueryPlanNodeUnary {
+                op: selection_op,
+                left: Box::new(seq_scan_node),
+            })
+        } else {
+            seq_scan_node
+        };
+
         let projection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
             op: UnaryPlanOperation::Projection {
                 fields: select_fields
@@ -101,7 +112,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                     })
                     .collect::<ApllodbResult<_>>()?,
             },
-            left: Box::new(seq_scan_node),
+            left: Box::new(projection_child_node),
         });
 
         Ok(QueryPlan::new(QueryPlanTree::new(projection_node)))

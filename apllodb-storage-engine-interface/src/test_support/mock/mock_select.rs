@@ -1,19 +1,9 @@
-use crate::{
-    test_support::{
-        test_models::{Body, People, Pet},
-        MockWithTxMethods,
-    },
-    ProjectionQuery,
+use crate::{test_support::MockWithTxMethods, ProjectionQuery};
+use apllodb_shared_components::{
+    test_support::test_models::{Body, ModelsMock, People, Pet},
+    FieldIndex, RecordIterator, TableName,
 };
-use apllodb_shared_components::{FieldIndex, Record, RecordIterator, TableName};
 use futures::FutureExt;
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct ModelsMock {
-    pub people: Vec<Record>,
-    pub body: Vec<Record>,
-    pub pet: Vec<Record>,
-}
 
 #[derive(Clone, PartialEq, Debug)]
 struct MockDatum {

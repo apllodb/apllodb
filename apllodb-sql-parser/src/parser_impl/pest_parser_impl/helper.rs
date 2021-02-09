@@ -55,14 +55,13 @@ pub(super) fn parse_child<T, ChildRet>(
 
         Ok(ret_closure(child_ast))
     } else {
-        eprintln!(
+        panic!(
             "Hit to unexpected rule: {:?}\n\
         Pair: {}\n\
         ",
             child_pair.as_rule(),
             child_pair
         );
-        unreachable!();
     }
 }
 

@@ -36,6 +36,7 @@ pub struct ApllodbAst(pub Command);
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Constant {
+    NullVariant,
     NumericConstantVariant(NumericConstant),
     StringConstantVariant(StringConstant),
 }
@@ -66,6 +67,12 @@ pub enum UnaryOperator {
     Minus,
 }
 
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum BinaryOperator {
+    Equal,
+}
+
 /*
  * ================================================================================================
  * Identifier:
@@ -94,6 +101,7 @@ pub enum Expression {
     ConstantVariant(Constant),
     ColumnReferenceVariant(ColumnReference),
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
+    BinaryOperatorVariant(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
 /*

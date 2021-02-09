@@ -1,8 +1,8 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, FieldIndex, Record, RecordIterator, SessionWithTx,
-    SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Record, RecordIterator,
+    SessionWithTx, SqlValueHashKey, TableName,
 };
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
 
@@ -45,6 +45,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ) -> ApllodbResult<RecordIterator> {
         match op_unary {
             UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
+            UnaryPlanOperation::Selection { condition } => self.selection(input_left, condition),
         }
     }
 
@@ -88,6 +89,14 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             .map(|record| record.projection(&fields))
             .collect::<ApllodbResult<Vec<Record>>>()?;
         Ok(RecordIterator::from(records))
+    }
+
+    fn selection(
+        &self,
+        input_left: RecordIterator,
+        condition: Expression,
+    ) -> ApllodbResult<RecordIterator> {
+        input_left.selection(&condition)
     }
 
     /// Join algorithm using hash table.
