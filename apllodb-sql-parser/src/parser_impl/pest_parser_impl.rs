@@ -132,7 +132,6 @@ impl PestParserImpl {
         let s = self_as_str(&mut params);
         match s.to_lowercase().as_str() {
             "=" => Ok(BinaryOperator::Equal),
-            "and" => Ok(BinaryOperator::And),
             _ => Err(ApllodbSqlParserError::new(
                 params.apllodb_sql,
                 "Does not match any child rule of binary_operator.",

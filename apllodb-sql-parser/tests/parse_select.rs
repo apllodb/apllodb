@@ -191,31 +191,6 @@ fn test_select_accepted() {
                 None,
             ),
         ),
-        (
-            "SELECT id FROM t WHERE id = 1 AND c = 777",
-            SelectCommand::factory(
-                vec![SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(None, "id")),
-                    None,
-                )],
-                Some(vec![FromItem::factory("t", None)]),
-                Some(Condition {
-                    expression: Expression::factory_and(
-                        Expression::factory_eq(
-                            Expression::factory_colref(ColumnReference::factory(None, "id")),
-                            Expression::factory_integer("1"),
-                        ),
-                        Expression::factory_eq(
-                            Expression::factory_colref(ColumnReference::factory(None, "c")),
-                            Expression::factory_integer("777"),
-                        ),
-                    ),
-                }),
-                None,
-                None,
-                None,
-            ),
-        ),
     ];
 
     let parser = ApllodbSqlParser::default();

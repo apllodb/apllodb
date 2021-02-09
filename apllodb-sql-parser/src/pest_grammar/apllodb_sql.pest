@@ -37,7 +37,7 @@ keyword = {
     // | ^"ALL"
     | ^"ALTER"
     // | ^"ALWAYS"
-    | ^"AND"
+    // | ^"AND"
     // | ^"ANY"
     // | ^"ARE"
     // | ^"ARRAY_AGG"
@@ -787,7 +787,6 @@ unary_operator = {
 
 binary_operator = {
     "="
-    | ^"AND"
 }
 
 /*

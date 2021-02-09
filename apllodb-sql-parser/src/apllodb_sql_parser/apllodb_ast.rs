@@ -70,7 +70,6 @@ pub enum UnaryOperator {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum BinaryOperator {
     Equal,
-    And,
 }
 
 /*

@@ -209,14 +209,6 @@ impl Expression {
             Box::new(right_expression),
         )
     }
-
-    pub fn factory_and(left_expression: Expression, right_expression: Expression) -> Self {
-        Self::BinaryOperatorVariant(
-            BinaryOperator::And,
-            Box::new(left_expression),
-            Box::new(right_expression),
-        )
-    }
 }
 
 impl Constant {
