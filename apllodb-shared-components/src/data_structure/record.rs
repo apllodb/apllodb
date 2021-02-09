@@ -90,7 +90,7 @@ impl Record {
             }
             Expression::UnaryOperatorVariant(_, _) => Err(ApllodbError::new(
                 ApllodbErrorKind::DatatypeMismatch,
-                "-(Expression) cannot be evaluated as BOOLEAN",
+                "(unary_op)(Expression) cannot be evaluated as BOOLEAN",
                 None,
             )),
             Expression::BooleanExpressionVariant(boolean_expr) => {
