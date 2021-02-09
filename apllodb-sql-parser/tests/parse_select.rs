@@ -1,7 +1,7 @@
 use apllodb_sql_parser::{
     apllodb_ast::{
         ColumnReference, Command, Condition, Correlation, Expression, FromItem, SelectCommand,
-        SelectField,
+        SelectField, UnaryOperator,
     },
     ApllodbAst, ApllodbSqlParser,
 };
@@ -162,6 +162,53 @@ fn test_select_accepted() {
                     expression: Expression::factory_eq(
                         Expression::factory_colref(ColumnReference::factory(None, "id")),
                         Expression::factory_integer("1"),
+                    ),
+                }),
+                None,
+                None,
+                None,
+            ),
+        ),
+        (
+            "SELECT id FROM t WHERE id = -1",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                Some(Condition {
+                    expression: Expression::factory_eq(
+                        Expression::factory_colref(ColumnReference::factory(None, "id")),
+                        Expression::factory_uni_op(
+                            UnaryOperator::Minus,
+                            Expression::factory_integer("1"),
+                        ),
+                    ),
+                }),
+                None,
+                None,
+                None,
+            ),
+        ),
+        (
+            "SELECT id FROM t WHERE id = 1 AND c = 777",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                Some(Condition {
+                    expression: Expression::factory_and(
+                        Expression::factory_eq(
+                            Expression::factory_colref(ColumnReference::factory(None, "id")),
+                            Expression::factory_integer("1"),
+                        ),
+                        Expression::factory_eq(
+                            Expression::factory_colref(ColumnReference::factory(None, "c")),
+                            Expression::factory_integer("777"),
+                        ),
                     ),
                 }),
                 None,
