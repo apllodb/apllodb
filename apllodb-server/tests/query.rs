@@ -122,16 +122,6 @@ async fn test_selection() {
             ),
         )
         .add_step(
-            // AND
-            Step::new(
-                "SELECT id, age FROM people WHERE id = 1 AND age = 35",
-                StepRes::OkQuery(Box::new(|records| {
-                    assert_eq!(records.count(), 0);
-                    Ok(())
-                })),
-            ),
-        )
-        .add_step(
             // NULL is evaluated as FALSE
             Step::new(
                 "SELECT id, age FROM people WHERE NULL",

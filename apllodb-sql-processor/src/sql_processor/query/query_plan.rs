@@ -87,8 +87,15 @@ impl TryFrom<SelectCommand> for QueryPlan {
             },
         });
 
-        let projection_child_node = if sc.where_condition.is_some() {
-            unimplemented!();
+        let projection_child_node = if let Some(condition) = sc.where_condition {
+            let selection_op = UnaryPlanOperation::Selection {
+                condition: AstTranslator::condition_in_select(condition, from_items.clone())?,
+            };
+            let selection_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
+                op: selection_op,
+                left: Box::new(seq_scan_node),
+            });
+            selection_node
         } else {
             seq_scan_node
         };
