@@ -836,7 +836,7 @@ expression = {
 }
 
 // To avoid left-recursion
-sub_expression = _{
+sub_expression = {
     constant
     | column_reference
     | (unary_operator ~ expression)
