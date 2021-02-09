@@ -2,6 +2,7 @@
 
 //! Module to translate [ApllodbAst](apllodb_sql_parser::ApllodbAst) into [apllodb_shared_components](crate)' data structures.
 
+pub mod binary_operator;
 pub mod column_constraint;
 pub mod column_definition;
 pub mod column_name;
