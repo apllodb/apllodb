@@ -184,8 +184,8 @@ impl PestParserImpl {
         )? {
             let right_expr = parse_child(
                 &mut params,
-                Rule::sub_expression,
-                Self::parse_sub_expression,
+                Rule::expression,
+                Self::parse_expression,
                 identity,
             )?;
             Ok(Expression::BinaryOperatorVariant(
