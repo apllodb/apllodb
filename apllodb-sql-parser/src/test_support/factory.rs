@@ -186,6 +186,10 @@ impl ColumnDefinition {
 }
 
 impl Expression {
+    pub fn factory_null() -> Self {
+        Self::ConstantVariant(Constant::factory_null())
+    }
+
     pub fn factory_integer(integer: &str) -> Self {
         Self::ConstantVariant(Constant::factory_integer(integer))
     }
@@ -212,6 +216,10 @@ impl Expression {
 }
 
 impl Constant {
+    pub fn factory_null() -> Self {
+        Self::NullVariant
+    }
+
     pub fn factory_integer(integer: &str) -> Self {
         Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(
             integer.to_string(),

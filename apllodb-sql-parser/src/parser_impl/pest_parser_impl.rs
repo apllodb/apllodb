@@ -61,10 +61,16 @@ impl PestParserImpl {
     fn parse_constant(mut params: FnParseParams) -> ApllodbSqlParserResult<Constant> {
         try_parse_child(
             &mut params,
+            Rule::null_constant,
+            |_| Ok(Constant::NullVariant),
+            identity,
+        )?
+        .or(try_parse_child(
+            &mut params,
             Rule::numeric_constant,
             Self::parse_numeric_constant,
             Constant::NumericConstantVariant,
-        )?
+        )?)
         .or(try_parse_child(
             &mut params,
             Rule::string_constant,

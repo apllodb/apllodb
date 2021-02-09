@@ -13,6 +13,7 @@ fn test_setup() {
 #[test]
 fn test_constant_accepted() {
     let expression_vs_expected_ast: Vec<(&str, Expression)> = vec![
+        ("null", Expression::factory_null()),
         ("0", Expression::factory_integer("0")),
         (
             // u128::MAX + 1

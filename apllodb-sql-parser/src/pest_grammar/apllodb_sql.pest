@@ -394,7 +394,7 @@ keyword = {
     // | ^"NULLABLE"
     // | ^"NULLIF"
     // | ^"NULLS"
-    // | ^"NULL"
+    | ^"NULL"
     // | ^"NUMBER"
     // | ^"NUMERIC"
     // | ^"OBJECT"
@@ -754,8 +754,13 @@ string_character = _{
  */
 
 constant = {
-    numeric_constant
+    null_constant
+    | numeric_constant
     | string_constant
+}
+
+null_constant = {
+    ^"NULL"
 }
 
 numeric_constant = {
