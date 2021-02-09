@@ -14,7 +14,7 @@ version = "0.1.0"
 test-support = ["mockall", "once_cell"]
 
 [dependencies]
-apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
+apllodb-shared-components = {path = "../apllodb-shared-components"}
 
 serde = {version = "1.0", features = ["derive"]}
 
