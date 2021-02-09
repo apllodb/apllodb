@@ -9,9 +9,9 @@ use crate::{
         record_iterator::record_field_ref_schema::RecordFieldRefSchema,
         reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
-    AliasName, ColumnDataType, ColumnName, DatabaseName, Expression, FieldIndex,
-    FullFieldReference, NNSqlValue, Record, RecordIterator, SqlType, SqlValue, SqlValues,
-    TableName, UnaryOperator,
+    AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
+    Expression, FieldIndex, FullFieldReference, LogicalFunction, NNSqlValue, Record,
+    RecordIterator, SqlType, SqlValue, SqlValues, TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -108,6 +108,28 @@ impl Expression {
 
     pub fn factory_uni_op(unary_operator: UnaryOperator, expression: Expression) -> Self {
         Self::UnaryOperatorVariant(unary_operator, Box::new(expression))
+    }
+
+    pub fn factory_eq(left: Expression, right: Expression) -> Self {
+        Self::BooleanExpressionVariant(BooleanExpression::factory_eq(left, right))
+    }
+
+    pub fn factory_and(left: BooleanExpression, right: BooleanExpression) -> Self {
+        Self::BooleanExpressionVariant(BooleanExpression::LogicalFunctionVariant(
+            LogicalFunction::AndVariant {
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+        ))
+    }
+}
+
+impl BooleanExpression {
+    pub fn factory_eq(left: Expression, right: Expression) -> Self {
+        BooleanExpression::ComparisonFunctionVariant(ComparisonFunction::EqualVariant {
+            left: Box::new(left),
+            right: Box::new(right),
+        })
     }
 }
 

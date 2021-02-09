@@ -16,7 +16,8 @@ impl AstTranslator {
 
         match ast_expression {
             apllodb_ast::Expression::ConstantVariant(_)
-            | apllodb_ast::Expression::UnaryOperatorVariant(_, _) => {
+            | apllodb_ast::Expression::UnaryOperatorVariant(_, _)
+            | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
                 panic!("select_field_column_reference() is only for ColumnReferenceVariant")
             }
 

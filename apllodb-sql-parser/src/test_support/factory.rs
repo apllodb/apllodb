@@ -1,10 +1,11 @@
 use crate::apllodb_ast::{
-    Action, AddColumn, Alias, AlterTableCommand, CharacterType, ColumnConstraint, ColumnDefinition,
-    ColumnName, ColumnReference, Condition, Constant, Correlation, CreateDatabaseCommand,
-    CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn, DropTableCommand,
-    Expression, FromItem, GroupingElement, Identifier, InsertCommand, IntegerConstant, IntegerType,
-    NonEmptyVec, NumericConstant, OrderBy, SelectCommand, SelectField, StringConstant,
-    TableConstraint, TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
+    Action, AddColumn, Alias, AlterTableCommand, BinaryOperator, CharacterType, ColumnConstraint,
+    ColumnDefinition, ColumnName, ColumnReference, Condition, Constant, Correlation,
+    CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn,
+    DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
+    IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, SelectCommand,
+    SelectField, StringConstant, TableConstraint, TableElement, TableName, UnaryOperator,
+    UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -185,6 +186,10 @@ impl ColumnDefinition {
 }
 
 impl Expression {
+    pub fn factory_null() -> Self {
+        Self::ConstantVariant(Constant::factory_null())
+    }
+
     pub fn factory_integer(integer: &str) -> Self {
         Self::ConstantVariant(Constant::factory_integer(integer))
     }
@@ -200,9 +205,21 @@ impl Expression {
     pub fn factory_uni_op(unary_operator: UnaryOperator, expression: Expression) -> Self {
         Self::UnaryOperatorVariant(unary_operator, Box::new(expression))
     }
+
+    pub fn factory_eq(left_expression: Expression, right_expression: Expression) -> Self {
+        Self::BinaryOperatorVariant(
+            BinaryOperator::Equal,
+            Box::new(left_expression),
+            Box::new(right_expression),
+        )
+    }
 }
 
 impl Constant {
+    pub fn factory_null() -> Self {
+        Self::NullVariant
+    }
+
     pub fn factory_integer(integer: &str) -> Self {
         Self::NumericConstantVariant(NumericConstant::IntegerConstantVariant(IntegerConstant(
             integer.to_string(),

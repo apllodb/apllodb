@@ -1,6 +1,7 @@
 use apllodb_sql_parser::{
     apllodb_ast::{
-        ColumnReference, Command, Correlation, Expression, FromItem, SelectCommand, SelectField,
+        ColumnReference, Command, Condition, Correlation, Expression, FromItem, SelectCommand,
+        SelectField, UnaryOperator,
     },
     ApllodbAst, ApllodbSqlParser,
 };
@@ -127,6 +128,64 @@ fn test_select_accepted() {
                 )],
                 None,
                 None,
+                None,
+                None,
+                None,
+            ),
+        ),
+        // Selection
+        (
+            "SELECT c FROM t WHERE c",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "c")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                Some(Condition {
+                    expression: Expression::factory_colref(ColumnReference::factory(None, "c")),
+                }),
+                None,
+                None,
+                None,
+            ),
+        ),
+        (
+            "SELECT id FROM t WHERE id = 1",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                Some(Condition {
+                    expression: Expression::factory_eq(
+                        Expression::factory_colref(ColumnReference::factory(None, "id")),
+                        Expression::factory_integer("1"),
+                    ),
+                }),
+                None,
+                None,
+                None,
+            ),
+        ),
+        (
+            "SELECT id FROM t WHERE id = -1",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                Some(Condition {
+                    expression: Expression::factory_eq(
+                        Expression::factory_colref(ColumnReference::factory(None, "id")),
+                        Expression::factory_uni_op(
+                            UnaryOperator::Minus,
+                            Expression::factory_integer("1"),
+                        ),
+                    ),
+                }),
                 None,
                 None,
                 None,
