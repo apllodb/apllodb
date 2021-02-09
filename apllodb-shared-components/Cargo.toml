@@ -14,7 +14,7 @@ version = "0.1.0"
 test-support = ["rand", "once_cell"]
 
 [dependencies]
-apllodb-sql-parser = {path = "../apllodb-sql-parser", features = ["test-support"]}
+apllodb-sql-parser = {path = "../apllodb-sql-parser"}
 
 serde = {version = "1.0", features = ["derive"]}
 
