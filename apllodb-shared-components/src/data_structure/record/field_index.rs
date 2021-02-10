@@ -229,6 +229,32 @@ impl<S: Into<String>> From<S> for FieldIndex {
     }
 }
 
+impl From<FullFieldReference> for FieldIndex {
+    fn from(full_field_reference: FullFieldReference) -> Self {
+        match (
+            full_field_reference.as_correlation_reference(),
+            full_field_reference.as_field_reference(),
+        ) {
+            (
+                CorrelationReference::TableNameVariant(table_name),
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                CorrelationReference::TableNameVariant(table_name),
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            )
+            | (
+                CorrelationReference::TableAliasVariant { table_name, .. },
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                CorrelationReference::TableAliasVariant { table_name, .. },
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{ApllodbErrorKind, ApllodbResult, FieldIndex, FullFieldReference};
