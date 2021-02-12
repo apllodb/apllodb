@@ -872,8 +872,8 @@ impl PestParserImpl {
         mut params: FnParseParams,
     ) -> ApllodbSqlParserResult<ColumnConstraint> {
         let s = self_as_str(&mut params);
-        match s {
-            "NOT NULL" => Ok(ColumnConstraint::NotNullVariant),
+        match s.to_lowercase().as_str() {
+            "not null" => Ok(ColumnConstraint::NotNullVariant),
             x => {
                 eprintln!("Unexpected constraint parsed: {}", x);
                 unreachable!();
