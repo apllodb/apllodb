@@ -20,6 +20,7 @@ log = "0.4"
 serde = {version = "1.0", features = ["derive"]}
 
 [dev-dependencies]
+apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
 
 ctor = "0.1"
