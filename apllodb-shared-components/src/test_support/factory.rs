@@ -10,8 +10,8 @@ use crate::{
         reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FieldIndex, FullFieldReference, LogicalFunction, NNSqlValue, Record,
-    RecordIterator, SqlType, SqlValue, SqlValues, TableName, UnaryOperator,
+    Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator, SqlType,
+    SqlValue, SqlValues, TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -44,32 +44,6 @@ impl FullFieldReference {
     pub fn with_field_alias(mut self, field_alias: &str) -> Self {
         self.set_field_alias(AliasName::factory(field_alias));
         self
-    }
-}
-
-impl From<FullFieldReference> for FieldIndex {
-    fn from(full_field_reference: FullFieldReference) -> Self {
-        match (
-            full_field_reference.as_correlation_reference(),
-            full_field_reference.as_field_reference(),
-        ) {
-            (
-                CorrelationReference::TableNameVariant(table_name),
-                FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                CorrelationReference::TableNameVariant(table_name),
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            )
-            | (
-                CorrelationReference::TableAliasVariant { table_name, .. },
-                FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                CorrelationReference::TableAliasVariant { table_name, .. },
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
-        }
     }
 }
 
