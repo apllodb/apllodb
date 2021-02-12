@@ -5,7 +5,7 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::AliasDef;
 use serde::{Deserialize, Serialize};
 
-/// Internally has similar structure as `Vec<ColumnColumn>` and works with [SqlValues](crate::SqlValues) with the same length
+/// Internally has similar structure as `Vec<ColumnColumn>` and works with [SqlValues](apllodb-shared-components::SqlValues) with the same length
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct RowColumnRefSchema {
     table_name: TableName,

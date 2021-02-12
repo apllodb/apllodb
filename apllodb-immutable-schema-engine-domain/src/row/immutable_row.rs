@@ -54,7 +54,7 @@ impl ImmutableRow {
     /// # Failures
     ///
     /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
-    ///   - Same [ColumnReference](apllodb_shared_components::ColumnReference) is already in this row.
+    ///   - Same [ColumnName](apllodb_shared_components::ColumnName) is already in this row.
     pub fn append(&mut self, column_name: ColumnName, sql_value: SqlValue) -> ApllodbResult<()> {
         self.schema.append(column_name)?;
         self.values.append(sql_value);
