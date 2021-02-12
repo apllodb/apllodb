@@ -10,8 +10,8 @@ use crate::{
         reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record,
-    RecordIterator, SqlType, SqlValue, SqlValues, TableName, UnaryOperator,
+    Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator, SqlType,
+    SqlValue, SqlValues, TableName, UnaryOperator,
 };
 use rand::Rng;
 
