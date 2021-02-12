@@ -25,6 +25,8 @@ env_logger = "0.8"
 log = "0.4"
 
 [dev-dependencies]
+apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
 
 ctor = "0.1"
