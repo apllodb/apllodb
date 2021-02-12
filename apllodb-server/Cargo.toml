@@ -9,10 +9,11 @@ test-support = ["apllodb-test-support", "apllodb-immutable-schema-engine-infra"]
 
 [dependencies]
 apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
-apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"], optional = true}
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-sql-processor = {path = "../apllodb-sql-processor"}
-apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
+apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
+
+apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", optional = true}
 apllodb-test-support = {path = "../apllodb-test-support", optional = true}
 
 env_logger = "0.8"

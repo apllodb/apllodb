@@ -14,7 +14,7 @@ version = "0.1.0"
 test-support = ["mockall", "once_cell"]
 
 [dependencies]
-apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
+apllodb-shared-components = {path = "../apllodb-shared-components"}
 
 serde = {version = "1.0", features = ["derive"]}
 
@@ -27,6 +27,7 @@ mockall = {version = "0.9", optional = true}
 once_cell = {version = "1.5", optional = true}
 
 [dev-dependencies]
+apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
 apllodb-storage-engine-interface = {path = ".", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
 
