@@ -3,7 +3,7 @@ use crate::apllodb_ast::{
     ColumnDefinition, ColumnName, ColumnReference, Condition, Constant, Correlation,
     CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn,
     DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
-    IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, SelectCommand,
+    IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, Ordering, SelectCommand,
     SelectField, StringConstant, TableConstraint, TableElement, TableName, UnaryOperator,
     UpdateCommand, UseDatabaseCommand,
 };
@@ -88,6 +88,22 @@ impl FromItem {
         Self {
             table_name: TableName::factory(table_name),
             alias: alias.map(Alias::factory),
+        }
+    }
+}
+
+impl OrderBy {
+    pub fn factory_expr(expression: Expression, ordering: Option<Ordering>) -> Self {
+        Self {
+            expression,
+            ordering,
+        }
+    }
+
+    pub fn factory_colref(column_reference: ColumnReference, ordering: Option<Ordering>) -> Self {
+        Self {
+            expression: Expression::factory_colref(column_reference),
+            ordering,
         }
     }
 }

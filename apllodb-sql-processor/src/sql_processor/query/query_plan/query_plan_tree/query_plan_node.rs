@@ -1,4 +1,4 @@
-use apllodb_shared_components::{Expression, FieldIndex, Record, TableName};
+use apllodb_shared_components::{Expression, FieldIndex, Ordering, Record, TableName};
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
 use serde::{Deserialize, Serialize};
 
@@ -56,8 +56,10 @@ pub(crate) enum UnaryPlanOperation {
         /// Otherwise [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch).
         condition: Expression,
     },
-    // TODO extend.
-    // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
+    Sort {
+        field_orderings: Vec<(FieldIndex, Ordering)>,
+    }, // TODO extend.
+       // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
 }
 
 /// Binary operations, which inputs two [RecordIterator](apllodb-shared-components::RecordIterator) and outputs one [RecordIterator](apllodb-shared-components::RecordIterator).

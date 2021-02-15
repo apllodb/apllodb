@@ -41,6 +41,11 @@ impl SqlValues {
         self.0.push(sql_value)
     }
 
+    /// get ref to SqlValue
+    pub fn get(&self, index: usize) -> &SqlValue {
+        self.0.index(index)
+    }
+
     /// extract SqlValue and remove from list
     pub fn remove(&mut self, index: usize) -> SqlValue {
         self.0.remove(index)

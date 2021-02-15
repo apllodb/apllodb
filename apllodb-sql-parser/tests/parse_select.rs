@@ -1,7 +1,7 @@
 use apllodb_sql_parser::{
     apllodb_ast::{
-        ColumnReference, Command, Condition, Correlation, Expression, FromItem, SelectCommand,
-        SelectField, UnaryOperator,
+        ColumnReference, Command, Condition, Correlation, Expression, FromItem, OrderBy, Ordering,
+        SelectCommand, SelectField, UnaryOperator,
     },
     ApllodbAst, ApllodbSqlParser,
 };
@@ -189,6 +189,101 @@ fn test_select_accepted() {
                 None,
                 None,
                 None,
+            ),
+        ),
+        // Sort
+        (
+            "SELECT id FROM t ORDER BY id",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                None,
+                None,
+                None,
+                Some(vec![OrderBy::factory_colref(
+                    ColumnReference::factory(None, "id"),
+                    None,
+                )]),
+            ),
+        ),
+        (
+            "SELECT id FROM t ORDER BY id ASC",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                None,
+                None,
+                None,
+                Some(vec![OrderBy::factory_colref(
+                    ColumnReference::factory(None, "id"),
+                    Some(Ordering::AscVariant),
+                )]),
+            ),
+        ),
+        (
+            "SELECT id FROM t ORDER BY id DESC",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                None,
+                None,
+                None,
+                Some(vec![OrderBy::factory_colref(
+                    ColumnReference::factory(None, "id"),
+                    Some(Ordering::DescVariant),
+                )]),
+            ),
+        ),
+        (
+            "SELECT id FROM t ORDER BY -id",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                None,
+                None,
+                None,
+                Some(vec![OrderBy::factory_expr(
+                    Expression::factory_uni_op(
+                        UnaryOperator::Minus,
+                        Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    ),
+                    None,
+                )]),
+            ),
+        ),
+        (
+            "SELECT id FROM t ORDER BY age ASC, id DESC",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(None, "id")),
+                    None,
+                )],
+                Some(vec![FromItem::factory("t", None)]),
+                None,
+                None,
+                None,
+                Some(vec![
+                    OrderBy::factory_colref(
+                        ColumnReference::factory(None, "age"),
+                        Some(Ordering::AscVariant),
+                    ),
+                    OrderBy::factory_colref(
+                        ColumnReference::factory(None, "id"),
+                        Some(Ordering::DescVariant),
+                    ),
+                ]),
             ),
         ),
     ];
