@@ -106,7 +106,7 @@ impl RecordIterator {
 
                 match a_val.sql_compare(&b_val).expect(&format!(
                     "two records in the same RecordIterator must have the same type for field `{}`",
-                    0
+                    index
                 )) {
                     crate::SqlCompareResult::Eq => res = std::cmp::Ordering::Equal,
                     crate::SqlCompareResult::LessThan => {
@@ -141,7 +141,7 @@ impl RecordIterator {
                         break;
                     }
                     crate::SqlCompareResult::NotEq => {
-                        unreachable!("sort key `{}` must be at least PartialOrd", 0)
+                        unreachable!("sort key `{}` must be at least PartialOrd", index)
                     }
                 }
             }
