@@ -31,17 +31,18 @@ async fn test_fullscan() {
         .add_step(
             // reproduces: https://github.com/darwin-education/apllodb/issues/132
             Step::new(
-            "SELECT id, people_id, kind, age FROM pet",
-            StepRes::OkQuery(Box::new(|records| {
-                let mut records = records
-                    .sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("id")).unwrap().unwrap());
-                assert_eq!(records.next(), Some(T_PET_R1.clone()));
-                assert_eq!(records.next(), Some(T_PET_R3_1.clone()));
-                assert_eq!(records.next(), Some(T_PET_R3_2.clone()));
-                assert!(records.next().is_none());
-                Ok(())
-            })),
-        ))
+                "SELECT id, people_id, kind, age FROM pet",
+                StepRes::OkQuery(Box::new(|records| {
+                    let mut records = records
+                        .sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("id")).unwrap().unwrap());
+                    assert_eq!(records.next(), Some(T_PET_R1.clone()));
+                    assert_eq!(records.next(), Some(T_PET_R3_1.clone()));
+                    assert_eq!(records.next(), Some(T_PET_R3_2.clone()));
+                    assert!(records.next().is_none());
+                    Ok(())
+                })),
+            ),
+        )
         .run()
         .await;
 }
