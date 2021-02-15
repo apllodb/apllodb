@@ -42,7 +42,7 @@ impl SqlValues {
     }
 
     /// get ref to SqlValue
-    pub fn get(& self, index: usize) -> &SqlValue {
+    pub fn get(&self, index: usize) -> &SqlValue {
         self.0.index(index)
     }
 
