@@ -253,3 +253,32 @@ async fn test_sort() {
         .run()
         .await;
 }
+
+#[async_std::test]
+async fn test_inner_join() {
+    SqlTest::default()
+        .add_steps(Steps::SetupPeopleBodyPetDataset)
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new(
+            "SELECT people.id, age, height FROM people INNER JOIN body ON people.id = body.people_id",
+            StepRes::OkQuery(Box::new(| records| {
+                let mut records =
+                records.sorted_by_key(|r| r.get::<i32>(&FieldIndex::from("people.id")).unwrap().unwrap());
+
+                let r = records.next().unwrap();
+                assert_eq!(r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), Some(1));
+                assert_eq!(r.get::<i64>(&FieldIndex::from("age")).unwrap(), Some(13));
+                assert_eq!(r.get::<i64>(&FieldIndex::from("height")).unwrap(), Some(145));
+
+                let r = records.next().unwrap();
+                assert_eq!(r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), Some(3));
+                assert_eq!(r.get::<i64>(&FieldIndex::from("age")).unwrap(), Some(35));
+                assert_eq!(r.get::<i64>(&FieldIndex::from("height")).unwrap(), Some(175));
+
+                assert!(records.next().is_none());
+                Ok(())
+            })),
+        ))
+        .run()
+        .await;
+}
