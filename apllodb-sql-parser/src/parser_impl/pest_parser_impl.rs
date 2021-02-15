@@ -7,9 +7,9 @@ use crate::{
         CharacterType, ColumnConstraint, ColumnDefinition, ColumnName, ColumnReference, Command,
         Condition, Constant, Correlation, CreateDatabaseCommand, CreateTableCommand, DataType,
         DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
-        Identifier, InsertCommand, IntegerConstant, IntegerType, NumericConstant, OrderBy,
-        Ordering, SelectCommand, SelectField, StringConstant, TableConstraint, TableElement,
-        TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
+        Identifier, InsertCommand, IntegerConstant, IntegerType, JoinType, NumericConstant,
+        OrderBy, Ordering, SelectCommand, SelectField, StringConstant, TableConstraint,
+        TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -711,7 +711,34 @@ impl PestParserImpl {
             Self::parse_sub_from_item,
             identity,
         )?;
-        Ok(from_item)
+
+        if let Some(join_type) = try_parse_child(
+            &mut params,
+            Rule::join_type,
+            Self::parse_join_type,
+            identity,
+        )? {
+            let right_from_item = parse_child(
+                &mut params,
+                Rule::from_item,
+                Self::parse_from_item,
+                identity,
+            )?;
+            let on = parse_child(
+                &mut params,
+                Rule::condition,
+                Self::parse_condition,
+                identity,
+            )?;
+            Ok(FromItem::JoinVariant {
+                join_type,
+                left: Box::new(from_item),
+                right: Box::new(right_from_item),
+                on,
+            })
+        } else {
+            Ok(from_item)
+        }
     }
 
     fn parse_sub_from_item(mut params: FnParseParams) -> ApllodbSqlParserResult<FromItem> {
@@ -722,7 +749,18 @@ impl PestParserImpl {
             identity,
         )?;
         let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
-        Ok(FromItem { table_name, alias })
+        Ok(FromItem::TableNameVariant { table_name, alias })
+    }
+
+    fn parse_join_type(mut params: FnParseParams) -> ApllodbSqlParserResult<JoinType> {
+        let s = self_as_str(&mut params);
+        match s.to_lowercase().as_str() {
+            "inner join" => Ok(JoinType::InnerJoin),
+            x => {
+                eprintln!("Unexpected join_type parsed: {}", x);
+                unreachable!();
+            }
+        }
     }
 
     fn parse_order_by(mut params: FnParseParams) -> ApllodbSqlParserResult<OrderBy> {

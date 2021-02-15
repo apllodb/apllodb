@@ -70,7 +70,6 @@ impl ColumnDataType {
         Self::new(ColumnName::factory(column_name), sql_type, nullable)
     }
 }
-
 impl Expression {
     pub fn factory_null() -> Self {
         Self::ConstantVariant(SqlValue::Null)

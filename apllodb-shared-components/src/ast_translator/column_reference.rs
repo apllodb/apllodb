@@ -170,37 +170,37 @@ mod tests {
             ),
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
-                vec![FromItem::factory("t", None)],
+                vec![FromItem::factory_tn("t", None)],
                 Ok(FullFieldReference::factory("t", "c")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
-                vec![FromItem::factory("t", None)],
+                vec![FromItem::factory_tn("t", None)],
                 Ok(FullFieldReference::factory("t", "c")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t1")), "c"),
-                vec![FromItem::factory("t2", None)],
+                vec![FromItem::factory_tn("t2", None)],
                 Err(ApllodbErrorKind::UndefinedColumn),
             ),
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
-                vec![FromItem::factory("t", Some("a"))],
+                vec![FromItem::factory_tn("t", Some("a"))],
                 Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
-                vec![FromItem::factory("t", Some("a"))],
+                vec![FromItem::factory_tn("t", Some("a"))],
                 Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("a")), "c"),
-                vec![FromItem::factory("t", Some("a"))],
+                vec![FromItem::factory_tn("t", Some("a"))],
                 Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("x")), "c"),
-                vec![FromItem::factory("t", Some("a"))],
+                vec![FromItem::factory_tn("t", Some("a"))],
                 Err(ApllodbErrorKind::UndefinedColumn),
             ),
         ];
