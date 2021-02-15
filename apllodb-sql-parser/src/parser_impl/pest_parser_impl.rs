@@ -705,6 +705,16 @@ impl PestParserImpl {
     }
 
     fn parse_from_item(mut params: FnParseParams) -> ApllodbSqlParserResult<FromItem> {
+        let from_item = parse_child(
+            &mut params,
+            Rule::sub_from_item,
+            Self::parse_sub_from_item,
+            identity,
+        )?;
+        Ok(from_item)
+    }
+
+    fn parse_sub_from_item(mut params: FnParseParams) -> ApllodbSqlParserResult<FromItem> {
         let table_name = parse_child(
             &mut params,
             Rule::table_name,

@@ -407,7 +407,7 @@ keyword = {
     // | ^"OMIT"
     // | ^"ONE"
     // | ^"ONLY"
-    // | ^"ON"
+    | ^"ON"
     // | ^"OPEN"
     // | ^"OPTIONS"
     // | ^"OPTION"
@@ -838,7 +838,6 @@ condition = {
 expression = {
     sub_expression ~ (binary_operator ~ expression)?
 }
-
 // To avoid left-recursion
 sub_expression = {
     constant
@@ -1080,7 +1079,15 @@ select_field = {
 }
 
 from_item = {
+    sub_from_item ~ (join_type ~ from_item ~ ^"ON" ~ condition)?
+}
+// To avoid left-recursion
+sub_from_item = {
     table_name ~ (^"AS"? ~ alias)?
+}
+
+join_type = {
+    ^"INNER" ~ ^"JOIN"
 }
 
 grouping_element = {
