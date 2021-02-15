@@ -2,7 +2,10 @@ pub(crate) mod record_field_ref_schema;
 
 use std::sync::Arc;
 
-use crate::{ApllodbResult, Expression, FieldIndex, FullFieldReference, Record, SqlValues};
+use crate::{
+    ApllodbResult, Expression, FieldIndex, FullFieldReference, Ordering, Record, SqlValue,
+    SqlValues,
+};
 
 use self::record_field_ref_schema::RecordFieldRefSchema;
 
@@ -80,6 +83,71 @@ impl RecordIterator {
             .collect();
 
         Ok(Self::new(new_schema, new_inner))
+    }
+
+    /// ORDER BY
+    pub fn sort(mut self, field_orderings: &[(FieldIndex, Ordering)]) -> ApllodbResult<Self> {
+        assert!(!field_orderings.is_empty(), "parser should avoid this case");
+
+        // TODO check if type in FieldIndex is PartialOrd
+
+        let schema = self.schema.clone();
+
+        self.inner.sort_by(|a, b| {
+            let mut res = std::cmp::Ordering::Equal;
+
+            for (index, ord) in field_orderings {
+                let idx = schema
+                    .resolve_index(&index)
+                    .expect(&format!("must be valid field: `{}`", index));
+
+                let a_val = a.get(idx);
+                let b_val = b.get(idx);
+
+                match a_val.sql_compare(&b_val).expect(&format!(
+                    "two records in the same RecordIterator must have the same type for field `{}`",
+                    0
+                )) {
+                    crate::SqlCompareResult::Eq => res = std::cmp::Ordering::Equal,
+                    crate::SqlCompareResult::LessThan => {
+                        match ord {
+                            Ordering::Asc => {
+                                res = std::cmp::Ordering::Less;
+                            }
+                            Ordering::Desc => {
+                                res = std::cmp::Ordering::Greater;
+                            }
+                        }
+                        break;
+                    }
+                    crate::SqlCompareResult::GreaterThan => {
+                        match ord {
+                            Ordering::Asc => {
+                                res = std::cmp::Ordering::Greater;
+                            }
+                            Ordering::Desc => {
+                                res = std::cmp::Ordering::Less;
+                            }
+                        }
+                        break;
+                    }
+                    crate::SqlCompareResult::Null => {
+                        // NULL comes last, regardless of ASC/DESC
+                        if let SqlValue::Null = a_val {
+                            res = std::cmp::Ordering::Greater
+                        } else {
+                            res = std::cmp::Ordering::Less
+                        }
+                        break;
+                    }
+                    crate::SqlCompareResult::NotEq => {
+                        unreachable!("sort key `{}` must be at least PartialOrd", 0)
+                    }
+                }
+            }
+            res
+        });
+        Ok(self)
     }
 }
 

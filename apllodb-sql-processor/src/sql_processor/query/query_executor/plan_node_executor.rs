@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Record, RecordIterator,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, RecordIterator,
     SessionWithTx, SqlValueHashKey, TableName,
 };
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
@@ -46,6 +46,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         match op_unary {
             UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
             UnaryPlanOperation::Selection { condition } => self.selection(input_left, condition),
+            UnaryPlanOperation::Sort { field_orderings } => self.sort(input_left, field_orderings),
         }
     }
 
@@ -97,6 +98,14 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         condition: Expression,
     ) -> ApllodbResult<RecordIterator> {
         input_left.selection(&condition)
+    }
+
+    fn sort(
+        &self,
+        input_left: RecordIterator,
+        field_orderings: Vec<(FieldIndex, Ordering)>,
+    ) -> ApllodbResult<RecordIterator> {
+        input_left.sort(&field_orderings)
     }
 
     /// Join algorithm using hash table.
