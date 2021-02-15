@@ -5,13 +5,12 @@ use super::ImmutableRow;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, SqlValue, SqlValues, TableName,
 };
-use std::collections::HashMap;
 
 /// Builder for ImmutableRow.
 #[derive(Debug)]
 pub struct ImmutableRowBuilder {
     table_name: TableName,
-    col_vals: HashMap<ColumnName, SqlValue>,
+    col_vals: Vec<(ColumnName, SqlValue)>,
 }
 
 impl ImmutableRowBuilder {
@@ -19,7 +18,7 @@ impl ImmutableRowBuilder {
     pub fn new(table_name: TableName) -> Self {
         Self {
             table_name,
-            col_vals: HashMap::new(),
+            col_vals: Vec::new(),
         }
     }
 
@@ -30,11 +29,7 @@ impl ImmutableRowBuilder {
     /// - [DuplicateColumn](apllodb_shared_components::ApllodbErrorKind::DuplicateColumn) when:
     ///   - Same `ColumnName` added twice.
     pub fn append(mut self, column_name: ColumnName, sql_value: SqlValue) -> ApllodbResult<Self> {
-        if self
-            .col_vals
-            .insert(column_name.clone(), sql_value)
-            .is_some()
-        {
+        if self.col_vals.iter().any(|(cn, _)| cn == &column_name) {
             Err(ApllodbError::new(
                 ApllodbErrorKind::DuplicateColumn,
                 format!(
@@ -44,6 +39,7 @@ impl ImmutableRowBuilder {
                 None,
             ))
         } else {
+            self.col_vals.push((column_name, sql_value));
             Ok(self)
         }
     }
@@ -53,10 +49,9 @@ impl ImmutableRowBuilder {
     }
 
     /// Finalize.
-    ///
-    /// TODO validate duplicate column name.
     pub fn build(self) -> ApllodbResult<ImmutableRow> {
-        let column_names: Vec<ColumnName> = self.col_vals.keys().cloned().collect();
+        let column_names: Vec<ColumnName> =
+            self.col_vals.iter().map(|(cn, _)| cn.clone()).collect();
         let sql_values: SqlValues = {
             let s = self
                 .col_vals

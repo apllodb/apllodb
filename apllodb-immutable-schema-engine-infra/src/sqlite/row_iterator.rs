@@ -76,8 +76,6 @@ impl From<VecDeque<ImmutableRow>> for SqliteRowIterator {
         if rows.is_empty() {
             Self::empty()
         } else {
-            log::error!("impl From<VecDeque<ImmutableRow>> for SqliteRowIterator: rows: {:#?}", rows);
-
             let r = rows.front().unwrap();
             let schema = r.schema().clone();
             Self { schema, rows }
