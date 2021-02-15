@@ -7,9 +7,9 @@ use crate::{
         CharacterType, ColumnConstraint, ColumnDefinition, ColumnName, ColumnReference, Command,
         Condition, Constant, Correlation, CreateDatabaseCommand, CreateTableCommand, DataType,
         DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
-        Identifier, InsertCommand, IntegerConstant, IntegerType, NumericConstant, SelectCommand,
-        SelectField, StringConstant, TableConstraint, TableElement, TableName, UnaryOperator,
-        UpdateCommand, UseDatabaseCommand,
+        Identifier, InsertCommand, IntegerConstant, IntegerType, NumericConstant, OrderBy,
+        Ordering, SelectCommand, SelectField, StringConstant, TableConstraint, TableElement,
+        TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -664,6 +664,23 @@ impl PestParserImpl {
             Self::parse_condition,
             identity,
         )?;
+        let order_bys: Option<Vec<OrderBy>> = {
+            if let Some(first_order_by) =
+                try_parse_child(&mut params, Rule::order_by, Self::parse_order_by, identity)?
+            {
+                let mut order_bys = vec![first_order_by];
+                let mut rest_order_bys = parse_child_seq(
+                    &mut params,
+                    Rule::order_by,
+                    &Self::parse_order_by,
+                    &identity,
+                )?;
+                order_bys.append(&mut rest_order_bys);
+                Some(order_bys)
+            } else {
+                None
+            }
+        };
         Ok(SelectCommand {
             select_fields: NonEmptyVec::new(select_fields),
             from_items: from_items.map(NonEmptyVec::new),
@@ -671,7 +688,8 @@ impl PestParserImpl {
             // TODO: grouping_elements, having_conditions, order_bys
             grouping_elements: None,
             having_conditions: None,
-            order_bys: None,
+
+            order_bys: order_bys.map(NonEmptyVec::new),
         })
     }
 
@@ -695,6 +713,33 @@ impl PestParserImpl {
         )?;
         let alias = try_parse_child(&mut params, Rule::alias, Self::parse_alias, identity)?;
         Ok(FromItem { table_name, alias })
+    }
+
+    fn parse_order_by(mut params: FnParseParams) -> ApllodbSqlParserResult<OrderBy> {
+        let expression = parse_child(
+            &mut params,
+            Rule::expression,
+            Self::parse_expression,
+            identity,
+        )?;
+        let ordering =
+            try_parse_child(&mut params, Rule::ordering, Self::parse_ordering, identity)?;
+        Ok(OrderBy {
+            expression,
+            ordering,
+        })
+    }
+
+    fn parse_ordering(mut params: FnParseParams) -> ApllodbSqlParserResult<Ordering> {
+        let s = self_as_str(&mut params);
+        match s.to_lowercase().as_str() {
+            "asc" => Ok(Ordering::AscVariant),
+            "desc" => Ok(Ordering::DescVariant),
+            x => {
+                eprintln!("Unexpected ordering parsed: {}", x);
+                unreachable!();
+            }
+        }
     }
 
     /*
@@ -827,8 +872,8 @@ impl PestParserImpl {
         mut params: FnParseParams,
     ) -> ApllodbSqlParserResult<ColumnConstraint> {
         let s = self_as_str(&mut params);
-        match s {
-            "NOT NULL" => Ok(ColumnConstraint::NotNullVariant),
+        match s.to_lowercase().as_str() {
+            "not null" => Ok(ColumnConstraint::NotNullVariant),
             x => {
                 eprintln!("Unexpected constraint parsed: {}", x);
                 unreachable!();
