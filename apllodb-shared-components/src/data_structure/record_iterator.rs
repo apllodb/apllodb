@@ -99,15 +99,17 @@ impl RecordIterator {
             for (index, ord) in field_orderings {
                 let idx = schema
                     .resolve_index(&index)
-                    .expect(&format!("must be valid field: `{}`", index));
+                    .unwrap_or_else(|_| panic!("must be valid field: `{}`", index));
 
                 let a_val = a.get(idx);
                 let b_val = b.get(idx);
 
-                match a_val.sql_compare(&b_val).expect(&format!(
+                match a_val.sql_compare(&b_val).unwrap_or_else(|_| {
+                    panic!(
                     "two records in the same RecordIterator must have the same type for field `{}`",
                     index
-                )) {
+                )
+                }) {
                     crate::SqlCompareResult::Eq => res = std::cmp::Ordering::Equal,
                     crate::SqlCompareResult::LessThan => {
                         match ord {
