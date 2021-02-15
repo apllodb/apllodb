@@ -145,7 +145,7 @@ async fn test_selection() {
 #[async_std::test]
 async fn test_sort() {
     SqlTest::default()
-        .add_steps(Steps::SetupPeopleDataset)
+        .add_steps(Steps::SetupPeopleBodyPetDataset)
         .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             // PK, ASC (default)
@@ -209,6 +209,17 @@ async fn test_sort() {
                 assert_eq!(records.next(), Some(T_PEOPLE_R2.clone()));
                 assert_eq!(records.next(), Some(T_PEOPLE_R3.clone()));
                 assert_eq!(records.next(), Some(T_PEOPLE_R1.clone()));
+                assert!(records.next().is_none());
+                Ok(())
+            })),
+        ))
+        .add_step(Step::new(
+            // non-PK, ASC ; PK, DESC
+            "SELECT id, people_id, kind, age FROM pet ORDER BY kind ASC, id DESC",
+            StepRes::OkQuery(Box::new(|mut records| {
+                assert_eq!(records.next(), Some(T_PET_R3_1.clone()));
+                assert_eq!(records.next(), Some(T_PET_R1.clone()));
+                assert_eq!(records.next(), Some(T_PET_R3_2.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
