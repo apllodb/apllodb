@@ -3,9 +3,9 @@ use crate::apllodb_ast::{
     ColumnDefinition, ColumnName, ColumnReference, Condition, Constant, Correlation,
     CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn,
     DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
-    IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, Ordering, SelectCommand,
-    SelectField, StringConstant, TableConstraint, TableElement, TableName, UnaryOperator,
-    UpdateCommand, UseDatabaseCommand,
+    IntegerConstant, IntegerType, JoinType, NonEmptyVec, NumericConstant, OrderBy, Ordering,
+    SelectCommand, SelectField, StringConstant, TableConstraint, TableElement, TableName,
+    UnaryOperator, UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -84,10 +84,19 @@ impl SelectField {
 }
 
 impl FromItem {
-    pub fn factory(table_name: &str, alias: Option<&str>) -> Self {
-        Self {
+    pub fn factory_tn(table_name: &str, alias: Option<&str>) -> Self {
+        Self::TableNameVariant {
             table_name: TableName::factory(table_name),
             alias: alias.map(Alias::factory),
+        }
+    }
+
+    pub fn factory_inner_join(left: Self, right: Self, on: Expression) -> Self {
+        Self::JoinVariant {
+            join_type: JoinType::InnerJoin,
+            left: Box::new(left),
+            right: Box::new(right),
+            on: Condition::factory(on),
         }
     }
 }
@@ -198,6 +207,12 @@ impl ColumnDefinition {
             data_type,
             column_constraints,
         }
+    }
+}
+
+impl Condition {
+    pub fn factory(expression: Expression) -> Self {
+        Self { expression }
     }
 }
 

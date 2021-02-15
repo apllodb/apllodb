@@ -40,37 +40,37 @@ mod tests {
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
                 None,
-                vec![FromItem::factory("t", None)],
+                vec![FromItem::factory_tn("t", None)],
                 Ok(FullFieldReference::factory("t", "c")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
                 None,
-                vec![FromItem::factory("t", Some("corr_alias"))],
+                vec![FromItem::factory_tn("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c").with_corr_alias("corr_alias")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("corr_alias")), "c"),
                 None,
-                vec![FromItem::factory("t", Some("corr_alias"))],
+                vec![FromItem::factory_tn("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c").with_corr_alias("corr_alias")),
             ),
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
                 Some(Alias::factory("field_alias")),
-                vec![FromItem::factory("t", None)],
+                vec![FromItem::factory_tn("t", None)],
                 Ok(FullFieldReference::factory("t", "c").with_field_alias("field_alias")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
                 Some(Alias::factory("field_alias")),
-                vec![FromItem::factory("t", None)],
+                vec![FromItem::factory_tn("t", None)],
                 Ok(FullFieldReference::factory("t", "c").with_field_alias("field_alias")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
                 Some(Alias::factory("field_alias")),
-                vec![FromItem::factory("t", Some("corr_alias"))],
+                vec![FromItem::factory_tn("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c")
                     .with_corr_alias("corr_alias")
                     .with_field_alias("field_alias")),
@@ -78,7 +78,7 @@ mod tests {
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("corr_alias")), "c"),
                 Some(Alias::factory("field_alias")),
-                vec![FromItem::factory("t", Some("corr_alias"))],
+                vec![FromItem::factory_tn("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c")
                     .with_corr_alias("corr_alias")
                     .with_field_alias("field_alias")),
