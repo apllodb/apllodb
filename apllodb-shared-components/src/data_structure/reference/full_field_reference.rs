@@ -26,15 +26,6 @@ impl Display for FullFieldReference {
 }
 
 impl FullFieldReference {
-    /// Constructor
-    pub fn new(
-        correlation_reference: Option<CorrelationReference>,
-        field_reference: FieldReference,
-    ) -> Self {
-        let base = FieldReferenceBase::new(correlation_reference, field_reference);
-        Self(base)
-    }
-
     /// Get ref of CorrelationReference
     pub fn as_correlation_reference(&self) -> Option<&CorrelationReference> {
         self.0.as_correlation_reference()
