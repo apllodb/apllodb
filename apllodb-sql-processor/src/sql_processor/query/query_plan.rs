@@ -65,7 +65,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let node1 = if let Some(condition) = sc.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
-                condition: AstTranslator::condition_in_select(condition, from_items.clone())?,
+                condition: AstTranslator::condition(condition, from_items.clone())?,
             };
             QueryPlanNode::Unary(QueryPlanNodeUnary {
                 op: selection_op,
@@ -159,9 +159,9 @@ impl QueryPlan {
             .into_iter()
             .map(|order_by| {
                 let expression =
-                    AstTranslator::expression_in_select(order_by.expression, from_items.to_vec())?;
+                    AstTranslator::expression(order_by.expression, from_items.to_vec())?;
                 let ffr = match expression {
-                    apllodb_shared_components::Expression::FullFieldReferenceVariant(ffr) => ffr,
+                    apllodb_shared_components::Expression::UnresolvedFieldReferenceVariant(ffr) => ffr,
                     apllodb_shared_components::Expression::ConstantVariant(_)
                     | apllodb_shared_components::Expression::UnaryOperatorVariant(_, _)
                     | apllodb_shared_components::Expression::BooleanExpressionVariant(_) => {

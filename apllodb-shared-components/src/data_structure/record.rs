@@ -84,7 +84,7 @@ impl Record {
     ///   - `condition` is not evaluated as BOOLEAN type.
     pub fn selection(&self, condition: &Expression) -> ApllodbResult<bool> {
         match condition {
-            Expression::ConstantVariant(_) | Expression::FullFieldReferenceVariant(_) => {
+            Expression::ConstantVariant(_) | Expression::UnresolvedFieldReferenceVariant(_) => {
                 let sql_value = self.eval_to_sql_value(condition)?;
                 self.selection_sql_value(&sql_value)
             }
@@ -173,8 +173,8 @@ impl Record {
     fn eval_to_sql_value(&self, expr: &Expression) -> ApllodbResult<SqlValue> {
         match expr {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
-            Expression::FullFieldReferenceVariant(ffr) => {
-                let index = FieldIndex::from(ffr.clone());
+            Expression::UnresolvedFieldReferenceVariant(ufr) => {
+                let index = FieldIndex::from(ufr.clone());
                 let sql_value = self.get_sql_value(&index)?;
                 Ok(sql_value.clone())
             }
@@ -228,7 +228,7 @@ mod tests {
             // FullFieldReference
             TestDatum {
                 in_record: T_PEOPLE_R1.clone(),
-                in_condition: Expression::FullFieldReferenceVariant(People::ffr_id()),
+                in_condition: Expression::UnresolvedFieldReferenceVariant(People::ffr_id()),
                 expected_result: Err(ApllodbErrorKind::DatatypeMismatch),
             },
             // BooleanExpression

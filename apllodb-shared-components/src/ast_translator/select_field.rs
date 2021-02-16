@@ -1,4 +1,4 @@
-use crate::{AliasName, ApllodbResult, FullFieldReference};
+use crate::{AliasName, ApllodbResult, UnresolvedFieldReference};
 use apllodb_sql_parser::apllodb_ast::{self};
 
 use crate::ast_translator::AstTranslator;
@@ -9,8 +9,7 @@ impl AstTranslator {
     /// errors from [AstTranslator::column_reference()](crate::AstTranslator::column_reference).
     pub fn select_field_column_reference(
         ast_select_field: apllodb_ast::SelectField,
-        ast_from_items: Vec<apllodb_ast::FromItem>,
-    ) -> ApllodbResult<FullFieldReference> {
+    ) -> ApllodbResult<UnresolvedFieldReference> {
         let ast_expression = ast_select_field.expression;
         let ast_field_alias = ast_select_field.alias;
 
@@ -22,13 +21,13 @@ impl AstTranslator {
             }
 
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let mut ffr = Self::column_reference(ast_colref, ast_from_items)?;
+                let mut ufr = Self::column_reference(ast_colref)?;
                 if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(field_alias))) =
                     ast_field_alias
                 {
-                    ffr.set_field_alias(AliasName::new(field_alias)?);
+                    ufr.set_field_alias(AliasName::new(field_alias)?);
                 }
-                Ok(ffr)
+                Ok(ufr)
             }
         }
     }
@@ -130,10 +129,7 @@ mod tests {
         ];
 
         for test_datum in test_data {
-            match AstTranslator::select_field_column_reference(
-                test_datum.ast_select_field,
-                test_datum.ast_from_items,
-            ) {
+            match AstTranslator::select_field_column_reference(test_datum.ast_select_field) {
                 Ok(ffr) => {
                     assert_eq!(ffr, test_datum.expected_result.unwrap())
                 }

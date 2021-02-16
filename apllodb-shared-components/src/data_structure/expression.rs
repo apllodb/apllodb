@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference};
+use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, UnresolvedFieldReference};
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
 
@@ -18,7 +18,7 @@ pub enum Expression {
     ConstantVariant(SqlValue),
 
     /// Reference to field
-    FullFieldReferenceVariant(FullFieldReference),
+    UnresolvedFieldReferenceVariant(UnresolvedFieldReference),
 
     /// With unary operator
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
@@ -43,7 +43,7 @@ impl TryFrom<Expression> for SqlValue {
     fn try_from(expression: Expression) -> ApllodbResult<Self> {
         match expression {
             Expression::ConstantVariant(sql_value) => Ok(sql_value),
-            Expression::FullFieldReferenceVariant(ffr) => Err(ApllodbError::new(
+            Expression::UnresolvedFieldReferenceVariant(ffr) => Err(ApllodbError::new(
                 ApllodbErrorKind::DataException,
                 format!("field `{}` cannot be into SqlValue", ffr),
                 None,

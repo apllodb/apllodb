@@ -2,10 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference,
-    FullFieldReference,
-};
+use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference, FullFieldReference, UnresolvedFieldReference};
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
 /// Used to get a value from a record.
@@ -249,6 +246,37 @@ impl<S: Into<String>> From<S> for FieldIndex {
                 correlation_name: None,
                 field_name: first,
             }
+        }
+    }
+}
+
+impl From<UnresolvedFieldReference> for FieldIndex {
+    fn from(unresolved_field_reference: UnresolvedFieldReference) -> Self {
+        match (
+            unresolved_field_reference.as_correlation_reference(),
+            unresolved_field_reference.as_field_reference(),
+        ) {
+            (None, FieldReference::ColumnNameVariant(column_name))
+            | (None, FieldReference::ColumnAliasVariant { column_name, .. }) => {
+                Self::from(column_name.as_str())
+            }
+
+            (
+                Some(CorrelationReference::TableNameVariant(table_name)),
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                Some(CorrelationReference::TableNameVariant(table_name)),
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            )
+            | (
+                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
+                FieldReference::ColumnNameVariant(column_name),
+            )
+            | (
+                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
+                FieldReference::ColumnAliasVariant { column_name, .. },
+            ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
         }
     }
 }
