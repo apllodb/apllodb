@@ -11,7 +11,7 @@ use crate::ast_translator::AstTranslator;
 impl AstTranslator {
     pub fn expression_in_select(
         ast_expression: apllodb_ast::Expression,
-        ast_from_items: Vec<apllodb_ast::FromItem>,
+        ast_table_names: Vec<(apllodb_ast::TableName, Option<apllodb_ast::Alias>)>,
     ) -> ApllodbResult<Expression> {
         let expression: Expression = match ast_expression {
             apllodb_ast::Expression::ConstantVariant(c) => {
@@ -19,18 +19,18 @@ impl AstTranslator {
                 Expression::ConstantVariant(sql_value)
             }
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let ffr = Self::column_reference(ast_colref, ast_from_items)?;
+                let ffr = Self::column_reference(ast_colref, ast_table_names)?;
                 Expression::FullFieldReferenceVariant(ffr)
             }
             apllodb_ast::Expression::UnaryOperatorVariant(uni_op, expr) => {
                 let uni_op = Self::unary_operator(uni_op);
-                let expr = Self::expression_in_select(*expr, ast_from_items)?;
+                let expr = Self::expression_in_select(*expr, ast_table_names)?;
                 Expression::UnaryOperatorVariant(uni_op, Box::new(expr))
             }
             apllodb_ast::Expression::BinaryOperatorVariant(bin_op, left, right) => {
                 let bin_op = Self::binary_operator(bin_op);
-                let left = Self::expression_in_select(*left, ast_from_items.clone())?;
-                let right = Self::expression_in_select(*right, ast_from_items)?;
+                let left = Self::expression_in_select(*left, ast_table_names.clone())?;
+                let right = Self::expression_in_select(*right, ast_table_names)?;
 
                 match bin_op {
                     BinaryOperator::Equal => Expression::BooleanExpressionVariant(
@@ -51,13 +51,10 @@ impl AstTranslator {
         ast_expression: apllodb_ast::Expression,
         ast_tables: Vec<apllodb_ast::TableName>,
     ) -> ApllodbResult<Expression> {
-        let ast_from_items = ast_tables
+        let ast_table_names: Vec<(apllodb_ast::TableName, Option<apllodb_ast::Alias>)> = ast_tables
             .into_iter()
-            .map(|table_name| apllodb_ast::FromItem {
-                table_name,
-                alias: None,
-            })
+            .map(|table_name| (table_name, None))
             .collect();
-        Self::expression_in_select(ast_expression, ast_from_items)
+        Self::expression_in_select(ast_expression, ast_table_names)
     }
 }

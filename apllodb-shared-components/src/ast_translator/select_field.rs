@@ -9,7 +9,7 @@ impl AstTranslator {
     /// errors from [AstTranslator::column_reference()](crate::AstTranslator::column_reference).
     pub fn select_field_column_reference(
         ast_select_field: apllodb_ast::SelectField,
-        ast_from_items: Vec<apllodb_ast::FromItem>,
+        ast_table_names: Vec<(apllodb_ast::TableName, Option<apllodb_ast::Alias>)>,
     ) -> ApllodbResult<FullFieldReference> {
         let ast_expression = ast_select_field.expression;
         let ast_field_alias = ast_select_field.alias;
@@ -22,7 +22,7 @@ impl AstTranslator {
             }
 
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let mut ffr = Self::column_reference(ast_colref, ast_from_items)?;
+                let mut ffr = Self::column_reference(ast_colref, ast_table_names)?;
                 if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(field_alias))) =
                     ast_field_alias
                 {
@@ -45,7 +45,7 @@ mod tests {
     #[derive(new)]
     struct TestDatum {
         ast_select_field: SelectField,
-        ast_from_items: Vec<FromItem>,
+        ast_table_names: Vec<FromItem>,
         expected_result: Result<FullFieldReference, ApllodbErrorKind>,
     }
 
@@ -132,7 +132,17 @@ mod tests {
         for test_datum in test_data {
             match AstTranslator::select_field_column_reference(
                 test_datum.ast_select_field,
-                test_datum.ast_from_items,
+                test_datum
+                    .ast_table_names
+                    .into_iter()
+                    .map(|from_item| {
+                        if let FromItem::TableNameVariant { table_name, alias } = from_item {
+                            (table_name, alias)
+                        } else {
+                            unreachable!("only TableNameVariant should be tested here")
+                        }
+                    })
+                    .collect(),
             ) {
                 Ok(ffr) => {
                     assert_eq!(ffr, test_datum.expected_result.unwrap())
