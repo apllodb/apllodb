@@ -171,12 +171,12 @@ mod tests {
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
                 vec![FromItem::factory("t", None)],
-                Ok(FullFieldReference::factory("t", "c")),
+                Ok(FullFieldReference::factory_tn_cn("t", "c")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
                 vec![FromItem::factory("t", None)],
-                Ok(FullFieldReference::factory("t", "c")),
+                Ok(FullFieldReference::factory_tn_cn("t", "c")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t1")), "c"),
@@ -186,17 +186,17 @@ mod tests {
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
                 vec![FromItem::factory("t", Some("a"))],
-                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
+                Ok(FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
                 vec![FromItem::factory("t", Some("a"))],
-                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
+                Ok(FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("a")), "c"),
                 vec![FromItem::factory("t", Some("a"))],
-                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
+                Ok(FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("x")), "c"),

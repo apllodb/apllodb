@@ -11,10 +11,10 @@ impl People {
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "id")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
     }
     pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "age")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn schema() -> RecordFieldRefSchema {
@@ -41,13 +41,13 @@ impl Body {
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "id")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "people_id")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
     }
     pub fn ffr_height() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "height")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "height")
     }
 
     pub fn schema() -> RecordFieldRefSchema {
@@ -86,16 +86,16 @@ impl Pet {
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "id")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "people_id")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
     }
     pub fn ffr_kind() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "kind")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "kind")
     }
     pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "age")
+        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn schema() -> RecordFieldRefSchema {

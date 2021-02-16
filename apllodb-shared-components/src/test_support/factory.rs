@@ -30,7 +30,12 @@ impl TableName {
 }
 
 impl FullFieldReference {
-    pub fn factory(table_name: &str, column_name: &str) -> Self {
+    pub fn factory_cn(column_name: &str) -> Self {
+        let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
+        Self::new(None, field)
+    }
+
+    pub fn factory_tn_cn(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(Some(corr), field)

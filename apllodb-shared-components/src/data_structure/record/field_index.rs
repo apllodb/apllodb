@@ -345,111 +345,121 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![FullFieldReference::factory("t", "c")],
+                full_field_references: vec![FullFieldReference::factory_cn("c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                full_field_references: vec![FullFieldReference::factory("t", "c")],
+                full_field_references: vec![FullFieldReference::factory_cn("c")],
+                expected_result: Err(ApllodbErrorKind::InvalidName),
+            },
+            TestDatum {
+                field_index: "c",
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
+                expected_result: Ok(0),
+            },
+            TestDatum {
+                field_index: "xxx",
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
                 full_field_references: vec![
-                    FullFieldReference::factory("t", "c").with_field_alias("ca")
+                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
                 full_field_references: vec![
-                    FullFieldReference::factory("t", "c").with_field_alias("ca")
+                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
                 full_field_references: vec![
-                    FullFieldReference::factory("t", "c").with_field_alias("ca")
+                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
                 full_field_references: vec![
-                    FullFieldReference::factory("t", "c").with_field_alias("ca")
+                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "t.c",
-                full_field_references: vec![FullFieldReference::factory("t", "c")],
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx.c",
-                full_field_references: vec![FullFieldReference::factory("t", "c")],
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
                 full_field_references: vec![
-                    FullFieldReference::factory("t", "c").with_corr_alias("ta")
+                    FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.c",
                 full_field_references: vec![
-                    FullFieldReference::factory("t", "c").with_corr_alias("ta")
+                    FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.c",
                 full_field_references: vec![
-                    FullFieldReference::factory("t", "c").with_corr_alias("ta")
+                    FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![FullFieldReference::factory("t", "c")
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                full_field_references: vec![FullFieldReference::factory("t", "c")
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.c",
-                full_field_references: vec![FullFieldReference::factory("t", "c")
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.c",
-                full_field_references: vec![FullFieldReference::factory("t", "c")
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                full_field_references: vec![FullFieldReference::factory("t", "c")
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.ca",
-                full_field_references: vec![FullFieldReference::factory("t", "c")
+                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
@@ -457,32 +467,32 @@ mod tests {
             TestDatum {
                 field_index: "c2",
                 full_field_references: vec![
-                    FullFieldReference::factory("t1", "c1"),
-                    FullFieldReference::factory("t2", "c2"),
+                    FullFieldReference::factory_tn_cn("t1", "c1"),
+                    FullFieldReference::factory_tn_cn("t2", "c2"),
                 ],
                 expected_result: Ok(1),
             },
             TestDatum {
                 field_index: "t1.c1",
                 full_field_references: vec![
-                    FullFieldReference::factory("t1", "c1"),
-                    FullFieldReference::factory("t2", "c2"),
+                    FullFieldReference::factory_tn_cn("t1", "c1"),
+                    FullFieldReference::factory_tn_cn("t2", "c2"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t1.c",
                 full_field_references: vec![
-                    FullFieldReference::factory("t1", "c"),
-                    FullFieldReference::factory("t2", "c"),
+                    FullFieldReference::factory_tn_cn("t1", "c"),
+                    FullFieldReference::factory_tn_cn("t2", "c"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c",
                 full_field_references: vec![
-                    FullFieldReference::factory("t1", "c"),
-                    FullFieldReference::factory("t2", "c"),
+                    FullFieldReference::factory_tn_cn("t1", "c"),
+                    FullFieldReference::factory_tn_cn("t2", "c"),
                 ],
                 expected_result: Err(ApllodbErrorKind::AmbiguousColumn),
             },
