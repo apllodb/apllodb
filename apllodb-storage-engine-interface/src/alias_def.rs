@@ -5,6 +5,7 @@ use apllodb_shared_components::{
 };
 use serde::{Deserialize, Serialize};
 
+/// Alias to a table and columns given from SQL.
 #[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct AliasDef {
     table_alias: Option<AliasName>,
@@ -41,12 +42,21 @@ impl From<Vec<FullFieldReference>> for AliasDef {
 
         for ffr in ffrs {
             match (ffr.as_correlation_reference(), ffr.as_field_reference()) {
-                (
-                    CorrelationReference::TableNameVariant(_),
+                (None, FieldReference::ColumnNameVariant(_))
+                | (
+                    Some(CorrelationReference::TableNameVariant(_)),
                     FieldReference::ColumnNameVariant(_),
                 ) => {}
+
                 (
-                    CorrelationReference::TableNameVariant(_),
+                    None,
+                    FieldReference::ColumnAliasVariant {
+                        alias_name,
+                        column_name,
+                    },
+                )
+                | (
+                    Some(CorrelationReference::TableNameVariant(_)),
                     FieldReference::ColumnAliasVariant {
                         alias_name,
                         column_name,
@@ -54,8 +64,9 @@ impl From<Vec<FullFieldReference>> for AliasDef {
                 ) => {
                     alias_def = alias_def.add_column_alias(column_name.clone(), alias_name.clone())
                 }
+
                 (
-                    CorrelationReference::TableAliasVariant { alias_name, .. },
+                    Some(CorrelationReference::TableAliasVariant { alias_name, .. }),
                     FieldReference::ColumnNameVariant(_),
                 ) => {
                     assert!(
@@ -65,10 +76,10 @@ impl From<Vec<FullFieldReference>> for AliasDef {
                     alias_def = alias_def.set_table_alias(alias_name.clone());
                 }
                 (
-                    CorrelationReference::TableAliasVariant {
+                    Some(CorrelationReference::TableAliasVariant {
                         alias_name: table_alias,
                         ..
-                    },
+                    }),
                     FieldReference::ColumnAliasVariant {
                         alias_name: column_alias,
                         column_name,

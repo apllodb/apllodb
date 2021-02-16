@@ -33,7 +33,7 @@ impl FullFieldReference {
     pub fn factory(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        Self::new(corr, field)
+        Self::new(Some(corr), field)
     }
 
     pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {

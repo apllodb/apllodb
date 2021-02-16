@@ -200,7 +200,7 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
                 .into_iter()
                 .map(|cn| {
                     FullFieldReference::new(
-                        CorrelationReference::TableNameVariant(table_name.clone()),
+                        Some(CorrelationReference::TableNameVariant(table_name.clone())),
                         FieldReference::ColumnNameVariant(cn),
                     )
                 })

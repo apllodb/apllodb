@@ -131,7 +131,7 @@ impl AstTranslator {
                 )?);
 
                 Ok(FullFieldReference::new(
-                    correlation_reference,
+                    Some(correlation_reference),
                     field_reference,
                 ))
             }

@@ -54,7 +54,7 @@ impl RowColumnRefSchema {
                         alias_name: column_alias.clone(),
                     },
                 };
-                FullFieldReference::new(correlation_reference.clone(), field_reference)
+                FullFieldReference::new(Some(correlation_reference.clone()), field_reference)
             })
             .collect();
 

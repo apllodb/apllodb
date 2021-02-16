@@ -163,7 +163,9 @@ impl ApparentPrimaryKey {
             .into_iter()
             .map(|(column_name, sql_value)| {
                 let ffr = FullFieldReference::new(
-                    CorrelationReference::TableNameVariant(self.table_name.clone()),
+                    Some(CorrelationReference::TableNameVariant(
+                        self.table_name.clone(),
+                    )),
                     FieldReference::ColumnNameVariant(column_name.clone()),
                 );
                 ComparisonFunction::EqualVariant {

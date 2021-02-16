@@ -89,25 +89,49 @@ impl FieldIndex {
             full_field_reference.as_field_reference(),
         ) {
             (
+                // index: t.c
+                // ffr: C
+                Some(_),
+                None,
+                _,
+            ) => false,
+            (
+                // index: c
+                // ffr: C
+                None,
+                None,
+                FieldReference::ColumnNameVariant(cn),
+            )
+            | (
                 // index: c
                 // ffr: T.C
                 None,
-                CorrelationReference::TableNameVariant(_),
+                Some(CorrelationReference::TableNameVariant(_)),
                 FieldReference::ColumnNameVariant(cn),
             )
             | (
                 // index: c
                 // ffr: (T AS TA).C
                 None,
-                CorrelationReference::TableAliasVariant { .. },
+                Some(CorrelationReference::TableAliasVariant { .. }),
                 FieldReference::ColumnNameVariant(cn),
             ) => self.field_name == cn.as_str(),
 
             (
                 // index: c
+                // ffr: C AS CA
+                None,
+                None,
+                FieldReference::ColumnAliasVariant {
+                    alias_name,
+                    column_name,
+                },
+            )
+            | (
+                // index: c
                 // ffr: T.C AS CA
                 None,
-                CorrelationReference::TableNameVariant(_),
+                Some(CorrelationReference::TableNameVariant(_)),
                 FieldReference::ColumnAliasVariant {
                     alias_name,
                     column_name,
@@ -117,7 +141,7 @@ impl FieldIndex {
                 // index: c
                 // ffr: (T AS TA).C AS CA
                 None,
-                CorrelationReference::TableAliasVariant { .. },
+                Some(CorrelationReference::TableAliasVariant { .. }),
                 FieldReference::ColumnAliasVariant {
                     alias_name,
                     column_name,
@@ -128,14 +152,14 @@ impl FieldIndex {
                 // index: t.c
                 // ffr: T.C
                 Some(self_correlation_name),
-                CorrelationReference::TableNameVariant(tn),
+                Some(CorrelationReference::TableNameVariant(tn)),
                 FieldReference::ColumnNameVariant(column_name),
             ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
             (
                 // index: t.c
                 // ffr: T.C AS CA
                 Some(self_correlation_name),
-                CorrelationReference::TableNameVariant(tn),
+                Some(CorrelationReference::TableNameVariant(tn)),
                 FieldReference::ColumnAliasVariant {
                     column_name,
                     alias_name,
@@ -150,10 +174,10 @@ impl FieldIndex {
                 // index: t.c
                 // ffr: (T AS TA).C
                 Some(self_correlation_name),
-                CorrelationReference::TableAliasVariant {
+                Some(CorrelationReference::TableAliasVariant {
                     alias_name,
                     table_name,
-                },
+                }),
                 FieldReference::ColumnNameVariant(column_name),
             ) => {
                 (self_correlation_name == table_name.as_str()
@@ -164,10 +188,10 @@ impl FieldIndex {
                 // index: t.c
                 // ffr: (T AS TA).C AS CA
                 Some(self_correlation_name),
-                CorrelationReference::TableAliasVariant {
+                Some(CorrelationReference::TableAliasVariant {
                     alias_name: table_alias,
                     table_name,
-                },
+                }),
                 FieldReference::ColumnAliasVariant {
                     column_name,
                     alias_name: column_alias,
@@ -235,20 +259,25 @@ impl From<FullFieldReference> for FieldIndex {
             full_field_reference.as_correlation_reference(),
             full_field_reference.as_field_reference(),
         ) {
+            (None, FieldReference::ColumnNameVariant(column_name))
+            | (None, FieldReference::ColumnAliasVariant { column_name, .. }) => {
+                Self::from(column_name.as_str())
+            }
+
             (
-                CorrelationReference::TableNameVariant(table_name),
+                Some(CorrelationReference::TableNameVariant(table_name)),
                 FieldReference::ColumnNameVariant(column_name),
             )
             | (
-                CorrelationReference::TableNameVariant(table_name),
+                Some(CorrelationReference::TableNameVariant(table_name)),
                 FieldReference::ColumnAliasVariant { column_name, .. },
             )
             | (
-                CorrelationReference::TableAliasVariant { table_name, .. },
+                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
                 FieldReference::ColumnNameVariant(column_name),
             )
             | (
-                CorrelationReference::TableAliasVariant { table_name, .. },
+                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
                 FieldReference::ColumnAliasVariant { column_name, .. },
             ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
         }
