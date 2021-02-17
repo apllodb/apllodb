@@ -121,12 +121,12 @@ mod tests {
             )",
                 People::table_name(),
                 vec![TableConstraintKind::PrimaryKey {
-                    column_names: vec![People::ffr_id().as_column_name().clone()],
+                    column_names: vec![People::ufr_id().as_column_name().clone()],
                 }],
                 vec![
                     ColumnDefinition::new(
                         ColumnDataType::new(
-                            People::ffr_id().as_column_name().clone(),
+                            People::ufr_id().as_column_name().clone(),
                             SqlType::integer(),
                             true,
                         ),
@@ -134,7 +134,7 @@ mod tests {
                     ),
                     ColumnDefinition::new(
                         ColumnDataType::new(
-                            People::ffr_age().as_column_name().clone(),
+                            People::ufr_age().as_column_name().clone(),
                             SqlType::integer(),
                             true,
                         ),

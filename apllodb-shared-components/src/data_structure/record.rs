@@ -225,10 +225,10 @@ mod tests {
                 in_condition: Expression::factory_integer(123),
                 expected_result: Err(ApllodbErrorKind::DatatypeMismatch),
             },
-            // FullFieldReference
+            // UnresolvedFieldReference
             TestDatum {
                 in_record: T_PEOPLE_R1.clone(),
-                in_condition: Expression::UnresolvedFieldReferenceVariant(People::ffr_id()),
+                in_condition: Expression::UnresolvedFieldReferenceVariant(People::ufr_id()),
                 expected_result: Err(ApllodbErrorKind::DatatypeMismatch),
             },
             // BooleanExpression

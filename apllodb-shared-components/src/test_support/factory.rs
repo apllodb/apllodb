@@ -10,8 +10,8 @@ use crate::{
         reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator, SqlType,
-    SqlValue, SqlValues, TableName, UnaryOperator, UnresolvedFieldReference,
+    Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator,
+    SqlType, SqlValue, SqlValues, TableName, UnaryOperator, UnresolvedFieldReference,
 };
 use rand::Rng;
 
@@ -29,18 +29,16 @@ impl TableName {
     }
 }
 
-impl FullFieldReference {
+impl UnresolvedFieldReference {
     pub fn factory_cn(column_name: &str) -> Self {
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        let ufr = UnresolvedFieldReference::new(None, field);
-        ufr.resolve(vec![]).unwrap()
+        Self::new(None, field)
     }
 
     pub fn factory_tn_cn(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        let ufr = UnresolvedFieldReference::new(Some(corr), field);
-        ufr.resolve(vec![FromItem::factory(table_name)]).unwrap()
+        Self::new(Some(corr), field)
     }
 
     pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {
@@ -75,6 +73,15 @@ impl AliasName {
 impl ColumnDataType {
     pub fn factory(column_name: &str, sql_type: SqlType, nullable: bool) -> Self {
         Self::new(ColumnName::factory(column_name), sql_type, nullable)
+    }
+}
+
+impl FromItem {
+    pub fn factory(table_name: &str) -> Self {
+        FromItem::TableNameVariant {
+            table_name: TableName::factory(table_name),
+            alias: None,
+        }
     }
 }
 

@@ -1,11 +1,10 @@
 use std::fmt::Display;
 
-use apllodb_sql_parser::apllodb_ast;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     data_structure::reference::correlation_reference::CorrelationReference, AliasName,
-    ApllodbResult, ColumnName, FullFieldReference, TableName,
+    ApllodbResult, ColumnName, FromItem, FullFieldReference, TableName,
 };
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
@@ -36,11 +35,7 @@ impl UnresolvedFieldReference {
     }
 
     /// into FullFieldReference
-    /// TODO use domain FromItem
-    pub fn resolve(
-        self,
-        _ast_from_items: Vec<apllodb_ast::FromItem>,
-    ) -> ApllodbResult<FullFieldReference> {
+    pub fn resolve(self, _ast_from_items: Vec<FromItem>) -> ApllodbResult<FullFieldReference> {
         todo!()
     }
 

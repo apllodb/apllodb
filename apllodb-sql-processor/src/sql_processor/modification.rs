@@ -147,8 +147,8 @@ mod tests {
                 "INSERT INTO people (id, age) VALUES (1, 13)",
                 People::table_name(),
                 vec![
-                    People::ffr_id().as_column_name().clone(),
-                    People::ffr_age().as_column_name().clone(),
+                    People::ufr_id().as_column_name().clone(),
+                    People::ufr_age().as_column_name().clone(),
                 ],
                 vec![SqlValues::new(vec![
                     SqlValue::NotNull(NNSqlValue::Integer(1)),

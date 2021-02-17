@@ -1,4 +1,7 @@
-use crate::{FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName};
+use crate::{
+    FromItem, FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
+    UnresolvedFieldReference,
+};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
@@ -10,11 +13,22 @@ impl People {
         TableName::new("people").unwrap()
     }
 
+    pub fn ufr_id() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+    }
+    pub fn ufr_age() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
+    }
+
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+        Self::ufr_id()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
     pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
+        Self::ufr_age()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
 
     pub fn schema() -> RecordFieldRefSchema {
@@ -40,14 +54,30 @@ impl Body {
         TableName::new("body").unwrap()
     }
 
+    pub fn ufr_id() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+    }
+    pub fn ufr_people_id() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
+    }
+    pub fn ufr_height() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "height")
+    }
+
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+        Self::ufr_id()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
+        Self::ufr_people_id()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
     pub fn ffr_height() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "height")
+        Self::ufr_height()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
 
     pub fn schema() -> RecordFieldRefSchema {
@@ -85,17 +115,38 @@ impl Pet {
         TableName::new("pet").unwrap()
     }
 
+    pub fn ufr_id() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+    }
+    pub fn ufr_people_id() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
+    }
+    pub fn ufr_kind() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "kind")
+    }
+    pub fn ufr_age() -> UnresolvedFieldReference {
+        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
+    }
+
     pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+        Self::ufr_id()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
+        Self::ufr_people_id()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
     pub fn ffr_kind() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "kind")
+        Self::ufr_kind()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
     pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
+        Self::ufr_age()
+            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .unwrap()
     }
 
     pub fn schema() -> RecordFieldRefSchema {
