@@ -50,6 +50,15 @@ impl UnresolvedFieldReference {
         self.set_field_alias(AliasName::factory(field_alias));
         self
     }
+
+    pub fn resolve_naive(self) -> FullFieldReference {
+        if let Some(table_name) = self.as_table_name() {
+            let from_item = FromItem::factory(table_name.as_str());
+            self.resolve(vec![from_item]).unwrap()
+        } else {
+            self.resolve(vec![]).unwrap()
+        }
+    }
 }
 
 impl TableName {

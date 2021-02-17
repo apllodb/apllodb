@@ -16,7 +16,7 @@ impl RecordFieldRefSchema {
     ///
     /// see: [FieldIndex::peek](crate::FieldIndex::peek)
     pub(crate) fn resolve_index(&self, index: &FieldIndex) -> ApllodbResult<usize> {
-        let (idx, _) = index.peek(&self.0)?;
+        let (idx, _) = index.peek(self.0.clone())?;
         Ok(idx)
     }
 
@@ -24,7 +24,7 @@ impl RecordFieldRefSchema {
         let new_ffrs: Vec<FullFieldReference> = projection
             .iter()
             .map(|index| {
-                let (_, ffr) = index.peek(&self.0)?;
+                let (_, ffr) = index.peek(self.0.clone())?;
                 Ok(ffr.clone())
             })
             .collect::<ApllodbResult<_>>()?;

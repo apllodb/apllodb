@@ -2,7 +2,10 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference, FullFieldReference, UnresolvedFieldReference};
+use crate::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference,
+    FullFieldReference, UnresolvedFieldReference,
+};
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
 /// Used to get a value from a record.
@@ -38,15 +41,15 @@ impl FieldIndex {
     ///   - none of `full_field_references` matches to this FieldIndex.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of `full_field_references` match to this FieldIndex.
-    pub fn peek<'a>(
+    pub fn peek(
         &self,
-        full_field_references: impl IntoIterator<Item = &'a FullFieldReference>,
-    ) -> ApllodbResult<(usize, &'a FullFieldReference)> {
+        full_field_references: impl IntoIterator<Item = FullFieldReference>,
+    ) -> ApllodbResult<(usize, FullFieldReference)> {
         let mut ret_idx: usize = 0;
-        let mut ret_ffr: Option<&'a FullFieldReference> = None;
+        let mut ret_ffr: Option<FullFieldReference> = None;
 
         for ffr in full_field_references {
-            if self.matches(ffr) {
+            if self.matches(&ffr) {
                 if ret_ffr.is_some() {
                     return Err(ApllodbError::new(
                         ApllodbErrorKind::AmbiguousColumn,
@@ -314,7 +317,7 @@ impl From<FullFieldReference> for FieldIndex {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, ApllodbResult, FieldIndex, FullFieldReference};
+    use crate::{ApllodbErrorKind, ApllodbResult, FieldIndex, UnresolvedFieldReference};
 
     #[test]
     fn test_from_success() {
@@ -358,7 +361,7 @@ mod tests {
     fn test_peek() -> ApllodbResult<()> {
         struct TestDatum {
             field_index: &'static str,
-            full_field_references: Vec<FullFieldReference>,
+            ufrs: Vec<UnresolvedFieldReference>,
             expected_result: Result<
                 usize, // index to matching one from `full_field_references`,
                 ApllodbErrorKind,
@@ -368,159 +371,145 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![],
+                ufrs: vec![],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![FullFieldReference::factory_cn("c")],
+                ufrs: vec![UnresolvedFieldReference::factory_cn("c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                full_field_references: vec![FullFieldReference::factory_cn("c")],
+                ufrs: vec![UnresolvedFieldReference::factory_cn("c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
-                ],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
-                ],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
-                ],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")
-                ],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "t.c",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx.c",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")
-                ],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.c",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")
-                ],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.c",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")
-                ],
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.c",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.c",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ta.ca",
-                full_field_references: vec![FullFieldReference::factory_tn_cn("t", "c")
+                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
                     .with_corr_alias("ta")
                     .with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c2",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t1", "c1"),
-                    FullFieldReference::factory_tn_cn("t2", "c2"),
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_tn_cn("t1", "c1"),
+                    UnresolvedFieldReference::factory_tn_cn("t2", "c2"),
                 ],
                 expected_result: Ok(1),
             },
             TestDatum {
                 field_index: "t1.c1",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t1", "c1"),
-                    FullFieldReference::factory_tn_cn("t2", "c2"),
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_tn_cn("t1", "c1"),
+                    UnresolvedFieldReference::factory_tn_cn("t2", "c2"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t1.c",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t1", "c"),
-                    FullFieldReference::factory_tn_cn("t2", "c"),
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_tn_cn("t1", "c"),
+                    UnresolvedFieldReference::factory_tn_cn("t2", "c"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c",
-                full_field_references: vec![
-                    FullFieldReference::factory_tn_cn("t1", "c"),
-                    FullFieldReference::factory_tn_cn("t2", "c"),
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_tn_cn("t1", "c"),
+                    UnresolvedFieldReference::factory_tn_cn("t2", "c"),
                 ],
                 expected_result: Err(ApllodbErrorKind::AmbiguousColumn),
             },
@@ -528,13 +517,22 @@ mod tests {
 
         for test_datum in test_data {
             let field_index = FieldIndex::from(test_datum.field_index);
-            match field_index.peek(test_datum.full_field_references.iter().as_ref()) {
+
+            match field_index.peek(
+                test_datum
+                    .ufrs
+                    .iter()
+                    .map(|ufr| ufr.clone().resolve_naive()),
+            ) {
                 Ok((idx, ffr)) => {
                     let expected_idx = test_datum
                         .expected_result
                         .expect("succeeded in peeking, should expect Ok()");
                     assert_eq!(idx, expected_idx);
-                    assert_eq!(ffr, test_datum.full_field_references.get(idx).unwrap());
+                    assert_eq!(
+                        ffr,
+                        test_datum.ufrs.get(idx).unwrap().clone().resolve_naive()
+                    );
                 }
                 Err(e) => {
                     assert_eq!(e.kind(), &test_datum.expected_result.unwrap_err());
