@@ -11,7 +11,7 @@ use crate::{
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator, SqlType,
-    SqlValue, SqlValues, TableName, UnaryOperator,
+    SqlValue, SqlValues, TableName, UnaryOperator, UnresolvedFieldReference,
 };
 use rand::Rng;
 
@@ -32,13 +32,15 @@ impl TableName {
 impl FullFieldReference {
     pub fn factory_cn(column_name: &str) -> Self {
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        Self::new(None, field)
+        let ufr = UnresolvedFieldReference::new(None, field);
+        ufr.resolve(vec![]).unwrap()
     }
 
     pub fn factory_tn_cn(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        Self::new(Some(corr), field)
+        let ufr = UnresolvedFieldReference::new(Some(corr), field);
+        ufr.resolve(vec![FromItem::factory(table_name)]).unwrap()
     }
 
     pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {

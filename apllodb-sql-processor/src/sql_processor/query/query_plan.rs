@@ -65,7 +65,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let node1 = if let Some(condition) = sc.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
-                condition: AstTranslator::condition(condition, from_items.clone())?,
+                condition: AstTranslator::condition(condition)?,
             };
             QueryPlanNode::Unary(QueryPlanNodeUnary {
                 op: selection_op,
@@ -141,8 +141,7 @@ impl QueryPlan {
             fields: select_fields
                 .into_iter()
                 .map(|select_field| {
-                    AstTranslator::select_field_column_reference(select_field, from_items.to_vec())
-                        .map(FieldIndex::from)
+                    AstTranslator::select_field_column_reference(select_field).map(FieldIndex::from)
                 })
                 .collect::<ApllodbResult<_>>()?,
         };
@@ -158,10 +157,11 @@ impl QueryPlan {
         let field_orderings: Vec<(FieldIndex, Ordering)> = order_byes
             .into_iter()
             .map(|order_by| {
-                let expression =
-                    AstTranslator::expression(order_by.expression, from_items.to_vec())?;
+                let expression = AstTranslator::expression(order_by.expression)?;
                 let ffr = match expression {
-                    apllodb_shared_components::Expression::UnresolvedFieldReferenceVariant(ffr) => ffr,
+                    apllodb_shared_components::Expression::UnresolvedFieldReferenceVariant(ffr) => {
+                        ffr
+                    }
                     apllodb_shared_components::Expression::ConstantVariant(_)
                     | apllodb_shared_components::Expression::UnaryOperatorVariant(_, _)
                     | apllodb_shared_components::Expression::BooleanExpressionVariant(_) => {
