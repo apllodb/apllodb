@@ -22,12 +22,12 @@ impl People {
 
     pub fn ffr_id() -> FullFieldReference {
         Self::ufr_id()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_age() -> FullFieldReference {
         Self::ufr_age()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
 
@@ -66,17 +66,17 @@ impl Body {
 
     pub fn ffr_id() -> FullFieldReference {
         Self::ufr_id()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_people_id() -> FullFieldReference {
         Self::ufr_people_id()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_height() -> FullFieldReference {
         Self::ufr_height()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
 
@@ -130,22 +130,22 @@ impl Pet {
 
     pub fn ffr_id() -> FullFieldReference {
         Self::ufr_id()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_people_id() -> FullFieldReference {
         Self::ufr_people_id()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_kind() -> FullFieldReference {
         Self::ufr_kind()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_age() -> FullFieldReference {
         Self::ufr_age()
-            .resolve(vec![FromItem::factory(Self::table_name().as_str())])
+            .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
 

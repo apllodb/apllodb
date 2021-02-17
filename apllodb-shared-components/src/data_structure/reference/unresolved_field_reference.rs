@@ -34,11 +34,6 @@ impl UnresolvedFieldReference {
         Self(base)
     }
 
-    /// into FullFieldReference
-    pub fn resolve(self, _ast_from_items: Vec<FromItem>) -> ApllodbResult<FullFieldReference> {
-        todo!()
-    }
-
     /// Get ref of CorrelationReference
     pub fn as_correlation_reference(&self) -> Option<&CorrelationReference> {
         self.0.as_correlation_reference()
@@ -71,5 +66,12 @@ impl UnresolvedFieldReference {
     /// Set field reference
     pub fn set_field_alias(&mut self, field_alias: AliasName) {
         self.0.set_field_alias(field_alias)
+    }
+
+    /// into FullFieldReference
+    ///
+    /// `ast_from_item` is None only when SELECT statement does not have FROM clause.
+    pub fn resolve(self, _ast_from_item: Option<FromItem>) -> ApllodbResult<FullFieldReference> {
+        todo!()
     }
 }
