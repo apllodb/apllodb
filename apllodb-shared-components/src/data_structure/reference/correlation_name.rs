@@ -4,17 +4,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::{data_structure::validation_helper::short_name::ShortName, ApllodbResult};
 
-/// Reference to a correlation.
+/// Name of a correlation.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct CorrelationReference(ShortName);
+pub struct CorrelationName(ShortName);
 
-impl Display for CorrelationReference {
+impl Display for CorrelationName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.as_str())
     }
 }
 
-impl CorrelationReference {
+impl CorrelationName {
     /// Constructor.
     ///
     /// # Failures

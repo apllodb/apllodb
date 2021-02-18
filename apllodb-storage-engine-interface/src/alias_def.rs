@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use apllodb_shared_components::{
-    AliasName, ColumnName, CorrelationReference, FieldReference, FullFieldReference,
+    AliasName, ColumnName, CorrelationName, FieldReference, FullFieldReference,
 };
 use serde::{Deserialize, Serialize};
 
@@ -44,7 +44,7 @@ impl From<Vec<FullFieldReference>> for AliasDef {
             match (ffr.as_correlation_reference(), ffr.as_field_reference()) {
                 (None, FieldReference::ColumnNameVariant(_))
                 | (
-                    Some(CorrelationReference::TableNameVariant(_)),
+                    Some(CorrelationName::TableNameVariant(_)),
                     FieldReference::ColumnNameVariant(_),
                 ) => {}
 
@@ -56,7 +56,7 @@ impl From<Vec<FullFieldReference>> for AliasDef {
                     },
                 )
                 | (
-                    Some(CorrelationReference::TableNameVariant(_)),
+                    Some(CorrelationName::TableNameVariant(_)),
                     FieldReference::ColumnAliasVariant {
                         alias_name,
                         column_name,
@@ -66,7 +66,7 @@ impl From<Vec<FullFieldReference>> for AliasDef {
                 }
 
                 (
-                    Some(CorrelationReference::TableAliasVariant { alias_name, .. }),
+                    Some(CorrelationName::TableAliasVariant { alias_name, .. }),
                     FieldReference::ColumnNameVariant(_),
                 ) => {
                     assert!(
@@ -76,7 +76,7 @@ impl From<Vec<FullFieldReference>> for AliasDef {
                     alias_def = alias_def.set_table_alias(alias_name.clone());
                 }
                 (
-                    Some(CorrelationReference::TableAliasVariant {
+                    Some(CorrelationName::TableAliasVariant {
                         alias_name: table_alias,
                         ..
                     }),

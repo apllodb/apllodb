@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{AliasName, FromItem, TableName};
+use crate::{traits::correlation::Correlation, AliasName, CorrelationName, FromItem, TableName};
 use serde::{Deserialize, Serialize};
 
 /// Table name with (optional) alias.
@@ -36,5 +36,16 @@ impl From<&FromItem> for Vec<TableWithAlias> {
                 left_tables
             }
         }
+    }
+}
+
+impl Correlation for TableWithAlias {
+    fn is_named(&self, correlation_name: &CorrelationName) -> bool {
+        let cn = correlation_name.as_str();
+        self.table_name.as_str() == cn
+            || self
+                .alias
+                .as_ref()
+                .map_or_else(|| false, |alias| alias.as_str() == cn)
     }
 }

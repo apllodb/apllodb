@@ -3,9 +3,9 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data_structure::reference::correlation_reference::CorrelationReference, AliasName,
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FromItem, FullFieldReference,
-    TableWithAlias,
+    data_structure::reference::correlation_name::CorrelationName, traits::correlation::Correlation,
+    AliasName, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FromItem,
+    FullFieldReference, TableWithAlias,
 };
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
@@ -27,16 +27,13 @@ impl Display for UnresolvedFieldReference {
 
 impl UnresolvedFieldReference {
     /// Constructor
-    pub fn new(
-        correlation_reference: Option<CorrelationReference>,
-        field_reference: FieldReference,
-    ) -> Self {
-        let base = FieldReferenceBase::new(correlation_reference, field_reference);
+    pub fn new(correlation_name: Option<CorrelationName>, field_reference: FieldReference) -> Self {
+        let base = FieldReferenceBase::new(correlation_name, field_reference);
         Self(base)
     }
 
     /// Get ref of CorrelationReference
-    pub fn as_correlation_reference(&self) -> Option<&CorrelationReference> {
+    pub fn as_correlation_reference(&self) -> Option<&CorrelationName> {
         self.0.as_correlation_reference()
     }
 
@@ -93,18 +90,18 @@ impl UnresolvedFieldReference {
     }
 
     fn resolve_with_table_with_prefix(
-        prefix: &CorrelationReference,
+        prefix: &CorrelationName,
         field: &FieldReference,
         from: &TableWithAlias,
     ) -> ApllodbResult<FullFieldReference> {
         // SELECT ta.C FROM T (AS a)?;
 
-        if prefix.as_str() != from.table_name.as_str()
-            && from
-                .alias
-                .as_ref()
-                .map_or_else(|| true, |alias| prefix.as_str() != alias.as_str())
-        {
+        if from.is_named(prefix) {
+            Ok(FullFieldReference::new(FieldReferenceBase::new(
+                Some(prefix.clone()),
+                field.clone(),
+            )))
+        } else {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidColumnReference,
                 format!(
@@ -113,11 +110,6 @@ impl UnresolvedFieldReference {
                 ),
                 None,
             ))
-        } else {
-            Ok(FullFieldReference::new(FieldReferenceBase::new(
-                Some(prefix.clone()),
-                field.clone(),
-            )))
         }
     }
 
@@ -131,8 +123,7 @@ impl UnresolvedFieldReference {
         // FIXME: it's wrong to eagerly determine "C is from T" when TableWithAlias are more than one.
         // Need to check catalog.
 
-        let correlation_reference =
-            CorrelationReference::new(table_with_alias.table_name.as_str())?;
+        let correlation_reference = CorrelationName::new(table_with_alias.table_name.as_str())?;
 
         Ok(FullFieldReference::new(FieldReferenceBase::new(
             Some(correlation_reference),

@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName,
     FieldReference, FullFieldReference, RecordFieldRefSchema,
 };
 use apllodb_storage_engine_interface::ProjectionQuery;
@@ -200,7 +200,7 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
                 .into_iter()
                 .map(|cn| {
                     FullFieldReference::new(
-                        Some(CorrelationReference::TableNameVariant(table_name.clone())),
+                        Some(CorrelationName::TableNameVariant(table_name.clone())),
                         FieldReference::ColumnNameVariant(cn),
                     )
                 })

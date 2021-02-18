@@ -1,7 +1,7 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ComparisonFunction, CorrelationReference, Expression, FieldReference, FullFieldReference,
+    ComparisonFunction, CorrelationName, Expression, FieldReference, FullFieldReference,
     LogicalFunction, NNSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
 };
 use serde::{Deserialize, Serialize};
@@ -163,7 +163,7 @@ impl ApparentPrimaryKey {
             .into_iter()
             .map(|(column_name, sql_value)| {
                 let ffr = FullFieldReference::new(
-                    Some(CorrelationReference::TableNameVariant(
+                    Some(CorrelationName::TableNameVariant(
                         self.table_name.clone(),
                     )),
                     FieldReference::ColumnNameVariant(column_name.clone()),

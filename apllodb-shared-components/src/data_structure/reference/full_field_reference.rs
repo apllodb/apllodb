@@ -2,9 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    data_structure::reference::correlation_reference::CorrelationReference, AliasName, ColumnName,
-};
+use crate::{data_structure::reference::correlation_name::CorrelationName, AliasName, ColumnName};
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
 
@@ -32,7 +30,7 @@ impl FullFieldReference {
     }
 
     /// Get ref of CorrelationReference
-    pub fn as_correlation_reference(&self) -> Option<&CorrelationReference> {
+    pub fn as_correlation_reference(&self) -> Option<&CorrelationName> {
         self.0.as_correlation_reference()
     }
 

@@ -1,5 +1,5 @@
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName,
     FieldReference, FullFieldReference, RecordFieldRefSchema, TableName,
 };
 use apllodb_storage_engine_interface::AliasDef;
@@ -35,8 +35,8 @@ impl RowColumnRefSchema {
 
     pub fn into_record_schema(self, alias_def: AliasDef) -> RecordFieldRefSchema {
         let correlation_reference = match alias_def.table_alias() {
-            None => CorrelationReference::TableNameVariant(self.table_name),
-            Some(table_alias) => CorrelationReference::TableAliasVariant {
+            None => CorrelationName::TableNameVariant(self.table_name),
+            Some(table_alias) => CorrelationName::TableAliasVariant {
                 table_name: self.table_name,
                 alias_name: table_alias.clone(),
             },

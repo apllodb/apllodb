@@ -2,7 +2,7 @@ use std::{convert::TryFrom, rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
-    CorrelationReference, FieldReference, FullFieldReference, Record, RecordFieldRefSchema,
+    CorrelationName, FieldReference, FullFieldReference, Record, RecordFieldRefSchema,
     Session, SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
@@ -78,7 +78,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             .into_iter()
             .map(|cn| {
                 FullFieldReference::new(
-                    Some(CorrelationReference::TableNameVariant(table_name.clone())),
+                    Some(CorrelationName::TableNameVariant(table_name.clone())),
                     FieldReference::ColumnNameVariant(cn),
                 )
             })

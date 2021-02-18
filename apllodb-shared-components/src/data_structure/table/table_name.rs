@@ -1,4 +1,7 @@
-use crate::{data_structure::validation_helper::short_name::ShortName, error::ApllodbResult};
+use crate::{
+    data_structure::validation_helper::short_name::ShortName, error::ApllodbResult,
+    traits::correlation::Correlation, CorrelationName,
+};
 use serde::{Deserialize, Serialize};
 
 /// Table name.
@@ -19,5 +22,11 @@ impl TableName {
     /// Table name as str
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+}
+
+impl Correlation for TableName {
+    fn is_named(&self, correlation_name: &CorrelationName) -> bool {
+        self.as_str() == correlation_name.as_str()
     }
 }

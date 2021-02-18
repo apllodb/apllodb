@@ -7,7 +7,7 @@ use std::sync::Arc;
 use crate::{
     data_structure::{
         record_iterator::record_field_ref_schema::RecordFieldRefSchema,
-        reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
+        reference::{correlation_name::CorrelationName, field_reference::FieldReference},
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator,
@@ -37,7 +37,7 @@ impl UnresolvedFieldReference {
     }
 
     pub fn factory_corr_cn(correlation_reference: &str, column_name: &str) -> Self {
-        let corr = CorrelationReference::factory(correlation_reference);
+        let corr = CorrelationName::factory(correlation_reference);
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(Some(corr), field)
     }
@@ -57,7 +57,7 @@ impl UnresolvedFieldReference {
     }
 }
 
-impl CorrelationReference {
+impl CorrelationName {
     pub fn factory(correlation_reference: &str) -> Self {
         Self::new(correlation_reference).unwrap()
     }

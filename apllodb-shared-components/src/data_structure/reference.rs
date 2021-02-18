@@ -1,16 +1,16 @@
 use std::fmt::Display;
 
-use crate::{AliasName, ColumnName, CorrelationReference, FieldReference};
+use crate::{AliasName, ColumnName, CorrelationName, FieldReference};
 use serde::{Deserialize, Serialize};
 
-pub(crate) mod correlation_reference;
+pub(crate) mod correlation_name;
 pub(crate) mod field_reference;
 pub(crate) mod full_field_reference;
 pub(crate) mod unresolved_field_reference;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 struct FieldReferenceBase {
-    correlation_reference: Option<CorrelationReference>,
+    correlation_name: Option<CorrelationName>,
     field_reference: FieldReference,
 }
 
@@ -31,8 +31,8 @@ impl Display for FieldReferenceBase {
 
 impl FieldReferenceBase {
     /// Get ref of CorrelationReference
-    pub fn as_correlation_reference(&self) -> Option<&CorrelationReference> {
-        self.correlation_reference.as_ref()
+    pub fn as_correlation_reference(&self) -> Option<&CorrelationName> {
+        self.correlation_name.as_ref()
     }
 
     /// Get ref of FieldReference
