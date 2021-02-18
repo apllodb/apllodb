@@ -63,7 +63,20 @@ impl UnresolvedFieldReference {
     ///   - `ast_from_item` does not have matching field.
     pub fn resolve(self, from_item: Option<FromItem>) -> ApllodbResult<FullFieldReference> {
         match from_item {
-            None => Ok(FullFieldReference::new(self.0)),
+            None => {
+                if let Some(_corr) = self.as_correlation_reference() {
+                    Err(ApllodbError::new(
+                        ApllodbErrorKind::InvalidColumnReference,
+                        format!(
+                            "field `{}` specified but the correlation is not in FROM clause",
+                            self.as_field_reference()
+                        ),
+                        None,
+                    ))
+                } else {
+                    Ok(FullFieldReference::new(self.0))
+                }
+            }
             Some(from_item) => {
                 let tables: Vec<TableWithAlias> = (&from_item).into();
                 assert!(!tables.is_empty());
@@ -139,7 +152,7 @@ mod tests {
     };
     use pretty_assertions::assert_eq;
 
-    #[derive(new)]
+    #[derive(Debug, new)]
     struct TestDatum {
         ufr: UnresolvedFieldReference,
         from_item: Option<FromItem>,
@@ -152,7 +165,7 @@ mod tests {
             TestDatum::new(
                 UnresolvedFieldReference::factory_cn("c"),
                 None,
-                Err(ApllodbErrorKind::InvalidColumnReference),
+                Ok(UnresolvedFieldReference::factory_cn("c").resolve_naive()),
             ),
             TestDatum::new(
                 UnresolvedFieldReference::factory_corr_cn("t", "c"),
@@ -182,6 +195,8 @@ mod tests {
         ];
 
         for test_datum in test_data {
+            log::debug!("{:#?}", test_datum);
+
             match test_datum.ufr.resolve(test_datum.from_item) {
                 Ok(ffr) => {
                     assert_eq!(ffr, test_datum.expected_result.unwrap())
