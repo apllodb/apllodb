@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data_structure::reference::correlation_reference::CorrelationReference, AliasName, ColumnName,
-    TableName,
 };
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
@@ -37,11 +36,6 @@ impl FullFieldReference {
         self.0.as_correlation_reference()
     }
 
-    /// Get ref of TableName
-    pub fn as_table_name(&self) -> Option<&TableName> {
-        self.0.as_table_name()
-    }
-
     /// Get ref of FieldReference
     pub fn as_field_reference(&self) -> &FieldReference {
         self.0.as_field_reference()
@@ -50,15 +44,6 @@ impl FullFieldReference {
     /// Get ref of ColumnName
     pub fn as_column_name(&self) -> &ColumnName {
         self.0.as_column_name()
-    }
-
-    /// Set correlation reference
-    ///
-    /// # Panics
-    ///
-    /// When correlation does not exist.
-    pub fn set_correlation_alias(&mut self, correlation_alias: AliasName) {
-        self.0.set_correlation_alias(correlation_alias)
     }
 
     /// Set field reference

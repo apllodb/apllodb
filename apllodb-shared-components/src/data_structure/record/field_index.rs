@@ -3,8 +3,8 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference,
-    FullFieldReference, TableWithAlias, UnresolvedFieldReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, FieldReference, FullFieldReference,
+    UnresolvedFieldReference,
 };
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
@@ -135,61 +135,22 @@ impl FieldIndex {
                 // index: t.c
                 // ffr: T.C
                 Some(self_correlation_name),
-                Some(CorrelationReference::TableVariant(TableWithAlias {
-                    table_name: tn,
-                    alias: None,
-                })),
+                Some(corr),
                 FieldReference::ColumnNameVariant(column_name),
-            ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
+            ) => self_correlation_name == corr.as_str() && self.field_name == column_name.as_str(),
             (
                 // index: t.c
                 // ffr: T.C AS CA
                 Some(self_correlation_name),
-                Some(CorrelationReference::TableVariant(TableWithAlias {
-                    table_name: tn,
-                    alias: None,
-                })),
+                Some(corr),
                 FieldReference::ColumnAliasVariant {
                     column_name,
                     alias_name,
                 },
             ) => {
-                self_correlation_name == tn.as_str()
+                self_correlation_name == corr.as_str()
                     && (self.field_name == column_name.as_str()
                         || self.field_name == alias_name.as_str())
-            }
-
-            (
-                // index: t.c
-                // ffr: (T AS TA).C
-                Some(self_correlation_name),
-                Some(CorrelationReference::TableVariant(TableWithAlias {
-                    table_name,
-                    alias: Some(alias_name),
-                })),
-                FieldReference::ColumnNameVariant(column_name),
-            ) => {
-                (self_correlation_name == table_name.as_str()
-                    || self_correlation_name == alias_name.as_str())
-                    && self.field_name == column_name.as_str()
-            }
-            (
-                // index: t.c
-                // ffr: (T AS TA).C AS CA
-                Some(self_correlation_name),
-                Some(CorrelationReference::TableVariant(TableWithAlias {
-                    table_name,
-                    alias: Some(table_alias),
-                })),
-                FieldReference::ColumnAliasVariant {
-                    column_name,
-                    alias_name: column_alias,
-                },
-            ) => {
-                (self_correlation_name == table_name.as_str()
-                    || self_correlation_name == table_alias.as_str())
-                    && (self.field_name == column_name.as_str()
-                        || self.field_name == column_alias.as_str())
             }
         }
     }
@@ -253,14 +214,10 @@ impl From<UnresolvedFieldReference> for FieldIndex {
                 Self::from(column_name.as_str())
             }
 
-            (
-                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
-                FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
+            (Some(corr), FieldReference::ColumnNameVariant(column_name))
+            | (Some(corr), FieldReference::ColumnAliasVariant { column_name, .. }) => {
+                Self::from(format!("{}.{}", corr.as_str(), column_name.as_str()))
+            }
         }
     }
 }
@@ -276,14 +233,10 @@ impl From<FullFieldReference> for FieldIndex {
                 Self::from(column_name.as_str())
             }
 
-            (
-                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
-                FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
+            (Some(corr), FieldReference::ColumnNameVariant(column_name))
+            | (Some(corr), FieldReference::ColumnAliasVariant { column_name, .. }) => {
+                Self::from(format!("{}.{}", corr.as_str(), column_name.as_str()))
+            }
         }
     }
 }
@@ -359,130 +312,81 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_field_alias("ca")],
+                ufrs: vec![
+                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                ],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "t.c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx.c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")],
+                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
-            },
-            TestDatum {
-                field_index: "c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "t.c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "ta.c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c").with_corr_alias("ta")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("ta")
-                    .with_field_alias("ca")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "ca",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("ta")
-                    .with_field_alias("ca")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "t.c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("ta")
-                    .with_field_alias("ca")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "ta.c",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("ta")
-                    .with_field_alias("ca")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "t.ca",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("ta")
-                    .with_field_alias("ca")],
-                expected_result: Ok(0),
-            },
-            TestDatum {
-                field_index: "ta.ca",
-                ufrs: vec![UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("ta")
-                    .with_field_alias("ca")],
-                expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c2",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_tn_cn("t1", "c1"),
-                    UnresolvedFieldReference::factory_tn_cn("t2", "c2"),
+                    UnresolvedFieldReference::factory_corr_cn("t1", "c1"),
+                    UnresolvedFieldReference::factory_corr_cn("t2", "c2"),
                 ],
                 expected_result: Ok(1),
             },
             TestDatum {
                 field_index: "t1.c1",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_tn_cn("t1", "c1"),
-                    UnresolvedFieldReference::factory_tn_cn("t2", "c2"),
+                    UnresolvedFieldReference::factory_corr_cn("t1", "c1"),
+                    UnresolvedFieldReference::factory_corr_cn("t2", "c2"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t1.c",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_tn_cn("t1", "c"),
-                    UnresolvedFieldReference::factory_tn_cn("t2", "c"),
+                    UnresolvedFieldReference::factory_corr_cn("t1", "c"),
+                    UnresolvedFieldReference::factory_corr_cn("t2", "c"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_tn_cn("t1", "c"),
-                    UnresolvedFieldReference::factory_tn_cn("t2", "c"),
+                    UnresolvedFieldReference::factory_corr_cn("t1", "c"),
+                    UnresolvedFieldReference::factory_corr_cn("t2", "c"),
                 ],
                 expected_result: Err(ApllodbErrorKind::AmbiguousColumn),
             },

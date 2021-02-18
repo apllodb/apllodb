@@ -14,10 +14,10 @@ impl People {
     }
 
     pub fn ufr_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
     pub fn ufr_age() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn ffr_id() -> FullFieldReference {
@@ -55,13 +55,13 @@ impl Body {
     }
 
     pub fn ufr_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
     pub fn ufr_people_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
     }
     pub fn ufr_height() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "height")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "height")
     }
 
     pub fn ffr_id() -> FullFieldReference {
@@ -116,16 +116,16 @@ impl Pet {
     }
 
     pub fn ufr_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "id")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
     pub fn ufr_people_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "people_id")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
     }
     pub fn ufr_kind() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "kind")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "kind")
     }
     pub fn ufr_age() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_tn_cn(Self::table_name().as_str(), "age")
+        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn ffr_id() -> FullFieldReference {

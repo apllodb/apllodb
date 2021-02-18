@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     data_structure::reference::correlation_reference::CorrelationReference, AliasName,
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FromItem, FullFieldReference,
-    TableName, TableWithAlias,
+    TableWithAlias,
 };
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
@@ -40,11 +40,6 @@ impl UnresolvedFieldReference {
         self.0.as_correlation_reference()
     }
 
-    /// Get ref of TableName
-    pub fn as_table_name(&self) -> Option<&TableName> {
-        self.0.as_table_name()
-    }
-
     /// Get ref of FieldReference
     pub fn as_field_reference(&self) -> &FieldReference {
         self.0.as_field_reference()
@@ -53,15 +48,6 @@ impl UnresolvedFieldReference {
     /// Get ref of ColumnName
     pub fn as_column_name(&self) -> &ColumnName {
         self.0.as_column_name()
-    }
-
-    /// Set correlation reference
-    ///
-    /// # Panics
-    ///
-    /// When correlation does not exist.
-    pub fn set_correlation_alias(&mut self, correlation_alias: AliasName) {
-        self.0.set_correlation_alias(correlation_alias)
     }
 
     /// Set field reference
@@ -100,71 +86,44 @@ impl UnresolvedFieldReference {
         table_with_alias: TableWithAlias,
     ) -> ApllodbResult<FullFieldReference> {
         if let Some(corr) = self.as_correlation_reference() {
-            Self::resolve_with_table_with_corr(corr, self.as_field_reference(), table_with_alias)
+            Self::resolve_with_table_with_prefix(corr, self.as_field_reference(), &table_with_alias)
         } else {
-            Self::resolve_with_table_without_corr(self.as_field_reference(), table_with_alias)
+            Self::resolve_with_table_without_prefix(self.as_field_reference(), &table_with_alias)
         }
     }
 
-    fn resolve_with_table_with_corr(
+    fn resolve_with_table_with_prefix(
         prefix: &CorrelationReference,
         field: &FieldReference,
-        from: TableWithAlias,
+        from: &TableWithAlias,
     ) -> ApllodbResult<FullFieldReference> {
         // SELECT ta.C FROM T (AS a)?;
 
-        let (prefix_tn, prefix_alias) = match prefix {
-            CorrelationReference::TableVariant(t) => (t.table_name, t.alias),
-        };
-
-        let ret_corr = if prefix_tn == from.table_name {
-            // SELECT T.C FROM T (AS a)?;
-            // -> C is from T
-            Ok(CorrelationReference::TableVariant(from))
+        if prefix.as_str() != from.table_name.as_str()
+            && from
+                .alias
+                .as_ref()
+                .map_or_else(|| true, |alias| prefix.as_str() != alias.as_str())
+        {
+            Err(ApllodbError::new(
+                ApllodbErrorKind::InvalidColumnReference,
+                format!(
+                    "field `{:?}` is not the same as FROM item `{:?}`",
+                    field, from
+                ),
+                None,
+            ))
         } else {
-            // SELECT a1.C FROM T (AS a2)?;
-            match &from.alias {
-                None => {
-                    // SELECT a_not_T.C FROM T;
-                    // -> InvalidColumnReference
-                    Err(ApllodbError::new(
-                        ApllodbErrorKind::InvalidColumnReference,
-                        format!(
-                            "field `{:?}` is not the same as FROM item `{:?}`",
-                            field, from
-                        ),
-                        None,
-                    ))
-                }
-                Some(from_alias) => {
-                    // SELECT a_not_T.C FROM T AS A;
-                    if colref_corr == from_item_alias {
-                        // SELECT A.C FROM T AS A;
-                        // -> C is FROM T aliased as A
-                        Ok(CorrelationReference::TableAliasVariant {
-                            alias_name: AliasName::new(colref_corr)?,
-                            table_name: TableName::new(ast_from_item.table_name.0 .0.clone())?,
-                        })
-                    } else {
-                        // SELECT not_a_t.C FROM T AS A;
-                        // -> UndefinedColumn
-                        Err(ApllodbError::new(
-                            ApllodbErrorKind::UndefinedColumn,
-                            format!(
-                                "correlation of column reference `{:?}` is not the same as FROM item `{:?}`",
-                                ast_column_reference, ast_from_item
-                            ),
-                            None,
-                        ))
-                    }
-                }
-            }
-        }?;
+            Ok(FullFieldReference::new(FieldReferenceBase::new(
+                Some(prefix.clone()),
+                field.clone(),
+            )))
+        }
     }
 
-    fn resolve_with_table_without_corr(
+    fn resolve_with_table_without_prefix(
         field_reference: &FieldReference,
-        table_with_alias: TableWithAlias,
+        table_with_alias: &TableWithAlias,
     ) -> ApllodbResult<FullFieldReference> {
         // SELECT C FROM T (AS a)?;
         // -> C is from T
@@ -172,7 +131,8 @@ impl UnresolvedFieldReference {
         // FIXME: it's wrong to eagerly determine "C is from T" when TableWithAlias are more than one.
         // Need to check catalog.
 
-        let correlation_reference = CorrelationReference::TableVariant(table_with_alias);
+        let correlation_reference =
+            CorrelationReference::new(table_with_alias.table_name.as_str())?;
 
         Ok(FullFieldReference::new(FieldReferenceBase::new(
             Some(correlation_reference),
@@ -204,48 +164,27 @@ mod tests {
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_tn_cn("t", "c"),
+                UnresolvedFieldReference::factory_corr_cn("t", "c"),
                 None,
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),
             TestDatum::new(
                 UnresolvedFieldReference::factory_cn("c"),
                 Some(FromItem::factory("t")),
-                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c").resolve_naive()),
+                Ok(UnresolvedFieldReference::factory_corr_cn("t", "c").resolve_naive()),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_tn_cn("t", "c"),
+                UnresolvedFieldReference::factory_corr_cn("t", "c"),
                 Some(FromItem::factory("t")),
-                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c").resolve_naive()),
+                Ok(UnresolvedFieldReference::factory_corr_cn("t", "c").resolve_naive()),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_tn_cn("t1", "c"),
+                UnresolvedFieldReference::factory_corr_cn("t1", "c"),
                 Some(FromItem::factory("t2")),
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_cn("c"),
-                Some(FromItem::factory_with_corr_alias("t", "a")),
-                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("a")
-                    .resolve_naive()),
-            ),
-            TestDatum::new(
-                UnresolvedFieldReference::factory_tn_cn("t", "c"),
-                Some(FromItem::factory_with_corr_alias("t", "a")),
-                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("a")
-                    .resolve_naive()),
-            ),
-            TestDatum::new(
-                UnresolvedFieldReference::factory_tn_cn("a", "c"),
-                Some(FromItem::factory_with_corr_alias("t", "a")),
-                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c")
-                    .with_corr_alias("a")
-                    .resolve_naive()),
-            ),
-            TestDatum::new(
-                UnresolvedFieldReference::factory_tn_cn("x", "c"),
+                UnresolvedFieldReference::factory_corr_cn("x", "c"),
                 Some(FromItem::factory_with_corr_alias("t", "a")),
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),

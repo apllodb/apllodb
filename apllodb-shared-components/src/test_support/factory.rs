@@ -36,18 +36,10 @@ impl UnresolvedFieldReference {
         Self::new(None, field)
     }
 
-    pub fn factory_tn_cn(table_name: &str, column_name: &str) -> Self {
-        let corr = CorrelationReference::TableVariant(TableWithAlias::new(
-            TableName::factory(table_name),
-            None,
-        ));
+    pub fn factory_corr_cn(correlation_reference: &str, column_name: &str) -> Self {
+        let corr = CorrelationReference::factory(correlation_reference);
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(Some(corr), field)
-    }
-
-    pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {
-        self.set_correlation_alias(AliasName::factory(correlation_alias));
-        self
     }
 
     pub fn with_field_alias(mut self, field_alias: &str) -> Self {
@@ -56,12 +48,18 @@ impl UnresolvedFieldReference {
     }
 
     pub fn resolve_naive(self) -> FullFieldReference {
-        if let Some(table_name) = self.as_table_name() {
-            let from_item = FromItem::factory(table_name.as_str());
+        if let Some(corr) = self.as_correlation_reference() {
+            let from_item = FromItem::factory(corr.as_str());
             self.resolve(Some(from_item)).unwrap()
         } else {
             self.resolve(None).unwrap()
         }
+    }
+}
+
+impl CorrelationReference {
+    pub fn factory(correlation_reference: &str) -> Self {
+        Self::new(correlation_reference).unwrap()
     }
 }
 
