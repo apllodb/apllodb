@@ -71,7 +71,98 @@ impl UnresolvedFieldReference {
     /// into FullFieldReference
     ///
     /// `ast_from_item` is None only when SELECT statement does not have FROM clause.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
+    ///   - `ast_from_item` does not have matching correlation.
+    ///   - `ast_from_item` does not have matching field.
     pub fn resolve(self, _ast_from_item: Option<FromItem>) -> ApllodbResult<FullFieldReference> {
         todo!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        ApllodbErrorKind, ApllodbResult, FromItem, FullFieldReference, UnresolvedFieldReference,
+    };
+    use pretty_assertions::assert_eq;
+
+    #[derive(new)]
+    struct TestDatum {
+        ufr: UnresolvedFieldReference,
+        from_item: Option<FromItem>,
+        expected_result: Result<FullFieldReference, ApllodbErrorKind>,
+    }
+
+    #[test]
+    fn test_resolve() -> ApllodbResult<()> {
+        let test_data: Vec<TestDatum> = vec![
+            TestDatum::new(
+                UnresolvedFieldReference::factory_cn("c"),
+                None,
+                Err(ApllodbErrorKind::InvalidColumnReference),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_tn_cn("t", "c"),
+                None,
+                Err(ApllodbErrorKind::InvalidColumnReference),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_cn("c"),
+                Some(FromItem::factory("t")),
+                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c").resolve_naive()),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_tn_cn("t", "c"),
+                Some(FromItem::factory("t")),
+                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c").resolve_naive()),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_tn_cn("t1", "c"),
+                Some(FromItem::factory("t2")),
+                Err(ApllodbErrorKind::InvalidColumnReference),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_cn("c"),
+                Some(FromItem::factory_with_corr_alias("t", "a")),
+                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c")
+                    .with_corr_alias("a")
+                    .resolve_naive()),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_tn_cn("t", "c"),
+                Some(FromItem::factory_with_corr_alias("t", "a")),
+                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c")
+                    .with_corr_alias("a")
+                    .resolve_naive()),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_tn_cn("a", "c"),
+                Some(FromItem::factory_with_corr_alias("t", "a")),
+                Ok(UnresolvedFieldReference::factory_tn_cn("t", "c")
+                    .with_corr_alias("a")
+                    .resolve_naive()),
+            ),
+            TestDatum::new(
+                UnresolvedFieldReference::factory_tn_cn("x", "c"),
+                Some(FromItem::factory_with_corr_alias("t", "a")),
+                Err(ApllodbErrorKind::InvalidColumnReference),
+            ),
+        ];
+
+        for test_datum in test_data {
+            match test_datum.ufr.resolve(test_datum.from_item) {
+                Ok(ffr) => {
+                    assert_eq!(ffr, test_datum.expected_result.unwrap())
+                }
+                Err(e) => {
+                    assert_eq!(e.kind(), &test_datum.expected_result.unwrap_err())
+                }
+            }
+        }
+
+        Ok(())
     }
 }

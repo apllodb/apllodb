@@ -92,6 +92,13 @@ impl FromItem {
             alias: None,
         }
     }
+
+    pub fn factory_with_corr_alias(table_name: &str, correlation_alias: &str) -> Self {
+        FromItem::TableNameVariant {
+            table_name: TableName::factory(table_name),
+            alias: Some(AliasName::factory(correlation_alias)),
+        }
+    }
 }
 
 impl Expression {
