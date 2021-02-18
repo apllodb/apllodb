@@ -1,6 +1,7 @@
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName,
-    FieldReference, FullFieldReference, RecordFieldRefSchema, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName, FieldReference,
+    FromItem, FullFieldReference, RecordFieldRefSchema, TableName, TableWithAlias,
+    UnresolvedFieldReference,
 };
 use apllodb_storage_engine_interface::AliasDef;
 use serde::{Deserialize, Serialize};
@@ -34,13 +35,10 @@ impl RowColumnRefSchema {
     }
 
     pub fn into_record_schema(self, alias_def: AliasDef) -> RecordFieldRefSchema {
-        let correlation_reference = match alias_def.table_alias() {
-            None => CorrelationName::TableNameVariant(self.table_name),
-            Some(table_alias) => CorrelationName::TableAliasVariant {
-                table_name: self.table_name,
-                alias_name: table_alias.clone(),
-            },
-        };
+        let correlation_name =
+            CorrelationName::new(self.table_name.as_str()).expect("both ShortName");
+        let table_with_alias =
+            TableWithAlias::new(self.table_name, alias_def.table_alias().cloned());
 
         let ffrs: Vec<FullFieldReference> = self
             .column_names
@@ -54,7 +52,10 @@ impl RowColumnRefSchema {
                         alias_name: column_alias.clone(),
                     },
                 };
-                FullFieldReference::new(Some(correlation_reference.clone()), field_reference)
+                let ufr =
+                    UnresolvedFieldReference::new(Some(correlation_name.clone()), field_reference);
+                ufr.resolve(Some(FromItem::TableVariant(table_with_alias.clone())))
+                    .expect("FromItem is given here arbitrarily")
             })
             .collect();
 

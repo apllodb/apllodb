@@ -3,6 +3,7 @@ use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
     ComparisonFunction, CorrelationName, Expression, FieldReference, FullFieldReference,
     LogicalFunction, NNSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
+    UnresolvedFieldReference,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, ops::Index};
@@ -162,20 +163,18 @@ impl ApparentPrimaryKey {
             .zipped()
             .into_iter()
             .map(|(column_name, sql_value)| {
-                let ffr = FullFieldReference::new(
-                    Some(CorrelationName::TableNameVariant(
-                        self.table_name.clone(),
-                    )),
+                let ufr = UnresolvedFieldReference::new(
+                    Some(CorrelationName::new(self.table_name.as_str())?),
                     FieldReference::ColumnNameVariant(column_name.clone()),
                 );
-                ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::UnresolvedFieldReferenceVariant(ffr)),
+                Ok(ComparisonFunction::EqualVariant {
+                    left: Box::new(Expression::UnresolvedFieldReferenceVariant(ufr)),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),
                     ))),
-                }
+                })
             })
-            .collect::<VecDeque<ComparisonFunction>>();
+            .collect::<ApllodbResult<VecDeque<ComparisonFunction>>>()?;
 
         let mut boolean_expr = BooleanExpression::ComparisonFunctionVariant(
             comparisons

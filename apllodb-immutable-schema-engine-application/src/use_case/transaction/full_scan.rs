@@ -1,5 +1,8 @@
 use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
+use apllodb_immutable_schema_engine_domain::{
+    abstract_types::ImmutableSchemaAbstractTypes,
+    row_iter::version_row_iter::row_column_ref_schema::RowColumnRefSchema,
+};
 use apllodb_immutable_schema_engine_domain::{
     query::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
@@ -55,8 +58,14 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result: ProjectionResult =
             ProjectionResult::new(&vtable, active_versions, input.projection)?;
-        let schema = RecordFieldRefSchema::from(projection_result.clone());
+
+        let row_schema = RowColumnRefSchema::from(projection_result.clone());
+        let rec_schema = RecordFieldRefSchema::from(row_schema);
+
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
-        Ok(FullScanUseCaseOutput { schema, row_iter })
+        Ok(FullScanUseCaseOutput {
+            schema: rec_schema,
+            row_iter,
+        })
     }
 }

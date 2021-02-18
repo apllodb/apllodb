@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{
-    AliasName, ColumnName, CorrelationName, FieldReference, FullFieldReference,
-};
+use apllodb_shared_components::{AliasName, ColumnName};
 use serde::{Deserialize, Serialize};
 
 /// Alias to a table and columns given from SQL.
@@ -33,69 +31,5 @@ impl AliasDef {
     pub fn add_column_alias(mut self, column_name: ColumnName, column_alias: AliasName) -> Self {
         self.column_aliases.insert(column_name, column_alias);
         self
-    }
-}
-
-impl From<Vec<FullFieldReference>> for AliasDef {
-    fn from(ffrs: Vec<FullFieldReference>) -> Self {
-        let mut alias_def = Self::default();
-
-        for ffr in ffrs {
-            match (ffr.as_correlation_reference(), ffr.as_field_reference()) {
-                (None, FieldReference::ColumnNameVariant(_))
-                | (
-                    Some(CorrelationName::TableNameVariant(_)),
-                    FieldReference::ColumnNameVariant(_),
-                ) => {}
-
-                (
-                    None,
-                    FieldReference::ColumnAliasVariant {
-                        alias_name,
-                        column_name,
-                    },
-                )
-                | (
-                    Some(CorrelationName::TableNameVariant(_)),
-                    FieldReference::ColumnAliasVariant {
-                        alias_name,
-                        column_name,
-                    },
-                ) => {
-                    alias_def = alias_def.add_column_alias(column_name.clone(), alias_name.clone())
-                }
-
-                (
-                    Some(CorrelationName::TableAliasVariant { alias_name, .. }),
-                    FieldReference::ColumnNameVariant(_),
-                ) => {
-                    assert!(
-                        alias_def.table_alias.is_none()
-                            || alias_def.table_alias() == Some(alias_name)
-                    );
-                    alias_def = alias_def.set_table_alias(alias_name.clone());
-                }
-                (
-                    Some(CorrelationName::TableAliasVariant {
-                        alias_name: table_alias,
-                        ..
-                    }),
-                    FieldReference::ColumnAliasVariant {
-                        alias_name: column_alias,
-                        column_name,
-                    },
-                ) => {
-                    assert!(
-                        alias_def.table_alias.is_none()
-                            || alias_def.table_alias() == Some(table_alias)
-                    );
-                    alias_def = alias_def
-                        .set_table_alias(table_alias.clone())
-                        .add_column_alias(column_name.clone(), column_alias.clone());
-                }
-            }
-        }
-
-        alias_def
     }
 }
