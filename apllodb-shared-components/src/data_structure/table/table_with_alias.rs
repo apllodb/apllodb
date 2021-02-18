@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{AliasName, FromItem, TableName};
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +11,16 @@ pub struct TableWithAlias {
 
     /// alias
     pub alias: Option<AliasName>,
+}
+
+impl Display for TableWithAlias {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match &self.alias {
+            Some(alias) => alias.as_str(),
+            None => self.table_name.as_str(),
+        };
+        write!(f, "{}", s)
+    }
 }
 
 impl From<&FromItem> for Vec<TableWithAlias> {

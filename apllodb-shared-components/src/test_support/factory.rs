@@ -37,7 +37,10 @@ impl UnresolvedFieldReference {
     }
 
     pub fn factory_tn_cn(table_name: &str, column_name: &str) -> Self {
-        let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
+        let corr = CorrelationReference::TableVariant(TableWithAlias::new(
+            TableName::factory(table_name),
+            None,
+        ));
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(Some(corr), field)
     }

@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-use crate::{AliasName, ColumnName, CorrelationReference, FieldReference, TableName};
+use crate::{
+    AliasName, ColumnName, CorrelationReference, FieldReference, TableName, TableWithAlias,
+};
 use serde::{Deserialize, Serialize};
 
 pub(crate) mod correlation_reference;
@@ -38,8 +40,7 @@ impl FieldReferenceBase {
     /// Get ref of TableName
     pub fn as_table_name(&self) -> Option<&TableName> {
         self.as_correlation_reference().map(|corr| match corr {
-            CorrelationReference::TableNameVariant(tn) => tn,
-            CorrelationReference::TableAliasVariant { table_name, .. } => table_name,
+            CorrelationReference::TableVariant(TableWithAlias { table_name, .. }) => table_name,
         })
     }
 
@@ -63,10 +64,10 @@ impl FieldReferenceBase {
     /// When correlation does not exist.
     pub fn set_correlation_alias(&mut self, correlation_alias: AliasName) {
         let cur_table_name = self.as_table_name().expect("correlation does not exist");
-        self.correlation_reference = Some(CorrelationReference::TableAliasVariant {
-            alias_name: correlation_alias,
+        self.correlation_reference = Some(CorrelationReference::TableVariant(TableWithAlias {
+            alias: Some(correlation_alias),
             table_name: cur_table_name.clone(),
-        });
+        }));
     }
 
     /// Set field reference

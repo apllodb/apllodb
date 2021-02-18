@@ -26,6 +26,12 @@ impl Display for FullFieldReference {
 }
 
 impl FullFieldReference {
+    pub(in crate::data_structure::reference) fn new(
+        field_reference_base: FieldReferenceBase,
+    ) -> Self {
+        Self(field_reference_base)
+    }
+
     /// Get ref of CorrelationReference
     pub fn as_correlation_reference(&self) -> Option<&CorrelationReference> {
         self.0.as_correlation_reference()

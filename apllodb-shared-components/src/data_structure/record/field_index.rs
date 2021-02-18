@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference,
-    FullFieldReference, UnresolvedFieldReference,
+    FullFieldReference, TableWithAlias, UnresolvedFieldReference,
 };
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
@@ -104,16 +104,9 @@ impl FieldIndex {
             )
             | (
                 // index: c
-                // ffr: T.C
+                // ffr: (T (AS TA)?).C
                 None,
-                Some(CorrelationReference::TableNameVariant(_)),
-                FieldReference::ColumnNameVariant(cn),
-            )
-            | (
-                // index: c
-                // ffr: (T AS TA).C
-                None,
-                Some(CorrelationReference::TableAliasVariant { .. }),
+                Some(_),
                 FieldReference::ColumnNameVariant(cn),
             ) => self.field_name == cn.as_str(),
 
@@ -129,19 +122,9 @@ impl FieldIndex {
             )
             | (
                 // index: c
-                // ffr: T.C AS CA
+                // ffr: (T (AS TA)?).C AS CA
                 None,
-                Some(CorrelationReference::TableNameVariant(_)),
-                FieldReference::ColumnAliasVariant {
-                    alias_name,
-                    column_name,
-                },
-            )
-            | (
-                // index: c
-                // ffr: (T AS TA).C AS CA
-                None,
-                Some(CorrelationReference::TableAliasVariant { .. }),
+                Some(_),
                 FieldReference::ColumnAliasVariant {
                     alias_name,
                     column_name,
@@ -152,14 +135,20 @@ impl FieldIndex {
                 // index: t.c
                 // ffr: T.C
                 Some(self_correlation_name),
-                Some(CorrelationReference::TableNameVariant(tn)),
+                Some(CorrelationReference::TableVariant(TableWithAlias {
+                    table_name: tn,
+                    alias: None,
+                })),
                 FieldReference::ColumnNameVariant(column_name),
             ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
             (
                 // index: t.c
                 // ffr: T.C AS CA
                 Some(self_correlation_name),
-                Some(CorrelationReference::TableNameVariant(tn)),
+                Some(CorrelationReference::TableVariant(TableWithAlias {
+                    table_name: tn,
+                    alias: None,
+                })),
                 FieldReference::ColumnAliasVariant {
                     column_name,
                     alias_name,
@@ -174,10 +163,10 @@ impl FieldIndex {
                 // index: t.c
                 // ffr: (T AS TA).C
                 Some(self_correlation_name),
-                Some(CorrelationReference::TableAliasVariant {
-                    alias_name,
+                Some(CorrelationReference::TableVariant(TableWithAlias {
                     table_name,
-                }),
+                    alias: Some(alias_name),
+                })),
                 FieldReference::ColumnNameVariant(column_name),
             ) => {
                 (self_correlation_name == table_name.as_str()
@@ -188,10 +177,10 @@ impl FieldIndex {
                 // index: t.c
                 // ffr: (T AS TA).C AS CA
                 Some(self_correlation_name),
-                Some(CorrelationReference::TableAliasVariant {
-                    alias_name: table_alias,
+                Some(CorrelationReference::TableVariant(TableWithAlias {
                     table_name,
-                }),
+                    alias: Some(table_alias),
+                })),
                 FieldReference::ColumnAliasVariant {
                     column_name,
                     alias_name: column_alias,
@@ -265,19 +254,11 @@ impl From<UnresolvedFieldReference> for FieldIndex {
             }
 
             (
-                Some(CorrelationReference::TableNameVariant(table_name)),
+                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
                 FieldReference::ColumnNameVariant(column_name),
             )
             | (
-                Some(CorrelationReference::TableNameVariant(table_name)),
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            )
-            | (
-                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
-                FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
+                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
                 FieldReference::ColumnAliasVariant { column_name, .. },
             ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
         }
@@ -296,19 +277,11 @@ impl From<FullFieldReference> for FieldIndex {
             }
 
             (
-                Some(CorrelationReference::TableNameVariant(table_name)),
+                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
                 FieldReference::ColumnNameVariant(column_name),
             )
             | (
-                Some(CorrelationReference::TableNameVariant(table_name)),
-                FieldReference::ColumnAliasVariant { column_name, .. },
-            )
-            | (
-                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
-                FieldReference::ColumnNameVariant(column_name),
-            )
-            | (
-                Some(CorrelationReference::TableAliasVariant { table_name, .. }),
+                Some(CorrelationReference::TableVariant(TableWithAlias { table_name, .. })),
                 FieldReference::ColumnAliasVariant { column_name, .. },
             ) => Self::from(format!("{}.{}", table_name.as_str(), column_name.as_str())),
         }

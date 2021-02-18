@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data_structure::reference::correlation_reference::CorrelationReference, AliasName,
-    ApllodbResult, ColumnName, FromItem, FullFieldReference, TableName,
+    ApllodbResult, ColumnName, FromItem, FullFieldReference, TableName, TableWithAlias,
 };
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
@@ -77,8 +77,58 @@ impl UnresolvedFieldReference {
     /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
     ///   - `ast_from_item` does not have matching correlation.
     ///   - `ast_from_item` does not have matching field.
-    pub fn resolve(self, _ast_from_item: Option<FromItem>) -> ApllodbResult<FullFieldReference> {
+    pub fn resolve(self, from_item: Option<FromItem>) -> ApllodbResult<FullFieldReference> {
+        match from_item {
+            None => Ok(FullFieldReference::new(self.0)),
+            Some(from_item) => {
+                let tables: Vec<TableWithAlias> = (&from_item).into();
+                assert!(!tables.is_empty());
+
+                if tables.len() > 1 {
+                    unimplemented!("needs catalog info")
+                }
+
+                let table = tables.first().unwrap().clone();
+                self.resolve_with_table(table)
+            }
+        }
+    }
+
+    fn resolve_with_table(
+        self,
+        table_with_alias: TableWithAlias,
+    ) -> ApllodbResult<FullFieldReference> {
+        if let Some(corr) = self.as_correlation_reference() {
+            Self::resolve_with_table_with_corr(corr, self.as_field_reference(), table_with_alias)
+        } else {
+            Self::resolve_with_table_without_corr(self.as_field_reference(), table_with_alias)
+        }
+    }
+
+    fn resolve_with_table_with_corr(
+        _correlation_reference: &CorrelationReference,
+        _field_reference: &FieldReference,
+        _table_with_alias: TableWithAlias,
+    ) -> ApllodbResult<FullFieldReference> {
         todo!()
+    }
+
+    fn resolve_with_table_without_corr(
+        field_reference: &FieldReference,
+        table_with_alias: TableWithAlias,
+    ) -> ApllodbResult<FullFieldReference> {
+        // SELECT C FROM T (AS a)?;
+        // -> C is from T
+        //
+        // FIXME: it's wrong to eagerly determine "C is from T" when TableWithAlias are more than one.
+        // Need to check catalog.
+
+        let correlation_reference = CorrelationReference::TableVariant(table_with_alias);
+
+        Ok(FullFieldReference::new(FieldReferenceBase::new(
+            Some(correlation_reference),
+            field_reference.clone(),
+        )))
     }
 }
 
