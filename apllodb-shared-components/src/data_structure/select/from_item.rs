@@ -1,18 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{AliasName, Expression, TableName};
+use crate::{Expression, TableWithAlias};
 
 /// FROM ...
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum FromItem {
     /// T (AS TA)?
-    TableNameVariant {
-        /// T
-        table_name: TableName,
-
-        /// TA
-        alias: Option<AliasName>,
-    },
+    TableVariant(TableWithAlias),
 
     /// T (AS TA)? INNER JOIN ... ON ...
     JoinVariant {

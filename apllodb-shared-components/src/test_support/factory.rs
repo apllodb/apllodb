@@ -11,7 +11,8 @@ use crate::{
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator,
-    SqlType, SqlValue, SqlValues, TableName, UnaryOperator, UnresolvedFieldReference,
+    SqlType, SqlValue, SqlValues, TableName, TableWithAlias, UnaryOperator,
+    UnresolvedFieldReference,
 };
 use rand::Rng;
 
@@ -87,17 +88,14 @@ impl ColumnDataType {
 
 impl FromItem {
     pub fn factory(table_name: &str) -> Self {
-        FromItem::TableNameVariant {
-            table_name: TableName::factory(table_name),
-            alias: None,
-        }
+        FromItem::TableVariant(TableWithAlias::new(TableName::factory(table_name), None))
     }
 
     pub fn factory_with_corr_alias(table_name: &str, correlation_alias: &str) -> Self {
-        FromItem::TableNameVariant {
-            table_name: TableName::factory(table_name),
-            alias: Some(AliasName::factory(correlation_alias)),
-        }
+        FromItem::TableVariant(TableWithAlias::new(
+            TableName::factory(table_name),
+            Some(AliasName::factory(correlation_alias)),
+        ))
     }
 }
 

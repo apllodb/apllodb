@@ -43,7 +43,7 @@ pub use crate::{
         },
         table::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
-            table_name::TableName,
+            table_name::TableName, table_with_alias::TableWithAlias,
         },
         value::{
             sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
