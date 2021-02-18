@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data_structure::reference::correlation_reference::CorrelationReference, AliasName,
-    ApllodbResult, ColumnName, FromItem, FullFieldReference, TableName, TableWithAlias,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FromItem, FullFieldReference,
+    TableName, TableWithAlias,
 };
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
@@ -106,11 +107,59 @@ impl UnresolvedFieldReference {
     }
 
     fn resolve_with_table_with_corr(
-        _correlation_reference: &CorrelationReference,
-        _field_reference: &FieldReference,
-        _table_with_alias: TableWithAlias,
+        prefix: &CorrelationReference,
+        field: &FieldReference,
+        from: TableWithAlias,
     ) -> ApllodbResult<FullFieldReference> {
-        todo!()
+        // SELECT ta.C FROM T (AS a)?;
+
+        let (prefix_tn, prefix_alias) = match prefix {
+            CorrelationReference::TableVariant(t) => (t.table_name, t.alias),
+        };
+
+        let ret_corr = if prefix_tn == from.table_name {
+            // SELECT T.C FROM T (AS a)?;
+            // -> C is from T
+            Ok(CorrelationReference::TableVariant(from))
+        } else {
+            // SELECT a1.C FROM T (AS a2)?;
+            match &from.alias {
+                None => {
+                    // SELECT a_not_T.C FROM T;
+                    // -> InvalidColumnReference
+                    Err(ApllodbError::new(
+                        ApllodbErrorKind::InvalidColumnReference,
+                        format!(
+                            "field `{:?}` is not the same as FROM item `{:?}`",
+                            field, from
+                        ),
+                        None,
+                    ))
+                }
+                Some(from_alias) => {
+                    // SELECT a_not_T.C FROM T AS A;
+                    if colref_corr == from_item_alias {
+                        // SELECT A.C FROM T AS A;
+                        // -> C is FROM T aliased as A
+                        Ok(CorrelationReference::TableAliasVariant {
+                            alias_name: AliasName::new(colref_corr)?,
+                            table_name: TableName::new(ast_from_item.table_name.0 .0.clone())?,
+                        })
+                    } else {
+                        // SELECT not_a_t.C FROM T AS A;
+                        // -> UndefinedColumn
+                        Err(ApllodbError::new(
+                            ApllodbErrorKind::UndefinedColumn,
+                            format!(
+                                "correlation of column reference `{:?}` is not the same as FROM item `{:?}`",
+                                ast_column_reference, ast_from_item
+                            ),
+                            None,
+                        ))
+                    }
+                }
+            }
+        }?;
     }
 
     fn resolve_with_table_without_corr(
