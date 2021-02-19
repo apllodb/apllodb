@@ -1,6 +1,5 @@
 use crate::{
-    data_structure::reference::field_reference::FieldReference, ApllodbResult,
-    SelectFieldReference,
+    data_structure::reference::field_reference::FieldReference, ApllodbResult, SelectFieldReference,
 };
 use apllodb_sql_parser::apllodb_ast::{self};
 

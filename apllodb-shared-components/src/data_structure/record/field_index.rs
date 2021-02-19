@@ -322,30 +322,22 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {

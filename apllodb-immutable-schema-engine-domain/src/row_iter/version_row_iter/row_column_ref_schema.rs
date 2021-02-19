@@ -1,7 +1,7 @@
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName, FieldReference,
-    FromItem, FullFieldReference, RecordFieldRefSchema, TableName, TableWithAlias,
-    SelectFieldReference,
+    FromItem, FullFieldReference, RecordFieldRefSchema, SelectFieldReference, TableName,
+    TableWithAlias,
 };
 use apllodb_storage_engine_interface::AliasDef;
 use serde::{Deserialize, Serialize};

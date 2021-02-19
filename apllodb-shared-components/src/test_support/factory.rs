@@ -11,8 +11,7 @@ use crate::{
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator,
-    SqlType, SqlValue, SqlValues, TableName, TableWithAlias, UnaryOperator,
-    SelectFieldReference,
+    SelectFieldReference, SqlType, SqlValue, SqlValues, TableName, TableWithAlias, UnaryOperator,
 };
 use rand::Rng;
 
