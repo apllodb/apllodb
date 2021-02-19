@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, UnresolvedFieldReference};
+use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, SelectFieldReference};
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
 
@@ -18,7 +18,7 @@ pub enum Expression {
     ConstantVariant(SqlValue),
 
     /// Reference to field
-    UnresolvedFieldReferenceVariant(UnresolvedFieldReference),
+    UnresolvedFieldReferenceVariant(SelectFieldReference),
 
     /// With unary operator
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),

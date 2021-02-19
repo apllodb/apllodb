@@ -12,7 +12,7 @@ use crate::{
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator,
     SqlType, SqlValue, SqlValues, TableName, TableWithAlias, UnaryOperator,
-    UnresolvedFieldReference,
+    SelectFieldReference,
 };
 use rand::Rng;
 
@@ -30,7 +30,7 @@ impl TableName {
     }
 }
 
-impl UnresolvedFieldReference {
+impl SelectFieldReference {
     pub fn factory_cn(column_name: &str) -> Self {
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(None, field)
@@ -153,7 +153,7 @@ impl Record {
         let ffrs: Vec<FullFieldReference> = fields.iter().map(|f| f.0.clone()).collect();
         let sql_values: Vec<SqlValue> = fields.into_iter().map(|f| f.1).collect();
 
-        let schema = RecordFieldRefSchema::new(ffrs);
+        let schema = RecordFieldRefSchema::new_for_select(ffrs);
 
         Self::new(Arc::new(schema), SqlValues::new(sql_values))
     }
@@ -176,7 +176,7 @@ impl RecordIterator {
 
 impl RecordFieldRefSchema {
     pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
-        Self::new(full_field_references)
+        Self::new_for_select(full_field_references)
     }
 }
 

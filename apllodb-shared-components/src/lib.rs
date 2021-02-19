@@ -34,7 +34,7 @@ pub use crate::{
         reference::{
             correlation_name::CorrelationName, field_reference::FieldReference,
             full_field_reference::FullFieldReference,
-            unresolved_field_reference::UnresolvedFieldReference,
+            unresolved_field_reference::SelectFieldReference,
         },
         select::{from_item::FromItem, ordering::Ordering},
         session::{

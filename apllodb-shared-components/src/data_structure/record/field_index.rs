@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, FieldReference, FullFieldReference,
-    UnresolvedFieldReference,
+    SelectFieldReference,
 };
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
@@ -203,8 +203,8 @@ impl<S: Into<String>> From<S> for FieldIndex {
     }
 }
 
-impl From<UnresolvedFieldReference> for FieldIndex {
-    fn from(unresolved_field_reference: UnresolvedFieldReference) -> Self {
+impl From<SelectFieldReference> for FieldIndex {
+    fn from(unresolved_field_reference: SelectFieldReference) -> Self {
         match (
             unresolved_field_reference.as_correlation_reference(),
             unresolved_field_reference.as_field_reference(),
@@ -243,7 +243,7 @@ impl From<FullFieldReference> for FieldIndex {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, ApllodbResult, FieldIndex, UnresolvedFieldReference};
+    use crate::{ApllodbErrorKind, ApllodbResult, FieldIndex, SelectFieldReference};
 
     #[test]
     fn test_from_success() {
@@ -287,7 +287,7 @@ mod tests {
     fn test_peek() -> ApllodbResult<()> {
         struct TestDatum {
             field_index: &'static str,
-            ufrs: Vec<UnresolvedFieldReference>,
+            ufrs: Vec<SelectFieldReference>,
             expected_result: Result<
                 usize, // index to matching one from `full_field_references`,
                 ApllodbErrorKind,
@@ -302,91 +302,91 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![UnresolvedFieldReference::factory_cn("c")],
+                ufrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                ufrs: vec![UnresolvedFieldReference::factory_cn("c")],
+                ufrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
+                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
+                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
+                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "t.c",
-                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
+                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx.c",
-                ufrs: vec![UnresolvedFieldReference::factory_corr_cn("t", "c")],
+                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c2",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t1", "c1"),
-                    UnresolvedFieldReference::factory_corr_cn("t2", "c2"),
+                    SelectFieldReference::factory_corr_cn("t1", "c1"),
+                    SelectFieldReference::factory_corr_cn("t2", "c2"),
                 ],
                 expected_result: Ok(1),
             },
             TestDatum {
                 field_index: "t1.c1",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t1", "c1"),
-                    UnresolvedFieldReference::factory_corr_cn("t2", "c2"),
+                    SelectFieldReference::factory_corr_cn("t1", "c1"),
+                    SelectFieldReference::factory_corr_cn("t2", "c2"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t1.c",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t1", "c"),
-                    UnresolvedFieldReference::factory_corr_cn("t2", "c"),
+                    SelectFieldReference::factory_corr_cn("t1", "c"),
+                    SelectFieldReference::factory_corr_cn("t2", "c"),
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "c",
                 ufrs: vec![
-                    UnresolvedFieldReference::factory_corr_cn("t1", "c"),
-                    UnresolvedFieldReference::factory_corr_cn("t2", "c"),
+                    SelectFieldReference::factory_corr_cn("t1", "c"),
+                    SelectFieldReference::factory_corr_cn("t2", "c"),
                 ],
                 expected_result: Err(ApllodbErrorKind::AmbiguousColumn),
             },

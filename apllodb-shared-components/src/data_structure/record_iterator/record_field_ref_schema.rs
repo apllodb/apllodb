@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbResult, FieldIndex, FullFieldReference};
+use crate::{ApllodbResult, ColumnName, CorrelationName, FieldIndex, FieldReference, FromItem, FullFieldReference, TableName, SelectFieldReference};
 
 /// Internally has similar structure as `Vec<FullFieldReference>` and works with [SqlValues](crate::SqlValues) with the same length
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -8,8 +8,28 @@ pub struct RecordFieldRefSchema(Vec<FullFieldReference>);
 
 impl RecordFieldRefSchema {
     /// Constructor
-    pub fn new(full_field_references: Vec<FullFieldReference>) -> Self {
+    ///
+    /// Each field may contain alias.
+    pub fn new_for_select(full_field_references: Vec<FullFieldReference>) -> Self {
         Self(full_field_references)
+    }
+
+    /// Constructor
+    pub fn new_for_modification(table_name: TableName, column_names: Vec<ColumnName>) -> Self {
+        let correlation_name = CorrelationName::from(table_name);
+        let ffrs: Vec<FullFieldReference> = column_names
+            .into_iter()
+            .map(|column_name| {
+                let ufr = SelectFieldReference::new(
+                    Some(correlation_name),
+                    FieldReference::from(column_name),
+                );
+                ufr.resolve(Some(FromItem::TableVariant(TableWithAlias {
+                    table_name
+
+                })))
+            })
+            .collect();
     }
 
     /// # Failures

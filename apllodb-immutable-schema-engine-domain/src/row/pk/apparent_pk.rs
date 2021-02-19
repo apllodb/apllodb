@@ -3,7 +3,7 @@ use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
     ComparisonFunction, CorrelationName, Expression, FieldReference, FullFieldReference,
     LogicalFunction, NNSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
-    UnresolvedFieldReference,
+    SelectFieldReference,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, ops::Index};
@@ -163,7 +163,7 @@ impl ApparentPrimaryKey {
             .zipped()
             .into_iter()
             .map(|(column_name, sql_value)| {
-                let ufr = UnresolvedFieldReference::new(
+                let ufr = SelectFieldReference::new(
                     Some(CorrelationName::new(self.table_name.as_str())?),
                     FieldReference::ColumnNameVariant(column_name.clone()),
                 );

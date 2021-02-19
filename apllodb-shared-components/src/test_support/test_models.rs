@@ -1,6 +1,6 @@
 use crate::{
     FromItem, FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
-    UnresolvedFieldReference,
+    SelectFieldReference,
 };
 
 /// - people:
@@ -13,11 +13,11 @@ impl People {
         TableName::new("people").unwrap()
     }
 
-    pub fn ufr_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
+    pub fn ufr_id() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
-    pub fn ufr_age() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
+    pub fn ufr_age() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn ffr_id() -> FullFieldReference {
@@ -54,14 +54,14 @@ impl Body {
         TableName::new("body").unwrap()
     }
 
-    pub fn ufr_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
+    pub fn ufr_id() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
-    pub fn ufr_people_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
+    pub fn ufr_people_id() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
     }
-    pub fn ufr_height() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "height")
+    pub fn ufr_height() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "height")
     }
 
     pub fn ffr_id() -> FullFieldReference {
@@ -115,17 +115,17 @@ impl Pet {
         TableName::new("pet").unwrap()
     }
 
-    pub fn ufr_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
+    pub fn ufr_id() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
-    pub fn ufr_people_id() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
+    pub fn ufr_people_id() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
     }
-    pub fn ufr_kind() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "kind")
+    pub fn ufr_kind() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "kind")
     }
-    pub fn ufr_age() -> UnresolvedFieldReference {
-        UnresolvedFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
+    pub fn ufr_age() -> SelectFieldReference {
+        SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn ffr_id() -> FullFieldReference {

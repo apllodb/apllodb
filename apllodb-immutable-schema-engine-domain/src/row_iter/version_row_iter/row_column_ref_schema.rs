@@ -1,7 +1,7 @@
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName, FieldReference,
     FromItem, FullFieldReference, RecordFieldRefSchema, TableName, TableWithAlias,
-    UnresolvedFieldReference,
+    SelectFieldReference,
 };
 use apllodb_storage_engine_interface::AliasDef;
 use serde::{Deserialize, Serialize};
@@ -53,13 +53,13 @@ impl RowColumnRefSchema {
                     },
                 };
                 let ufr =
-                    UnresolvedFieldReference::new(Some(correlation_name.clone()), field_reference);
+                    SelectFieldReference::new(Some(correlation_name.clone()), field_reference);
                 ufr.resolve(Some(FromItem::TableVariant(table_with_alias.clone())))
                     .expect("FromItem is given here arbitrarily")
             })
             .collect();
 
-        RecordFieldRefSchema::new(ffrs)
+        RecordFieldRefSchema::new_for_select(ffrs)
     }
 
     /// # Failures

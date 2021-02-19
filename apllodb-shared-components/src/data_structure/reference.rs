@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub(crate) mod correlation_name;
 pub(crate) mod field_reference;
 pub(crate) mod full_field_reference;
-pub(crate) mod unresolved_field_reference;
+pub(crate) mod select_field_reference;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 struct FieldReferenceBase {

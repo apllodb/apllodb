@@ -83,7 +83,10 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
                 )
             })
             .collect();
-        let schema = RecordFieldRefSchema::new(ffrs);
+
+            let row_schema = Row ::new()
+
+            let schema = RecordFieldRefSchema::new_for_select(ffrs);
 
         let constant_values: Vec<SqlValue> = expressions
             .into_iter()

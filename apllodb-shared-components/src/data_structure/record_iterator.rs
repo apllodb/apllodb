@@ -169,7 +169,7 @@ impl Iterator for RecordIterator {
 impl From<Vec<Record>> for RecordIterator {
     fn from(rs: Vec<Record>) -> Self {
         let schema = if rs.is_empty() {
-            RecordFieldRefSchema::new(vec![])
+            RecordFieldRefSchema::new_for_select(vec![])
         } else {
             let r = rs.first().unwrap();
             r.schema().clone()

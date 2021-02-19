@@ -10,22 +10,22 @@ use crate::{
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
 
-/// Unresolved field reference is in a "(correlation.)?field" form.
+/// Unresolved field reference is in a "(correlation.)?field" form, appears in SELECT field.
 ///
 /// It's correlation may be omitted in SQL.
 /// E.g. `SELECT c FROM t  -- t is omitted`
 ///
 /// Omitted correlation can be *resolved* by FromItem.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct UnresolvedFieldReference(FieldReferenceBase);
+pub struct SelectFieldReference(FieldReferenceBase);
 
-impl Display for UnresolvedFieldReference {
+impl Display for SelectFieldReference {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.to_string())
     }
 }
 
-impl UnresolvedFieldReference {
+impl SelectFieldReference {
     /// Constructor
     pub fn new(correlation_name: Option<CorrelationName>, field_reference: FieldReference) -> Self {
         let base = FieldReferenceBase::new(correlation_name, field_reference);
@@ -52,7 +52,7 @@ impl UnresolvedFieldReference {
         self.0.set_field_alias(field_alias)
     }
 
-    /// into FullFieldReference
+    /// into FullFieldReference w/ FromItem.
     ///
     /// `ast_from_item` is None only when SELECT statement does not have FROM clause.
     ///
@@ -148,13 +148,13 @@ impl UnresolvedFieldReference {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ApllodbErrorKind, ApllodbResult, FromItem, FullFieldReference, UnresolvedFieldReference,
+        ApllodbErrorKind, ApllodbResult, FromItem, FullFieldReference, SelectFieldReference,
     };
     use pretty_assertions::assert_eq;
 
     #[derive(Debug, new)]
     struct TestDatum {
-        ufr: UnresolvedFieldReference,
+        ufr: SelectFieldReference,
         from_item: Option<FromItem>,
         expected_result: Result<FullFieldReference, ApllodbErrorKind>,
     }
@@ -163,32 +163,32 @@ mod tests {
     fn test_resolve() -> ApllodbResult<()> {
         let test_data: Vec<TestDatum> = vec![
             TestDatum::new(
-                UnresolvedFieldReference::factory_cn("c"),
+                SelectFieldReference::factory_cn("c"),
                 None,
-                Ok(UnresolvedFieldReference::factory_cn("c").resolve_naive()),
+                Ok(SelectFieldReference::factory_cn("c").resolve_naive()),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_corr_cn("t", "c"),
+                SelectFieldReference::factory_corr_cn("t", "c"),
                 None,
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_cn("c"),
+                SelectFieldReference::factory_cn("c"),
                 Some(FromItem::factory("t")),
-                Ok(UnresolvedFieldReference::factory_corr_cn("t", "c").resolve_naive()),
+                Ok(SelectFieldReference::factory_corr_cn("t", "c").resolve_naive()),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_corr_cn("t", "c"),
+                SelectFieldReference::factory_corr_cn("t", "c"),
                 Some(FromItem::factory("t")),
-                Ok(UnresolvedFieldReference::factory_corr_cn("t", "c").resolve_naive()),
+                Ok(SelectFieldReference::factory_corr_cn("t", "c").resolve_naive()),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_corr_cn("t1", "c"),
+                SelectFieldReference::factory_corr_cn("t1", "c"),
                 Some(FromItem::factory("t2")),
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),
             TestDatum::new(
-                UnresolvedFieldReference::factory_corr_cn("x", "c"),
+                SelectFieldReference::factory_corr_cn("x", "c"),
                 Some(FromItem::factory_with_corr_alias("t", "a")),
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),

@@ -1,4 +1,4 @@
-use crate::{AliasName, ApllodbResult, UnresolvedFieldReference};
+use crate::{AliasName, ApllodbResult, SelectFieldReference};
 use apllodb_sql_parser::apllodb_ast::{self};
 
 use crate::ast_translator::AstTranslator;
@@ -9,7 +9,7 @@ impl AstTranslator {
     /// errors from [AstTranslator::column_reference()](crate::AstTranslator::column_reference).
     pub fn select_field_column_reference(
         ast_select_field: apllodb_ast::SelectField,
-    ) -> ApllodbResult<UnresolvedFieldReference> {
+    ) -> ApllodbResult<SelectFieldReference> {
         let ast_expression = ast_select_field.expression;
         let ast_field_alias = ast_select_field.alias;
 
