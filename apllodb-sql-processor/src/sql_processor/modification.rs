@@ -2,8 +2,7 @@ use std::{convert::TryFrom, rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
-    CorrelationName, FieldReference, FullFieldReference, Record, RecordFieldRefSchema, Session,
-    SessionWithTx, SqlValue, SqlValues,
+    FullFieldReference, Record, RecordFieldRefSchema, Session, SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -76,25 +75,15 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
         let ffrs: Vec<FullFieldReference> = column_names
             .into_iter()
-            .map(|cn| {
-                FullFieldReference::new(
-                    Some(CorrelationName::TableNameVariant(table_name.clone())),
-                    FieldReference::ColumnNameVariant(cn),
-                )
-            })
+            .map(|cn| FullFieldReference::new_for_modification(table_name.clone(), cn))
             .collect();
 
-            let row_schema = Row ::new()
-
-            let schema = RecordFieldRefSchema::new_for_select(ffrs);
+        let schema = RecordFieldRefSchema::new_for_select(ffrs);
 
         let constant_values: Vec<SqlValue> = expressions
             .into_iter()
             .map(|ast_expression| {
-                let expression = AstTranslator::expression_in_non_select(
-                    ast_expression,
-                    vec![ast_table_name.clone()],
-                )?;
+                let expression = AstTranslator::expression(ast_expression)?;
                 SqlValue::try_from(expression)
             })
             .collect::<ApllodbResult<_>>()?;

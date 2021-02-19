@@ -2,7 +2,9 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{data_structure::reference::correlation_name::CorrelationName, AliasName, ColumnName};
+use crate::{
+    data_structure::reference::correlation_name::CorrelationName, AliasName, ColumnName, TableName,
+};
 
 use super::{field_reference::FieldReference, FieldReferenceBase};
 
@@ -27,6 +29,15 @@ impl FullFieldReference {
         field_reference_base: FieldReferenceBase,
     ) -> Self {
         Self(field_reference_base)
+    }
+
+    /// Constructor for INSERT/SELECT
+    pub fn new_for_modification(table_name: TableName, column_name: ColumnName) -> Self {
+        let base = FieldReferenceBase::new(
+            Some(CorrelationName::from(table_name)),
+            FieldReference::from(column_name),
+        );
+        Self(base)
     }
 
     /// Get ref of CorrelationReference

@@ -4,8 +4,8 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{
     BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Expression,
-    FullFieldReference, I64LooseType, LogicalFunction, NNSqlValue, NumericComparableType, SqlType,
-    SqlValue, StringComparableLoseType, TableName, UnaryOperator,
+    FullFieldReference, I64LooseType, LogicalFunction, NNSqlValue, NumericComparableType,
+    SelectFieldReference, SqlType, SqlValue, StringComparableLoseType, TableName, UnaryOperator,
 };
 
 pub(in crate::sqlite) trait ToSqlString {
@@ -60,6 +60,12 @@ impl ToSqlString for ColumnName {
 }
 
 impl ToSqlString for FullFieldReference {
+    fn to_sql_string(&self) -> String {
+        self.to_string()
+    }
+}
+
+impl ToSqlString for SelectFieldReference {
     fn to_sql_string(&self) -> String {
         self.to_string()
     }
@@ -144,7 +150,7 @@ impl ToSqlString for Expression {
     fn to_sql_string(&self) -> String {
         match self {
             Expression::ConstantVariant(c) => c.to_sql_string(),
-            Expression::SelectFieldReferenceVariant(ffr) => ffr.to_sql_string(),
+            Expression::SelectFieldReferenceVariant(sfr) => sfr.to_sql_string(),
             Expression::BooleanExpressionVariant(boolean_expr) => boolean_expr.to_sql_string(),
             Expression::UnaryOperatorVariant(uni_op, expr) => {
                 format!("{} {}", uni_op.to_sql_string(), expr.to_sql_string())

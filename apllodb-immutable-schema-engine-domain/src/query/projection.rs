@@ -1,9 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName, FieldReference,
-    FullFieldReference, RecordFieldRefSchema,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 

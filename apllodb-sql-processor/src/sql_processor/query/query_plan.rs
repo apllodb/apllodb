@@ -3,10 +3,10 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex, FullFieldReference,
-    Ordering,
+    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex, FromItem,
+    FullFieldReference, Ordering, TableWithAlias,
 };
-use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
+use apllodb_sql_parser::apllodb_ast::{self, SelectCommand, SelectField};
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
 
 use self::query_plan_tree::{
@@ -35,17 +35,11 @@ impl TryFrom<SelectCommand> for QueryPlan {
             unimplemented!();
         }
 
-        let from_items = Self::select_command_into_from_items(sc.clone());
-
-        let from_item = if from_items.len() != 1 {
-            unimplemented!()
-        } else {
-            from_items.first().unwrap().clone()
-        };
+        let from_item = Self::select_command_into_from_item(sc.clone())?;
 
         let select_fields = sc.select_fields.into_vec();
         let ffrs: Vec<FullFieldReference> =
-            Self::select_fields_into_ffrs(&select_fields, &from_items)?;
+            Self::select_fields_into_ffrs(&select_fields, &from_item)?;
 
         let column_names: Vec<ColumnName> = ffrs
             .iter()
@@ -53,11 +47,18 @@ impl TryFrom<SelectCommand> for QueryPlan {
             .cloned()
             .collect();
 
-        let alias_def = AliasDef::from(ffrs);
+        let table_with_aliases: Vec<TableWithAlias> = (&from_item).into();
+        assert!(
+            table_with_aliases.len() == 1,
+            "FROM item must be 1 currently"
+        );
+        let table_with_alias = table_with_aliases.first().unwrap();
+
+        let alias_def = AliasDef::new(table_with_alias.clone(), &ffrs);
 
         let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
-                table_name: AstTranslator::table_name(from_item.table_name)?, // correlation alias情報が消えている
+                table_name: table_with_alias.table_name.clone(),
                 projection: ProjectionQuery::ColumnNames(column_names),
                 alias_def,
             },
@@ -77,7 +78,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let node2 = if let Some(order_byes) = sc.order_bys {
             QueryPlanNode::Unary(QueryPlanNodeUnary {
-                op: Self::sort_node(order_byes, &from_items)?,
+                op: Self::sort_node(order_byes)?,
                 left: Box::new(node1),
             })
         } else {
@@ -85,7 +86,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
         };
 
         let root_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
-            op: Self::projection_node(select_fields, &from_items)?,
+            op: Self::projection_node(select_fields)?,
             left: Box::new(node2),
         });
 
@@ -94,36 +95,39 @@ impl TryFrom<SelectCommand> for QueryPlan {
 }
 
 impl QueryPlan {
-    fn select_command_into_from_items(select_command: SelectCommand) -> Vec<FromItem> {
-        select_command
+    fn select_command_into_from_item(select_command: SelectCommand) -> ApllodbResult<FromItem> {
+        let ast_from_items = select_command
             .from_items
             .expect("currently SELECT w/o FROM is unimplemented")
-            .into_vec()
+            .into_vec();
+
+        assert!(ast_from_items.len() == 1, "currently FROM item must be 1");
+
+        let ast_from_item = ast_from_items.first().unwrap();
+        AstTranslator::from_item(ast_from_item.clone())
     }
 
     fn select_fields_into_ffrs(
         select_fields: &[SelectField],
-        from_items: &[FromItem],
+        from_item: &FromItem,
     ) -> ApllodbResult<Vec<FullFieldReference>> {
         select_fields
             .iter()
-            .map(|select_field| Self::select_field_into_ffr(select_field, &from_items))
+            .map(|select_field| Self::select_field_into_ffr(select_field, &from_item))
             .collect::<ApllodbResult<_>>()
     }
 
     fn select_field_into_ffr(
         select_field: &SelectField,
-        from_items: &[FromItem],
+        from_item: &FromItem,
     ) -> ApllodbResult<FullFieldReference> {
         match &select_field.expression {
             apllodb_ast::Expression::ConstantVariant(_) => {
                 unimplemented!();
             }
             apllodb_ast::Expression::ColumnReferenceVariant(_) => {
-                AstTranslator::select_field_column_reference(
-                    select_field.clone(),
-                    from_items.to_vec(),
-                )
+                let sfr = AstTranslator::select_field_column_reference(select_field.clone())?;
+                sfr.resolve(Some(from_item.clone()))
             }
             apllodb_ast::Expression::UnaryOperatorVariant(_, _)
             | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
@@ -133,10 +137,7 @@ impl QueryPlan {
         }
     }
 
-    fn projection_node(
-        select_fields: Vec<SelectField>,
-        from_items: &[FromItem],
-    ) -> ApllodbResult<UnaryPlanOperation> {
+    fn projection_node(select_fields: Vec<SelectField>) -> ApllodbResult<UnaryPlanOperation> {
         let node = UnaryPlanOperation::Projection {
             fields: select_fields
                 .into_iter()
@@ -150,7 +151,6 @@ impl QueryPlan {
 
     fn sort_node(
         ast_order_byes: apllodb_ast::NonEmptyVec<apllodb_ast::OrderBy>,
-        from_items: &[FromItem],
     ) -> ApllodbResult<UnaryPlanOperation> {
         let order_byes = ast_order_byes.into_vec();
 
@@ -159,9 +159,7 @@ impl QueryPlan {
             .map(|order_by| {
                 let expression = AstTranslator::expression(order_by.expression)?;
                 let ffr = match expression {
-                    apllodb_shared_components::Expression::SelectFieldReferenceVariant(ffr) => {
-                        ffr
-                    }
+                    apllodb_shared_components::Expression::SelectFieldReferenceVariant(ffr) => ffr,
                     apllodb_shared_components::Expression::ConstantVariant(_)
                     | apllodb_shared_components::Expression::UnaryOperatorVariant(_, _)
                     | apllodb_shared_components::Expression::BooleanExpressionVariant(_) => {

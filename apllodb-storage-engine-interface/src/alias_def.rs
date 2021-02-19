@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{AliasName, ColumnName};
+use apllodb_shared_components::{AliasName, ColumnName, FullFieldReference, TableWithAlias};
 use serde::{Deserialize, Serialize};
 
 /// Alias to a table and columns given from SQL.
@@ -11,6 +11,25 @@ pub struct AliasDef {
 }
 
 impl AliasDef {
+    pub fn new(
+        table_with_alias: TableWithAlias,
+        full_field_references: &[FullFieldReference],
+    ) -> Self {
+        let column_aliases: HashMap<ColumnName, AliasName> = full_field_references
+            .iter()
+            .filter_map(|ffr| {
+                let fr = ffr.as_field_reference();
+                fr.as_alias_name()
+                    .map(|alias| (fr.as_column_name().clone(), alias.clone()))
+            })
+            .collect();
+
+        Self {
+            table_alias: table_with_alias.alias,
+            column_aliases,
+        }
+    }
+
     /// get table alias
     pub fn table_alias(&self) -> Option<&AliasName> {
         self.table_alias.as_ref()

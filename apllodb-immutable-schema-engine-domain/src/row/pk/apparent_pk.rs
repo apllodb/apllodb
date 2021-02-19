@@ -1,9 +1,8 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ComparisonFunction, CorrelationName, Expression, FieldReference, FullFieldReference,
-    LogicalFunction, NNSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
-    SelectFieldReference,
+    ComparisonFunction, CorrelationName, Expression, FieldReference, LogicalFunction, NNSqlValue,
+    SelectFieldReference, SqlConvertible, SqlValue, SqlValues, TableName,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, ops::Index};
