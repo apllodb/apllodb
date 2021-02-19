@@ -42,7 +42,7 @@ impl<'usecase> UpdateAllUseCaseInput<'usecase> {
             match expr {
                 Expression::ConstantVariant(_) => {}
                 Expression::UnaryOperatorVariant(_, _) => {}
-                Expression::UnresolvedFieldReferenceVariant(_) | Expression::BooleanExpressionVariant(_) => {
+                Expression::SelectFieldReferenceVariant(_) | Expression::BooleanExpressionVariant(_) => {
                     return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
                         format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
                         column_name, expr

@@ -52,9 +52,9 @@ impl RowColumnRefSchema {
                         alias_name: column_alias.clone(),
                     },
                 };
-                let ufr =
+                let sfr =
                     SelectFieldReference::new(Some(correlation_name.clone()), field_reference);
-                ufr.resolve(Some(FromItem::TableVariant(table_with_alias.clone())))
+                sfr.resolve(Some(FromItem::TableVariant(table_with_alias.clone())))
                     .expect("FromItem is given here arbitrarily")
             })
             .collect();

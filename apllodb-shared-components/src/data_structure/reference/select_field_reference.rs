@@ -154,7 +154,7 @@ mod tests {
 
     #[derive(Debug, new)]
     struct TestDatum {
-        ufr: SelectFieldReference,
+        sfr: SelectFieldReference,
         from_item: Option<FromItem>,
         expected_result: Result<FullFieldReference, ApllodbErrorKind>,
     }
@@ -197,7 +197,7 @@ mod tests {
         for test_datum in test_data {
             log::debug!("{:#?}", test_datum);
 
-            match test_datum.ufr.resolve(test_datum.from_item) {
+            match test_datum.sfr.resolve(test_datum.from_item) {
                 Ok(ffr) => {
                     assert_eq!(ffr, test_datum.expected_result.unwrap())
                 }

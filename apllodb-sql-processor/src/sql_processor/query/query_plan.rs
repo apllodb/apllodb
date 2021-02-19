@@ -159,7 +159,7 @@ impl QueryPlan {
             .map(|order_by| {
                 let expression = AstTranslator::expression(order_by.expression)?;
                 let ffr = match expression {
-                    apllodb_shared_components::Expression::UnresolvedFieldReferenceVariant(ffr) => {
+                    apllodb_shared_components::Expression::SelectFieldReferenceVariant(ffr) => {
                         ffr
                     }
                     apllodb_shared_components::Expression::ConstantVariant(_)

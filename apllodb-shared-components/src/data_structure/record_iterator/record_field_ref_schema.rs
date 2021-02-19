@@ -20,11 +20,11 @@ impl RecordFieldRefSchema {
         let ffrs: Vec<FullFieldReference> = column_names
             .into_iter()
             .map(|column_name| {
-                let ufr = SelectFieldReference::new(
+                let sfr = SelectFieldReference::new(
                     Some(correlation_name),
                     FieldReference::from(column_name),
                 );
-                ufr.resolve(Some(FromItem::TableVariant(TableWithAlias {
+                sfr.resolve(Some(FromItem::TableVariant(TableWithAlias {
                     table_name
 
                 })))

@@ -287,7 +287,7 @@ mod tests {
     fn test_peek() -> ApllodbResult<()> {
         struct TestDatum {
             field_index: &'static str,
-            ufrs: Vec<SelectFieldReference>,
+            sfrs: Vec<SelectFieldReference>,
             expected_result: Result<
                 usize, // index to matching one from `full_field_references`,
                 ApllodbErrorKind,
@@ -297,70 +297,70 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             TestDatum {
                 field_index: "c",
-                ufrs: vec![],
+                sfrs: vec![],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![SelectFieldReference::factory_cn("c")],
+                sfrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                ufrs: vec![SelectFieldReference::factory_cn("c")],
+                sfrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
                 ],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "t.c",
-                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx.c",
-                ufrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c2",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c1"),
                     SelectFieldReference::factory_corr_cn("t2", "c2"),
                 ],
@@ -368,7 +368,7 @@ mod tests {
             },
             TestDatum {
                 field_index: "t1.c1",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c1"),
                     SelectFieldReference::factory_corr_cn("t2", "c2"),
                 ],
@@ -376,7 +376,7 @@ mod tests {
             },
             TestDatum {
                 field_index: "t1.c",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c"),
                     SelectFieldReference::factory_corr_cn("t2", "c"),
                 ],
@@ -384,7 +384,7 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
-                ufrs: vec![
+                sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c"),
                     SelectFieldReference::factory_corr_cn("t2", "c"),
                 ],
@@ -397,9 +397,9 @@ mod tests {
 
             match field_index.peek(
                 test_datum
-                    .ufrs
+                    .sfrs
                     .iter()
-                    .map(|ufr| ufr.clone().resolve_naive()),
+                    .map(|sfr| sfr.clone().resolve_naive()),
             ) {
                 Ok((idx, ffr)) => {
                     let expected_idx = test_datum
@@ -408,7 +408,7 @@ mod tests {
                     assert_eq!(idx, expected_idx);
                     assert_eq!(
                         ffr,
-                        test_datum.ufrs.get(idx).unwrap().clone().resolve_naive()
+                        test_datum.sfrs.get(idx).unwrap().clone().resolve_naive()
                     );
                 }
                 Err(e) => {

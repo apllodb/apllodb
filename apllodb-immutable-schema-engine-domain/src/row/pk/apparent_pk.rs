@@ -163,12 +163,12 @@ impl ApparentPrimaryKey {
             .zipped()
             .into_iter()
             .map(|(column_name, sql_value)| {
-                let ufr = SelectFieldReference::new(
+                let sfr = SelectFieldReference::new(
                     Some(CorrelationName::new(self.table_name.as_str())?),
                     FieldReference::ColumnNameVariant(column_name.clone()),
                 );
                 Ok(ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::UnresolvedFieldReferenceVariant(ufr)),
+                    left: Box::new(Expression::SelectFieldReferenceVariant(sfr)),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),
                     ))),

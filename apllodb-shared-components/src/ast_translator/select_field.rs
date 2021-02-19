@@ -21,13 +21,13 @@ impl AstTranslator {
             }
 
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let mut ufr = Self::column_reference(ast_colref)?;
+                let mut sfr = Self::column_reference(ast_colref)?;
                 if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(field_alias))) =
                     ast_field_alias
                 {
-                    ufr.set_field_alias(AliasName::new(field_alias)?);
+                    sfr.set_field_alias(AliasName::new(field_alias)?);
                 }
-                Ok(ufr)
+                Ok(sfr)
             }
         }
     }

@@ -18,7 +18,7 @@ pub enum Expression {
     ConstantVariant(SqlValue),
 
     /// Reference to field
-    UnresolvedFieldReferenceVariant(SelectFieldReference),
+    SelectFieldReferenceVariant(SelectFieldReference),
 
     /// With unary operator
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
@@ -43,7 +43,7 @@ impl TryFrom<Expression> for SqlValue {
     fn try_from(expression: Expression) -> ApllodbResult<Self> {
         match expression {
             Expression::ConstantVariant(sql_value) => Ok(sql_value),
-            Expression::UnresolvedFieldReferenceVariant(ffr) => Err(ApllodbError::new(
+            Expression::SelectFieldReferenceVariant(ffr) => Err(ApllodbError::new(
                 ApllodbErrorKind::DataException,
                 format!("field `{}` cannot be into SqlValue", ffr),
                 None,

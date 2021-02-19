@@ -1,6 +1,6 @@
 use crate::{
-    FromItem, FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
-    SelectFieldReference,
+    FromItem, FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SelectFieldReference,
+    SqlValue, TableName,
 };
 
 /// - people:
@@ -13,20 +13,20 @@ impl People {
         TableName::new("people").unwrap()
     }
 
-    pub fn ufr_id() -> SelectFieldReference {
+    pub fn sfr_id() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
-    pub fn ufr_age() -> SelectFieldReference {
+    pub fn sfr_age() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        Self::ufr_id()
+        Self::sfr_id()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_age() -> FullFieldReference {
-        Self::ufr_age()
+        Self::sfr_age()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
@@ -54,28 +54,28 @@ impl Body {
         TableName::new("body").unwrap()
     }
 
-    pub fn ufr_id() -> SelectFieldReference {
+    pub fn sfr_id() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
-    pub fn ufr_people_id() -> SelectFieldReference {
+    pub fn sfr_people_id() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
     }
-    pub fn ufr_height() -> SelectFieldReference {
+    pub fn sfr_height() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "height")
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        Self::ufr_id()
+        Self::sfr_id()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        Self::ufr_people_id()
+        Self::sfr_people_id()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_height() -> FullFieldReference {
-        Self::ufr_height()
+        Self::sfr_height()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
@@ -115,36 +115,36 @@ impl Pet {
         TableName::new("pet").unwrap()
     }
 
-    pub fn ufr_id() -> SelectFieldReference {
+    pub fn sfr_id() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "id")
     }
-    pub fn ufr_people_id() -> SelectFieldReference {
+    pub fn sfr_people_id() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "people_id")
     }
-    pub fn ufr_kind() -> SelectFieldReference {
+    pub fn sfr_kind() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "kind")
     }
-    pub fn ufr_age() -> SelectFieldReference {
+    pub fn sfr_age() -> SelectFieldReference {
         SelectFieldReference::factory_corr_cn(Self::table_name().as_str(), "age")
     }
 
     pub fn ffr_id() -> FullFieldReference {
-        Self::ufr_id()
+        Self::sfr_id()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_people_id() -> FullFieldReference {
-        Self::ufr_people_id()
+        Self::sfr_people_id()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_kind() -> FullFieldReference {
-        Self::ufr_kind()
+        Self::sfr_kind()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
     pub fn ffr_age() -> FullFieldReference {
-        Self::ufr_age()
+        Self::sfr_age()
             .resolve(Some(FromItem::factory(Self::table_name().as_str())))
             .unwrap()
     }
