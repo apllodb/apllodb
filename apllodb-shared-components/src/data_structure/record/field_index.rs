@@ -401,6 +401,12 @@ mod tests {
                 ],
                 expected_result: Err(ApllodbErrorKind::AmbiguousColumn),
             },
+            TestDatum {
+                field_index: "ta.c",
+                from_item: Some(FromItem::factory_with_corr_alias("t", "ta")),
+                sfrs: vec![SelectFieldReference::factory_corr_cn("ta", "c")],
+                expected_result: Ok(0),
+            },
         ];
 
         for test_datum in test_data {
