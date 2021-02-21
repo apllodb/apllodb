@@ -114,13 +114,11 @@ mod tests {
                         InsertNode {
                             table_name: People::table_name(),
                             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-                                op: LeafPlanOperation::Values {
-                                    records: vec![
-                                        T_PEOPLE_R1.clone(),
-                                        T_PEOPLE_R2.clone(),
-                                        T_PEOPLE_R3.clone(),
-                                    ],
-                                },
+                                op: LeafPlanOperation::factory_insert_values(vec![
+                                    T_PEOPLE_R1.clone(),
+                                    T_PEOPLE_R2.clone(),
+                                    T_PEOPLE_R3.clone(),
+                                ]),
                             }),
                         },
                     )),

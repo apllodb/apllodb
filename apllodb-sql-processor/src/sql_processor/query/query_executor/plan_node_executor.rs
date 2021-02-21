@@ -1,8 +1,10 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, RecordIterator,
-    SessionWithTx, SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, CorrelationName, Expression,
+    FieldIndex, FieldReference, FromItem, FullFieldReference, Ordering, Record,
+    RecordFieldRefSchema, RecordIterator, SelectFieldReference, Session, SessionWithTx,
+    SqlValueHashKey, SqlValues, TableName, TableWithAlias,
 };
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
 
@@ -26,7 +28,36 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         op_leaf: LeafPlanOperation,
     ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::Values { records } => Ok((RecordIterator::from(records), session)),
+            LeafPlanOperation::InsertValues {
+                table_name,
+                column_names,
+                values,
+            } => {
+                let from_item = FromItem::TableVariant(TableWithAlias {
+                    table_name: table_name.clone(),
+                    alias: None,
+                });
+
+                let res_ffrs: ApllodbResult<Vec<FullFieldReference>> = column_names
+                    .into_iter()
+                    .map(|column_name| {
+                        let sfr = SelectFieldReference::new(
+                            Some(CorrelationName::from(table_name.clone())),
+                            FieldReference::from(column_name),
+                        );
+                        sfr.resolve(Some(from_item.clone()))
+                        //.map_err(|e| )
+                    })
+                    .collect();
+
+                match res_ffrs {
+                    Ok(ffrs) => {
+                        let schema = RecordFieldRefSchema::new(Some(from_item), ffrs);
+                        Ok((RecordIterator::new(schema, values), session))
+                    }
+                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+                }
+            }
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
@@ -86,11 +117,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         input_left: RecordIterator,
         fields: Vec<FieldIndex>,
     ) -> ApllodbResult<RecordIterator> {
-        // FIXME RecordIterator::projection があるべき
-        let records = input_left
-            .map(|record| record.projection(&fields))
-            .collect::<ApllodbResult<Vec<Record>>>()?;
-        Ok(RecordIterator::from(records))
+        input_left.projection(&fields)
     }
 
     fn selection(
@@ -150,6 +177,17 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             }
         }
 
-        Ok(RecordIterator::from(ret))
+        let it = if ret.is_empty() {
+            RecordIterator::new(
+                RecordFieldRefSchema::new(None, vec![]),
+                Vec::<SqlValues>::new(),
+            )
+        } else {
+            let r = ret.first().unwrap();
+            let schema = r.schema();
+            RecordIterator::new(schema.clone(), ret)
+        };
+
+        Ok(it)
     }
 }

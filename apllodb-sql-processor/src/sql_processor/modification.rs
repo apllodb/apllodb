@@ -1,8 +1,8 @@
-use std::{convert::TryFrom, rc::Rc, sync::Arc};
+use std::{convert::TryFrom, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
-    FullFieldReference, Record, RecordFieldRefSchema, Session, SessionWithTx, SqlValue, SqlValues,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName, Session,
+    SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -73,13 +73,6 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             unimplemented!();
         }
 
-        let ffrs: Vec<FullFieldReference> = column_names
-            .into_iter()
-            .map(|cn| FullFieldReference::new_for_modification(table_name.clone(), cn))
-            .collect();
-
-        let schema = RecordFieldRefSchema::new_for_select(ffrs);
-
         let constant_values: Vec<SqlValue> = expressions
             .into_iter()
             .map(|ast_expression| {
@@ -91,11 +84,12 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         let insert_values = SqlValues::new(constant_values);
 
         let plan_node = ModificationPlanNode::Insert(InsertNode {
-            table_name,
+            table_name: table_name.clone(),
             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-                op: LeafPlanOperation::Values {
-                    // TODO ここでレコード作っているが、RecordはあくまでもSELECT onlyとする
-                    records: vec![Record::new(Arc::new(schema), insert_values)],
+                op: LeafPlanOperation::InsertValues {
+                    table_name,
+                    column_names,
+                    values: vec![insert_values],
                 },
             }),
         });

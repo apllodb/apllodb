@@ -1,4 +1,6 @@
-use apllodb_shared_components::{Expression, FieldIndex, Ordering, Record, TableName};
+use apllodb_shared_components::{
+    ColumnName, Expression, FieldIndex, Ordering, SqlValues, TableName,
+};
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
 use serde::{Deserialize, Serialize};
 
@@ -33,8 +35,10 @@ pub(crate) struct QueryPlanNodeBinary {
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, PartialEq, Debug)]
 pub(crate) enum LeafPlanOperation {
-    Values {
-        records: Vec<Record>,
+    InsertValues {
+        table_name: TableName,
+        column_names: Vec<ColumnName>,
+        values: Vec<SqlValues>,
     },
     SeqScan {
         table_name: TableName,

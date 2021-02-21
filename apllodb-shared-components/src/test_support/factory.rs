@@ -160,6 +160,17 @@ impl Record {
         Self::new(Arc::new(schema), SqlValues::new(sql_values))
     }
 
+    pub fn as_table_name(&self) -> TableName {
+        let corr = self
+            .schema()
+            .as_full_field_references()
+            .first()
+            .unwrap()
+            .as_correlation_reference()
+            .unwrap();
+        TableName::factory(corr.as_str())
+    }
+
     pub fn as_column_names(&self) -> Vec<ColumnName> {
         self.schema()
             .as_full_field_references()

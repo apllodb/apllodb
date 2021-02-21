@@ -37,7 +37,7 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
     fn into_record_iterator(self, alias_def: AliasDef) -> RecordIterator {
         if self.0.is_empty() {
             RecordIterator::new(
-                RecordFieldRefSchema::new_for_select(vec![]),
+                RecordFieldRefSchema::new(None, vec![]),
                 Vec::<SqlValues>::new(),
             )
         } else {
