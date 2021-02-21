@@ -39,6 +39,7 @@ impl RowColumnRefSchema {
             CorrelationName::new(self.table_name.as_str()).expect("both ShortName");
         let table_with_alias =
             TableWithAlias::new(self.table_name, alias_def.table_alias().cloned());
+        let from_item = FromItem::TableVariant(table_with_alias.clone());
 
         let ffrs: Vec<FullFieldReference> = self
             .column_names
@@ -54,12 +55,12 @@ impl RowColumnRefSchema {
                 };
                 let sfr =
                     SelectFieldReference::new(Some(correlation_name.clone()), field_reference);
-                sfr.resolve(Some(FromItem::TableVariant(table_with_alias.clone())))
+                sfr.resolve(Some(from_item.clone()))
                     .expect("FromItem is given here arbitrarily")
             })
             .collect();
 
-        RecordFieldRefSchema::new_for_select(ffrs)
+        RecordFieldRefSchema::new(Some(from_item), ffrs)
     }
 
     /// # Failures
