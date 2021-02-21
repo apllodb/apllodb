@@ -192,7 +192,7 @@ impl RecordFieldRefSchema {
             })
             .collect();
 
-        Self::new(from_item, ffrs)
+        Self::new(Some(from_item), ffrs)
     }
 }
 

@@ -7,7 +7,9 @@ use crate::{ApllodbResult, FieldIndex, FromItem, FullFieldReference};
 /// Internally has similar structure as `Vec<FullFieldReference>` and works with [SqlValues](crate::SqlValues) with the same length
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct RecordFieldRefSchema {
-    from_item: FromItem,
+    /// None when `SELECT 1 + 1;`, for example
+    from_item: Option<FromItem>,
+
     fields: Vec<FullFieldReference>,
 }
 

@@ -297,7 +297,7 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             TestDatum {
                 field_index: "c",
-                from_item: sfrs: vec![],
+                sfrs: vec![],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
