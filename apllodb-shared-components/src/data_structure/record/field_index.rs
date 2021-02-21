@@ -243,7 +243,10 @@ impl From<FullFieldReference> for FieldIndex {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, ApllodbResult, FieldIndex, SelectFieldReference};
+    use crate::{
+        ApllodbErrorKind, ApllodbResult, FieldIndex, FromItem, FullFieldReference,
+        RecordFieldRefSchema, SelectFieldReference,
+    };
 
     #[test]
     fn test_from_success() {
@@ -287,6 +290,7 @@ mod tests {
     fn test_peek() -> ApllodbResult<()> {
         struct TestDatum {
             field_index: &'static str,
+            from_item: Option<FromItem>,
             sfrs: Vec<SelectFieldReference>,
             expected_result: Result<
                 usize, // index to matching one from `full_field_references`,
@@ -297,61 +301,73 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             TestDatum {
                 field_index: "c",
+                from_item: None,
                 sfrs: vec![],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
+                from_item: None,
                 sfrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
+                from_item: None,
                 sfrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "t.c",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx.c",
+                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c2",
+                from_item: Some(FromItem::factory("t2")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c1"),
                     SelectFieldReference::factory_corr_cn("t2", "c2"),
@@ -360,6 +376,7 @@ mod tests {
             },
             TestDatum {
                 field_index: "t1.c1",
+                from_item: Some(FromItem::factory("t1")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c1"),
                     SelectFieldReference::factory_corr_cn("t2", "c2"),
@@ -368,6 +385,7 @@ mod tests {
             },
             TestDatum {
                 field_index: "t1.c",
+                from_item: Some(FromItem::factory("t1")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c"),
                     SelectFieldReference::factory_corr_cn("t2", "c"),
@@ -376,6 +394,7 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
+                from_item: Some(FromItem::factory("t1")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c"),
                     SelectFieldReference::factory_corr_cn("t2", "c"),
@@ -387,12 +406,15 @@ mod tests {
         for test_datum in test_data {
             let field_index = FieldIndex::from(test_datum.field_index);
 
-            match field_index.peek(
-                test_datum
-                    .sfrs
-                    .iter()
-                    .map(|sfr| sfr.clone().resolve_naive()),
-            ) {
+            let ffrs: Vec<FullFieldReference> = test_datum
+                .sfrs
+                .iter()
+                .map(|sfr| sfr.clone().resolve_naive())
+                .collect();
+
+            let schema = RecordFieldRefSchema::new(test_datum.from_item, ffrs);
+
+            match field_index.peek(&schema) {
                 Ok((idx, ffr)) => {
                     let expected_idx = test_datum
                         .expected_result
