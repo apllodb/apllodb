@@ -94,6 +94,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             table_name,
             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                 op: LeafPlanOperation::Values {
+                    // TODO ここでレコード作っているが、RecordはあくまでもSELECT onlyとする
                     records: vec![Record::new(Arc::new(schema), insert_values)],
                 },
             }),

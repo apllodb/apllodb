@@ -1,35 +1,22 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbResult, ColumnName, FieldIndex, FullFieldReference, TableName};
+use crate::{ApllodbResult, FieldIndex, FromItem, FullFieldReference};
 
+/// [Record](crate::Record)'s schema.
+///
 /// Internally has similar structure as `Vec<FullFieldReference>` and works with [SqlValues](crate::SqlValues) with the same length
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct RecordFieldRefSchema(Vec<FullFieldReference>);
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
+pub struct RecordFieldRefSchema {
+    from_item: FromItem,
+    fields: Vec<FullFieldReference>,
+}
 
 impl RecordFieldRefSchema {
-    /// Constructor
-    ///
-    /// Each field may contain alias.
-    pub fn new_for_select(full_field_references: Vec<FullFieldReference>) -> Self {
-        Self(full_field_references)
-    }
-
-    /// Constructor
-    pub fn new_for_modification(table_name: TableName, column_names: Vec<ColumnName>) -> Self {
-        let ffrs: Vec<FullFieldReference> = column_names
-            .into_iter()
-            .map(|column_name| {
-                FullFieldReference::new_for_modification(table_name.clone(), column_name)
-            })
-            .collect();
-        Self(ffrs)
-    }
-
     /// # Failures
     ///
     /// see: [FieldIndex::peek](crate::FieldIndex::peek)
     pub(crate) fn resolve_index(&self, index: &FieldIndex) -> ApllodbResult<usize> {
-        let (idx, _) = index.peek(self.0.clone())?;
+        let (idx, _) = index.peek(&self)?;
         Ok(idx)
     }
 
@@ -37,21 +24,25 @@ impl RecordFieldRefSchema {
         let new_ffrs: Vec<FullFieldReference> = projection
             .iter()
             .map(|index| {
-                let (_, ffr) = index.peek(self.0.clone())?;
+                let (_, ffr) = index.peek(&self)?;
                 Ok(ffr.clone())
             })
             .collect::<ApllodbResult<_>>()?;
-        Ok(Self(new_ffrs))
+        Ok(Self::new(self.from_item.clone(), new_ffrs))
     }
 
     pub(crate) fn joined(&self, right: &Self) -> Self {
-        let mut left = self.0.clone();
-        let mut right = right.0.clone();
-        left.append(&mut right);
-        Self(left)
+        assert_eq!(
+            self.from_item, right.from_item,
+            "Records to join must be from the same SELECT SQL (same FROM item)"
+        );
+
+        let (mut left_fields, mut right_fields) = (self.fields.clone(), right.fields.clone());
+        left_fields.append(&mut right_fields);
+        Self::new(self.from_item.clone(), left_fields)
     }
 
     pub(crate) fn as_full_field_references(&self) -> &[FullFieldReference] {
-        &self.0
+        &self.fields
     }
 }

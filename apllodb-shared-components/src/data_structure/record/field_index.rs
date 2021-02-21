@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, FieldReference, FullFieldReference,
-    SelectFieldReference,
+    RecordFieldRefSchema, SelectFieldReference,
 };
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
@@ -33,7 +33,7 @@ pub struct FieldIndex {
 }
 
 impl FieldIndex {
-    /// Find a FullFieldReference which matches this FieldIndex.
+    /// Find a FullFieldReference index which matches this FieldIndex.
     ///
     /// # Failures
     ///
@@ -41,14 +41,14 @@ impl FieldIndex {
     ///   - none of `full_field_references` matches to this FieldIndex.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of `full_field_references` match to this FieldIndex.
-    pub fn peek(
+    pub(crate) fn peek(
         &self,
-        full_field_references: impl IntoIterator<Item = FullFieldReference>,
+        schema: &RecordFieldRefSchema,
     ) -> ApllodbResult<(usize, FullFieldReference)> {
         let mut ret_idx: usize = 0;
         let mut ret_ffr: Option<FullFieldReference> = None;
 
-        for ffr in full_field_references {
+        for ffr in schema.as_full_field_references() {
             if self.matches(&ffr) {
                 if ret_ffr.is_some() {
                     return Err(ApllodbError::new(
@@ -60,7 +60,7 @@ impl FieldIndex {
                         None,
                     ));
                 } else {
-                    ret_ffr = Some(ffr);
+                    ret_ffr = Some(ffr.clone());
                 }
             }
             if ret_ffr.is_none() {
@@ -297,7 +297,7 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             TestDatum {
                 field_index: "c",
-                sfrs: vec![],
+                from_item: sfrs: vec![],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
@@ -322,30 +322,22 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                sfrs: vec![
-                    SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")
-                ],
+                sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {

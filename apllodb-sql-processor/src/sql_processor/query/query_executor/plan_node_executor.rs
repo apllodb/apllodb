@@ -86,6 +86,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         input_left: RecordIterator,
         fields: Vec<FieldIndex>,
     ) -> ApllodbResult<RecordIterator> {
+        // FIXME RecordIterator::projection があるべき
         let records = input_left
             .map(|record| record.projection(&fields))
             .collect::<ApllodbResult<Vec<Record>>>()?;

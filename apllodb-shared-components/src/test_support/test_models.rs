@@ -32,14 +32,17 @@ impl People {
     }
 
     pub fn schema() -> RecordFieldRefSchema {
-        RecordFieldRefSchema::factory(vec![Self::ffr_id(), Self::ffr_age()])
+        RecordFieldRefSchema::factory(Self::table_name().as_str(), vec!["id", "age"])
     }
 
     pub fn record(id: i64, age: i32) -> Record {
-        Record::factory(vec![
-            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
-            (Self::ffr_age(), SqlValue::NotNull(NNSqlValue::Integer(age))),
-        ])
+        Record::factory(
+            Self::table_name().as_str(),
+            vec![
+                ("id", SqlValue::NotNull(NNSqlValue::BigInt(id))),
+                ("age", SqlValue::NotNull(NNSqlValue::Integer(age))),
+            ],
+        )
     }
 }
 
@@ -81,25 +84,24 @@ impl Body {
     }
 
     pub fn schema() -> RecordFieldRefSchema {
-        RecordFieldRefSchema::factory(vec![
-            Self::ffr_id(),
-            Self::ffr_people_id(),
-            Self::ffr_height(),
-        ])
+        RecordFieldRefSchema::factory(
+            Self::table_name().as_str(),
+            vec!["id", "people_id", "height"],
+        )
     }
 
     pub fn record(id: i64, people_id: i64, height: i32) -> Record {
-        Record::factory(vec![
-            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
-            (
-                Self::ffr_people_id(),
-                SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            ),
-            (
-                Self::ffr_height(),
-                SqlValue::NotNull(NNSqlValue::Integer(height)),
-            ),
-        ])
+        Record::factory(
+            Self::table_name().as_str(),
+            vec![
+                ("id", SqlValue::NotNull(NNSqlValue::BigInt(id))),
+                (
+                    "people_id",
+                    SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+                ),
+                ("height", SqlValue::NotNull(NNSqlValue::Integer(height))),
+            ],
+        )
     }
 }
 
@@ -150,30 +152,28 @@ impl Pet {
     }
 
     pub fn schema() -> RecordFieldRefSchema {
-        RecordFieldRefSchema::factory(vec![
-            Self::ffr_id(),
-            Self::ffr_people_id(),
-            Self::ffr_kind(),
-            Self::ffr_age(),
-        ])
+        RecordFieldRefSchema::factory(
+            Self::table_name().as_str(),
+            vec!["id", "people_id", "kind", "age"],
+        )
     }
 
     pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Record {
-        Record::factory(vec![
-            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
-            (
-                Self::ffr_people_id(),
-                SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            ),
-            (
-                Self::ffr_kind(),
-                SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
-            ),
-            (
-                Self::ffr_age(),
-                SqlValue::NotNull(NNSqlValue::SmallInt(age)),
-            ),
-        ])
+        Record::factory(
+            Self::table_name().as_str(),
+            vec![
+                ("id", SqlValue::NotNull(NNSqlValue::BigInt(id))),
+                (
+                    "people_id",
+                    SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+                ),
+                (
+                    "kind",
+                    SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
+                ),
+                ("age", SqlValue::NotNull(NNSqlValue::SmallInt(age))),
+            ],
+        )
     }
 }
 

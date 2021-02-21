@@ -11,8 +11,7 @@ use crate::{
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator,
-    SqlType, SqlValue, SqlValues, TableName, TableWithAlias, UnaryOperator,
-    SelectFieldReference,
+    SelectFieldReference, SqlType, SqlValue, SqlValues, TableName, TableWithAlias, UnaryOperator,
 };
 use rand::Rng;
 
@@ -149,11 +148,14 @@ impl NNSqlValue {
 }
 
 impl Record {
-    pub fn factory(fields: Vec<(FullFieldReference, SqlValue)>) -> Self {
-        let ffrs: Vec<FullFieldReference> = fields.iter().map(|f| f.0.clone()).collect();
+    pub fn factory(table_name: &str, fields: Vec<(&str, SqlValue)>) -> Self {
+        let field_names: Vec<&str> = fields
+            .iter()
+            .map(|(field_name, _)| field_name.clone())
+            .collect();
         let sql_values: Vec<SqlValue> = fields.into_iter().map(|f| f.1).collect();
 
-        let schema = RecordFieldRefSchema::new_for_select(ffrs);
+        let schema = RecordFieldRefSchema::factory(table_name, field_names);
 
         Self::new(Arc::new(schema), SqlValues::new(sql_values))
     }
@@ -175,8 +177,22 @@ impl RecordIterator {
 }
 
 impl RecordFieldRefSchema {
-    pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
-        Self::new_for_select(full_field_references)
+    pub fn factory(table_name: &str, fields: Vec<&str>) -> Self {
+        let table_name = TableName::factory(table_name);
+        let from_item = FromItem::TableVariant(TableWithAlias {
+            table_name: table_name.clone(),
+            alias: None,
+        });
+
+        let ffrs: Vec<FullFieldReference> = fields
+            .iter()
+            .map(|field_name| {
+                let sfr = SelectFieldReference::factory_corr_cn(table_name.as_str(), field_name);
+                sfr.resolve(Some(from_item.clone())).unwrap()
+            })
+            .collect();
+
+        Self::new(from_item, ffrs)
     }
 }
 

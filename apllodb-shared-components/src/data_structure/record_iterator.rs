@@ -50,16 +50,20 @@ impl RecordIterator {
 
     /// Filter records that satisfy the given `condition`.
     pub fn selection(self, condition: &Expression) -> ApllodbResult<Self> {
-        let records: Vec<Record> = self
+        let schema = self.schema.clone();
+        let sql_values: Vec<SqlValues> = self
             .into_iter()
             .filter_map(|record| match record.selection(condition) {
                 Ok(false) => None,
-                Ok(true) => Some(Ok(record)),
+                Ok(true) => Some(Ok(record.into())),
                 Err(e) => Some(Err(e)),
             })
             .collect::<ApllodbResult<_>>()?;
 
-        Ok(Self::from(records))
+        Ok(Self {
+            schema,
+            inner: sql_values,
+        })
     }
 
     /// Shrink records into record with specified `fields`.
@@ -163,18 +167,5 @@ impl Iterator for RecordIterator {
             let values = self.inner.remove(0);
             Some(Record::new(self.schema.clone(), values))
         }
-    }
-}
-
-impl From<Vec<Record>> for RecordIterator {
-    fn from(rs: Vec<Record>) -> Self {
-        let schema = if rs.is_empty() {
-            RecordFieldRefSchema::new_for_select(vec![])
-        } else {
-            let r = rs.first().unwrap();
-            r.schema().clone()
-        };
-
-        Self::new(schema, rs)
     }
 }
