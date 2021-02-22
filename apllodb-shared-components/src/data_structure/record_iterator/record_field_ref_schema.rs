@@ -18,7 +18,7 @@ impl RecordFieldRefSchema {
     ///
     /// see: [FieldIndex::peek](crate::FieldIndex::peek)
     pub(crate) fn resolve_index(&self, index: &FieldIndex) -> ApllodbResult<usize> {
-        let (idx, _) = index.peek(&self)?;
+        let (idx, _) = index.peek(self.as_full_field_references())?;
         Ok(idx)
     }
 
@@ -26,7 +26,7 @@ impl RecordFieldRefSchema {
         let new_ffrs: Vec<FullFieldReference> = projection
             .iter()
             .map(|index| {
-                let (_, ffr) = index.peek(&self)?;
+                let (_, ffr) = index.peek(self.as_full_field_references())?;
                 Ok(ffr.clone())
             })
             .collect::<ApllodbResult<_>>()?;
@@ -42,6 +42,10 @@ impl RecordFieldRefSchema {
         let (mut left_fields, mut right_fields) = (self.fields.clone(), right.fields.clone());
         left_fields.append(&mut right_fields);
         Self::new(self.from_item.clone(), left_fields)
+    }
+
+    pub(crate) fn as_from_item(&self) -> Option<&FromItem> {
+        self.from_item.as_ref()
     }
 
     pub(crate) fn as_full_field_references(&self) -> &[FullFieldReference] {

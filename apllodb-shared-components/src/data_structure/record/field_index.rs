@@ -3,8 +3,8 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, FieldReference, FullFieldReference,
-    RecordFieldRefSchema, SelectFieldReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, FieldReference, FromItem, FullFieldReference,
+    SelectFieldReference,
 };
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
@@ -39,50 +39,106 @@ impl FieldIndex {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - none of `full_field_references` matches to this FieldIndex.
+    ///   - this FieldIndex has correlation while SELECT SQL does not include FROM item.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of `full_field_references` match to this FieldIndex.
     pub(crate) fn peek(
         &self,
-        schema: &RecordFieldRefSchema,
+        full_field_references: &[FullFieldReference],
     ) -> ApllodbResult<(usize, FullFieldReference)> {
-        let mut ret_idx: usize = 0;
-        let mut ret_ffr: Option<FullFieldReference> = None;
+        let match_fn: Box<dyn FnOnce(&FullFieldReference) -> bool> = match &self.correlation_name {
+            None => {
+                Box::new(move |ffr| Self::matches_without_index_corr(self.field_name.clone(), ffr))
+            }
+            Some(index_corr) => Box::new(move |ffr| {
+                Self::matches_with_index_corr(index_corr.clone(), self.field_name.clone(), ffr)
+            }),
+        };
 
-        for ffr in schema.as_full_field_references() {
-            if self.matches(&ffr) {
-                if ret_ffr.is_some() {
-                    return Err(ApllodbError::new(
-                        ApllodbErrorKind::AmbiguousColumn,
-                        format!(
-                            "field index `{}` match to more than 1 of full_field_references",
-                            self
-                        ),
-                        None,
-                    ));
+        let matches: Vec<(usize, FullFieldReference)> = full_field_references
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, ffr)| {
+                if match_fn(ffr) {
+                    Some((idx, ffr.clone()))
                 } else {
-                    ret_ffr = Some(ffr.clone());
+                    None
                 }
-            }
-            if ret_ffr.is_none() {
-                ret_idx += 1;
-            }
-        }
+            })
+            .collect();
 
-        if ret_ffr.is_none() {
-            return Err(ApllodbError::new(
+        match matches.len() {
+            0 => Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
                 format!(
                     "field index `{}` does not match any of full_field_references",
                     self
                 ),
                 None,
-            ));
+            )),
+            1 => Ok(matches[0]),
+            _ => Err(ApllodbError::new(
+                ApllodbErrorKind::AmbiguousColumn,
+                format!(
+                    "field index `{}` match to more than 1 of full_field_references",
+                    self
+                ),
+                None,
+            )),
         }
-
-        Ok((ret_idx, ret_ffr.unwrap()))
     }
 
-    fn matches(&self, full_field_reference: &FullFieldReference) -> bool {
+    fn matches_with_index_corr(
+        self_corr: String,
+        self_field: String,
+        full_field_reference: &FullFieldReference,
+    ) -> bool {
+        match (
+            full_field_reference.as_correlation_reference(),
+            full_field_reference.as_field_reference(),
+        ) {
+            (
+                // index: t.c
+                // ffr: C
+                None,
+                _,
+            ) => false,
+
+            (
+                // index: t.c
+                // ffr: T.C
+                Some(corr),
+                FieldReference::ColumnNameVariant(column_name),
+            ) => self_corr == &corr.to_string() && self_field == column_name.as_str(),
+            (
+                // index: t.c
+                // ffr: T.C AS CA
+                Some(self_correlation_name),
+                Some(corr),
+                FieldReference::ColumnAliasVariant {
+                    column_name,
+                    alias_name,
+                },
+            ) => {
+                self_correlation_name == corr.as_str()
+                    && (self.field_name == column_name.as_str()
+                        || self.field_name == alias_name.as_str())
+            }
+        }
+    }
+
+    fn matches_without_index_corr(
+        self_field: String,
+        full_field_reference: &FullFieldReference,
+    ) -> bool {
+        todo!()
+    }
+
+    fn _matches(
+        &self,
+        from_item: Option<&FromItem>,
+        full_field_reference: &FullFieldReference,
+    ) -> bool {
         match (
             &self.correlation_name,
             full_field_reference.as_correlation_reference(),
@@ -137,7 +193,7 @@ impl FieldIndex {
                 Some(self_correlation_name),
                 Some(corr),
                 FieldReference::ColumnNameVariant(column_name),
-            ) => self_correlation_name == corr.as_str() && self.field_name == column_name.as_str(),
+            ) => self_correlation_name == &corr.to_string() && self.field_name == column_name.as_str(),
             (
                 // index: t.c
                 // ffr: T.C AS CA
@@ -148,7 +204,7 @@ impl FieldIndex {
                     alias_name,
                 },
             ) => {
-                self_correlation_name == corr.as_str()
+                self_correlation_name == &corr.to_string()
                     && (self.field_name == column_name.as_str()
                         || self.field_name == alias_name.as_str())
             }
@@ -206,7 +262,7 @@ impl<S: Into<String>> From<S> for FieldIndex {
 impl From<SelectFieldReference> for FieldIndex {
     fn from(unresolved_field_reference: SelectFieldReference) -> Self {
         match (
-            unresolved_field_reference.as_correlation_reference(),
+            unresolved_field_reference.as_correlation_name(),
             unresolved_field_reference.as_field_reference(),
         ) {
             (None, FieldReference::ColumnNameVariant(column_name))
@@ -235,7 +291,7 @@ impl From<FullFieldReference> for FieldIndex {
 
             (Some(corr), FieldReference::ColumnNameVariant(column_name))
             | (Some(corr), FieldReference::ColumnAliasVariant { column_name, .. }) => {
-                Self::from(format!("{}.{}", corr.as_str(), column_name.as_str()))
+                Self::from(format!("{}.{}", corr.to_string(), column_name.as_str()))
             }
         }
     }

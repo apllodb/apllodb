@@ -2,11 +2,9 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    data_structure::reference::correlation_name::CorrelationName, AliasName, ColumnName, TableName,
-};
+use crate::{AliasName, ColumnName, CorrelationReference, TableName, TableWithAlias};
 
-use super::{field_reference::FieldReference, FieldReferenceBase};
+use super::field_reference::FieldReference;
 
 /// Full field reference is in a "(correlation.)?field" form.
 ///
@@ -16,47 +14,72 @@ use super::{field_reference::FieldReference, FieldReferenceBase};
 /// In some cases, correlation does not exist.
 /// E.g. `SELECT 1 AS a` -> `a`
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct FullFieldReference(FieldReferenceBase);
+pub struct FullFieldReference {
+    correlation_reference: Option<CorrelationReference>,
+    field_reference: FieldReference,
+}
 
 impl Display for FullFieldReference {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.to_string())
+        write!(
+            f,
+            "{}{}",
+            if let Some(corr) = self.as_correlation_reference() {
+                format!("{}.", corr)
+            } else {
+                "".to_string()
+            },
+            self.field_reference
+        )
     }
 }
 
 impl FullFieldReference {
     pub(in crate::data_structure::reference) fn new(
-        field_reference_base: FieldReferenceBase,
+        correlation_reference: Option<CorrelationReference>,
+        field_reference: FieldReference,
     ) -> Self {
-        Self(field_reference_base)
+        Self {
+            correlation_reference,
+            field_reference,
+        }
     }
 
     /// Constructor for INSERT/SELECT
     pub fn new_for_modification(table_name: TableName, column_name: ColumnName) -> Self {
-        let base = FieldReferenceBase::new(
-            Some(CorrelationName::from(table_name)),
+        Self::new(
+            Some(CorrelationReference::from(TableWithAlias {
+                table_name,
+                alias: None,
+            })),
             FieldReference::from(column_name),
-        );
-        Self(base)
+        )
     }
 
     /// Get ref of CorrelationReference
-    pub fn as_correlation_reference(&self) -> Option<&CorrelationName> {
-        self.0.as_correlation_reference()
+    pub fn as_correlation_reference(&self) -> Option<&CorrelationReference> {
+        self.correlation_reference.as_ref()
     }
 
     /// Get ref of FieldReference
     pub fn as_field_reference(&self) -> &FieldReference {
-        self.0.as_field_reference()
+        &self.field_reference
     }
 
     /// Get ref of ColumnName
     pub fn as_column_name(&self) -> &ColumnName {
-        self.0.as_column_name()
+        match &self.field_reference {
+            FieldReference::ColumnNameVariant(cn) => cn,
+            FieldReference::ColumnAliasVariant { column_name, .. } => column_name,
+        }
     }
 
     /// Set field reference
     pub fn set_field_alias(&mut self, field_alias: AliasName) {
-        self.0.set_field_alias(field_alias)
+        let cur_column_name = self.as_column_name();
+        self.field_reference = FieldReference::ColumnAliasVariant {
+            alias_name: field_alias,
+            column_name: cur_column_name.clone(),
+        };
     }
 }

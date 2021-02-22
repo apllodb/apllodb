@@ -3,12 +3,12 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data_structure::reference::correlation_name::CorrelationName, traits::correlation::Correlation,
-    AliasName, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FromItem,
-    FullFieldReference, TableWithAlias,
+    traits::correlation::Correlation, AliasName, ApllodbError, ApllodbErrorKind, ApllodbResult,
+    ColumnName, CorrelationName, CorrelationReference, FromItem, FullFieldReference,
+    TableWithAlias,
 };
 
-use super::{field_reference::FieldReference, FieldReferenceBase};
+use super::field_reference::FieldReference;
 
 /// Unresolved field reference is in a "(correlation.)?field" form, appears in SELECT field.
 ///
@@ -16,40 +16,53 @@ use super::{field_reference::FieldReference, FieldReferenceBase};
 /// E.g. `SELECT c FROM t  -- t is omitted`
 ///
 /// Omitted correlation can be *resolved* by FromItem.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct SelectFieldReference(FieldReferenceBase);
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
+pub struct SelectFieldReference {
+    correlation_name: Option<CorrelationName>,
+    field_reference: FieldReference,
+}
 
 impl Display for SelectFieldReference {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.to_string())
+        write!(
+            f,
+            "{}{}",
+            if let Some(corr) = self.as_correlation_name() {
+                format!("{}.", corr)
+            } else {
+                "".to_string()
+            },
+            self.field_reference
+        )
     }
 }
 
 impl SelectFieldReference {
-    /// Constructor
-    pub fn new(correlation_name: Option<CorrelationName>, field_reference: FieldReference) -> Self {
-        let base = FieldReferenceBase::new(correlation_name, field_reference);
-        Self(base)
-    }
-
-    /// Get ref of CorrelationReference
-    pub fn as_correlation_reference(&self) -> Option<&CorrelationName> {
-        self.0.as_correlation_reference()
+    /// Get ref of CorrelationName
+    pub fn as_correlation_name(&self) -> Option<&CorrelationName> {
+        self.correlation_name.as_ref()
     }
 
     /// Get ref of FieldReference
     pub fn as_field_reference(&self) -> &FieldReference {
-        self.0.as_field_reference()
+        &self.field_reference
     }
 
     /// Get ref of ColumnName
     pub fn as_column_name(&self) -> &ColumnName {
-        self.0.as_column_name()
+        match &self.field_reference {
+            FieldReference::ColumnNameVariant(cn) => cn,
+            FieldReference::ColumnAliasVariant { column_name, .. } => column_name,
+        }
     }
 
     /// Set field reference
     pub fn set_field_alias(&mut self, field_alias: AliasName) {
-        self.0.set_field_alias(field_alias)
+        let cur_column_name = self.as_column_name();
+        self.field_reference = FieldReference::ColumnAliasVariant {
+            alias_name: field_alias,
+            column_name: cur_column_name.clone(),
+        };
     }
 
     /// into FullFieldReference w/ FromItem.
@@ -64,7 +77,7 @@ impl SelectFieldReference {
     pub fn resolve(self, from_item: Option<FromItem>) -> ApllodbResult<FullFieldReference> {
         match from_item {
             None => {
-                if let Some(_corr) = self.as_correlation_reference() {
+                if let Some(_corr) = self.as_correlation_name() {
                     Err(ApllodbError::new(
                         ApllodbErrorKind::InvalidColumnReference,
                         format!(
@@ -74,7 +87,7 @@ impl SelectFieldReference {
                         None,
                     ))
                 } else {
-                    Ok(FullFieldReference::new(self.0))
+                    Ok(FullFieldReference::new(None, self.field_reference))
                 }
             }
             Some(from_item) => {
@@ -95,7 +108,7 @@ impl SelectFieldReference {
         self,
         table_with_alias: TableWithAlias,
     ) -> ApllodbResult<FullFieldReference> {
-        if let Some(corr) = self.as_correlation_reference() {
+        if let Some(corr) = self.as_correlation_name() {
             Self::resolve_with_table_with_prefix(corr, self.as_field_reference(), &table_with_alias)
         } else {
             Self::resolve_with_table_without_prefix(self.as_field_reference(), &table_with_alias)
@@ -110,10 +123,10 @@ impl SelectFieldReference {
         // SELECT ta.C FROM T (AS a)?;
 
         if from.is_named(prefix) {
-            Ok(FullFieldReference::new(FieldReferenceBase::new(
-                Some(prefix.clone()),
+            Ok(FullFieldReference::new(
+                Some(CorrelationReference::from(from.clone())),
                 field.clone(),
-            )))
+            ))
         } else {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidColumnReference,
@@ -136,12 +149,12 @@ impl SelectFieldReference {
         // FIXME: it's wrong to eagerly determine "C is from T" when TableWithAlias are more than one.
         // Need to check catalog.
 
-        let correlation_reference = CorrelationName::new(table_with_alias.table_name.as_str())?;
+        let correlation_reference = CorrelationReference::from(table_with_alias.clone());
 
-        Ok(FullFieldReference::new(FieldReferenceBase::new(
+        Ok(FullFieldReference::new(
             Some(correlation_reference),
             field_reference.clone(),
-        )))
+        ))
     }
 }
 

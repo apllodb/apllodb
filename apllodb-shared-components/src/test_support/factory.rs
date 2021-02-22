@@ -7,11 +7,12 @@ use std::sync::Arc;
 use crate::{
     data_structure::{
         record_iterator::record_field_ref_schema::RecordFieldRefSchema,
-        reference::{correlation_name::CorrelationName, field_reference::FieldReference},
+        reference::field_reference::FieldReference,
     },
-    AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator,
-    SelectFieldReference, SqlType, SqlValue, SqlValues, TableName, TableWithAlias, UnaryOperator,
+    AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, CorrelationName,
+    DatabaseName, Expression, FromItem, FullFieldReference, LogicalFunction, NNSqlValue, Record,
+    RecordIterator, SelectFieldReference, SqlType, SqlValue, SqlValues, TableName, TableWithAlias,
+    UnaryOperator,
 };
 use rand::Rng;
 
@@ -35,8 +36,8 @@ impl SelectFieldReference {
         Self::new(None, field)
     }
 
-    pub fn factory_corr_cn(correlation_reference: &str, column_name: &str) -> Self {
-        let corr = CorrelationName::factory(correlation_reference);
+    pub fn factory_corr_cn(correlation_name: &str, column_name: &str) -> Self {
+        let corr = CorrelationName::factory(correlation_name);
         let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
         Self::new(Some(corr), field)
     }
@@ -47,7 +48,7 @@ impl SelectFieldReference {
     }
 
     pub fn resolve_naive(self) -> FullFieldReference {
-        if let Some(corr) = self.as_correlation_reference() {
+        if let Some(corr) = self.as_correlation_name() {
             let from_item = FromItem::factory(corr.as_str());
             self.resolve(Some(from_item)).unwrap()
         } else {
@@ -57,8 +58,8 @@ impl SelectFieldReference {
 }
 
 impl CorrelationName {
-    pub fn factory(correlation_reference: &str) -> Self {
-        Self::new(correlation_reference).unwrap()
+    pub fn factory(correlation_name: &str) -> Self {
+        Self::new(correlation_name).unwrap()
     }
 }
 
@@ -168,7 +169,7 @@ impl Record {
             .unwrap()
             .as_correlation_reference()
             .unwrap();
-        TableName::factory(corr.as_str())
+        TableName::factory(&corr.to_string())
     }
 
     pub fn as_column_names(&self) -> Vec<ColumnName> {

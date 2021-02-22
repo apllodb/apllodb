@@ -32,8 +32,10 @@ pub use crate::{
         record::{field_index::FieldIndex, Record},
         record_iterator::{record_field_ref_schema::RecordFieldRefSchema, RecordIterator},
         reference::{
-            correlation_name::CorrelationName, field_reference::FieldReference,
-            full_field_reference::FullFieldReference, select_field_reference::SelectFieldReference,
+            correlation_reference::{correlation_name::CorrelationName, CorrelationReference},
+            field_reference::FieldReference,
+            full_field_reference::FullFieldReference,
+            select_field_reference::SelectFieldReference,
         },
         select::{from_item::FromItem, ordering::Ordering},
         session::{
