@@ -2,11 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    traits::correlation::Correlation, AliasName, ApllodbError, ApllodbErrorKind, ApllodbResult,
-    ColumnName, CorrelationName, CorrelationReference, FromItem, FullFieldReference,
-    TableWithAlias,
-};
+use crate::{AliasName, ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationName, CorrelationReference, FromItem, FullFieldReference, TableWithAlias, traits::correlation::Correlation};
 
 use super::field_reference::FieldReference;
 

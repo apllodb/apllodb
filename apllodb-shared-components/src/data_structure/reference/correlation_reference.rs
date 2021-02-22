@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{AliasName, TableWithAlias};
+use crate::{traits::correlation::Correlation, AliasName, TableWithAlias};
 
 use self::correlation_name::CorrelationName;
 
@@ -27,6 +27,16 @@ impl From<TableWithAlias> for CorrelationReference {
             name: CorrelationName::from(table_with_alias.table_name),
             alias: table_with_alias.alias,
         }
+    }
+}
+
+impl Correlation for CorrelationReference {
+    fn is_named(&self, correlation_name: &CorrelationName) -> bool {
+        &self.name == correlation_name
+            || self.alias.map_or_else(
+                || false,
+                |alias| alias.as_str() == correlation_name.as_str(),
+            )
     }
 }
 

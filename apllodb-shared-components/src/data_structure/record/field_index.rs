@@ -3,8 +3,8 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, FieldReference, FromItem, FullFieldReference,
-    SelectFieldReference,
+    traits::correlation::Correlation, ApllodbError, ApllodbErrorKind, ApllodbResult,
+    CorrelationName, FieldReference, FromItem, FullFieldReference, SelectFieldReference,
 };
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
@@ -89,7 +89,7 @@ impl FieldIndex {
     }
 
     fn matches_with_index_corr(
-        self_corr: String,
+        self_corr: CorrelationName,
         self_field: String,
         full_field_reference: &FullFieldReference,
     ) -> bool {
@@ -103,27 +103,12 @@ impl FieldIndex {
                 None,
                 _,
             ) => false,
-
             (
                 // index: t.c
                 // ffr: T.C
-                Some(corr),
-                FieldReference::ColumnNameVariant(column_name),
-            ) => self_corr == &corr.to_string() && self_field == column_name.as_str(),
-            (
-                // index: t.c
-                // ffr: T.C AS CA
-                Some(self_correlation_name),
-                Some(corr),
-                FieldReference::ColumnAliasVariant {
-                    column_name,
-                    alias_name,
-                },
-            ) => {
-                self_correlation_name == corr.as_str()
-                    && (self.field_name == column_name.as_str()
-                        || self.field_name == alias_name.as_str())
-            }
+                Some(ffr_corr),
+                ffr_field,
+            ) => ffr_corr.is_named(&self_corr) && ffr_field.is_named(self_field),
         }
     }
 
@@ -193,7 +178,10 @@ impl FieldIndex {
                 Some(self_correlation_name),
                 Some(corr),
                 FieldReference::ColumnNameVariant(column_name),
-            ) => self_correlation_name == &corr.to_string() && self.field_name == column_name.as_str(),
+            ) => {
+                self_correlation_name == &corr.to_string()
+                    && self.field_name == column_name.as_str()
+            }
             (
                 // index: t.c
                 // ffr: T.C AS CA
