@@ -44,10 +44,6 @@ impl RecordFieldRefSchema {
         Self::new(self.from_item.clone(), left_fields)
     }
 
-    pub(crate) fn as_from_item(&self) -> Option<&FromItem> {
-        self.from_item.as_ref()
-    }
-
     pub(crate) fn as_full_field_references(&self) -> &[FullFieldReference] {
         &self.fields
     }

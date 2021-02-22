@@ -1,6 +1,8 @@
+pub(crate) mod field_name;
+
 use std::fmt::Display;
 
-use crate::{AliasName, ColumnName};
+use crate::{AliasName, ColumnName, FieldName};
 use serde::{Deserialize, Serialize};
 
 /// Reference to a field.
@@ -48,6 +50,22 @@ impl FieldReference {
         match self {
             FieldReference::ColumnNameVariant(_) => None,
             FieldReference::ColumnAliasVariant { alias_name, .. } => Some(alias_name),
+        }
+    }
+
+    /// compares a name with field name or alias
+    pub fn is_named(&self, field_name: &FieldName) -> bool {
+        match self {
+            FieldReference::ColumnNameVariant(column_name) => {
+                column_name.as_str() == field_name.as_str()
+            }
+            FieldReference::ColumnAliasVariant {
+                alias_name,
+                column_name,
+            } => {
+                column_name.as_str() == field_name.as_str()
+                    || alias_name.as_str() == field_name.as_str()
+            }
         }
     }
 }

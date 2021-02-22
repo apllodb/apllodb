@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     traits::correlation::Correlation, ApllodbError, ApllodbErrorKind, ApllodbResult,
-    CorrelationName, FieldReference, FromItem, FullFieldReference, SelectFieldReference,
+    CorrelationName, FieldName, FieldReference, FullFieldReference, SelectFieldReference,
 };
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
@@ -28,8 +28,8 @@ use crate::{
 /// When constructed from invalid-formed string.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct FieldIndex {
-    correlation_name: Option<String>,
-    field_name: String,
+    correlation_name: Option<CorrelationName>,
+    field_name: FieldName,
 }
 
 impl FieldIndex {
@@ -46,7 +46,8 @@ impl FieldIndex {
         &self,
         full_field_references: &[FullFieldReference],
     ) -> ApllodbResult<(usize, FullFieldReference)> {
-        let match_fn: Box<dyn FnOnce(&FullFieldReference) -> bool> = match &self.correlation_name {
+        let mut match_fn: Box<dyn FnMut(&FullFieldReference) -> bool> = match &self.correlation_name
+        {
             None => {
                 Box::new(move |ffr| Self::matches_without_index_corr(self.field_name.clone(), ffr))
             }
@@ -55,7 +56,7 @@ impl FieldIndex {
             }),
         };
 
-        let matches: Vec<(usize, FullFieldReference)> = full_field_references
+        let mut matches: Vec<(usize, FullFieldReference)> = full_field_references
             .iter()
             .enumerate()
             .filter_map(|(idx, ffr)| {
@@ -76,7 +77,7 @@ impl FieldIndex {
                 ),
                 None,
             )),
-            1 => Ok(matches[0]),
+            1 => Ok(matches.pop().unwrap()),
             _ => Err(ApllodbError::new(
                 ApllodbErrorKind::AmbiguousColumn,
                 format!(
@@ -90,113 +91,27 @@ impl FieldIndex {
 
     fn matches_with_index_corr(
         self_corr: CorrelationName,
-        self_field: String,
+        self_field: FieldName,
         full_field_reference: &FullFieldReference,
     ) -> bool {
         match (
             full_field_reference.as_correlation_reference(),
             full_field_reference.as_field_reference(),
         ) {
-            (
-                // index: t.c
-                // ffr: C
-                None,
-                _,
-            ) => false,
-            (
-                // index: t.c
-                // ffr: T.C
-                Some(ffr_corr),
-                ffr_field,
-            ) => ffr_corr.is_named(&self_corr) && ffr_field.is_named(self_field),
+            (None, _) => false,
+            (Some(ffr_corr), ffr_field) => {
+                ffr_corr.is_named(&self_corr) && ffr_field.is_named(&self_field)
+            }
         }
     }
 
     fn matches_without_index_corr(
-        self_field: String,
+        self_field: FieldName,
         full_field_reference: &FullFieldReference,
     ) -> bool {
-        todo!()
-    }
-
-    fn _matches(
-        &self,
-        from_item: Option<&FromItem>,
-        full_field_reference: &FullFieldReference,
-    ) -> bool {
-        match (
-            &self.correlation_name,
-            full_field_reference.as_correlation_reference(),
-            full_field_reference.as_field_reference(),
-        ) {
-            (
-                // index: t.c
-                // ffr: C
-                Some(_),
-                None,
-                _,
-            ) => false,
-            (
-                // index: c
-                // ffr: C
-                None,
-                None,
-                FieldReference::ColumnNameVariant(cn),
-            )
-            | (
-                // index: c
-                // ffr: (T (AS TA)?).C
-                None,
-                Some(_),
-                FieldReference::ColumnNameVariant(cn),
-            ) => self.field_name == cn.as_str(),
-
-            (
-                // index: c
-                // ffr: C AS CA
-                None,
-                None,
-                FieldReference::ColumnAliasVariant {
-                    alias_name,
-                    column_name,
-                },
-            )
-            | (
-                // index: c
-                // ffr: (T (AS TA)?).C AS CA
-                None,
-                Some(_),
-                FieldReference::ColumnAliasVariant {
-                    alias_name,
-                    column_name,
-                },
-            ) => self.field_name == column_name.as_str() || self.field_name == alias_name.as_str(),
-
-            (
-                // index: t.c
-                // ffr: T.C
-                Some(self_correlation_name),
-                Some(corr),
-                FieldReference::ColumnNameVariant(column_name),
-            ) => {
-                self_correlation_name == &corr.to_string()
-                    && self.field_name == column_name.as_str()
-            }
-            (
-                // index: t.c
-                // ffr: T.C AS CA
-                Some(self_correlation_name),
-                Some(corr),
-                FieldReference::ColumnAliasVariant {
-                    column_name,
-                    alias_name,
-                },
-            ) => {
-                self_correlation_name == &corr.to_string()
-                    && (self.field_name == column_name.as_str()
-                        || self.field_name == alias_name.as_str())
-            }
-        }
+        full_field_reference
+            .as_field_reference()
+            .is_named(&self_field)
     }
 }
 
@@ -212,6 +127,7 @@ impl Display for FieldIndex {
 }
 
 impl<S: Into<String>> From<S> for FieldIndex {
+    /// This method is called from client code so panic!() would not be a big problem.
     fn from(s: S) -> Self {
         let s: String = s.into();
         let parts: Vec<&str> = s.split('.').collect();
@@ -235,13 +151,13 @@ impl<S: Into<String>> From<S> for FieldIndex {
 
         if let Some(second) = second {
             Self {
-                correlation_name: Some(first),
-                field_name: second,
+                correlation_name: Some(CorrelationName::new(first).unwrap()),
+                field_name: FieldName::new(second).unwrap(),
             }
         } else {
             Self {
                 correlation_name: None,
-                field_name: first,
+                field_name: FieldName::new(first).unwrap(),
             }
         }
     }
@@ -288,8 +204,7 @@ impl From<FullFieldReference> for FieldIndex {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ApllodbErrorKind, ApllodbResult, FieldIndex, FromItem, FullFieldReference,
-        RecordFieldRefSchema, SelectFieldReference,
+        ApllodbErrorKind, ApllodbResult, FieldIndex, FullFieldReference, SelectFieldReference,
     };
 
     #[test]
@@ -334,7 +249,6 @@ mod tests {
     fn test_peek() -> ApllodbResult<()> {
         struct TestDatum {
             field_index: &'static str,
-            from_item: Option<FromItem>,
             sfrs: Vec<SelectFieldReference>,
             expected_result: Result<
                 usize, // index to matching one from `full_field_references`,
@@ -345,73 +259,61 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             TestDatum {
                 field_index: "c",
-                from_item: None,
                 sfrs: vec![],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                from_item: None,
                 sfrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                from_item: None,
                 sfrs: vec![SelectFieldReference::factory_cn("c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "ca",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "t.ca",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c").with_field_alias("ca")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "t.c",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Ok(0),
             },
             TestDatum {
                 field_index: "xxx.c",
-                from_item: Some(FromItem::factory("t")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("t", "c")],
                 expected_result: Err(ApllodbErrorKind::InvalidName),
             },
             TestDatum {
                 field_index: "c2",
-                from_item: Some(FromItem::factory("t2")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c1"),
                     SelectFieldReference::factory_corr_cn("t2", "c2"),
@@ -420,7 +322,6 @@ mod tests {
             },
             TestDatum {
                 field_index: "t1.c1",
-                from_item: Some(FromItem::factory("t1")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c1"),
                     SelectFieldReference::factory_corr_cn("t2", "c2"),
@@ -429,7 +330,6 @@ mod tests {
             },
             TestDatum {
                 field_index: "t1.c",
-                from_item: Some(FromItem::factory("t1")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c"),
                     SelectFieldReference::factory_corr_cn("t2", "c"),
@@ -438,7 +338,6 @@ mod tests {
             },
             TestDatum {
                 field_index: "c",
-                from_item: Some(FromItem::factory("t1")),
                 sfrs: vec![
                     SelectFieldReference::factory_corr_cn("t1", "c"),
                     SelectFieldReference::factory_corr_cn("t2", "c"),
@@ -447,7 +346,6 @@ mod tests {
             },
             TestDatum {
                 field_index: "ta.c",
-                from_item: Some(FromItem::factory_with_corr_alias("t", "ta")),
                 sfrs: vec![SelectFieldReference::factory_corr_cn("ta", "c")],
                 expected_result: Ok(0),
             },
@@ -462,9 +360,7 @@ mod tests {
                 .map(|sfr| sfr.clone().resolve_naive())
                 .collect();
 
-            let schema = RecordFieldRefSchema::new(test_datum.from_item, ffrs);
-
-            match field_index.peek(&schema) {
+            match field_index.peek(&ffrs) {
                 Ok((idx, ffr)) => {
                     let expected_idx = test_datum
                         .expected_result

@@ -33,7 +33,7 @@ impl From<TableWithAlias> for CorrelationReference {
 impl Correlation for CorrelationReference {
     fn is_named(&self, correlation_name: &CorrelationName) -> bool {
         &self.name == correlation_name
-            || self.alias.map_or_else(
+            || self.alias.as_ref().map_or_else(
                 || false,
                 |alias| alias.as_str() == correlation_name.as_str(),
             )

@@ -33,7 +33,7 @@ pub use crate::{
         record_iterator::{record_field_ref_schema::RecordFieldRefSchema, RecordIterator},
         reference::{
             correlation_reference::{correlation_name::CorrelationName, CorrelationReference},
-            field_reference::FieldReference,
+            field_reference::{field_name::FieldName, FieldReference},
             full_field_reference::FullFieldReference,
             select_field_reference::SelectFieldReference,
         },
