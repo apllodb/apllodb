@@ -81,22 +81,14 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     /// # Failures
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
-    fn projection(
-        &self,
-        input_left: Records,
-        fields: Vec<FieldIndex>,
-    ) -> ApllodbResult<Records> {
+    fn projection(&self, input_left: Records, fields: Vec<FieldIndex>) -> ApllodbResult<Records> {
         let records = input_left
             .map(|record| record.projection(&fields))
             .collect::<ApllodbResult<Vec<Record>>>()?;
         Ok(Records::from(records))
     }
 
-    fn selection(
-        &self,
-        input_left: Records,
-        condition: Expression,
-    ) -> ApllodbResult<Records> {
+    fn selection(&self, input_left: Records, condition: Expression) -> ApllodbResult<Records> {
         input_left.selection(&condition)
     }
 

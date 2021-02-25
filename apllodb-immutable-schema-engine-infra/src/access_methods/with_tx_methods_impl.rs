@@ -16,8 +16,8 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_immutable_schema_engine_domain::row_iter::ImmutableSchemaRowIterator;
 use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, Records, SessionId,
-    SqlValues, TableConstraints, TableName,
+    AlterTableAction, ColumnDefinition, ColumnName, Expression, Records, SessionId, SqlValues,
+    TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, WithTxMethods};
 use futures::FutureExt;

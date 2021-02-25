@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnDefinition,
-    ColumnName, Expression, Records, Session, SessionId, SessionWithDb, SessionWithTx,
-    SqlValues, TableConstraints, TableName,
+    ColumnName, Expression, Records, Session, SessionId, SessionWithDb, SessionWithTx, SqlValues,
+    TableConstraints, TableName,
 };
 use futures::FutureExt;
 
