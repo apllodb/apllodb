@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, RecordIterator,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, Records,
     SessionWithTx, SqlValueHashKey, TableName,
 };
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
@@ -24,9 +24,9 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         &self,
         session: SessionWithTx,
         op_leaf: LeafPlanOperation,
-    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::Values { records } => Ok((RecordIterator::from(records), session)),
+            LeafPlanOperation::Values { records } => Ok((Records::from(records), session)),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
@@ -41,8 +41,8 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     pub(super) fn run_unary(
         &self,
         op_unary: UnaryPlanOperation,
-        input_left: RecordIterator,
-    ) -> ApllodbResult<RecordIterator> {
+        input_left: Records,
+    ) -> ApllodbResult<Records> {
         match op_unary {
             UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
             UnaryPlanOperation::Selection { condition } => self.selection(input_left, condition),
@@ -53,9 +53,9 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     pub(super) fn run_binary(
         &self,
         op_binary: BinaryPlanOperation,
-        input_left: RecordIterator,
-        input_right: RecordIterator,
-    ) -> ApllodbResult<RecordIterator> {
+        input_left: Records,
+        input_right: Records,
+    ) -> ApllodbResult<Records> {
         match op_binary {
             // TODO type cast
             BinaryPlanOperation::HashJoin {
@@ -71,7 +71,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         table_name: TableName,
         projection: ProjectionQuery,
         alias_def: AliasDef,
-    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         self.engine
             .with_tx()
             .select(session, table_name, projection, alias_def)
@@ -81,30 +81,22 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     /// # Failures
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
-    fn projection(
-        &self,
-        input_left: RecordIterator,
-        fields: Vec<FieldIndex>,
-    ) -> ApllodbResult<RecordIterator> {
+    fn projection(&self, input_left: Records, fields: Vec<FieldIndex>) -> ApllodbResult<Records> {
         let records = input_left
             .map(|record| record.projection(&fields))
             .collect::<ApllodbResult<Vec<Record>>>()?;
-        Ok(RecordIterator::from(records))
+        Ok(Records::from(records))
     }
 
-    fn selection(
-        &self,
-        input_left: RecordIterator,
-        condition: Expression,
-    ) -> ApllodbResult<RecordIterator> {
+    fn selection(&self, input_left: Records, condition: Expression) -> ApllodbResult<Records> {
         input_left.selection(&condition)
     }
 
     fn sort(
         &self,
-        input_left: RecordIterator,
+        input_left: Records,
         field_orderings: Vec<(FieldIndex, Ordering)>,
-    ) -> ApllodbResult<RecordIterator> {
+    ) -> ApllodbResult<Records> {
         input_left.sort(&field_orderings)
     }
 
@@ -118,11 +110,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ///   - Specified field does not exist in any record.
     fn hash_join(
         &self,
-        input_left: RecordIterator,
-        input_right: RecordIterator,
+        input_left: Records,
+        input_right: Records,
         left_field: &FieldIndex,
         right_field: &FieldIndex,
-    ) -> ApllodbResult<RecordIterator> {
+    ) -> ApllodbResult<Records> {
         // TODO Create hash table from smaller input.
         let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
 
@@ -149,6 +141,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             }
         }
 
-        Ok(RecordIterator::from(ret))
+        Ok(Records::from(ret))
     }
 }

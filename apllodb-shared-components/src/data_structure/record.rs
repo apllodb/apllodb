@@ -7,9 +7,7 @@ use crate::{
 };
 use std::{ops::Index, sync::Arc};
 
-use super::{
-    record_iterator::record_field_ref_schema::RecordFieldRefSchema, value::sql_value::SqlValue,
-};
+use super::{records::record_field_ref_schema::RecordFieldRefSchema, value::sql_value::SqlValue};
 
 /// Record representation used in client and query processor.
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.

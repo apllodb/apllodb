@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnDefinition,
-    ColumnName, Expression, RecordIterator, Session, SessionId, SessionWithDb, SessionWithTx,
-    SqlValues, TableConstraints, TableName,
+    ColumnName, Expression, Records, Session, SessionId, SessionWithDb, SessionWithTx, SqlValues,
+    TableConstraints, TableName,
 };
 use futures::FutureExt;
 
@@ -133,7 +133,7 @@ pub trait WithTxMethods: Sized + 'static {
         table_name: TableName,
         projection: ProjectionQuery,
         alias_def: AliasDef,
-    ) -> BoxFut<ApllodbSessionResult<(RecordIterator, SessionWithTx)>> {
+    ) -> BoxFut<ApllodbSessionResult<(Records, SessionWithTx)>> {
         let sid = *session.get_id();
         async move {
             match self
@@ -154,7 +154,7 @@ pub trait WithTxMethods: Sized + 'static {
         table_name: TableName,
         projection: ProjectionQuery,
         alias_def: AliasDef,
-    ) -> BoxFut<ApllodbResult<RecordIterator>>;
+    ) -> BoxFut<ApllodbResult<Records>>;
 
     fn insert(
         self,

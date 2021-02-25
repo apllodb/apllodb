@@ -1,13 +1,16 @@
 use apllodb_sql_processor::SQLProcessorSuccess;
 
-use crate::ApllodbCommandSuccess;
+use crate::{ApllodbCommandSuccess, RecordIterator};
 
 pub(in crate::apllodb_server::use_case) fn to_server_resp(
     sql_processor_success: SQLProcessorSuccess,
 ) -> ApllodbCommandSuccess {
     match sql_processor_success {
         SQLProcessorSuccess::QueryRes { session, records } => {
-            ApllodbCommandSuccess::QueryResponse { session, records }
+            ApllodbCommandSuccess::QueryResponse {
+                session,
+                records: RecordIterator::from(records),
+            }
         }
         SQLProcessorSuccess::ModificationRes { session } => {
             ApllodbCommandSuccess::ModificationResponse { session }

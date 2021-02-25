@@ -6,7 +6,7 @@ pub(crate) mod column;
 pub(crate) mod database;
 pub(crate) mod expression;
 pub(crate) mod record;
-pub(crate) mod record_iterator;
+pub(crate) mod records;
 pub(crate) mod reference;
 pub(crate) mod select;
 pub(crate) mod session;

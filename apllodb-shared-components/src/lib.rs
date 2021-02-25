@@ -30,7 +30,7 @@ pub use crate::{
             Expression,
         },
         record::{field_index::FieldIndex, Record},
-        record_iterator::{record_field_ref_schema::RecordFieldRefSchema, RecordIterator},
+        records::{record_field_ref_schema::RecordFieldRefSchema, Records},
         reference::{
             correlation_reference::CorrelationReference, field_reference::FieldReference,
             full_field_reference::FullFieldReference,
