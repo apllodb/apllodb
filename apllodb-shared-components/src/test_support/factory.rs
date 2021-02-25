@@ -6,11 +6,11 @@ use std::sync::Arc;
 
 use crate::{
     data_structure::{
-        record_iterator::record_field_ref_schema::RecordFieldRefSchema,
+        records::record_field_ref_schema::RecordFieldRefSchema,
         reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record, RecordIterator, SqlType,
+    Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record, Records, SqlType,
     SqlValue, SqlValues, TableName, UnaryOperator,
 };
 use rand::Rng;
@@ -139,7 +139,7 @@ impl Record {
     }
 }
 
-impl RecordIterator {
+impl Records {
     pub fn factory(schema: RecordFieldRefSchema, records: Vec<Record>) -> Self {
         Self::new(schema, records)
     }

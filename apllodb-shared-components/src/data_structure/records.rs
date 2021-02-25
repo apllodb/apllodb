@@ -13,12 +13,12 @@ use self::record_field_ref_schema::RecordFieldRefSchema;
 ///
 /// Note that Record is always generated from RecordIterator, who has ownership to [RecordFieldRefSchema](crate::RecordFieldRefSchema).
 #[derive(Clone, PartialEq, Debug)]
-pub struct RecordIterator {
+pub struct Records {
     schema: Arc<RecordFieldRefSchema>,
     inner: Vec<SqlValues>,
 }
 
-impl RecordIterator {
+impl Records {
     /// Constructor
     pub fn new<IntoValues: Into<SqlValues>, I: IntoIterator<Item = IntoValues>>(
         schema: RecordFieldRefSchema,
@@ -153,7 +153,7 @@ impl RecordIterator {
     }
 }
 
-impl Iterator for RecordIterator {
+impl Iterator for Records {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -166,7 +166,7 @@ impl Iterator for RecordIterator {
     }
 }
 
-impl From<Vec<Record>> for RecordIterator {
+impl From<Vec<Record>> for Records {
     fn from(rs: Vec<Record>) -> Self {
         let schema = if rs.is_empty() {
             RecordFieldRefSchema::new(vec![])

@@ -1,7 +1,7 @@
 use crate::{test_support::MockWithTxMethods, ProjectionQuery};
 use apllodb_shared_components::{
     test_support::test_models::{Body, ModelsMock, People, Pet},
-    FieldIndex, RecordIterator, TableName,
+    FieldIndex, Records, TableName,
 };
 use futures::FutureExt;
 
@@ -16,15 +16,15 @@ impl From<ModelsMock> for MockDatum {
             tables: vec![
                 MockDatumInTable {
                     table_name: People::table_name(),
-                    records: RecordIterator::factory(People::schema(), models.people),
+                    records: Records::factory(People::schema(), models.people),
                 },
                 MockDatumInTable {
                     table_name: Body::table_name(),
-                    records: RecordIterator::factory(Body::schema(), models.body),
+                    records: Records::factory(Body::schema(), models.body),
                 },
                 MockDatumInTable {
                     table_name: Pet::table_name(),
-                    records: RecordIterator::factory(Pet::schema(), models.pet),
+                    records: Records::factory(Pet::schema(), models.pet),
                 },
             ],
         }
@@ -34,7 +34,7 @@ impl From<ModelsMock> for MockDatum {
 #[derive(Clone, PartialEq, Debug)]
 struct MockDatumInTable {
     table_name: TableName,
-    records: RecordIterator,
+    records: Records,
 }
 
 pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock) {

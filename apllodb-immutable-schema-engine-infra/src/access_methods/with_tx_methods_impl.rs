@@ -16,7 +16,7 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_immutable_schema_engine_domain::row_iter::ImmutableSchemaRowIterator;
 use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, RecordIterator, SessionId,
+    AlterTableAction, ColumnDefinition, ColumnName, Expression, Records, SessionId,
     SqlValues, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, WithTxMethods};
@@ -134,7 +134,7 @@ impl WithTxMethods for WithTxMethodsImpl {
         table_name: TableName,
         projection: ProjectionQuery,
         alias_def: AliasDef,
-    ) -> BoxFutRes<RecordIterator> {
+    ) -> BoxFutRes<Records> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;

@@ -1,11 +1,11 @@
-use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
+use apllodb_shared_components::{Records, Session, SessionWithDb, SessionWithTx};
 
 /// Successful response from apllodb-server's [command()](crate::ApllodbServer::command).
 #[derive(Debug)]
 pub enum ApllodbCommandSuccess {
     QueryResponse {
         session: SessionWithTx,
-        records: RecordIterator,
+        records: Records,
     },
     ModificationResponse {
         session: SessionWithTx,

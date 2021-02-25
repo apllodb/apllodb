@@ -3,7 +3,7 @@ mod plan_node_executor;
 use std::rc::Rc;
 
 use apllodb_shared_components::{
-    ApllodbSessionError, ApllodbSessionResult, RecordIterator, Session, SessionWithTx,
+    ApllodbSessionError, ApllodbSessionResult, Records, Session, SessionWithTx,
 };
 use apllodb_storage_engine_interface::StorageEngine;
 
@@ -24,7 +24,7 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
         &self,
         session: SessionWithTx,
         plan: QueryPlan,
-    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         let plan_tree = plan.plan_tree;
         let root = plan_tree.root;
         self.run_dfs_post_order(session, root).await
@@ -41,7 +41,7 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
         &self,
         session: SessionWithTx,
         node: QueryPlanNode,
-    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         let executor = PlanNodeExecutor::new(self.engine.clone());
 
         match node {

@@ -2,7 +2,7 @@ pub(crate) mod query_executor;
 pub(crate) mod query_plan;
 
 use apllodb_shared_components::{
-    ApllodbSessionError, ApllodbSessionResult, RecordIterator, Session, SessionWithTx,
+    ApllodbSessionError, ApllodbSessionResult, Records, Session, SessionWithTx,
 };
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
 use apllodb_storage_engine_interface::StorageEngine;
@@ -27,7 +27,7 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
         &self,
         session: SessionWithTx,
         select_command: SelectCommand,
-    ) -> ApllodbSessionResult<(RecordIterator, SessionWithTx)> {
+    ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
         match QueryPlan::try_from(select_command) {
