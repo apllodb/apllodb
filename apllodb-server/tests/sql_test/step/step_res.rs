@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
-use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, RecordIterator};
+use apllodb_server::RecordIterator;
+use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 
 #[allow(dead_code)]
 pub enum StepRes {

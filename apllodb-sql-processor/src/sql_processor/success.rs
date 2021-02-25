@@ -1,4 +1,4 @@
-use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
+use apllodb_shared_components::{Records, Session, SessionWithDb, SessionWithTx};
 
 /// Successful result from [SQLProcessor](crate::SQLProcessor).
 #[derive(Debug)]
@@ -8,7 +8,7 @@ pub enum SQLProcessorSuccess {
         /// Same session with input session
         session: SessionWithTx,
         /// Result records
-        records: RecordIterator,
+        records: Records,
     },
 
     /// Response from INSERT/UPDATE/DELETE command.

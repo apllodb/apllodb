@@ -1,4 +1,8 @@
-use apllodb_shared_components::{RecordIterator, Session, SessionWithDb, SessionWithTx};
+pub(crate) mod record_iterator;
+
+use apllodb_shared_components::{Session, SessionWithDb, SessionWithTx};
+
+use crate::RecordIterator;
 
 /// Successful response from apllodb-server's [command()](crate::ApllodbServer::command).
 #[derive(Debug)]
