@@ -9,9 +9,7 @@ use crate::{
 
 use self::record_field_ref_schema::RecordFieldRefSchema;
 
-/// Iterator of [Record](crate::Record)s.
-///
-/// Note that Record is always generated from RecordIterator, who has ownership to [RecordFieldRefSchema](crate::RecordFieldRefSchema).
+/// Seq of [Record](crate::Record)s.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Records {
     schema: Arc<RecordFieldRefSchema>,
