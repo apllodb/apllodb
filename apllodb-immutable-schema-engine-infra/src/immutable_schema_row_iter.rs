@@ -36,7 +36,10 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
 
     fn into_record_iterator(self, alias_def: AliasDef) -> Records {
         if self.0.is_empty() {
-            Records::new(RecordFieldRefSchema::new(vec![]), Vec::<SqlValues>::new())
+            Records::new(
+                RecordFieldRefSchema::new(vec![]), // FIXME empty FFRs causes Err on FieldIndex::peek()
+                Vec::<SqlValues>::new(),
+            )
         } else {
             let record_schema = {
                 let row_iter = self.0.front().unwrap();

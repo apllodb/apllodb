@@ -182,7 +182,7 @@ struct ProjectionResultInVersion {
 impl From<ProjectionResult> for RecordFieldRefSchema {
     fn from(pr: ProjectionResult) -> Self {
         if pr.result_per_version.is_empty() {
-            RecordFieldRefSchema::new(vec![])
+            RecordFieldRefSchema::new(vec![]) // FIXME empty FFRs causes Err on FieldIndex::peek()
         } else {
             let (version_id, _) = pr.result_per_version.iter().next().unwrap();
             let table_name = version_id.vtable_id().table_name().clone();
