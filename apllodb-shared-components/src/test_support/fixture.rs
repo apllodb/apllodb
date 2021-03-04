@@ -21,11 +21,19 @@ pub static FULL_MODELS: Lazy<ModelsMock> = Lazy::new(|| ModelsMock {
         PEOPLE_RECORD3.clone(),
     ],
     body: vec![BODY_RECORD1.clone(), BODY_RECORD3.clone()],
-    pet: vec![PET_RECORD1.clone(), PET_RECORD3_1.clone(), PET_RECORD3_2.clone()],
+    pet: vec![
+        PET_RECORD1.clone(),
+        PET_RECORD3_1.clone(),
+        PET_RECORD3_2.clone(),
+    ],
 });
 
 pub static PET_MODELS: Lazy<ModelsMock> = Lazy::new(|| ModelsMock {
     people: vec![],
     body: vec![],
-    pet: vec![PET_RECORD1.clone(), PET_RECORD3_1.clone(), PET_RECORD3_2.clone()],
+    pet: vec![
+        PET_RECORD1.clone(),
+        PET_RECORD3_1.clone(),
+        PET_RECORD3_2.clone(),
+    ],
 });
