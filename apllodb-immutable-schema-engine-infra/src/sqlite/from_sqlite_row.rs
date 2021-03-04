@@ -56,6 +56,9 @@ pub(crate) trait FromSqliteRow {
                     Self::_sqlite_row_value::<String>(sqlite_row, column_data_type)?
                 }
             },
+            SqlType::BooleanComparable => {
+                Self::_sqlite_row_value::<bool>(sqlite_row, column_data_type)?
+            }
         };
 
         Ok(sql_value)

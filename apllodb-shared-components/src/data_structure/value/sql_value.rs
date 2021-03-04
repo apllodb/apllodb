@@ -167,14 +167,17 @@ impl SqlValue {
     pub fn to_bool(&self) -> ApllodbResult<bool> {
         match self {
             SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
-            SqlValue::NotNull(nn_sql_value) => Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
-                format!(
-                    "{:?} cannot be evaluated as BOOLEAN",
-                    nn_sql_value.sql_type()
-                ),
-                None,
-            )),
+            SqlValue::NotNull(nn_sql_value) => match nn_sql_value {
+                NNSqlValue::Boolean(b) => Ok(b.clone()),
+                _ => Err(ApllodbError::new(
+                    ApllodbErrorKind::DatatypeMismatch,
+                    format!(
+                        "{:?} cannot be evaluated as BOOLEAN",
+                        nn_sql_value.sql_type()
+                    ),
+                    None,
+                )),
+            },
         }
     }
 }

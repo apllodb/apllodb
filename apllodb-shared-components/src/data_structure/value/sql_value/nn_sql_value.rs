@@ -144,6 +144,10 @@ impl NNSqlValue {
                     }
                 }
             }
+            (SqlType::BooleanComparable, SqlType::BooleanComparable) => {
+                let (self_b, other_b) = (self.unpack::<bool>()?, other.unpack::<bool>()?);
+                Ok(SqlCompareResult::from(self_b.cmp(&other_b)))
+            }
             (_, _) => Err(ApllodbError::new(
                 ApllodbErrorKind::DatatypeMismatch,
                 format!(
