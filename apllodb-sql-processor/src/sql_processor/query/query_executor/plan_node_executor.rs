@@ -63,7 +63,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 right_field,
             } => {
                 let left_idx = input_left.as_schema().resolve_index(&left_field)?;
-                let right_idx = input_left.as_schema().resolve_index(&right_field)?;
+                let right_idx = input_right.as_schema().resolve_index(&right_field)?;
                 self.hash_join(input_left, input_right, left_idx, right_idx)
             }
         }
