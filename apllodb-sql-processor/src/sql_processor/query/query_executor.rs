@@ -144,9 +144,15 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R1
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R2
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R3
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_id())])?,
                 ],
             },
             TestDatum {
@@ -160,9 +166,15 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R1
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R2
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R3
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_age())])?,
                 ],
             },
             // Projection
@@ -182,9 +194,15 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R1
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R2
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R3
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_id())])?,
                 ],
             },
             TestDatum {
@@ -203,9 +221,15 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R1
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R2
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R3
+                        .clone()
+                        .projection(&[People::field_idx(People::ffr_age())])?,
                 ],
             },
             // HashJoin

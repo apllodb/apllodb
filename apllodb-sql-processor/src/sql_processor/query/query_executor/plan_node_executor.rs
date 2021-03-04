@@ -130,6 +130,8 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         // TODO Create hash table from smaller input.
         let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
 
+        let schema = input_left.as_schema().joined(input_right.as_schema());
+
         for left_record in input_left {
             let left_sql_value = left_record.get_sql_value(left_idx)?;
             hash_table
@@ -138,8 +140,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 .and_modify(|records| records.push(left_record.clone()))
                 .or_insert_with(|| vec![left_record]);
         }
-
-        let schema = input_left.as_schema().joined(input_right.as_schema());
 
         let mut records = Vec::<Record>::new();
         for right_record in input_right {

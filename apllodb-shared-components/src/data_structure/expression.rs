@@ -32,7 +32,7 @@ impl Expression {
     /// # Panics
     ///
     /// if `record_for_field_ref` is None for Expression::FullFieldReferenceVariant.
-    pub(crate) fn to_sql_value(
+    pub fn to_sql_value(
         &self,
         record_for_field_ref: Option<(&Record, &RecordFieldRefSchema)>,
     ) -> ApllodbResult<SqlValue> {
