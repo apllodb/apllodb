@@ -29,19 +29,24 @@ pub enum Expression {
 }
 
 impl Expression {
+    /// # Panics
+    ///
+    /// if `record_for_field_ref` is None for Expression::FullFieldReferenceVariant.
     pub(crate) fn to_sql_value(
         &self,
-        record: &Record,
-        schema: &RecordFieldRefSchema,
+        record_for_field_ref: Option<(&Record, &RecordFieldRefSchema)>,
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
             Expression::FullFieldReferenceVariant(ffr) => {
+                let (record, schema) = record_for_field_ref.expect(
+                    "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
+                );
                 let idx = schema.resolve_index(&FieldIndex::from(ffr.clone()))?;
                 record.get_sql_value(idx).map(|v| v.clone())
             }
             Expression::UnaryOperatorVariant(uni_op, child) => {
-                let child_sql_value = child.to_sql_value(record, schema)?;
+                let child_sql_value = child.to_sql_value(record_for_field_ref)?;
                 match (uni_op, child_sql_value) {
                     (UnaryOperator::Minus, SqlValue::Null) => Ok(SqlValue::Null),
                     (UnaryOperator::Minus, SqlValue::NotNull(nn_sql_value)) => {
@@ -53,8 +58,8 @@ impl Expression {
                 BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
                     match comparison_function {
                         ComparisonFunction::EqualVariant { left, right } => {
-                            let left_sql_value = left.to_sql_value(record, schema)?;
-                            let right_sql_value = right.to_sql_value(record, schema)?;
+                            let left_sql_value = left.to_sql_value(record_for_field_ref)?;
+                            let right_sql_value = right.to_sql_value(record_for_field_ref)?;
                             left_sql_value
                                 .sql_compare(&right_sql_value)
                                 .map(|sql_compare_result| {
@@ -70,10 +75,10 @@ impl Expression {
                         LogicalFunction::AndVariant { left, right } => {
                             let left_sql_value =
                                 Expression::BooleanExpressionVariant(*(left.clone()))
-                                    .to_sql_value(record, schema)?;
+                                    .to_sql_value(record_for_field_ref)?;
                             let right_sql_value =
                                 Expression::BooleanExpressionVariant(*(right.clone()))
-                                    .to_sql_value(record, schema)?;
+                                    .to_sql_value(record_for_field_ref)?;
 
                             let b = left_sql_value.to_bool()? && right_sql_value.to_bool()?;
                             Ok(SqlValue::NotNull(NNSqlValue::Boolean(b)))
@@ -104,7 +109,7 @@ mod tests {
         #[derive(Clone, Debug, new)]
         struct TestDatum {
             in_expr: Expression,
-            in_schema_record: Option<(RecordFieldRefSchema, Record)>,
+            in_record_for_field_ref: Option<(Record, RecordFieldRefSchema)>,
             expected_sql_value: SqlValue,
         }
 
@@ -124,7 +129,7 @@ mod tests {
             // FullFieldReference
             TestDatum::new(
                 Expression::FullFieldReferenceVariant(People::ffr_id()),
-                Some((People::schema(), T_PEOPLE_R1.clone())),
+                Some((T_PEOPLE_R1.clone(), People::schema())),
                 SqlValue::factory_integer(1),
             ),
             // BooleanExpression
@@ -180,13 +185,9 @@ mod tests {
         ];
 
         for t in test_data {
-            let schema_record = t.in_schema_record.unwrap_or_else(|| {
-                let schema = RecordFieldRefSchema::new(vec![]);
-                (schema, Record::factory(vec![]))
-            });
-            let (schema, record) = schema_record;
-
-            let sql_value = t.in_expr.to_sql_value(&record, &schema)?;
+            let sql_value = t
+                .in_expr
+                .to_sql_value(t.in_record_for_field_ref.as_ref().map(|(r, s)| (r, s)))?;
             assert_eq!(sql_value, t.expected_sql_value);
         }
 

@@ -64,7 +64,7 @@ impl Records {
                 self.into_iter()
                     .filter_map(|r| {
                         match condition
-                            .to_sql_value(&r, &schema)
+                            .to_sql_value(Some((&r, &schema)))
                             .and_then(|sql_value| sql_value.to_bool())
                         {
                             Ok(false) => None,
