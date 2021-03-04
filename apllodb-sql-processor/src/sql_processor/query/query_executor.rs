@@ -128,9 +128,9 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.clone(),
-                    T_PEOPLE_R2.clone(),
-                    T_PEOPLE_R3.clone(),
+                    PEOPLE_RECORD1.clone(),
+                    PEOPLE_RECORD2.clone(),
+                    PEOPLE_RECORD3.clone(),
                 ],
             },
             TestDatum {
@@ -144,13 +144,13 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1
+                    PEOPLE_RECORD1
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R2
+                    PEOPLE_RECORD2
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R3
+                    PEOPLE_RECORD3
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
                 ],
@@ -166,13 +166,13 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1
+                    PEOPLE_RECORD1
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R2
+                    PEOPLE_RECORD2
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R3
+                    PEOPLE_RECORD3
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
                 ],
@@ -194,13 +194,13 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1
+                    PEOPLE_RECORD1
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R2
+                    PEOPLE_RECORD2
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R3
+                    PEOPLE_RECORD3
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
                 ],
@@ -221,13 +221,13 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1
+                    PEOPLE_RECORD1
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R2
+                    PEOPLE_RECORD2
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R3
+                    PEOPLE_RECORD3
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
                 ],
@@ -255,8 +255,8 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.clone().join(T_BODY_R1.clone()),
-                    T_PEOPLE_R3.clone().join(T_BODY_R3.clone()),
+                    PEOPLE_RECORD1.clone().join(BODY_RECORD1.clone()),
+                    PEOPLE_RECORD3.clone().join(BODY_RECORD3.clone()),
                 ],
             },
             TestDatum {
@@ -282,9 +282,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PEOPLE_R1.clone().join(T_PET_R1.clone()),
-                    T_PEOPLE_R3.clone().join(T_PET_R3_1.clone()),
-                    T_PEOPLE_R3.clone().join(T_PET_R3_2.clone()),
+                    PEOPLE_RECORD1.clone().join(PET_RECORD1.clone()),
+                    PEOPLE_RECORD3.clone().join(PET_RECORD3_1.clone()),
+                    PEOPLE_RECORD3.clone().join(PET_RECORD3_2.clone()),
                 ],
             },
             TestDatum {
@@ -310,9 +310,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    T_PET_R1.clone().join(T_PEOPLE_R1.clone()),
-                    T_PET_R3_1.clone().join(T_PEOPLE_R3.clone()),
-                    T_PET_R3_2.clone().join(T_PEOPLE_R3.clone()),
+                    PET_RECORD1.clone().join(PEOPLE_RECORD1.clone()),
+                    PET_RECORD3_1.clone().join(PEOPLE_RECORD3.clone()),
+                    PET_RECORD3_2.clone().join(PEOPLE_RECORD3.clone()),
                 ],
             },
             TestDatum {
@@ -337,7 +337,7 @@ mod tests {
                         },
                     })),
                 })),
-                expected_select_records: vec![T_PEOPLE_R1.clone().join(T_PET_R1.clone())],
+                expected_select_records: vec![PEOPLE_RECORD1.clone().join(PET_RECORD1.clone())],
             },
         ];
 

@@ -129,7 +129,7 @@ mod tests {
             // FullFieldReference
             TestDatum::new(
                 Expression::FullFieldReferenceVariant(People::ffr_id()),
-                Some((T_PEOPLE_R1.clone(), People::schema())),
+                Some((PEOPLE_RECORD1.clone(), People::schema())),
                 SqlValue::factory_integer(1),
             ),
             // BooleanExpression

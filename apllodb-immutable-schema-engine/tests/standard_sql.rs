@@ -4,8 +4,8 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, Expression, FieldIndex, NNSqlValue, SqlType, SqlValue, SqlValues,
-    TableConstraintKind, TableConstraints, TableName,
+    ColumnDefinition, Expression, NNSqlValue, SqlType, SqlValue, SqlValues, TableConstraintKind,
+    TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{test_support::session_with_tx, AliasDef};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -99,6 +99,8 @@ async fn test_insert() -> ApllodbResult<()> {
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
+    let (id_idx, c1_idx): (usize, usize) = (0, 1);
+
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
         column_names: vec![c_id_def.column_data_type().column_name().clone()],
     }])?;
@@ -135,18 +137,8 @@ async fn test_insert() -> ApllodbResult<()> {
         .await?;
 
     let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c_id_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(1)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c1_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(100)
-    );
+    assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+    assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
 
     assert!(records.next().is_none());
 
@@ -171,6 +163,8 @@ async fn test_update() -> ApllodbResult<()> {
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
+
+    let (id_idx, c1_idx): (usize, usize) = (0, 1);
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
         column_names: vec![c_id_def.column_data_type().column_name().clone()],
@@ -206,18 +200,8 @@ async fn test_update() -> ApllodbResult<()> {
         )
         .await?;
     let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c_id_def.column_data_type().column_name().as_str(),
-        ))?,
-        Some(1)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c1_def.column_data_type().column_name().as_str(),
-        ))?,
-        Some(100)
-    );
+    assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+    assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
     assert!(records.next().is_none());
 
     // update non-PK
@@ -238,25 +222,15 @@ async fn test_update() -> ApllodbResult<()> {
         )
         .await?;
     let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c_id_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(1)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c1_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(200)
-    );
+    assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+    assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
     assert!(records.next().is_none());
 
     // update PK
     let session =engine.with_tx().
-update(
-    session,
-    t_name.clone(),
+    update(
+        session,
+        t_name.clone(),
         hmap! {
             c_id_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(2)))
         },
@@ -271,18 +245,8 @@ update(
         )
         .await?;
     let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c_id_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(2)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c1_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(200)
-    );
+    assert_eq!(record.get::<i32>(id_idx)?, Some(2));
+    assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
     assert!(records.next().is_none());
 
     engine.with_tx().commit_transaction(session).await?;

@@ -91,22 +91,22 @@ mod tests {
             TestDatum::new(
                 "SELECT id, age FROM people",
                 vec![
-                    T_PEOPLE_R1.clone(),
-                    T_PEOPLE_R2.clone(),
-                    T_PEOPLE_R3.clone(),
+                    PEOPLE_RECORD1.clone(),
+                    PEOPLE_RECORD2.clone(),
+                    PEOPLE_RECORD3.clone(),
                 ],
             ),
             // projection
             TestDatum::new(
                 "SELECT id FROM people",
                 vec![
-                    T_PEOPLE_R1
+                    PEOPLE_RECORD1
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R2
+                    PEOPLE_RECORD2
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
-                    T_PEOPLE_R3
+                    PEOPLE_RECORD3
                         .clone()
                         .projection(&[People::field_idx(People::ffr_id())])?,
                 ],
@@ -114,13 +114,13 @@ mod tests {
             TestDatum::new(
                 "SELECT age FROM people",
                 vec![
-                    T_PEOPLE_R1
+                    PEOPLE_RECORD1
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R2
+                    PEOPLE_RECORD2
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
-                    T_PEOPLE_R3
+                    PEOPLE_RECORD3
                         .clone()
                         .projection(&[People::field_idx(People::ffr_age())])?,
                 ],

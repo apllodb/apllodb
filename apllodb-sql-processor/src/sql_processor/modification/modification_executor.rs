@@ -119,9 +119,9 @@ mod tests {
                                     records: Records::new(
                                         People::schema(),
                                         vec![
-                                            T_PEOPLE_R1.clone(),
-                                            T_PEOPLE_R2.clone(),
-                                            T_PEOPLE_R3.clone(),
+                                            PEOPLE_RECORD1.clone(),
+                                            PEOPLE_RECORD2.clone(),
+                                            PEOPLE_RECORD3.clone(),
                                         ],
                                     ),
                                 },
@@ -131,9 +131,9 @@ mod tests {
                     expected_insert_table: People::table_name(),
                     expected_insert_columns: People::schema().to_column_names(),
                     expected_insert_records: vec![
-                        T_PEOPLE_R1.clone(),
-                        T_PEOPLE_R2.clone(),
-                        T_PEOPLE_R3.clone(),
+                        PEOPLE_RECORD1.clone(),
+                        PEOPLE_RECORD2.clone(),
+                        PEOPLE_RECORD3.clone(),
                     ],
                 },
                 // input from same table records (dup)
@@ -153,9 +153,9 @@ mod tests {
                     expected_insert_table: Pet::table_name(),
                     expected_insert_columns: Pet::schema().to_column_names(),
                     expected_insert_records: vec![
-                        T_PET_R1.clone(),
-                        T_PET_R3_1.clone(),
-                        T_PET_R3_2.clone(),
+                        PET_RECORD1.clone(),
+                        PET_RECORD3_1.clone(),
+                        PET_RECORD3_2.clone(),
                     ],
                 },
             ]
