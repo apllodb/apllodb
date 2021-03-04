@@ -8,6 +8,6 @@ impl SqlConvertible for bool {
     }
 
     fn try_from_bool(v: &bool) -> ApllodbResult<Self> {
-        Ok(v.clone())
+        Ok(*v)
     }
 }
