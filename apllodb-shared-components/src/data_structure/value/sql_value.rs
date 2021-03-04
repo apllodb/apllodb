@@ -5,6 +5,7 @@ pub(crate) mod sql_value_hash_key;
 use std::{fmt::Display, hash::Hash};
 
 use crate::error::ApllodbResult;
+use crate::{ApllodbError, ApllodbErrorKind};
 use serde::{Deserialize, Serialize};
 
 use self::{nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult};
@@ -154,6 +155,26 @@ impl SqlValue {
             (SqlValue::NotNull(nn_self), SqlValue::NotNull(nn_other)) => {
                 nn_self.sql_compare(nn_other)
             }
+        }
+    }
+
+    /// Eval as bool if possible.
+    ///
+    /// # Failures
+    ///
+    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - this SqlValue cannot be evaluated as SQL BOOLEAN
+    pub fn to_bool(&self) -> ApllodbResult<bool> {
+        match self {
+            SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
+            SqlValue::NotNull(nn_sql_value) => Err(ApllodbError::new(
+                ApllodbErrorKind::DatatypeMismatch,
+                format!(
+                    "{:?} cannot be evaluated as BOOLEAN",
+                    nn_sql_value.sql_type()
+                ),
+                None,
+            )),
         }
     }
 }

@@ -1,11 +1,12 @@
 pub(crate) mod boolean_expression;
 pub(crate) mod operator;
 
-use std::convert::TryFrom;
-
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference};
+use crate::{
+    ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NNSqlValue,
+    Record, RecordFieldRefSchema,
+};
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
 
@@ -27,29 +28,20 @@ pub enum Expression {
     BooleanExpressionVariant(BooleanExpression),
 }
 
-impl From<SqlValue> for Expression {
-    fn from(sql_val: SqlValue) -> Self {
-        Self::ConstantVariant(sql_val)
-    }
-}
-
-impl TryFrom<Expression> for SqlValue {
-    type Error = ApllodbError;
-
-    /// # Failures
-    ///
-    /// - [DataException](crate::ApllodbErrorKind::DataException) when:
-    ///   - expression cannot be folded into an SqlValue
-    fn try_from(expression: Expression) -> ApllodbResult<Self> {
-        match expression {
-            Expression::ConstantVariant(sql_value) => Ok(sql_value),
-            Expression::FullFieldReferenceVariant(ffr) => Err(ApllodbError::new(
-                ApllodbErrorKind::DataException,
-                format!("field `{}` cannot be into SqlValue", ffr),
-                None,
-            )),
+impl Expression {
+    pub fn to_sql_value(
+        &self,
+        record: &Record,
+        schema: &RecordFieldRefSchema,
+    ) -> ApllodbResult<SqlValue> {
+        match self {
+            Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
+            Expression::FullFieldReferenceVariant(ffr) => {
+                let idx = schema.resolve_index(&FieldIndex::from(ffr.clone()))?;
+                record.get_sql_value(idx).map(|v| v.clone())
+            }
             Expression::UnaryOperatorVariant(uni_op, child) => {
-                let child_sql_value = SqlValue::try_from(*child)?;
+                let child_sql_value = child.to_sql_value(record, schema)?;
                 match (uni_op, child_sql_value) {
                     (UnaryOperator::Minus, SqlValue::Null) => Ok(SqlValue::Null),
                     (UnaryOperator::Minus, SqlValue::NotNull(nn_sql_value)) => {
@@ -57,10 +49,45 @@ impl TryFrom<Expression> for SqlValue {
                     }
                 }
             }
-            Expression::BooleanExpressionVariant(_) => {
-                unimplemented!()
-            }
+            Expression::BooleanExpressionVariant(bool_expr) => match bool_expr {
+                BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
+                    match comparison_function {
+                        ComparisonFunction::EqualVariant { left, right } => {
+                            let left_sql_value = left.to_sql_value(record, schema)?;
+                            let right_sql_value = right.to_sql_value(record, schema)?;
+                            left_sql_value
+                                .sql_compare(&right_sql_value)
+                                .map(|sql_compare_result| {
+                                    SqlValue::NotNull(NNSqlValue::Boolean(
+                                        sql_compare_result.is_equal(),
+                                    ))
+                                })
+                        }
+                    }
+                }
+                BooleanExpression::LogicalFunctionVariant(logical_function) => {
+                    match logical_function {
+                        LogicalFunction::AndVariant { left, right } => {
+                            let left_sql_value =
+                                Expression::BooleanExpressionVariant(*(left.clone()))
+                                    .to_sql_value(record, schema)?;
+                            let right_sql_value =
+                                Expression::BooleanExpressionVariant(*(right.clone()))
+                                    .to_sql_value(record, schema)?;
+
+                            let b = left_sql_value.to_bool()? && right_sql_value.to_bool()?;
+                            Ok(SqlValue::NotNull(NNSqlValue::Boolean(b)))
+                        }
+                    }
+                }
+            },
         }
+    }
+}
+
+impl From<SqlValue> for Expression {
+    fn from(sql_val: SqlValue) -> Self {
+        Self::ConstantVariant(sql_val)
     }
 }
 

@@ -24,6 +24,9 @@ pub enum NNSqlValue {
 
     /// TEXT
     Text(String),
+
+    /// BOOLEAN
+    Boolean(bool),
 }
 
 /// Although function is better to use,
@@ -41,13 +44,14 @@ pub enum NNSqlValue {
 ///
 /// does not work properly with closures which capture &mut environments.
 macro_rules! for_all_loose_types {
-    ( $nn_sql_value:expr, $closure_i64:expr, $closure_string:expr ) => {{
+    ( $nn_sql_value:expr, $closure_i64:expr, $closure_string:expr, $closure_bool:expr ) => {{
         match &$nn_sql_value {
             NNSqlValue::SmallInt(_) | NNSqlValue::Integer(_) | NNSqlValue::BigInt(_) => {
                 let v = $nn_sql_value.unpack::<i64>().unwrap();
                 $closure_i64(v)
             }
             NNSqlValue::Text(s) => $closure_string(s.to_string()),
+            NNSqlValue::Boolean(b) => $closure_bool(b.clone()),
         }
     }};
 }
@@ -69,17 +73,20 @@ impl Hash for NNSqlValue {
             },
             |s: String| {
                 s.hash(state);
-            }
+            },
+            |b: bool| { b.hash(state) }
         )
     }
 }
 
 impl Display for NNSqlValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s: String = for_all_loose_types!(self, |i: i64| i.to_string(), |s: String| format!(
-            r#""{}""#,
-            s
-        ));
+        let s: String = for_all_loose_types!(
+            self,
+            |i: i64| i.to_string(),
+            |s: String| format!(r#""{}""#, s),
+            |b: bool| (if b { "TRUE" } else { "FALSE" }).to_string()
+        );
         write!(f, "{}", s)
     }
 }
@@ -103,6 +110,7 @@ impl NNSqlValue {
             NNSqlValue::Integer(i32_) => T::try_from_i32(i32_),
             NNSqlValue::BigInt(i64_) => T::try_from_i64(i64_),
             NNSqlValue::Text(string) => T::try_from_string(string),
+            NNSqlValue::Boolean(b) => T::try_from_bool(b),
         }
     }
 
@@ -113,6 +121,7 @@ impl NNSqlValue {
             NNSqlValue::Integer(_) => SqlType::integer(),
             NNSqlValue::BigInt(_) => SqlType::big_int(),
             NNSqlValue::Text(_) => SqlType::text(),
+            NNSqlValue::Boolean(_) => SqlType::boolean(),
         }
     }
 
@@ -155,9 +164,9 @@ impl NNSqlValue {
             NNSqlValue::SmallInt(v) => Ok(Self::SmallInt(-v)),
             NNSqlValue::Integer(v) => Ok(Self::Integer(-v)),
             NNSqlValue::BigInt(v) => Ok(Self::BigInt(-v)),
-            NNSqlValue::Text(_) => Err(ApllodbError::new(
+            NNSqlValue::Text(_) | NNSqlValue::Boolean(_) => Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidParameterValue,
-                "String cannot negate",
+                format!("{} cannot negate", self),
                 None,
             )),
         }

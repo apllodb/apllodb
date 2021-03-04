@@ -48,16 +48,34 @@ impl Records {
 
     /// Filter records that satisfy the given `condition`.
     pub fn selection(self, condition: &Expression) -> ApllodbResult<Self> {
-        let records: Vec<Record> = self
-            .into_iter()
-            .filter_map(|record| match record.selection(condition) {
-                Ok(false) => None,
-                Ok(true) => Some(Ok(record)),
-                Err(e) => Some(Err(e)),
-            })
-            .collect::<ApllodbResult<_>>()?;
-
-        Ok(Self::from(records))
+        match condition {
+            Expression::ConstantVariant(sql_value) => {
+                if sql_value.to_bool()? {
+                    Ok(self)
+                } else {
+                    Ok(Self {
+                        schema: self.schema.clone(),
+                        inner: vec![],
+                    })
+                }
+            }
+            _ => {
+                let schema = self.as_schema().clone();
+                self.into_iter()
+                    .filter_map(|r| {
+                        match condition
+                            .to_sql_value(&r, &schema)
+                            .and_then(|sql_value| sql_value.to_bool())
+                        {
+                            Ok(false) => None,
+                            Ok(true) => Some(Ok(r)),
+                            Err(e) => Some(Err(e)),
+                        }
+                    })
+                    .collect::<ApllodbResult<Vec<Record>>>()
+                    .map(|records| Self::new(schema, records))
+            }
+        }
     }
 
     /// Shrink records into record with specified `fields`.
@@ -159,20 +177,7 @@ impl Iterator for Records {
             None
         } else {
             let values = self.inner.remove(0);
-            Some(Record::new(self.schema.clone(), values))
+            Some(Record::new(values))
         }
-    }
-}
-
-impl From<Vec<Record>> for Records {
-    fn from(rs: Vec<Record>) -> Self {
-        let schema = if rs.is_empty() {
-            RecordFieldRefSchema::new(vec![])
-        } else {
-            let r = rs.first().unwrap();
-            r.schema().clone()
-        };
-
-        Self::new(schema, rs)
     }
 }

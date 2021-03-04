@@ -1,13 +1,9 @@
 pub(crate) mod field_index;
 
-use crate::{
-    error::ApllodbResult, traits::sql_convertible::SqlConvertible, ApllodbError, ApllodbErrorKind,
-    BooleanExpression, ComparisonFunction, Expression, FieldIndex, FullFieldReference,
-    LogicalFunction, SqlValues, UnaryOperator,
-};
-use std::{ops::Index, sync::Arc};
+use crate::{error::ApllodbResult, traits::sql_convertible::SqlConvertible, SqlValues};
+use std::ops::Index;
 
-use super::{records::record_field_ref_schema::RecordFieldRefSchema, value::sql_value::SqlValue};
+use super::value::sql_value::SqlValue;
 
 /// Record representation used in client and query processor.
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.
@@ -16,14 +12,13 @@ use super::{records::record_field_ref_schema::RecordFieldRefSchema, value::sql_v
 /// It is created while SELECT by a storage engine or query processor.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Record {
-    schema: Arc<RecordFieldRefSchema>,
     values: SqlValues,
 }
 
 impl Record {
     /// Constructor
-    pub fn new(schema: Arc<RecordFieldRefSchema>, values: SqlValues) -> Self {
-        Self { schema, values }
+    pub fn new(values: SqlValues) -> Self {
+        Self { values }
     }
 
     /// Get Rust value from record's field.
@@ -35,7 +30,7 @@ impl Record {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
-    pub fn get<T: SqlConvertible>(&self, index: &FieldIndex) -> ApllodbResult<Option<T>> {
+    pub fn get<T: SqlConvertible>(&self, index: usize) -> ApllodbResult<Option<T>> {
         let sql_value = self.get_sql_value(index)?;
         let ret = match sql_value {
             SqlValue::Null => None,
@@ -50,9 +45,8 @@ impl Record {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn get_sql_value(&self, index: &FieldIndex) -> ApllodbResult<&SqlValue> {
-        let idx = self.schema.resolve_index(index)?;
-        let sql_value = self.values.index(idx);
+    pub fn get_sql_value(&self, index: usize) -> ApllodbResult<&SqlValue> {
+        let sql_value = self.values.index(index);
         Ok(sql_value)
     }
 
@@ -62,82 +56,13 @@ impl Record {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(mut self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
-        let idxs: Vec<usize> = projection
-            .iter()
-            .map(|index| self.schema.resolve_index(index))
-            .collect::<ApllodbResult<_>>()?;
-
-        self.schema = Arc::new(self.schema.projection(projection)?);
-        self.values = self.values.projection(&idxs);
-
+    pub fn projection(mut self, indexes: &[usize]) -> ApllodbResult<Self> {
+        self.values = self.values.projection(&indexes);
         Ok(self)
-    }
-
-    /// Check if whether this record satisfies selection condition.
-    ///
-    /// # Failures
-    ///
-    /// - [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch) when:
-    ///   - `condition` is not evaluated as BOOLEAN type.
-    pub fn selection(&self, condition: &Expression) -> ApllodbResult<bool> {
-        match condition {
-            Expression::ConstantVariant(_) | Expression::FullFieldReferenceVariant(_) => {
-                let sql_value = self.eval_to_sql_value(condition)?;
-                self.selection_sql_value(&sql_value)
-            }
-            Expression::UnaryOperatorVariant(_, _) => Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
-                "(unary_op)(Expression) cannot be evaluated as BOOLEAN",
-                None,
-            )),
-            Expression::BooleanExpressionVariant(boolean_expr) => {
-                self.selection_boolean_expression(boolean_expr)
-            }
-        }
-    }
-
-    fn selection_sql_value(&self, sql_value: &SqlValue) -> ApllodbResult<bool> {
-        match sql_value {
-            SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
-            SqlValue::NotNull(nn_sql_value) => Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
-                format!(
-                    "{:?} cannot be evaluated as BOOLEAN",
-                    nn_sql_value.sql_type()
-                ),
-                None,
-            )),
-        }
-    }
-
-    fn selection_boolean_expression(
-        &self,
-        boolean_expr: &BooleanExpression,
-    ) -> ApllodbResult<bool> {
-        match boolean_expr {
-            BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
-                match comparison_function {
-                    ComparisonFunction::EqualVariant { left, right } => {
-                        let left_sql_value = self.eval_to_sql_value(left)?;
-                        let right_sql_value = self.eval_to_sql_value(right)?;
-                        Ok(left_sql_value == right_sql_value)
-                    }
-                }
-            }
-            BooleanExpression::LogicalFunctionVariant(logical_function) => match logical_function {
-                LogicalFunction::AndVariant { left, right } => {
-                    let left_b = self.selection_boolean_expression(left)?;
-                    let right_b = self.selection_boolean_expression(right)?;
-                    Ok(left_b && right_b)
-                }
-            },
-        }
     }
 
     /// Joins another record after this record.
     pub fn join(mut self, right: Self) -> Self {
-        self.schema = Arc::new(self.schema.joined(right.schema()));
         self.values.join(right.values);
         self
     }
@@ -145,54 +70,6 @@ impl Record {
     /// Get raw representation
     pub fn into_values(self) -> SqlValues {
         self.values
-    }
-
-    /// Get raw representation
-    pub fn into_ffr_vals(self) -> Vec<(FullFieldReference, SqlValue)> {
-        self.schema
-            .as_full_field_references()
-            .iter()
-            .cloned()
-            .zip(self.values)
-            .collect()
-    }
-
-    /// ref to schema
-    pub fn schema(&self) -> &RecordFieldRefSchema {
-        self.schema.as_ref()
-    }
-
-    /// # Failures
-    ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
-    ///   - failed to evaluate as SqlValue.
-    ///
-    /// TODO no clone()
-    fn eval_to_sql_value(&self, expr: &Expression) -> ApllodbResult<SqlValue> {
-        match expr {
-            Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
-            Expression::FullFieldReferenceVariant(ffr) => {
-                let index = FieldIndex::from(ffr.clone());
-                let sql_value = self.get_sql_value(&index)?;
-                Ok(sql_value.clone())
-            }
-            Expression::UnaryOperatorVariant(op, expr) => {
-                let sql_value = self.eval_to_sql_value(expr)?;
-                match op {
-                    UnaryOperator::Minus => match sql_value {
-                        SqlValue::Null => Ok(sql_value),
-                        SqlValue::NotNull(nn_sql_value) => {
-                            Ok(SqlValue::NotNull(nn_sql_value.negate()?))
-                        }
-                    },
-                }
-            }
-            Expression::BooleanExpressionVariant(_) => Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
-                "BooleanExpression cannot be evaluated as SqlValue",
-                None,
-            )),
-        }
     }
 }
 

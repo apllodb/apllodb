@@ -1,3 +1,4 @@
+mod boolean;
 mod int;
 mod text;
 
@@ -42,6 +43,14 @@ pub trait SqlConvertible: Sized {
     ///   - the type implementing SqlConvertible is not convertible from String
     fn try_from_string(_: &str) -> ApllodbResult<Self> {
         Self::default_err("String")
+    }
+
+    /// # Failures
+    ///
+    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - the type implementing SqlConvertible is not convertible from bool
+    fn try_from_bool(_: &bool) -> ApllodbResult<Self> {
+        Self::default_err("bool")
     }
 
     #[doc(hidden)]
