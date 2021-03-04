@@ -168,7 +168,7 @@ impl SqlValue {
         match self {
             SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
             SqlValue::NotNull(nn_sql_value) => match nn_sql_value {
-                NNSqlValue::Boolean(b) => Ok(b.clone()),
+                NNSqlValue::Boolean(b) => Ok(*b),
                 _ => Err(ApllodbError::new(
                     ApllodbErrorKind::DatatypeMismatch,
                     format!(

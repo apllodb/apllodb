@@ -54,7 +54,7 @@ impl Records {
                     Ok(self)
                 } else {
                     Ok(Self {
-                        schema: self.schema.clone(),
+                        schema: self.schema,
                         inner: vec![],
                     })
                 }
