@@ -1,10 +1,7 @@
 mod sql_test;
 
-use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{
-    test_support::{fixture::*, test_models::People},
-    ApllodbErrorKind, FieldIndex,
-};
+use apllodb_server::test_support::{fixture::*, test_setup};
+use apllodb_shared_components::{ApllodbErrorKind, FieldIndex};
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
 use sql_test::{SqlTest, Step, StepRes, Steps};
@@ -24,9 +21,9 @@ async fn test_fullscan() {
             StepRes::OkQuery(Box::new(|records| {
                 let mut records = records
                     .sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("id")).unwrap().unwrap());
-                assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC1.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC2.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC3.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -38,9 +35,9 @@ async fn test_fullscan() {
                 StepRes::OkQuery(Box::new(|records| {
                     let mut records = records
                         .sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("id")).unwrap().unwrap());
-                    assert_eq!(records.next(), Some(PET_RECORD1.clone()));
-                    assert_eq!(records.next(), Some(PET_RECORD3_1.clone()));
-                    assert_eq!(records.next(), Some(PET_RECORD3_2.clone()));
+                    assert_eq!(records.next(), Some(PET_REC1.clone()));
+                    assert_eq!(records.next(), Some(PET_REC3_1.clone()));
+                    assert_eq!(records.next(), Some(PET_REC3_2.clone()));
                     assert!(records.next().is_none());
                     Ok(())
                 })),
@@ -68,9 +65,7 @@ async fn test_projection() {
                     let r = records.next().unwrap();
                     assert_eq!(
                         r.get::<i64>(&id_index).unwrap(),
-                        PEOPLE_RECORD1
-                            .get::<i64>(People::field_idx(People::ffr_id()))
-                            .unwrap()
+                        PEOPLE_REC1.get::<i64>(&id_index).unwrap()
                     );
                     assert_eq!(
                         r.get::<i32>(&FieldIndex::from("age")).unwrap_err().kind(),
@@ -92,9 +87,7 @@ async fn test_projection() {
                     let r = records.next().unwrap();
                     assert_eq!(
                         r.get::<i32>(&age_index).unwrap(),
-                        PEOPLE_RECORD1
-                            .get::<i32>(People::field_idx(People::ffr_age()))
-                            .unwrap()
+                        PEOPLE_REC1.get::<i32>(&age_index).unwrap()
                     );
                     assert_eq!(
                         r.get::<i64>(&FieldIndex::from("id")).unwrap_err().kind(),
@@ -173,9 +166,9 @@ async fn test_sort() {
             // PK, ASC (default)
             "SELECT id, age FROM people ORDER BY id",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC1.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC2.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC3.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -184,9 +177,9 @@ async fn test_sort() {
             // PK, ASC
             "SELECT id, age FROM people ORDER BY id ASC",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC1.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC2.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC3.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -195,9 +188,9 @@ async fn test_sort() {
             // PK, DESC
             "SELECT id, age FROM people ORDER BY id DESC",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC3.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC2.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC1.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -206,9 +199,9 @@ async fn test_sort() {
             // non-PK, ASC (default)
             "SELECT id, age FROM people ORDER BY age",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC1.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC3.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC2.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -217,9 +210,9 @@ async fn test_sort() {
             // non-PK, ASC
             "SELECT id, age FROM people ORDER BY age ASC",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC1.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC3.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC2.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -228,9 +221,9 @@ async fn test_sort() {
             // non-PK, ASC
             "SELECT id, age FROM people ORDER BY age DESC",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
-                assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC2.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC3.clone()));
+                assert_eq!(records.next(), Some(PEOPLE_REC1.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -239,9 +232,9 @@ async fn test_sort() {
             // non-PK, ASC ; PK, DESC
             "SELECT id, people_id, kind, age FROM pet ORDER BY kind ASC, id DESC",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PET_RECORD3_2.clone()));
-                assert_eq!(records.next(), Some(PET_RECORD3_1.clone()));
-                assert_eq!(records.next(), Some(PET_RECORD1.clone()));
+                assert_eq!(records.next(), Some(PET_REC3_2.clone()));
+                assert_eq!(records.next(), Some(PET_REC3_1.clone()));
+                assert_eq!(records.next(), Some(PET_REC1.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
@@ -250,9 +243,9 @@ async fn test_sort() {
             // non-PK, DESC ; PK, DESC
             "SELECT id, people_id, kind, age FROM pet ORDER BY kind DESC, id DESC",
             StepRes::OkQuery(Box::new(|mut records| {
-                assert_eq!(records.next(), Some(PET_RECORD3_1.clone()));
-                assert_eq!(records.next(), Some(PET_RECORD1.clone()));
-                assert_eq!(records.next(), Some(PET_RECORD3_2.clone()));
+                assert_eq!(records.next(), Some(PET_REC3_1.clone()));
+                assert_eq!(records.next(), Some(PET_REC1.clone()));
+                assert_eq!(records.next(), Some(PET_REC3_2.clone()));
                 assert!(records.next().is_none());
                 Ok(())
             })),
