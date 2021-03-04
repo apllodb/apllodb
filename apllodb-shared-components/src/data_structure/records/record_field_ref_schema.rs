@@ -40,7 +40,8 @@ impl RecordFieldRefSchema {
         Self(left)
     }
 
-    pub(crate) fn as_full_field_references(&self) -> &[FullFieldReference] {
+    /// get raw FFR
+    pub fn as_full_field_references(&self) -> &[FullFieldReference] {
         &self.0
     }
 }

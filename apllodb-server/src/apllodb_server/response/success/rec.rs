@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, FieldIndex, Record, RecordFieldRefSchema, SqlConvertible,
+    ApllodbResult, FieldIndex, FullFieldReference, Record, RecordFieldRefSchema, SqlConvertible,
+    SqlValue,
 };
 
 /// Iterator of [Rec](crate::Rec)s.
@@ -27,5 +28,15 @@ impl Rec {
     pub fn get<T: SqlConvertible>(&self, index: &FieldIndex) -> ApllodbResult<Option<T>> {
         let idx = self.schema.resolve_index(index)?;
         self.record.get(idx)
+    }
+
+    /// Get raw representation
+    pub fn into_ffr_vals(self) -> Vec<(FullFieldReference, SqlValue)> {
+        self.schema
+            .as_full_field_references()
+            .iter()
+            .cloned()
+            .zip(self.record.into_values())
+            .collect()
     }
 }
