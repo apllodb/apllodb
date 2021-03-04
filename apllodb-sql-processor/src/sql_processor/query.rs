@@ -45,7 +45,6 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 mod tests {
     use std::rc::Rc;
 
-    use crate::test_support::utility_functions::r_projection;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
         ApllodbResult, Record,
@@ -101,17 +100,17 @@ mod tests {
             TestDatum::new(
                 "SELECT id FROM people",
                 vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id().into()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id().into()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id().into()])?,
+                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_id())])?,
                 ],
             ),
             TestDatum::new(
                 "SELECT age FROM people",
                 vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age().into()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age().into()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age().into()])?,
+                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_age())])?,
                 ],
             ),
         ];

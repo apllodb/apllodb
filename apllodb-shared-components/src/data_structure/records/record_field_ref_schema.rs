@@ -15,12 +15,13 @@ impl RecordFieldRefSchema {
     /// # Failures
     ///
     /// see: [FieldIndex::peek](crate::FieldIndex::peek)
-    pub(crate) fn resolve_index(&self, index: &FieldIndex) -> ApllodbResult<usize> {
+    pub fn resolve_index(&self, index: &FieldIndex) -> ApllodbResult<usize> {
         let (idx, _) = index.peek(&self.0)?;
         Ok(idx)
     }
 
-    pub(crate) fn projection(&self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
+    /// Filter specified fields
+    pub fn projection(&self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
         let new_ffrs: Vec<FullFieldReference> = projection
             .iter()
             .map(|index| {
@@ -29,6 +30,14 @@ impl RecordFieldRefSchema {
             })
             .collect::<ApllodbResult<_>>()?;
         Ok(Self(new_ffrs))
+    }
+
+    /// Join 2 schema
+    pub fn joined(&self, right: &Self) -> Self {
+        let mut left = self.0.clone();
+        let mut right = right.0.clone();
+        left.append(&mut right);
+        Self(left)
     }
 
     pub(crate) fn as_full_field_references(&self) -> &[FullFieldReference] {

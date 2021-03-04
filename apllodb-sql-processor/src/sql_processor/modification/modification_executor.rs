@@ -71,7 +71,7 @@ mod tests {
             fixture::*,
             test_models::{People, Pet},
         },
-        ApllodbResult, Record, SqlValues, TableName,
+        ApllodbResult, ColumnName, Record, Records, SqlValues, TableName,
     };
     use apllodb_storage_engine_interface::{
         test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
@@ -100,6 +100,7 @@ mod tests {
     struct TestDatum {
         in_plan_tree: ModificationPlanTree,
         expected_insert_table: TableName,
+        expected_insert_columns: Vec<ColumnName>,
         expected_insert_records: Vec<Record>,
     }
 
@@ -115,16 +116,20 @@ mod tests {
                             table_name: People::table_name(),
                             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::Values {
-                                    records: vec![
-                                        T_PEOPLE_R1.clone(),
-                                        T_PEOPLE_R2.clone(),
-                                        T_PEOPLE_R3.clone(),
-                                    ],
+                                    records: Records::new(
+                                        People::schema(),
+                                        vec![
+                                            T_PEOPLE_R1.clone(),
+                                            T_PEOPLE_R2.clone(),
+                                            T_PEOPLE_R3.clone(),
+                                        ],
+                                    ),
                                 },
                             }),
                         },
                     )),
                     expected_insert_table: People::table_name(),
+                    expected_insert_columns: People::schema().to_column_names(),
                     expected_insert_records: vec![
                         T_PEOPLE_R1.clone(),
                         T_PEOPLE_R2.clone(),
@@ -146,6 +151,7 @@ mod tests {
                         },
                     )),
                     expected_insert_table: Pet::table_name(),
+                    expected_insert_columns: Pet::schema().to_column_names(),
                     expected_insert_records: vec![
                         T_PET_R1.clone(),
                         T_PET_R3_1.clone(),
@@ -179,11 +185,7 @@ mod tests {
                     .with(
                         always(),
                         eq(test_datum.expected_insert_table),
-                        eq(test_datum
-                            .expected_insert_records
-                            .first()
-                            .unwrap()
-                            .as_column_names()),
+                        eq(test_datum.expected_insert_columns),
                         eq(test_datum
                             .expected_insert_records
                             .into_iter()

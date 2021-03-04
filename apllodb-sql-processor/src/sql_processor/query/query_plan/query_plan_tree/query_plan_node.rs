@@ -1,4 +1,4 @@
-use apllodb_shared_components::{Expression, FieldIndex, Ordering, Record, TableName};
+use apllodb_shared_components::{Expression, FieldIndex, Ordering, Records, TableName};
 use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
 use serde::{Deserialize, Serialize};
 
@@ -34,7 +34,7 @@ pub(crate) struct QueryPlanNodeBinary {
 #[derive(Clone, PartialEq, Debug)]
 pub(crate) enum LeafPlanOperation {
     Values {
-        records: Vec<Record>,
+        records: Records,
     },
     SeqScan {
         table_name: TableName,

@@ -1,4 +1,6 @@
-use crate::{FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName};
+use crate::{
+    FieldIndex, FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
+};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
@@ -19,6 +21,12 @@ impl People {
 
     pub fn schema() -> RecordFieldRefSchema {
         RecordFieldRefSchema::factory(vec![Self::ffr_id(), Self::ffr_age()])
+    }
+
+    pub fn field_idx(ffr: FullFieldReference) -> usize {
+        Self::schema()
+            .resolve_index(&FieldIndex::from(ffr))
+            .unwrap()
     }
 
     pub fn record(id: i64, age: i32) -> Record {

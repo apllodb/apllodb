@@ -141,6 +141,13 @@ impl RecordFieldRefSchema {
     pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
         Self::new(full_field_references)
     }
+
+    pub fn to_column_names(&self) -> Vec<ColumnName> {
+        self.as_full_field_references()
+            .iter()
+            .map(|ffr| ffr.as_column_name().clone())
+            .collect()
+    }
 }
 
 fn random_id() -> String {

@@ -26,7 +26,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         op_leaf: LeafPlanOperation,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::Values { records } => Ok((Records::from(records), session)),
+            LeafPlanOperation::Values { records } => Ok((records, session)),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
@@ -61,7 +61,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             BinaryPlanOperation::HashJoin {
                 left_field,
                 right_field,
-            } => self.hash_join(input_left, input_right, &left_field, &right_field),
+            } => {
+                let left_idx = input_left.as_schema().resolve_index(&left_field)?;
+                let right_idx = input_left.as_schema().resolve_index(&right_field)?;
+                self.hash_join(input_left, input_right, left_idx, right_idx)
+            }
         }
     }
 
@@ -82,10 +86,18 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
     fn projection(&self, input_left: Records, fields: Vec<FieldIndex>) -> ApllodbResult<Records> {
+        let idxs: Vec<usize> = fields
+            .iter()
+            .map(|f| input_left.as_schema().resolve_index(f))
+            .collect::<ApllodbResult<_>>()?;
+
+        let schema = input_left.as_schema().projection(&fields)?;
+
         let records = input_left
-            .map(|record| record.projection(&fields))
+            .map(|record| record.projection(&idxs))
             .collect::<ApllodbResult<Vec<Record>>>()?;
-        Ok(Records::from(records))
+
+        Ok(Records::new(schema, records))
     }
 
     fn selection(&self, input_left: Records, condition: Expression) -> ApllodbResult<Records> {
@@ -112,14 +124,14 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         &self,
         input_left: Records,
         input_right: Records,
-        left_field: &FieldIndex,
-        right_field: &FieldIndex,
+        left_idx: usize,
+        right_idx: usize,
     ) -> ApllodbResult<Records> {
         // TODO Create hash table from smaller input.
         let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
 
         for left_record in input_left {
-            let left_sql_value = left_record.get_sql_value(&left_field)?;
+            let left_sql_value = left_record.get_sql_value(left_idx)?;
             hash_table
                 .entry(SqlValueHashKey::from(left_sql_value))
                 // FIXME Clone less. If join keys are unique, no need for clone.
@@ -127,12 +139,13 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 .or_insert_with(|| vec![left_record]);
         }
 
-        let mut ret = Vec::<Record>::new();
+        let schema = input_left.as_schema().joined(input_right.as_schema());
 
+        let mut records = Vec::<Record>::new();
         for right_record in input_right {
-            let right_sql_value = right_record.get_sql_value(&right_field)?;
+            let right_sql_value = right_record.get_sql_value(right_idx)?;
             if let Some(left_records) = hash_table.get(&SqlValueHashKey::from(right_sql_value)) {
-                ret.append(
+                records.append(
                     &mut left_records
                         .iter()
                         .map(|left_record| left_record.clone().join(right_record.clone()))
@@ -141,6 +154,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             }
         }
 
-        Ok(Records::from(ret))
+        Ok(Records::new(schema, records))
     }
 }

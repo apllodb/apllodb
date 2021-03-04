@@ -86,18 +86,15 @@ mod tests {
         AliasDef, ProjectionQuery,
     };
 
-    use crate::{
-        sql_processor::query::query_plan::{
-            query_plan_tree::{
-                query_plan_node::{
-                    BinaryPlanOperation, LeafPlanOperation, QueryPlanNode, QueryPlanNodeBinary,
-                    QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
-                },
-                QueryPlanTree,
+    use crate::sql_processor::query::query_plan::{
+        query_plan_tree::{
+            query_plan_node::{
+                BinaryPlanOperation, LeafPlanOperation, QueryPlanNode, QueryPlanNodeBinary,
+                QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
             },
-            QueryPlan,
+            QueryPlanTree,
         },
-        test_support::utility_functions::r_projection,
+        QueryPlan,
     };
 
     use super::QueryExecutor;
@@ -147,9 +144,9 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id().into()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id().into()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id().into()])?,
+                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_id())])?,
                 ],
             },
             TestDatum {
@@ -163,9 +160,9 @@ mod tests {
                     },
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age().into()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age().into()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age().into()])?,
+                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_age())])?,
                 ],
             },
             // Projection
@@ -185,9 +182,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_id().into()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_id().into()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_id().into()])?,
+                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_id())])?,
+                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_id())])?,
                 ],
             },
             TestDatum {
@@ -206,9 +203,9 @@ mod tests {
                     })),
                 })),
                 expected_select_records: vec![
-                    r_projection(T_PEOPLE_R1.clone(), vec![People::ffr_age().into()])?,
-                    r_projection(T_PEOPLE_R2.clone(), vec![People::ffr_age().into()])?,
-                    r_projection(T_PEOPLE_R3.clone(), vec![People::ffr_age().into()])?,
+                    T_PEOPLE_R1.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R2.projection(&[People::field_idx(People::ffr_age())])?,
+                    T_PEOPLE_R3.projection(&[People::field_idx(People::ffr_age())])?,
                 ],
             },
             // HashJoin
