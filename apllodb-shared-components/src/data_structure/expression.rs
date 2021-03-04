@@ -29,7 +29,7 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn to_sql_value(
+    pub(crate) fn to_sql_value(
         &self,
         record: &Record,
         schema: &RecordFieldRefSchema,
@@ -93,23 +93,101 @@ impl From<SqlValue> for Expression {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
-
-    use crate::{ApllodbResult, Expression, SqlValue, UnaryOperator};
+    use crate::test_support::{fixture::*, test_models::People};
+    use crate::{
+        ApllodbResult, BooleanExpression, Expression, Record, RecordFieldRefSchema, SqlValue,
+        UnaryOperator,
+    };
 
     #[test]
-    fn test_try_from_success() -> ApllodbResult<()> {
-        let expr_vs_expected_sql_value: Vec<(Expression, SqlValue)> = vec![
-            (Expression::factory_integer(1), SqlValue::factory_integer(1)),
-            (
+    fn test_to_sql_value() -> ApllodbResult<()> {
+        #[derive(Clone, Debug, new)]
+        struct TestDatum {
+            in_expr: Expression,
+            in_schema_record: Option<(RecordFieldRefSchema, Record)>,
+            expected_sql_value: SqlValue,
+        }
+
+        let test_data: Vec<TestDatum> = vec![
+            // constants
+            TestDatum::new(
+                Expression::factory_integer(1),
+                None,
+                SqlValue::factory_integer(1),
+            ),
+            // unary op
+            TestDatum::new(
                 Expression::factory_uni_op(UnaryOperator::Minus, Expression::factory_integer(1)),
+                None,
                 SqlValue::factory_integer(-1),
+            ),
+            // FullFieldReference
+            TestDatum::new(
+                Expression::FullFieldReferenceVariant(People::ffr_id()),
+                Some((People::schema(), T_PEOPLE_R1.clone())),
+                SqlValue::factory_integer(1),
+            ),
+            // BooleanExpression
+            TestDatum::new(
+                Expression::factory_eq(Expression::factory_null(), Expression::factory_null()),
+                None,
+                SqlValue::factory_bool(false),
+            ),
+            TestDatum::new(
+                Expression::factory_eq(
+                    Expression::factory_integer(123),
+                    Expression::factory_integer(123),
+                ),
+                None,
+                SqlValue::factory_bool(true),
+            ),
+            TestDatum::new(
+                Expression::factory_eq(
+                    Expression::factory_integer(123),
+                    Expression::factory_integer(-123),
+                ),
+                None,
+                SqlValue::factory_bool(false),
+            ),
+            TestDatum::new(
+                Expression::factory_and(
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(123),
+                        Expression::factory_integer(123),
+                    ),
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(456),
+                        Expression::factory_integer(456),
+                    ),
+                ),
+                None,
+                SqlValue::factory_bool(true),
+            ),
+            TestDatum::new(
+                Expression::factory_and(
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(-123),
+                        Expression::factory_integer(123),
+                    ),
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(456),
+                        Expression::factory_integer(456),
+                    ),
+                ),
+                None,
+                SqlValue::factory_bool(false),
             ),
         ];
 
-        for (expr, expected_sql_value) in expr_vs_expected_sql_value {
-            let sql_value = SqlValue::try_from(expr)?;
-            assert_eq!(sql_value, expected_sql_value);
+        for t in test_data {
+            let schema_record = t.in_schema_record.unwrap_or_else(|| {
+                let schema = RecordFieldRefSchema::new(vec![]);
+                (schema, Record::factory(vec![]))
+            });
+            let (schema, record) = schema_record;
+
+            let sql_value = t.in_expr.to_sql_value(&record, &schema)?;
+            assert_eq!(sql_value, t.expected_sql_value);
         }
 
         Ok(())
