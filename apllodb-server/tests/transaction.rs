@@ -74,6 +74,7 @@ async fn test_commit_saves_records() {
 }
 
 #[async_std::test]
+#[ignore]
 async fn test_abort_discards_records() {
     SqlTest::default()
         .add_steps(Steps::CreateTablePeople)
@@ -154,6 +155,7 @@ async fn test_transaction_ddl_isolation() {
 }
 
 #[async_std::test]
+#[ignore]
 async fn test_transaction_dml_isolation() {
     SqlTestSessionAB::default()
         .add_steps(SessionAB::A, Steps::CreateTablePeople)

@@ -4,7 +4,8 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    NNSqlValue, SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
+    FieldIndex, NNSqlValue, SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints,
+    TableName,
 };
 use apllodb_storage_engine_interface::{test_support::session_with_tx, AliasDef};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -31,8 +32,6 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     );
     let coldefs = vec![c_id_def.clone(), c1_def.clone()];
 
-    let (id_idx, c1_idx): (usize, usize) = (0, 1);
-
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
         column_names: vec![c_id_def.column_data_type().column_name().clone()],
     }])?;
@@ -48,7 +47,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // v1
     // | id | c1 |
     // |----|----|
-    // | 1  | 1  |
+    // | 1  | 10 |
     let session = engine
         .with_tx()
         .insert(
@@ -60,7 +59,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
             ],
             vec![SqlValues::new(vec![
                 SqlValue::NotNull(NNSqlValue::Integer(1)),
-                SqlValue::NotNull(NNSqlValue::Integer(1)),
+                SqlValue::NotNull(NNSqlValue::Integer(10)),
             ])],
         )
         .await?;
@@ -68,7 +67,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // v1
     // | id | c1 |
     // |----|----|
-    // | 1  | 1  |
+    // | 1  | 10 |
     //
     // v2
     // | id |
@@ -87,7 +86,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // v1
     // | id | c1 |
     // |----|----|
-    // | 1  | 1  |
+    // | 1  | 10 |
     //
     // v2
     // | id |
@@ -108,8 +107,8 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // v1
     // | id | c1 |
     // |----|----|
-    // | 1  | 1  |
-    // | 3  | 3  |
+    // | 1  | 10 |
+    // | 3  | 30 |
     //
     // v2
     // | id |
@@ -126,7 +125,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
             ],
             vec![SqlValues::new(vec![
                 SqlValue::NotNull(NNSqlValue::Integer(3)),
-                SqlValue::NotNull(NNSqlValue::Integer(3)),
+                SqlValue::NotNull(NNSqlValue::Integer(30)),
             ])],
         )
         .await?;
@@ -145,11 +144,19 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
 
     assert_eq!(records.clone().count(), 3);
 
+    let schema = records.as_schema().clone();
+    let id_idx = schema.resolve_index(&FieldIndex::from(
+        c_id_def.column_data_type().column_name().as_str(),
+    ))?;
+    let c1_idx = schema.resolve_index(&FieldIndex::from(
+        c1_def.column_data_type().column_name().as_str(),
+    ))?;
+
     for record in records {
         let id: i32 = record.get(id_idx)?.unwrap();
         match id {
-            1 => assert_eq!(record.get::<i32>(c1_idx)?, Some(1)),
-            3 => assert_eq!(record.get::<i32>(c1_idx)?, Some(3)),
+            1 => assert_eq!(record.get::<i32>(c1_idx)?, Some(10)),
+            3 => assert_eq!(record.get::<i32>(c1_idx)?, Some(30)),
             2 => {
                 // Can fetch column `c1` from v2 and it's value is NULL.
                 assert_eq!(record.get::<i32>(c1_idx)?, None);

@@ -3,8 +3,8 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
-    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, NNSqlValue, SqlType,
-    SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
+    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex, NNSqlValue,
+    SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{test_support::session_with_tx, AliasDef};
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -30,8 +30,6 @@ async fn test_compound_pk() -> ApllodbResult<()> {
         ColumnConstraints::new(vec![])?,
     );
     let coldefs = vec![c_country_code_def.clone(), c_postal_code_def.clone()];
-
-    let (country_code_idx, postal_code_idx): (usize, usize) = (0, 1);
 
     let tc = TableConstraints::new(vec![TableConstraintKind::PrimaryKey {
         column_names: vec![
@@ -73,6 +71,14 @@ async fn test_compound_pk() -> ApllodbResult<()> {
             AliasDef::default(),
         )
         .await?;
+
+    let schema = records.as_schema().clone();
+    let country_code_idx = schema.resolve_index(&FieldIndex::from(
+        c_country_code_def.column_data_type().column_name().as_str(),
+    ))?;
+    let postal_code_idx = schema.resolve_index(&FieldIndex::from(
+        c_postal_code_def.column_data_type().column_name().as_str(),
+    ))?;
 
     for record in records {
         assert_eq!(
