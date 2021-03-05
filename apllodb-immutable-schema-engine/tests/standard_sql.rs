@@ -4,8 +4,8 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, Expression, FieldIndex, NNSqlValue, SqlType, SqlValue, SqlValues,
-    TableConstraintKind, TableConstraints, TableName,
+    ColumnDefinition, Expression, FieldIndex, FullFieldReference, NNSqlValue, RecordFieldRefSchema,
+    SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::test_support::session_with_tx;
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -295,7 +295,12 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
+            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+                FullFieldReference::factory(
+                    t_name.as_str(),
+                    c_id_def.column_data_type().column_name().as_str(),
+                ),
+            ])),
         )
         .await?;
     assert_eq!(rows.count(), 1);
@@ -306,7 +311,12 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
+            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+                FullFieldReference::factory(
+                    t_name.as_str(),
+                    c_id_def.column_data_type().column_name().as_str(),
+                ),
+            ])),
         )
         .await?;
     assert_eq!(rows.count(), 0);
