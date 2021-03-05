@@ -90,8 +90,23 @@ impl TryFrom<SelectCommand> for QueryPlan {
             node1
         };
 
+        // FIXME not necessary? `let ffrs: Vec<FullFieldReference>` already filters necessary fields.
         let root_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
-            op: Self::projection_node(select_fields, &from_items)?,
+            op: Self::projection_node(
+                select_fields
+                    .into_iter()
+                    .map(|select_field| {
+                        if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
+                            select_field.expression
+                        {
+                            (ast_colref, select_field.alias)
+                        } else {
+                            panic!("fix 'FIXME' above!")
+                        }
+                    })
+                    .collect(),
+                &from_items,
+            )?,
             left: Box::new(node2),
         });
 
@@ -125,9 +140,10 @@ impl QueryPlan {
             apllodb_ast::Expression::ConstantVariant(_) => {
                 unimplemented!();
             }
-            apllodb_ast::Expression::ColumnReferenceVariant(_) => {
+            apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
                 AstTranslator::select_field_column_reference(
-                    select_field.clone(),
+                    ast_colref.clone(),
+                    select_field.alias.clone(),
                     from_items.to_vec(),
                 )
             }
@@ -140,15 +156,19 @@ impl QueryPlan {
     }
 
     fn projection_node(
-        select_fields: Vec<SelectField>,
+        fields: Vec<(apllodb_ast::ColumnReference, Option<apllodb_ast::Alias>)>,
         from_items: &[FromItem],
     ) -> ApllodbResult<UnaryPlanOperation> {
         let node = UnaryPlanOperation::Projection {
-            fields: select_fields
+            fields: fields
                 .into_iter()
-                .map(|select_field| {
-                    AstTranslator::select_field_column_reference(select_field, from_items.to_vec())
-                        .map(FieldIndex::from)
+                .map(|(ast_colref, ast_field_alias)| {
+                    AstTranslator::select_field_column_reference(
+                        ast_colref,
+                        ast_field_alias,
+                        from_items.to_vec(),
+                    )
+                    .map(FieldIndex::from)
                 })
                 .collect::<ApllodbResult<_>>()?,
         };
