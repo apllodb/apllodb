@@ -17,14 +17,12 @@ impl AstTranslator {
                 left,
                 right,
                 on,
-            } => {
-                Ok(FromItem::JoinVariant {
-                    join_type: Self::join_type(join_type),
-                    left: Self::from_item(*left),
-                    right: Self::from_item(*right),
-                    on: Self::expression_in_select(ast_expression, ast_table_names)
-                })
-            }
+            } => Ok(FromItem::JoinVariant {
+                join_type: Self::join_type(join_type),
+                left: Self::from_item(*left),
+                right: Self::from_item(*right),
+                on: Self::expression_in_select(ast_expression, ast_table_names),
+            }),
         }
     }
 }
