@@ -4,7 +4,7 @@ use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, Records,
     SessionWithTx, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
@@ -31,10 +31,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 table_name,
                 projection,
                 alias_def,
-            } => {
-                self.seq_scan(session, table_name, projection, alias_def)
-                    .await
-            }
+            } => self.seq_scan(session, table_name, projection).await,
         }
     }
 
@@ -74,11 +71,10 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         session: SessionWithTx,
         table_name: TableName,
         projection: ProjectionQuery,
-        alias_def: AliasDef,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         self.engine
             .with_tx()
-            .select(session, table_name, projection, alias_def)
+            .select(session, table_name, projection)
             .await
     }
 

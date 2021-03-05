@@ -33,6 +33,7 @@ impl RowColumnRefSchema {
         self.column_names
     }
 
+    // これはいるのかも・・・？
     pub fn into_record_schema(self, alias_def: AliasDef) -> RecordFieldRefSchema {
         let correlation_reference = match alias_def.table_alias() {
             None => CorrelationReference::TableNameVariant(self.table_name),

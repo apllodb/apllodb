@@ -40,7 +40,7 @@ struct MockDatumInTable {
 pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock) {
     with_tx
         .expect_select()
-        .returning(move |session, table_name, projection, _alias_def| {
+        .returning(move |session, table_name, projection| {
             let models = models.clone();
             let datum = MockDatum::from(models);
 

@@ -7,7 +7,6 @@ use apllodb_immutable_schema_engine_domain::{
     },
 };
 use apllodb_shared_components::{RecordFieldRefSchema, Records, SqlValues};
-use apllodb_storage_engine_interface::AliasDef;
 
 use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes};
 
@@ -34,19 +33,10 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
         Self(iters.into_iter().collect())
     }
 
-    fn into_record_iterator(self, alias_def: AliasDef) -> Records {
+    fn into_record_iterator(self, schema: RecordFieldRefSchema) -> Records {
         if self.0.is_empty() {
-            Records::new(
-                RecordFieldRefSchema::new(vec![]), // FIXME empty FFRs causes Err on FieldIndex::peek()
-                Vec::<SqlValues>::new(),
-            )
+            Records::new(schema, Vec::<SqlValues>::new())
         } else {
-            let record_schema = {
-                let row_iter = self.0.front().unwrap();
-                let row_schema = row_iter.schema().clone();
-                row_schema.into_record_schema(alias_def)
-            };
-
             let mut sql_values: Vec<SqlValues> = vec![];
 
             for row_iter in self.0 {
@@ -63,7 +53,7 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
                 sql_values.append(&mut vs);
             }
 
-            Records::new(record_schema, sql_values)
+            Records::new(schema, sql_values)
         }
     }
 

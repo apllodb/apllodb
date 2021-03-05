@@ -1,10 +1,14 @@
 use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
+use apllodb_immutable_schema_engine_domain::{
+    abstract_types::ImmutableSchemaAbstractTypes, row_iter::ImmutableSchemaRowIterator,
+};
 use apllodb_immutable_schema_engine_domain::{
     query::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{ApllodbResult, DatabaseName, RecordFieldRefSchema, TableName};
+use apllodb_shared_components::{
+    ApllodbResult, DatabaseName, RecordFieldRefSchema, Records, TableName,
+};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
@@ -22,11 +26,10 @@ impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput<Types: ImmutableSchemaAbstractTypes> {
-    pub schema: RecordFieldRefSchema,
-    pub row_iter: Types::ImmutableSchemaRowIter,
+pub struct FullScanUseCaseOutput {
+    pub records: Records,
 }
-impl<Types: ImmutableSchemaAbstractTypes> UseCaseOutput for FullScanUseCaseOutput<Types> {}
+impl UseCaseOutput for FullScanUseCaseOutput {}
 
 pub struct FullScanUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
     _marker: PhantomData<(&'usecase (), Types)>,
@@ -37,7 +40,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
     for FullScanUseCase<'usecase, Types>
 {
     type In = FullScanUseCaseInput<'usecase>;
-    type Out = FullScanUseCaseOutput<Types>;
+    type Out = FullScanUseCaseOutput;
 
     /// # Failures
     ///
@@ -55,8 +58,10 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result: ProjectionResult =
             ProjectionResult::new(&vtable, active_versions, input.projection)?;
-        let schema = RecordFieldRefSchema::from(projection_result.clone());
+        let schema = RecordFieldRefSchema::from(projection_result.clone()); // こいつにalias相当の情報が入っていれば、engine-interefaceにおいてalias_defは不要
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
-        Ok(FullScanUseCaseOutput { schema, row_iter })
+
+        let records = row_iter.into_record_iterator(schema);
+        Ok(FullScanUseCaseOutput { records })
     }
 }
