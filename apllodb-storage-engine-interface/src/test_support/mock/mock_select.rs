@@ -54,12 +54,11 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
 
             let records = match projection {
                 ProjectionQuery::All => records,
-                ProjectionQuery::ColumnNames(column_names) => {
-                    let fields: Vec<FieldIndex> = column_names
+                ProjectionQuery::Schema(schema) => {
+                    let fields: Vec<FieldIndex> = schema
+                        .as_full_field_references()
                         .into_iter()
-                        .map(|cn| {
-                            FieldIndex::from(format!("{}.{}", table_name.as_str(), cn.as_str()))
-                        })
+                        .map(|ffr| FieldIndex::from(ffr.clone()))
                         .collect();
 
                     records.projection(&fields).unwrap()

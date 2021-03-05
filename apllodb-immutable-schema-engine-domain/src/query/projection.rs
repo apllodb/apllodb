@@ -47,16 +47,20 @@ impl ProjectionResult {
 
         let pk_query_columns: Vec<ColumnName> = match &query {
             ProjectionQuery::All => pk_columns.iter().cloned().collect(),
-            ProjectionQuery::ColumnNames(cns) => cns
+            ProjectionQuery::Schema(schema) => schema
+                .as_full_field_references()
                 .iter()
+                .map(|ffr| ffr.as_column_name())
                 .filter(|cn| pk_columns.contains(cn))
                 .cloned()
                 .collect(),
         };
         let non_pk_query_columns: Vec<ColumnName> = match &query {
             ProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
-            ProjectionQuery::ColumnNames(cns) => cns
+            ProjectionQuery::Schema(schema) => schema
+                .as_full_field_references()
                 .iter()
+                .map(|ffr| ffr.as_column_name())
                 .filter(|cn| versions_available_columns.contains(cn))
                 .cloned()
                 .collect(),

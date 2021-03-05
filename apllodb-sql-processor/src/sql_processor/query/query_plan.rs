@@ -3,8 +3,8 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex, FullFieldReference,
-    Ordering,
+    ApllodbError, ApllodbResult, AstTranslator, FieldIndex, FullFieldReference, Ordering,
+    RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
 use apllodb_storage_engine_interface::ProjectionQuery;
@@ -55,17 +55,12 @@ impl TryFrom<SelectCommand> for QueryPlan {
         //
         // > 2テーブル以上にまたがったときにどうやってschemaをsplitするか。
         // FFRにCorrelationReferenceでfilterする関数を設ける？その方針だったら Schema::joined は廃止して、最終的なRecordのSchemaから分割していく作りになる
-
-        let column_names: Vec<ColumnName> = ffrs
-            .iter()
-            .map(|ffr| ffr.as_column_name())
-            .cloned()
-            .collect();
+        let schema = RecordFieldRefSchema::new(ffrs);
 
         let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
                 table_name: AstTranslator::table_name(from_item.table_name)?, // correlation alias情報が消えている
-                projection: ProjectionQuery::ColumnNames(column_names),
+                projection: ProjectionQuery::Schema(schema),
             },
         });
 
