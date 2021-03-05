@@ -30,7 +30,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-                alias_def,
             } => self.seq_scan(session, table_name, projection).await,
         }
     }

@@ -1,5 +1,5 @@
 use apllodb_shared_components::{Expression, FieldIndex, Ordering, Records, TableName};
-use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
+use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 /// Node of query plan tree.
@@ -39,7 +39,6 @@ pub(crate) enum LeafPlanOperation {
     SeqScan {
         table_name: TableName,
         projection: ProjectionQuery,
-        alias_def: AliasDef,
     },
     // TODO extend.
     // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>

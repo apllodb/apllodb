@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     ColumnDefinition, Expression, FieldIndex, NNSqlValue, SqlType, SqlValue, SqlValues,
     TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{test_support::session_with_tx, AliasDef};
+use apllodb_storage_engine_interface::test_support::session_with_tx;
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[ctor::ctor]
@@ -126,12 +126,7 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
 
     let schema = records.as_schema().clone();
@@ -197,12 +192,7 @@ async fn test_update() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
 
     let schema = records.as_schema().clone();
@@ -228,12 +218,7 @@ async fn test_update() -> ApllodbResult<()> {
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
     let record = records.next().unwrap();
     assert_eq!(record.get::<i32>(id_idx)?, Some(1));
@@ -251,12 +236,7 @@ async fn test_update() -> ApllodbResult<()> {
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
     let record = records.next().unwrap();
     assert_eq!(record.get::<i32>(id_idx)?, Some(2));
@@ -316,7 +296,6 @@ async fn test_delete() -> ApllodbResult<()> {
             session,
             t_name.clone(),
             ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
-            AliasDef::default(),
         )
         .await?;
     assert_eq!(rows.count(), 1);
@@ -328,7 +307,6 @@ async fn test_delete() -> ApllodbResult<()> {
             session,
             t_name.clone(),
             ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
-            AliasDef::default(),
         )
         .await?;
     assert_eq!(rows.count(), 0);

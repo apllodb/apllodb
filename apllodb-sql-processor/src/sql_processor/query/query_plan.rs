@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     Ordering,
 };
 use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
-use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
+use apllodb_storage_engine_interface::ProjectionQuery;
 
 use self::query_plan_tree::{
     query_plan_node::{
@@ -62,13 +62,10 @@ impl TryFrom<SelectCommand> for QueryPlan {
             .cloned()
             .collect();
 
-        let alias_def = AliasDef::from(ffrs);
-
         let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
                 table_name: AstTranslator::table_name(from_item.table_name)?, // correlation alias情報が消えている
                 projection: ProjectionQuery::ColumnNames(column_names),
-                alias_def,
             },
         });
 

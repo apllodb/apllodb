@@ -75,7 +75,7 @@ mod tests {
     };
     use apllodb_storage_engine_interface::{
         test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
-        AliasDef, ProjectionQuery,
+        ProjectionQuery,
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
@@ -145,7 +145,6 @@ mod tests {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: Pet::table_name(),
                                     projection: ProjectionQuery::All,
-                                    alias_def: AliasDef::default(),
                                 },
                             }),
                         },

@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex, NNSqlValue,
     SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{test_support::session_with_tx, AliasDef};
+use apllodb_storage_engine_interface::test_support::session_with_tx;
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[ctor::ctor]
@@ -68,7 +68,6 @@ async fn test_compound_pk() -> ApllodbResult<()> {
                 .column_data_type()
                 .column_name()
                 .clone()]),
-            AliasDef::default(),
         )
         .await?;
 
