@@ -181,32 +181,33 @@ struct ProjectionResultInVersion {
 
 impl From<ProjectionResult> for RecordFieldRefSchema {
     fn from(pr: ProjectionResult) -> Self {
-        if pr.result_per_version.is_empty() {
-            RecordFieldRefSchema::new(vec![]) // FIXME empty FFRs causes Err on FieldIndex::peek()
-        } else {
-            let (version_id, _) = pr.result_per_version.iter().next().unwrap();
-            let table_name = version_id.vtable_id().table_name().clone();
+        assert!(
+            !pr.result_per_version.is_empty(),
+            "at least 1 pr.result_per_version should exist for CREATEd table"
+        );
 
-            let mut all_column_names: Vec<ColumnName> = vec![];
+        let (version_id, _) = pr.result_per_version.iter().next().unwrap();
+        let table_name = version_id.vtable_id().table_name().clone();
 
-            for (_, mut projection_result_in_version) in pr.result_per_version {
-                all_column_names.append(&mut projection_result_in_version.pk_effective);
-                all_column_names.append(&mut projection_result_in_version.pk_void);
-                all_column_names.append(&mut projection_result_in_version.non_pk_effective);
-                all_column_names.append(&mut projection_result_in_version.non_pk_void);
-            }
+        let mut all_column_names: Vec<ColumnName> = vec![];
 
-            let ffrs: Vec<FullFieldReference> = all_column_names
-                .into_iter()
-                .map(|cn| {
-                    FullFieldReference::new(
-                        CorrelationReference::TableNameVariant(table_name.clone()),
-                        FieldReference::ColumnNameVariant(cn),
-                    )
-                })
-                .collect();
-
-            RecordFieldRefSchema::new(ffrs)
+        for (_, mut projection_result_in_version) in pr.result_per_version {
+            all_column_names.append(&mut projection_result_in_version.pk_effective);
+            all_column_names.append(&mut projection_result_in_version.pk_void);
+            all_column_names.append(&mut projection_result_in_version.non_pk_effective);
+            all_column_names.append(&mut projection_result_in_version.non_pk_void);
         }
+
+        let ffrs: Vec<FullFieldReference> = all_column_names
+            .into_iter()
+            .map(|cn| {
+                FullFieldReference::new(
+                    CorrelationReference::TableNameVariant(table_name.clone()),
+                    FieldReference::ColumnNameVariant(cn),
+                )
+            })
+            .collect();
+
+        RecordFieldRefSchema::new(ffrs)
     }
 }
