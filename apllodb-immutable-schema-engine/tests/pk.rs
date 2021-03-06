@@ -3,9 +3,8 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
-    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex,
-    FullFieldReference, NNSqlValue, RecordFieldRefSchema, SqlType, SqlValue, SqlValues,
-    TableConstraintKind, TableConstraints, TableName,
+    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex, NNSqlValue,
+    SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::test_support::session_with_tx;
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -62,16 +61,7 @@ async fn test_compound_pk() -> ApllodbResult<()> {
 
     let (records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
-                FullFieldReference::factory(
-                    t_name.as_str(),
-                    c_postal_code_def.column_data_type().column_name().as_str(),
-                ),
-            ])),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
 
     let schema = records.as_schema().clone();
