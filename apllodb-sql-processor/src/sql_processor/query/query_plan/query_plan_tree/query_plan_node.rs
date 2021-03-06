@@ -1,4 +1,6 @@
-use apllodb_shared_components::{Expression, FieldIndex, Ordering, Records, TableName};
+use apllodb_shared_components::{
+    Expression, FieldIndex, Ordering, RecordFieldRefSchema, Records, TableName,
+};
 use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
@@ -65,6 +67,7 @@ pub(crate) enum UnaryPlanOperation {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub(crate) enum BinaryPlanOperation {
     HashJoin {
+        joined_schema: RecordFieldRefSchema,
         left_field: FieldIndex,
         right_field: FieldIndex,
     },

@@ -231,6 +231,7 @@ mod tests {
             TestDatum {
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
+                        joined_schema: People::schema().joined(&Body::schema()),
                         left_field: FieldIndex::from(People::ffr_id()),
                         right_field: FieldIndex::from(Body::ffr_people_id()),
                     },
@@ -256,6 +257,7 @@ mod tests {
                 // right has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
+                        joined_schema: People::schema().joined(&Pet::schema()),
                         left_field: FieldIndex::from(People::ffr_id()),
                         right_field: FieldIndex::from(Pet::ffr_people_id()),
                     },
@@ -282,6 +284,7 @@ mod tests {
                 // left has 2 same join keys
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
+                        joined_schema: Pet::schema().joined(&People::schema()),
                         left_field: FieldIndex::from(Pet::ffr_people_id()),
                         right_field: FieldIndex::from(People::ffr_id()),
                     },
@@ -308,6 +311,7 @@ mod tests {
                 // Eq comparison with Integer & SmallInt
                 in_plan_tree: QueryPlanTree::new(QueryPlanNode::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
+                        joined_schema: People::schema().joined(&Pet::schema()),
                         left_field: FieldIndex::from(People::ffr_age()),
                         right_field: FieldIndex::from(Pet::ffr_age()),
                     },

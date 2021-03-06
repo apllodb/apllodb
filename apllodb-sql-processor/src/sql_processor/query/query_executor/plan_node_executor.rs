@@ -1,8 +1,8 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, Records,
-    SessionWithTx, SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record,
+    RecordFieldRefSchema, Records, SessionWithTx, SqlValueHashKey, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
@@ -55,12 +55,13 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         match op_binary {
             // TODO type cast
             BinaryPlanOperation::HashJoin {
+                joined_schema,
                 left_field,
                 right_field,
             } => {
                 let left_idx = input_left.as_schema().resolve_index(&left_field)?;
                 let right_idx = input_right.as_schema().resolve_index(&right_field)?;
-                self.hash_join(input_left, input_right, left_idx, right_idx)
+                self.hash_join(joined_schema, input_left, input_right, left_idx, right_idx)
             }
         }
     }
@@ -117,6 +118,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ///   - Specified field does not exist in any record.
     fn hash_join(
         &self,
+        joined_schema: RecordFieldRefSchema,
         input_left: Records,
         input_right: Records,
         left_idx: usize,
@@ -124,8 +126,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ) -> ApllodbResult<Records> {
         // TODO Create hash table from smaller input.
         let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
-
-        let schema = input_left.as_schema().joined(input_right.as_schema());
 
         for left_record in input_left {
             let left_sql_value = left_record.get_sql_value(left_idx)?;
@@ -149,6 +149,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             }
         }
 
-        Ok(Records::new(schema, records))
+        Ok(Records::new(joined_schema, records))
     }
 }

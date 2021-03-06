@@ -32,14 +32,6 @@ impl RecordFieldRefSchema {
         Ok(Self(new_ffrs))
     }
 
-    /// Join 2 schema
-    pub fn joined(&self, right: &Self) -> Self {
-        let mut left = self.0.clone();
-        let mut right = right.0.clone();
-        left.append(&mut right);
-        Self(left)
-    }
-
     /// get raw FFR
     pub fn as_full_field_references(&self) -> &[FullFieldReference] {
         &self.0

@@ -142,6 +142,13 @@ impl RecordFieldRefSchema {
         Self::new(full_field_references)
     }
 
+    pub fn joined(&self, right: &Self) -> Self {
+        let mut left = self.as_full_field_references().to_vec();
+        let mut right = right.as_full_field_references().to_vec();
+        left.append(&mut right);
+        Self::new(left)
+    }
+
     pub fn to_column_names(&self) -> Vec<ColumnName> {
         self.as_full_field_references()
             .iter()
