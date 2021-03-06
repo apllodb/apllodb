@@ -57,7 +57,7 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
                 ProjectionQuery::Schema(schema) => {
                     let fields: Vec<FieldIndex> = schema
                         .as_full_field_references()
-                        .into_iter()
+                        .iter()
                         .map(|ffr| FieldIndex::from(ffr.clone()))
                         .collect();
 
