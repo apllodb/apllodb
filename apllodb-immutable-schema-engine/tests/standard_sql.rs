@@ -195,18 +195,20 @@ async fn test_update() -> ApllodbResult<()> {
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
 
-    let schema = records.as_schema().clone();
-    let id_idx = schema.resolve_index(&FieldIndex::from(
-        c_id_def.column_data_type().column_name().as_str(),
-    ))?;
-    let c1_idx = schema.resolve_index(&FieldIndex::from(
-        c1_def.column_data_type().column_name().as_str(),
-    ))?;
+    {
+        let schema = records.as_schema().clone();
+        let id_idx = schema.resolve_index(&FieldIndex::from(
+            c_id_def.column_data_type().column_name().as_str(),
+        ))?;
+        let c1_idx = schema.resolve_index(&FieldIndex::from(
+            c1_def.column_data_type().column_name().as_str(),
+        ))?;
 
-    let record = records.next().unwrap();
-    assert_eq!(record.get::<i32>(id_idx)?, Some(1));
-    assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
-    assert!(records.next().is_none());
+        let record = records.next().unwrap();
+        assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+        assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
+        assert!(records.next().is_none());
+    }
 
     // update non-PK
     let session = engine.with_tx().update(
@@ -220,10 +222,21 @@ async fn test_update() -> ApllodbResult<()> {
         .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
-    let record = records.next().unwrap();
-    assert_eq!(record.get::<i32>(id_idx)?, Some(1));
-    assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
-    assert!(records.next().is_none());
+
+    {
+        let schema = records.as_schema().clone();
+        let id_idx = schema.resolve_index(&FieldIndex::from(
+            c_id_def.column_data_type().column_name().as_str(),
+        ))?;
+        let c1_idx = schema.resolve_index(&FieldIndex::from(
+            c1_def.column_data_type().column_name().as_str(),
+        ))?;
+
+        let record = records.next().unwrap();
+        assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+        assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
+        assert!(records.next().is_none());
+    }
 
     // update PK
     let session =engine.with_tx().
@@ -238,10 +251,19 @@ async fn test_update() -> ApllodbResult<()> {
         .with_tx()
         .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
-    let record = records.next().unwrap();
-    assert_eq!(record.get::<i32>(id_idx)?, Some(2));
-    assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
-    assert!(records.next().is_none());
+    {
+        let schema = records.as_schema().clone();
+        let id_idx = schema.resolve_index(&FieldIndex::from(
+            c_id_def.column_data_type().column_name().as_str(),
+        ))?;
+        let c1_idx = schema.resolve_index(&FieldIndex::from(
+            c1_def.column_data_type().column_name().as_str(),
+        ))?;
+        let record = records.next().unwrap();
+        assert_eq!(record.get::<i32>(id_idx)?, Some(2));
+        assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
+        assert!(records.next().is_none());
+    }
 
     engine.with_tx().commit_transaction(session).await?;
 
