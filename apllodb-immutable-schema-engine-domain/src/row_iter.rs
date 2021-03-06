@@ -2,7 +2,7 @@ pub mod version_row_iter;
 
 use std::fmt::Debug;
 
-use apllodb_shared_components::{RecordFieldRefSchema, Records};
+use apllodb_shared_components::{ApllodbResult, RecordFieldRefSchema, Records};
 
 use crate::{abstract_types::ImmutableSchemaAbstractTypes, row::immutable_row::ImmutableRow};
 
@@ -19,5 +19,5 @@ pub trait ImmutableSchemaRowIterator<Types: ImmutableSchemaAbstractTypes>:
     fn chain_versions(iters: impl IntoIterator<Item = Types::VersionRowIter>) -> Self;
 
     ///  Into<RecordIterator>.
-    fn into_record_iterator(self, schema: RecordFieldRefSchema) -> Records;
+    fn into_record_iterator(self, schema: RecordFieldRefSchema) -> ApllodbResult<Records>;
 }

@@ -61,7 +61,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         let schema = RecordFieldRefSchema::from(projection_result.clone());
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
 
-        let records = row_iter.into_record_iterator(schema);
+        let records = row_iter.into_record_iterator(schema)?;
         Ok(FullScanUseCaseOutput { records })
     }
 }

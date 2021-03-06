@@ -6,7 +6,7 @@ use apllodb_immutable_schema_engine_domain::{
         version_row_iter::row_column_ref_schema::RowColumnRefSchema, ImmutableSchemaRowIterator,
     },
 };
-use apllodb_shared_components::{RecordFieldRefSchema, Records, SqlValues};
+use apllodb_shared_components::{ApllodbResult, RecordFieldRefSchema, Records, SqlValues};
 
 use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes};
 
@@ -33,27 +33,30 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
         Self(iters.into_iter().collect())
     }
 
-    fn into_record_iterator(self, schema: RecordFieldRefSchema) -> Records {
+    fn into_record_iterator(self, schema: RecordFieldRefSchema) -> ApllodbResult<Records> {
         if self.0.is_empty() {
-            Records::new(schema, Vec::<SqlValues>::new())
+            Ok(Records::new(schema, Vec::<SqlValues>::new()))
         } else {
             let mut sql_values: Vec<SqlValues> = vec![];
 
             for row_iter in self.0 {
                 let mut vs: Vec<SqlValues> = row_iter
-                    .map(|row| {
-                        let col_vals = row.into_zipped();
-                        let sql_values = col_vals
-                            .into_iter()
-                            .map(|(_, sql_value)| sql_value)
-                            .collect();
-                        SqlValues::new(sql_values)
+                    .map(|mut row| {
+                        schema
+                            .as_full_field_references()
+                            .iter()
+                            .map(|ffr| {
+                                let cn = ffr.as_column_name();
+                                row.get_sql_value(cn)
+                            })
+                            .collect::<ApllodbResult<_>>()
+                            .map(|sql_values| SqlValues::new(sql_values))
                     })
-                    .collect();
+                    .collect::<ApllodbResult<_>>()?;
                 sql_values.append(&mut vs);
             }
 
-            Records::new(schema, sql_values)
+            Ok(Records::new(schema, sql_values))
         }
     }
 
