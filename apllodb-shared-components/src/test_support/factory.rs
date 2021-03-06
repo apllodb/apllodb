@@ -2,8 +2,6 @@
 
 //! Factory methods for testing
 
-use std::sync::Arc;
-
 use crate::{
     data_structure::{
         records::record_field_ref_schema::RecordFieldRefSchema,
@@ -111,31 +109,25 @@ impl SqlValue {
     pub fn factory_integer(integer: i32) -> Self {
         Self::NotNull(NNSqlValue::factory_integer(integer))
     }
+
+    pub fn factory_bool(bool_: bool) -> Self {
+        Self::NotNull(NNSqlValue::factory_bool(bool_))
+    }
 }
 
 impl NNSqlValue {
     pub fn factory_integer(integer: i32) -> Self {
         Self::Integer(integer)
     }
+
+    pub fn factory_bool(bool_: bool) -> Self {
+        Self::Boolean(bool_)
+    }
 }
 
 impl Record {
-    pub fn factory(fields: Vec<(FullFieldReference, SqlValue)>) -> Self {
-        let ffrs: Vec<FullFieldReference> = fields.iter().map(|f| f.0.clone()).collect();
-        let sql_values: Vec<SqlValue> = fields.into_iter().map(|f| f.1).collect();
-
-        let schema = RecordFieldRefSchema::new(ffrs);
-
-        Self::new(Arc::new(schema), SqlValues::new(sql_values))
-    }
-
-    pub fn as_column_names(&self) -> Vec<ColumnName> {
-        self.schema()
-            .as_full_field_references()
-            .iter()
-            .map(|ffr| ffr.as_column_name())
-            .cloned()
-            .collect()
+    pub fn factory(sql_values: Vec<SqlValue>) -> Self {
+        Self::new(SqlValues::new(sql_values))
     }
 }
 
@@ -148,6 +140,20 @@ impl Records {
 impl RecordFieldRefSchema {
     pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
         Self::new(full_field_references)
+    }
+
+    pub fn joined(&self, right: &Self) -> Self {
+        let mut left = self.as_full_field_references().to_vec();
+        let mut right = right.as_full_field_references().to_vec();
+        left.append(&mut right);
+        Self::new(left)
+    }
+
+    pub fn to_column_names(&self) -> Vec<ColumnName> {
+        self.as_full_field_references()
+            .iter()
+            .map(|ffr| ffr.as_column_name().clone())
+            .collect()
     }
 }
 

@@ -15,7 +15,7 @@ extern crate derive_new;
 mod apllodb_server;
 
 pub use crate::apllodb_server::{
-    response::success::{record_iterator::RecordIterator, ApllodbCommandSuccess},
+    response::success::{rec::Rec, rec_iter::RecIter, ApllodbCommandSuccess},
     ApllodbServer,
 };
 

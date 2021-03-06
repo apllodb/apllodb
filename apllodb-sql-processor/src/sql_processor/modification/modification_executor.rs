@@ -71,11 +71,11 @@ mod tests {
             fixture::*,
             test_models::{People, Pet},
         },
-        ApllodbResult, Record, SqlValues, TableName,
+        ApllodbResult, ColumnName, Record, Records, SqlValues, TableName,
     };
     use apllodb_storage_engine_interface::{
         test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
-        AliasDef, ProjectionQuery,
+        ProjectionQuery,
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
@@ -100,6 +100,7 @@ mod tests {
     struct TestDatum {
         in_plan_tree: ModificationPlanTree,
         expected_insert_table: TableName,
+        expected_insert_columns: Vec<ColumnName>,
         expected_insert_records: Vec<Record>,
     }
 
@@ -115,20 +116,24 @@ mod tests {
                             table_name: People::table_name(),
                             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::Values {
-                                    records: vec![
-                                        T_PEOPLE_R1.clone(),
-                                        T_PEOPLE_R2.clone(),
-                                        T_PEOPLE_R3.clone(),
-                                    ],
+                                    records: Records::new(
+                                        People::schema(),
+                                        vec![
+                                            PEOPLE_RECORD1.clone(),
+                                            PEOPLE_RECORD2.clone(),
+                                            PEOPLE_RECORD3.clone(),
+                                        ],
+                                    ),
                                 },
                             }),
                         },
                     )),
                     expected_insert_table: People::table_name(),
+                    expected_insert_columns: People::schema().to_column_names(),
                     expected_insert_records: vec![
-                        T_PEOPLE_R1.clone(),
-                        T_PEOPLE_R2.clone(),
-                        T_PEOPLE_R3.clone(),
+                        PEOPLE_RECORD1.clone(),
+                        PEOPLE_RECORD2.clone(),
+                        PEOPLE_RECORD3.clone(),
                     ],
                 },
                 // input from same table records (dup)
@@ -140,16 +145,16 @@ mod tests {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: Pet::table_name(),
                                     projection: ProjectionQuery::All,
-                                    alias_def: AliasDef::default(),
                                 },
                             }),
                         },
                     )),
                     expected_insert_table: Pet::table_name(),
+                    expected_insert_columns: Pet::schema().to_column_names(),
                     expected_insert_records: vec![
-                        T_PET_R1.clone(),
-                        T_PET_R3_1.clone(),
-                        T_PET_R3_2.clone(),
+                        PET_RECORD1.clone(),
+                        PET_RECORD3_1.clone(),
+                        PET_RECORD3_2.clone(),
                     ],
                 },
             ]
@@ -179,11 +184,7 @@ mod tests {
                     .with(
                         always(),
                         eq(test_datum.expected_insert_table),
-                        eq(test_datum
-                            .expected_insert_records
-                            .first()
-                            .unwrap()
-                            .as_column_names()),
+                        eq(test_datum.expected_insert_columns),
                         eq(test_datum
                             .expected_insert_records
                             .into_iter()

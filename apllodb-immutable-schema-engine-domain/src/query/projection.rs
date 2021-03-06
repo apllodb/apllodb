@@ -14,8 +14,11 @@ use crate::{
 };
 
 /// Has projected columns for each version in a VTable.
-#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ProjectionResult {
+    // to keep RecordFieldRefSchema (alias) info
+    query: ProjectionQuery,
+
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
 }
 
@@ -47,16 +50,20 @@ impl ProjectionResult {
 
         let pk_query_columns: Vec<ColumnName> = match &query {
             ProjectionQuery::All => pk_columns.iter().cloned().collect(),
-            ProjectionQuery::ColumnNames(cns) => cns
+            ProjectionQuery::Schema(schema) => schema
+                .as_full_field_references()
                 .iter()
+                .map(|ffr| ffr.as_column_name())
                 .filter(|cn| pk_columns.contains(cn))
                 .cloned()
                 .collect(),
         };
         let non_pk_query_columns: Vec<ColumnName> = match &query {
             ProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
-            ProjectionQuery::ColumnNames(cns) => cns
+            ProjectionQuery::Schema(schema) => schema
+                .as_full_field_references()
                 .iter()
+                .map(|ffr| ffr.as_column_name())
                 .filter(|cn| versions_available_columns.contains(cn))
                 .cloned()
                 .collect(),
@@ -114,7 +121,10 @@ impl ProjectionResult {
             result_per_version.insert(version_id.clone(), result_in_version);
         }
 
-        Ok(Self { result_per_version })
+        Ok(Self {
+            query,
+            result_per_version,
+        })
     }
 
     /// Columns included in [ProjectionQuery](apllodb-shared-components::ProjectionQuery) and primary key for this version.
@@ -181,32 +191,44 @@ struct ProjectionResultInVersion {
 
 impl From<ProjectionResult> for RecordFieldRefSchema {
     fn from(pr: ProjectionResult) -> Self {
-        if pr.result_per_version.is_empty() {
-            RecordFieldRefSchema::new(vec![])
-        } else {
-            let (version_id, _) = pr.result_per_version.iter().next().unwrap();
-            let table_name = version_id.vtable_id().table_name().clone();
+        assert!(
+            !pr.result_per_version.is_empty(),
+            "at least 1 pr.result_per_version should exist for CREATEd table"
+        );
 
-            let mut all_column_names: Vec<ColumnName> = vec![];
+        let projection_query = pr.query.clone();
 
-            for (_, mut projection_result_in_version) in pr.result_per_version {
-                all_column_names.append(&mut projection_result_in_version.pk_effective);
-                all_column_names.append(&mut projection_result_in_version.pk_void);
-                all_column_names.append(&mut projection_result_in_version.non_pk_effective);
-                all_column_names.append(&mut projection_result_in_version.non_pk_void);
-            }
+        let (version_id, _) = pr.result_per_version.iter().next().unwrap();
+        let table_name = version_id.vtable_id().table_name().clone();
 
-            let ffrs: Vec<FullFieldReference> = all_column_names
-                .into_iter()
-                .map(|cn| {
-                    FullFieldReference::new(
-                        CorrelationReference::TableNameVariant(table_name.clone()),
-                        FieldReference::ColumnNameVariant(cn),
-                    )
-                })
-                .collect();
+        let mut all_column_names: Vec<ColumnName> = vec![];
 
-            RecordFieldRefSchema::new(ffrs)
+        for (_, mut projection_result_in_version) in pr.result_per_version {
+            all_column_names.append(&mut projection_result_in_version.pk_effective);
+            all_column_names.append(&mut projection_result_in_version.pk_void);
+            all_column_names.append(&mut projection_result_in_version.non_pk_effective);
+            all_column_names.append(&mut projection_result_in_version.non_pk_void);
         }
+
+        // unique
+        let all_column_names: HashSet<ColumnName> = all_column_names.into_iter().collect();
+
+        let ffrs: Vec<FullFieldReference> = all_column_names
+            .into_iter()
+            .map(|cn| match &projection_query {
+                ProjectionQuery::All => FullFieldReference::new(
+                    CorrelationReference::TableNameVariant(table_name.clone()),
+                    FieldReference::ColumnNameVariant(cn),
+                ),
+                ProjectionQuery::Schema(schema) => schema
+                    .as_full_field_references()
+                    .iter()
+                    .find(|ffr| ffr.as_column_name() == &cn)
+                    .expect("this ProjectionResult is created from this ProjectionQuery")
+                    .clone(),
+            })
+            .collect();
+
+        RecordFieldRefSchema::new(ffrs)
     }
 }

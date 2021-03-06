@@ -14,6 +14,9 @@ pub enum SqlType {
 
     /// String types
     StringComparableLoose(StringComparableLoseType),
+
+    /// Boolean types
+    BooleanComparable,
 }
 
 impl SqlType {
@@ -33,6 +36,11 @@ impl SqlType {
     /// Constructor of Text
     pub fn text() -> SqlType {
         SqlType::StringComparableLoose(StringComparableLoseType::Text)
+    }
+
+    /// Constructor of Boolean
+    pub fn boolean() -> SqlType {
+        SqlType::BooleanComparable
     }
 }
 

@@ -6,7 +6,7 @@ use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex, NNSqlValue,
     SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{test_support::session_with_tx, AliasDef};
+use apllodb_storage_engine_interface::test_support::session_with_tx;
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[ctor::ctor]
@@ -61,33 +61,26 @@ async fn test_compound_pk() -> ApllodbResult<()> {
 
     let (records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::ColumnNames(vec![c_postal_code_def
-                .column_data_type()
-                .column_name()
-                .clone()]),
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
+
+    let schema = records.as_schema().clone();
+    let country_code_idx = schema.resolve_index(&FieldIndex::from(
+        c_country_code_def.column_data_type().column_name().as_str(),
+    ))?;
+    let postal_code_idx = schema.resolve_index(&FieldIndex::from(
+        c_postal_code_def.column_data_type().column_name().as_str(),
+    ))?;
 
     for record in records {
         assert_eq!(
             record.get::<i16>(
-                &FieldIndex::from(
-                    c_country_code_def.column_data_type().column_name().as_str()
-                )
+                country_code_idx
             )?,
             Some(100i16),
             "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK"
         );
-        assert_eq!(
-            record.get::<i32>(&FieldIndex::from(
-                c_postal_code_def.column_data_type().column_name().as_str()
-            ))?,
-            Some(1000001i32),
-        );
+        assert_eq!(record.get::<i32>(postal_code_idx)?, Some(1000001i32),);
     }
 
     engine.with_tx().commit_transaction(session).await?;

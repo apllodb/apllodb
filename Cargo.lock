@@ -142,6 +142,7 @@ dependencies = [
  "futures",
  "itertools",
  "log",
+ "once_cell",
  "pretty_assertions",
  "serde",
 ]

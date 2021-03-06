@@ -14,12 +14,11 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_immutable_schema_engine_domain::row_iter::ImmutableSchemaRowIterator;
 use apllodb_shared_components::{
     AlterTableAction, ColumnDefinition, ColumnName, Expression, Records, SessionId, SqlValues,
     TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, WithTxMethods};
+use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
 
 use super::BoxFutRes;
@@ -133,7 +132,6 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         projection: ProjectionQuery,
-        alias_def: AliasDef,
     ) -> BoxFutRes<Records> {
         async move {
             let tx_pool = self.tx_pool.borrow();
@@ -148,7 +146,7 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(output.row_iter.into_record_iterator(alias_def))
+            Ok(output.records)
         }
         .boxed_local()
     }
