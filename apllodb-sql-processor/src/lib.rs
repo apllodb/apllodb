@@ -13,9 +13,6 @@ pub(crate) mod sql_processor;
 pub use sql_processor::{success::SQLProcessorSuccess, SQLProcessor};
 
 #[cfg(test)]
-pub(crate) mod test_support;
-
-#[cfg(test)]
 mod tests {
     use apllodb_test_support::setup::setup_test_logger;
     use ctor::ctor;

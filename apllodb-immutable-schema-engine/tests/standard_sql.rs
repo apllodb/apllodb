@@ -4,10 +4,10 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::test_setup;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, Expression, FieldIndex, NNSqlValue, SqlType, SqlValue, SqlValues,
-    TableConstraintKind, TableConstraints, TableName,
+    ColumnDefinition, Expression, FieldIndex, FullFieldReference, NNSqlValue, RecordFieldRefSchema,
+    SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{test_support::session_with_tx, AliasDef};
+use apllodb_storage_engine_interface::test_support::session_with_tx;
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 #[ctor::ctor]
@@ -126,27 +126,20 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
 
+    let schema = records.as_schema().clone();
+    let id_idx = schema.resolve_index(&FieldIndex::from(
+        c_id_def.column_data_type().column_name().as_str(),
+    ))?;
+    let c1_idx = schema.resolve_index(&FieldIndex::from(
+        c1_def.column_data_type().column_name().as_str(),
+    ))?;
+
     let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c_id_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(1)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c1_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(100)
-    );
+    assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+    assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
 
     assert!(records.next().is_none());
 
@@ -196,29 +189,26 @@ async fn test_update() -> ApllodbResult<()> {
             ])],
         )
         .await?;
+
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
-    let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
+
+    {
+        let schema = records.as_schema().clone();
+        let id_idx = schema.resolve_index(&FieldIndex::from(
             c_id_def.column_data_type().column_name().as_str(),
-        ))?,
-        Some(1)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
+        ))?;
+        let c1_idx = schema.resolve_index(&FieldIndex::from(
             c1_def.column_data_type().column_name().as_str(),
-        ))?,
-        Some(100)
-    );
-    assert!(records.next().is_none());
+        ))?;
+
+        let record = records.next().unwrap();
+        assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+        assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
+        assert!(records.next().is_none());
+    }
 
     // update non-PK
     let session = engine.with_tx().update(
@@ -230,60 +220,50 @@ async fn test_update() -> ApllodbResult<()> {
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
-    let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c_id_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(1)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c1_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(200)
-    );
-    assert!(records.next().is_none());
+
+    {
+        let schema = records.as_schema().clone();
+        let id_idx = schema.resolve_index(&FieldIndex::from(
+            c_id_def.column_data_type().column_name().as_str(),
+        ))?;
+        let c1_idx = schema.resolve_index(&FieldIndex::from(
+            c1_def.column_data_type().column_name().as_str(),
+        ))?;
+
+        let record = records.next().unwrap();
+        assert_eq!(record.get::<i32>(id_idx)?, Some(1));
+        assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
+        assert!(records.next().is_none());
+    }
 
     // update PK
     let session =engine.with_tx().
-update(
-    session,
-    t_name.clone(),
+    update(
+        session,
+        t_name.clone(),
         hmap! {
             c_id_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(2)))
         },
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(
-            session,
-            t_name.clone(),
-            ProjectionQuery::All,
-            AliasDef::default(),
-        )
+        .select(session, t_name.clone(), ProjectionQuery::All)
         .await?;
-    let record = records.next().unwrap();
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c_id_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(2)
-    );
-    assert_eq!(
-        record.get::<i32>(&FieldIndex::from(
-            c1_def.column_data_type().column_name().as_str()
-        ))?,
-        Some(200)
-    );
-    assert!(records.next().is_none());
+    {
+        let schema = records.as_schema().clone();
+        let id_idx = schema.resolve_index(&FieldIndex::from(
+            c_id_def.column_data_type().column_name().as_str(),
+        ))?;
+        let c1_idx = schema.resolve_index(&FieldIndex::from(
+            c1_def.column_data_type().column_name().as_str(),
+        ))?;
+        let record = records.next().unwrap();
+        assert_eq!(record.get::<i32>(id_idx)?, Some(2));
+        assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
+        assert!(records.next().is_none());
+    }
 
     engine.with_tx().commit_transaction(session).await?;
 
@@ -337,8 +317,12 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
-            AliasDef::default(),
+            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+                FullFieldReference::factory(
+                    t_name.as_str(),
+                    c_id_def.column_data_type().column_name().as_str(),
+                ),
+            ])),
         )
         .await?;
     assert_eq!(rows.count(), 1);
@@ -349,8 +333,12 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::ColumnNames(vec![c_id_def.column_data_type().column_name().clone()]),
-            AliasDef::default(),
+            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+                FullFieldReference::factory(
+                    t_name.as_str(),
+                    c_id_def.column_data_type().column_name().as_str(),
+                ),
+            ])),
         )
         .await?;
     assert_eq!(rows.count(), 0);

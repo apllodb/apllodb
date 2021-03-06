@@ -1,11 +1,11 @@
 use std::fmt::Debug;
 
-use apllodb_server::RecordIterator;
+use apllodb_server::RecIter;
 use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
 
 #[allow(dead_code)]
 pub enum StepRes {
-    OkQuery(Box<dyn Fn(RecordIterator) -> ApllodbResult<()>>),
+    OkQuery(Box<dyn Fn(RecIter) -> ApllodbResult<()>>),
     Ok,
     Err(ApllodbErrorKind),
 }

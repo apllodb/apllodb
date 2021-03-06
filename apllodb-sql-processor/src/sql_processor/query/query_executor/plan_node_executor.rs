@@ -1,10 +1,10 @@
 use std::{collections::HashMap, rc::Rc};
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, Records,
-    SessionWithTx, SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record,
+    RecordFieldRefSchema, Records, SessionWithTx, SqlValueHashKey, TableName,
 };
-use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
@@ -26,15 +26,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         op_leaf: LeafPlanOperation,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         match op_leaf {
-            LeafPlanOperation::Values { records } => Ok((Records::from(records), session)),
+            LeafPlanOperation::Values { records } => Ok((records, session)),
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-                alias_def,
-            } => {
-                self.seq_scan(session, table_name, projection, alias_def)
-                    .await
-            }
+            } => self.seq_scan(session, table_name, projection).await,
         }
     }
 
@@ -59,9 +55,14 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         match op_binary {
             // TODO type cast
             BinaryPlanOperation::HashJoin {
+                joined_schema,
                 left_field,
                 right_field,
-            } => self.hash_join(input_left, input_right, &left_field, &right_field),
+            } => {
+                let left_idx = input_left.as_schema().resolve_index(&left_field)?;
+                let right_idx = input_right.as_schema().resolve_index(&right_field)?;
+                self.hash_join(joined_schema, input_left, input_right, left_idx, right_idx)
+            }
         }
     }
 
@@ -70,11 +71,10 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         session: SessionWithTx,
         table_name: TableName,
         projection: ProjectionQuery,
-        alias_def: AliasDef,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         self.engine
             .with_tx()
-            .select(session, table_name, projection, alias_def)
+            .select(session, table_name, projection)
             .await
     }
 
@@ -82,10 +82,18 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
     fn projection(&self, input_left: Records, fields: Vec<FieldIndex>) -> ApllodbResult<Records> {
+        let idxs: Vec<usize> = fields
+            .iter()
+            .map(|f| input_left.as_schema().resolve_index(f))
+            .collect::<ApllodbResult<_>>()?;
+
+        let schema = input_left.as_schema().projection(&fields)?;
+
         let records = input_left
-            .map(|record| record.projection(&fields))
+            .map(|record| record.projection(&idxs))
             .collect::<ApllodbResult<Vec<Record>>>()?;
-        Ok(Records::from(records))
+
+        Ok(Records::new(schema, records))
     }
 
     fn selection(&self, input_left: Records, condition: Expression) -> ApllodbResult<Records> {
@@ -110,16 +118,17 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ///   - Specified field does not exist in any record.
     fn hash_join(
         &self,
+        joined_schema: RecordFieldRefSchema,
         input_left: Records,
         input_right: Records,
-        left_field: &FieldIndex,
-        right_field: &FieldIndex,
+        left_idx: usize,
+        right_idx: usize,
     ) -> ApllodbResult<Records> {
         // TODO Create hash table from smaller input.
         let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
 
         for left_record in input_left {
-            let left_sql_value = left_record.get_sql_value(&left_field)?;
+            let left_sql_value = left_record.get_sql_value(left_idx)?;
             hash_table
                 .entry(SqlValueHashKey::from(left_sql_value))
                 // FIXME Clone less. If join keys are unique, no need for clone.
@@ -127,12 +136,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 .or_insert_with(|| vec![left_record]);
         }
 
-        let mut ret = Vec::<Record>::new();
-
+        let mut records = Vec::<Record>::new();
         for right_record in input_right {
-            let right_sql_value = right_record.get_sql_value(&right_field)?;
+            let right_sql_value = right_record.get_sql_value(right_idx)?;
             if let Some(left_records) = hash_table.get(&SqlValueHashKey::from(right_sql_value)) {
-                ret.append(
+                records.append(
                     &mut left_records
                         .iter()
                         .map(|left_record| left_record.clone().join(right_record.clone()))
@@ -141,6 +149,6 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             }
         }
 
-        Ok(Records::from(ret))
+        Ok(Records::new(joined_schema, records))
     }
 }

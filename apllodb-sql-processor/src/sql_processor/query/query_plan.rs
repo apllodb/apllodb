@@ -3,11 +3,11 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, FieldIndex, FullFieldReference,
-    Ordering,
+    ApllodbError, ApllodbResult, AstTranslator, FieldIndex, FullFieldReference, Ordering,
+    RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
-use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
+use apllodb_storage_engine_interface::ProjectionQuery;
 
 use self::query_plan_tree::{
     query_plan_node::{
@@ -46,20 +46,12 @@ impl TryFrom<SelectCommand> for QueryPlan {
         let select_fields = sc.select_fields.into_vec();
         let ffrs: Vec<FullFieldReference> =
             Self::select_fields_into_ffrs(&select_fields, &from_items)?;
-
-        let column_names: Vec<ColumnName> = ffrs
-            .iter()
-            .map(|ffr| ffr.as_column_name())
-            .cloned()
-            .collect();
-
-        let alias_def = AliasDef::from(ffrs);
+        let schema = RecordFieldRefSchema::new(ffrs);
 
         let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
                 table_name: AstTranslator::table_name(from_item.table_name)?, // correlation alias情報が消えている
-                projection: ProjectionQuery::ColumnNames(column_names),
-                alias_def,
+                projection: ProjectionQuery::Schema(schema),
             },
         });
 
@@ -84,8 +76,23 @@ impl TryFrom<SelectCommand> for QueryPlan {
             node1
         };
 
+        // FIXME not necessary? `let ffrs: Vec<FullFieldReference>` already filters necessary fields.
         let root_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
-            op: Self::projection_node(select_fields, &from_items)?,
+            op: Self::projection_node(
+                select_fields
+                    .into_iter()
+                    .map(|select_field| {
+                        if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
+                            select_field.expression
+                        {
+                            (ast_colref, select_field.alias)
+                        } else {
+                            panic!("fix 'FIXME' above!")
+                        }
+                    })
+                    .collect(),
+                &from_items,
+            )?,
             left: Box::new(node2),
         });
 
@@ -119,9 +126,10 @@ impl QueryPlan {
             apllodb_ast::Expression::ConstantVariant(_) => {
                 unimplemented!();
             }
-            apllodb_ast::Expression::ColumnReferenceVariant(_) => {
+            apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
                 AstTranslator::select_field_column_reference(
-                    select_field.clone(),
+                    ast_colref.clone(),
+                    select_field.alias.clone(),
                     from_items.to_vec(),
                 )
             }
@@ -134,15 +142,19 @@ impl QueryPlan {
     }
 
     fn projection_node(
-        select_fields: Vec<SelectField>,
+        fields: Vec<(apllodb_ast::ColumnReference, Option<apllodb_ast::Alias>)>,
         from_items: &[FromItem],
     ) -> ApllodbResult<UnaryPlanOperation> {
         let node = UnaryPlanOperation::Projection {
-            fields: select_fields
+            fields: fields
                 .into_iter()
-                .map(|select_field| {
-                    AstTranslator::select_field_column_reference(select_field, from_items.to_vec())
-                        .map(FieldIndex::from)
+                .map(|(ast_colref, ast_field_alias)| {
+                    AstTranslator::select_field_column_reference(
+                        ast_colref,
+                        ast_field_alias,
+                        from_items.to_vec(),
+                    )
+                    .map(FieldIndex::from)
                 })
                 .collect::<ApllodbResult<_>>()?,
         };

@@ -78,6 +78,7 @@ impl ToSqlString for SqlType {
             SqlType::StringComparableLoose(s) => match s {
                 StringComparableLoseType::Text => "TEXT",
             },
+            SqlType::BooleanComparable => "BOOLEAN",
         }
         .to_string()
     }

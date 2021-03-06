@@ -1,4 +1,6 @@
-use crate::{FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName};
+use crate::{
+    FieldIndex, FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
+};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
@@ -21,10 +23,16 @@ impl People {
         RecordFieldRefSchema::factory(vec![Self::ffr_id(), Self::ffr_age()])
     }
 
+    pub fn field_idx(ffr: FullFieldReference) -> usize {
+        Self::schema()
+            .resolve_index(&FieldIndex::from(ffr))
+            .unwrap()
+    }
+
     pub fn record(id: i64, age: i32) -> Record {
         Record::factory(vec![
-            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
-            (Self::ffr_age(), SqlValue::NotNull(NNSqlValue::Integer(age))),
+            SqlValue::NotNull(NNSqlValue::BigInt(id)),
+            SqlValue::NotNull(NNSqlValue::Integer(age)),
         ])
     }
 }
@@ -60,15 +68,9 @@ impl Body {
 
     pub fn record(id: i64, people_id: i64, height: i32) -> Record {
         Record::factory(vec![
-            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
-            (
-                Self::ffr_people_id(),
-                SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            ),
-            (
-                Self::ffr_height(),
-                SqlValue::NotNull(NNSqlValue::Integer(height)),
-            ),
+            SqlValue::NotNull(NNSqlValue::BigInt(id)),
+            SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+            SqlValue::NotNull(NNSqlValue::Integer(height)),
         ])
     }
 }
@@ -109,19 +111,10 @@ impl Pet {
 
     pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Record {
         Record::factory(vec![
-            (Self::ffr_id(), SqlValue::NotNull(NNSqlValue::BigInt(id))),
-            (
-                Self::ffr_people_id(),
-                SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            ),
-            (
-                Self::ffr_kind(),
-                SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
-            ),
-            (
-                Self::ffr_age(),
-                SqlValue::NotNull(NNSqlValue::SmallInt(age)),
-            ),
+            SqlValue::NotNull(NNSqlValue::BigInt(id)),
+            SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
+            SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
+            SqlValue::NotNull(NNSqlValue::SmallInt(age)),
         ])
     }
 }

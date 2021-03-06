@@ -1,9 +1,9 @@
-use std::{convert::TryFrom, rc::Rc, sync::Arc};
+use std::rc::Rc;
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
     CorrelationReference, FieldReference, FullFieldReference, Record, RecordFieldRefSchema,
-    Session, SessionWithTx, SqlValue, SqlValues,
+    Records, Session, SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -92,7 +92,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
                     ast_expression,
                     vec![ast_table_name.clone()],
                 )?;
-                SqlValue::try_from(expression)
+                expression.to_sql_value(None)
             })
             .collect::<ApllodbResult<_>>()?;
 
@@ -102,7 +102,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             table_name,
             child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
                 op: LeafPlanOperation::Values {
-                    records: vec![Record::new(Arc::new(schema), insert_values)],
+                    records: Records::new(schema, vec![Record::new(insert_values)]),
                 },
             }),
         });

@@ -8,43 +8,28 @@ impl AstTranslator {
     ///
     /// errors from [AstTranslator::column_reference()](crate::AstTranslator::column_reference).
     pub fn select_field_column_reference(
-        ast_select_field: apllodb_ast::SelectField,
+        ast_column_reference: apllodb_ast::ColumnReference,
+        ast_field_alias: Option<apllodb_ast::Alias>,
         ast_from_items: Vec<apllodb_ast::FromItem>,
     ) -> ApllodbResult<FullFieldReference> {
-        let ast_expression = ast_select_field.expression;
-        let ast_field_alias = ast_select_field.alias;
-
-        match ast_expression {
-            apllodb_ast::Expression::ConstantVariant(_)
-            | apllodb_ast::Expression::UnaryOperatorVariant(_, _)
-            | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
-                panic!("select_field_column_reference() is only for ColumnReferenceVariant")
-            }
-
-            apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let mut ffr = Self::column_reference(ast_colref, ast_from_items)?;
-                if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(field_alias))) =
-                    ast_field_alias
-                {
-                    ffr.set_field_alias(AliasName::new(field_alias)?);
-                }
-                Ok(ffr)
-            }
+        let mut ffr = Self::column_reference(ast_column_reference, ast_from_items)?;
+        if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(field_alias))) = ast_field_alias {
+            ffr.set_field_alias(AliasName::new(field_alias)?);
         }
+        Ok(ffr)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{ApllodbErrorKind, ApllodbResult, AstTranslator, FullFieldReference};
-    use apllodb_sql_parser::apllodb_ast::{
-        ColumnReference, Correlation, Expression, FromItem, SelectField,
-    };
+    use apllodb_sql_parser::apllodb_ast::{Alias, ColumnReference, Correlation, FromItem};
     use pretty_assertions::assert_eq;
 
     #[derive(new)]
     struct TestDatum {
-        ast_select_field: SelectField,
+        ast_column_reference: ColumnReference,
+        ast_field_alias: Option<Alias>,
         ast_from_items: Vec<FromItem>,
         expected_result: Result<FullFieldReference, ApllodbErrorKind>,
     }
@@ -53,75 +38,46 @@ mod tests {
     fn test_select_field_column_reference() -> ApllodbResult<()> {
         let test_data: Vec<TestDatum> = vec![
             TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(None, "c")),
-                    None,
-                ),
+                ColumnReference::factory(None, "c"),
+                None,
                 vec![FromItem::factory("t", None)],
                 Ok(FullFieldReference::factory("t", "c")),
             ),
             TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(
-                        Some(Correlation::factory("t")),
-                        "c",
-                    )),
-                    None,
-                ),
+                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                None,
                 vec![FromItem::factory("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c").with_corr_alias("corr_alias")),
             ),
             TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(
-                        Some(Correlation::factory("corr_alias")),
-                        "c",
-                    )),
-                    None,
-                ),
+                ColumnReference::factory(Some(Correlation::factory("corr_alias")), "c"),
+                None,
                 vec![FromItem::factory("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c").with_corr_alias("corr_alias")),
             ),
             TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(None, "c")),
-                    Some("field_alias"),
-                ),
+                ColumnReference::factory(None, "c"),
+                Some(Alias::factory("field_alias")),
                 vec![FromItem::factory("t", None)],
                 Ok(FullFieldReference::factory("t", "c").with_field_alias("field_alias")),
             ),
             TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(
-                        Some(Correlation::factory("t")),
-                        "c",
-                    )),
-                    Some("field_alias"),
-                ),
+                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                Some(Alias::factory("field_alias")),
                 vec![FromItem::factory("t", None)],
                 Ok(FullFieldReference::factory("t", "c").with_field_alias("field_alias")),
             ),
             TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(
-                        Some(Correlation::factory("t")),
-                        "c",
-                    )),
-                    Some("field_alias"),
-                ),
+                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                Some(Alias::factory("field_alias")),
                 vec![FromItem::factory("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c")
                     .with_corr_alias("corr_alias")
                     .with_field_alias("field_alias")),
             ),
             TestDatum::new(
-                SelectField::factory(
-                    Expression::factory_colref(ColumnReference::factory(
-                        Some(Correlation::factory("corr_alias")),
-                        "c",
-                    )),
-                    Some("field_alias"),
-                ),
+                ColumnReference::factory(Some(Correlation::factory("corr_alias")), "c"),
+                Some(Alias::factory("field_alias")),
                 vec![FromItem::factory("t", Some("corr_alias"))],
                 Ok(FullFieldReference::factory("t", "c")
                     .with_corr_alias("corr_alias")
@@ -131,7 +87,8 @@ mod tests {
 
         for test_datum in test_data {
             match AstTranslator::select_field_column_reference(
-                test_datum.ast_select_field,
+                test_datum.ast_column_reference,
+                test_datum.ast_field_alias,
                 test_datum.ast_from_items,
             ) {
                 Ok(ffr) => {

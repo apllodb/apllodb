@@ -1,5 +1,7 @@
-use apllodb_shared_components::{Expression, FieldIndex, Ordering, Record, TableName};
-use apllodb_storage_engine_interface::{AliasDef, ProjectionQuery};
+use apllodb_shared_components::{
+    Expression, FieldIndex, Ordering, RecordFieldRefSchema, Records, TableName,
+};
+use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 /// Node of query plan tree.
@@ -34,12 +36,11 @@ pub(crate) struct QueryPlanNodeBinary {
 #[derive(Clone, PartialEq, Debug)]
 pub(crate) enum LeafPlanOperation {
     Values {
-        records: Vec<Record>,
+        records: Records,
     },
     SeqScan {
         table_name: TableName,
         projection: ProjectionQuery,
-        alias_def: AliasDef,
     },
     // TODO extend.
     // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
@@ -66,6 +67,7 @@ pub(crate) enum UnaryPlanOperation {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub(crate) enum BinaryPlanOperation {
     HashJoin {
+        joined_schema: RecordFieldRefSchema,
         left_field: FieldIndex,
         right_field: FieldIndex,
     },

@@ -1,11 +1,12 @@
 pub(crate) mod boolean_expression;
 pub(crate) mod operator;
 
-use std::convert::TryFrom;
-
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, FullFieldReference};
+use crate::{
+    ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NNSqlValue,
+    Record, RecordFieldRefSchema,
+};
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
 
@@ -27,29 +28,25 @@ pub enum Expression {
     BooleanExpressionVariant(BooleanExpression),
 }
 
-impl From<SqlValue> for Expression {
-    fn from(sql_val: SqlValue) -> Self {
-        Self::ConstantVariant(sql_val)
-    }
-}
-
-impl TryFrom<Expression> for SqlValue {
-    type Error = ApllodbError;
-
-    /// # Failures
+impl Expression {
+    /// # Panics
     ///
-    /// - [DataException](crate::ApllodbErrorKind::DataException) when:
-    ///   - expression cannot be folded into an SqlValue
-    fn try_from(expression: Expression) -> ApllodbResult<Self> {
-        match expression {
-            Expression::ConstantVariant(sql_value) => Ok(sql_value),
-            Expression::FullFieldReferenceVariant(ffr) => Err(ApllodbError::new(
-                ApllodbErrorKind::DataException,
-                format!("field `{}` cannot be into SqlValue", ffr),
-                None,
-            )),
+    /// if `record_for_field_ref` is None for Expression::FullFieldReferenceVariant.
+    pub fn to_sql_value(
+        &self,
+        record_for_field_ref: Option<(&Record, &RecordFieldRefSchema)>,
+    ) -> ApllodbResult<SqlValue> {
+        match self {
+            Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
+            Expression::FullFieldReferenceVariant(ffr) => {
+                let (record, schema) = record_for_field_ref.expect(
+                    "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
+                );
+                let idx = schema.resolve_index(&FieldIndex::from(ffr.clone()))?;
+                record.get_sql_value(idx).map(|v| v.clone())
+            }
             Expression::UnaryOperatorVariant(uni_op, child) => {
-                let child_sql_value = SqlValue::try_from(*child)?;
+                let child_sql_value = child.to_sql_value(record_for_field_ref)?;
                 match (uni_op, child_sql_value) {
                     (UnaryOperator::Minus, SqlValue::Null) => Ok(SqlValue::Null),
                     (UnaryOperator::Minus, SqlValue::NotNull(nn_sql_value)) => {
@@ -57,32 +54,141 @@ impl TryFrom<Expression> for SqlValue {
                     }
                 }
             }
-            Expression::BooleanExpressionVariant(_) => {
-                unimplemented!()
-            }
+            Expression::BooleanExpressionVariant(bool_expr) => match bool_expr {
+                BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
+                    match comparison_function {
+                        ComparisonFunction::EqualVariant { left, right } => {
+                            let left_sql_value = left.to_sql_value(record_for_field_ref)?;
+                            let right_sql_value = right.to_sql_value(record_for_field_ref)?;
+                            left_sql_value
+                                .sql_compare(&right_sql_value)
+                                .map(|sql_compare_result| {
+                                    SqlValue::NotNull(NNSqlValue::Boolean(
+                                        sql_compare_result.is_equal(),
+                                    ))
+                                })
+                        }
+                    }
+                }
+                BooleanExpression::LogicalFunctionVariant(logical_function) => {
+                    match logical_function {
+                        LogicalFunction::AndVariant { left, right } => {
+                            let left_sql_value =
+                                Expression::BooleanExpressionVariant(*(left.clone()))
+                                    .to_sql_value(record_for_field_ref)?;
+                            let right_sql_value =
+                                Expression::BooleanExpressionVariant(*(right.clone()))
+                                    .to_sql_value(record_for_field_ref)?;
+
+                            let b = left_sql_value.to_bool()? && right_sql_value.to_bool()?;
+                            Ok(SqlValue::NotNull(NNSqlValue::Boolean(b)))
+                        }
+                    }
+                }
+            },
         }
+    }
+}
+
+impl From<SqlValue> for Expression {
+    fn from(sql_val: SqlValue) -> Self {
+        Self::ConstantVariant(sql_val)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
-
-    use crate::{ApllodbResult, Expression, SqlValue, UnaryOperator};
+    use crate::test_support::{fixture::*, test_models::People};
+    use crate::{
+        ApllodbResult, BooleanExpression, Expression, Record, RecordFieldRefSchema, SqlValue,
+        UnaryOperator,
+    };
 
     #[test]
-    fn test_try_from_success() -> ApllodbResult<()> {
-        let expr_vs_expected_sql_value: Vec<(Expression, SqlValue)> = vec![
-            (Expression::factory_integer(1), SqlValue::factory_integer(1)),
-            (
+    fn test_to_sql_value() -> ApllodbResult<()> {
+        #[derive(Clone, Debug, new)]
+        struct TestDatum {
+            in_expr: Expression,
+            in_record_for_field_ref: Option<(Record, RecordFieldRefSchema)>,
+            expected_sql_value: SqlValue,
+        }
+
+        let test_data: Vec<TestDatum> = vec![
+            // constants
+            TestDatum::new(
+                Expression::factory_integer(1),
+                None,
+                SqlValue::factory_integer(1),
+            ),
+            // unary op
+            TestDatum::new(
                 Expression::factory_uni_op(UnaryOperator::Minus, Expression::factory_integer(1)),
+                None,
                 SqlValue::factory_integer(-1),
+            ),
+            // FullFieldReference
+            TestDatum::new(
+                Expression::FullFieldReferenceVariant(People::ffr_id()),
+                Some((PEOPLE_RECORD1.clone(), People::schema())),
+                SqlValue::factory_integer(1),
+            ),
+            // BooleanExpression
+            TestDatum::new(
+                Expression::factory_eq(Expression::factory_null(), Expression::factory_null()),
+                None,
+                SqlValue::factory_bool(false),
+            ),
+            TestDatum::new(
+                Expression::factory_eq(
+                    Expression::factory_integer(123),
+                    Expression::factory_integer(123),
+                ),
+                None,
+                SqlValue::factory_bool(true),
+            ),
+            TestDatum::new(
+                Expression::factory_eq(
+                    Expression::factory_integer(123),
+                    Expression::factory_integer(-123),
+                ),
+                None,
+                SqlValue::factory_bool(false),
+            ),
+            TestDatum::new(
+                Expression::factory_and(
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(123),
+                        Expression::factory_integer(123),
+                    ),
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(456),
+                        Expression::factory_integer(456),
+                    ),
+                ),
+                None,
+                SqlValue::factory_bool(true),
+            ),
+            TestDatum::new(
+                Expression::factory_and(
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(-123),
+                        Expression::factory_integer(123),
+                    ),
+                    BooleanExpression::factory_eq(
+                        Expression::factory_integer(456),
+                        Expression::factory_integer(456),
+                    ),
+                ),
+                None,
+                SqlValue::factory_bool(false),
             ),
         ];
 
-        for (expr, expected_sql_value) in expr_vs_expected_sql_value {
-            let sql_value = SqlValue::try_from(expr)?;
-            assert_eq!(sql_value, expected_sql_value);
+        for t in test_data {
+            let sql_value = t
+                .in_expr
+                .to_sql_value(t.in_record_for_field_ref.as_ref().map(|(r, s)| (r, s)))?;
+            assert_eq!(sql_value, t.expected_sql_value);
         }
 
         Ok(())
