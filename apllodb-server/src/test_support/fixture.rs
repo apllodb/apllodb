@@ -12,7 +12,7 @@ use once_cell::sync::Lazy;
 use crate::Rec;
 
 fn record_to_rec(schema: RecordFieldRefSchema, record: Record) -> Rec {
-    Rec::new(Arc::new(schema), record.clone())
+    Rec::new(Arc::new(schema), record)
 }
 
 pub static PEOPLE_REC1: Lazy<Rec> =
