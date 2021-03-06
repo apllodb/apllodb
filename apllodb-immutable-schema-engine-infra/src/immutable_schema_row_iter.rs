@@ -50,7 +50,7 @@ impl ImmutableSchemaRowIterator<SqliteTypes> for ImmutableSchemaRowIter {
                                 row.get_sql_value(cn)
                             })
                             .collect::<ApllodbResult<_>>()
-                            .map(|sql_values| SqlValues::new(sql_values))
+                            .map(SqlValues::new)
                     })
                     .collect::<ApllodbResult<_>>()?;
                 sql_values.append(&mut vs);
