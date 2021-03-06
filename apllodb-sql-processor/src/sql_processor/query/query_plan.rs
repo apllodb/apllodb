@@ -46,15 +46,6 @@ impl TryFrom<SelectCommand> for QueryPlan {
         let select_fields = sc.select_fields.into_vec();
         let ffrs: Vec<FullFieldReference> =
             Self::select_fields_into_ffrs(&select_fields, &from_items)?;
-        // この時点でschemaつくればええやん。AliasDefなんて作らずに
-        // -> んー、ProjectionQueryとRecordRefSchemaは両立は不要だな。
-        // あと、ここでschema作る問題は、2テーブル以上にまたがったときにどうやってschemaをsplitするか。
-        //
-        // ProjectionQuery (特に * の対応) を廃止し、ここで「ストレージエンジンへのカタログ問い合わせ」を行ってFFR解決まで行うことも視野に入れつつ、
-        //
-        //
-        // > 2テーブル以上にまたがったときにどうやってschemaをsplitするか。
-        // FFRにCorrelationReferenceでfilterする関数を設ける？その方針だったら Schema::joined は廃止して、最終的なRecordのSchemaから分割していく作りになる
         let schema = RecordFieldRefSchema::new(ffrs);
 
         let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {

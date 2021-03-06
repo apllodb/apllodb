@@ -14,8 +14,11 @@ use crate::{
 };
 
 /// Has projected columns for each version in a VTable.
-#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ProjectionResult {
+    // to keep RecordFieldRefSchema (alias) info
+    query: ProjectionQuery,
+
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
 }
 
@@ -118,7 +121,10 @@ impl ProjectionResult {
             result_per_version.insert(version_id.clone(), result_in_version);
         }
 
-        Ok(Self { result_per_version })
+        Ok(Self {
+            query,
+            result_per_version,
+        })
     }
 
     /// Columns included in [ProjectionQuery](apllodb-shared-components::ProjectionQuery) and primary key for this version.
@@ -190,6 +196,8 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
             "at least 1 pr.result_per_version should exist for CREATEd table"
         );
 
+        let projection_query = pr.query.clone();
+
         let (version_id, _) = pr.result_per_version.iter().next().unwrap();
         let table_name = version_id.vtable_id().table_name().clone();
 
@@ -207,11 +215,17 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
 
         let ffrs: Vec<FullFieldReference> = all_column_names
             .into_iter()
-            .map(|cn| {
-                FullFieldReference::new(
+            .map(|cn| match &projection_query {
+                ProjectionQuery::All => FullFieldReference::new(
                     CorrelationReference::TableNameVariant(table_name.clone()),
                     FieldReference::ColumnNameVariant(cn),
-                )
+                ),
+                ProjectionQuery::Schema(schema) => schema
+                    .as_full_field_references()
+                    .iter()
+                    .find(|ffr| ffr.as_column_name() == &cn)
+                    .expect("this ProjectionResult is created from this ProjectionQuery")
+                    .clone(),
             })
             .collect();
 
