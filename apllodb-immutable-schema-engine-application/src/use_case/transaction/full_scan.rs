@@ -58,7 +58,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result: ProjectionResult =
             ProjectionResult::new(&vtable, active_versions, input.projection)?;
-        let schema = RecordFieldRefSchema::from(projection_result.clone()); // こいつにalias相当の情報が入っていれば、engine-interefaceにおいてalias_defは不要
+        let schema = RecordFieldRefSchema::from(projection_result.clone());
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
 
         let records = row_iter.into_record_iterator(schema);

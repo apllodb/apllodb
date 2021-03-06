@@ -202,6 +202,9 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
             all_column_names.append(&mut projection_result_in_version.non_pk_void);
         }
 
+        // unique
+        let all_column_names: HashSet<ColumnName> = all_column_names.into_iter().collect();
+
         let ffrs: Vec<FullFieldReference> = all_column_names
             .into_iter()
             .map(|cn| {
