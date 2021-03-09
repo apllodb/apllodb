@@ -1,4 +1,4 @@
-use crate::{AliasName, ApllodbResult, FullFieldReference};
+use crate::{AliasName, ApllodbResult, CorrelationReference, FullFieldReference};
 use apllodb_sql_parser::apllodb_ast::{self};
 
 use crate::ast_translator::AstTranslator;
@@ -10,9 +10,9 @@ impl AstTranslator {
     pub fn select_field_column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
         ast_field_alias: Option<apllodb_ast::Alias>,
-        ast_from_items: Vec<apllodb_ast::FromItem>,
+        correlations: Vec<CorrelationReference>,
     ) -> ApllodbResult<FullFieldReference> {
-        let mut ffr = Self::column_reference(ast_column_reference, ast_from_items)?;
+        let mut ffr = Self::column_reference(ast_column_reference, correlations)?;
         if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(field_alias))) = ast_field_alias {
             ffr.set_field_alias(AliasName::new(field_alias)?);
         }

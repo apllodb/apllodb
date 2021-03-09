@@ -25,9 +25,9 @@ impl AstTranslator {
     ///   - `ast_column_reference` has a correlation but it is not any of `ast_from_items`.
     pub fn column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
-        ast_from_items: Vec<apllodb_ast::FromItem>,
+        correlations: Vec<CorrelationReference>,
     ) -> ApllodbResult<FullFieldReference> {
-        match ast_from_items.len() {
+        match correlations.len() {
             0 => {
                 // SELECT (ta.)?C;
                 // -> InvalidColumnReference
