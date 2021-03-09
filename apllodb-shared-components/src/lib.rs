@@ -35,7 +35,7 @@ pub use crate::{
             correlation_reference::CorrelationReference, field_reference::FieldReference,
             full_field_reference::FullFieldReference,
         },
-        select::ordering::Ordering,
+        select::{from_item::FromItem, ordering::Ordering},
         session::{
             session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
             without_db::SessionWithoutDb, Session,
