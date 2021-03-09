@@ -1067,7 +1067,7 @@ insert_command = {
 select_command = {
     ^"SELECT"
     ~ select_field ~ ("," ~ select_field)*
-    ~ (^"FROM" ~ from_item ~ ("," ~ from_item)*)?
+    ~ (^"FROM" ~ from_item)?
     ~ (^"WHERE" ~ condition)?
     ~ (^"GROUP" ~ "BY" ~ grouping_element ~ ("," ~ grouping_element)*)?
     ~ (^"HAVING" ~ condition ~ ("," ~ condition)*)?

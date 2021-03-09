@@ -101,7 +101,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 }
 
 impl QueryPlan {
-    fn select_command_into_from_items(select_command: SelectCommand) -> Vec<FromItem> {
+    fn select_command_into_from_items(select_command: SelectCommand) -> FromItem {
         select_command
             .from_items
             .expect("currently SELECT w/o FROM is unimplemented")

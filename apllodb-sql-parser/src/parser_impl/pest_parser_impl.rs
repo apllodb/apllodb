@@ -638,26 +638,12 @@ impl PestParserImpl {
             &Self::parse_select_field,
             &identity,
         )?;
-        let from_items: Option<Vec<FromItem>> = {
-            if let Some(first_item) = try_parse_child(
-                &mut params,
-                Rule::from_item,
-                Self::parse_from_item,
-                identity,
-            )? {
-                let mut items = vec![first_item];
-                let mut rest_items = parse_child_seq(
-                    &mut params,
-                    Rule::from_item,
-                    &Self::parse_from_item,
-                    &identity,
-                )?;
-                items.append(&mut rest_items);
-                Some(items)
-            } else {
-                None
-            }
-        };
+        let from_item: Option<FromItem> = try_parse_child(
+            &mut params,
+            Rule::from_item,
+            Self::parse_from_item,
+            identity,
+        )?;
         let where_condition = try_parse_child(
             &mut params,
             Rule::condition,
@@ -683,7 +669,7 @@ impl PestParserImpl {
         };
         Ok(SelectCommand {
             select_fields: NonEmptyVec::new(select_fields),
-            from_items: from_items.map(NonEmptyVec::new),
+            from_item,
             where_condition,
             // TODO: grouping_elements, having_conditions, order_bys
             grouping_elements: None,
