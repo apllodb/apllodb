@@ -20,7 +20,7 @@ impl AstTranslator {
             }
             apllodb_ast::FromItem::JoinVariant { left, right, .. } => {
                 let mut left_corr_ref = Self::from_item(*left)?;
-                let mut right_corr_ref = Self::from_item(*left)?;
+                let mut right_corr_ref = Self::from_item(*right)?;
                 left_corr_ref.append(&mut right_corr_ref);
                 Ok(left_corr_ref)
             }
