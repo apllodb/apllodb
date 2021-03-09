@@ -17,16 +17,16 @@ impl AstTranslator {
     /// # Failures
     ///
     /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
-    ///   - `correlations` is empty.
+    ///   - `from_item_correlations` is empty.
     /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
-    ///   - none of `correlations` has field named `ast_column_reference.column_name`
+    ///   - none of `from_item_correlations` has field named `ast_column_reference.column_name`
     /// - [UndefinedObject](crate::ApllodbErrorKind::UndefinedObject) when:
-    ///   - `ast_column_reference` has a correlation but it is not any of `correlations`.
+    ///   - `ast_column_reference` has a correlation but it is not any of `from_item_correlations`.
     pub fn column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
-        correlations: &[CorrelationReference],
+        from_item_correlations: &[CorrelationReference],
     ) -> ApllodbResult<FullFieldReference> {
-        if correlations.is_empty() {
+        if from_item_correlations.is_empty() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidColumnReference,
                 format!(
@@ -40,22 +40,56 @@ impl AstTranslator {
                 Self::column_reference_with_corr(
                     ast_corr,
                     ast_column_reference.column_name,
-                    correlations,
+                    from_item_correlations,
                 )
             } else {
-                Self::column_reference_without_corr(ast_column_reference.column_name, correlations)
+                Self::column_reference_without_corr(
+                    ast_column_reference.column_name,
+                    from_item_correlations,
+                )
             }
         }
     }
 
+    /// # Failures
+    ///
+    /// - [UndefinedObject](crate::ApllodbErrorKind::UndefinedObject) when:
+    ///   - `ast_correlation` does not match any of `from_item_correlations`.
     fn column_reference_with_corr(
-        _ast_correlation: apllodb_ast::Correlation,
-        _ast_column_name: apllodb_ast::ColumnName,
-        correlations: &[CorrelationReference],
+        ast_correlation: apllodb_ast::Correlation,
+        ast_column_name: apllodb_ast::ColumnName,
+        from_item_correlations: &[CorrelationReference],
     ) -> ApllodbResult<FullFieldReference> {
-        assert!(!correlations.is_empty());
+        assert!(!from_item_correlations.is_empty());
 
-        todo!()
+        let expr_corr = ast_correlation.0 .0;
+        let expr_colname = ColumnName::new(ast_column_name.0 .0)?;
+
+        // SELECT T.C FROM ...;
+        from_item_correlations
+            .iter()
+            .find_map(|from_item_corr| {
+                if from_item_corr.matches(&expr_corr) {
+                    Some(FullFieldReference::new(
+                        from_item_corr.clone(),
+                        FieldReference::ColumnNameVariant(expr_colname.clone()),
+                    ))
+                } else {
+                    None
+                }
+            })
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedObject,
+                    format!(
+                        "expression `{}.{}` does not match any of FROM items: {:?}",
+                        expr_corr,
+                        expr_colname.as_str(),
+                        from_item_correlations
+                    ),
+                    None,
+                )
+            })
     }
 
     fn column_reference_without_corr(

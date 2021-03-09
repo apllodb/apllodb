@@ -30,6 +30,17 @@ impl Display for CorrelationReference {
 }
 
 impl CorrelationReference {
+    /// check if `correlation_name` matches to this column reference
+    pub fn matches(&self, correlation_name: &str) -> bool {
+        match self {
+            CorrelationReference::TableNameVariant(tn) => tn.as_str() == correlation_name,
+            CorrelationReference::TableAliasVariant {
+                alias_name,
+                table_name,
+            } => alias_name.as_str() == correlation_name || table_name.as_str() == correlation_name,
+        }
+    }
+
     /// get ref to TableName
     pub fn as_table_name(&self) -> &TableName {
         match self {
