@@ -24,7 +24,7 @@ impl AstTranslator {
     ///   - `ast_column_reference` has a correlation but it is not any of `correlations`.
     pub fn column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
-        correlations: Vec<CorrelationReference>,
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<FullFieldReference> {
         if correlations.is_empty() {
             Err(ApllodbError::new(
@@ -51,7 +51,7 @@ impl AstTranslator {
     fn column_reference_with_corr(
         _ast_correlation: apllodb_ast::Correlation,
         _ast_column_name: apllodb_ast::ColumnName,
-        correlations: Vec<CorrelationReference>,
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<FullFieldReference> {
         assert!(!correlations.is_empty());
 
@@ -60,7 +60,7 @@ impl AstTranslator {
 
     fn column_reference_without_corr(
         ast_column_name: apllodb_ast::ColumnName,
-        correlations: Vec<CorrelationReference>,
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<FullFieldReference> {
         assert!(!correlations.is_empty());
         if correlations.len() > 1 {
@@ -152,7 +152,7 @@ mod tests {
         for test_datum in test_data {
             match AstTranslator::column_reference(
                 test_datum.ast_column_reference,
-                test_datum.correlations,
+                &test_datum.correlations,
             ) {
                 Ok(ffr) => {
                     assert_eq!(ffr, test_datum.expected_result.unwrap())

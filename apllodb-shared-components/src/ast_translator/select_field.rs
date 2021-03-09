@@ -10,7 +10,7 @@ impl AstTranslator {
     pub fn select_field_column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
         ast_field_alias: Option<apllodb_ast::Alias>,
-        correlations: Vec<CorrelationReference>,
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<FullFieldReference> {
         let mut ffr = Self::column_reference(ast_column_reference, correlations)?;
         if let Some(apllodb_ast::Alias(apllodb_ast::Identifier(field_alias))) = ast_field_alias {
@@ -91,7 +91,7 @@ mod tests {
             match AstTranslator::select_field_column_reference(
                 test_datum.ast_column_reference,
                 test_datum.ast_field_alias,
-                test_datum.correlations,
+                &test_datum.correlations,
             ) {
                 Ok(ffr) => {
                     assert_eq!(ffr, test_datum.expected_result.unwrap())

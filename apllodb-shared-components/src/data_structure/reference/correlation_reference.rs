@@ -28,3 +28,13 @@ impl Display for CorrelationReference {
         write!(f, "{}", s)
     }
 }
+
+impl CorrelationReference {
+    /// get ref to TableName
+    pub fn as_table_name(&self) -> &TableName {
+        match self {
+            CorrelationReference::TableNameVariant(tn) => tn,
+            CorrelationReference::TableAliasVariant { table_name, .. } => table_name,
+        }
+    }
+}

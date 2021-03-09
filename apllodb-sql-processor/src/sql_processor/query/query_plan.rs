@@ -3,8 +3,8 @@ pub(crate) mod query_plan_tree;
 use std::convert::TryFrom;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, FieldIndex, FullFieldReference, Ordering,
-    RecordFieldRefSchema,
+    ApllodbError, ApllodbResult, AstTranslator, CorrelationReference, FieldIndex,
+    FullFieldReference, Ordering, RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
 use apllodb_storage_engine_interface::ProjectionQuery;
@@ -35,29 +35,29 @@ impl TryFrom<SelectCommand> for QueryPlan {
             unimplemented!();
         }
 
-        let from_items = Self::select_command_into_from_items(sc.clone());
-
-        let from_item = if from_items.len() != 1 {
-            unimplemented!()
-        } else {
-            from_items.first().unwrap().clone()
-        };
+        let from_item = Self::select_command_into_from_item(sc.clone());
+        let correlations = AstTranslator::from_item(from_item)?;
 
         let select_fields = sc.select_fields.into_vec();
         let ffrs: Vec<FullFieldReference> =
-            Self::select_fields_into_ffrs(&select_fields, &from_items)?;
+            Self::select_fields_into_ffrs(&select_fields, &correlations)?;
         let schema = RecordFieldRefSchema::new(ffrs);
+
+        if correlations.len() != 1 {
+            unimplemented!("currently SELECT w/ 0 or 2+ FROM items is not implemented");
+        }
+        let corref = correlations[0].clone();
 
         let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
-                table_name: AstTranslator::table_name(from_item.table_name)?, // correlation alias情報が消えている
+                table_name: corref.as_table_name().clone(),
                 projection: ProjectionQuery::Schema(schema),
             },
         });
 
         let node1 = if let Some(condition) = sc.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
-                condition: AstTranslator::condition_in_select(condition, from_items.clone())?,
+                condition: AstTranslator::condition_in_select(condition, &correlations)?,
             };
             QueryPlanNode::Unary(QueryPlanNodeUnary {
                 op: selection_op,
@@ -69,7 +69,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let node2 = if let Some(order_byes) = sc.order_bys {
             QueryPlanNode::Unary(QueryPlanNodeUnary {
-                op: Self::sort_node(order_byes, &from_items)?,
+                op: Self::sort_node(order_byes, &correlations)?,
                 left: Box::new(node1),
             })
         } else {
@@ -91,7 +91,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         }
                     })
                     .collect(),
-                &from_items,
+                &correlations,
             )?,
             left: Box::new(node2),
         });
@@ -101,26 +101,25 @@ impl TryFrom<SelectCommand> for QueryPlan {
 }
 
 impl QueryPlan {
-    fn select_command_into_from_items(select_command: SelectCommand) -> FromItem {
+    fn select_command_into_from_item(select_command: SelectCommand) -> FromItem {
         select_command
-            .from_items
+            .from_item
             .expect("currently SELECT w/o FROM is unimplemented")
-            .into_vec()
     }
 
     fn select_fields_into_ffrs(
         select_fields: &[SelectField],
-        from_items: &[FromItem],
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<Vec<FullFieldReference>> {
         select_fields
             .iter()
-            .map(|select_field| Self::select_field_into_ffr(select_field, &from_items))
+            .map(|select_field| Self::select_field_into_ffr(select_field, correlations))
             .collect::<ApllodbResult<_>>()
     }
 
     fn select_field_into_ffr(
         select_field: &SelectField,
-        from_items: &[FromItem],
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<FullFieldReference> {
         match &select_field.expression {
             apllodb_ast::Expression::ConstantVariant(_) => {
@@ -130,7 +129,7 @@ impl QueryPlan {
                 AstTranslator::select_field_column_reference(
                     ast_colref.clone(),
                     select_field.alias.clone(),
-                    from_items.to_vec(),
+                    correlations,
                 )
             }
             apllodb_ast::Expression::UnaryOperatorVariant(_, _)
@@ -143,7 +142,7 @@ impl QueryPlan {
 
     fn projection_node(
         fields: Vec<(apllodb_ast::ColumnReference, Option<apllodb_ast::Alias>)>,
-        from_items: &[FromItem],
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<UnaryPlanOperation> {
         let node = UnaryPlanOperation::Projection {
             fields: fields
@@ -152,7 +151,7 @@ impl QueryPlan {
                     AstTranslator::select_field_column_reference(
                         ast_colref,
                         ast_field_alias,
-                        from_items.to_vec(),
+                        correlations,
                     )
                     .map(FieldIndex::from)
                 })
@@ -163,7 +162,7 @@ impl QueryPlan {
 
     fn sort_node(
         ast_order_byes: apllodb_ast::NonEmptyVec<apllodb_ast::OrderBy>,
-        from_items: &[FromItem],
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<UnaryPlanOperation> {
         let order_byes = ast_order_byes.into_vec();
 
@@ -171,7 +170,7 @@ impl QueryPlan {
             .into_iter()
             .map(|order_by| {
                 let expression =
-                    AstTranslator::expression_in_select(order_by.expression, from_items.to_vec())?;
+                    AstTranslator::expression_in_select(order_by.expression, correlations)?;
                 let ffr = match expression {
                     apllodb_shared_components::Expression::FullFieldReferenceVariant(ffr) => ffr,
                     apllodb_shared_components::Expression::ConstantVariant(_)

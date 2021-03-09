@@ -11,7 +11,7 @@ use crate::ast_translator::AstTranslator;
 impl AstTranslator {
     pub fn expression_in_select(
         ast_expression: apllodb_ast::Expression,
-        correlations: Vec<CorrelationReference>,
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<Expression> {
         let expression: Expression = match ast_expression {
             apllodb_ast::Expression::ConstantVariant(c) => {
@@ -58,6 +58,6 @@ impl AstTranslator {
                 Ok(CorrelationReference::TableNameVariant(table_name))
             })
             .collect::<ApllodbResult<_>>()?;
-        Self::expression_in_select(ast_expression, table_names)
+        Self::expression_in_select(ast_expression, &table_names)
     }
 }

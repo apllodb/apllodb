@@ -6,7 +6,7 @@ use crate::ast_translator::AstTranslator;
 impl AstTranslator {
     pub fn condition_in_select(
         ast_condition: apllodb_ast::Condition,
-        correlations: Vec<CorrelationReference>,
+        correlations: &[CorrelationReference],
     ) -> ApllodbResult<Expression> {
         Self::expression_in_select(ast_condition.expression, correlations)
     }
