@@ -1,3 +1,4 @@
+pub(crate) mod ast_translator;
 pub(crate) mod ddl;
 pub(crate) mod modification;
 pub(crate) mod query;

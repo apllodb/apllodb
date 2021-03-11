@@ -1,16 +1,14 @@
 //! Inputs [SelectCommand](apllodb-sql-parser::apllodb_ast::SelectCommand), outputs [QueryPlanTree](crate::sql_processor::query::query_plan::query_plan_tree::QueryPlanTree).
 
+mod from_item;
+
 use apllodb_shared_components::{
     ApllodbResult, AstTranslator, CorrelationReference, FieldIndex, FullFieldReference, Ordering,
-    RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
-use apllodb_storage_engine_interface::ProjectionQuery;
 
 use crate::sql_processor::query::query_plan::query_plan_tree::{
-    query_plan_node::{
-        LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
-    },
+    query_plan_node::{QueryPlanNode, QueryPlanNodeUnary, UnaryPlanOperation},
     QueryPlanTree,
 };
 
@@ -25,30 +23,12 @@ impl QueryPlanner {
             unimplemented!();
         }
 
-        let from_item = Self::select_command_into_from_item(ast_select_command.clone());
-        let from_correlations = AstTranslator::from_item(from_item)?;
-        // from_item から、NodeLeaf とそれらをまとめた bin_op のサブツリーがすべて出てくるようにしたいね
+        let ast_from_item = Self::select_command_into_from_item(ast_select_command.clone());
+        let from_item_plan = Self::from_item(&ast_from_item)?;
+
+        let from_correlations = AstTranslator::from_item(ast_from_item)?;
 
         let select_fields = ast_select_command.select_fields.into_vec();
-        let ffrs: Vec<FullFieldReference> =
-            Self::select_fields_into_ffrs(&select_fields, &from_correlations)?;
-        let schema = RecordFieldRefSchema::new(ffrs);
-
-        // ここの schema だけから storage engine から取ってくるテーブルを判断するのは間違っている。
-        // SELECT t.id FROM t INNER JOIN ON t.x = s.y;
-        // みたいなSQLもあるので。
-
-        if from_correlations.len() != 1 {
-            unimplemented!("currently SELECT w/ 0 or 2+ FROM items is not implemented");
-        }
-        let corref = from_correlations[0].clone();
-
-        let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-            op: LeafPlanOperation::SeqScan {
-                table_name: corref.as_table_name().clone(),
-                projection: ProjectionQuery::Schema(schema),
-            },
-        });
 
         let node1 = if let Some(condition) = ast_select_command.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
@@ -56,10 +36,10 @@ impl QueryPlanner {
             };
             QueryPlanNode::Unary(QueryPlanNodeUnary {
                 op: selection_op,
-                left: Box::new(leaf_node),
+                left: Box::new(from_item_plan),
             })
         } else {
-            leaf_node
+            from_item_plan
         };
 
         let node2 = if let Some(order_byes) = ast_select_command.order_bys {
