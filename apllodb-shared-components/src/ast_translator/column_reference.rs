@@ -34,19 +34,17 @@ impl AstTranslator {
                 ),
                 None,
             ))
+        } else if let Some(ast_corr) = ast_column_reference.correlation {
+            Self::column_reference_with_corr(
+                ast_corr,
+                ast_column_reference.column_name,
+                from_item_correlations,
+            )
         } else {
-            if let Some(ast_corr) = ast_column_reference.correlation {
-                Self::column_reference_with_corr(
-                    ast_corr,
-                    ast_column_reference.column_name,
-                    from_item_correlations,
-                )
-            } else {
-                Self::column_reference_without_corr(
-                    ast_column_reference.column_name,
-                    from_item_correlations,
-                )
-            }
+            Self::column_reference_without_corr(
+                ast_column_reference.column_name,
+                from_item_correlations,
+            )
         }
     }
 
