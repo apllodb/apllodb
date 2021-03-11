@@ -266,6 +266,7 @@ async fn test_inner_join() {
                 records.sorted_by_key(|r| r.get::<i32>(&FieldIndex::from("people.id")).unwrap().unwrap());
 
                 let r = records.next().unwrap();
+                // TODO この辺の期待結果でmagic number使いすぎ
                 assert_eq!(r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), Some(1));
                 assert_eq!(r.get::<i64>(&FieldIndex::from("age")).unwrap(), Some(13));
                 assert_eq!(r.get::<i64>(&FieldIndex::from("height")).unwrap(), Some(145));
@@ -279,6 +280,8 @@ async fn test_inner_join() {
                 Ok(())
             })),
         ))
+        // TODO 少なくとも SELECT people.id FROM people INNER JOIN body ON people.id = body.people_id (bodyテーブルはselect fieldに現れない)は増やす
+        // あと、3つのテーブルのJOINも
         .run()
         .await;
 }

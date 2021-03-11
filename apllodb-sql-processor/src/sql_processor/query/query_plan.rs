@@ -36,17 +36,22 @@ impl TryFrom<SelectCommand> for QueryPlan {
         }
 
         let from_item = Self::select_command_into_from_item(sc.clone());
-        let correlations = AstTranslator::from_item(from_item)?;
+        let from_correlations = AstTranslator::from_item(from_item)?;
+        // from_item から、NodeLeaf とそれらをまとめた bin_op のサブツリーがすべて出てくるようにしたいね
 
         let select_fields = sc.select_fields.into_vec();
         let ffrs: Vec<FullFieldReference> =
-            Self::select_fields_into_ffrs(&select_fields, &correlations)?;
+            Self::select_fields_into_ffrs(&select_fields, &from_correlations)?;
         let schema = RecordFieldRefSchema::new(ffrs);
 
-        if correlations.len() != 1 {
+        // ここの schema だけから storage engine から取ってくるテーブルを判断するのは間違っている。
+        // SELECT t.id FROM t INNER JOIN ON t.x = s.y;
+        // みたいなSQLもあるので。
+
+        if from_correlations.len() != 1 {
             unimplemented!("currently SELECT w/ 0 or 2+ FROM items is not implemented");
         }
-        let corref = correlations[0].clone();
+        let corref = from_correlations[0].clone();
 
         let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
             op: LeafPlanOperation::SeqScan {
@@ -57,7 +62,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let node1 = if let Some(condition) = sc.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
-                condition: AstTranslator::condition_in_select(condition, &correlations)?,
+                condition: AstTranslator::condition_in_select(condition, &from_correlations)?,
             };
             QueryPlanNode::Unary(QueryPlanNodeUnary {
                 op: selection_op,
@@ -69,7 +74,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
 
         let node2 = if let Some(order_byes) = sc.order_bys {
             QueryPlanNode::Unary(QueryPlanNodeUnary {
-                op: Self::sort_node(order_byes, &correlations)?,
+                op: Self::sort_node(order_byes, &from_correlations)?,
                 left: Box::new(node1),
             })
         } else {
@@ -91,7 +96,7 @@ impl TryFrom<SelectCommand> for QueryPlan {
                         }
                     })
                     .collect(),
-                &correlations,
+                &from_correlations,
             )?,
             left: Box::new(node2),
         });
