@@ -260,7 +260,7 @@ async fn test_inner_join() {
         .add_steps(Steps::SetupPeopleBodyPetDataset)
         .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
-            "SELECT people.id, age, height FROM people INNER JOIN body ON people.id = body.people_id",
+            "SELECT people.id, people.age, body.height FROM people INNER JOIN body ON people.id = body.people_id",
             StepRes::OkQuery(Box::new(| records| {
                 let mut records =
                 records.sorted_by_key(|r| r.get::<i32>(&FieldIndex::from("people.id")).unwrap().unwrap());
