@@ -36,7 +36,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
                 let (input, session) = query_executor
                     .run(
                         session,
-                        QueryPlan::new(QueryPlanTree::new(input_query_plan_root)),
+                        QueryPlan::from(QueryPlanTree::new(input_query_plan_root)),
                     )
                     .await?;
 

@@ -340,7 +340,7 @@ mod tests {
 
             let session = session_with_tx(engine.as_ref()).await?;
             let executor = QueryExecutor::new(engine.clone());
-            let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
+            let query_plan = QueryPlan::from(test_datum.in_plan_tree.clone());
             let (result, _) = executor.run(session, query_plan).await?;
 
             assert_eq!(
