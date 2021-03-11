@@ -20,7 +20,6 @@ impl AstTranslator {
     ///   - `from_item_correlations` is empty.
     /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
     ///   - none of `from_item_correlations` has field named `ast_column_reference.column_name`
-    /// - [UndefinedObject](crate::ApllodbErrorKind::UndefinedObject) when:
     ///   - `ast_column_reference` has a correlation but it is not any of `from_item_correlations`.
     pub fn column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
@@ -53,7 +52,7 @@ impl AstTranslator {
 
     /// # Failures
     ///
-    /// - [UndefinedObject](crate::ApllodbErrorKind::UndefinedObject) when:
+    /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `ast_correlation` does not match any of `from_item_correlations`.
     fn column_reference_with_corr(
         ast_correlation: apllodb_ast::Correlation,
@@ -80,7 +79,7 @@ impl AstTranslator {
             })
             .ok_or_else(|| {
                 ApllodbError::new(
-                    ApllodbErrorKind::UndefinedObject,
+                    ApllodbErrorKind::UndefinedColumn,
                     format!(
                         "expression `{}.{}` does not match any of FROM items: {:?}",
                         expr_corr,
