@@ -27,6 +27,19 @@ impl TableName {
     }
 }
 
+impl CorrelationReference {
+    pub fn factory_tn(table_name: &str) -> Self {
+        Self::TableNameVariant(TableName::factory(table_name))
+    }
+
+    pub fn factory_ta(table_name: &str, alias: &str) -> Self {
+        Self::TableAliasVariant {
+            table_name: TableName::factory(table_name),
+            alias_name: AliasName::factory(alias),
+        }
+    }
+}
+
 impl FullFieldReference {
     pub fn factory(table_name: &str, column_name: &str) -> Self {
         let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
@@ -68,7 +81,6 @@ impl ColumnDataType {
         Self::new(ColumnName::factory(column_name), sql_type, nullable)
     }
 }
-
 impl Expression {
     pub fn factory_null() -> Self {
         Self::ConstantVariant(SqlValue::Null)
