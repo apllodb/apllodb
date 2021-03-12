@@ -1,3 +1,4 @@
+pub(crate) mod naive_query_planner;
 pub(crate) mod query_executor;
 pub(crate) mod query_plan;
 
@@ -7,10 +8,7 @@ use apllodb_shared_components::{
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
 use apllodb_storage_engine_interface::StorageEngine;
 
-use self::{
-    query_executor::QueryExecutor,
-    query_plan::{query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator, QueryPlan},
-};
+use self::{naive_query_planner::NaiveQueryPlanner, query_executor::QueryExecutor, query_plan::{QueryPlan, query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator}};
 
 use std::{rc::Rc, sync::Arc};
 
@@ -30,10 +28,12 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
-        match QueryPlan::from_select_command(self.id_gen.clone(), select_command) {
+        match NaiveQueryPlanner::from_select_command(self.id_gen.clone(), select_command) {
             Ok(plan) => {
                 let executor = QueryExecutor::new(self.engine.clone());
-                executor.run(session, plan).await
+                executor
+                    .run(session, QueryPlan::new(plan, self.id_gen.clone()))
+                    .await
                 // TODO plan optimization -> QueryPlan
             }
             Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
