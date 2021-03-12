@@ -1,17 +1,20 @@
 pub(crate) mod query_plan_tree;
 
-use std::convert::TryFrom;
+use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, CorrelationReference, FieldIndex,
-    FullFieldReference, Ordering, RecordFieldRefSchema,
+    ApllodbResult, AstTranslator, CorrelationReference, FieldIndex, FullFieldReference, Ordering,
+    RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
 use apllodb_storage_engine_interface::ProjectionQuery;
 
 use self::query_plan_tree::{
     query_plan_node::{
-        LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf, QueryPlanNodeUnary, UnaryPlanOperation,
+        node_id::QueryPlanNodeIdGenerator,
+        node_kind::{QueryPlanNodeKind, QueryPlanNodeLeaf, QueryPlanNodeUnary},
+        operation::{LeafPlanOperation, UnaryPlanOperation},
+        QueryPlanNode,
     },
     QueryPlanTree,
 };
@@ -20,14 +23,16 @@ use self::query_plan_tree::{
 #[derive(Clone, PartialEq, Debug, new)]
 pub(crate) struct QueryPlan {
     pub(crate) plan_tree: QueryPlanTree,
+    pub(crate) id_gen: Arc<QueryPlanNodeIdGenerator>,
     // TODO evaluated cost, etc...
     // See PostgreSQL's plan structure: <https://github.com/postgres/postgres/blob/master/src/include/nodes/plannodes.h#L110>
 }
 
-impl TryFrom<SelectCommand> for QueryPlan {
-    type Error = ApllodbError;
-
-    fn try_from(sc: SelectCommand) -> ApllodbResult<Self> {
+impl QueryPlan {
+    pub(crate) fn from_select_command(
+        id_gen: Arc<QueryPlanNodeIdGenerator>,
+        sc: SelectCommand,
+    ) -> ApllodbResult<Self> {
         if sc.grouping_elements.is_some() {
             unimplemented!();
         }
@@ -48,59 +53,69 @@ impl TryFrom<SelectCommand> for QueryPlan {
         }
         let corref = correlations[0].clone();
 
-        let leaf_node = QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-            op: LeafPlanOperation::SeqScan {
-                table_name: corref.as_table_name().clone(),
-                projection: ProjectionQuery::Schema(schema),
-            },
-        });
+        let leaf_node = QueryPlanNode::new(
+            &id_gen,
+            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                op: LeafPlanOperation::SeqScan {
+                    table_name: corref.as_table_name().clone(),
+                    projection: ProjectionQuery::Schema(schema),
+                },
+            }),
+        );
 
         let node1 = if let Some(condition) = sc.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
                 condition: AstTranslator::condition_in_select(condition, &correlations)?,
             };
-            QueryPlanNode::Unary(QueryPlanNodeUnary {
-                op: selection_op,
-                left: Box::new(leaf_node),
-            })
+            QueryPlanNode::new(
+                &id_gen,
+                QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                    op: selection_op,
+                    left: Box::new(leaf_node),
+                }),
+            )
         } else {
             leaf_node
         };
 
         let node2 = if let Some(order_byes) = sc.order_bys {
-            QueryPlanNode::Unary(QueryPlanNodeUnary {
-                op: Self::sort_node(order_byes, &correlations)?,
-                left: Box::new(node1),
-            })
+            QueryPlanNode::new(
+                &id_gen,
+                QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                    op: Self::sort_node(order_byes, &correlations)?,
+                    left: Box::new(node1),
+                }),
+            )
         } else {
             node1
         };
 
         // FIXME not necessary? `let ffrs: Vec<FullFieldReference>` already filters necessary fields.
-        let root_node = QueryPlanNode::Unary(QueryPlanNodeUnary {
-            op: Self::projection_node(
-                select_fields
-                    .into_iter()
-                    .map(|select_field| {
-                        if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
-                            select_field.expression
-                        {
-                            (ast_colref, select_field.alias)
-                        } else {
-                            panic!("fix 'FIXME' above!")
-                        }
-                    })
-                    .collect(),
-                &correlations,
-            )?,
-            left: Box::new(node2),
-        });
+        let root_node = QueryPlanNode::new(
+            &id_gen,
+            QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                op: Self::projection_node(
+                    select_fields
+                        .into_iter()
+                        .map(|select_field| {
+                            if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
+                                select_field.expression
+                            {
+                                (ast_colref, select_field.alias)
+                            } else {
+                                panic!("fix 'FIXME' above!")
+                            }
+                        })
+                        .collect(),
+                    &correlations,
+                )?,
+                left: Box::new(node2),
+            }),
+        );
 
-        Ok(QueryPlan::new(QueryPlanTree::new(root_node)))
+        Ok(Self::new(QueryPlanTree::new(root_node), id_gen.clone()))
     }
-}
 
-impl QueryPlan {
     fn select_command_into_from_item(select_command: SelectCommand) -> FromItem {
         select_command
             .from_items

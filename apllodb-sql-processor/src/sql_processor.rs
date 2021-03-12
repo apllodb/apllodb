@@ -3,7 +3,7 @@ pub(crate) mod modification;
 pub(crate) mod query;
 pub(crate) mod success;
 
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
@@ -13,6 +13,7 @@ use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
 };
+use query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator;
 
 use self::{
     ddl::DDLProcessor, modification::ModificationProcessor, query::QueryProcessor,
@@ -20,12 +21,21 @@ use self::{
 };
 
 /// Processes SQL.
-#[derive(Clone, Debug, new)]
+#[derive(Debug)]
 pub struct SQLProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
+    id_gen: Arc<QueryPlanNodeIdGenerator>,
 }
 
 impl<Engine: StorageEngine> SQLProcessor<Engine> {
+    /// Constructor
+    pub fn new(engine: Rc<Engine>) -> Self {
+        Self {
+            engine,
+            id_gen: Arc::new(QueryPlanNodeIdGenerator::new()),
+        }
+    }
+
     /// # Failures
     ///
     /// - [InvalidDatabaseDefinition](apllodb-shared-components::ApllodbErrorKind::InvalidDatabaseDefinition) when:
@@ -188,10 +198,10 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
     }
 
     fn modification(&self) -> ModificationProcessor<Engine> {
-        ModificationProcessor::new(self.engine.clone())
+        ModificationProcessor::new(self.engine.clone(), self.id_gen.clone())
     }
 
     fn query(&self) -> QueryProcessor<Engine> {
-        QueryProcessor::new(self.engine.clone())
+        QueryProcessor::new(self.engine.clone(), self.id_gen.clone())
     }
 }

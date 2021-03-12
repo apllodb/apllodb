@@ -7,21 +7,21 @@ use apllodb_shared_components::{
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
 use apllodb_storage_engine_interface::StorageEngine;
 
-use self::{query_executor::QueryExecutor, query_plan::QueryPlan};
+use self::{
+    query_executor::QueryExecutor,
+    query_plan::{query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator, QueryPlan},
+};
 
-use std::{convert::TryFrom, rc::Rc};
+use std::{rc::Rc, sync::Arc};
 
 /// Processes SELECT command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct QueryProcessor<Engine: StorageEngine> {
+#[derive(Eq, PartialEq, Hash, Debug, new)]
+pub(crate) struct QueryProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
+    id_gen: Arc<QueryPlanNodeIdGenerator>,
 }
 
 impl<Engine: StorageEngine> QueryProcessor<Engine> {
-    pub(crate) fn new(engine: Rc<Engine>) -> Self {
-        Self { engine }
-    }
-
     /// Executes parsed SELECT query.
     pub async fn run(
         &self,
@@ -30,7 +30,7 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
-        match QueryPlan::try_from(select_command) {
+        match QueryPlan::from_select_command(self.id_gen.clone(), select_command) {
             Ok(plan) => {
                 let executor = QueryExecutor::new(self.engine.clone());
                 executor.run(session, plan).await
@@ -43,8 +43,10 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    use std::{rc::Rc, sync::Arc};
 
+    use super::QueryProcessor;
+    use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
         ApllodbResult, Record,
@@ -53,8 +55,6 @@ mod tests {
     use apllodb_storage_engine_interface::test_support::{
         default_mock_engine, mock_select, session_with_tx, MockWithTxMethods,
     };
-
-    use super::QueryProcessor;
 
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
@@ -138,7 +138,8 @@ mod tests {
                 }
             };
             let session = session_with_tx(engine.as_ref()).await?;
-            let processor = QueryProcessor::new(engine.clone());
+            let id_gen = QueryPlanNodeIdGenerator::new();
+            let processor = QueryProcessor::new(engine.clone(), Arc::new(id_gen));
             let (result, _) = processor.run(session, select_command).await?;
 
             assert_eq!(
