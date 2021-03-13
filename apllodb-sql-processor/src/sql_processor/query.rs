@@ -14,16 +14,13 @@ use self::{
     query_plan::{query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository, QueryPlan},
 };
 
-use std::{
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{rc::Rc, sync::Arc};
 
 /// Processes SELECT command.
 #[derive(Debug, new)]
 pub(crate) struct QueryProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
-    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
+    node_repo: Arc<QueryPlanNodeRepository>,
 }
 
 impl<Engine: StorageEngine> QueryProcessor<Engine> {
@@ -50,10 +47,7 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        rc::Rc,
-        sync::{Arc, RwLock},
-    };
+    use std::{rc::Rc, sync::Arc};
 
     use super::QueryProcessor;
     use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
@@ -148,10 +142,8 @@ mod tests {
                 }
             };
             let session = session_with_tx(engine.as_ref()).await?;
-            let processor = QueryProcessor::new(
-                engine.clone(),
-                Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
-            );
+            let processor =
+                QueryProcessor::new(engine.clone(), Arc::new(QueryPlanNodeRepository::default()));
             let (result, _) = processor.run(session, select_command).await?;
 
             assert_eq!(

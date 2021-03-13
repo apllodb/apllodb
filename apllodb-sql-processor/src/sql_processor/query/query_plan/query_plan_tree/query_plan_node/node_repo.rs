@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::RwLock};
 
-use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 
 use super::{
     node_id::{QueryPlanNodeId, QueryPlanNodeIdGenerator},
@@ -10,26 +10,29 @@ use super::{
 
 #[derive(Debug, Default)]
 pub(crate) struct QueryPlanNodeRepository {
-    hmap: HashMap<QueryPlanNodeId, QueryPlanNode>,
+    hmap: RwLock<HashMap<QueryPlanNodeId, QueryPlanNode>>,
     id_gen: QueryPlanNodeIdGenerator,
 }
 
 impl QueryPlanNodeRepository {
-    pub(crate) fn create(&mut self, kind: QueryPlanNodeKind) -> &QueryPlanNode {
+    pub(crate) fn create(&self, kind: QueryPlanNodeKind) -> QueryPlanNodeId {
         let node = QueryPlanNode::new(self.id_gen.gen(), kind);
         let id = node.id;
-        self.hmap.insert(id, node);
-        self.hmap.get(&id).expect("just inserted")
+        self.hmap.write().unwrap().insert(id, node);
+        id
     }
 
     /// # Failures
     ///
-    /// -
-    pub(crate) fn find(&self, _id: QueryPlanNodeId) -> ApllodbResult<&QueryPlanNode> {
-        todo!()
-    }
-
-    pub(crate) fn remove(&mut self, _id: QueryPlanNodeId) -> ApllodbResult<QueryPlanNode> {
-        todo!()
+    /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
+    ///    - node with id does not exist.
+    pub(crate) fn remove(&self, id: QueryPlanNodeId) -> ApllodbResult<QueryPlanNode> {
+        self.hmap.write().unwrap().remove(&id).ok_or_else(|| {
+            ApllodbError::new(
+                ApllodbErrorKind::UndefinedObject,
+                format!("QueryPlanNode:{:?} does not exist (already removed?)", id),
+                None,
+            )
+        })
     }
 }

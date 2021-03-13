@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use apllodb_shared_components::{
     ApllodbResult, AstTranslator, CorrelationReference, FieldIndex, FullFieldReference, Ordering,
@@ -38,13 +38,11 @@ use super::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNod
 /// Nodes are created from bottom to top.
 #[derive(Clone, Debug, new)]
 pub(crate) struct NaiveQueryPlanner {
-    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
+    node_repo: Arc<QueryPlanNodeRepository>,
 }
 
 impl NaiveQueryPlanner {
     pub(crate) fn from_select_command(&self, sc: SelectCommand) -> ApllodbResult<QueryPlanTree> {
-        let mut node_repo = self.node_repo.write().unwrap();
-
         if sc.grouping_elements.is_some() {
             unimplemented!();
         }
@@ -65,55 +63,61 @@ impl NaiveQueryPlanner {
         }
         let corref = correlations[0].clone();
 
-        let leaf_node = node_repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
-            op: LeafPlanOperation::SeqScan {
-                table_name: corref.as_table_name().clone(),
-                projection: ProjectionQuery::Schema(schema),
-            },
-        }));
+        let leaf_node_id = self
+            .node_repo
+            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                op: LeafPlanOperation::SeqScan {
+                    table_name: corref.as_table_name().clone(),
+                    projection: ProjectionQuery::Schema(schema),
+                },
+            }));
 
-        let node1 = if let Some(condition) = sc.where_condition {
+        let node1_id = if let Some(condition) = sc.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
                 condition: AstTranslator::condition_in_select(condition, &correlations)?,
             };
-            node_repo.create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
-                op: selection_op,
-                left: leaf_node.id,
-            }))
+            self.node_repo
+                .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                    op: selection_op,
+                    left: leaf_node_id,
+                }))
         } else {
-            leaf_node
+            leaf_node_id
         };
 
-        let node2 = if let Some(order_byes) = sc.order_bys {
-            node_repo.create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
-                op: Self::sort_node(order_byes, &correlations)?,
-                left: node1.id,
-            }))
+        let node2_id = if let Some(order_byes) = sc.order_bys {
+            self.node_repo
+                .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                    op: Self::sort_node(order_byes, &correlations)?,
+                    left: node1_id,
+                }))
         } else {
-            node1
+            node1_id
         };
 
         // FIXME not necessary? `let ffrs: Vec<FullFieldReference>` already filters necessary fields.
-        let root_node = node_repo.create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
-            op: Self::projection_node(
-                select_fields
-                    .into_iter()
-                    .map(|select_field| {
-                        if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
-                            select_field.expression
-                        {
-                            (ast_colref, select_field.alias)
-                        } else {
-                            panic!("fix 'FIXME' above!")
-                        }
-                    })
-                    .collect(),
-                &correlations,
-            )?,
-            left: node2.id,
-        }));
+        let root_node_id = self
+            .node_repo
+            .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                op: Self::projection_node(
+                    select_fields
+                        .into_iter()
+                        .map(|select_field| {
+                            if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
+                                select_field.expression
+                            {
+                                (ast_colref, select_field.alias)
+                            } else {
+                                panic!("fix 'FIXME' above!")
+                            }
+                        })
+                        .collect(),
+                    &correlations,
+                )?,
+                left: node2_id,
+            }));
 
-        Ok(QueryPlanTree::new(root_node.id))
+        Ok(QueryPlanTree::new(root_node_id))
     }
 
     fn select_command_into_from_item(select_command: SelectCommand) -> FromItem {

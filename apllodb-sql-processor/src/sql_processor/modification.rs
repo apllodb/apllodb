@@ -1,7 +1,4 @@
-use std::{
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
@@ -36,7 +33,7 @@ pub(crate) mod modification_plan;
 #[derive(Debug, new)]
 pub(crate) struct ModificationProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
-    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
+    node_repo: Arc<QueryPlanNodeRepository>,
 }
 
 impl<Engine: StorageEngine> ModificationProcessor<Engine> {}
@@ -105,17 +102,14 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         let insert_values = SqlValues::new(constant_values);
 
         let records_query_node = {
-            let node_id = {
-                let mut repo = self.node_repo.write().unwrap();
-                repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+            let node_id = self
+                .node_repo
+                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::Values {
                         records: Records::new(schema, vec![Record::new(insert_values)]),
                     },
-                }))
-                .id
-            };
-            let mut repo = self.node_repo.write().unwrap();
-            repo.remove(node_id)?
+                }));
+            self.node_repo.remove(node_id)?
         };
 
         let plan_node = ModificationPlanNode::Insert(InsertNode {
@@ -129,10 +123,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        rc::Rc,
-        sync::{Arc, RwLock},
-    };
+    use std::{rc::Rc, sync::Arc};
 
     use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
     use apllodb_shared_components::{
@@ -204,7 +195,7 @@ mod tests {
             let session = session_with_tx(&engine).await?;
             let processor = ModificationProcessor::new(
                 Rc::new(engine),
-                Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
+                Arc::new(QueryPlanNodeRepository::default()),
             );
             processor.run(session, ast.0).await?;
         }

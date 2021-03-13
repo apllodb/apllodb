@@ -3,10 +3,7 @@ pub(crate) mod modification;
 pub(crate) mod query;
 pub(crate) mod success;
 
-use std::{
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
@@ -31,7 +28,7 @@ use self::{
 #[derive(Debug)]
 pub struct SQLProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
-    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
+    node_repo: Arc<QueryPlanNodeRepository>,
 }
 
 impl<Engine: StorageEngine> SQLProcessor<Engine> {
@@ -39,7 +36,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
     pub fn new(engine: Rc<Engine>) -> Self {
         Self {
             engine,
-            node_repo: Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
+            node_repo: Arc::new(QueryPlanNodeRepository::default()),
         }
     }
 

@@ -1,7 +1,4 @@
-use std::{
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{rc::Rc, sync::Arc};
 
 use apllodb_shared_components::{ApllodbSessionResult, SessionWithTx};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
@@ -22,7 +19,7 @@ use super::modification_plan::{
 #[derive(Clone, Debug, new)]
 pub(crate) struct ModificationExecutor<Engine: StorageEngine> {
     engine: Rc<Engine>,
-    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
+    node_repo: Arc<QueryPlanNodeRepository>,
 }
 
 impl<Engine: StorageEngine> ModificationExecutor<Engine> {
@@ -67,10 +64,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        rc::Rc,
-        sync::{Arc, RwLock},
-    };
+    use std::{rc::Rc, sync::Arc};
 
     use apllodb_shared_components::{
         test_support::{
@@ -125,8 +119,8 @@ mod tests {
                     in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
                         InsertNode {
                             table_name: People::table_name(),
-                            child: REPO
-                                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            child: {
+                                let id = REPO.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                     op: LeafPlanOperation::Values {
                                         records: Records::new(
                                             People::schema(),
@@ -137,8 +131,9 @@ mod tests {
                                             ],
                                         ),
                                     },
-                                }))
-                                .clone(),
+                                }));
+                                REPO.remove(id).unwrap()
+                            },
                         },
                     )),
                     expected_insert_table: People::table_name(),
@@ -154,14 +149,15 @@ mod tests {
                     in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
                         InsertNode {
                             table_name: Pet::table_name(),
-                            child: REPO
-                                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            child: {
+                                let id = REPO.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                     op: LeafPlanOperation::SeqScan {
                                         table_name: Pet::table_name(),
                                         projection: ProjectionQuery::All,
                                     },
-                                }))
-                                .clone(),
+                                }));
+                                REPO.remove(id).unwrap()
+                            },
                         },
                     )),
                     expected_insert_table: Pet::table_name(),
@@ -215,7 +211,7 @@ mod tests {
             let session = session_with_tx(engine.as_ref()).await?;
             let executor = ModificationExecutor::new(
                 engine.clone(),
-                Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
+                Arc::new(QueryPlanNodeRepository::default()),
             );
             executor.run(session, modification_plan).await?;
         }
