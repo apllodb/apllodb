@@ -3,10 +3,7 @@ pub(crate) mod node_kind;
 pub(crate) mod node_repo;
 pub(crate) mod operation;
 
-use self::{
-    node_id::{QueryPlanNodeId, QueryPlanNodeIdGenerator},
-    node_kind::QueryPlanNodeKind,
-};
+use self::{node_id::QueryPlanNodeId, node_kind::QueryPlanNodeKind};
 use std::hash::Hash;
 
 /// Node of query plan tree.
@@ -29,10 +26,10 @@ impl Hash for QueryPlanNode {
 }
 
 impl QueryPlanNode {
-    pub(crate) fn new(id_gen: &QueryPlanNodeIdGenerator, kind: QueryPlanNodeKind) -> Self {
-        Self {
-            id: id_gen.gen(),
-            kind,
-        }
+    pub(in crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node) fn new(
+        id: QueryPlanNodeId,
+        kind: QueryPlanNodeKind,
+    ) -> Self {
+        Self { id, kind }
     }
 }

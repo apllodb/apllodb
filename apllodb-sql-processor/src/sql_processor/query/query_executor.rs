@@ -34,8 +34,7 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
         plan: QueryPlan,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         let plan_tree = plan.plan_tree;
-        let root = plan_tree.root;
-        self.run_dfs_post_order(session, root.id).await
+        self.run_dfs_post_order(session, plan_tree.root).await
     }
 
     /// Runs `node` in post-order and returns `node`'s output.
@@ -106,13 +105,11 @@ mod tests {
     use crate::sql_processor::query::query_plan::{
         query_plan_tree::{
             query_plan_node::{
-                node_id::QueryPlanNodeIdGenerator,
                 node_kind::{
                     QueryPlanNodeBinary, QueryPlanNodeKind, QueryPlanNodeLeaf, QueryPlanNodeUnary,
                 },
                 node_repo::QueryPlanNodeRepository,
                 operation::{BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation},
-                QueryPlanNode,
             },
             QueryPlanTree,
         },
@@ -138,20 +135,20 @@ mod tests {
             with_tx
         });
         let engine = Rc::new(engine);
-        let id_gen = Arc::new(QueryPlanNodeIdGenerator::new());
+
+        let mut repo = QueryPlanNodeRepository::default();
 
         let test_data: Vec<TestDatum> = vec![
             // SeqScan (with storage engine layer projection)
             TestDatum {
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                in_plan_tree: QueryPlanTree::new(repo.create(QueryPlanNodeKind::Leaf(
+                    QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::All,
                         },
-                    }),
-                )),
+                    },
+                ))),
                 expected_select_records: vec![
                     PEOPLE_RECORD1.clone(),
                     PEOPLE_RECORD2.clone(),
@@ -159,17 +156,16 @@ mod tests {
                 ],
             },
             TestDatum {
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                in_plan_tree: QueryPlanTree::new(repo.create(QueryPlanNodeKind::Leaf(
+                    QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::Schema(RecordFieldRefSchema::factory(
                                 vec![People::ffr_id()],
                             )),
                         },
-                    }),
-                )),
+                    },
+                ))),
                 expected_select_records: vec![
                     PEOPLE_RECORD1
                         .clone()
@@ -183,17 +179,16 @@ mod tests {
                 ],
             },
             TestDatum {
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                in_plan_tree: QueryPlanTree::new(repo.create(QueryPlanNodeKind::Leaf(
+                    QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
                             projection: ProjectionQuery::Schema(RecordFieldRefSchema::factory(
                                 vec![People::ffr_age()],
                             )),
                         },
-                    }),
-                )),
+                    },
+                ))),
                 expected_select_records: vec![
                     PEOPLE_RECORD1
                         .clone()
@@ -208,25 +203,23 @@ mod tests {
             },
             // Projection
             TestDatum {
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                in_plan_tree: QueryPlanTree::new(
+                    repo.create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
                         op: UnaryPlanOperation::Projection {
                             fields: vec![FieldIndex::from(People::ffr_id())]
                                 .into_iter()
                                 .collect(),
                         },
-                        left: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                        left: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: People::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                    }),
-                )),
+                            }))
+                            .id,
+                    })),
+                ),
                 expected_select_records: vec![
                     PEOPLE_RECORD1
                         .clone()
@@ -240,25 +233,23 @@ mod tests {
                 ],
             },
             TestDatum {
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                in_plan_tree: QueryPlanTree::new(
+                    repo.create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
                         op: UnaryPlanOperation::Projection {
                             fields: vec![FieldIndex::from(People::ffr_age())]
                                 .into_iter()
                                 .collect(),
                         },
-                        left: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                        left: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: People::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                    }),
-                )),
+                            }))
+                            .id,
+                    })),
+                ),
                 expected_select_records: vec![
                     PEOPLE_RECORD1
                         .clone()
@@ -273,34 +264,31 @@ mod tests {
             },
             // HashJoin
             TestDatum {
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
+                in_plan_tree: QueryPlanTree::new(
+                    repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                         op: BinaryPlanOperation::HashJoin {
                             joined_schema: People::schema().joined(&Body::schema()),
                             left_field: FieldIndex::from(People::ffr_id()),
                             right_field: FieldIndex::from(Body::ffr_people_id()),
                         },
-                        left: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                        left: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: People::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                        right: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            }))
+                            .id,
+                        right: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: Body::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                    }),
-                )),
+                            }))
+                            .id,
+                    })),
+                ),
                 expected_select_records: vec![
                     PEOPLE_RECORD1.clone().join(BODY_RECORD1.clone()),
                     PEOPLE_RECORD3.clone().join(BODY_RECORD3.clone()),
@@ -308,34 +296,31 @@ mod tests {
             },
             TestDatum {
                 // right has 2 same join keys
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
+                in_plan_tree: QueryPlanTree::new(
+                    repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                         op: BinaryPlanOperation::HashJoin {
                             joined_schema: People::schema().joined(&Pet::schema()),
                             left_field: FieldIndex::from(People::ffr_id()),
                             right_field: FieldIndex::from(Pet::ffr_people_id()),
                         },
-                        left: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                        left: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: People::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                        right: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            }))
+                            .id,
+                        right: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: Pet::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                    }),
-                )),
+                            }))
+                            .id,
+                    })),
+                ),
                 expected_select_records: vec![
                     PEOPLE_RECORD1.clone().join(PET_RECORD1.clone()),
                     PEOPLE_RECORD3.clone().join(PET_RECORD3_1.clone()),
@@ -344,34 +329,31 @@ mod tests {
             },
             TestDatum {
                 // left has 2 same join keys
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
+                in_plan_tree: QueryPlanTree::new(
+                    repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                         op: BinaryPlanOperation::HashJoin {
                             joined_schema: Pet::schema().joined(&People::schema()),
                             left_field: FieldIndex::from(Pet::ffr_people_id()),
                             right_field: FieldIndex::from(People::ffr_id()),
                         },
-                        left: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                        left: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: Pet::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                        right: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            }))
+                            .id,
+                        right: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: People::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                    }),
-                )),
+                            }))
+                            .id,
+                    })),
+                ),
                 expected_select_records: vec![
                     PET_RECORD1.clone().join(PEOPLE_RECORD1.clone()),
                     PET_RECORD3_1.clone().join(PEOPLE_RECORD3.clone()),
@@ -380,34 +362,31 @@ mod tests {
             },
             TestDatum {
                 // Eq comparison with Integer & SmallInt
-                in_plan_tree: QueryPlanTree::new(QueryPlanNode::new(
-                    &id_gen,
-                    QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
+                in_plan_tree: QueryPlanTree::new(
+                    repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                         op: BinaryPlanOperation::HashJoin {
                             joined_schema: People::schema().joined(&Pet::schema()),
                             left_field: FieldIndex::from(People::ffr_age()),
                             right_field: FieldIndex::from(Pet::ffr_age()),
                         },
-                        left: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                        left: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: People::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                        right: Box::new(QueryPlanNode::new(
-                            &id_gen,
-                            QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            }))
+                            .id,
+                        right: repo
+                            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                 op: LeafPlanOperation::SeqScan {
                                     table_name: Pet::table_name(),
                                     projection: ProjectionQuery::All,
                                 },
-                            }),
-                        )),
-                    }),
-                )),
+                            }))
+                            .id,
+                    })),
+                ),
                 expected_select_records: vec![PEOPLE_RECORD1.clone().join(PET_RECORD1.clone())],
             },
         ];
@@ -423,7 +402,7 @@ mod tests {
                 engine.clone(),
                 Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
             );
-            let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone(), id_gen.clone());
+            let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
             let (result, _) = executor.run(session, query_plan).await?;
 
             assert_eq!(

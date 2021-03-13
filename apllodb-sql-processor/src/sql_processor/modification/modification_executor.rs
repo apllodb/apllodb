@@ -9,12 +9,7 @@ use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 use crate::sql_processor::query::{
     query_executor::QueryExecutor,
     query_plan::{
-        query_plan_tree::{
-            query_plan_node::{
-                node_id::QueryPlanNodeIdGenerator, node_repo::QueryPlanNodeRepository,
-            },
-            QueryPlanTree,
-        },
+        query_plan_tree::{query_plan_node::node_repo::QueryPlanNodeRepository, QueryPlanTree},
         QueryPlan,
     },
 };
@@ -27,7 +22,6 @@ use super::modification_plan::{
 #[derive(Clone, Debug, new)]
 pub(crate) struct ModificationExecutor<Engine: StorageEngine> {
     engine: Rc<Engine>,
-    id_gen: Arc<QueryPlanNodeIdGenerator>,
     node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
 }
 
@@ -45,10 +39,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
                 let (input, session) = query_executor
                     .run(
                         session,
-                        QueryPlan::new(
-                            QueryPlanTree::new(input_query_plan_root),
-                            self.id_gen.clone(),
-                        ),
+                        QueryPlan::new(QueryPlanTree::new(input_query_plan_root.id)),
                     )
                     .await?;
 
@@ -105,11 +96,9 @@ mod tests {
             ModificationPlan,
         },
         query::query_plan::query_plan_tree::query_plan_node::{
-            node_id::QueryPlanNodeIdGenerator,
             node_kind::{QueryPlanNodeKind, QueryPlanNodeLeaf},
             node_repo::QueryPlanNodeRepository,
             operation::LeafPlanOperation,
-            QueryPlanNode,
         },
     };
 
@@ -126,8 +115,8 @@ mod tests {
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
     async fn test_modification_executor() -> ApllodbResult<()> {
-        static ID_GEN: Lazy<QueryPlanNodeIdGenerator> =
-            Lazy::new(|| QueryPlanNodeIdGenerator::new());
+        static REPO: Lazy<QueryPlanNodeRepository> =
+            Lazy::new(|| QueryPlanNodeRepository::default());
 
         static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
             vec![
@@ -136,9 +125,8 @@ mod tests {
                     in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
                         InsertNode {
                             table_name: People::table_name(),
-                            child: QueryPlanNode::new(
-                                &ID_GEN,
-                                QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            child: REPO
+                                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                     op: LeafPlanOperation::Values {
                                         records: Records::new(
                                             People::schema(),
@@ -149,8 +137,8 @@ mod tests {
                                             ],
                                         ),
                                     },
-                                }),
-                            ),
+                                }))
+                                .clone(),
                         },
                     )),
                     expected_insert_table: People::table_name(),
@@ -166,15 +154,14 @@ mod tests {
                     in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
                         InsertNode {
                             table_name: Pet::table_name(),
-                            child: QueryPlanNode::new(
-                                &ID_GEN,
-                                QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            child: REPO
+                                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                                     op: LeafPlanOperation::SeqScan {
                                         table_name: Pet::table_name(),
                                         projection: ProjectionQuery::All,
                                     },
-                                }),
-                            ),
+                                }))
+                                .clone(),
                         },
                     )),
                     expected_insert_table: Pet::table_name(),
@@ -228,7 +215,6 @@ mod tests {
             let session = session_with_tx(engine.as_ref()).await?;
             let executor = ModificationExecutor::new(
                 engine.clone(),
-                Arc::new(QueryPlanNodeIdGenerator::new()),
                 Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
             );
             executor.run(session, modification_plan).await?;

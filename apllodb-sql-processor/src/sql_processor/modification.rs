@@ -14,7 +14,6 @@ use apllodb_storage_engine_interface::StorageEngine;
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     node_kind::{QueryPlanNodeKind, QueryPlanNodeLeaf},
     operation::LeafPlanOperation,
-    QueryPlanNode,
 };
 
 use self::{
@@ -28,9 +27,7 @@ use self::{
     },
 };
 
-use super::query::query_plan::query_plan_tree::query_plan_node::{
-    node_id::QueryPlanNodeIdGenerator, node_repo::QueryPlanNodeRepository,
-};
+use super::query::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
 
 pub(crate) mod modification_executor;
 pub(crate) mod modification_plan;
@@ -39,7 +36,6 @@ pub(crate) mod modification_plan;
 #[derive(Debug, new)]
 pub(crate) struct ModificationProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
-    id_gen: Arc<QueryPlanNodeIdGenerator>,
     node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
 }
 
@@ -55,11 +51,8 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         match command {
             Command::InsertCommandVariant(ic) => match self.run_helper_insert(ic) {
                 Ok(plan) => {
-                    let executor = ModificationExecutor::new(
-                        self.engine.clone(),
-                        self.id_gen.clone(),
-                        self.node_repo.clone(),
-                    );
+                    let executor =
+                        ModificationExecutor::new(self.engine.clone(), self.node_repo.clone());
                     executor.run(session, plan).await
                 }
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
@@ -111,16 +104,23 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
         let insert_values = SqlValues::new(constant_values);
 
-        let plan_node = ModificationPlanNode::Insert(InsertNode {
-            table_name,
-            child: QueryPlanNode::new(
-                &self.id_gen,
-                QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+        let records_query_node = {
+            let node_id = {
+                let mut repo = self.node_repo.write().unwrap();
+                repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::Values {
                         records: Records::new(schema, vec![Record::new(insert_values)]),
                     },
-                }),
-            ),
+                }))
+                .id
+            };
+            let mut repo = self.node_repo.write().unwrap();
+            repo.remove(node_id)?
+        };
+
+        let plan_node = ModificationPlanNode::Insert(InsertNode {
+            table_name,
+            child: records_query_node,
         });
 
         Ok(ModificationPlan::new(ModificationPlanTree::new(plan_node)))
@@ -134,10 +134,7 @@ mod tests {
         sync::{Arc, RwLock},
     };
 
-    use crate::sql_processor::query::query_plan::{
-        query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator,
-        query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository,
-    };
+    use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
     use apllodb_shared_components::{
         test_support::test_models::People, ApllodbResult, ColumnName, NNSqlValue, SqlValue,
         SqlValues, TableName,
@@ -207,7 +204,6 @@ mod tests {
             let session = session_with_tx(&engine).await?;
             let processor = ModificationProcessor::new(
                 Rc::new(engine),
-                Arc::new(QueryPlanNodeIdGenerator::new()),
                 Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
             );
             processor.run(session, ast.0).await?;

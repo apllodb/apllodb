@@ -11,12 +11,7 @@ use apllodb_storage_engine_interface::StorageEngine;
 use self::{
     naive_query_planner::NaiveQueryPlanner,
     query_executor::QueryExecutor,
-    query_plan::{
-        query_plan_tree::query_plan_node::{
-            node_id::QueryPlanNodeIdGenerator, node_repo::QueryPlanNodeRepository,
-        },
-        QueryPlan,
-    },
+    query_plan::{query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository, QueryPlan},
 };
 
 use std::{
@@ -28,7 +23,6 @@ use std::{
 #[derive(Debug, new)]
 pub(crate) struct QueryProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
-    id_gen: Arc<QueryPlanNodeIdGenerator>,
     node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
 }
 
@@ -41,14 +35,12 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
-        let planner = NaiveQueryPlanner::new(self.id_gen.clone(), self.node_repo.clone());
+        let planner = NaiveQueryPlanner::new(self.node_repo.clone());
 
         match planner.from_select_command(select_command) {
             Ok(plan) => {
                 let executor = QueryExecutor::new(self.engine.clone(), self.node_repo.clone());
-                executor
-                    .run(session, QueryPlan::new(plan, self.id_gen.clone()))
-                    .await
+                executor.run(session, QueryPlan::new(plan)).await
                 // TODO plan optimization -> QueryPlan
             }
             Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
@@ -64,9 +56,7 @@ mod tests {
     };
 
     use super::QueryProcessor;
-    use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
-        node_id::QueryPlanNodeIdGenerator, node_repo::QueryPlanNodeRepository,
-    };
+    use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
         ApllodbResult, Record,
@@ -160,7 +150,6 @@ mod tests {
             let session = session_with_tx(engine.as_ref()).await?;
             let processor = QueryProcessor::new(
                 engine.clone(),
-                Arc::new(QueryPlanNodeIdGenerator::new()),
                 Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
             );
             let (result, _) = processor.run(session, select_command).await?;
