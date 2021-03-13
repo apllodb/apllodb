@@ -101,20 +101,17 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
         let insert_values = SqlValues::new(constant_values);
 
-        let records_query_node = {
-            let node_id = self
-                .node_repo
+        let records_query_node_id =
+            self.node_repo
                 .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::Values {
                         records: Records::new(schema, vec![Record::new(insert_values)]),
                     },
                 }));
-            self.node_repo.remove(node_id)?
-        };
 
         let plan_node = ModificationPlanNode::Insert(InsertNode {
             table_name,
-            child: records_query_node,
+            child: records_query_node_id,
         });
 
         Ok(ModificationPlan::new(ModificationPlanTree::new(plan_node)))

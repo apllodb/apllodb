@@ -1,6 +1,6 @@
 use apllodb_shared_components::TableName;
 
-use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::QueryPlanNode;
+use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeId;
 
 #[derive(Clone, PartialEq, Debug)]
 /// Root node of modification plan tree.
@@ -23,5 +23,5 @@ pub(crate) struct InsertNode {
     /// ```sql
     /// INSERT INTO t (id, c) SELECT c_id, d FROM s;
     /// ```
-    pub(crate) child: QueryPlanNode,
+    pub(crate) child: QueryPlanNodeId,
 }

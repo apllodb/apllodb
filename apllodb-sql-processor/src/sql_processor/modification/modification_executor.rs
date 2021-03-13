@@ -32,11 +32,11 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         let plan_tree = plan.plan_tree;
         match plan_tree.root {
             ModificationPlanNode::Insert(insert_node) => {
-                let input_query_plan_root = insert_node.child;
+                let input_query_plan_root_id = insert_node.child;
                 let (input, session) = query_executor
                     .run(
                         session,
-                        QueryPlan::new(QueryPlanTree::new(input_query_plan_root.id)),
+                        QueryPlan::new(QueryPlanTree::new(input_query_plan_root_id)),
                     )
                     .await?;
 
@@ -119,21 +119,18 @@ mod tests {
                     in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
                         InsertNode {
                             table_name: People::table_name(),
-                            child: {
-                                let id = REPO.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
-                                    op: LeafPlanOperation::Values {
-                                        records: Records::new(
-                                            People::schema(),
-                                            vec![
-                                                PEOPLE_RECORD1.clone(),
-                                                PEOPLE_RECORD2.clone(),
-                                                PEOPLE_RECORD3.clone(),
-                                            ],
-                                        ),
-                                    },
-                                }));
-                                REPO.remove(id).unwrap()
-                            },
+                            child: REPO.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                                op: LeafPlanOperation::Values {
+                                    records: Records::new(
+                                        People::schema(),
+                                        vec![
+                                            PEOPLE_RECORD1.clone(),
+                                            PEOPLE_RECORD2.clone(),
+                                            PEOPLE_RECORD3.clone(),
+                                        ],
+                                    ),
+                                },
+                            })),
                         },
                     )),
                     expected_insert_table: People::table_name(),
@@ -149,15 +146,12 @@ mod tests {
                     in_plan_tree: ModificationPlanTree::new(ModificationPlanNode::Insert(
                         InsertNode {
                             table_name: Pet::table_name(),
-                            child: {
-                                let id = REPO.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
-                                    op: LeafPlanOperation::SeqScan {
-                                        table_name: Pet::table_name(),
-                                        projection: ProjectionQuery::All,
-                                    },
-                                }));
-                                REPO.remove(id).unwrap()
-                            },
+                            child: REPO.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                                op: LeafPlanOperation::SeqScan {
+                                    table_name: Pet::table_name(),
+                                    projection: ProjectionQuery::All,
+                                },
+                            })),
                         },
                     )),
                     expected_insert_table: Pet::table_name(),
