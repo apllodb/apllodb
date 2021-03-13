@@ -1,4 +1,7 @@
-use std::{rc::Rc, sync::Arc};
+use std::{
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
 use apllodb_shared_components::{ApllodbSessionResult, SessionWithTx};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
@@ -6,7 +9,12 @@ use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 use crate::sql_processor::query::{
     query_executor::QueryExecutor,
     query_plan::{
-        query_plan_tree::{query_plan_node::node_id::QueryPlanNodeIdGenerator, QueryPlanTree},
+        query_plan_tree::{
+            query_plan_node::{
+                node_id::QueryPlanNodeIdGenerator, node_repo::QueryPlanNodeRepository,
+            },
+            QueryPlanTree,
+        },
         QueryPlan,
     },
 };
@@ -16,10 +24,11 @@ use super::modification_plan::{
 };
 
 /// Modification (INSERT, UPDATE, and DELETE) executor which inputs a ModificationPlan requests to storage engine.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
+#[derive(Clone, Debug, new)]
 pub(crate) struct ModificationExecutor<Engine: StorageEngine> {
     engine: Rc<Engine>,
     id_gen: Arc<QueryPlanNodeIdGenerator>,
+    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
 }
 
 impl<Engine: StorageEngine> ModificationExecutor<Engine> {
@@ -28,7 +37,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         session: SessionWithTx,
         plan: ModificationPlan,
     ) -> ApllodbSessionResult<SessionWithTx> {
-        let query_executor = QueryExecutor::new(self.engine.clone());
+        let query_executor = QueryExecutor::new(self.engine.clone(), self.node_repo.clone());
         let plan_tree = plan.plan_tree;
         match plan_tree.root {
             ModificationPlanNode::Insert(insert_node) => {
@@ -67,7 +76,10 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, sync::Arc};
+    use std::{
+        rc::Rc,
+        sync::{Arc, RwLock},
+    };
 
     use apllodb_shared_components::{
         test_support::{
@@ -95,6 +107,7 @@ mod tests {
         query::query_plan::query_plan_tree::query_plan_node::{
             node_id::QueryPlanNodeIdGenerator,
             node_kind::{QueryPlanNodeKind, QueryPlanNodeLeaf},
+            node_repo::QueryPlanNodeRepository,
             operation::LeafPlanOperation,
             QueryPlanNode,
         },
@@ -216,6 +229,7 @@ mod tests {
             let executor = ModificationExecutor::new(
                 engine.clone(),
                 Arc::new(QueryPlanNodeIdGenerator::new()),
+                Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
             );
             executor.run(session, modification_plan).await?;
         }

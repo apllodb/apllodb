@@ -3,7 +3,10 @@ pub(crate) mod modification;
 pub(crate) mod query;
 pub(crate) mod success;
 
-use std::{rc::Rc, sync::Arc};
+use std::{
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
@@ -16,7 +19,12 @@ use apllodb_storage_engine_interface::{
 use query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator;
 
 use self::{
-    ddl::DDLProcessor, modification::ModificationProcessor, query::QueryProcessor,
+    ddl::DDLProcessor,
+    modification::ModificationProcessor,
+    query::{
+        query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository,
+        QueryProcessor,
+    },
     success::SQLProcessorSuccess,
 };
 
@@ -25,6 +33,7 @@ use self::{
 pub struct SQLProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
     id_gen: Arc<QueryPlanNodeIdGenerator>,
+    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
 }
 
 impl<Engine: StorageEngine> SQLProcessor<Engine> {
@@ -33,6 +42,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
         Self {
             engine,
             id_gen: Arc::new(QueryPlanNodeIdGenerator::new()),
+            node_repo: Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
         }
     }
 
@@ -198,10 +208,18 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
     }
 
     fn modification(&self) -> ModificationProcessor<Engine> {
-        ModificationProcessor::new(self.engine.clone(), self.id_gen.clone())
+        ModificationProcessor::new(
+            self.engine.clone(),
+            self.id_gen.clone(),
+            self.node_repo.clone(),
+        )
     }
 
     fn query(&self) -> QueryProcessor<Engine> {
-        QueryProcessor::new(self.engine.clone(), self.id_gen.clone())
+        QueryProcessor::new(
+            self.engine.clone(),
+            self.id_gen.clone(),
+            self.node_repo.clone(),
+        )
     }
 }

@@ -1,4 +1,7 @@
-use std::{rc::Rc, sync::Arc};
+use std::{
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
@@ -25,16 +28,19 @@ use self::{
     },
 };
 
-use super::query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator;
+use super::query::query_plan::query_plan_tree::query_plan_node::{
+    node_id::QueryPlanNodeIdGenerator, node_repo::QueryPlanNodeRepository,
+};
 
 pub(crate) mod modification_executor;
 pub(crate) mod modification_plan;
 
 /// Processes ÎNSERT/UPDATE/DELETE command.
-#[derive(Eq, PartialEq, Hash, Debug, new)]
+#[derive(Debug, new)]
 pub(crate) struct ModificationProcessor<Engine: StorageEngine> {
     engine: Rc<Engine>,
     id_gen: Arc<QueryPlanNodeIdGenerator>,
+    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
 }
 
 impl<Engine: StorageEngine> ModificationProcessor<Engine> {}
@@ -49,8 +55,11 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         match command {
             Command::InsertCommandVariant(ic) => match self.run_helper_insert(ic) {
                 Ok(plan) => {
-                    let executor =
-                        ModificationExecutor::new(self.engine.clone(), self.id_gen.clone());
+                    let executor = ModificationExecutor::new(
+                        self.engine.clone(),
+                        self.id_gen.clone(),
+                        self.node_repo.clone(),
+                    );
                     executor.run(session, plan).await
                 }
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
@@ -120,9 +129,15 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, sync::Arc};
+    use std::{
+        rc::Rc,
+        sync::{Arc, RwLock},
+    };
 
-    use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator;
+    use crate::sql_processor::query::query_plan::{
+        query_plan_tree::query_plan_node::node_id::QueryPlanNodeIdGenerator,
+        query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository,
+    };
     use apllodb_shared_components::{
         test_support::test_models::People, ApllodbResult, ColumnName, NNSqlValue, SqlValue,
         SqlValues, TableName,
@@ -149,7 +164,6 @@ mod tests {
     #[allow(clippy::redundant_clone)]
     async fn test_modification_processor_with_sql() -> ApllodbResult<()> {
         let parser = ApllodbSqlParser::default();
-        let id_gen = Arc::new(QueryPlanNodeIdGenerator::new());
 
         static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
             vec![TestDatum::new(
@@ -191,7 +205,11 @@ mod tests {
 
             let ast = parser.parse(test_datum.in_insert_sql).unwrap();
             let session = session_with_tx(&engine).await?;
-            let processor = ModificationProcessor::new(Rc::new(engine), id_gen.clone());
+            let processor = ModificationProcessor::new(
+                Rc::new(engine),
+                Arc::new(QueryPlanNodeIdGenerator::new()),
+                Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
+            );
             processor.run(session, ast.0).await?;
         }
 

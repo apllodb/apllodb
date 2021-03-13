@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use apllodb_shared_components::{
     ApllodbResult, AstTranslator, CorrelationReference, FieldIndex, FullFieldReference, Ordering,
@@ -17,6 +17,8 @@ use crate::sql_processor::query::query_plan::query_plan_tree::{
     QueryPlanTree,
 };
 
+use super::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
+
 /// Translates [SelectCommand](apllodb_sql_parser::apllodb_ast::SelectCommand) into [QueryPlanTree](crate::sql_processor::query::query_plan::query_plan_tree::QueryPlanTree).
 ///
 /// Output tree has the following form:
@@ -34,13 +36,16 @@ use crate::sql_processor::query::query_plan::query_plan_tree::{
 ///  |------+
 /// CORR   CORR
 /// ```
-pub(crate) struct NaiveQueryPlanner;
+///
+/// Nodes are created from bottom to top.
+#[derive(Clone, Debug, new)]
+pub(crate) struct NaiveQueryPlanner {
+    id_gen: Arc<QueryPlanNodeIdGenerator>,
+    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
+}
 
 impl NaiveQueryPlanner {
-    pub(crate) fn from_select_command(
-        id_gen: Arc<QueryPlanNodeIdGenerator>,
-        sc: SelectCommand,
-    ) -> ApllodbResult<QueryPlanTree> {
+    pub(crate) fn from_select_command(&self, sc: SelectCommand) -> ApllodbResult<QueryPlanTree> {
         if sc.grouping_elements.is_some() {
             unimplemented!();
         }
@@ -62,7 +67,7 @@ impl NaiveQueryPlanner {
         let corref = correlations[0].clone();
 
         let leaf_node = QueryPlanNode::new(
-            &id_gen,
+            &self.id_gen,
             QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                 op: LeafPlanOperation::SeqScan {
                     table_name: corref.as_table_name().clone(),
@@ -76,10 +81,10 @@ impl NaiveQueryPlanner {
                 condition: AstTranslator::condition_in_select(condition, &correlations)?,
             };
             QueryPlanNode::new(
-                &id_gen,
+                &self.id_gen,
                 QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
                     op: selection_op,
-                    left: Box::new(leaf_node),
+                    left: leaf_node.id,
                 }),
             )
         } else {
@@ -88,10 +93,10 @@ impl NaiveQueryPlanner {
 
         let node2 = if let Some(order_byes) = sc.order_bys {
             QueryPlanNode::new(
-                &id_gen,
+                &self.id_gen,
                 QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
                     op: Self::sort_node(order_byes, &correlations)?,
-                    left: Box::new(node1),
+                    left: node1.id,
                 }),
             )
         } else {
@@ -100,7 +105,7 @@ impl NaiveQueryPlanner {
 
         // FIXME not necessary? `let ffrs: Vec<FullFieldReference>` already filters necessary fields.
         let root_node = QueryPlanNode::new(
-            &id_gen,
+            &self.id_gen,
             QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
                 op: Self::projection_node(
                     select_fields
@@ -117,7 +122,7 @@ impl NaiveQueryPlanner {
                         .collect(),
                     &correlations,
                 )?,
-                left: Box::new(node2),
+                left: node2.id,
             }),
         );
 

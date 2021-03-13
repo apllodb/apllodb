@@ -1,6 +1,9 @@
 mod plan_node_executor;
 
-use std::rc::Rc;
+use std::{
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
 use apllodb_shared_components::{
     ApllodbSessionError, ApllodbSessionResult, Records, Session, SessionWithTx,
@@ -9,15 +12,19 @@ use apllodb_storage_engine_interface::StorageEngine;
 
 use self::plan_node_executor::PlanNodeExecutor;
 use crate::sql_processor::query::query_plan::{
-    query_plan_tree::query_plan_node::{node_kind::QueryPlanNodeKind, QueryPlanNode},
-    QueryPlan,
+    query_plan_tree::query_plan_node::node_kind::QueryPlanNodeKind, QueryPlan,
 };
 use async_recursion::async_recursion;
 
+use super::query_plan::query_plan_tree::query_plan_node::{
+    node_id::QueryPlanNodeId, node_repo::QueryPlanNodeRepository,
+};
+
 /// Query executor which inputs a QueryPlan and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, new)]
+#[derive(Clone, Debug, new)]
 pub(crate) struct QueryExecutor<Engine: StorageEngine> {
     engine: Rc<Engine>,
+    node_repo: Arc<RwLock<QueryPlanNodeRepository>>,
 }
 
 impl<Engine: StorageEngine> QueryExecutor<Engine> {
@@ -28,7 +35,7 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         let plan_tree = plan.plan_tree;
         let root = plan_tree.root;
-        self.run_dfs_post_order(session, root).await
+        self.run_dfs_post_order(session, root.id).await
     }
 
     /// Runs `node` in post-order and returns `node`'s output.
@@ -41,37 +48,46 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
     async fn run_dfs_post_order(
         &self,
         session: SessionWithTx,
-        node: QueryPlanNode,
+        node_id: QueryPlanNodeId,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         let executor = PlanNodeExecutor::new(self.engine.clone());
+        let mut node_repo = self.node_repo.write().unwrap();
 
-        match node.kind {
-            QueryPlanNodeKind::Leaf(node_leaf) => executor.run_leaf(session, node_leaf.op).await,
-            QueryPlanNodeKind::Unary(node_unary) => {
-                let (left_input, session) =
-                    self.run_dfs_post_order(session, *node_unary.left).await?;
-                match executor.run_unary(node_unary.op, left_input) {
-                    Ok(records) => Ok((records, session)),
-                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+        match node_repo.remove(node_id) {
+            Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+            Ok(node) => match node.kind {
+                QueryPlanNodeKind::Leaf(node_leaf) => {
+                    executor.run_leaf(session, node_leaf.op).await
                 }
-            }
-            QueryPlanNodeKind::Binary(node_binary) => {
-                let (left_input, session) =
-                    self.run_dfs_post_order(session, *node_binary.left).await?;
-                let (right_input, session) =
-                    self.run_dfs_post_order(session, *node_binary.right).await?;
-                match executor.run_binary(node_binary.op, left_input, right_input) {
-                    Ok(records) => Ok((records, session)),
-                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+                QueryPlanNodeKind::Unary(node_unary) => {
+                    let (left_input, session) =
+                        self.run_dfs_post_order(session, node_unary.left).await?;
+                    match executor.run_unary(node_unary.op, left_input) {
+                        Ok(records) => Ok((records, session)),
+                        Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+                    }
                 }
-            }
+                QueryPlanNodeKind::Binary(node_binary) => {
+                    let (left_input, session) =
+                        self.run_dfs_post_order(session, node_binary.left).await?;
+                    let (right_input, session) =
+                        self.run_dfs_post_order(session, node_binary.right).await?;
+                    match executor.run_binary(node_binary.op, left_input, right_input) {
+                        Ok(records) => Ok((records, session)),
+                        Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+                    }
+                }
+            },
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, sync::Arc};
+    use std::{
+        rc::Rc,
+        sync::{Arc, RwLock},
+    };
 
     use pretty_assertions::assert_eq;
 
@@ -94,6 +110,7 @@ mod tests {
                 node_kind::{
                     QueryPlanNodeBinary, QueryPlanNodeKind, QueryPlanNodeLeaf, QueryPlanNodeUnary,
                 },
+                node_repo::QueryPlanNodeRepository,
                 operation::{BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation},
                 QueryPlanNode,
             },
@@ -402,7 +419,10 @@ mod tests {
             );
 
             let session = session_with_tx(engine.as_ref()).await?;
-            let executor = QueryExecutor::new(engine.clone());
+            let executor = QueryExecutor::new(
+                engine.clone(),
+                Arc::new(RwLock::new(QueryPlanNodeRepository::default())),
+            );
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone(), id_gen.clone());
             let (result, _) = executor.run(session, query_plan).await?;
 

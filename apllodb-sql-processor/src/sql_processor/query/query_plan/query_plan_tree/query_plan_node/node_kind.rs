@@ -1,6 +1,6 @@
 use super::{
+    node_id::QueryPlanNodeId,
     operation::{BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation},
-    QueryPlanNode,
 };
 
 #[derive(Clone, Debug)]
@@ -20,12 +20,12 @@ pub(crate) struct QueryPlanNodeLeaf {
 #[derive(Clone, Debug)]
 pub(crate) struct QueryPlanNodeUnary {
     pub(crate) op: UnaryPlanOperation,
-    pub(crate) left: Box<QueryPlanNode>,
+    pub(crate) left: QueryPlanNodeId,
 }
 
 #[derive(Clone, Debug)]
 pub(crate) struct QueryPlanNodeBinary {
     pub(crate) op: BinaryPlanOperation,
-    pub(crate) left: Box<QueryPlanNode>,
-    pub(crate) right: Box<QueryPlanNode>,
+    pub(crate) left: QueryPlanNodeId,
+    pub(crate) right: QueryPlanNodeId,
 }

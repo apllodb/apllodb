@@ -1,5 +1,6 @@
 pub(crate) mod node_id;
 pub(crate) mod node_kind;
+pub(crate) mod node_repo;
 pub(crate) mod operation;
 
 use self::{
