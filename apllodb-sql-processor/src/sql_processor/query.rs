@@ -1,3 +1,4 @@
+pub(crate) mod naive_query_planner;
 pub(crate) mod query_executor;
 pub(crate) mod query_plan;
 
@@ -7,21 +8,21 @@ use apllodb_shared_components::{
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
 use apllodb_storage_engine_interface::StorageEngine;
 
-use self::{query_executor::QueryExecutor, query_plan::QueryPlan};
+use self::{
+    naive_query_planner::NaiveQueryPlanner, query_executor::QueryExecutor, query_plan::QueryPlan,
+};
 
-use std::{convert::TryFrom, rc::Rc};
+use std::sync::Arc;
+
+use super::sql_processor_context::SQLProcessorContext;
 
 /// Processes SELECT command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct QueryProcessor<Engine: StorageEngine> {
-    engine: Rc<Engine>,
+#[derive(Debug, new)]
+pub(crate) struct QueryProcessor<Engine: StorageEngine> {
+    context: Arc<SQLProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> QueryProcessor<Engine> {
-    pub(crate) fn new(engine: Rc<Engine>) -> Self {
-        Self { engine }
-    }
-
     /// Executes parsed SELECT query.
     pub async fn run(
         &self,
@@ -30,10 +31,12 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
-        match QueryPlan::try_from(select_command) {
+        let planner = NaiveQueryPlanner::new(&self.context.node_repo);
+
+        match planner.from_select_command(select_command) {
             Ok(plan) => {
-                let executor = QueryExecutor::new(self.engine.clone());
-                executor.run(session, plan).await
+                let executor = QueryExecutor::new(self.context.clone());
+                executor.run(session, QueryPlan::new(plan)).await
                 // TODO plan optimization -> QueryPlan
             }
             Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
@@ -43,18 +46,17 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
+    use super::QueryProcessor;
+    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
         ApllodbResult, Record,
     };
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
     use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, mock_select, session_with_tx, MockWithTxMethods,
+        default_mock_engine, mock_select, MockWithTxMethods,
     };
-
-    use super::QueryProcessor;
+    use std::sync::Arc;
 
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
@@ -84,7 +86,7 @@ mod tests {
 
             with_tx
         });
-        let engine = Rc::new(engine);
+        let context = Arc::new(SQLProcessorContext::new(engine));
 
         let test_data: Vec<TestDatum> = vec![
             // full scan
@@ -137,9 +139,7 @@ mod tests {
                     panic!("only SELECT is acceptable for this test")
                 }
             };
-            let session = session_with_tx(engine.as_ref()).await?;
-            let processor = QueryProcessor::new(engine.clone());
-            let (result, _) = processor.run(session, select_command).await?;
+            let result = QueryProcessor::run_directly(context.clone(), select_command).await?;
 
             assert_eq!(
                 result.collect::<Vec<Record>>(),

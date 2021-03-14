@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnDefinition,
@@ -7,17 +7,15 @@ use apllodb_shared_components::{
 use apllodb_sql_parser::apllodb_ast::{Command, CreateTableCommand, TableElement};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 
+use super::sql_processor_context::SQLProcessorContext;
+
 /// Processes DDL command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct DDLProcessor<Engine: StorageEngine> {
-    engine: Rc<Engine>,
+#[derive(Clone, Debug, new)]
+pub(crate) struct DDLProcessor<Engine: StorageEngine> {
+    context: Arc<SQLProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> DDLProcessor<Engine> {
-    pub(crate) fn new(engine: Rc<Engine>) -> Self {
-        Self { engine }
-    }
-
     /// Executes DDL command.
     pub async fn run(
         &self,
@@ -27,7 +25,8 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
         match command {
             Command::CreateTableCommandVariant(cc) => match self.run_helper_create_table(cc) {
                 Ok((table_name, table_constraints, column_definitions)) => {
-                    self.engine
+                    self.context
+                        .engine
                         .with_tx()
                         .create_table(session, table_name, table_constraints, column_definitions)
                         .await
@@ -82,21 +81,19 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
+    use super::DDLProcessor;
+    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
         test_support::test_models::People, ApllodbResult, ColumnConstraints, ColumnDataType,
         ColumnDefinition, SqlType, TableConstraintKind, TableConstraints, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
-    use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, session_with_tx, MockWithTxMethods,
-    };
+    use apllodb_storage_engine_interface::test_support::{default_mock_engine, MockWithTxMethods};
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
-
-    use super::DDLProcessor;
 
     #[derive(Clone, PartialEq, Debug, new)]
     struct TestDatum<'test> {
@@ -166,10 +163,10 @@ mod tests {
                 with_tx
             });
 
+            let context = Arc::new(SQLProcessorContext::new(engine));
+
             let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
-            let session = session_with_tx(&engine).await?;
-            let processor = DDLProcessor::new(Rc::new(engine));
-            processor.run(session, ast.0).await?;
+            DDLProcessor::run_directly(context.clone(), ast.0).await?;
         }
 
         Ok(())
