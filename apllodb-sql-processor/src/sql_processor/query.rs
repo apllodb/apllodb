@@ -31,9 +31,9 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
-        let planner = NaiveQueryPlanner::new(&self.context.node_repo);
+        let planner = NaiveQueryPlanner::new(&self.context.node_repo, select_command);
 
-        match planner.from_select_command(select_command) {
+        match planner.run() {
             Ok(plan) => {
                 let executor = QueryExecutor::new(self.context.clone());
                 executor.run(session, QueryPlan::new(plan)).await
