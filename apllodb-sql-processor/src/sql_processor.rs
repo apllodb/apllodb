@@ -1,9 +1,10 @@
 pub(crate) mod ddl;
 pub(crate) mod modification;
 pub(crate) mod query;
+pub(crate) mod sql_processor_context;
 pub(crate) mod success;
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
@@ -16,13 +17,13 @@ use apllodb_storage_engine_interface::{
 
 use self::{
     ddl::DDLProcessor, modification::ModificationProcessor, query::QueryProcessor,
-    success::SQLProcessorSuccess,
+    sql_processor_context::SQLProcessorContext, success::SQLProcessorSuccess,
 };
 
 /// Processes SQL.
-#[derive(Clone, Debug, new)]
+#[derive(Debug, new)]
 pub struct SQLProcessor<Engine: StorageEngine> {
-    engine: Rc<Engine>,
+    context: Arc<SQLProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> SQLProcessor<Engine> {
@@ -50,11 +51,11 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
             Ok(ApllodbAst(command)) => match session {
                 Session::WithTx(sess) => match command {
                     apllodb_ast::Command::CommitTransactionCommandVariant => {
-                        let session = self.engine.with_tx().commit_transaction(sess).await?;
+                        let session = self.context.engine.with_tx().commit_transaction(sess).await?;
                         Ok(SQLProcessorSuccess::TransactionEndRes {session})
                     }
                     apllodb_ast::Command::AbortTransactionCommandVariant => {
-                        let session = self.engine.with_tx().abort_transaction(sess).await?;
+                        let session = self.context.engine.with_tx().abort_transaction(sess).await?;
                         Ok(SQLProcessorSuccess::TransactionEndRes {session})
                     }
 
@@ -102,7 +103,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                 },
                 Session::WithDb(sess) => match command {
                     apllodb_ast::Command::BeginTransactionCommandVariant => {
-                        let session = self.engine.with_db().begin_transaction(sess).await?;
+                        let session = self.context.engine.with_db().begin_transaction(sess).await?;
                         Ok(SQLProcessorSuccess::BeginTransactionRes {session})
                     }
 
@@ -140,7 +141,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     apllodb_ast::Command::CreateDatabaseCommandVariant(cmd) => {
                         match AstTranslator::database_name(cmd.database_name) {
                             Ok(database_name) => {
-                                let session = self.engine
+                                let session = self.context.engine
                                 .without_db()
                                 .create_database(Session::from(sess), database_name)
                                 .await?;
@@ -152,7 +153,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     }
                     apllodb_ast::Command::UseDatabaseCommandVariant(cmd) => {
                       match AstTranslator::database_name(cmd.database_name) {
-                          Ok(database_name)=>{let session = self.engine
+                          Ok(database_name)=>{let session = self.context.engine
                             .without_db()
                             .use_database(sess, database_name)
                             .await?;
@@ -184,14 +185,14 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
     }
 
     fn ddl(&self) -> DDLProcessor<Engine> {
-        DDLProcessor::new(self.engine.clone())
+        DDLProcessor::new(self.context.clone())
     }
 
     fn modification(&self) -> ModificationProcessor<Engine> {
-        ModificationProcessor::new(self.engine.clone())
+        ModificationProcessor::new(self.context.clone())
     }
 
     fn query(&self) -> QueryProcessor<Engine> {
-        QueryProcessor::new(self.engine.clone())
+        QueryProcessor::new(self.context.clone())
     }
 }

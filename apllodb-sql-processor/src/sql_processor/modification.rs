@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
@@ -9,7 +9,8 @@ use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
-    LeafPlanOperation, QueryPlanNode, QueryPlanNodeLeaf,
+    node_kind::{QueryPlanNodeKind, QueryPlanNodeLeaf},
+    operation::LeafPlanOperation,
 };
 
 use self::{
@@ -23,20 +24,20 @@ use self::{
     },
 };
 
+use super::sql_processor_context::SQLProcessorContext;
+
 pub(crate) mod modification_executor;
 pub(crate) mod modification_plan;
 
 /// Processes ÎNSERT/UPDATE/DELETE command.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct ModificationProcessor<Engine: StorageEngine> {
-    engine: Rc<Engine>,
+#[derive(Debug, new)]
+pub(crate) struct ModificationProcessor<Engine: StorageEngine> {
+    context: Arc<SQLProcessorContext<Engine>>,
 }
 
-impl<Engine: StorageEngine> ModificationProcessor<Engine> {
-    pub(crate) fn new(engine: Rc<Engine>) -> Self {
-        Self { engine }
-    }
+impl<Engine: StorageEngine> ModificationProcessor<Engine> {}
 
+impl<Engine: StorageEngine> ModificationProcessor<Engine> {
     /// Executes parsed INSERT/UPDATE/DELETE command.
     pub async fn run(
         &self,
@@ -46,7 +47,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         match command {
             Command::InsertCommandVariant(ic) => match self.run_helper_insert(ic) {
                 Ok(plan) => {
-                    let executor = ModificationExecutor::new(self.engine.clone());
+                    let executor = ModificationExecutor::new(self.context.clone());
                     executor.run(session, plan).await
                 }
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
@@ -98,13 +99,18 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
         let insert_values = SqlValues::new(constant_values);
 
+        let records_query_node_id =
+            self.context
+                .node_repo
+                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                    op: LeafPlanOperation::Values {
+                        records: Records::new(schema, vec![Record::new(insert_values)]),
+                    },
+                }));
+
         let plan_node = ModificationPlanNode::Insert(InsertNode {
             table_name,
-            child: QueryPlanNode::Leaf(QueryPlanNodeLeaf {
-                op: LeafPlanOperation::Values {
-                    records: Records::new(schema, vec![Record::new(insert_values)]),
-                },
-            }),
+            child: records_query_node_id,
         });
 
         Ok(ModificationPlan::new(ModificationPlanTree::new(plan_node)))
@@ -113,16 +119,15 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
+    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
         test_support::test_models::People, ApllodbResult, ColumnName, NNSqlValue, SqlValue,
         SqlValues, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
-    use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, session_with_tx, MockWithTxMethods,
-    };
+    use apllodb_storage_engine_interface::test_support::{default_mock_engine, MockWithTxMethods};
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
@@ -180,10 +185,10 @@ mod tests {
                 with_tx
             });
 
+            let context = Arc::new(SQLProcessorContext::new(engine));
+
             let ast = parser.parse(test_datum.in_insert_sql).unwrap();
-            let session = session_with_tx(&engine).await?;
-            let processor = ModificationProcessor::new(Rc::new(engine));
-            processor.run(session, ast.0).await?;
+            ModificationProcessor::run_directly(context.clone(), ast.0).await?;
         }
 
         Ok(())
