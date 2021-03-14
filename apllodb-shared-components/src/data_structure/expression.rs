@@ -88,6 +88,11 @@ impl Expression {
             },
         }
     }
+
+    /// retrieves all FFR in a expression
+    pub fn to_full_field_references(&self) -> Vec<FullFieldReference> {
+        todo!()
+    }
 }
 
 impl From<SqlValue> for Expression {

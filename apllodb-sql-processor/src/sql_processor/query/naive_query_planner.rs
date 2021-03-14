@@ -1,6 +1,8 @@
+use std::collections::HashSet;
+
 use apllodb_shared_components::{
-    ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex, Ordering,
-    RecordFieldRefSchema,
+    ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, Expression, FieldIndex,
+    FullFieldReference, Ordering, RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
@@ -65,7 +67,7 @@ impl<'r> NaiveQueryPlanner<'r> {
     fn create_correlation_nodes(&self) -> ApllodbResult<()> {
         let from_correlations = self.select_command_into_correlation_references()?;
 
-        let widest_schema = self.widest_schema();
+        let widest_schema = self.widest_schema()?;
 
         for corref in from_correlations {
             let _ = self
@@ -154,8 +156,69 @@ impl<'r> NaiveQueryPlanner<'r> {
     }
 
     /// including all fields used during a SELECT execution
-    fn widest_schema(&self) -> RecordFieldRefSchema {
-        todo!()
+    fn widest_schema(&self) -> ApllodbResult<RecordFieldRefSchema> {
+        let mut widest_ffrs = HashSet::<FullFieldReference>::new();
+
+        for ffr in self.ffrs_in_selection()? {
+            widest_ffrs.insert(ffr);
+        }
+        for ffr in self.ffrs_in_sort()? {
+            widest_ffrs.insert(ffr);
+        }
+        for ffr in self.ffrs_in_projection()? {
+            widest_ffrs.insert(ffr);
+        }
+
+        Ok(RecordFieldRefSchema::new(widest_ffrs.into_iter().collect()))
+    }
+    fn ffrs_in_selection(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+        if let Some(ast_condition) = &self.select_command.where_condition {
+            let from_correlations = self.select_command_into_correlation_references()?;
+            let expression =
+                AstTranslator::condition_in_select(ast_condition.clone(), &from_correlations)?;
+            let ffrs = expression.to_full_field_references();
+            Ok(ffrs.into_iter().collect())
+        } else {
+            Ok(HashSet::new())
+        }
+    }
+    fn ffrs_in_sort(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+        // FIXME create_sort_node() と共通化
+        if let Some(ast_order_bys) = &self.select_command.order_bys {
+            let from_correlations = self.select_command_into_correlation_references()?;
+
+            let ast_order_bys = ast_order_bys.clone().into_vec();
+
+            let ffrs: HashSet<FullFieldReference> = ast_order_bys
+                .into_iter()
+                .map(|ast_order_by| {
+                    let expression = AstTranslator::expression_in_select(
+                        ast_order_by.expression,
+                        &from_correlations,
+                    )?;
+                    let ffr = if let Expression::FullFieldReferenceVariant(ffr) = expression {
+                        ffr
+                    } else {
+                        unimplemented!(
+                            "ORDER BY's expression is supposed to be a field name currently"
+                        );
+                    };
+                    Ok(ffr)
+                })
+                .collect::<ApllodbResult<_>>()?;
+            Ok(ffrs)
+        } else {
+            Ok(HashSet::new())
+        }
+    }
+    fn ffrs_in_projection(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+        let from_correlations = self.select_command_into_correlation_references()?;
+        let ast_select_fields = self.select_command.select_fields.as_vec().clone();
+
+        ast_select_fields
+            .iter()
+            .map(|select_field| Self::select_field_into_ffr(select_field, &from_correlations))
+            .collect::<ApllodbResult<_>>()
     }
 
     fn select_command_into_correlation_references(
@@ -171,6 +234,29 @@ impl<'r> NaiveQueryPlanner<'r> {
             .unwrap()
             .clone();
         AstTranslator::from_item(ast_from_item)
+    }
+
+    fn select_field_into_ffr(
+        ast_select_field: &apllodb_ast::SelectField,
+        from_correlations: &[CorrelationReference],
+    ) -> ApllodbResult<FullFieldReference> {
+        match &ast_select_field.expression {
+            apllodb_ast::Expression::ConstantVariant(_) => {
+                unimplemented!();
+            }
+            apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
+                AstTranslator::select_field_column_reference(
+                    ast_colref.clone(),
+                    ast_select_field.alias.clone(),
+                    from_correlations,
+                )
+            }
+            apllodb_ast::Expression::UnaryOperatorVariant(_, _)
+            | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
+                // TODO このレイヤーで計算しちゃいたい
+                unimplemented!();
+            }
+        }
     }
 
     fn projection_node(
@@ -195,25 +281,26 @@ impl<'r> NaiveQueryPlanner<'r> {
 
     fn sort_node(
         ast_order_byes: apllodb_ast::NonEmptyVec<apllodb_ast::OrderBy>,
-        correlations: &[CorrelationReference],
+        from_correlations: &[CorrelationReference],
     ) -> ApllodbResult<UnaryPlanOperation> {
-        let order_byes = ast_order_byes.into_vec();
+        let ast_order_bys = ast_order_byes.into_vec();
 
-        let field_orderings: Vec<(FieldIndex, Ordering)> = order_byes
+        let field_orderings: Vec<(FieldIndex, Ordering)> = ast_order_bys
             .into_iter()
-            .map(|order_by| {
-                let expression =
-                    AstTranslator::expression_in_select(order_by.expression, correlations)?;
-                let ffr = match expression {
-                    apllodb_shared_components::Expression::FullFieldReferenceVariant(ffr) => ffr,
-                    apllodb_shared_components::Expression::ConstantVariant(_)
-                    | apllodb_shared_components::Expression::UnaryOperatorVariant(_, _)
-                    | apllodb_shared_components::Expression::BooleanExpressionVariant(_) => {
-                        unimplemented!()
-                    }
+            .map(|ast_order_by| {
+                let expression = AstTranslator::expression_in_select(
+                    ast_order_by.expression,
+                    from_correlations,
+                )?;
+                let ffr = if let Expression::FullFieldReferenceVariant(ffr) = expression {
+                    ffr
+                } else {
+                    unimplemented!(
+                        "ORDER BY's expression is supposed to be a field name currently"
+                    );
                 };
                 let index = FieldIndex::from(ffr);
-                let ordering = AstTranslator::ordering(order_by.ordering);
+                let ordering = AstTranslator::ordering(ast_order_by.ordering);
                 Ok((index, ordering))
             })
             .collect::<ApllodbResult<_>>()?;
