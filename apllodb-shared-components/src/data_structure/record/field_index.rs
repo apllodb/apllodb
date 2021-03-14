@@ -3,6 +3,7 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    data_structure::reference::correlation_reference::correlation_index::CorrelationIndex,
     ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference,
     FullFieldReference,
 };
@@ -28,7 +29,7 @@ use crate::{
 /// When constructed from invalid-formed string.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct FieldIndex {
-    correlation_name: Option<String>,
+    correlation_index: Option<CorrelationIndex>,
     field_name: String,
 }
 
@@ -84,40 +85,23 @@ impl FieldIndex {
 
     fn matches(&self, full_field_reference: &FullFieldReference) -> bool {
         match (
-            &self.correlation_name,
+            &self.correlation_index,
             full_field_reference.as_correlation_reference(),
             full_field_reference.as_field_reference(),
         ) {
             (
                 // index: c
-                // ffr: T.C
+                // ffr: (T (AS TA)?).C
                 None,
-                CorrelationReference::TableNameVariant(_),
-                FieldReference::ColumnNameVariant(cn),
-            )
-            | (
-                // index: c
-                // ffr: (T AS TA).C
-                None,
-                CorrelationReference::TableAliasVariant { .. },
+                _,
                 FieldReference::ColumnNameVariant(cn),
             ) => self.field_name == cn.as_str(),
 
             (
                 // index: c
-                // ffr: T.C AS CA
+                // ffr: (T (AS TA)?).C AS CA
                 None,
-                CorrelationReference::TableNameVariant(_),
-                FieldReference::ColumnAliasVariant {
-                    alias_name,
-                    column_name,
-                },
-            )
-            | (
-                // index: c
-                // ffr: (T AS TA).C AS CA
-                None,
-                CorrelationReference::TableAliasVariant { .. },
+                _,
                 FieldReference::ColumnAliasVariant {
                     alias_name,
                     column_name,
@@ -126,57 +110,26 @@ impl FieldIndex {
 
             (
                 // index: t.c
-                // ffr: T.C
-                Some(self_correlation_name),
-                CorrelationReference::TableNameVariant(tn),
+                // ffr: (T (AS TA)?).C
+                Some(self_correlation_index),
+                corr_ref,
                 FieldReference::ColumnNameVariant(column_name),
-            ) => self_correlation_name == tn.as_str() && self.field_name == column_name.as_str(),
+            ) => {
+                self_correlation_index.matches(corr_ref) && self.field_name == column_name.as_str()
+            }
             (
                 // index: t.c
-                // ffr: T.C AS CA
+                // ffr: (T (AS TA)?).C AS CA
                 Some(self_correlation_name),
-                CorrelationReference::TableNameVariant(tn),
+                corr_ref,
                 FieldReference::ColumnAliasVariant {
                     column_name,
                     alias_name,
                 },
             ) => {
-                self_correlation_name == tn.as_str()
+                self_correlation_name.matches(corr_ref)
                     && (self.field_name == column_name.as_str()
                         || self.field_name == alias_name.as_str())
-            }
-
-            (
-                // index: t.c
-                // ffr: (T AS TA).C
-                Some(self_correlation_name),
-                CorrelationReference::TableAliasVariant {
-                    alias_name,
-                    table_name,
-                },
-                FieldReference::ColumnNameVariant(column_name),
-            ) => {
-                (self_correlation_name == table_name.as_str()
-                    || self_correlation_name == alias_name.as_str())
-                    && self.field_name == column_name.as_str()
-            }
-            (
-                // index: t.c
-                // ffr: (T AS TA).C AS CA
-                Some(self_correlation_name),
-                CorrelationReference::TableAliasVariant {
-                    alias_name: table_alias,
-                    table_name,
-                },
-                FieldReference::ColumnAliasVariant {
-                    column_name,
-                    alias_name: column_alias,
-                },
-            ) => {
-                (self_correlation_name == table_name.as_str()
-                    || self_correlation_name == table_alias.as_str())
-                    && (self.field_name == column_name.as_str()
-                        || self.field_name == column_alias.as_str())
             }
         }
     }
@@ -184,7 +137,7 @@ impl FieldIndex {
 
 impl Display for FieldIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let pre = if let Some(corr) = &self.correlation_name {
+        let pre = if let Some(corr) = &self.correlation_index {
             format!("{}.", corr)
         } else {
             "".to_string()
@@ -217,12 +170,12 @@ impl<S: Into<String>> From<S> for FieldIndex {
 
         if let Some(second) = second {
             Self {
-                correlation_name: Some(first),
+                correlation_index: Some(CorrelationIndex::from(first)),
                 field_name: second,
             }
         } else {
             Self {
-                correlation_name: None,
+                correlation_index: None,
                 field_name: first,
             }
         }
