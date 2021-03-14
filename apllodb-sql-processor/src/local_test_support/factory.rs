@@ -1,10 +1,7 @@
 use crate::{
     sql_processor::{
         ddl::DDLProcessor,
-        modification::{
-            modification_executor::ModificationExecutor, modification_plan::ModificationPlan,
-            ModificationProcessor,
-        },
+        modification::ModificationProcessor,
         query::{query_executor::QueryExecutor, query_plan::QueryPlan, QueryProcessor},
     },
     SQLProcessorContext,
@@ -74,22 +71,6 @@ impl QueryExecutor<MockStorageEngine> {
             .run(session, plan)
             .await
             .map(|(records, _)| records)
-            .map_err(ApllodbError::from)
-    }
-}
-
-impl ModificationExecutor<MockStorageEngine> {
-    pub async fn run_directly(
-        context: Arc<SQLProcessorContext<MockStorageEngine>>,
-        plan: ModificationPlan,
-    ) -> ApllodbResult<()> {
-        let session = session_with_tx(&context.engine).await?;
-
-        let executor = Self::new(context.clone());
-        executor
-            .run(session, plan)
-            .await
-            .map(|_| ())
             .map_err(ApllodbError::from)
     }
 }
