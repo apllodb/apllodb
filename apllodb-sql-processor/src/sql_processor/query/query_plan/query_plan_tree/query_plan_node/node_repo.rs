@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::RwLock};
+use std::{
+    collections::HashMap,
+    sync::{Mutex, RwLock},
+};
 
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 
@@ -11,12 +14,12 @@ use super::{
 #[derive(Debug, Default)]
 pub(crate) struct QueryPlanNodeRepository {
     hmap: RwLock<HashMap<QueryPlanNodeId, QueryPlanNode>>,
-    id_gen: QueryPlanNodeIdGenerator,
+    id_gen: Mutex<QueryPlanNodeIdGenerator>,
 }
 
 impl QueryPlanNodeRepository {
     pub(crate) fn create(&self, kind: QueryPlanNodeKind) -> QueryPlanNodeId {
-        let node = QueryPlanNode::new(self.id_gen.gen(), kind);
+        let node = QueryPlanNode::new(self.id_gen.lock().unwrap().gen(), kind);
         let id = node.id;
         self.hmap.write().unwrap().insert(id, node);
         id
