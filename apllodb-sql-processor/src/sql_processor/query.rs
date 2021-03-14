@@ -9,18 +9,17 @@ use apllodb_sql_parser::apllodb_ast::SelectCommand;
 use apllodb_storage_engine_interface::StorageEngine;
 
 use self::{
-    naive_query_planner::NaiveQueryPlanner,
-    query_executor::QueryExecutor,
-    query_plan::{query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository, QueryPlan},
+    naive_query_planner::NaiveQueryPlanner, query_executor::QueryExecutor, query_plan::QueryPlan,
 };
 
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
+
+use super::sql_processor_context::SQLProcessorContext;
 
 /// Processes SELECT command.
 #[derive(Debug, new)]
 pub(crate) struct QueryProcessor<Engine: StorageEngine> {
-    engine: Rc<Engine>,
-    node_repo: Arc<QueryPlanNodeRepository>,
+    context: Arc<SQLProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> QueryProcessor<Engine> {
@@ -32,11 +31,11 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         // TODO query rewrite -> SelectCommand
 
-        let planner = NaiveQueryPlanner::new(self.node_repo.clone());
+        let planner = NaiveQueryPlanner::new(&self.context.node_repo);
 
         match planner.from_select_command(select_command) {
             Ok(plan) => {
-                let executor = QueryExecutor::new(self.engine.clone(), self.node_repo.clone());
+                let executor = QueryExecutor::new(self.context.clone());
                 executor.run(session, QueryPlan::new(plan)).await
                 // TODO plan optimization -> QueryPlan
             }
@@ -47,10 +46,10 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, sync::Arc};
+    use std::sync::Arc;
 
     use super::QueryProcessor;
-    use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
+    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
         ApllodbResult, Record,
@@ -88,7 +87,6 @@ mod tests {
 
             with_tx
         });
-        let engine = Rc::new(engine);
 
         let test_data: Vec<TestDatum> = vec![
             // full scan
@@ -141,9 +139,8 @@ mod tests {
                     panic!("only SELECT is acceptable for this test")
                 }
             };
-            let session = session_with_tx(engine.as_ref()).await?;
-            let processor =
-                QueryProcessor::new(engine.clone(), Arc::new(QueryPlanNodeRepository::default()));
+            let session = session_with_tx(&engine).await?;
+            let processor = QueryProcessor::new(Arc::new(SQLProcessorContext::new(engine)));
             let (result, _) = processor.run(session, select_command).await?;
 
             assert_eq!(

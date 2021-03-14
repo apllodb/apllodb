@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use apllodb_shared_components::{
     ApllodbResult, AstTranslator, CorrelationReference, FieldIndex, FullFieldReference, Ordering,
     RecordFieldRefSchema,
@@ -37,11 +35,11 @@ use super::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNod
 ///
 /// Nodes are created from bottom to top.
 #[derive(Clone, Debug, new)]
-pub(crate) struct NaiveQueryPlanner {
-    node_repo: Arc<QueryPlanNodeRepository>,
+pub(crate) struct NaiveQueryPlanner<'r> {
+    node_repo: &'r QueryPlanNodeRepository,
 }
 
-impl NaiveQueryPlanner {
+impl<'r> NaiveQueryPlanner<'r> {
     pub(crate) fn from_select_command(&self, sc: SelectCommand) -> ApllodbResult<QueryPlanTree> {
         if sc.grouping_elements.is_some() {
             unimplemented!();

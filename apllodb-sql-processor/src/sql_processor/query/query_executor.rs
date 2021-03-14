@@ -1,6 +1,6 @@
 mod plan_node_executor;
 
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 use apllodb_shared_components::{
     ApllodbSessionError, ApllodbSessionResult, Records, Session, SessionWithTx,
@@ -8,20 +8,20 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::StorageEngine;
 
 use self::plan_node_executor::PlanNodeExecutor;
-use crate::sql_processor::query::query_plan::{
-    query_plan_tree::query_plan_node::node_kind::QueryPlanNodeKind, QueryPlan,
+use crate::sql_processor::{
+    query::query_plan::{
+        query_plan_tree::query_plan_node::node_kind::QueryPlanNodeKind, QueryPlan,
+    },
+    sql_processor_context::SQLProcessorContext,
 };
 use async_recursion::async_recursion;
 
-use super::query_plan::query_plan_tree::query_plan_node::{
-    node_id::QueryPlanNodeId, node_repo::QueryPlanNodeRepository,
-};
+use super::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeId;
 
 /// Query executor which inputs a QueryPlan and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Debug, new)]
 pub(crate) struct QueryExecutor<Engine: StorageEngine> {
-    engine: Rc<Engine>,
-    node_repo: Arc<QueryPlanNodeRepository>,
+    context: Arc<SQLProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> QueryExecutor<Engine> {
@@ -46,9 +46,9 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
         session: SessionWithTx,
         node_id: QueryPlanNodeId,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
-        let executor = PlanNodeExecutor::new(self.engine.clone());
+        let executor = PlanNodeExecutor::new(self.context.clone());
 
-        match self.node_repo.remove(node_id) {
+        match self.context.node_repo.remove(node_id) {
             Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             Ok(node) => match node.kind {
                 QueryPlanNodeKind::Leaf(node_leaf) => {
@@ -79,10 +79,9 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, sync::Arc};
+    use std::sync::Arc;
 
-    use pretty_assertions::assert_eq;
-
+    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
         test_support::{
             fixture::*,
@@ -94,6 +93,7 @@ mod tests {
         test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
         ProjectionQuery,
     };
+    use pretty_assertions::assert_eq;
 
     use crate::sql_processor::query::query_plan::{
         query_plan_tree::{
@@ -127,7 +127,6 @@ mod tests {
             mock_select(&mut with_tx, &FULL_MODELS);
             with_tx
         });
-        let engine = Rc::new(engine);
 
         let repo = QueryPlanNodeRepository::default();
 
@@ -370,9 +369,8 @@ mod tests {
                 test_datum.in_plan_tree
             );
 
-            let session = session_with_tx(engine.as_ref()).await?;
-            let executor =
-                QueryExecutor::new(engine.clone(), Arc::new(QueryPlanNodeRepository::default()));
+            let session = session_with_tx(&engine).await?;
+            let executor = QueryExecutor::new(Arc::new(SQLProcessorContext::new(engine)));
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
             let (result, _) = executor.run(session, query_plan).await?;
 

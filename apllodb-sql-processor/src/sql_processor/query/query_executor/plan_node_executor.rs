@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, sync::Arc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record,
@@ -6,20 +6,19 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
-use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::operation::{
-    BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
+use crate::sql_processor::{
+    query::query_plan::query_plan_tree::query_plan_node::operation::{
+        BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
+    },
+    sql_processor_context::SQLProcessorContext,
 };
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Debug, new)]
 pub(super) struct PlanNodeExecutor<Engine: StorageEngine> {
-    engine: Rc<Engine>,
+    context: Arc<SQLProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
-    pub(crate) fn new(engine: Rc<Engine>) -> Self {
-        Self { engine }
-    }
-
     pub(super) async fn run_leaf(
         &self,
         session: SessionWithTx,
@@ -72,7 +71,8 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         table_name: TableName,
         projection: ProjectionQuery,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
-        self.engine
+        self.context
+            .engine
             .with_tx()
             .select(session, table_name, projection)
             .await

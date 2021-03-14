@@ -10,7 +10,9 @@ extern crate derive_new;
 
 pub(crate) mod sql_processor;
 
-pub use sql_processor::{success::SQLProcessorSuccess, SQLProcessor};
+pub use sql_processor::{
+    sql_processor_context::SQLProcessorContext, success::SQLProcessorSuccess, SQLProcessor,
+};
 
 #[cfg(test)]
 mod tests {
