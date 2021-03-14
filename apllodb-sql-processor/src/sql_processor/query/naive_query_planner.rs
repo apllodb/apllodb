@@ -41,7 +41,7 @@ pub(crate) struct NaiveQueryPlanner<'r> {
 }
 
 impl<'r> NaiveQueryPlanner<'r> {
-    pub(crate) fn from_select_command(&self) -> ApllodbResult<QueryPlanTree> {
+    pub(crate) fn run(&self) -> ApllodbResult<QueryPlanTree> {
         if self.select_command.grouping_elements.is_some() {
             unimplemented!();
         }
