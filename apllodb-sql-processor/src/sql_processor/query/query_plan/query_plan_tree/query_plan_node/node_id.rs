@@ -9,8 +9,8 @@ pub(crate) struct QueryPlanNodeId(u32);
 #[derive(Eq, PartialEq, Hash, Debug, Default, Serialize, Deserialize)]
 pub(crate) struct QueryPlanNodeIdGenerator(u32);
 impl QueryPlanNodeIdGenerator {
-    pub(crate) fn gen(&self) -> QueryPlanNodeId {
-        let next = self.0 + 1;
-        QueryPlanNodeId(next)
+    pub(crate) fn gen(&mut self) -> QueryPlanNodeId {
+        self.0 += 1;
+        QueryPlanNodeId(self.0)
     }
 }
