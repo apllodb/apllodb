@@ -1,8 +1,8 @@
 use apllodb_shared_components::{
-    ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex,
-    FullFieldReference, Ordering, RecordFieldRefSchema,
+    ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex, Ordering,
+    RecordFieldRefSchema,
 };
-use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
+use apllodb_sql_parser::apllodb_ast::{self, SelectCommand};
 use apllodb_storage_engine_interface::ProjectionQuery;
 
 use crate::sql_processor::query::query_plan::query_plan_tree::{
@@ -51,62 +51,19 @@ impl<'r> NaiveQueryPlanner<'r> {
 
         self.create_correlation_nodes()?;
 
-        let select_fields = self.select_command.select_fields.into_vec();
-        let ffrs: Vec<FullFieldReference> =
-            Self::select_fields_into_ffrs(&select_fields, &from_correlations)?;
-        let schema = RecordFieldRefSchema::new(ffrs);
+        // join
 
-        let node1_id = if let Some(condition) = self.select_command.where_condition {
-            let selection_op = UnaryPlanOperation::Selection {
-                condition: AstTranslator::condition_in_select(condition, &from_correlations)?,
-            };
-            self.node_repo
-                .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
-                    op: selection_op,
-                    left: leaf_node_id,
-                }))
-        } else {
-            leaf_node_id
-        };
+        self.create_selection_node()?;
 
-        let node2_id = if let Some(order_byes) = sc.order_bys {
-            self.node_repo
-                .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
-                    op: Self::sort_node(order_byes, &from_correlations)?,
-                    left: node1_id,
-                }))
-        } else {
-            node1_id
-        };
+        self.create_sort_node()?;
 
-        // FIXME not necessary? `let ffrs: Vec<FullFieldReference>` already filters necessary fields.
-        let root_node_id = self
-            .node_repo
-            .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
-                op: Self::projection_node(
-                    select_fields
-                        .into_iter()
-                        .map(|select_field| {
-                            if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
-                                select_field.expression
-                            {
-                                (ast_colref, select_field.alias)
-                            } else {
-                                panic!("fix 'FIXME' above!")
-                            }
-                        })
-                        .collect(),
-                    &from_correlations,
-                )?,
-                left: node2_id,
-            }));
+        self.create_projection_node()?;
 
-        Ok(QueryPlanTree::new(root_node_id))
+        Ok(QueryPlanTree::new(self.node_repo.latest_node_id()?))
     }
 
     fn create_correlation_nodes(&self) -> ApllodbResult<()> {
-        let ast_from_item = self.select_command_into_from_item();
-        let from_correlations = AstTranslator::from_item(ast_from_item)?;
+        let from_correlations = self.select_command_into_correlation_references()?;
 
         let widest_schema = self.widest_schema();
 
@@ -126,52 +83,94 @@ impl<'r> NaiveQueryPlanner<'r> {
         Ok(())
     }
 
+    fn create_selection_node(&self) -> ApllodbResult<()> {
+        if let Some(ast_condition) = &self.select_command.where_condition {
+            let from_correlations = self.select_command_into_correlation_references()?;
+
+            let selection_op = UnaryPlanOperation::Selection {
+                condition: AstTranslator::condition_in_select(
+                    ast_condition.clone(),
+                    &from_correlations,
+                )?,
+            };
+            let child_id = self.node_repo.latest_node_id()?;
+
+            let _ = self
+                .node_repo
+                .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                    op: selection_op,
+                    left: child_id,
+                }));
+        }
+        Ok(())
+    }
+
+    fn create_sort_node(&self) -> ApllodbResult<()> {
+        if let Some(ast_order_bys) = &self.select_command.order_bys {
+            let from_correlations = self.select_command_into_correlation_references()?;
+
+            let sort_op = Self::sort_node(ast_order_bys.clone(), &from_correlations)?;
+            let child_id = self.node_repo.latest_node_id()?;
+
+            let _ = self
+                .node_repo
+                .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                    op: sort_op,
+                    left: child_id,
+                }));
+        }
+        Ok(())
+    }
+
+    fn create_projection_node(&self) -> ApllodbResult<()> {
+        let from_correlations = self.select_command_into_correlation_references()?;
+        let select_fields = self.select_command.select_fields.as_vec().clone();
+
+        let projection_op = Self::projection_node(
+            select_fields
+                .into_iter()
+                .map(|select_field| {
+                    if let apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) =
+                        select_field.expression
+                    {
+                        (ast_colref, select_field.alias)
+                    } else {
+                        panic!("fix 'FIXME' above!")
+                    }
+                })
+                .collect(),
+            &from_correlations,
+        )?;
+        let child_id = self.node_repo.latest_node_id()?;
+
+        let _ = self
+            .node_repo
+            .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
+                op: projection_op,
+                left: child_id,
+            }));
+
+        Ok(())
+    }
+
     /// including all fields used during a SELECT execution
     fn widest_schema(&self) -> RecordFieldRefSchema {
         todo!()
     }
 
-    fn select_command_into_from_item(&self) -> FromItem {
-        self.select_command
+    fn select_command_into_correlation_references(
+        &self,
+    ) -> ApllodbResult<Vec<CorrelationReference>> {
+        let ast_from_item = self
+            .select_command
             .from_items
+            .clone()
             .expect("currently SELECT w/o FROM is unimplemented")
             .as_vec()
             .first()
             .unwrap()
-            .clone()
-    }
-
-    fn select_fields_into_ffrs(
-        select_fields: &[SelectField],
-        correlations: &[CorrelationReference],
-    ) -> ApllodbResult<Vec<FullFieldReference>> {
-        select_fields
-            .iter()
-            .map(|select_field| Self::select_field_into_ffr(select_field, correlations))
-            .collect::<ApllodbResult<_>>()
-    }
-
-    fn select_field_into_ffr(
-        select_field: &SelectField,
-        correlations: &[CorrelationReference],
-    ) -> ApllodbResult<FullFieldReference> {
-        match &select_field.expression {
-            apllodb_ast::Expression::ConstantVariant(_) => {
-                unimplemented!();
-            }
-            apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                AstTranslator::select_field_column_reference(
-                    ast_colref.clone(),
-                    select_field.alias.clone(),
-                    correlations,
-                )
-            }
-            apllodb_ast::Expression::UnaryOperatorVariant(_, _)
-            | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
-                // TODO このレイヤーで計算しちゃいたい
-                unimplemented!();
-            }
-        }
+            .clone();
+        AstTranslator::from_item(ast_from_item)
     }
 
     fn projection_node(
