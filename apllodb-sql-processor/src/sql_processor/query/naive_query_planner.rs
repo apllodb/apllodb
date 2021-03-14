@@ -37,42 +37,28 @@ use super::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNod
 #[derive(Clone, Debug, new)]
 pub(crate) struct NaiveQueryPlanner<'r> {
     node_repo: &'r QueryPlanNodeRepository,
+    select_command: SelectCommand,
 }
 
 impl<'r> NaiveQueryPlanner<'r> {
-    pub(crate) fn from_select_command(&self, sc: SelectCommand) -> ApllodbResult<QueryPlanTree> {
-        if sc.grouping_elements.is_some() {
+    pub(crate) fn from_select_command(&self) -> ApllodbResult<QueryPlanTree> {
+        if self.select_command.grouping_elements.is_some() {
             unimplemented!();
         }
-        if sc.having_conditions.is_some() {
+        if self.select_command.having_conditions.is_some() {
             unimplemented!();
         }
 
-        let from_item = Self::select_command_into_from_item(sc.clone());
-        let correlations = AstTranslator::from_item(from_item)?;
+        self.create_correlation_nodes()?;
 
-        let select_fields = sc.select_fields.into_vec();
+        let select_fields = self.select_command.select_fields.into_vec();
         let ffrs: Vec<FullFieldReference> =
-            Self::select_fields_into_ffrs(&select_fields, &correlations)?;
+            Self::select_fields_into_ffrs(&select_fields, &from_correlations)?;
         let schema = RecordFieldRefSchema::new(ffrs);
 
-        if correlations.len() != 1 {
-            unimplemented!("currently SELECT w/ 0 or 2+ FROM items is not implemented");
-        }
-        let corref = correlations[0].clone();
-
-        let leaf_node_id = self
-            .node_repo
-            .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
-                op: LeafPlanOperation::SeqScan {
-                    table_name: corref.as_table_name().clone(),
-                    projection: ProjectionQuery::Schema(schema),
-                },
-            }));
-
-        let node1_id = if let Some(condition) = sc.where_condition {
+        let node1_id = if let Some(condition) = self.select_command.where_condition {
             let selection_op = UnaryPlanOperation::Selection {
-                condition: AstTranslator::condition_in_select(condition, &correlations)?,
+                condition: AstTranslator::condition_in_select(condition, &from_correlations)?,
             };
             self.node_repo
                 .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
@@ -86,7 +72,7 @@ impl<'r> NaiveQueryPlanner<'r> {
         let node2_id = if let Some(order_byes) = sc.order_bys {
             self.node_repo
                 .create(QueryPlanNodeKind::Unary(QueryPlanNodeUnary {
-                    op: Self::sort_node(order_byes, &correlations)?,
+                    op: Self::sort_node(order_byes, &from_correlations)?,
                     left: node1_id,
                 }))
         } else {
@@ -110,7 +96,7 @@ impl<'r> NaiveQueryPlanner<'r> {
                             }
                         })
                         .collect(),
-                    &correlations,
+                    &from_correlations,
                 )?,
                 left: node2_id,
             }));
@@ -118,8 +104,31 @@ impl<'r> NaiveQueryPlanner<'r> {
         Ok(QueryPlanTree::new(root_node_id))
     }
 
-    fn select_command_into_from_item(select_command: SelectCommand) -> FromItem {
-        select_command
+    fn create_correlation_nodes(&self) -> ApllodbResult<()> {
+        let ast_from_item = self.select_command_into_from_item();
+        let from_correlations = AstTranslator::from_item(ast_from_item)?;
+
+        for corref in from_correlations {
+            let _ = self
+                .node_repo
+                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                    op: LeafPlanOperation::SeqScan {
+                        table_name: corref.as_table_name().clone(),
+                        projection: ProjectionQuery::Schema(schema),
+                    },
+                }));
+        }
+
+        Ok(())
+    }
+
+    /// including all fields used during a SELECT execution
+    fn widest_schema(&self) -> RecordFieldRefSchema {
+        todo!()
+    }
+
+    fn select_command_into_from_item(&self) -> FromItem {
+        self.select_command
             .from_items
             .expect("currently SELECT w/o FROM is unimplemented")
             .as_vec()
