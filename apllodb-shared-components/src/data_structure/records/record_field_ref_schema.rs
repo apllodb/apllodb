@@ -34,17 +34,14 @@ impl RecordFieldRefSchema {
 
     /// Filter fields specified by CorrelationIndex.
     /// Used for a storage engine access.
-    pub fn filter_by_correlation(
-        &self,
-        correlation_index: &CorrelationIndex,
-    ) -> ApllodbResult<Self> {
+    pub fn filter_by_correlation(&self, correlation_index: &CorrelationIndex) -> Self {
         let new_ffrs: Vec<FullFieldReference> = self
             .0
             .iter()
             .filter(|ffr| correlation_index.matches(ffr.as_correlation_reference()))
             .cloned()
             .collect();
-        Ok(Self(new_ffrs))
+        Self(new_ffrs)
     }
 
     /// get raw FFR

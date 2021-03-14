@@ -1,6 +1,6 @@
 use apllodb_shared_components::{
-    ApllodbResult, AstTranslator, CorrelationReference, FieldIndex, FullFieldReference, Ordering,
-    RecordFieldRefSchema,
+    ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex,
+    FullFieldReference, Ordering, RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast::{self, FromItem, SelectCommand, SelectField};
 use apllodb_storage_engine_interface::ProjectionQuery;
@@ -108,13 +108,17 @@ impl<'r> NaiveQueryPlanner<'r> {
         let ast_from_item = self.select_command_into_from_item();
         let from_correlations = AstTranslator::from_item(ast_from_item)?;
 
+        let widest_schema = self.widest_schema();
+
         for corref in from_correlations {
             let _ = self
                 .node_repo
                 .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: corref.as_table_name().clone(),
-                        projection: ProjectionQuery::Schema(schema),
+                        projection: ProjectionQuery::Schema(
+                            widest_schema.filter_by_correlation(&CorrelationIndex::from(corref)),
+                        ),
                     },
                 }));
         }
