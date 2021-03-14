@@ -44,13 +44,6 @@ pub(crate) struct NaiveQueryPlanner<'r> {
 
 impl<'r> NaiveQueryPlanner<'r> {
     pub(crate) fn run(&self) -> ApllodbResult<QueryPlanTree> {
-        if self.select_command.grouping_elements.is_some() {
-            unimplemented!();
-        }
-        if self.select_command.having_conditions.is_some() {
-            unimplemented!();
-        }
-
         self.create_correlation_nodes()?;
 
         // join
@@ -58,6 +51,8 @@ impl<'r> NaiveQueryPlanner<'r> {
         self.create_selection_node()?;
 
         self.create_sort_node()?;
+
+        // aggregation
 
         self.create_projection_node()?;
 
