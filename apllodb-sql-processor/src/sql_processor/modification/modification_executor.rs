@@ -75,7 +75,7 @@ mod tests {
         ApllodbResult, ColumnName, Record, Records, SqlValues, TableName,
     };
     use apllodb_storage_engine_interface::{
-        test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
+        test_support::{default_mock_engine, mock_select, MockWithTxMethods},
         ProjectionQuery,
     };
     use futures::FutureExt;
@@ -203,9 +203,8 @@ mod tests {
                 with_tx
             });
 
-            let session = session_with_tx(&engine).await?;
-            let executor = ModificationExecutor::new(Arc::new(SQLProcessorContext::new(engine)));
-            executor.run(session, modification_plan).await?;
+            let context = Arc::new(SQLProcessorContext::new(engine));
+            ModificationExecutor::run_directly(context.clone(), modification_plan).await?;
         }
 
         Ok(())

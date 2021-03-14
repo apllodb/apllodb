@@ -90,9 +90,7 @@ mod tests {
         ColumnDefinition, SqlType, TableConstraintKind, TableConstraints, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
-    use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, session_with_tx, MockWithTxMethods,
-    };
+    use apllodb_storage_engine_interface::test_support::{default_mock_engine, MockWithTxMethods};
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
@@ -165,10 +163,10 @@ mod tests {
                 with_tx
             });
 
+            let context = Arc::new(SQLProcessorContext::new(engine));
+
             let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
-            let session = session_with_tx(&engine).await?;
-            let processor = DDLProcessor::new(Arc::new(SQLProcessorContext::new(engine)));
-            processor.run(session, ast.0).await?;
+            DDLProcessor::run_directly(context.clone(), ast.0).await?;
         }
 
         Ok(())

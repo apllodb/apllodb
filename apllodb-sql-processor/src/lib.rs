@@ -15,6 +15,9 @@ pub use sql_processor::{
 };
 
 #[cfg(test)]
+mod local_test_support;
+
+#[cfg(test)]
 mod tests {
     use apllodb_test_support::setup::setup_test_logger;
     use ctor::ctor;

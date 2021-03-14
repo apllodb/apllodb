@@ -46,8 +46,6 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
     use super::QueryProcessor;
     use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
@@ -56,8 +54,9 @@ mod tests {
     };
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
     use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, mock_select, session_with_tx, MockWithTxMethods,
+        default_mock_engine, mock_select, MockWithTxMethods,
     };
+    use std::sync::Arc;
 
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
@@ -87,6 +86,7 @@ mod tests {
 
             with_tx
         });
+        let context = Arc::new(SQLProcessorContext::new(engine));
 
         let test_data: Vec<TestDatum> = vec![
             // full scan
@@ -139,9 +139,7 @@ mod tests {
                     panic!("only SELECT is acceptable for this test")
                 }
             };
-            let session = session_with_tx(&engine).await?;
-            let processor = QueryProcessor::new(Arc::new(SQLProcessorContext::new(engine)));
-            let (result, _) = processor.run(session, select_command).await?;
+            let result = QueryProcessor::run_directly(context.clone(), select_command).await?;
 
             assert_eq!(
                 result.collect::<Vec<Record>>(),

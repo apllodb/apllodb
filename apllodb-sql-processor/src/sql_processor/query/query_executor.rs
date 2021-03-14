@@ -81,7 +81,6 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
 mod tests {
     use std::sync::Arc;
 
-    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
         test_support::{
             fixture::*,
@@ -90,11 +89,12 @@ mod tests {
         ApllodbResult, FieldIndex, Record, RecordFieldRefSchema,
     };
     use apllodb_storage_engine_interface::{
-        test_support::{default_mock_engine, mock_select, session_with_tx, MockWithTxMethods},
+        test_support::{default_mock_engine, mock_select, MockWithTxMethods},
         ProjectionQuery,
     };
     use pretty_assertions::assert_eq;
 
+    use super::QueryExecutor;
     use crate::sql_processor::query::query_plan::{
         query_plan_tree::{
             query_plan_node::{
@@ -108,8 +108,7 @@ mod tests {
         },
         QueryPlan,
     };
-
-    use super::QueryExecutor;
+    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
 
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
@@ -127,6 +126,7 @@ mod tests {
             mock_select(&mut with_tx, &FULL_MODELS);
             with_tx
         });
+        let context = Arc::new(SQLProcessorContext::new(engine));
 
         let repo = QueryPlanNodeRepository::default();
 
@@ -369,10 +369,8 @@ mod tests {
                 test_datum.in_plan_tree
             );
 
-            let session = session_with_tx(&engine).await?;
-            let executor = QueryExecutor::new(Arc::new(SQLProcessorContext::new(engine)));
             let query_plan = QueryPlan::new(test_datum.in_plan_tree.clone());
-            let (result, _) = executor.run(session, query_plan).await?;
+            let result = QueryExecutor::run_directly(context.clone(), query_plan).await?;
 
             assert_eq!(
                 result.collect::<Vec<Record>>(),
