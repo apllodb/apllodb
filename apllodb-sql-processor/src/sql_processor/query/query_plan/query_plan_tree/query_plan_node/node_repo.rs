@@ -35,7 +35,7 @@ impl QueryPlanNodeRepository {
             .unwrap()
             .iter()
             .max_by(|(a_id, _), (b_id, _)| a_id.cmp(b_id))
-            .map(|(id, _)| id.clone())
+            .map(|(id, _)| *id)
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedObject,
