@@ -88,6 +88,45 @@ impl Expression {
             },
         }
     }
+
+    /// retrieves all FFR in a expression
+    pub fn to_full_field_references(&self) -> Vec<FullFieldReference> {
+        fn helper_boolean_expr(boolean_expr: &BooleanExpression) -> Vec<FullFieldReference> {
+            match boolean_expr {
+                BooleanExpression::LogicalFunctionVariant(logical_function) => {
+                    match logical_function {
+                        LogicalFunction::AndVariant { left, right } => {
+                            let mut left = helper_boolean_expr(&*left);
+                            let mut right = helper_boolean_expr(&*right);
+                            left.append(&mut right);
+                            left
+                        }
+                    }
+                }
+                BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
+                    match comparison_function {
+                        ComparisonFunction::EqualVariant { left, right } => {
+                            let mut left = left.to_full_field_references();
+                            let mut right = right.to_full_field_references();
+                            left.append(&mut right);
+                            left
+                        }
+                    }
+                }
+            }
+        }
+
+        match self {
+            Expression::ConstantVariant(_) => {
+                vec![]
+            }
+            Expression::FullFieldReferenceVariant(ffr) => {
+                vec![ffr.clone()]
+            }
+            Expression::UnaryOperatorVariant(_op, expr) => expr.to_full_field_references(),
+            Expression::BooleanExpressionVariant(bool_expr) => helper_boolean_expr(bool_expr),
+        }
+    }
 }
 
 impl From<SqlValue> for Expression {

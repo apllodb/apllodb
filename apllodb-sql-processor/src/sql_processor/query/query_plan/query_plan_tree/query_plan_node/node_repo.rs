@@ -28,6 +28,26 @@ impl QueryPlanNodeRepository {
     /// # Failures
     ///
     /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
+    ///    - no node has been created.
+    pub(crate) fn latest_node_id(&self) -> ApllodbResult<QueryPlanNodeId> {
+        self.hmap
+            .read()
+            .unwrap()
+            .iter()
+            .max_by(|(a_id, _), (b_id, _)| a_id.cmp(b_id))
+            .map(|(id, _)| *id)
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedObject,
+                    "no QueryPlanNode exists (already removed?)",
+                    None,
+                )
+            })
+    }
+
+    /// # Failures
+    ///
+    /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
     ///    - node with id does not exist.
     pub(crate) fn remove(&self, id: QueryPlanNodeId) -> ApllodbResult<QueryPlanNode> {
         self.hmap.write().unwrap().remove(&id).ok_or_else(|| {

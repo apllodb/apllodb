@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 )]
 pub(crate) struct QueryPlanNodeId(u32);
 
-#[derive(Eq, PartialEq, Hash, Debug, Default, Serialize, Deserialize)]
+/// Monotonously increasing ID generator.
+#[derive(Eq, PartialEq, PartialOrd, Ord, Hash, Debug, Default, Serialize, Deserialize)]
 pub(crate) struct QueryPlanNodeIdGenerator(u32);
 impl QueryPlanNodeIdGenerator {
     pub(crate) fn gen(&mut self) -> QueryPlanNodeId {
