@@ -15,7 +15,7 @@ pub struct CorrelationIndex {
 }
 
 impl CorrelationIndex {
-    fn matches(&self, correlation_reference: &CorrelationReference) -> bool {
+    pub fn matches(&self, correlation_reference: &CorrelationReference) -> bool {
         match correlation_reference {
             CorrelationReference::TableNameVariant(table_name) => {
                 self.correlation_name.as_str() == table_name.as_str()
