@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record,
-    RecordFieldRefSchema, Records, SessionWithTx, SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, Records,
+    SessionWithTx, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
