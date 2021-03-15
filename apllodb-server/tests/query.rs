@@ -266,15 +266,32 @@ async fn test_inner_join() {
                 records.sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("people.id")).unwrap().unwrap());
 
                 let r = records.next().unwrap();
-                // TODO この辺の期待結果でmagic number使いすぎ
-                assert_eq!(r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), Some(1));
-                assert_eq!(r.get::<i32>(&FieldIndex::from("age")).unwrap(), Some(13));
-                assert_eq!(r.get::<i32>(&FieldIndex::from("height")).unwrap(), Some(145));
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC1.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("age")).unwrap(), 
+                    PEOPLE_REC1.get::<i32>(&FieldIndex::from("age")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("height")).unwrap(), 
+                    BODY_REC1.get::<i32>(&FieldIndex::from("height")).unwrap()
+                );
 
                 let r = records.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), Some(3));
-                assert_eq!(r.get::<i32>(&FieldIndex::from("age")).unwrap(), Some(35));
-                assert_eq!(r.get::<i32>(&FieldIndex::from("height")).unwrap(), Some(175));
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC3.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("age")).unwrap(), 
+                    PEOPLE_REC3.get::<i32>(&FieldIndex::from("age")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("height")).unwrap(), 
+                    BODY_REC3.get::<i32>(&FieldIndex::from("height")).unwrap()
+                );
 
                 assert!(records.next().is_none());
                 Ok(())
