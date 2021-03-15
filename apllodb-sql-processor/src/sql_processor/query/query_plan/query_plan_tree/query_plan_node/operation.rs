@@ -7,16 +7,15 @@ use serde::{Deserialize, Serialize};
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, PartialEq, Debug)]
 pub(crate) enum LeafPlanOperation {
-    Values { records: Records },
-    SeqScan(SeqScanOperation),
+    Values {
+        records: Records,
+    },
+    SeqScan {
+        table_name: TableName,
+        projection: ProjectionQuery,
+    },
     // TODO extend.
     // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub(crate) struct SeqScanOperation {
-    table_name: TableName,
-    projection: ProjectionQuery,
 }
 
 /// Unary operations, which inputs [RecordIterator](apllodb-shared-components::RecordIterator) and outputs [RecordIterator](apllodb-shared-components::RecordIterator).

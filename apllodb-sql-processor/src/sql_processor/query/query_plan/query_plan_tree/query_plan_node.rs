@@ -1,31 +1,35 @@
+pub(crate) mod node_id;
+pub(crate) mod node_kind;
+pub(crate) mod node_repo;
 pub(crate) mod operation;
 
-use operation::{BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation};
+use self::{node_id::QueryPlanNodeId, node_kind::QueryPlanNodeKind};
+use std::hash::Hash;
 
 /// Node of query plan tree.
-#[derive(Clone, PartialEq, Debug)]
-pub(crate) enum QueryPlanNode {
-    Leaf(QueryPlanNodeLeaf),
-    Unary(QueryPlanNodeUnary),
-
-    #[allow(dead_code)]
-    Binary(QueryPlanNodeBinary),
+#[derive(Clone, Debug)]
+pub(crate) struct QueryPlanNode {
+    pub(crate) id: QueryPlanNodeId,
+    pub(crate) kind: QueryPlanNodeKind,
 }
 
-#[derive(Clone, PartialEq, Debug)]
-pub(crate) struct QueryPlanNodeLeaf {
-    pub(crate) op: LeafPlanOperation,
+impl PartialEq for QueryPlanNode {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for QueryPlanNode {}
+impl Hash for QueryPlanNode {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state)
+    }
 }
 
-#[derive(Clone, PartialEq, Debug)]
-pub(crate) struct QueryPlanNodeUnary {
-    pub(crate) op: UnaryPlanOperation,
-    pub(crate) left: Box<QueryPlanNode>,
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub(crate) struct QueryPlanNodeBinary {
-    pub(crate) op: BinaryPlanOperation,
-    pub(crate) left: Box<QueryPlanNode>,
-    pub(crate) right: Box<QueryPlanNode>,
+impl QueryPlanNode {
+    pub(in crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node) fn new(
+        id: QueryPlanNodeId,
+        kind: QueryPlanNodeKind,
+    ) -> Self {
+        Self { id, kind }
+    }
 }

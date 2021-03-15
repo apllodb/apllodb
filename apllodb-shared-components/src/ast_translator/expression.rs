@@ -29,7 +29,7 @@ impl AstTranslator {
             }
             apllodb_ast::Expression::BinaryOperatorVariant(bin_op, left, right) => {
                 let bin_op = Self::binary_operator(bin_op);
-                let left = Self::expression_in_select(*left, correlations.clone())?;
+                let left = Self::expression_in_select(*left, correlations)?;
                 let right = Self::expression_in_select(*right, correlations)?;
 
                 match bin_op {

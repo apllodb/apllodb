@@ -3,15 +3,9 @@ pub(crate) mod query_plan_tree;
 use self::query_plan_tree::QueryPlanTree;
 
 /// Query plan from which an executor can do its work deterministically.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, new)]
 pub(crate) struct QueryPlan {
     pub(crate) plan_tree: QueryPlanTree,
     // TODO evaluated cost, etc...
     // See PostgreSQL's plan structure: <https://github.com/postgres/postgres/blob/master/src/include/nodes/plannodes.h#L110>
-}
-
-impl From<QueryPlanTree> for QueryPlan {
-    fn from(plan_tree: QueryPlanTree) -> Self {
-        QueryPlan { plan_tree }
-    }
 }

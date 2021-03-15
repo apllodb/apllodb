@@ -1,3 +1,5 @@
+pub(crate) mod correlation_index;
+
 use std::fmt::Display;
 
 use crate::{AliasName, TableName};

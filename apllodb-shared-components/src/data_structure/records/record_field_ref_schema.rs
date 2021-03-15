@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbResult, FieldIndex, FullFieldReference};
+use crate::{ApllodbResult, CorrelationIndex, FieldIndex, FullFieldReference};
 
 /// Internally has similar structure as `Vec<FullFieldReference>` and works with [SqlValues](crate::SqlValues) with the same length
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -30,6 +30,18 @@ impl RecordFieldRefSchema {
             })
             .collect::<ApllodbResult<_>>()?;
         Ok(Self(new_ffrs))
+    }
+
+    /// Filter fields specified by CorrelationIndex.
+    /// Used for a storage engine access.
+    pub fn filter_by_correlation(&self, correlation_index: &CorrelationIndex) -> Self {
+        let new_ffrs: Vec<FullFieldReference> = self
+            .0
+            .iter()
+            .filter(|ffr| correlation_index.matches(ffr.as_correlation_reference()))
+            .cloned()
+            .collect();
+        Self(new_ffrs)
     }
 
     /// get raw FFR
