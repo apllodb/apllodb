@@ -214,11 +214,7 @@ impl Records {
                 .iter()
                 .map(|joined_ffr| {
                     helper_get_sql_value(joined_ffr, left_schema, &left_record)
-                        .or(helper_get_sql_value(
-                            joined_ffr,
-                            right_schema,
-                            &right_record,
-                        ))
+                        .or_else(|| helper_get_sql_value(joined_ffr, right_schema, &right_record))
                         .expect("left or right must have FFR in joined_schema")
                 })
                 .collect::<ApllodbResult<_>>()?;
