@@ -297,7 +297,29 @@ async fn test_inner_join() {
                 Ok(())
             })),
         ))
-        // TODO 少なくとも SELECT people.id FROM people INNER JOIN body ON people.id = body.people_id (bodyテーブルはselect fieldに現れない)は増やす
+        .add_step(Step::new(
+            // body table appears in join, but does not in projection.
+            "SELECT people.id FROM people INNER JOIN body ON people.id = body.people_id",
+            StepRes::OkQuery(Box::new(| records| {
+                let mut records =
+                records.sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("people.id")).unwrap().unwrap());
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC1.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC3.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+
+                assert!(records.next().is_none());
+                Ok(())
+            })),
+        ))
         // あと、3つのテーブルのJOINも
         .run()
         .await;
