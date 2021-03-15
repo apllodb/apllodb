@@ -1,3 +1,5 @@
+mod from_item;
+
 use std::collections::HashSet;
 
 use apllodb_shared_components::{
@@ -27,18 +29,6 @@ impl SelectCommandAnalyzer {
         }
 
         Ok(RecordFieldRefSchema::new(widest_ffrs.into_iter().collect()))
-    }
-
-    pub(super) fn from_item_correlation_references(
-        &self,
-    ) -> ApllodbResult<Vec<CorrelationReference>> {
-        let ast_from_item = self
-            .select_command
-            .from_item
-            .as_ref()
-            .expect("currently SELECT w/o FROM is unimplemented")
-            .clone();
-        AstTranslator::from_item(ast_from_item)
     }
 
     pub(super) fn selection_condition(&self) -> ApllodbResult<Option<Expression>> {
