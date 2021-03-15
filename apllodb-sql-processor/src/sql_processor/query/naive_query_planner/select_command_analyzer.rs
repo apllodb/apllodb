@@ -85,11 +85,11 @@ impl SelectCommandAnalyzer {
             .collect::<ApllodbResult<_>>()
     }
 
-    fn ffrs_in_join(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+    fn ffrs_in_join(&self) -> ApllodbResult<Vec<FullFieldReference>> {
         self.from_item_full_field_references()
             .map(|ffrs| ffrs.into_iter().collect())
     }
-    fn ffrs_in_selection(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+    fn ffrs_in_selection(&self) -> ApllodbResult<Vec<FullFieldReference>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
             let from_correlations = self.from_item_correlation_references()?;
             let expression =
@@ -97,10 +97,10 @@ impl SelectCommandAnalyzer {
             let ffrs = expression.to_full_field_references();
             Ok(ffrs.into_iter().collect())
         } else {
-            Ok(HashSet::new())
+            Ok(vec![])
         }
     }
-    fn ffrs_in_sort(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+    fn ffrs_in_sort(&self) -> ApllodbResult<Vec<FullFieldReference>> {
         let ffr_orderings = self.sort_ffr_orderings()?;
         Ok(ffr_orderings.into_iter().map(|(ffr, _)| ffr).collect())
     }
