@@ -84,11 +84,9 @@ impl<'r> NaiveQueryPlanner<'r> {
 
     /// # Limitations
     ///
-    /// - Supports only 2 correlations' INNER JOIN.
-    /// - Each correlation is supposed to be from SeqScan.
+    /// - Leaf correlations are supposed to be from SeqScan.
     fn create_join_nodes(&self) -> ApllodbResult<()> {
-        // TODO
-        Ok(())
+        self.analyzer.create_join_nodes(&self.node_repo)
     }
 
     fn create_selection_node(&self) -> ApllodbResult<()> {
