@@ -7,6 +7,7 @@ use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
 };
 use apllodb_shared_components::{
     ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex,
+    RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast;
 
@@ -33,10 +34,18 @@ impl SelectCommandAnalyzer {
         /// returns NodeId of node created from cur_from_item
         fn rec_create(
             cur_from_item: &apllodb_ast::FromItem,
+
+            widest_schema: &RecordFieldRefSchema,
             node_repo: &QueryPlanNodeRepository,
         ) -> ApllodbResult<QueryPlanNodeId> {
             let from_item_correlations =
                 SelectCommandAnalyzer::ast_from_item_into_correlation_references(cur_from_item)?;
+            let joined_schema = widest_schema.filter_by_correlations(
+                &from_item_correlations
+                    .iter()
+                    .map(|cr| CorrelationIndex::from(cr.clone()))
+                    .collect::<Vec<_>>(),
+            );
 
             match cur_from_item {
                 apllodb_ast::FromItem::TableNameVariant { table_name, .. } => {
@@ -50,8 +59,8 @@ impl SelectCommandAnalyzer {
                     right,
                     on,
                 } => {
-                    let left_node_id = rec_create(&*left, node_repo)?;
-                    let right_node_id = rec_create(&*right, node_repo)?;
+                    let left_node_id = rec_create(&*left, widest_schema, node_repo)?;
+                    let right_node_id = rec_create(&*right, widest_schema, node_repo)?;
                     let mid_node_id =
                         node_repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                             left: left_node_id,
@@ -59,6 +68,7 @@ impl SelectCommandAnalyzer {
                             op: SelectCommandAnalyzer::join_variant_into_join_op(
                                 join_type,
                                 on,
+                                joined_schema,
                                 &from_item_correlations,
                             )?,
                         }));
@@ -68,7 +78,7 @@ impl SelectCommandAnalyzer {
         }
 
         if let Some(ast_from_item) = self.ast_from_item() {
-            rec_create(ast_from_item, node_repo).map(|_| ())
+            rec_create(ast_from_item, &self.widest_schema()?, node_repo).map(|_| ())
         } else {
             Ok(())
         }
@@ -106,6 +116,7 @@ impl SelectCommandAnalyzer {
         join_type: &apllodb_ast::JoinType,
         on: &apllodb_ast::Condition,
 
+        joined_schema: RecordFieldRefSchema,
         from_item_correlations: &[CorrelationReference],
     ) -> ApllodbResult<BinaryPlanOperation> {
         assert!(
@@ -113,10 +124,9 @@ impl SelectCommandAnalyzer {
             "only InnerJoin is supported currently"
         );
 
-        let expr = on.expression;
-        match expr {
+        match &on.expression {
             apllodb_ast::Expression::BinaryOperatorVariant(bin_op, left, right) => {
-                match (bin_op, *left, *right) {
+                match (bin_op, *left.clone(), *right.clone()) {
                     (
                         apllodb_ast::BinaryOperator::Equal,
                         apllodb_ast::Expression::ColumnReferenceVariant(left_colref),
@@ -129,6 +139,7 @@ impl SelectCommandAnalyzer {
                         Ok(BinaryPlanOperation::HashJoin {
                             left_field: FieldIndex::from(left_ffr),
                             right_field: FieldIndex::from(right_ffr),
+                            joined_schema,
                         })
                     }
                     _ => unimplemented!("only `ON a = b` JOIN condition is supported currently"),

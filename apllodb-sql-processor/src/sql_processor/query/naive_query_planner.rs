@@ -73,7 +73,7 @@ impl<'r> NaiveQueryPlanner<'r> {
                     op: LeafPlanOperation::SeqScan {
                         table_name: corref.as_table_name().clone(),
                         projection: ProjectionQuery::Schema(
-                            widest_schema.filter_by_correlation(&CorrelationIndex::from(corref)),
+                            widest_schema.filter_by_correlations(&[CorrelationIndex::from(corref)]),
                         ),
                     },
                 }));
