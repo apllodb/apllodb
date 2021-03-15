@@ -57,27 +57,6 @@ impl SqlValues {
     /// 'a', 'b', 'c', 'd'
     /// ```
     ///
-    /// and `right` is:
-    ///
-    /// ```text
-    /// 'x', 'y', 'z'
-    /// ```
-    ///
-    /// then result is:
-    ///
-    /// ```text
-    /// 'a', 'b', 'c', 'd', 'x', 'y', 'z'
-    /// ```
-    pub fn join(&mut self, mut right: Self) {
-        self.0.append(&mut right.0)
-    }
-
-    /// If SqlValues is like this:
-    ///
-    /// ```text
-    /// 'a', 'b', 'c', 'd'
-    /// ```
-    ///
     /// and `idxs = [3, 0]`, then result is:
     ///
     /// ```text

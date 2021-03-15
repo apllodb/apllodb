@@ -302,7 +302,7 @@ pub struct InsertCommand {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SelectCommand {
     pub select_fields: NonEmptyVec<SelectField>,
-    pub from_items: Option<NonEmptyVec<FromItem>>,
+    pub from_item: Option<FromItem>,
     pub where_condition: Option<Condition>,
     pub grouping_elements: Option<NonEmptyVec<GroupingElement>>,
     pub having_conditions: Option<NonEmptyVec<Condition>>,
@@ -318,9 +318,23 @@ pub struct SelectField {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct FromItem {
-    pub table_name: TableName,
-    pub alias: Option<Alias>,
+pub enum FromItem {
+    TableNameVariant {
+        table_name: TableName,
+        alias: Option<Alias>,
+    },
+    JoinVariant {
+        join_type: JoinType,
+        left: Box<FromItem>,
+        right: Box<FromItem>,
+        on: Condition,
+    },
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum JoinType {
+    InnerJoin,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]

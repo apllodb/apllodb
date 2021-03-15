@@ -3,9 +3,9 @@ use crate::apllodb_ast::{
     ColumnDefinition, ColumnName, ColumnReference, Condition, Constant, Correlation,
     CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn,
     DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
-    IntegerConstant, IntegerType, NonEmptyVec, NumericConstant, OrderBy, Ordering, SelectCommand,
-    SelectField, StringConstant, TableConstraint, TableElement, TableName, UnaryOperator,
-    UpdateCommand, UseDatabaseCommand,
+    IntegerConstant, IntegerType, JoinType, NonEmptyVec, NumericConstant, OrderBy, Ordering,
+    SelectCommand, SelectField, StringConstant, TableConstraint, TableElement, TableName,
+    UnaryOperator, UpdateCommand, UseDatabaseCommand,
 };
 
 impl AlterTableCommand {
@@ -57,7 +57,7 @@ impl CreateTableCommand {
 impl SelectCommand {
     pub fn factory(
         select_fields: Vec<SelectField>,
-        from_items: Option<Vec<FromItem>>,
+        from_item: Option<FromItem>,
         where_condition: Option<Condition>,
         grouping_elements: Option<Vec<GroupingElement>>,
         having_conditions: Option<Vec<Condition>>,
@@ -65,7 +65,7 @@ impl SelectCommand {
     ) -> Self {
         Self {
             select_fields: NonEmptyVec::new(select_fields),
-            from_items: from_items.map(NonEmptyVec::new),
+            from_item,
             where_condition,
             grouping_elements: grouping_elements.map(NonEmptyVec::new),
             having_conditions: having_conditions.map(NonEmptyVec::new),
@@ -84,10 +84,19 @@ impl SelectField {
 }
 
 impl FromItem {
-    pub fn factory(table_name: &str, alias: Option<&str>) -> Self {
-        Self {
+    pub fn factory_tn(table_name: &str, alias: Option<&str>) -> Self {
+        Self::TableNameVariant {
             table_name: TableName::factory(table_name),
             alias: alias.map(Alias::factory),
+        }
+    }
+
+    pub fn factory_inner_join(left: Self, right: Self, on: Expression) -> Self {
+        Self::JoinVariant {
+            join_type: JoinType::InnerJoin,
+            left: Box::new(left),
+            right: Box::new(right),
+            on: Condition::factory(on),
         }
     }
 }
@@ -198,6 +207,12 @@ impl ColumnDefinition {
             data_type,
             column_constraints,
         }
+    }
+}
+
+impl Condition {
+    pub fn factory(expression: Expression) -> Self {
+        Self { expression }
     }
 }
 

@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record,
-    RecordFieldRefSchema, Records, SessionWithTx, SqlValueHashKey, TableName,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Record, Records,
+    SessionWithTx, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
 
@@ -57,11 +57,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 joined_schema,
                 left_field,
                 right_field,
-            } => {
-                let left_idx = input_left.as_schema().resolve_index(&left_field)?;
-                let right_idx = input_right.as_schema().resolve_index(&right_field)?;
-                self.hash_join(joined_schema, input_left, input_right, left_idx, right_idx)
-            }
+            } => input_left.hash_join(joined_schema, input_right, &left_field, &right_field),
         }
     }
 
@@ -106,49 +102,5 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         field_orderings: Vec<(FieldIndex, Ordering)>,
     ) -> ApllodbResult<Records> {
         input_left.sort(&field_orderings)
-    }
-
-    /// Join algorithm using hash table.
-    /// It can be used with join keys' equality (like `ON t.id = s.t_id`).
-    /// This algorithm's time-complexity is `max[O(len(input_left)), O(len(input_right))]` but uses relatively large memory.
-    ///
-    /// # Failures
-    ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
-    ///   - Specified field does not exist in any record.
-    fn hash_join(
-        &self,
-        joined_schema: RecordFieldRefSchema,
-        input_left: Records,
-        input_right: Records,
-        left_idx: usize,
-        right_idx: usize,
-    ) -> ApllodbResult<Records> {
-        // TODO Create hash table from smaller input.
-        let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
-
-        for left_record in input_left {
-            let left_sql_value = left_record.get_sql_value(left_idx)?;
-            hash_table
-                .entry(SqlValueHashKey::from(left_sql_value))
-                // FIXME Clone less. If join keys are unique, no need for clone.
-                .and_modify(|records| records.push(left_record.clone()))
-                .or_insert_with(|| vec![left_record]);
-        }
-
-        let mut records = Vec::<Record>::new();
-        for right_record in input_right {
-            let right_sql_value = right_record.get_sql_value(right_idx)?;
-            if let Some(left_records) = hash_table.get(&SqlValueHashKey::from(right_sql_value)) {
-                records.append(
-                    &mut left_records
-                        .iter()
-                        .map(|left_record| left_record.clone().join(right_record.clone()))
-                        .collect::<Vec<Record>>(),
-                );
-            }
-        }
-
-        Ok(Records::new(joined_schema, records))
     }
 }

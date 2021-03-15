@@ -253,3 +253,74 @@ async fn test_sort() {
         .run()
         .await;
 }
+
+#[async_std::test]
+async fn test_inner_join() {
+    SqlTest::default()
+        .add_steps(Steps::SetupPeopleBodyPetDataset)
+        .add_step(Step::new("BEGIN", StepRes::Ok))
+        .add_step(Step::new(
+            "SELECT people.id, people.age, body.height FROM people INNER JOIN body ON people.id = body.people_id",
+            StepRes::OkQuery(Box::new(| records| {
+                let mut records =
+                records.sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("people.id")).unwrap().unwrap());
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC1.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("age")).unwrap(), 
+                    PEOPLE_REC1.get::<i32>(&FieldIndex::from("age")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("height")).unwrap(), 
+                    BODY_REC1.get::<i32>(&FieldIndex::from("height")).unwrap()
+                );
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC3.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("age")).unwrap(), 
+                    PEOPLE_REC3.get::<i32>(&FieldIndex::from("age")).unwrap()
+                );
+                assert_eq!(
+                    r.get::<i32>(&FieldIndex::from("height")).unwrap(), 
+                    BODY_REC3.get::<i32>(&FieldIndex::from("height")).unwrap()
+                );
+
+                assert!(records.next().is_none());
+                Ok(())
+            })),
+        ))
+        .add_step(Step::new(
+            // body table appears in join, but does not in projection.
+            "SELECT people.id FROM people INNER JOIN body ON people.id = body.people_id",
+            StepRes::OkQuery(Box::new(| records| {
+                let mut records =
+                records.sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("people.id")).unwrap().unwrap());
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC1.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+
+                let r = records.next().unwrap();
+                assert_eq!(
+                    r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), 
+                    PEOPLE_REC3.get::<i64>(&FieldIndex::from("id")).unwrap()
+                );
+
+                assert!(records.next().is_none());
+                Ok(())
+            })),
+        ))
+        // TODO 3-table join
+        .run()
+        .await;
+}

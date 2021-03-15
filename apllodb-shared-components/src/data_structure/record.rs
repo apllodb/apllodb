@@ -61,12 +61,6 @@ impl Record {
         Ok(self)
     }
 
-    /// Joins another record after this record.
-    pub fn join(mut self, right: Self) -> Self {
-        self.values.join(right.values);
-        self
-    }
-
     /// Get raw representation
     pub fn into_values(self) -> SqlValues {
         self.values
