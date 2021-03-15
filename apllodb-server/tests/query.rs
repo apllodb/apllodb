@@ -320,7 +320,7 @@ async fn test_inner_join() {
                 Ok(())
             })),
         ))
-        // あと、3つのテーブルのJOINも
+        // TODO 3-table join
         .run()
         .await;
 }
