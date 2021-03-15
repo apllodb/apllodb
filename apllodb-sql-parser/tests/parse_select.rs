@@ -23,7 +23,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -43,30 +43,7 @@ fn test_select_accepted() {
                         None,
                     ),
                 ],
-                Some(vec![FromItem::factory("t", None)]),
-                None,
-                None,
-                None,
-                None,
-            ),
-        ),
-        (
-            "SELECT id, c1 FROM t1, t2",
-            SelectCommand::factory(
-                vec![
-                    SelectField::factory(
-                        Expression::factory_colref(ColumnReference::factory(None, "id")),
-                        None,
-                    ),
-                    SelectField::factory(
-                        Expression::factory_colref(ColumnReference::factory(None, "c1")),
-                        None,
-                    ),
-                ],
-                Some(vec![
-                    FromItem::factory("t1", None),
-                    FromItem::factory("t2", None),
-                ]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -89,7 +66,7 @@ fn test_select_accepted() {
                         None,
                     ),
                 ],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -112,7 +89,7 @@ fn test_select_accepted() {
                         None,
                     ),
                 ],
-                Some(vec![FromItem::factory("t", Some("s"))]),
+                Some(FromItem::factory_tn("t", Some("s"))),
                 None,
                 None,
                 None,
@@ -141,7 +118,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "c")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 Some(Condition {
                     expression: Expression::factory_colref(ColumnReference::factory(None, "c")),
                 }),
@@ -157,7 +134,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 Some(Condition {
                     expression: Expression::factory_eq(
                         Expression::factory_colref(ColumnReference::factory(None, "id")),
@@ -176,7 +153,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 Some(Condition {
                     expression: Expression::factory_eq(
                         Expression::factory_colref(ColumnReference::factory(None, "id")),
@@ -199,7 +176,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -216,7 +193,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -233,7 +210,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -250,7 +227,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -270,7 +247,7 @@ fn test_select_accepted() {
                     Expression::factory_colref(ColumnReference::factory(None, "id")),
                     None,
                 )],
-                Some(vec![FromItem::factory("t", None)]),
+                Some(FromItem::factory_tn("t", None)),
                 None,
                 None,
                 None,
@@ -284,6 +261,37 @@ fn test_select_accepted() {
                         Some(Ordering::DescVariant),
                     ),
                 ]),
+            ),
+        ),
+        // Join
+        (
+            "SELECT t.id FROM t INNER JOIN s ON t.id = s.t_id",
+            SelectCommand::factory(
+                vec![SelectField::factory(
+                    Expression::factory_colref(ColumnReference::factory(
+                        Some(Correlation::factory("t")),
+                        "id",
+                    )),
+                    None,
+                )],
+                Some(FromItem::factory_inner_join(
+                    FromItem::factory_tn("t", None),
+                    FromItem::factory_tn("s", None),
+                    Expression::factory_eq(
+                        Expression::factory_colref(ColumnReference::factory(
+                            Some(Correlation::factory("t")),
+                            "id",
+                        )),
+                        Expression::factory_colref(ColumnReference::factory(
+                            Some(Correlation::factory("s")),
+                            "t_id",
+                        )),
+                    ),
+                )),
+                None,
+                None,
+                None,
+                None,
             ),
         ),
     ];

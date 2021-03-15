@@ -1,3 +1,5 @@
+mod from_item;
+
 use std::collections::HashSet;
 
 use apllodb_shared_components::{
@@ -16,6 +18,9 @@ impl SelectCommandAnalyzer {
     pub(super) fn widest_schema(&self) -> ApllodbResult<RecordFieldRefSchema> {
         let mut widest_ffrs = HashSet::<FullFieldReference>::new();
 
+        for ffr in self.ffrs_in_join()? {
+            widest_ffrs.insert(ffr);
+        }
         for ffr in self.ffrs_in_selection()? {
             widest_ffrs.insert(ffr);
         }
@@ -27,21 +32,6 @@ impl SelectCommandAnalyzer {
         }
 
         Ok(RecordFieldRefSchema::new(widest_ffrs.into_iter().collect()))
-    }
-
-    pub(super) fn from_item_correlation_references(
-        &self,
-    ) -> ApllodbResult<Vec<CorrelationReference>> {
-        let ast_from_item = self
-            .select_command
-            .from_items
-            .clone()
-            .expect("currently SELECT w/o FROM is unimplemented")
-            .as_vec()
-            .first()
-            .unwrap()
-            .clone();
-        AstTranslator::from_item(ast_from_item)
     }
 
     pub(super) fn selection_condition(&self) -> ApllodbResult<Option<Expression>> {
@@ -95,7 +85,11 @@ impl SelectCommandAnalyzer {
             .collect::<ApllodbResult<_>>()
     }
 
-    fn ffrs_in_selection(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+    fn ffrs_in_join(&self) -> ApllodbResult<Vec<FullFieldReference>> {
+        self.from_item_full_field_references()
+            .map(|ffrs| ffrs.into_iter().collect())
+    }
+    fn ffrs_in_selection(&self) -> ApllodbResult<Vec<FullFieldReference>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
             let from_correlations = self.from_item_correlation_references()?;
             let expression =
@@ -103,10 +97,10 @@ impl SelectCommandAnalyzer {
             let ffrs = expression.to_full_field_references();
             Ok(ffrs.into_iter().collect())
         } else {
-            Ok(HashSet::new())
+            Ok(vec![])
         }
     }
-    fn ffrs_in_sort(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+    fn ffrs_in_sort(&self) -> ApllodbResult<Vec<FullFieldReference>> {
         let ffr_orderings = self.sort_ffr_orderings()?;
         Ok(ffr_orderings.into_iter().map(|(ffr, _)| ffr).collect())
     }

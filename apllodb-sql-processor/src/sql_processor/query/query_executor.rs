@@ -321,8 +321,8 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1.clone().join(BODY_RECORD1.clone()),
-                PEOPLE_RECORD3.clone().join(BODY_RECORD3.clone()),
+                PEOPLE_RECORD1.clone().naive_join(BODY_RECORD1.clone()),
+                PEOPLE_RECORD3.clone().naive_join(BODY_RECORD3.clone()),
             ])
             .run()
             .await?;
@@ -350,9 +350,9 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1.clone().join(PET_RECORD1.clone()),
-                PEOPLE_RECORD3.clone().join(PET_RECORD3_1.clone()),
-                PEOPLE_RECORD3.clone().join(PET_RECORD3_2.clone()),
+                PEOPLE_RECORD1.clone().naive_join(PET_RECORD1.clone()),
+                PEOPLE_RECORD3.clone().naive_join(PET_RECORD3_1.clone()),
+                PEOPLE_RECORD3.clone().naive_join(PET_RECORD3_2.clone()),
             ])
             .run()
             .await?;
@@ -380,9 +380,9 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PET_RECORD1.clone().join(PEOPLE_RECORD1.clone()),
-                PET_RECORD3_1.clone().join(PEOPLE_RECORD3.clone()),
-                PET_RECORD3_2.clone().join(PEOPLE_RECORD3.clone()),
+                PET_RECORD1.clone().naive_join(PEOPLE_RECORD1.clone()),
+                PET_RECORD3_1.clone().naive_join(PEOPLE_RECORD3.clone()),
+                PET_RECORD3_2.clone().naive_join(PEOPLE_RECORD3.clone()),
             ])
             .run()
             .await?;
@@ -409,7 +409,7 @@ mod tests {
                     })),
                 }))
             })
-            .expect(vec![PEOPLE_RECORD1.clone().join(PET_RECORD1.clone())])
+            .expect(vec![PEOPLE_RECORD1.clone().naive_join(PET_RECORD1.clone())])
             .run()
             .await?;
 

@@ -1,10 +1,10 @@
 pub(crate) mod record_field_ref_schema;
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     ApllodbResult, Expression, FieldIndex, FullFieldReference, Ordering, Record, SqlValue,
-    SqlValues,
+    SqlValueHashKey, SqlValues,
 };
 
 use self::record_field_ref_schema::RecordFieldRefSchema;
@@ -166,6 +166,102 @@ impl Records {
             res
         });
         Ok(self)
+    }
+
+    /// Join algorithm using hash table.
+    /// It can be used with join keys' equality (like `ON t.id = s.t_id`).
+    /// This algorithm's time-complexity is `max[O(len(self)), O(len(right_records))]` but uses relatively large memory.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    ///   - Specified field does not exist in any record.
+    pub fn hash_join(
+        self,
+        joined_schema: RecordFieldRefSchema,
+        right_records: Records,
+        self_join_field: &FieldIndex,
+        right_join_field: &FieldIndex,
+    ) -> ApllodbResult<Self> {
+        fn helper_get_sql_value(
+            joined_ffr: &FullFieldReference,
+            schema: &RecordFieldRefSchema,
+            record: &Record,
+        ) -> Option<ApllodbResult<SqlValue>> {
+            schema
+                .as_full_field_references()
+                .iter()
+                .enumerate()
+                .find_map(|(idx, ffr)| {
+                    if ffr == joined_ffr {
+                        let res_sql_value = record.get_sql_value(idx).map(|v| v.clone());
+                        Some(res_sql_value)
+                    } else {
+                        None
+                    }
+                })
+        }
+
+        fn helper_join_records(
+            joined_schema: &RecordFieldRefSchema,
+            left_schema: &RecordFieldRefSchema,
+            right_schema: &RecordFieldRefSchema,
+            left_record: Record,
+            right_record: Record,
+        ) -> ApllodbResult<Record> {
+            let sql_values: Vec<SqlValue> = joined_schema
+                .as_full_field_references()
+                .iter()
+                .map(|joined_ffr| {
+                    helper_get_sql_value(joined_ffr, left_schema, &left_record)
+                        .or_else(|| helper_get_sql_value(joined_ffr, right_schema, &right_record))
+                        .expect("left or right must have FFR in joined_schema")
+                })
+                .collect::<ApllodbResult<_>>()?;
+            let sql_values = SqlValues::new(sql_values);
+            Ok(Record::new(sql_values))
+        }
+
+        let self_schema = self.as_schema().clone();
+        let right_schema = right_records.as_schema().clone();
+
+        let self_join_idx = self.as_schema().resolve_index(self_join_field)?;
+        let right_join_idx = right_records.as_schema().resolve_index(&right_join_field)?;
+
+        // TODO Create hash table from smaller input.
+        let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
+
+        for left_record in self {
+            let left_sql_value = left_record.get_sql_value(self_join_idx)?;
+            hash_table
+                .entry(SqlValueHashKey::from(left_sql_value))
+                // FIXME Clone less. If join keys are unique, no need for clone.
+                .and_modify(|records| records.push(left_record.clone()))
+                .or_insert_with(|| vec![left_record]);
+        }
+
+        let mut records = Vec::<Record>::new();
+        for right_record in right_records {
+            let right_sql_value = right_record.get_sql_value(right_join_idx)?;
+            if let Some(left_records) = hash_table.get(&SqlValueHashKey::from(right_sql_value)) {
+                records.append(
+                    &mut left_records
+                        .iter()
+                        .map(|left_record| {
+                            helper_join_records(
+                                &joined_schema,
+                                &self_schema,
+                                &right_schema,
+                                left_record.clone(),
+                                right_record.clone(),
+                            )
+                        })
+                        .collect::<ApllodbResult<Vec<Record>>>()?,
+                );
+            }
+        }
+
+        Ok(Records::new(joined_schema, records))
     }
 }
 

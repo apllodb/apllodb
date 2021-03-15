@@ -3,7 +3,7 @@ use std::{
     sync::{Mutex, RwLock},
 };
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationIndex};
 
 use super::{
     node_id::{QueryPlanNodeId, QueryPlanNodeIdGenerator},
@@ -36,6 +36,38 @@ impl QueryPlanNodeRepository {
             .iter()
             .max_by(|(a_id, _), (b_id, _)| a_id.cmp(b_id))
             .map(|(id, _)| *id)
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedObject,
+                    "no QueryPlanNode exists (already removed?)",
+                    None,
+                )
+            })
+    }
+
+    /// # Failures
+    ///
+    /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
+    ///    - no matching node is found.
+    pub(crate) fn find_correlation_node(
+        &self,
+        correlation_index: &CorrelationIndex,
+    ) -> ApllodbResult<QueryPlanNodeId> {
+        self.hmap
+            .read()
+            .unwrap()
+            .iter()
+            .find_map(|(id, node)| {
+                node.source_correlation_reference()
+                    .map(|corr_ref| {
+                        if correlation_index.matches(&corr_ref) {
+                            Some(*id)
+                        } else {
+                            None
+                        }
+                    })
+                    .flatten()
+            })
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedObject,

@@ -3,7 +3,9 @@ pub(crate) mod node_kind;
 pub(crate) mod node_repo;
 pub(crate) mod operation;
 
-use self::{node_id::QueryPlanNodeId, node_kind::QueryPlanNodeKind};
+use apllodb_shared_components::CorrelationReference;
+
+use self::{node_id::QueryPlanNodeId, node_kind::QueryPlanNodeKind, operation::LeafPlanOperation};
 use std::hash::Hash;
 
 /// Node of query plan tree.
@@ -31,5 +33,20 @@ impl QueryPlanNode {
         kind: QueryPlanNodeKind,
     ) -> Self {
         Self { id, kind }
+    }
+
+    /// Returns CorrelationReference if this node is a correlation data source (SeqScan, for example).
+    pub(in crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node) fn source_correlation_reference(
+        &self,
+    ) -> Option<CorrelationReference> {
+        match &self.kind {
+            QueryPlanNodeKind::Leaf(leaf) => match &leaf.op {
+                LeafPlanOperation::SeqScan { table_name, .. } => {
+                    Some(CorrelationReference::TableNameVariant(table_name.clone()))
+                }
+                _ => None,
+            },
+            _ => None,
+        }
     }
 }
