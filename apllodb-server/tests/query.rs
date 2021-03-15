@@ -263,18 +263,18 @@ async fn test_inner_join() {
             "SELECT people.id, people.age, body.height FROM people INNER JOIN body ON people.id = body.people_id",
             StepRes::OkQuery(Box::new(| records| {
                 let mut records =
-                records.sorted_by_key(|r| r.get::<i32>(&FieldIndex::from("people.id")).unwrap().unwrap());
+                records.sorted_by_key(|r| r.get::<i64>(&FieldIndex::from("people.id")).unwrap().unwrap());
 
                 let r = records.next().unwrap();
                 // TODO この辺の期待結果でmagic number使いすぎ
                 assert_eq!(r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), Some(1));
-                assert_eq!(r.get::<i64>(&FieldIndex::from("age")).unwrap(), Some(13));
-                assert_eq!(r.get::<i64>(&FieldIndex::from("height")).unwrap(), Some(145));
+                assert_eq!(r.get::<i32>(&FieldIndex::from("age")).unwrap(), Some(13));
+                assert_eq!(r.get::<i32>(&FieldIndex::from("height")).unwrap(), Some(145));
 
                 let r = records.next().unwrap();
                 assert_eq!(r.get::<i64>(&FieldIndex::from("people.id")).unwrap(), Some(3));
-                assert_eq!(r.get::<i64>(&FieldIndex::from("age")).unwrap(), Some(35));
-                assert_eq!(r.get::<i64>(&FieldIndex::from("height")).unwrap(), Some(175));
+                assert_eq!(r.get::<i32>(&FieldIndex::from("age")).unwrap(), Some(35));
+                assert_eq!(r.get::<i32>(&FieldIndex::from("height")).unwrap(), Some(175));
 
                 assert!(records.next().is_none());
                 Ok(())
