@@ -18,6 +18,9 @@ impl SelectCommandAnalyzer {
     pub(super) fn widest_schema(&self) -> ApllodbResult<RecordFieldRefSchema> {
         let mut widest_ffrs = HashSet::<FullFieldReference>::new();
 
+        for ffr in self.ffrs_in_join()? {
+            widest_ffrs.insert(ffr);
+        }
         for ffr in self.ffrs_in_selection()? {
             widest_ffrs.insert(ffr);
         }
@@ -82,6 +85,10 @@ impl SelectCommandAnalyzer {
             .collect::<ApllodbResult<_>>()
     }
 
+    fn ffrs_in_join(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
+        self.from_item_full_field_references()
+            .map(|ffrs| ffrs.into_iter().collect())
+    }
     fn ffrs_in_selection(&self) -> ApllodbResult<HashSet<FullFieldReference>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
             let from_correlations = self.from_item_correlation_references()?;

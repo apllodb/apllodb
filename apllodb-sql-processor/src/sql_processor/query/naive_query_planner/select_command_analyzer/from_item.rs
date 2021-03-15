@@ -7,7 +7,7 @@ use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
 };
 use apllodb_shared_components::{
     ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex,
-    RecordFieldRefSchema,
+    FullFieldReference, RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast;
 
@@ -17,6 +17,17 @@ impl SelectCommandAnalyzer {
     ) -> ApllodbResult<Vec<CorrelationReference>> {
         if let Some(ast_from_item) = self.ast_from_item() {
             Self::ast_from_item_into_correlation_references(ast_from_item)
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    /// FFRs appear in JOIN ... ON ... condition.
+    pub(in super::super) fn from_item_full_field_references(
+        &self,
+    ) -> ApllodbResult<Vec<FullFieldReference>> {
+        if let Some(ast_from_item) = self.ast_from_item() {
+            Self::ast_from_item_into_full_field_references(ast_from_item)
         } else {
             Ok(vec![])
         }
@@ -108,6 +119,31 @@ impl SelectCommandAnalyzer {
                 let mut right_corr_ref = Self::ast_from_item_into_correlation_references(right)?;
                 left_corr_ref.append(&mut right_corr_ref);
                 Ok(left_corr_ref)
+            }
+        }
+    }
+
+    fn ast_from_item_into_full_field_references(
+        ast_from_item: &apllodb_ast::FromItem,
+    ) -> ApllodbResult<Vec<FullFieldReference>> {
+        match ast_from_item {
+            apllodb_ast::FromItem::TableNameVariant { .. } => Ok(vec![]),
+            apllodb_ast::FromItem::JoinVariant {
+                left, right, on, ..
+            } => {
+                let expression = AstTranslator::expression_in_select(
+                    on.expression.clone(),
+                    &Self::ast_from_item_into_correlation_references(ast_from_item)?,
+                )?;
+
+                let mut ffrs = expression.to_full_field_references();
+                ffrs.append(&mut Self::ast_from_item_into_full_field_references(
+                    left.as_ref(),
+                )?);
+                ffrs.append(&mut Self::ast_from_item_into_full_field_references(
+                    right.as_ref(),
+                )?);
+                Ok(ffrs)
             }
         }
     }
