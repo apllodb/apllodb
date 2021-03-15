@@ -174,7 +174,7 @@ impl Records {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in any record.
     pub fn hash_join(
         self,
