@@ -24,7 +24,7 @@ derive-new = "0.5"
 futures = "0.3"
 serde = {version = "1.0"}
 
-once_cell = {version = "1.5", optional = true}
+once_cell = {version = "1.7", optional = true}
 
 [dev-dependencies]
 apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"]}
