@@ -8,6 +8,18 @@
 //!
 //! This crate directly depends on apllodb-immutable-schema-engine currently, although apllodb's storage engine is designed to be plugable.
 //! See <https://github.com/darwin-education/apllodb/issues/47#issuecomment-753779450> for future plan.
+//!
+//! # What's tested here?
+//!
+//! apllodb-server crate has a number of e2e tests in `tests/` directory.
+//! All of them uses `tests/sql_test` module to write test scenarios with SQL.
+//!
+//! Here shows rules of file name and type of tests:
+//!
+//! | File name | Test type |
+//! |--|--|
+//! | `tests/simple_*.rs` | Human-readable tests to: <ul><li>quickly shows what type of SQLs are currently supported</li><li>proceed TDD</li></ul> |
+//! | `tests/prop_*.rs` | Property-based tests to assure the system: <ul><li>doesn't crash</li><li>returns expected type of responses</li></ul> with any SQL inputs. |
 
 #[macro_use]
 extern crate derive_new;
