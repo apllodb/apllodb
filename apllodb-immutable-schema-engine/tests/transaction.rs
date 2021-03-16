@@ -1,7 +1,9 @@
 mod test_support;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_immutable_schema_engine_infra::test_support::test_setup;
+use apllodb_immutable_schema_engine_infra::test_support::{
+    sqlite_database_cleaner::SqliteDatabaseCleaner, test_setup,
+};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
     ColumnDefinition, DatabaseName, Session, SessionWithoutDb, SqlType, TableConstraintKind,
@@ -19,7 +21,8 @@ fn setup() {
 #[async_std::test]
 async fn test_wait_lock() -> ApllodbResult<()> {
     let engine = ApllodbImmutableSchemaEngine::default();
-    let db = DatabaseName::new("test_wait_lock")?;
+    let db = DatabaseName::random();
+    let _db_cleaner = SqliteDatabaseCleaner::new(db.clone());
 
     let _ = engine
         .without_db()

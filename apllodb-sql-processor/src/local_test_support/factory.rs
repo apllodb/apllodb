@@ -6,9 +6,10 @@ use crate::{
     },
     SQLProcessorContext,
 };
+use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
 use apllodb_shared_components::{ApllodbError, ApllodbResult, Records};
 use apllodb_sql_parser::apllodb_ast;
-use apllodb_storage_engine_interface::{test_support::session_with_tx, MockStorageEngine};
+use apllodb_storage_engine_interface::MockStorageEngine;
 use std::sync::Arc;
 
 impl QueryProcessor<MockStorageEngine> {
