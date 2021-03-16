@@ -33,6 +33,8 @@ apllodb-shared-components = {path = "../apllodb-shared-components", features = [
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
 
+proptest = "1.0"
+
 ctor = "0.1"
 
 async-std = {version = "1.9", features = ["attributes"]}
