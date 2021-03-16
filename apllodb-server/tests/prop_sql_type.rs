@@ -13,7 +13,7 @@ fn setup() {
 
 proptest! {
     #[test]
-    fn insert_small_int(v: i16) {
+    fn proptest_insert_small_int(v: i16) {
         block_on(async {
             SqlTest::default()
             .add_steps(Steps::BeginTransaction)
