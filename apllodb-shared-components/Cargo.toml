@@ -38,4 +38,4 @@ ctor = "0.1"
 
 version-sync = "0.9"
 
-pretty_assertions = "0.6"
+pretty_assertions = "0.7"
