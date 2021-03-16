@@ -184,6 +184,7 @@ dependencies = [
 name = "apllodb-sql-processor"
 version = "0.1.0"
 dependencies = [
+ "apllodb-immutable-schema-engine-infra",
  "apllodb-shared-components",
  "apllodb-sql-parser",
  "apllodb-storage-engine-interface",

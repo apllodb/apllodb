@@ -69,7 +69,7 @@ impl SqliteDatabase {
         &self.name
     }
 
-    fn sqlite_db_path(db_name: &DatabaseName) -> PathBuf {
+    pub(crate) fn sqlite_db_path(db_name: &DatabaseName) -> PathBuf {
         PathBuf::from(format!("immutable_schema_{}.sqlite3", db_name.as_str())) // FIXME: path from configuration
     }
 
