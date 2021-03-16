@@ -1,0 +1,7 @@
+version: 1
+updates:
+  - package-ecosystem: "rust:cargo"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 99
