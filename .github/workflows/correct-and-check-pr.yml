@@ -137,6 +137,7 @@ jobs:
       - name: checks if client runs quickly
         run: |
           echo 'CREATE DATABASE abc' | ./target/debug/apllodb-client
+          rm *.sqlite3*
 
       - name: cargo build --tests
         uses: actions-rs/cargo@v1
