@@ -1,5 +1,6 @@
 mod sql_test;
 
+use apllodb_immutable_schema_engine_infra::test_support::clean_test_sqlite3;
 use async_std::task::block_on;
 use proptest::prelude::*;
 
@@ -14,6 +15,8 @@ fn setup() {
 proptest! {
     #[test]
     fn proptest_insert_small_int(v: i16) {
+        clean_test_sqlite3().unwrap();
+
         block_on(async {
             SqlTest::default()
             .add_steps(Steps::BeginTransaction)
