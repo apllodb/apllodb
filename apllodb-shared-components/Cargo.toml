@@ -27,7 +27,7 @@ fastrand = "1.4"
 
 rand = {version = "0.8", optional = true}
 
-once_cell = {version = "1.5", optional = true}
+once_cell = {version = "1.7", optional = true}
 
 [dev-dependencies]
 apllodb-shared-components = {path = ".", features = ["test-support"]}
