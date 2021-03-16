@@ -152,7 +152,7 @@ jobs:
 
       - name: checks if tests clean .sqlite3* files (use SqliteDatabaseCleaner if fails)
         run: |
-           [ $(find . -name '*.sqlite3*' |wc -l) = '0' ]
+           [ $(find . -name '*.sqlite3*' |wc -l) = '0' ] || find . -name '*.sqlite3*' ; false
 
   check_rustdoc:
     runs-on: ubuntu-latest
