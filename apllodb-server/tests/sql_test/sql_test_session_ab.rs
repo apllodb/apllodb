@@ -1,3 +1,4 @@
+use apllodb_immutable_schema_engine_infra::test_support::sqlite_database_cleaner::SqliteDatabaseCleaner;
 use apllodb_server::ApllodbServer;
 use apllodb_shared_components::{DatabaseName, Session, SessionWithoutDb};
 use futures::FutureExt;
@@ -68,6 +69,8 @@ impl SqlTestSessionAB {
 
         let database_name_a = DatabaseName::random();
         let database_name_b = database_name_a.clone();
+
+        let _db_cleaner = SqliteDatabaseCleaner::new(database_name_a.clone());
 
         let mut session_a_fut =
             async move { Session::from(session_with_db(&server_a, database_name_a).await) }

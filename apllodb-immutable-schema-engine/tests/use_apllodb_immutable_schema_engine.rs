@@ -1,7 +1,9 @@
 mod test_support;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_immutable_schema_engine_infra::test_support::test_setup;
+use apllodb_immutable_schema_engine_infra::test_support::{
+    sqlite_database_cleaner::SqliteDatabaseCleaner, test_setup,
+};
 use apllodb_shared_components::{
     ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, DatabaseName, Session,
     SessionWithoutDb, SqlType, TableConstraintKind, TableConstraints, TableName,
@@ -19,7 +21,9 @@ fn setup() {
 async fn test_use_apllodb_immutable_schema_engine() -> ApllodbResult<()> {
     let engine = ApllodbImmutableSchemaEngine::default();
 
-    let db_name = DatabaseName::new("db")?;
+    let db_name = DatabaseName::random();
+    let _db_cleaner = SqliteDatabaseCleaner::new(db_name.clone());
+
     let t_name = TableName::new("t")?;
 
     let c1_def = ColumnDefinition::new(
