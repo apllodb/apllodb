@@ -150,7 +150,7 @@ jobs:
           command: test
           args: --all-features
 
-      - name: checks if tests clean .sqlite3* files
+      - name: checks if tests clean .sqlite3* files (use SqliteDatabaseCleaner if fails)
         run: |
            [ $(find . -name '*.sqlite3*' |wc -l) = '0' ]
 
