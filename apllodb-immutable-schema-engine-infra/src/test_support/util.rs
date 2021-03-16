@@ -1,4 +1,4 @@
-use crate::{StorageEngine, WithDbMethods, WithoutDbMethods};
+use apllodb_storage_engine_interface::{StorageEngine, WithDbMethods, WithoutDbMethods};
 use apllodb_shared_components::{
     ApllodbResult, DatabaseName, Session, SessionWithDb, SessionWithTx, SessionWithoutDb,
 };
