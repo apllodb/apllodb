@@ -150,6 +150,10 @@ jobs:
           command: test
           args: --all-features
 
+      - name: checks if tests clean .sqlite3# files
+        run: |
+           [ $(find . -name '*.sqlite3*' |wc -l) = '0' ]
+
   check_rustdoc:
     runs-on: ubuntu-latest
     steps:
