@@ -24,7 +24,7 @@ futures = "0.3"
 
 mockall = {version = "0.9", optional = true}
 
-once_cell = {version = "1.5", optional = true}
+once_cell = {version = "1.7", optional = true}
 
 [dev-dependencies]
 apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
