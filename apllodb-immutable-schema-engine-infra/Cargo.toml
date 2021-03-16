@@ -48,7 +48,7 @@ apllodb-test-support = {path = "../apllodb-test-support"}
 
 ctor = "0.1"
 
-pretty_assertions = "0.6"
+pretty_assertions = "0.7"
 rand = "0.8"
 version-sync = "0.9"
 
