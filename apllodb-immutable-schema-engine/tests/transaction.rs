@@ -1,7 +1,9 @@
 mod test_support;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
-use apllodb_immutable_schema_engine_infra::test_support::{sqlite_database_cleaner::SqliteDatabaseCleaner, test_setup};
+use apllodb_immutable_schema_engine_infra::test_support::{
+    sqlite_database_cleaner::SqliteDatabaseCleaner, test_setup,
+};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
     ColumnDefinition, DatabaseName, Session, SessionWithoutDb, SqlType, TableConstraintKind,
