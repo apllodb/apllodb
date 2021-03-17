@@ -35,6 +35,12 @@ pub enum Session {
     WithTx(SessionWithTx),
 }
 
+impl Default for Session {
+    fn default() -> Self {
+        Self::WithoutDb(SessionWithoutDb::default())
+    }
+}
+
 impl From<SessionWithoutDb> for Session {
     fn from(s: SessionWithoutDb) -> Self {
         Session::WithoutDb(s)
