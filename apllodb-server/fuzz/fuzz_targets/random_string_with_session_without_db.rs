@@ -1,4 +1,11 @@
 //! Checks crash safety of `ApllodbServer::command` with arbitrary string input (most of them are invalid SQL).
+//!
+//! Note that test inputs here rarely pass even lexer. Almost none of them passes parser.
+//! To increase test coverage, an SQL fuzzer is required.
+//!
+//! Related articles:
+//!
+//! - <https://www.cockroachlabs.com/blog/sqlsmith-randomized-sql-testing/>
 
 #![no_main]
 
