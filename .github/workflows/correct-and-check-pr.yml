@@ -134,9 +134,9 @@ jobs:
           command: build
           args: --all-features
 
-      - name: checks if client runs quickly
+      - name: checks if CLI client runs without crash
         run: |
-          echo 'CREATE DATABASE abc' | ./target/debug/apllodb-client
+          echo 'CREATE DATABASE abc' | ./target/debug/apllodb-cli
           rm *.sqlite3*
 
       - name: cargo build --tests
