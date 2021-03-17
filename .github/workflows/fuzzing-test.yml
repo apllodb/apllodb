@@ -1,13 +1,8 @@
 name: fuzzing_test
 
-# on:
-#   schedule:
-#     - cron:  '30 6 * * *'  # UTC 6:30
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+  schedule:
+    - cron:  '30 6 * * *'  # UTC 6:30
 
 jobs:
   run_fuzz:
