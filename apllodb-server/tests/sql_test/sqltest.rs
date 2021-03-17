@@ -40,7 +40,7 @@ impl SqlTest {
 
     #[allow(dead_code)]
     pub async fn run_with_manual_db_control(self) {
-        let mut cur_session = Session::from(SessionWithoutDb::default());
+        let mut cur_session = Session::default();
         for step in &self.steps {
             cur_session = step.run(&self.server, cur_session).await;
         }

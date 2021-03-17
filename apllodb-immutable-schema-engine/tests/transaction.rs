@@ -26,7 +26,7 @@ async fn test_wait_lock() -> ApllodbResult<()> {
 
     let _ = engine
         .without_db()
-        .create_database(Session::from(SessionWithoutDb::default()), db.clone())
+        .create_database(Session::default(), db.clone())
         .await?;
 
     let session1 = engine
