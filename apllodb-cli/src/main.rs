@@ -8,8 +8,7 @@ extern crate derive_new;
 mod cmd_processor;
 mod shell;
 
-use apllodb_server::ApllodbServer;
-use apllodb_shared_components::{ApllodbResult, Session, SessionWithoutDb};
+use apllodb_server::{ApllodbResult, ApllodbServer, Session};
 use cmd_processor::CmdProcessor;
 use rustyline::error::ReadlineError;
 use shell::ReadLine;
@@ -22,7 +21,7 @@ async fn main() -> ApllodbResult<()> {
     let mut rl = ReadLine::default();
     let cmd_processor = CmdProcessor::new(&server);
 
-    let mut session = Session::from(SessionWithoutDb::default());
+    let mut session = Session::default();
 
     loop {
         match rl.readline() {
