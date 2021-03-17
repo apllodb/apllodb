@@ -5,8 +5,14 @@ use glob::glob;
 /// Removes sqlite3 database file on drop().
 ///
 /// Use this in "panic guard" pattern.
-#[derive(Debug, new)]
+#[derive(Debug)]
 pub struct SqliteDatabaseCleaner(DatabaseName);
+
+impl SqliteDatabaseCleaner {
+    pub fn new(database_name: DatabaseName) -> Self {
+        Self(database_name)
+    }
+}
 
 impl Drop for SqliteDatabaseCleaner {
     fn drop(&mut self) {
