@@ -1,16 +1,18 @@
 
 [package]
-name = "apllodb-server-fuzz"
-version = "0.0.0"
 authors = ["Automatically generated"]
-publish = false
 edition = "2018"
+name = "apllodb-server-fuzz"
+publish = false
+version = "0.0.0"
 
 [package.metadata]
 cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+
+async-std = {version = "1.9", features = ["attributes"]}
 
 [dependencies.apllodb-server]
 path = ".."
@@ -20,7 +22,7 @@ path = ".."
 members = ["."]
 
 [[bin]]
+doc = false
 name = "random_string_with_session_without_db"
 path = "fuzz_targets/random_string_with_session_without_db.rs"
 test = false
-doc = false
