@@ -1,6 +1,6 @@
 #![deny(warnings, missing_debug_implementations)]
 
-//! apllodb's client bin crate.
+//! apllodb's CLI client.
 
 #[macro_use]
 extern crate derive_new;

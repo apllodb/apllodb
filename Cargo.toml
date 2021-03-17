@@ -14,7 +14,8 @@ members = [
   "apllodb-immutable-schema-engine-infra",
 
   "apllodb-server",
-  "apllodb-client",
+
+  "apllodb-cli-client",
 
   "apllodb-test-support",
 ]

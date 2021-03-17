@@ -45,7 +45,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "apllodb-client"
+name = "apllodb-cli-client"
 version = "0.1.0"
 dependencies = [
  "apllodb-server",
