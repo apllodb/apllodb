@@ -1,6 +1,6 @@
 use apllodb_immutable_schema_engine_infra::test_support::sqlite_database_cleaner::SqliteDatabaseCleaner;
 use apllodb_server::ApllodbServer;
-use apllodb_shared_components::{DatabaseName, Session, SessionWithoutDb};
+use apllodb_shared_components::{DatabaseName, Session};
 use futures::FutureExt;
 
 use super::{session_with_db, Step, Steps};
