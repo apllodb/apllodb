@@ -49,7 +49,6 @@ name = "apllodb-cli"
 version = "0.1.0"
 dependencies = [
  "apllodb-server",
- "apllodb-shared-components",
  "async-std",
  "clap",
  "derive-new",

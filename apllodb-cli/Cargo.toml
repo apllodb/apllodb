@@ -8,7 +8,6 @@ version = "0.1.0"
 
 [dependencies]
 apllodb-server = {path = "../apllodb-server"}
-apllodb-shared-components = {path = "../apllodb-shared-components"}
 
 derive-new = "0.5"
 
