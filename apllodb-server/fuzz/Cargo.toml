@@ -20,7 +20,7 @@ path = ".."
 members = ["."]
 
 [[bin]]
-name = "fuzz_target_1"
-path = "fuzz_targets/fuzz_target_1.rs"
+name = "random_string_with_session_without_db"
+path = "fuzz_targets/random_string_with_session_without_db.rs"
 test = false
 doc = false
