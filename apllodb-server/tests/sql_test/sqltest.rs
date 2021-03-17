@@ -1,6 +1,6 @@
 use apllodb_immutable_schema_engine_infra::test_support::sqlite_database_cleaner::SqliteDatabaseCleaner;
 use apllodb_server::ApllodbServer;
-use apllodb_shared_components::{DatabaseName, Session, SessionWithoutDb};
+use apllodb_shared_components::{DatabaseName, Session};
 
 use super::{session_with_db, Step, Steps};
 
@@ -40,7 +40,7 @@ impl SqlTest {
 
     #[allow(dead_code)]
     pub async fn run_with_manual_db_control(self) {
-        let mut cur_session = Session::from(SessionWithoutDb::default());
+        let mut cur_session = Session::default();
         for step in &self.steps {
             cur_session = step.run(&self.server, cur_session).await;
         }
