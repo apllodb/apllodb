@@ -30,11 +30,11 @@ jobs:
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
         with:
-          path: |
+          path: &cache-path |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: &cache-key ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: cargo fmt
         uses: actions-rs/cargo@v1
@@ -66,11 +66,8 @@ jobs:
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: *cache-path
+          key: *cache-key
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
@@ -122,11 +119,8 @@ jobs:
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: *cache-path
+          key: *cache-key
 
       - name: cargo build
         uses: actions-rs/cargo@v1
@@ -171,11 +165,8 @@ jobs:
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path:  *cache-path
+          key: *cache-key
         
       - name: cargo clean --doc
         uses: actions-rs/cargo@v1
