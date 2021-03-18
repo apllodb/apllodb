@@ -191,3 +191,17 @@ jobs:
       # TODO comment-in
       # - run: cargo install cargo-deadlinks
       # - run: cargo deadlinks
+
+  slack-notify:
+    if: always()
+    needs:
+      - lint
+      - test
+      - check_rustdoc
+    name: workflow notification to slack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Gamesight/slack-workflow-status@master
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_APLLODB_CI_WEBHOOK_URL }}
