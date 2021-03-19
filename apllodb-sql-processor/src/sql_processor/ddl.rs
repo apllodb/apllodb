@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnDefinition,
-    Session, SessionWithTx, TableConstraintKind, TableConstraints, TableName,
+    ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
+    ColumnDefinition, Session, SessionWithTx, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, CreateTableCommand, TableElement};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
@@ -33,7 +33,12 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
                 }
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             },
-            _ => unimplemented!(),
+            _ => Err(ApllodbSessionError::new(
+                ApllodbError::feature_not_supported(
+                    "only CREATE TABLE is supported for DDL currently",
+                ),
+                Session::from(session),
+            )),
         }
     }
 
