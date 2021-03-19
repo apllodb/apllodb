@@ -37,7 +37,7 @@ extern crate derive_new;
 mod apllodb_server;
 
 // re-export from apllodb-shared-components
-pub use apllodb_shared_components::{ApllodbResult, Session};
+pub use apllodb_shared_components::{ApllodbResult, ApllodbSessionResult, Session};
 
 pub use crate::apllodb_server::{
     response::success::{rec::Rec, rec_iter::RecIter, ApllodbCommandSuccess},

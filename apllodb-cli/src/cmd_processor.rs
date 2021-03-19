@@ -1,4 +1,4 @@
-use apllodb_server::{ApllodbCommandSuccess, ApllodbResult, ApllodbServer, Session};
+use apllodb_server::{ApllodbCommandSuccess, ApllodbServer, ApllodbSessionResult, Session};
 
 #[derive(Debug, new)]
 pub(crate) struct CmdProcessor<'main> {
@@ -6,7 +6,11 @@ pub(crate) struct CmdProcessor<'main> {
 }
 
 impl<'main> CmdProcessor<'main> {
-    pub(crate) async fn process(&self, session: Session, cmd: &str) -> ApllodbResult<Session> {
+    pub(crate) async fn process(
+        &self,
+        session: Session,
+        cmd: &str,
+    ) -> ApllodbSessionResult<Session> {
         let success = self.server.command(session, cmd.to_string()).await?;
         match success {
             ApllodbCommandSuccess::QueryResponse { session, records } => {
