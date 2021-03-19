@@ -6,7 +6,7 @@ use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
     operation::BinaryPlanOperation,
 };
 use apllodb_shared_components::{
-    ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex,
+    ApllodbError, ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex,
     FullFieldReference, RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast;
@@ -178,10 +178,14 @@ impl SelectCommandAnalyzer {
                             joined_schema,
                         })
                     }
-                    _ => unimplemented!("only `ON a = b` JOIN condition is supported currently"),
+                    _ => Err(ApllodbError::feature_not_supported(
+                        "only `ON a = b` JOIN condition is supported currently",
+                    )),
                 }
             }
-            _ => unimplemented!("only `ON a = b` JOIN condition is supported currently"),
+            _ => Err(ApllodbError::feature_not_supported(
+                "only `ON a = b` JOIN condition is supported currently",
+            )),
         }
     }
 }
