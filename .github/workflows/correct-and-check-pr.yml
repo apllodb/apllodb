@@ -56,6 +56,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: checks if any `todo!()` or `unimplemented!()` is used (to prevent easy server crash)
+        run: |
+          git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
+          git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
+
       - name: rustup override set `cat rust-toolchain`
         uses: actions-rs/toolchain@v1
         with:
