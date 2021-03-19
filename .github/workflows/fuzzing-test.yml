@@ -12,13 +12,7 @@ jobs:
         working-directory: apllodb-server/fuzz/
     steps:
       - uses: actions/checkout@v2
-
-      - name: Install prerequisites
-        run: |
-          set -xe
-          sudo apt update -y
-          sudo apt install -y libsqlite3-dev
-
+      - uses: composite/install-apllodb-dep@v1
       - name: rustup override set `cat rust-toolchain`
         uses: actions-rs/toolchain@v1
         with:

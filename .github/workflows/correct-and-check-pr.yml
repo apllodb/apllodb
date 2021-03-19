@@ -90,12 +90,7 @@ jobs:
             - 1.48.0  # MSRV
     steps:
       - uses: actions/checkout@v2
-
-      - name: Install prerequisites
-        run: |
-          set -xe
-          sudo apt update -y
-          sudo apt install -y libsqlite3-dev
+      - uses: composite/install-apllodb-dep@v1
 
       # https://github.com/actions-rs/meta/blob/master/recipes/matrix.md
       - name: rustup override set {{ matrix.rust }}
