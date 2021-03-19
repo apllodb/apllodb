@@ -44,7 +44,7 @@ jobs:
           if-no-files-found: error
 
   slack-notify:
-    if: always()
+    if: failure()
     needs:
       - run_fuzz
     name: workflow notification to slack
