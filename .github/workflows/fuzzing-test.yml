@@ -56,9 +56,9 @@ jobs:
           if-no-files-found: error
 
   slack-notify:
+    if: always()
     needs:
       - run_fuzz
-    if: failure()
     name: workflow notification to slack
     runs-on: ubuntu-latest
     steps:
