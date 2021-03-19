@@ -11,6 +11,7 @@ fn setup() {
     test_setup();
 }
 
+#[ignore]
 #[async_std::test]
 async fn test_scenario_010_pre_demo() {
     SqlTest::default()
