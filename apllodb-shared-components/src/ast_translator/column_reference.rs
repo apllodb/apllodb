@@ -98,7 +98,7 @@ impl AstTranslator {
             return Err(ApllodbError::feature_not_supported(format!(
                 "needs catalog info to detect which table has the column `{:?}`",
                 ast_column_name
-            )))
+            )));
         }
 
         // SELECT C FROM T (AS a)?;
