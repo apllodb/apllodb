@@ -19,12 +19,6 @@ jobs:
           profile: minimal
           override: true
 
-      # https://github.com/actions/cache/blob/master/examples.md#using-multiple-systems-and-npm-config
-      - name: Get running rustc --version
-        id: rustc_version
-        run: |
-          echo "::set-output name=version::$(rustc --version)"
-
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
         with:
