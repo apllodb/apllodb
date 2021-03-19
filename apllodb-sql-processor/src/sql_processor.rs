@@ -115,7 +115,10 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     | apllodb_ast::Command::UpdateCommandVariant(_)
                     | apllodb_ast::Command::SelectCommandVariant(_) => {
                         // TODO auto-commit feature here?
-                        todo!()
+                        Err(ApllodbSessionError::new(
+                            ApllodbError::feature_not_supported("auto-commit is not supported currently"),
+                            Session::from(sess)
+                        ))
                     }
                     apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
                         Err(

@@ -8,13 +8,13 @@ extern crate derive_new;
 mod cmd_processor;
 mod shell;
 
-use apllodb_server::{ApllodbResult, ApllodbServer, Session};
+use apllodb_server::{ApllodbServer, Session};
 use cmd_processor::CmdProcessor;
 use rustyline::error::ReadlineError;
 use shell::ReadLine;
 
 #[async_std::main]
-async fn main() -> ApllodbResult<()> {
+async fn main() {
     env_logger::init();
 
     let server = ApllodbServer::default();
@@ -26,17 +26,24 @@ async fn main() -> ApllodbResult<()> {
     loop {
         match rl.readline() {
             Ok(cmd) => {
-                session = cmd_processor.process(session, &cmd).await?;
-                let _ = rl.add_history(&cmd);
+                session = match cmd_processor.process(session, &cmd).await {
+                    Ok(sess) => {
+                        let _ = rl.add_history(&cmd);
+                        sess
+                    }
+                    Err(e) => {
+                        log::error!("{:?}", e);
+                        e.session
+                    }
+                }
             }
+
             Err(ReadlineError::Interrupted) => continue,
             Err(ReadlineError::Eof) => break,
             Err(e) => {
-                println!("Error: {:?}", e);
-                break;
+                log::error!("{:?}", e);
+                continue;
             }
         }
     }
-
-    Ok(())
 }

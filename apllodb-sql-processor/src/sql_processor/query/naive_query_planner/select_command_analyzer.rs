@@ -3,8 +3,8 @@ mod from_item;
 use std::collections::HashSet;
 
 use apllodb_shared_components::{
-    ApllodbResult, AstTranslator, CorrelationReference, Expression, FullFieldReference, Ordering,
-    RecordFieldRefSchema,
+    ApllodbError, ApllodbResult, AstTranslator, CorrelationReference, Expression,
+    FullFieldReference, Ordering, RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast;
 
@@ -58,12 +58,12 @@ impl SelectCommandAnalyzer {
                         &from_correlations,
                     )?;
                     let ffr = if let Expression::FullFieldReferenceVariant(ffr) = expression {
-                        ffr
+                        Ok(ffr)
                     } else {
-                        unimplemented!(
-                            "ORDER BY's expression is supposed to be a field name currently"
-                        );
-                    };
+                        Err(ApllodbError::feature_not_supported(
+                            "ORDER BY's expression is supposed to be a field name currently",
+                        ))
+                    }?;
                     let ordering = AstTranslator::ordering(ast_order_by.ordering);
                     Ok((ffr, ordering))
                 })
@@ -111,7 +111,9 @@ impl SelectCommandAnalyzer {
     ) -> ApllodbResult<FullFieldReference> {
         match &ast_select_field.expression {
             apllodb_ast::Expression::ConstantVariant(_) => {
-                unimplemented!();
+                Err(ApllodbError::feature_not_supported(
+                    "constant in select field is not supported currently",
+                ))
             }
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
                 AstTranslator::select_field_column_reference(
@@ -123,7 +125,9 @@ impl SelectCommandAnalyzer {
             apllodb_ast::Expression::UnaryOperatorVariant(_, _)
             | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
                 // TODO このレイヤーで計算しちゃいたい
-                unimplemented!();
+                Err(ApllodbError::feature_not_supported(
+                    "unary/binary operation in select field is not supported currently",
+                ))
             }
         }
     }

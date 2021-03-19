@@ -108,7 +108,9 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
         _vtable_id: &VTableId,
         _pks: &[ApparentPrimaryKey],
     ) -> ApllodbResult<()> {
-        todo!()
+        Err(ApllodbError::feature_not_supported(
+            "VRR::deregister() is unimplemented",
+        ))
     }
 
     async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()> {

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator, ColumnName,
-    CorrelationReference, FieldReference, FullFieldReference, Record, RecordFieldRefSchema,
-    Records, Session, SessionWithTx, SqlValue, SqlValues,
+    ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
+    ColumnName, CorrelationReference, FieldReference, FullFieldReference, Record,
+    RecordFieldRefSchema, Records, Session, SessionWithTx, SqlValue, SqlValues,
 };
 use apllodb_sql_parser::apllodb_ast::{Command, InsertCommand};
 use apllodb_storage_engine_interface::StorageEngine;
@@ -52,13 +52,18 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
                 }
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             },
-            _ => unimplemented!(),
+            _ => Err(ApllodbSessionError::new(
+                ApllodbError::feature_not_supported("only INSERT is supported for DML currently"),
+                Session::from(session),
+            )),
         }
     }
 
     fn run_helper_insert(&self, command: InsertCommand) -> ApllodbResult<ModificationPlan> {
         if command.alias.is_some() {
-            unimplemented!();
+            ApllodbError::feature_not_supported(
+                "table alias in INSERT command is not currently supported",
+            );
         }
 
         let ast_table_name = command.table_name;
@@ -72,7 +77,9 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         let expressions = command.expressions.into_vec();
 
         if column_names.len() != expressions.len() {
-            unimplemented!();
+            ApllodbError::feature_not_supported(
+                "VALUES expressions and column names must have same length currently",
+            );
         }
 
         let ffrs: Vec<FullFieldReference> = column_names
