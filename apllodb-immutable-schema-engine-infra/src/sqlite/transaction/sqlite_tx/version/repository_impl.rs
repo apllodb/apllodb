@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
     version_revision_resolver::VersionRevisionResolver,
 };
-use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_shared_components::{ColumnName, SqlValue};
 use async_trait::async_trait;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
@@ -37,7 +37,9 @@ impl VersionRepository for VersionRepositoryImpl {
     }
 
     async fn deactivate(&self, _version_id: &VersionId) -> ApllodbResult<()> {
-        todo!()
+        Err(ApllodbError::feature_not_supported(
+            "VersionRepositoryImpl::deactivate() is unimplemented",
+        ))
     }
 
     async fn insert(

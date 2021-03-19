@@ -101,13 +101,15 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             for (column_name, val_before) in col_vals_before {
                 let val_after = if let Some(expr) = input.column_values.remove(&column_name) {
                     if let Expression::ConstantVariant(sql_value) = expr {
-                        sql_value
+                        Ok(sql_value)
                     } else {
-                        todo!("only ConstantVariant is acceptable for now")
+                        Err(ApllodbError::feature_not_supported(
+                            "only ConstantVariant is acceptable for now",
+                        ))
                     }
                 } else {
-                    val_before
-                };
+                    Ok(val_before)
+                }?;
                 vals_after.push(val_after);
             }
 

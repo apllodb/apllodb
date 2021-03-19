@@ -14,10 +14,7 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_shared_components::{
-    AlterTableAction, ColumnDefinition, ColumnName, Expression, Records, SessionId, SqlValues,
-    TableConstraints, TableName,
-};
+use apllodb_shared_components::{AlterTableAction, ApllodbError, ColumnDefinition, ColumnName, Expression, Records, SessionId, SqlValues, TableConstraints, TableName};
 use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
 
@@ -121,7 +118,12 @@ impl WithTxMethods for WithTxMethodsImpl {
     }
 
     fn drop_table_core(self, _sid: SessionId, _table_name: TableName) -> BoxFutRes<()> {
-        async move { todo!() }.boxed_local()
+        async move {
+            Err(ApllodbError::feature_not_supported(
+                "DROP TABLE is not supported currently",
+            ))
+        }
+        .boxed_local()
     }
 
     // ========================================================================
