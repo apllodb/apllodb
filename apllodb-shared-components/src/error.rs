@@ -35,19 +35,24 @@ pub struct ApllodbError {
 }
 
 impl ApllodbError {
-    /// Constructor.
+    /// General constructor.
     ///
     /// Pass `Some(SourceError)` if you have one.
-    pub fn new<S: Into<String>>(
+    pub fn new(
         kind: ApllodbErrorKind,
-        desc: S,
+        desc: impl ToString,
         source: Option<Box<dyn Error + Sync + Send + 'static>>,
     ) -> Self {
         Self {
             kind,
-            desc: desc.into(),
+            desc: desc.to_string(),
             source,
         }
+    }
+
+    /// Constructor of [ApllodbErrorKind::FeatureNotSupported](crate::ApllodbErrorKind::FeatureNotSupported).
+    pub fn feature_not_supported(desc: impl ToString) -> Self {
+        Self::new(ApllodbErrorKind::FeatureNotSupported, desc, None)
     }
 }
 
