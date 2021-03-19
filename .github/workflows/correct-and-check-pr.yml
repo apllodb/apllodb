@@ -90,7 +90,7 @@ jobs:
             - 1.48.0  # MSRV
     steps:
       - uses: actions/checkout@v2
-      - uses: composite/install-apllodb-dep@v1
+      - uses: ./.github/actions/install-apllodb-dep
 
       # https://github.com/actions-rs/meta/blob/master/recipes/matrix.md
       - name: rustup override set {{ matrix.rust }}
