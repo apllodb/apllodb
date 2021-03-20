@@ -74,13 +74,8 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             .into_iter()
             .map(AstTranslator::column_name)
             .collect::<ApllodbResult<_>>()?;
-        let expressions = command.expressions.into_vec();
-
-        if column_names.len() != expressions.len() {
-            ApllodbError::feature_not_supported(
-                "VALUES expressions and column names must have same length currently",
-            );
-        }
+        let column_names_len = column_names.len();
+        let insert_values = command.values.into_vec();
 
         let ffrs: Vec<FullFieldReference> = column_names
             .into_iter()
@@ -93,25 +88,39 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
             .collect();
         let schema = RecordFieldRefSchema::new(ffrs);
 
-        let constant_values: Vec<SqlValue> = expressions
+        let records: Vec<Record> = insert_values
             .into_iter()
-            .map(|ast_expression| {
-                let expression = AstTranslator::expression_in_non_select(
-                    ast_expression,
-                    vec![ast_table_name.clone()],
-                )?;
-                expression.to_sql_value(None)
+            .map(|insert_value| {
+                let expressions = insert_value.expressions.into_vec();
+
+                if column_names_len != expressions.len() {
+                    ApllodbError::feature_not_supported(
+                        "VALUES expressions and column names must have same length currently",
+                    );
+                }
+
+                let constant_values: Vec<SqlValue> = expressions
+                    .into_iter()
+                    .map(|ast_expression| {
+                        let expression = AstTranslator::expression_in_non_select(
+                            ast_expression,
+                            vec![ast_table_name.clone()],
+                        )?;
+                        expression.to_sql_value(None)
+                    })
+                    .collect::<ApllodbResult<_>>()?;
+
+                let values = SqlValues::new(constant_values);
+                Ok(Record::new(values))
             })
             .collect::<ApllodbResult<_>>()?;
-
-        let insert_values = SqlValues::new(constant_values);
 
         let records_query_node_id =
             self.context
                 .node_repo
                 .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::Values {
-                        records: Records::new(schema, vec![Record::new(insert_values)]),
+                        records: Records::new(schema, records),
                     },
                 }));
 
