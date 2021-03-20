@@ -3,8 +3,8 @@ use crate::apllodb_ast::{
     ColumnDefinition, ColumnName, ColumnReference, Condition, Constant, Correlation,
     CreateDatabaseCommand, CreateTableCommand, DataType, DatabaseName, DeleteCommand, DropColumn,
     DropTableCommand, Expression, FromItem, GroupingElement, Identifier, InsertCommand,
-    IntegerConstant, IntegerType, JoinType, NonEmptyVec, NumericConstant, OrderBy, Ordering,
-    SelectCommand, SelectField, StringConstant, TableConstraint, TableElement, TableName,
+    InsertValue, IntegerConstant, IntegerType, JoinType, NonEmptyVec, NumericConstant, OrderBy,
+    Ordering, SelectCommand, SelectField, StringConstant, TableConstraint, TableElement, TableName,
     UnaryOperator, UpdateCommand, UseDatabaseCommand,
 };
 
@@ -122,7 +122,7 @@ impl InsertCommand {
         table_name: &str,
         alias: Option<&str>,
         column_names: Vec<&str>,
-        expressions: Vec<Expression>,
+        values: Vec<InsertValue>,
     ) -> Self {
         Self {
             table_name: TableName::factory(table_name),
@@ -130,6 +130,14 @@ impl InsertCommand {
             column_names: NonEmptyVec::new(
                 column_names.into_iter().map(ColumnName::factory).collect(),
             ),
+            values: NonEmptyVec::new(values),
+        }
+    }
+}
+
+impl InsertValue {
+    pub fn factory(expressions: Vec<Expression>) -> Self {
+        Self {
             expressions: NonEmptyVec::new(expressions),
         }
     }

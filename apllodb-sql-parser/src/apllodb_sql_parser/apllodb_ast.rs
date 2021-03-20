@@ -289,6 +289,12 @@ pub struct InsertCommand {
     pub table_name: TableName,
     pub alias: Option<Alias>,
     pub column_names: NonEmptyVec<ColumnName>,
+    pub values: NonEmptyVec<InsertValue>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct InsertValue {
     pub expressions: NonEmptyVec<Expression>,
 }
 
