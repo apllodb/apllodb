@@ -22,6 +22,14 @@ async fn test_error_on_dup_pk() {
             "INSERT INTO people (id, age) VALUES (1, 20)",
             StepRes::Err(ApllodbErrorKind::UniqueViolation),
         ))
+        .add_step(Step::new(
+            "INSERT INTO people (id, age) VALUES (2, 20), (3, 30)",
+            StepRes::Ok,
+        ))
+        .add_step(Step::new(
+            "INSERT INTO people (id, age) VALUES (4, 40), (4, 44)",
+            StepRes::Err(ApllodbErrorKind::UniqueViolation),
+        ))
         .run()
         .await;
 }
