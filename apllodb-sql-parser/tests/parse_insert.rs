@@ -70,6 +70,18 @@ fn test_insert_accepted() {
                 ],
             ),
         ),
+        (
+            "INSERT INTO t (id, c1) VALUES (1, 123), (2, 456)",
+            InsertCommand::factory(
+                "t",
+                None,
+                vec!["id", "c1"],
+                vec![
+                    Expression::factory_integer("1"),
+                    Expression::factory_integer("123"),
+                ],
+            ),
+        ),
     ];
 
     let parser = ApllodbSqlParser::default();
