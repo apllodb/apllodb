@@ -1,5 +1,5 @@
 use apllodb_sql_parser::{
-    apllodb_ast::{Command, Expression, InsertCommand},
+    apllodb_ast::{Command, Expression, InsertCommand, InsertValue},
     ApllodbAst, ApllodbSqlParser,
 };
 use pretty_assertions::assert_eq;
@@ -20,10 +20,10 @@ fn test_insert_accepted() {
                 "t",
                 None,
                 vec!["id", "c1"],
-                vec![
+                vec![InsertValue::factory(vec![
                     Expression::factory_integer("1"),
                     Expression::factory_integer("123"),
-                ],
+                ])],
             ),
         ),
         (
@@ -32,7 +32,9 @@ fn test_insert_accepted() {
                 "t",
                 None,
                 vec!["c"],
-                vec![Expression::factory_text(r#"abc"#)],
+                vec![InsertValue::factory(vec![Expression::factory_text(
+                    r#"abc"#,
+                )])],
             ),
         ),
         (
@@ -41,7 +43,9 @@ fn test_insert_accepted() {
                 "t",
                 None,
                 vec!["c"],
-                vec![Expression::factory_text(r#"abcあいう🍣 '@\"#)],
+                vec![InsertValue::factory(vec![Expression::factory_text(
+                    r#"abcあいう🍣 '@\"#,
+                )])],
             ),
         ),
         (
@@ -50,10 +54,10 @@ fn test_insert_accepted() {
                 "long_table_name",
                 Some("t"),
                 vec!["id", "c1"],
-                vec![
+                vec![InsertValue::factory(vec![
                     Expression::factory_integer("1"),
                     Expression::factory_integer("123"),
-                ],
+                ])],
             ),
         ),
         (
@@ -63,11 +67,11 @@ fn test_insert_accepted() {
                 "t",
                 None,
                 vec!["id", "c1"],
-                vec![
+                vec![InsertValue::factory(vec![
                     Expression::factory_integer("1"),
                     Expression::factory_integer("123"),
                     Expression::factory_integer("456"),
-                ],
+                ])],
             ),
         ),
         (
@@ -77,8 +81,14 @@ fn test_insert_accepted() {
                 None,
                 vec!["id", "c1"],
                 vec![
-                    Expression::factory_integer("1"),
-                    Expression::factory_integer("123"),
+                    InsertValue::factory(vec![
+                        Expression::factory_integer("1"),
+                        Expression::factory_integer("123"),
+                    ]),
+                    InsertValue::factory(vec![
+                        Expression::factory_integer("2"),
+                        Expression::factory_integer("456"),
+                    ]),
                 ],
             ),
         ),
