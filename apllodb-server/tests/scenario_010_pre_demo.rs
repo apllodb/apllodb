@@ -60,7 +60,7 @@ async fn test_scenario_010_pre_demo() {
             VALUES
               (1, 102, 103),
               (2, 101, 104);
-            );"#,
+            "#,
             StepRes::Ok,
         ))
         .add_step(Step::new("COMMIT", StepRes::Ok))
@@ -108,7 +108,7 @@ async fn test_scenario_010_pre_demo() {
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
+                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
                     r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
                     "ハドソン"
@@ -127,7 +127,7 @@ async fn test_scenario_010_pre_demo() {
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
+                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 104);
                 assert_eq!(
                     r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
                     "エリクソン"
@@ -158,18 +158,6 @@ async fn test_scenario_010_pre_demo() {
                     r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
                     "コナミ"
                 );
-                assert_eq!(
-                    r.get::<String>(&FieldIndex::from("本社の地域"))
-                        .unwrap()
-                        .unwrap(),
-                    "東京"
-                );
-                assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("従業員数"))
-                        .unwrap()
-                        .unwrap(),
-                    1000
-                );
 
                 let r = rec_iter.next().unwrap();
                 assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
@@ -177,36 +165,12 @@ async fn test_scenario_010_pre_demo() {
                     r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
                     "ソニー"
                 );
-                assert_eq!(
-                    r.get::<String>(&FieldIndex::from("本社の地域"))
-                        .unwrap()
-                        .unwrap(),
-                    "東京"
-                );
-                assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("従業員数"))
-                        .unwrap()
-                        .unwrap(),
-                    3000
-                );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
+                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
                     r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
                     "ハドソン"
-                );
-                assert_eq!(
-                    r.get::<String>(&FieldIndex::from("本社の地域"))
-                        .unwrap()
-                        .unwrap(),
-                    "東京"
-                );
-                assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("従業員数"))
-                        .unwrap()
-                        .unwrap(),
-                    500
                 );
 
                 assert!(rec_iter.next().is_none());

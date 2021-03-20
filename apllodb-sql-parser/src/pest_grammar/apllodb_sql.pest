@@ -1055,7 +1055,11 @@ insert_command = {
     ~ table_name
     ~ (^"AS" ~ alias)?
     ~ "(" ~ column_name ~ ("," ~ column_name)* ~ ")"
-    ~ ^"VALUES" ~ "(" ~ expression ~ ("," ~ expression)* ~ ")"
+    ~ ^"VALUES" ~ insert_value ~ ("," ~ insert_value)*
+}
+
+insert_value = {
+    "(" ~ expression ~ ("," ~ expression)* ~ ")"
 }
 
 /*

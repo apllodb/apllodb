@@ -7,9 +7,9 @@ use crate::{
         CharacterType, ColumnConstraint, ColumnDefinition, ColumnName, ColumnReference, Command,
         Condition, Constant, Correlation, CreateDatabaseCommand, CreateTableCommand, DataType,
         DatabaseName, DeleteCommand, DropColumn, DropTableCommand, Expression, FromItem,
-        Identifier, InsertCommand, IntegerConstant, IntegerType, JoinType, NumericConstant,
-        OrderBy, Ordering, SelectCommand, SelectField, StringConstant, TableConstraint,
-        TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
+        Identifier, InsertCommand, InsertValue, IntegerConstant, IntegerType, JoinType,
+        NumericConstant, OrderBy, Ordering, SelectCommand, SelectField, StringConstant,
+        TableConstraint, TableElement, TableName, UnaryOperator, UpdateCommand, UseDatabaseCommand,
     },
     apllodb_sql_parser::error::{ApllodbSqlParserError, ApllodbSqlParserResult},
     ApllodbAst,
@@ -611,16 +611,28 @@ impl PestParserImpl {
             &Self::parse_column_name,
             &identity,
         )?;
-        let expressions = parse_child_seq(
+        let values = parse_child_seq(
             &mut params,
-            Rule::expression,
-            &Self::parse_expression,
+            Rule::insert_value,
+            &Self::parse_insert_value,
             &identity,
         )?;
         Ok(InsertCommand {
             table_name,
             alias,
             column_names: NonEmptyVec::new(column_names),
+            values: NonEmptyVec::new(values),
+        })
+    }
+
+    fn parse_insert_value(mut params: FnParseParams) -> ApllodbSqlParserResult<InsertValue> {
+        let expressions = parse_child_seq(
+            &mut params,
+            Rule::expression,
+            &Self::parse_expression,
+            &identity,
+        )?;
+        Ok(InsertValue {
             expressions: NonEmptyVec::new(expressions),
         })
     }
