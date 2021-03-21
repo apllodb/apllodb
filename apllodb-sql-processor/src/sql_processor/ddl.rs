@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
-    ColumnDefinition, Session, SessionWithTx, TableConstraintKind, TableConstraints, TableName,
+    AlterTableAction, ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult,
+    AstTranslator, ColumnDefinition, Session, SessionWithTx, TableConstraintKind, TableConstraints,
+    TableName,
 };
-use apllodb_sql_parser::apllodb_ast::{Command, CreateTableCommand, TableElement};
+use apllodb_sql_parser::apllodb_ast::{
+    AlterTableCommand, Command, CreateTableCommand, TableElement,
+};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 
 use super::sql_processor_context::SQLProcessorContext;
@@ -33,9 +36,19 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
                 }
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             },
+            Command::AlterTableCommandVariant(ac) => match self.run_helper_alter_table(ac) {
+                Ok((table_name, action)) => {
+                    self.context
+                        .engine
+                        .with_tx()
+                        .alter_table(session, table_name, action)
+                        .await
+                }
+                Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+            },
             _ => Err(ApllodbSessionError::new(
                 ApllodbError::feature_not_supported(
-                    "only CREATE TABLE is supported for DDL currently",
+                    "only CREATE TABLE / ALTER TABLE are supported for DDL currently",
                 ),
                 Session::from(session),
             )),
@@ -81,6 +94,29 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
             TableConstraints::new(table_constraints)?,
             column_definitions,
         ))
+    }
+
+    fn run_helper_alter_table(
+        &self,
+        command: AlterTableCommand,
+    ) -> ApllodbResult<(TableName, AlterTableAction)> {
+        let table_name = AstTranslator::table_name(command.table_name)?;
+
+        let ast_actions = command.actions.into_vec();
+        let ast_action = if ast_actions.len() > 1 {
+            Err(ApllodbError::feature_not_supported(
+                "ALTER TABLE does not support multiple actions currently",
+            ))
+        } else {
+            Ok(ast_actions
+                .first()
+                .expect("NonEmptyVec assures first element")
+                .clone())
+        }?;
+
+        let action = AstTranslator::alter_table_action(ast_action)?;
+
+        Ok((table_name, action))
     }
 }
 
