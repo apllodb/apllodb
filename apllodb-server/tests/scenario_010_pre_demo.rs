@@ -317,7 +317,7 @@ async fn test_scenario_010_pre_demo() {
         .add_step(Step::new(
             // v1 is the max possible version to insert this record (not having NOT NULL 時価総額 column).
             r#"
-            INSERT INTO 会社 (ID, 名前, 本社の地域)
+            INSERT INTO 会社 (ID, 名前, 本社の地域, 従業員数)
               VALUES
               (106, "ソフトブレーン", "北海道", 500);
             "#,
