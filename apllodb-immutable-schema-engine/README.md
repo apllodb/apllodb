@@ -27,7 +27,7 @@ Currently SQLite is used in Frameworks & Derivers layer (or Infrastructure layer
 
 Here is the diagram describing Clean Architecture used in `apllodb-immutable-schema-engine-*` sub-crates.
 
-![apllodb-immutable-schema-engine Clean Architecture](https://user-images.githubusercontent.com/498788/85363246-5b802e80-b55b-11ea-98ca-a3d97f68a53a.png)
+![apllodb-immutable-schema-engine's Clean Architecture (src: https://www.figma.com/file/4gSzS7R9WQBKx54RQIjVpD/apllodb-immutable-schema-engine-s-Clean-Architecture)](./doc/apllodb-immutable-schema-engine-clean-architecture.svg)
 
 Note that Interface Adapters layer is not used for the following reasons.
 
