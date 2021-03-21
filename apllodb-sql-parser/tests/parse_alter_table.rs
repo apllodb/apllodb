@@ -27,6 +27,17 @@ fn test_alter_table_accepted() {
             ),
         ),
         (
+            "ALTER TABLE t ADD c1 INTEGER",
+            AlterTableCommand::factory(
+                "t",
+                vec![Action::factory_add_col(ColumnDefinition::factory(
+                    "c1",
+                    DataType::integer(),
+                    vec![],
+                ))],
+            ),
+        ),
+        (
             "ALTER TABLE t ADD COLUMN c1 INTEGER NOT NULL, DROP COLUMN c2",
             AlterTableCommand::factory(
                 "t",
