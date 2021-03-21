@@ -83,8 +83,6 @@ impl ActiveVersion {
 
                 // TODO treat cd_to_add.column_constraint
 
-                // TODO NOT NULL を TableConstraint としてとる
-
                 let id = VersionId::new(self.vtable_id(), &self.number().next());
 
                 Ok(Self(Version {
