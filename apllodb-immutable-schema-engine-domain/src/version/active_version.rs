@@ -72,10 +72,31 @@ impl ActiveVersion {
     ///   - If column to alter does not exist.
     pub fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
         match action {
+            AlterTableAction::AddColumn {
+                column_definition: cd_to_add,
+            } => {
+                self.validate_col_not_exists(cd_to_add.column_data_type().column_name())?;
+
+                let mut next_column_data_types: Vec<ColumnDataType> =
+                    self.0.column_data_types.clone();
+                next_column_data_types.push(cd_to_add.column_data_type().clone());
+
+                // TODO treat cd_to_add.column_constraint
+
+                // TODO NOT NULL を TableConstraint としてとる
+
+                let id = VersionId::new(self.vtable_id(), &self.number().next());
+
+                Ok(Self(Version {
+                    id,
+                    column_data_types: next_column_data_types,
+                    constraints: VersionConstraints::default(),
+                }))
+            }
             AlterTableAction::DropColumn {
                 column_name: column_to_drop,
             } => {
-                self.validate_col_existence(&column_to_drop)?;
+                self.validate_col_exists(&column_to_drop)?;
 
                 let next_column_data_types: Vec<ColumnDataType> = self
                     .0
@@ -161,7 +182,27 @@ impl ActiveVersion {
         Ok(())
     }
 
-    fn validate_col_existence(&self, column_name: &ColumnName) -> ApllodbResult<()> {
+    fn validate_col_not_exists(&self, column_name: &ColumnName) -> ApllodbResult<()> {
+        if self
+            .0
+            .column_data_types
+            .iter()
+            .any(|cdt| cdt.column_name() == column_name)
+        {
+            Err(ApllodbError::new(
+                ApllodbErrorKind::DuplicateColumn,
+                format!(
+                    "column `{:?}` already exists in current version",
+                    column_name
+                ),
+                None,
+            ))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn validate_col_exists(&self, column_name: &ColumnName) -> ApllodbResult<()> {
         self.0
             .column_data_types
             .iter()

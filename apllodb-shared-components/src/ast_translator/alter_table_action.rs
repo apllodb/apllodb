@@ -3,7 +3,7 @@ use apllodb_sql_parser::apllodb_ast;
 use crate::{ast_translator::AstTranslator, AlterTableAction, ApllodbResult};
 
 impl AstTranslator {
-    pub(crate) fn alter_table_action(
+    pub fn alter_table_action(
         ast_alter_table_action: apllodb_ast::Action,
     ) -> ApllodbResult<AlterTableAction> {
         match ast_alter_table_action {

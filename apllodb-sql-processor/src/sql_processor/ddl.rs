@@ -108,7 +108,10 @@ impl<Engine: StorageEngine> DDLProcessor<Engine> {
                 "ALTER TABLE does not support multiple actions currently",
             ))
         } else {
-            Ok(ast_actions[0])
+            Ok(ast_actions
+                .first()
+                .expect("NonEmptyVec assures first element")
+                .clone())
         }?;
 
         let action = AstTranslator::alter_table_action(ast_action)?;
