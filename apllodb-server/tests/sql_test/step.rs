@@ -79,7 +79,7 @@ impl Step {
                         assert_eq!(kind, e.kind());
                     }
                     _ => panic!(
-                        "unexpected error {:#?} on ApllodbServer::command() - step: {:#?}",
+                        "unexpected error {} on ApllodbServer::command() - step: {:#?}",
                         e, self
                     ),
                 }
