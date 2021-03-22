@@ -34,10 +34,13 @@ cargo test
 We refer to ["Architecture of a Database System"](https://dsf.berkeley.edu/papers/fntdb07-architecture.pdf) to set boundaries between each components (crates).
 
 The following diagram, similarly illustrated to Fig. 1.1 of the paper, shows sub-crates and their rolls.
+(Box with gray text are unimplemented roles)
 
-![apllodb's Architecture](https://drive.google.com/uc?export=view&id=1hlHuIgVHkGb_n8A8ZBKIyxtRBGqIDgfQ)
+![apllodb's Architecture (src: https://www.figma.com/file/9pBZXpEHkA8rtSH7w1Itqi/apllodb's-Architecture?node-id=1%3A2&viewport=552%2C484%2C0.7679687738418579)](./doc/apllodb-architecture.svg)
 
 Entry points in `apllodb-server`, `apllodb-sql-processor`, and `apllodb-storage-engine-interface` are **async** functions so clients can run multiple SQLs at a time.
+
+`apllodb-server` is the component to choose storage engine to use. `apllodb-immutable-schema-engine::ApllodbImmutableSchemaEngine` is specified at compile-time (as type parameter) for now.
 
 Currently, apllodb has a single client; `apllodb-cli`. `apllodb-cli` runs from a shell, takes SQL text from stdin, and outputs query result records (or error messages) to stdout/stderr.
 Also, `apllodb-cli` works as single-process database. `apllodb-server` currently does not run solely.
