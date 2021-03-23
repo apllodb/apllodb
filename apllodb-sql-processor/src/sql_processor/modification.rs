@@ -1,16 +1,19 @@
 mod insert_planner;
+mod update_planner;
 
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
+    ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
 };
 use apllodb_sql_parser::apllodb_ast::Command;
 use apllodb_storage_engine_interface::StorageEngine;
 
 use self::{
-    insert_planner::InsertPlanner, modification_executor::ModificationExecutor,
-    modification_plan::ModificationPlan,
+    insert_planner::InsertPlanner,
+    modification_executor::ModificationExecutor,
+    modification_plan::{modification_plan_tree::ModificationPlanTree, ModificationPlan},
+    update_planner::UpdatePlanner,
 };
 
 use super::sql_processor_context::SQLProcessorContext;
@@ -36,19 +39,32 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
         match command {
             Command::InsertCommandVariant(ic) => {
                 let planner = InsertPlanner::new(&self.context.node_repo, ic);
-                match planner.run() {
-                    Ok(plan) => {
-                        let executor = ModificationExecutor::new(self.context.clone());
-                        executor.run(session, ModificationPlan::new(plan)).await
-                    }
-                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
-                }
+                let plan_tree_res = planner.run();
+                self.run_plan_tree(session, plan_tree_res).await
             }
-
+            Command::UpdateCommandVariant(uc) => {
+                let planner = UpdatePlanner::new(uc);
+                let plan_tree_res = planner.run();
+                self.run_plan_tree(session, plan_tree_res).await
+            }
             _ => Err(ApllodbSessionError::new(
                 ApllodbError::feature_not_supported("only INSERT is supported for DML currently"),
                 Session::from(session),
             )),
+        }
+    }
+
+    async fn run_plan_tree(
+        &self,
+        session: SessionWithTx,
+        plan_tree_res: ApllodbResult<ModificationPlanTree>,
+    ) -> ApllodbSessionResult<SessionWithTx> {
+        match plan_tree_res {
+            Ok(plan) => {
+                let executor = ModificationExecutor::new(self.context.clone());
+                executor.run(session, ModificationPlan::new(plan)).await
+            }
+            Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
         }
     }
 }
