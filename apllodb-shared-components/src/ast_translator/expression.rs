@@ -2,7 +2,7 @@ pub mod constant;
 
 use crate::{
     data_structure::expression::operator::BinaryOperator, ApllodbResult, BooleanExpression,
-    ComparisonFunction, CorrelationReference, Expression,
+    ComparisonFunction, CorrelationReference, Expression, TableName,
 };
 use apllodb_sql_parser::apllodb_ast;
 
@@ -49,15 +49,12 @@ impl AstTranslator {
 
     pub fn expression_in_non_select(
         ast_expression: apllodb_ast::Expression,
-        ast_tables: Vec<apllodb_ast::TableName>,
+        table_names: Vec<TableName>,
     ) -> ApllodbResult<Expression> {
-        let table_names: Vec<CorrelationReference> = ast_tables
+        let corr_refs: Vec<CorrelationReference> = table_names
             .into_iter()
-            .map(|ast_table_name| {
-                let table_name = AstTranslator::table_name(ast_table_name)?;
-                Ok(CorrelationReference::TableNameVariant(table_name))
-            })
+            .map(|table_name| Ok(CorrelationReference::TableNameVariant(table_name)))
             .collect::<ApllodbResult<_>>()?;
-        Self::expression_in_select(ast_expression, &table_names)
+        Self::expression_in_select(ast_expression, &corr_refs)
     }
 }
