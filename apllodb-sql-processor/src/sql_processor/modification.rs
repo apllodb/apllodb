@@ -1,4 +1,5 @@
 mod insert_planner;
+mod update_planner;
 
 use std::sync::Arc;
 
@@ -12,6 +13,7 @@ use self::{
     insert_planner::InsertPlanner,
     modification_executor::ModificationExecutor,
     modification_plan::{modification_plan_tree::ModificationPlanTree, ModificationPlan},
+    update_planner::UpdatePlanner,
 };
 
 use super::sql_processor_context::SQLProcessorContext;
@@ -41,7 +43,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
                 self.run_plan_tree(session, plan_tree_res).await
             }
             Command::UpdateCommandVariant(uc) => {
-                let planner = UpdatePlanner::new(&self.context.node_repo, uc);
+                let planner = UpdatePlanner::new(uc);
                 let plan_tree_res = planner.run();
                 self.run_plan_tree(session, plan_tree_res).await
             }

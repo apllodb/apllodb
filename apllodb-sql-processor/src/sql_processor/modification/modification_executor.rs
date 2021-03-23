@@ -58,6 +58,16 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
 
                 Ok(session)
             }
+            ModificationPlanNode::Update(update_node) => {
+                let session = self
+                    .context
+                    .engine
+                    .with_tx()
+                    .update(session, update_node.table_name, update_node.column_values)
+                    .await?;
+
+                Ok(session)
+            }
         }
     }
 }
