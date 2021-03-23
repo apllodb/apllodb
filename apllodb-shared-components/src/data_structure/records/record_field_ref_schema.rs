@@ -12,6 +12,11 @@ impl RecordFieldRefSchema {
         Self(full_field_references)
     }
 
+    /// Number of fields
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
     /// # Failures
     ///
     /// see: [FieldIndex::peek](crate::FieldIndex::peek)
