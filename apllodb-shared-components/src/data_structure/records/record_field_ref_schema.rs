@@ -17,6 +17,11 @@ impl RecordFieldRefSchema {
         self.0.len()
     }
 
+    /// is empty?
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     /// # Failures
     ///
     /// see: [FieldIndex::peek](crate::FieldIndex::peek)
