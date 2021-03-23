@@ -9,6 +9,7 @@ fn setup() {
     test_setup();
 }
 
+#[ignore]
 #[async_std::test]
 async fn test_update() {
     SqlTest::default()
