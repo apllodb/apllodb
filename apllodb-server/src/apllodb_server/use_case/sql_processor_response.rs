@@ -15,7 +15,7 @@ pub(in crate::apllodb_server::use_case) fn to_server_resp(
         SqlProcessorSuccess::ModificationRes { session } => {
             ApllodbCommandSuccess::ModificationResponse { session }
         }
-        SqlProcessorSuccess::DDLRes { session } => ApllodbCommandSuccess::DDLResponse { session },
+        SqlProcessorSuccess::DdlRes { session } => ApllodbCommandSuccess::DdlResponse { session },
         SqlProcessorSuccess::CreateDatabaseRes { session } => {
             ApllodbCommandSuccess::CreateDatabaseResponse { session }
         }

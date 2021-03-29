@@ -32,7 +32,7 @@ impl<'main> CmdProcessor<'main> {
             }
 
             ApllodbCommandSuccess::ModificationResponse { session }
-            | ApllodbCommandSuccess::DDLResponse { session }
+            | ApllodbCommandSuccess::DdlResponse { session }
             | ApllodbCommandSuccess::BeginTransactionResponse { session } => {
                 Ok(Session::from(session))
             }

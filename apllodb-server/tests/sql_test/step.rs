@@ -46,7 +46,7 @@ impl Step {
                 }
 
                 ApllodbCommandSuccess::ModificationResponse { session }
-                | ApllodbCommandSuccess::DDLResponse { session }
+                | ApllodbCommandSuccess::DdlResponse { session }
                 | ApllodbCommandSuccess::BeginTransactionResponse { session } => {
                     match &self.expected {
                         StepRes::Ok => {}
