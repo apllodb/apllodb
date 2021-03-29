@@ -59,19 +59,19 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct 
 }
 
 #[derive(Clone, PartialEq, Hash, Debug)]
-pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct ExistingNaviWithPK {
+pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct ExistingNaviWithPk {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) navi: ExistingNavi,
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) pk: ApparentPrimaryKey,
 }
 
 /// `Some()` only when `r` is Navi::Exist.
-impl ExistingNaviWithPK {
+impl ExistingNaviWithPk {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn from_navi_row(
         vtable: &VTable,
         mut r: ImmutableRow,
     ) -> ApllodbResult<Option<Self>> {
         let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(&mut r)? {
-            Some(ExistingNaviWithPK {
+            Some(ExistingNaviWithPk {
                 navi: existing_navi,
                 pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, &mut r)?,
             })
