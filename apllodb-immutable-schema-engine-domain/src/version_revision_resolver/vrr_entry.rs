@@ -14,14 +14,14 @@ use crate::{
 };
 
 #[derive(PartialEq, Hash, Debug, new)] // Clone here doesn't work. `Engine`'s Clone bound is somehow required. See: https://github.com/rust-lang/rust/issues/41481
-pub struct VRREntry<Types: ImmutableSchemaAbstractTypes> {
-    id: Types::VRRId,
+pub struct VrrEntry<Types: ImmutableSchemaAbstractTypes> {
+    id: Types::VrrId,
     pk: ApparentPrimaryKey,
     pub(in crate::version_revision_resolver) version_id: VersionId,
     revision: Revision,
 }
 
-impl<Types: ImmutableSchemaAbstractTypes> VRREntry<Types> {
+impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
     pub fn into_pk(self) -> ApparentPrimaryKey {
         self.pk
     }
@@ -37,7 +37,7 @@ impl<Types: ImmutableSchemaAbstractTypes> VRREntry<Types> {
     }
 }
 
-impl<Types: ImmutableSchemaAbstractTypes> Clone for VRREntry<Types> {
+impl<Types: ImmutableSchemaAbstractTypes> Clone for VrrEntry<Types> {
     fn clone(&self) -> Self {
         Self {
             id: self.id.clone(),
@@ -48,8 +48,8 @@ impl<Types: ImmutableSchemaAbstractTypes> Clone for VRREntry<Types> {
     }
 }
 
-impl<Types: ImmutableSchemaAbstractTypes> Entity for VRREntry<Types> {
-    type Id = Types::VRRId;
+impl<Types: ImmutableSchemaAbstractTypes> Entity for VrrEntry<Types> {
+    type Id = Types::VrrId;
 
     fn id(&self) -> &Self::Id {
         &self.id

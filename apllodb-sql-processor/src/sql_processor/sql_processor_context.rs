@@ -5,12 +5,12 @@ use super::query::query_plan::query_plan_tree::query_plan_node::node_repo::Query
 /// Context object each Processor/Executor has.
 /// A context object must be moved out after an SQL process.
 #[derive(Debug)]
-pub struct SQLProcessorContext<Engine: StorageEngine> {
+pub struct SqlProcessorContext<Engine: StorageEngine> {
     pub(crate) engine: Engine,
     pub(crate) node_repo: QueryPlanNodeRepository,
 }
 
-impl<Engine: StorageEngine> SQLProcessorContext<Engine> {
+impl<Engine: StorageEngine> SqlProcessorContext<Engine> {
     /// Constructor
     pub fn new(engine: Engine) -> Self {
         Self {

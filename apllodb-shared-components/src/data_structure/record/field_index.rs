@@ -210,7 +210,7 @@ impl From<FullFieldReference> for FieldIndex {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, ApllodbResult, FieldIndex, FullFieldReference};
+    use crate::{ApllodbErrorKind, FieldIndex, FullFieldReference};
 
     #[test]
     fn test_from_success() {
@@ -251,7 +251,7 @@ mod tests {
     }
 
     #[test]
-    fn test_peek() -> ApllodbResult<()> {
+    fn test_peek() {
         struct TestDatum {
             field_index: &'static str,
             full_field_references: Vec<FullFieldReference>,
@@ -427,6 +427,5 @@ mod tests {
                 }
             }
         }
-        Ok(())
     }
 }

@@ -8,7 +8,7 @@ use crate::sql_processor::{
         query_executor::QueryExecutor,
         query_plan::{query_plan_tree::QueryPlanTree, QueryPlan},
     },
-    sql_processor_context::SQLProcessorContext,
+    sql_processor_context::SqlProcessorContext,
 };
 
 use super::modification_plan::{
@@ -18,7 +18,7 @@ use super::modification_plan::{
 /// Modification (INSERT, UPDATE, and DELETE) executor which inputs a ModificationPlan requests to storage engine.
 #[derive(Clone, Debug, new)]
 pub(crate) struct ModificationExecutor<Engine: StorageEngine> {
-    context: Arc<SQLProcessorContext<Engine>>,
+    context: Arc<SqlProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> ModificationExecutor<Engine> {

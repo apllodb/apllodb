@@ -12,7 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
 
-use crate::sqlite::sqlite_types::{SqliteTypes, VRREntries, VRREntry};
+use crate::sqlite::sqlite_types::{SqliteTypes, VrrEntries, VrrEntry};
 
 use self::navi_dao::{navi::Navi, NaviDao};
 use super::SqliteTx;
@@ -38,8 +38,8 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
-    ) -> ApllodbResult<VRREntries> {
-        let mut entries = VecDeque::<VRREntry>::new();
+    ) -> ApllodbResult<VrrEntries> {
+        let mut entries = VecDeque::<VrrEntry>::new();
 
         for pk in pks {
             // FIXME solve N+1 problem
@@ -49,7 +49,7 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
                 .await?;
             if let Navi::Exist(existing_navi) = navi {
                 let version_id = VersionId::new(&vtable_id, &existing_navi.version_number);
-                let entry = VRREntry::new(
+                let entry = VrrEntry::new(
                     existing_navi.rowid.clone(),
                     pk,
                     version_id,
@@ -58,18 +58,18 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
                 entries.push_back(entry);
             }
         }
-        Ok(VRREntries::new(vtable_id.clone(), entries))
+        Ok(VrrEntries::new(vtable_id.clone(), entries))
     }
 
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries> {
-        let mut entries = VecDeque::<VRREntry>::new();
+    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VrrEntries> {
+        let mut entries = VecDeque::<VrrEntry>::new();
 
         for navi in self.navi_dao().full_scan_latest_revision(vtable).await? {
             let version_id = VersionId::new(&vtable.id(), &navi.navi.version_number);
-            let entry = VRREntry::new(
+            let entry = VrrEntry::new(
                 navi.navi.rowid.clone(),
                 navi.pk,
                 version_id,
@@ -77,14 +77,14 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
             );
             entries.push_back(entry);
         }
-        Ok(VRREntries::new(vtable.id().clone(), entries))
+        Ok(VrrEntries::new(vtable.id().clone(), entries))
     }
 
     async fn register(
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
-    ) -> ApllodbResult<VRREntry> {
+    ) -> ApllodbResult<VrrEntry> {
         let revision = match self
             .navi_dao()
             .probe_latest_revision(version_id.vtable_id(), &pk)
@@ -100,7 +100,7 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
         }?;
 
         let rowid = self.navi_dao().insert(&pk, &revision, &version_id).await?;
-        Ok(VRREntry::new(rowid, pk, version_id.clone(), revision))
+        Ok(VrrEntry::new(rowid, pk, version_id.clone(), revision))
     }
 
     async fn deregister(
@@ -109,7 +109,7 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
         _pks: &[ApparentPrimaryKey],
     ) -> ApllodbResult<()> {
         Err(ApllodbError::feature_not_supported(
-            "VRR::deregister() is unimplemented",
+            "Vrr::deregister() is unimplemented",
         ))
     }
 

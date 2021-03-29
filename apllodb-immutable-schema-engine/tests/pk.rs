@@ -3,7 +3,7 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::{session_with_tx, test_setup};
 use apllodb_shared_components::{
-    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex, NNSqlValue,
+    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex, NnSqlValue,
     SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -52,8 +52,8 @@ async fn test_compound_pk() -> ApllodbResult<()> {
                 c_postal_code_def.column_data_type().column_name().clone(),
             ],
             vec![SqlValues::new(vec![
-                SqlValue::NotNull(NNSqlValue::SmallInt(100)),
-                SqlValue::NotNull(NNSqlValue::Integer(1000001)),
+                SqlValue::NotNull(NnSqlValue::SmallInt(100)),
+                SqlValue::NotNull(NnSqlValue::Integer(1000001)),
             ])],
         )
         .await?;

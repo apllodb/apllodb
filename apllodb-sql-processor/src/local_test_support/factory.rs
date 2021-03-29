@@ -1,10 +1,10 @@
 use crate::{
     sql_processor::{
-        ddl::DDLProcessor,
+        ddl::DdlProcessor,
         modification::ModificationProcessor,
         query::{query_executor::QueryExecutor, query_plan::QueryPlan, QueryProcessor},
     },
-    SQLProcessorContext,
+    SqlProcessorContext,
 };
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
 use apllodb_shared_components::{ApllodbError, ApllodbResult, Records};
@@ -14,7 +14,7 @@ use std::sync::Arc;
 
 impl QueryProcessor<MockStorageEngine> {
     pub async fn run_directly(
-        context: Arc<SQLProcessorContext<MockStorageEngine>>,
+        context: Arc<SqlProcessorContext<MockStorageEngine>>,
         select_command: apllodb_ast::SelectCommand,
     ) -> ApllodbResult<Records> {
         let session = session_with_tx(&context.engine).await?;
@@ -30,7 +30,7 @@ impl QueryProcessor<MockStorageEngine> {
 
 impl ModificationProcessor<MockStorageEngine> {
     pub async fn run_directly(
-        context: Arc<SQLProcessorContext<MockStorageEngine>>,
+        context: Arc<SqlProcessorContext<MockStorageEngine>>,
         command: apllodb_ast::Command,
     ) -> ApllodbResult<()> {
         let session = session_with_tx(&context.engine).await?;
@@ -44,9 +44,9 @@ impl ModificationProcessor<MockStorageEngine> {
     }
 }
 
-impl DDLProcessor<MockStorageEngine> {
+impl DdlProcessor<MockStorageEngine> {
     pub async fn run_directly(
-        context: Arc<SQLProcessorContext<MockStorageEngine>>,
+        context: Arc<SqlProcessorContext<MockStorageEngine>>,
         command: apllodb_ast::Command,
     ) -> ApllodbResult<()> {
         let session = session_with_tx(&context.engine).await?;
@@ -62,7 +62,7 @@ impl DDLProcessor<MockStorageEngine> {
 
 impl QueryExecutor<MockStorageEngine> {
     pub async fn run_directly(
-        context: Arc<SQLProcessorContext<MockStorageEngine>>,
+        context: Arc<SqlProcessorContext<MockStorageEngine>>,
         plan: QueryPlan,
     ) -> ApllodbResult<Records> {
         let session = session_with_tx(&context.engine).await?;

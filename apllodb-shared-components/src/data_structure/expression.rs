@@ -4,7 +4,7 @@ pub(crate) mod operator;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NNSqlValue,
+    ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
     Record, RecordFieldRefSchema,
 };
 
@@ -63,7 +63,7 @@ impl Expression {
                             left_sql_value
                                 .sql_compare(&right_sql_value)
                                 .map(|sql_compare_result| {
-                                    SqlValue::NotNull(NNSqlValue::Boolean(
+                                    SqlValue::NotNull(NnSqlValue::Boolean(
                                         sql_compare_result.is_equal(),
                                     ))
                                 })
@@ -81,7 +81,7 @@ impl Expression {
                                     .to_sql_value(record_for_field_ref)?;
 
                             let b = left_sql_value.to_bool()? && right_sql_value.to_bool()?;
-                            Ok(SqlValue::NotNull(NNSqlValue::Boolean(b)))
+                            Ok(SqlValue::NotNull(NnSqlValue::Boolean(b)))
                         }
                     }
                 }

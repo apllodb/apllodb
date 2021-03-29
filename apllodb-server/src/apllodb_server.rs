@@ -3,7 +3,7 @@ mod use_case;
 
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_shared_components::{ApllodbSessionResult, Session};
-use apllodb_sql_processor::SQLProcessorContext;
+use apllodb_sql_processor::SqlProcessorContext;
 
 use std::sync::Arc;
 use use_case::UseCase;
@@ -12,13 +12,13 @@ use crate::ApllodbCommandSuccess;
 
 #[derive(Clone, Debug)]
 pub struct ApllodbServer {
-    context: Arc<SQLProcessorContext<ApllodbImmutableSchemaEngine>>,
+    context: Arc<SqlProcessorContext<ApllodbImmutableSchemaEngine>>,
 }
 
 impl Default for ApllodbServer {
     fn default() -> Self {
         let engine = ApllodbImmutableSchemaEngine::default();
-        let context = Arc::new(SQLProcessorContext::new(engine));
+        let context = Arc::new(SqlProcessorContext::new(engine));
         Self { context }
     }
 }

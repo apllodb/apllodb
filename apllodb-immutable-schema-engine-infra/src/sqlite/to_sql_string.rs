@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine_domain::{
 };
 use apllodb_shared_components::{
     BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Expression,
-    FullFieldReference, I64LooseType, LogicalFunction, NNSqlValue, NumericComparableType, SqlType,
+    FullFieldReference, I64LooseType, LogicalFunction, NnSqlValue, NumericComparableType, SqlType,
     SqlValue, StringComparableLoseType, TableName, UnaryOperator,
 };
 
@@ -100,7 +100,7 @@ impl ToSqlString for SqlValue {
         self.to_string()
     }
 }
-impl ToSqlString for NNSqlValue {
+impl ToSqlString for NnSqlValue {
     fn to_sql_string(&self) -> String {
         self.to_string()
     }

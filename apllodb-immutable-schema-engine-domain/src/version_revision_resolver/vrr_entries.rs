@@ -4,19 +4,19 @@ use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, version::id::VersionId, vtable::id::VTableId,
 };
 
-use super::{vrr_entries_in_version::VRREntriesInVersion, vrr_entry::VRREntry};
+use super::{vrr_entries_in_version::VrrEntriesInVersion, vrr_entry::VrrEntry};
 
-/// Sequence of VRREntry.
+/// Sequence of VrrEntry.
 #[derive(Clone, PartialEq, Hash, Debug, new)]
-pub struct VRREntries<Types: ImmutableSchemaAbstractTypes> {
+pub struct VrrEntries<Types: ImmutableSchemaAbstractTypes> {
     vtable_id: VTableId,
-    inner: VecDeque<VRREntry<Types>>,
+    inner: VecDeque<VrrEntry<Types>>,
 }
 
-impl<Types: ImmutableSchemaAbstractTypes> VRREntries<Types> {
-    /// Order of VRREntry is kept in each group.
-    pub fn group_by_version_id(self) -> Vec<VRREntriesInVersion<Types>> {
-        let mut h: HashMap<VersionId, VecDeque<VRREntry<Types>>> = HashMap::new();
+impl<Types: ImmutableSchemaAbstractTypes> VrrEntries<Types> {
+    /// Order of VrrEntry is kept in each group.
+    pub fn group_by_version_id(self) -> Vec<VrrEntriesInVersion<Types>> {
+        let mut h: HashMap<VersionId, VecDeque<VrrEntry<Types>>> = HashMap::new();
 
         for e in self.inner {
             let version_id = &e.version_id;
@@ -33,7 +33,7 @@ impl<Types: ImmutableSchemaAbstractTypes> VRREntries<Types> {
         }
 
         h.into_iter()
-            .map(|(version_id, es)| VRREntriesInVersion::new(version_id, es))
+            .map(|(version_id, es)| VrrEntriesInVersion::new(version_id, es))
             .collect()
     }
 
@@ -42,8 +42,8 @@ impl<Types: ImmutableSchemaAbstractTypes> VRREntries<Types> {
     }
 }
 
-impl<Types: ImmutableSchemaAbstractTypes> Iterator for VRREntries<Types> {
-    type Item = VRREntry<Types>;
+impl<Types: ImmutableSchemaAbstractTypes> Iterator for VrrEntries<Types> {
+    type Item = VrrEntry<Types>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.pop_front()
