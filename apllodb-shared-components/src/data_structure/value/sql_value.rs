@@ -8,7 +8,7 @@ use crate::error::ApllodbResult;
 use crate::{ApllodbError, ApllodbErrorKind};
 use serde::{Deserialize, Serialize};
 
-use self::{nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult};
+use self::{nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult};
 
 /// SQL-typed value that is efficiently compressed.
 ///
@@ -49,12 +49,12 @@ use self::{nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult};
 ///
 /// ```
 /// use std::collections::HashSet;
-/// use apllodb_shared_components::{ApllodbResult, NNSqlValue, SqlType, SqlValue, SqlValueHashKey};
+/// use apllodb_shared_components::{ApllodbResult, NnSqlValue, SqlType, SqlValue, SqlValueHashKey};
 ///
 /// fn main() -> ApllodbResult<()> {
-///     let v_integer = SqlValue::NotNull(NNSqlValue::Integer(42));
-///     let v_smallint = SqlValue::NotNull(NNSqlValue::SmallInt(42));
-///     let v_bigint = SqlValue::NotNull(NNSqlValue::BigInt(42));
+///     let v_integer = SqlValue::NotNull(NnSqlValue::Integer(42));
+///     let v_smallint = SqlValue::NotNull(NnSqlValue::SmallInt(42));
+///     let v_bigint = SqlValue::NotNull(NnSqlValue::BigInt(42));
 ///     let v_null = SqlValue::Null;
 ///
 ///     assert_eq!(v_integer, v_integer);
@@ -78,7 +78,7 @@ pub enum SqlValue {
     /// NULL value.
     Null,
     /// NOT NULL value.
-    NotNull(NNSqlValue),
+    NotNull(NnSqlValue),
 }
 
 impl PartialEq for SqlValue {
@@ -122,14 +122,14 @@ impl SqlValue {
     ///
     /// ```
     /// use std::collections::HashSet;
-    /// use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlCompareResult, SqlType, SqlValue};
+    /// use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, NnSqlValue, SqlCompareResult, SqlType, SqlValue};
     ///
     /// fn main() -> ApllodbResult<()> {
-    ///     let v_integer = SqlValue::NotNull(NNSqlValue::Integer(42));
-    ///     let v_smallint = SqlValue::NotNull(NNSqlValue::SmallInt(42));
-    ///     let v_bigint = SqlValue::NotNull(NNSqlValue::BigInt(42));
-    ///     let v_integer_minus = SqlValue::NotNull(NNSqlValue::Integer(-42));
-    ///     let v_text = SqlValue::NotNull(NNSqlValue::Text("abc".to_string()));
+    ///     let v_integer = SqlValue::NotNull(NnSqlValue::Integer(42));
+    ///     let v_smallint = SqlValue::NotNull(NnSqlValue::SmallInt(42));
+    ///     let v_bigint = SqlValue::NotNull(NnSqlValue::BigInt(42));
+    ///     let v_integer_minus = SqlValue::NotNull(NnSqlValue::Integer(-42));
+    ///     let v_text = SqlValue::NotNull(NnSqlValue::Text("abc".to_string()));
     ///     let v_null = SqlValue::Null;
     ///
     ///     matches!(v_integer.sql_compare(&v_integer)?, SqlCompareResult::Eq);
@@ -168,7 +168,7 @@ impl SqlValue {
         match self {
             SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
             SqlValue::NotNull(nn_sql_value) => match nn_sql_value {
-                NNSqlValue::Boolean(b) => Ok(*b),
+                NnSqlValue::Boolean(b) => Ok(*b),
                 _ => Err(ApllodbError::new(
                     ApllodbErrorKind::DatatypeMismatch,
                     format!(

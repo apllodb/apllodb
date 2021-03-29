@@ -75,7 +75,7 @@ mod tests {
 
     use crate::sql_processor::sql_processor_context::SQLProcessorContext;
     use apllodb_shared_components::{
-        test_support::test_models::People, ApllodbResult, ColumnName, NNSqlValue, SqlValue,
+        test_support::test_models::People, ApllodbResult, ColumnName, NnSqlValue, SqlValue,
         SqlValues, TableName,
     };
     use apllodb_sql_parser::ApllodbSqlParser;
@@ -108,8 +108,8 @@ mod tests {
                     People::ffr_age().as_column_name().clone(),
                 ],
                 vec![SqlValues::new(vec![
-                    SqlValue::NotNull(NNSqlValue::Integer(1)),
-                    SqlValue::NotNull(NNSqlValue::Integer(13)),
+                    SqlValue::NotNull(NnSqlValue::Integer(1)),
+                    SqlValue::NotNull(NnSqlValue::Integer(13)),
                 ])],
             )]
             .into_boxed_slice()

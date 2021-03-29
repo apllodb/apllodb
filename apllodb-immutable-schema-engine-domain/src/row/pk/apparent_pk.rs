@@ -2,7 +2,7 @@ use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
     ComparisonFunction, CorrelationReference, Expression, FieldReference, FullFieldReference,
-    LogicalFunction, NNSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
+    LogicalFunction, NnSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, ops::Index};
@@ -14,17 +14,17 @@ pub struct ApparentPrimaryKey {
     pk_column_names: Vec<ColumnName>,
 
     // real "key" of a record.
-    sql_values: Vec<NNSqlValue>,
+    sql_values: Vec<NnSqlValue>,
 }
 
 impl ApparentPrimaryKey {
-    /// Get [NNSqlValue](apllodb_shared_components::NNSqlValue) from a PK column.
+    /// Get [NnSqlValue](apllodb_shared_components::NnSqlValue) from a PK column.
     ///
     /// # Failures
     ///
     /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `column_name` is not in this PK.
-    pub fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&NNSqlValue> {
+    pub fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&NnSqlValue> {
         let target_sql_value = self
             .zipped()
             .iter()
@@ -77,7 +77,7 @@ impl ApparentPrimaryKey {
                     panic!("primary key's column must be NOT NULL")
                 }
             })
-            .collect::<ApllodbResult<Vec<NNSqlValue>>>()?;
+            .collect::<ApllodbResult<Vec<NnSqlValue>>>()?;
 
         Ok(Self::new(
             vtable.table_name().clone(),
@@ -116,7 +116,7 @@ impl ApparentPrimaryKey {
                     panic!("primary key's column must be NOT NULL")
                 }
             })
-            .collect::<Vec<NNSqlValue>>();
+            .collect::<Vec<NnSqlValue>>();
 
         Ok(Self::new(
             vtable.table_name().clone(),
@@ -133,15 +133,15 @@ impl ApparentPrimaryKey {
         &self.pk_column_names
     }
 
-    pub fn sql_values(&self) -> &[NNSqlValue] {
+    pub fn sql_values(&self) -> &[NnSqlValue] {
         &self.sql_values
     }
 
-    pub fn zipped(&self) -> Vec<(&ColumnName, &NNSqlValue)> {
+    pub fn zipped(&self) -> Vec<(&ColumnName, &NnSqlValue)> {
         self.pk_column_names.iter().zip(&self.sql_values).collect()
     }
 
-    pub fn into_zipped(self) -> Vec<(ColumnName, NNSqlValue)> {
+    pub fn into_zipped(self) -> Vec<(ColumnName, NnSqlValue)> {
         self.pk_column_names
             .into_iter()
             .zip(self.sql_values)

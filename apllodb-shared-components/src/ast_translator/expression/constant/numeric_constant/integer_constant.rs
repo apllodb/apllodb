@@ -1,4 +1,4 @@
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlValue};
+use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, NnSqlValue, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
@@ -14,14 +14,14 @@ impl AstTranslator {
         let s = ast_integer_constant.0;
 
         s.parse::<i16>()
-            .map(|i| SqlValue::NotNull(NNSqlValue::SmallInt(i)))
+            .map(|i| SqlValue::NotNull(NnSqlValue::SmallInt(i)))
             .or_else(|_| {
                 s.parse::<i32>()
-                    .map(|i| SqlValue::NotNull(NNSqlValue::Integer(i)))
+                    .map(|i| SqlValue::NotNull(NnSqlValue::Integer(i)))
             })
             .or_else(|_| {
                 s.parse::<i64>()
-                    .map(|i| SqlValue::NotNull(NNSqlValue::BigInt(i)))
+                    .map(|i| SqlValue::NotNull(NnSqlValue::BigInt(i)))
             })
             .map_err(|e| {
                 ApllodbError::new(
@@ -40,7 +40,7 @@ impl AstTranslator {
 mod test {
     use pretty_assertions::assert_eq;
 
-    use crate::{ApllodbErrorKind, ApllodbResult, NNSqlValue, SqlType, SqlValue};
+    use crate::{ApllodbErrorKind, ApllodbResult, NnSqlValue, SqlType, SqlValue};
     use apllodb_sql_parser::apllodb_ast;
 
     use super::AstTranslator;
@@ -132,7 +132,7 @@ mod test {
                 assert_eq!(out_sql_value.sql_type(), test_datum.expected_sql_type);
                 assert_eq!(
                     out_sql_value,
-                    NNSqlValue::BigInt(test_datum.expected_rust_value)
+                    NnSqlValue::BigInt(test_datum.expected_rust_value)
                 );
             } else {
                 unreachable!()

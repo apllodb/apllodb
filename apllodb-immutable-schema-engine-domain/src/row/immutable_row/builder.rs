@@ -75,7 +75,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::ImmutableRowBuilder;
-    use apllodb_shared_components::{ApllodbResult, ColumnName, NNSqlValue, SqlValue, TableName};
+    use apllodb_shared_components::{ApllodbResult, ColumnName, NnSqlValue, SqlValue, TableName};
 
     #[test]
     #[allow(clippy::redundant_clone)]
@@ -83,10 +83,10 @@ mod tests {
         let cn = ColumnName::factory("c1");
 
         let mut row1 = ImmutableRowBuilder::new(TableName::factory("t"))
-            .append(cn.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
+            .append(cn.clone(), SqlValue::NotNull(NnSqlValue::Integer(0)))?
             .build()?;
         let mut row2 = ImmutableRowBuilder::new(TableName::factory("t"))
-            .append(cn.clone(), SqlValue::NotNull(NNSqlValue::Integer(0)))?
+            .append(cn.clone(), SqlValue::NotNull(NnSqlValue::Integer(0)))?
             .build()?;
 
         assert_eq!(row1.get::<i32>(&cn.clone())?, row2.get::<i32>(&cn.clone())?);

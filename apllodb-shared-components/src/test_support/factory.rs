@@ -8,7 +8,7 @@ use crate::{
         reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FullFieldReference, LogicalFunction, NNSqlValue, Record, Records, SqlType,
+    Expression, FullFieldReference, LogicalFunction, NnSqlValue, Record, Records, SqlType,
     SqlValue, SqlValues, TableName, UnaryOperator,
 };
 use rand::Rng;
@@ -119,15 +119,15 @@ impl BooleanExpression {
 
 impl SqlValue {
     pub fn factory_integer(integer: i32) -> Self {
-        Self::NotNull(NNSqlValue::factory_integer(integer))
+        Self::NotNull(NnSqlValue::factory_integer(integer))
     }
 
     pub fn factory_bool(bool_: bool) -> Self {
-        Self::NotNull(NNSqlValue::factory_bool(bool_))
+        Self::NotNull(NnSqlValue::factory_bool(bool_))
     }
 }
 
-impl NNSqlValue {
+impl NnSqlValue {
     pub fn factory_integer(integer: i32) -> Self {
         Self::Integer(integer)
     }
