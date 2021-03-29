@@ -103,11 +103,11 @@ impl ApparentPrimaryKey {
                     .iter()
                     .position(|cn| cn == cdt.column_name())
                     .unwrap_or_else(|| {
-                        panic!(format!(
-                            "primary key's column `{}` is not inclueded in PK's columns=`{:#?}`",
+                        panic!(
+                            "primary key's column `{}` is not included in PK's columns=`{:#?}`",
                             cdt.column_name().as_str(),
                             apk_cdts
-                        ))
+                        )
                     });
                 let sql_value = sql_values.index(idx).clone();
                 if let SqlValue::NotNull(nn_sql_value) = sql_value {

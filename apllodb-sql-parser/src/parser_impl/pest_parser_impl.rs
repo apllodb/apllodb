@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_wraps)]
+
 mod generated_parser;
 mod helper;
 
