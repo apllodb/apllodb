@@ -1,4 +1,4 @@
-use apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_id::VRRId;
+use apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_id::VrrId;
 
 use apllodb_shared_components::{ApllodbResult, NnSqlValue, SqlConvertible};
 use serde::{Deserialize, Serialize};
@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct SqliteRowid(pub i64);
 
-impl VRRId for SqliteRowid {}
+impl VrrId for SqliteRowid {}
 
 impl SqlConvertible for SqliteRowid {
     fn into_sql_value(self) -> NnSqlValue {

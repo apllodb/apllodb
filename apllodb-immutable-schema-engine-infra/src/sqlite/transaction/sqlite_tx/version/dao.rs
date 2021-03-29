@@ -2,7 +2,7 @@ pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
 pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
 use crate::sqlite::{
-    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VRREntriesInVersion,
+    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VrrEntriesInVersion,
     to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -56,11 +56,11 @@ impl VersionDao {
         Ok(())
     }
 
-    /// Fetches only existing columns from SQLite, and makes SqliteRowIterator together with ApparentPrimaryKey from VRREntriesInVersion.
+    /// Fetches only existing columns from SQLite, and makes SqliteRowIterator together with ApparentPrimaryKey from VrrEntriesInVersion.
     pub(in crate::sqlite::transaction::sqlite_tx) async fn probe_in_version(
         &self,
         version: &ActiveVersion,
-        vrr_entries_in_version: VRREntriesInVersion,
+        vrr_entries_in_version: VrrEntriesInVersion,
         projection: &ProjectionResult,
     ) -> ApllodbResult<SqliteRowIterator> {
         if projection

@@ -10,27 +10,27 @@ use crate::{
     version::id::VersionId, vtable::id::VTableId, vtable::VTable,
 };
 
-use self::{vrr_entries::VRREntries, vrr_entry::VRREntry};
+use self::{vrr_entries::VrrEntries, vrr_entry::VrrEntry};
 use async_trait::async_trait;
 
 /// Resolves latest revision among rows with the same PK.
 #[async_trait(?Send)]
 pub trait VersionRevisionResolver<Types: ImmutableSchemaAbstractTypes> {
-    /// Returns undefined order of VRREntry
+    /// Returns undefined order of VrrEntry
     async fn probe(
         &self,
         vtable_id: &VTableId,
         pks: Vec<ApparentPrimaryKey>,
-    ) -> ApllodbResult<VRREntries<Types>>;
+    ) -> ApllodbResult<VrrEntries<Types>>;
 
-    /// Returns undefined order of VRREntry
-    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VRREntries<Types>>;
+    /// Returns undefined order of VrrEntry
+    async fn scan(&self, vtable: &VTable) -> ApllodbResult<VrrEntries<Types>>;
 
     async fn register(
         &self,
         version_id: &VersionId,
         pk: ApparentPrimaryKey,
-    ) -> ApllodbResult<VRREntry<Types>>;
+    ) -> ApllodbResult<VrrEntry<Types>>;
 
     async fn deregister(
         &self,

@@ -5,7 +5,7 @@ use crate::{
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
         row_iterator::SqliteRowIterator,
-        sqlite_types::{SqliteTypes, VRREntries},
+        sqlite_types::{SqliteTypes, VrrEntries},
         transaction::sqlite_tx::version::dao::VersionDao,
         transaction::sqlite_tx::{
             version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
@@ -113,7 +113,7 @@ impl VTableRepositoryImpl {
 
     async fn probe_vrr_entries(
         &self,
-        vrr_entries: VRREntries,
+        vrr_entries: VrrEntries,
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
