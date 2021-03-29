@@ -41,6 +41,7 @@ impl TableConstraints {
         Ok(Self { kinds: constraints })
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn validate_col_duplication(_constraints: &[TableConstraintKind]) -> ApllodbResult<()> {
         // TODO
         Ok(())
@@ -63,7 +64,7 @@ impl TableConstraints {
     }
 
     fn validate_multiple_pks(constraints: &[TableConstraintKind]) -> ApllodbResult<()> {
-        if constraints
+        let pk_constraints_count = constraints
             .iter()
             .filter(|table_constraint_kind| {
                 matches!(
@@ -71,9 +72,9 @@ impl TableConstraints {
                     TableConstraintKind::PrimaryKey { .. }
                 )
             })
-            .count()
-            > 1
-        {
+            .count();
+
+        if pk_constraints_count > 1 {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidTableDefinition,
                 "more than 1 PRIMARY KEY found",
