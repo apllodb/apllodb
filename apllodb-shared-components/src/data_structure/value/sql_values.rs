@@ -88,51 +88,51 @@ impl SqlValues {
 
 #[cfg(test)]
 mod tests {
-    use crate::{NNSqlValue, SqlValue, SqlValues};
+    use crate::{NnSqlValue, SqlValue, SqlValues};
 
     #[test]
     fn test_projection() {
         struct TestDatum {
-            input: Vec<NNSqlValue>,
+            input: Vec<NnSqlValue>,
             projection: Vec<usize>,
-            output: Vec<NNSqlValue>,
+            output: Vec<NnSqlValue>,
         }
 
         let test_data = vec![
             TestDatum {
                 input: vec![
-                    NNSqlValue::SmallInt(0),
-                    NNSqlValue::SmallInt(100),
-                    NNSqlValue::SmallInt(200),
+                    NnSqlValue::SmallInt(0),
+                    NnSqlValue::SmallInt(100),
+                    NnSqlValue::SmallInt(200),
                 ],
                 projection: vec![0, 1, 2],
                 output: vec![
-                    NNSqlValue::SmallInt(0),
-                    NNSqlValue::SmallInt(100),
-                    NNSqlValue::SmallInt(200),
+                    NnSqlValue::SmallInt(0),
+                    NnSqlValue::SmallInt(100),
+                    NnSqlValue::SmallInt(200),
                 ],
             },
             TestDatum {
                 input: vec![
-                    NNSqlValue::SmallInt(0),
-                    NNSqlValue::SmallInt(100),
-                    NNSqlValue::SmallInt(200),
+                    NnSqlValue::SmallInt(0),
+                    NnSqlValue::SmallInt(100),
+                    NnSqlValue::SmallInt(200),
                 ],
                 projection: vec![2, 0, 1],
                 output: vec![
-                    NNSqlValue::SmallInt(200),
-                    NNSqlValue::SmallInt(0),
-                    NNSqlValue::SmallInt(100),
+                    NnSqlValue::SmallInt(200),
+                    NnSqlValue::SmallInt(0),
+                    NnSqlValue::SmallInt(100),
                 ],
             },
             TestDatum {
                 input: vec![
-                    NNSqlValue::SmallInt(0),
-                    NNSqlValue::SmallInt(100),
-                    NNSqlValue::SmallInt(200),
+                    NnSqlValue::SmallInt(0),
+                    NnSqlValue::SmallInt(100),
+                    NnSqlValue::SmallInt(200),
                 ],
                 projection: vec![1],
-                output: vec![NNSqlValue::SmallInt(100)],
+                output: vec![NnSqlValue::SmallInt(100)],
             },
         ];
 

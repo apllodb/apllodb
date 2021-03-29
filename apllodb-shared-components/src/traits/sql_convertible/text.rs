@@ -1,10 +1,10 @@
-use crate::{ApllodbResult, NNSqlValue};
+use crate::{ApllodbResult, NnSqlValue};
 
 use super::SqlConvertible;
 
 impl SqlConvertible for String {
-    fn into_sql_value(self) -> NNSqlValue {
-        NNSqlValue::Text(self)
+    fn into_sql_value(self) -> NnSqlValue {
+        NnSqlValue::Text(self)
     }
 
     fn try_from_string(v: &str) -> ApllodbResult<Self> {

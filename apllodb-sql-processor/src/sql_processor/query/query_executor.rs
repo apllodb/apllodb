@@ -12,7 +12,7 @@ use crate::sql_processor::{
     query::query_plan::{
         query_plan_tree::query_plan_node::node_kind::QueryPlanNodeKind, QueryPlan,
     },
-    sql_processor_context::SQLProcessorContext,
+    sql_processor_context::SqlProcessorContext,
 };
 use async_recursion::async_recursion;
 
@@ -21,7 +21,7 @@ use super::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeI
 /// Query executor which inputs a QueryPlan and outputs [RecordIterator](apllodb-shared-components::RecordIterator).
 #[derive(Clone, Debug, new)]
 pub(crate) struct QueryExecutor<Engine: StorageEngine> {
-    context: Arc<SQLProcessorContext<Engine>>,
+    context: Arc<SqlProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> QueryExecutor<Engine> {
@@ -110,7 +110,7 @@ mod tests {
         },
         QueryPlan,
     };
-    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
+    use crate::sql_processor::sql_processor_context::SqlProcessorContext;
 
     #[async_std::test]
     #[allow(clippy::redundant_clone)]
@@ -128,7 +128,7 @@ mod tests {
 
         #[derive(Clone)]
         struct TestRunner {
-            context: Arc<SQLProcessorContext<MockStorageEngine>>,
+            context: Arc<SqlProcessorContext<MockStorageEngine>>,
 
             in_plan_tree: Option<QueryPlanTree>,
             expected_select_records: Option<Vec<Record>>,
@@ -136,7 +136,7 @@ mod tests {
         impl TestRunner {
             fn new() -> Self {
                 Self {
-                    context: Arc::new(SQLProcessorContext::new(engine())),
+                    context: Arc::new(SqlProcessorContext::new(engine())),
                     in_plan_tree: None,
                     expected_select_records: None,
                 }

@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::{session_with_tx, test_setup};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, Expression, FieldIndex, FullFieldReference, NNSqlValue, RecordFieldRefSchema,
+    ColumnDefinition, Expression, FieldIndex, FullFieldReference, NnSqlValue, RecordFieldRefSchema,
     SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -117,8 +117,8 @@ async fn test_insert() -> ApllodbResult<()> {
                 c1_def.column_data_type().column_name().clone(),
             ],
             vec![SqlValues::new(vec![
-                SqlValue::NotNull(NNSqlValue::Integer(1)),
-                SqlValue::NotNull(NNSqlValue::Integer(100)),
+                SqlValue::NotNull(NnSqlValue::Integer(1)),
+                SqlValue::NotNull(NnSqlValue::Integer(100)),
             ])],
         )
         .await?;
@@ -183,8 +183,8 @@ async fn test_update() -> ApllodbResult<()> {
                 c1_def.column_data_type().column_name().clone(),
             ],
             vec![SqlValues::new(vec![
-                SqlValue::NotNull(NNSqlValue::Integer(1)),
-                SqlValue::NotNull(NNSqlValue::Integer(100)),
+                SqlValue::NotNull(NnSqlValue::Integer(1)),
+                SqlValue::NotNull(NnSqlValue::Integer(100)),
             ])],
         )
         .await?;
@@ -214,7 +214,7 @@ async fn test_update() -> ApllodbResult<()> {
         session,
         t_name.clone(),
         hmap! {
-            c1_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(200)))
+            c1_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NnSqlValue::Integer(200)))
         },
     ).await?;
     let (mut records, session) = engine
@@ -243,7 +243,7 @@ async fn test_update() -> ApllodbResult<()> {
         session,
         t_name.clone(),
         hmap! {
-            c_id_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NNSqlValue::Integer(2)))
+            c_id_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NnSqlValue::Integer(2)))
         },
     ).await?;
     let (mut records, session) = engine
@@ -305,8 +305,8 @@ async fn test_delete() -> ApllodbResult<()> {
                 c1_def.column_data_type().column_name().clone(),
             ],
             vec![SqlValues::new(vec![
-                SqlValue::NotNull(NNSqlValue::Integer(1)),
-                SqlValue::NotNull(NNSqlValue::Integer(100)),
+                SqlValue::NotNull(NnSqlValue::Integer(1)),
+                SqlValue::NotNull(NnSqlValue::Integer(100)),
             ])],
         )
         .await?;

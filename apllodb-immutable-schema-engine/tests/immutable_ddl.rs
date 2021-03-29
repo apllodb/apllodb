@@ -4,7 +4,7 @@ use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::{session_with_tx, test_setup};
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-    FieldIndex, NNSqlValue, SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints,
+    FieldIndex, NnSqlValue, SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints,
     TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -57,8 +57,8 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
                 c1_def.column_data_type().column_name().clone(),
             ],
             vec![SqlValues::new(vec![
-                SqlValue::NotNull(NNSqlValue::Integer(1)),
-                SqlValue::NotNull(NNSqlValue::Integer(10)),
+                SqlValue::NotNull(NnSqlValue::Integer(1)),
+                SqlValue::NotNull(NnSqlValue::Integer(10)),
             ])],
         )
         .await?;
@@ -98,7 +98,7 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
             t_name.clone(),
             vec![c_id_def.column_data_type().column_name().clone()],
             vec![SqlValues::new(vec![SqlValue::NotNull(
-                NNSqlValue::Integer(2),
+                NnSqlValue::Integer(2),
             )])],
         )
         .await?;
@@ -123,8 +123,8 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
                 c1_def.column_data_type().column_name().clone(),
             ],
             vec![SqlValues::new(vec![
-                SqlValue::NotNull(NNSqlValue::Integer(3)),
-                SqlValue::NotNull(NNSqlValue::Integer(30)),
+                SqlValue::NotNull(NnSqlValue::Integer(3)),
+                SqlValue::NotNull(NnSqlValue::Integer(30)),
             ])],
         )
         .await?;

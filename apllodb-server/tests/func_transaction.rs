@@ -2,7 +2,7 @@ mod sql_test;
 
 use apllodb_server::test_support::test_setup;
 use apllodb_shared_components::ApllodbErrorKind;
-use sql_test::{SessionAB, SqlTest, SqlTestSessionAB, Step, StepRes, Steps};
+use sql_test::{SessionAb, SqlTest, SqlTestSessionAb, Step, StepRes, Steps};
 
 #[ctor::ctor]
 fn setup() {
@@ -97,11 +97,11 @@ async fn test_abort_discards_records() {
 
 #[async_std::test]
 async fn test_begin_session_ab() {
-    SqlTestSessionAB::default()
-        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
-        .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
+    SqlTestSessionAb::default()
+        .add_step(SessionAb::A, Step::new("BEGIN", StepRes::Ok))
+        .add_step(SessionAb::B, Step::new("BEGIN", StepRes::Ok))
         .add_step(
-            SessionAB::A,
+            SessionAb::A,
             Step::new(
                 "BEGIN",
                 StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
@@ -113,38 +113,38 @@ async fn test_begin_session_ab() {
 
 #[async_std::test]
 async fn test_transaction_ddl_isolation() {
-    SqlTestSessionAB::default()
-        .add_steps(SessionAB::A, Steps::BeginTransaction)
-        .add_steps(SessionAB::B, Steps::BeginTransaction)
+    SqlTestSessionAb::default()
+        .add_steps(SessionAb::A, Steps::BeginTransaction)
+        .add_steps(SessionAb::B, Steps::BeginTransaction)
         .add_step(
-            SessionAB::A,
+            SessionAb::A,
             Step::new("CREATE TABLE t (id INTEGER, PRIMARY KEY (id))", StepRes::Ok),
         )
         .add_step(
-            SessionAB::A,
+            SessionAb::A,
             Step::new("INSERT INTO t (id) VALUES (1)", StepRes::Ok),
         )
         .add_step(
             // No "Dirty read"
-            SessionAB::B,
+            SessionAb::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
                 StepRes::Err(ApllodbErrorKind::UndefinedTable),
             ),
         )
-        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
+        .add_step(SessionAb::A, Step::new("COMMIT", StepRes::Ok))
         .add_step(
             // No "Phantom read"
-            SessionAB::B,
+            SessionAb::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
                 StepRes::Err(ApllodbErrorKind::UndefinedTable),
             ),
         )
-        .add_step(SessionAB::B, Step::new("ABORT", StepRes::Ok))
-        .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
+        .add_step(SessionAb::B, Step::new("ABORT", StepRes::Ok))
+        .add_step(SessionAb::B, Step::new("BEGIN", StepRes::Ok))
         .add_step(
-            SessionAB::B,
+            SessionAb::B,
             Step::new("INSERT INTO t (id) VALUES (2)", StepRes::Ok),
         )
         .run()
@@ -155,16 +155,16 @@ async fn test_transaction_ddl_isolation() {
 
 #[async_std::test]
 async fn test_transaction_dml_isolation() {
-    SqlTestSessionAB::default()
-        .add_steps(SessionAB::A, Steps::CreateTablePeople)
-        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
-        .add_steps(SessionAB::B, Steps::BeginTransaction)
+    SqlTestSessionAb::default()
+        .add_steps(SessionAb::A, Steps::CreateTablePeople)
+        .add_step(SessionAb::A, Step::new("BEGIN", StepRes::Ok))
+        .add_steps(SessionAb::B, Steps::BeginTransaction)
         .add_step(
-            SessionAB::A,
+            SessionAb::A,
             Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
         )
         .add_step(
-            SessionAB::A,
+            SessionAb::A,
             Step::new(
                 "SELECT id, age FROM people",
                 StepRes::OkQuery(Box::new(|records| {
@@ -175,7 +175,7 @@ async fn test_transaction_dml_isolation() {
         )
         .add_step(
             // No "Dirty read"
-            SessionAB::B,
+            SessionAb::B,
             Step::new(
                 "SELECT id, age FROM people",
                 StepRes::OkQuery(Box::new(|records| {
@@ -184,10 +184,10 @@ async fn test_transaction_dml_isolation() {
                 })),
             ),
         )
-        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
+        .add_step(SessionAb::A, Step::new("COMMIT", StepRes::Ok))
         .add_step(
             // No "Phantom read"
-            SessionAB::B,
+            SessionAb::B,
             Step::new(
                 "SELECT id, age FROM people",
                 StepRes::OkQuery(Box::new(|records| {
@@ -196,10 +196,10 @@ async fn test_transaction_dml_isolation() {
                 })),
             ),
         )
-        .add_step(SessionAB::B, Step::new("ABORT", StepRes::Ok))
-        .add_step(SessionAB::B, Step::new("BEGIN", StepRes::Ok))
+        .add_step(SessionAb::B, Step::new("ABORT", StepRes::Ok))
+        .add_step(SessionAb::B, Step::new("BEGIN", StepRes::Ok))
         .add_step(
-            SessionAB::B,
+            SessionAb::B,
             Step::new(
                 "SELECT id, age FROM people",
                 StepRes::OkQuery(Box::new(|records| {
@@ -216,17 +216,17 @@ async fn test_transaction_dml_isolation() {
 
 #[async_std::test]
 async fn test_too_long_lock_wait_regarded_as_deadlock() {
-    SqlTestSessionAB::default()
-        .add_steps(SessionAB::A, Steps::CreateTablePeople)
-        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
-        .add_steps(SessionAB::B, Steps::BeginTransaction)
+    SqlTestSessionAb::default()
+        .add_steps(SessionAb::A, Steps::CreateTablePeople)
+        .add_step(SessionAb::A, Step::new("BEGIN", StepRes::Ok))
+        .add_steps(SessionAb::B, Steps::BeginTransaction)
         .add_step(
-            SessionAB::A,
+            SessionAb::A,
             Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
         )
         .add_step(
             // wait for A's transaction to end
-            SessionAB::B,
+            SessionAb::B,
             Step::new(
                 "INSERT INTO people (id, age) VALUES (1, 25)",
                 StepRes::Err(ApllodbErrorKind::DeadlockDetected),
@@ -241,24 +241,24 @@ async fn test_too_long_lock_wait_regarded_as_deadlock() {
 #[ignore]
 #[async_std::test]
 async fn test_latter_tx_is_waited() {
-    SqlTestSessionAB::default()
-        .add_steps(SessionAB::A, Steps::CreateTablePeople)
-        .add_step(SessionAB::A, Step::new("COMMIT", StepRes::Ok))
-        .add_step(SessionAB::A, Step::new("BEGIN", StepRes::Ok))
-        .add_steps(SessionAB::B, Steps::BeginTransaction)
+    SqlTestSessionAb::default()
+        .add_steps(SessionAb::A, Steps::CreateTablePeople)
+        .add_step(SessionAb::A, Step::new("COMMIT", StepRes::Ok))
+        .add_step(SessionAb::A, Step::new("BEGIN", StepRes::Ok))
+        .add_steps(SessionAb::B, Steps::BeginTransaction)
         .add_step(
-            SessionAB::B,
+            SessionAb::B,
             Step::new("INSERT INTO people (id, age) VALUES (1, 18)", StepRes::Ok),
         )
         .add_step(
             // wait for B's transaction to end; then got uniqueness error
-            SessionAB::A,
+            SessionAb::A,
             Step::new(
                 "INSERT INTO people (id, age) VALUES (1, 25)",
                 StepRes::Err(ApllodbErrorKind::UniqueViolation),
             ),
         )
-        .add_step(SessionAB::B, Step::new("COMMIT", StepRes::Ok))
+        .add_step(SessionAb::B, Step::new("COMMIT", StepRes::Ok))
         .run()
         .await;
 }

@@ -16,7 +16,7 @@ use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnName, SqlTy
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
 use self::{
-    navi::{ExistingNaviWithPK, Navi},
+    navi::{ExistingNaviWithPk, Navi},
     navi_table_name::NaviTableName,
 };
 
@@ -48,7 +48,7 @@ impl NaviDao {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn full_scan_latest_revision(
         &self,
         vtable: &VTable,
-    ) -> ApllodbResult<Vec<ExistingNaviWithPK>> {
+    ) -> ApllodbResult<Vec<ExistingNaviWithPk>> {
         let navi_table_name = NaviTableName::from(vtable.table_name().clone());
 
         let sql = format!(
@@ -90,9 +90,9 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             )
             .await?;
 
-        let ret: Vec<ExistingNaviWithPK> = row_iter
-            .map(|r| ExistingNaviWithPK::from_navi_row(vtable, r))
-            .collect::<ApllodbResult<Vec<Option<ExistingNaviWithPK>>>>()?
+        let ret: Vec<ExistingNaviWithPk> = row_iter
+            .map(|r| ExistingNaviWithPk::from_navi_row(vtable, r))
+            .collect::<ApllodbResult<Vec<Option<ExistingNaviWithPk>>>>()?
             .into_iter()
             .flatten()
             .collect();

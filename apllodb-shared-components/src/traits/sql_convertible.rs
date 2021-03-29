@@ -4,14 +4,14 @@ mod text;
 
 use crate::{
     error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
-    NNSqlValue,
+    NnSqlValue,
 };
 use std::any::type_name;
 
-/// Rust values which can have bidirectional mapping to/from SQL [NNSqlValue](crate::NNSqlValue).
+/// Rust values which can have bidirectional mapping to/from SQL [NnSqlValue](crate::NnSqlValue).
 pub trait SqlConvertible: Sized {
     /// Convert Rust type into strictly-matching SQL type.
-    fn into_sql_value(self) -> NNSqlValue;
+    fn into_sql_value(self) -> NnSqlValue;
 
     /// # Failures
     ///

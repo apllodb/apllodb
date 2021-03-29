@@ -1,5 +1,5 @@
 use crate::{
-    FieldIndex, FullFieldReference, NNSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
+    FieldIndex, FullFieldReference, NnSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName,
 };
 
 /// - people:
@@ -31,8 +31,8 @@ impl People {
 
     pub fn record(id: i64, age: i32) -> Record {
         Record::factory(vec![
-            SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            SqlValue::NotNull(NNSqlValue::Integer(age)),
+            SqlValue::NotNull(NnSqlValue::BigInt(id)),
+            SqlValue::NotNull(NnSqlValue::Integer(age)),
         ])
     }
 }
@@ -68,9 +68,9 @@ impl Body {
 
     pub fn record(id: i64, people_id: i64, height: i32) -> Record {
         Record::factory(vec![
-            SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            SqlValue::NotNull(NNSqlValue::Integer(height)),
+            SqlValue::NotNull(NnSqlValue::BigInt(id)),
+            SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
+            SqlValue::NotNull(NnSqlValue::Integer(height)),
         ])
     }
 }
@@ -111,10 +111,10 @@ impl Pet {
 
     pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Record {
         Record::factory(vec![
-            SqlValue::NotNull(NNSqlValue::BigInt(id)),
-            SqlValue::NotNull(NNSqlValue::BigInt(people_id)),
-            SqlValue::NotNull(NNSqlValue::Text(kind.to_string())),
-            SqlValue::NotNull(NNSqlValue::SmallInt(age)),
+            SqlValue::NotNull(NnSqlValue::BigInt(id)),
+            SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
+            SqlValue::NotNull(NnSqlValue::Text(kind.to_string())),
+            SqlValue::NotNull(NnSqlValue::SmallInt(age)),
         ])
     }
 }

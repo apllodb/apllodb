@@ -16,17 +16,17 @@ use apllodb_storage_engine_interface::{
 };
 
 use self::{
-    ddl::DDLProcessor, modification::ModificationProcessor, query::QueryProcessor,
-    sql_processor_context::SQLProcessorContext, success::SQLProcessorSuccess,
+    ddl::DdlProcessor, modification::ModificationProcessor, query::QueryProcessor,
+    sql_processor_context::SqlProcessorContext, success::SqlProcessorSuccess,
 };
 
 /// Processes SQL.
 #[derive(Debug, new)]
-pub struct SQLProcessor<Engine: StorageEngine> {
-    context: Arc<SQLProcessorContext<Engine>>,
+pub struct SqlProcessor<Engine: StorageEngine> {
+    context: Arc<SqlProcessorContext<Engine>>,
 }
 
-impl<Engine: StorageEngine> SQLProcessor<Engine> {
+impl<Engine: StorageEngine> SqlProcessor<Engine> {
     /// # Failures
     ///
     /// - [InvalidDatabaseDefinition](apllodb-shared-components::ApllodbErrorKind::InvalidDatabaseDefinition) when:
@@ -37,7 +37,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
         &self,
         session: Session,
         sql: &str,
-    ) -> ApllodbSessionResult<SQLProcessorSuccess> {
+    ) -> ApllodbSessionResult<SqlProcessorSuccess> {
         let parser = ApllodbSqlParser::default();
 
         match parser.parse(sql) {
@@ -52,11 +52,11 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                 Session::WithTx(sess) => match command {
                     apllodb_ast::Command::CommitTransactionCommandVariant => {
                         let session = self.context.engine.with_tx().commit_transaction(sess).await?;
-                        Ok(SQLProcessorSuccess::TransactionEndRes {session})
+                        Ok(SqlProcessorSuccess::TransactionEndRes {session})
                     }
                     apllodb_ast::Command::AbortTransactionCommandVariant => {
                         let session = self.context.engine.with_tx().abort_transaction(sess).await?;
-                        Ok(SQLProcessorSuccess::TransactionEndRes {session})
+                        Ok(SqlProcessorSuccess::TransactionEndRes {session})
                     }
 
                     apllodb_ast::Command::AlterTableCommandVariant(_)
@@ -64,19 +64,19 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                     | apllodb_ast::Command::DropTableCommandVariant(_) => {
                         let processor = self.ddl();
                         let sess = processor.run(sess, command).await?;
-                        Ok(SQLProcessorSuccess::DDLRes { session: sess })
+                        Ok(SqlProcessorSuccess::DdlRes { session: sess })
                     }
                     apllodb_ast::Command::DeleteCommandVariant(_)
                     | apllodb_ast::Command::InsertCommandVariant(_)
                     | apllodb_ast::Command::UpdateCommandVariant(_) => {
                         let processor = self.modification();
                         let sess = processor.run(sess, command).await?;
-                        Ok(SQLProcessorSuccess::ModificationRes { session: sess })
+                        Ok(SqlProcessorSuccess::ModificationRes { session: sess })
                     }
                     apllodb_ast::Command::SelectCommandVariant(select_command) => {
                         let processor = self.query();
                         let (records, sess) = processor.run(sess, select_command).await?;
-                        Ok(SQLProcessorSuccess::QueryRes {
+                        Ok(SqlProcessorSuccess::QueryRes {
                             session: sess,
                             records,
                         })
@@ -104,7 +104,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                 Session::WithDb(sess) => match command {
                     apllodb_ast::Command::BeginTransactionCommandVariant => {
                         let session = self.context.engine.with_db().begin_transaction(sess).await?;
-                        Ok(SQLProcessorSuccess::BeginTransactionRes {session})
+                        Ok(SqlProcessorSuccess::BeginTransactionRes {session})
                     }
 
                     apllodb_ast::Command::AlterTableCommandVariant(_)
@@ -148,7 +148,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                                 .without_db()
                                 .create_database(Session::from(sess), database_name)
                                 .await?;
-                            Ok(SQLProcessorSuccess::CreateDatabaseRes { session })
+                            Ok(SqlProcessorSuccess::CreateDatabaseRes { session })
                             }
                             Err(e) => Err(ApllodbSessionError::new(e, Session::from(sess)))
                         }
@@ -160,7 +160,7 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
                             .without_db()
                             .use_database(sess, database_name)
                             .await?;
-                        Ok(SQLProcessorSuccess::UseDatabaseRes { session })}
+                        Ok(SqlProcessorSuccess::UseDatabaseRes { session })}
                         Err(e) => Err(ApllodbSessionError::new(e, Session::from(sess)))
                       }
 
@@ -187,8 +187,8 @@ impl<Engine: StorageEngine> SQLProcessor<Engine> {
         }
     }
 
-    fn ddl(&self) -> DDLProcessor<Engine> {
-        DDLProcessor::new(self.context.clone())
+    fn ddl(&self) -> DdlProcessor<Engine> {
+        DdlProcessor::new(self.context.clone())
     }
 
     fn modification(&self) -> ModificationProcessor<Engine> {

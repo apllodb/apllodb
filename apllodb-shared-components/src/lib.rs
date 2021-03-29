@@ -48,7 +48,7 @@ pub use crate::{
         value::{
             sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
             sql_value::{
-                nn_sql_value::NNSqlValue, sql_compare_result::SqlCompareResult,
+                nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult,
                 sql_value_hash_key::SqlValueHashKey, SqlValue,
             },
             sql_values::SqlValues,

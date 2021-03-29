@@ -7,19 +7,19 @@ use super::{session_with_db, Step, Steps};
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
-pub enum SessionAB {
+pub enum SessionAb {
     A,
     B,
 }
 
 #[derive(Debug)]
-pub struct SqlTestSessionAB {
+pub struct SqlTestSessionAb {
     server: ApllodbServer,
-    steps: Vec<(Step, SessionAB)>,
+    steps: Vec<(Step, SessionAb)>,
     database_name: DatabaseName,
 }
 
-impl Default for SqlTestSessionAB {
+impl Default for SqlTestSessionAb {
     fn default() -> Self {
         Self {
             server: ApllodbServer::default(),
@@ -29,14 +29,14 @@ impl Default for SqlTestSessionAB {
     }
 }
 
-impl SqlTestSessionAB {
+impl SqlTestSessionAb {
     /// The order of `add_step()` call represents "The order of SQL commands *issued*", not "the order of SQL commands *finished*".
     ///
     /// ```text
-    /// .add_step(SessionAB::A, sql_a1)
-    /// .add_step(SessionAB::A, sql_a2)
-    /// .add_step(SessionAB::B, sql_b1)
-    /// .add_step(SessionAB::A, sql_a3)
+    /// .add_step(SessionAb::A, sql_a1)
+    /// .add_step(SessionAb::A, sql_a2)
+    /// .add_step(SessionAb::B, sql_b1)
+    /// .add_step(SessionAb::A, sql_a3)
     /// ```
     ///
     /// The order of SQL commands issued:
@@ -48,13 +48,13 @@ impl SqlTestSessionAB {
     ///
     /// NOTE: do not pass database command like "CREATE DATABASE" / "USE DATABASE" / ...
     /// Database is automatically created / used in run().
-    pub fn add_step(mut self, session_ab: SessionAB, step: Step) -> Self {
+    pub fn add_step(mut self, session_ab: SessionAb, step: Step) -> Self {
         self.steps.push((step, session_ab));
         self
     }
 
     #[allow(dead_code)] // seemingly every tests/*.rs must call this func not to be `dead_code`
-    pub fn add_steps(mut self, session_ab: SessionAB, steps: Steps) -> Self {
+    pub fn add_steps(mut self, session_ab: SessionAb, steps: Steps) -> Self {
         let steps: Vec<Step> = steps.into();
         for step in steps {
             self = self.add_step(session_ab.clone(), step);
@@ -81,11 +81,11 @@ impl SqlTestSessionAB {
 
         for (step, session_ab) in &self.steps {
             match session_ab {
-                SessionAB::A => {
+                SessionAb::A => {
                     let session_a = session_a_fut.await;
                     session_a_fut = step.run(&self.server, session_a).boxed_local();
                 }
-                SessionAB::B => {
+                SessionAb::B => {
                     let session_b = session_b_fut.await;
                     session_b_fut = step.run(&self.server, session_b).boxed_local();
                 }
@@ -103,10 +103,10 @@ impl SqlTestSessionAB {
 
         for (step, session_ab) in &self.steps {
             match session_ab {
-                SessionAB::A => {
+                SessionAb::A => {
                     session_a = step.run(&self.server, session_a).await;
                 }
-                SessionAB::B => {
+                SessionAb::B => {
                     session_b = step.run(&self.server, session_b).await;
                 }
             }

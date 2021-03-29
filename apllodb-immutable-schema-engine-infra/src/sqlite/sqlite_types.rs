@@ -15,7 +15,7 @@ use super::{
 pub struct SqliteTypes;
 
 impl ImmutableSchemaAbstractTypes for SqliteTypes {
-    type VRRId = SqliteRowid;
+    type VrrId = SqliteRowid;
 
     type ImmutableSchemaRowIter = ImmutableSchemaRowIter;
     type VersionRowIter = SqliteRowIterator;
@@ -25,13 +25,13 @@ impl ImmutableSchemaAbstractTypes for SqliteTypes {
 }
 
 // Fill structs' type parameters in domain / application layers.
-pub(crate) type VRREntriesInVersion =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VRREntriesInVersion<SqliteTypes>;
-pub(crate) type VRREntries =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VRREntries<
+pub(crate) type VrrEntriesInVersion =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries_in_version::VrrEntriesInVersion<SqliteTypes>;
+pub(crate) type VrrEntries =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entries::VrrEntries<
         SqliteTypes,
     >;
-pub(crate) type VRREntry =
-    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VRREntry<
+pub(crate) type VrrEntry =
+    apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VrrEntry<
         SqliteTypes,
     >;

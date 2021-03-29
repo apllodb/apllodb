@@ -119,10 +119,9 @@ async fn test_select_with_various_field_spec() {
                 match r.get::<i64>(&test_datum.clone().index) {
                     Ok(_) => assert!(
                         test_datum.expected_result.is_ok(),
-                        format!(
-                            "FieldIndex `{:?}` should be valid for Record::get() with this SQL: {}",
-                            test_datum.index, test_datum.sql
-                        )
+                        "FieldIndex `{:?}` should be valid for Record::get() with this SQL: {}",
+                        test_datum.index,
+                        test_datum.sql
                     ),
                     Err(e) => {
                         println!("{}", e);

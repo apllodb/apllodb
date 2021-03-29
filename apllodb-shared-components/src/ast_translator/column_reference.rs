@@ -117,9 +117,7 @@ impl AstTranslator {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        ApllodbErrorKind, ApllodbResult, AstTranslator, CorrelationReference, FullFieldReference,
-    };
+    use crate::{ApllodbErrorKind, AstTranslator, CorrelationReference, FullFieldReference};
     use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation};
     use pretty_assertions::assert_eq;
 
@@ -131,7 +129,7 @@ mod tests {
     }
 
     #[test]
-    fn test_column_reference() -> ApllodbResult<()> {
+    fn test_column_reference() {
         let test_data: Vec<TestDatum> = vec![
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
@@ -193,7 +191,5 @@ mod tests {
                 }
             }
         }
-
-        Ok(())
     }
 }
