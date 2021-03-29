@@ -14,12 +14,12 @@ use self::{
 
 use std::sync::Arc;
 
-use super::sql_processor_context::SQLProcessorContext;
+use super::sql_processor_context::SqlProcessorContext;
 
 /// Processes SELECT command.
 #[derive(Debug, new)]
 pub(crate) struct QueryProcessor<Engine: StorageEngine> {
-    context: Arc<SQLProcessorContext<Engine>>,
+    context: Arc<SqlProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> QueryProcessor<Engine> {
@@ -47,7 +47,7 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 #[cfg(test)]
 mod tests {
     use super::QueryProcessor;
-    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
+    use crate::sql_processor::sql_processor_context::SqlProcessorContext;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
         ApllodbResult, Record,
@@ -86,7 +86,7 @@ mod tests {
 
             with_tx
         });
-        let context = Arc::new(SQLProcessorContext::new(engine));
+        let context = Arc::new(SqlProcessorContext::new(engine));
 
         let test_data: Vec<TestDatum> = vec![
             // full scan

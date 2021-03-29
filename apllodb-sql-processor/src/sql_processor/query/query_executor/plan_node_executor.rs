@@ -10,12 +10,12 @@ use crate::sql_processor::{
     query::query_plan::query_plan_tree::query_plan_node::operation::{
         BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
     },
-    sql_processor_context::SQLProcessorContext,
+    sql_processor_context::SqlProcessorContext,
 };
 
 #[derive(Clone, Debug, new)]
 pub(super) struct PlanNodeExecutor<Engine: StorageEngine> {
-    context: Arc<SQLProcessorContext<Engine>>,
+    context: Arc<SqlProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {

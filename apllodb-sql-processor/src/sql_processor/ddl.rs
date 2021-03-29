@@ -10,12 +10,12 @@ use apllodb_sql_parser::apllodb_ast::{
 };
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 
-use super::sql_processor_context::SQLProcessorContext;
+use super::sql_processor_context::SqlProcessorContext;
 
 /// Processes DDL command.
 #[derive(Clone, Debug, new)]
 pub(crate) struct DDLProcessor<Engine: StorageEngine> {
-    context: Arc<SQLProcessorContext<Engine>>,
+    context: Arc<SqlProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> DDLProcessor<Engine> {
@@ -125,7 +125,7 @@ mod tests {
     use std::sync::Arc;
 
     use super::DDLProcessor;
-    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
+    use crate::sql_processor::sql_processor_context::SqlProcessorContext;
     use apllodb_shared_components::{
         test_support::test_models::People, ApllodbResult, ColumnConstraints, ColumnDataType,
         ColumnDefinition, SqlType, TableConstraintKind, TableConstraints, TableName,
@@ -204,7 +204,7 @@ mod tests {
                 with_tx
             });
 
-            let context = Arc::new(SQLProcessorContext::new(engine));
+            let context = Arc::new(SqlProcessorContext::new(engine));
 
             let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
             DDLProcessor::run_directly(context.clone(), ast.0).await?;

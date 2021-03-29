@@ -16,7 +16,7 @@ use self::{
     update_planner::UpdatePlanner,
 };
 
-use super::sql_processor_context::SQLProcessorContext;
+use super::sql_processor_context::SqlProcessorContext;
 
 pub(crate) mod modification_executor;
 pub(crate) mod modification_plan;
@@ -24,7 +24,7 @@ pub(crate) mod modification_plan;
 /// Processes ÎNSERT/UPDATE/DELETE command.
 #[derive(Debug, new)]
 pub(crate) struct ModificationProcessor<Engine: StorageEngine> {
-    context: Arc<SQLProcessorContext<Engine>>,
+    context: Arc<SqlProcessorContext<Engine>>,
 }
 
 impl<Engine: StorageEngine> ModificationProcessor<Engine> {}
@@ -73,7 +73,7 @@ impl<Engine: StorageEngine> ModificationProcessor<Engine> {
 mod tests {
     use std::sync::Arc;
 
-    use crate::sql_processor::sql_processor_context::SQLProcessorContext;
+    use crate::sql_processor::sql_processor_context::SqlProcessorContext;
     use apllodb_shared_components::{
         test_support::test_models::People, ApllodbResult, ColumnName, NnSqlValue, SqlValue,
         SqlValues, TableName,
@@ -137,7 +137,7 @@ mod tests {
                 with_tx
             });
 
-            let context = Arc::new(SQLProcessorContext::new(engine));
+            let context = Arc::new(SqlProcessorContext::new(engine));
 
             let ast = parser.parse(test_datum.in_insert_sql).unwrap();
             ModificationProcessor::run_directly(context.clone(), ast.0).await?;

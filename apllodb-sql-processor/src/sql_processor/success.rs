@@ -1,8 +1,8 @@
 use apllodb_shared_components::{Records, Session, SessionWithDb, SessionWithTx};
 
-/// Successful result from [SQLProcessor](crate::SQLProcessor).
+/// Successful result from [SqlProcessor](crate::SqlProcessor).
 #[derive(Debug)]
-pub enum SQLProcessorSuccess {
+pub enum SqlProcessorSuccess {
     /// Response from SELECT command.
     QueryRes {
         /// Same session with input session
