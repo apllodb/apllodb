@@ -53,7 +53,7 @@ impl ApparentPrimaryKey {
     ///   - `column_name` is not in this PK.
     pub fn get<T: SqlConvertible>(&self, column_name: &ColumnName) -> ApllodbResult<T> {
         let sql_value = self.get_sql_value(column_name)?;
-        Ok(sql_value.unpack()?)
+        sql_value.unpack()
     }
 }
 
