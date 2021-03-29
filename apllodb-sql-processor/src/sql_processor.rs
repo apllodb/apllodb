@@ -16,7 +16,7 @@ use apllodb_storage_engine_interface::{
 };
 
 use self::{
-    ddl::DDLProcessor, modification::ModificationProcessor, query::QueryProcessor,
+    ddl::DdlProcessor, modification::ModificationProcessor, query::QueryProcessor,
     sql_processor_context::SqlProcessorContext, success::SqlProcessorSuccess,
 };
 
@@ -64,7 +64,7 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                     | apllodb_ast::Command::DropTableCommandVariant(_) => {
                         let processor = self.ddl();
                         let sess = processor.run(sess, command).await?;
-                        Ok(SqlProcessorSuccess::DDLRes { session: sess })
+                        Ok(SqlProcessorSuccess::DdlRes { session: sess })
                     }
                     apllodb_ast::Command::DeleteCommandVariant(_)
                     | apllodb_ast::Command::InsertCommandVariant(_)
@@ -187,8 +187,8 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
         }
     }
 
-    fn ddl(&self) -> DDLProcessor<Engine> {
-        DDLProcessor::new(self.context.clone())
+    fn ddl(&self) -> DdlProcessor<Engine> {
+        DdlProcessor::new(self.context.clone())
     }
 
     fn modification(&self) -> ModificationProcessor<Engine> {

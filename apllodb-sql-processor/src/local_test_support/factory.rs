@@ -1,6 +1,6 @@
 use crate::{
     sql_processor::{
-        ddl::DDLProcessor,
+        ddl::DdlProcessor,
         modification::ModificationProcessor,
         query::{query_executor::QueryExecutor, query_plan::QueryPlan, QueryProcessor},
     },
@@ -44,7 +44,7 @@ impl ModificationProcessor<MockStorageEngine> {
     }
 }
 
-impl DDLProcessor<MockStorageEngine> {
+impl DdlProcessor<MockStorageEngine> {
     pub async fn run_directly(
         context: Arc<SqlProcessorContext<MockStorageEngine>>,
         command: apllodb_ast::Command,
