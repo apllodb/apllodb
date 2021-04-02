@@ -30,8 +30,11 @@ jobs:
 
       - run: cargo install cargo-fuzz
 
-      - name: Download previous corpus
-        uses: actions/download-artifact@v2
+      - name: Download corpus from previous successful workflow
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: fuzzing-test.yml
+          path: apllodb-server/fuzz/corpus
 
       - run: cargo fuzz run random_string_with_session_without_db -- -max_total_time=3600  # in seconds
 
@@ -39,8 +42,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: corpus
-          path: |
-            apllodb-server/fuzz/corpus
+          path: apllodb-server/fuzz/corpus
           if-no-files-found: error
 
   slack-notify:
