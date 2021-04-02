@@ -1,14 +1,8 @@
 name: fuzzing_test
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-
-# on:
-#   schedule:
-#     - cron:  '30 6 * * *'  # UTC 6:30
+  schedule:
+    - cron:  '30 6 * * *'  # UTC 6:30
 
 jobs:
   run_fuzz:
@@ -42,7 +36,7 @@ jobs:
           workflow: fuzzing-test.yml
           path: apllodb-server/fuzz/corpus
 
-      - run: cargo fuzz run random_string_with_session_without_db -- -max_total_time=10  # in seconds
+      - run: cargo fuzz run random_string_with_session_without_db -- -max_total_time=3600  # in seconds
 
       - name: Archive corpus
         uses: actions/upload-artifact@v2
