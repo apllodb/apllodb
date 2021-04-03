@@ -1,9 +1,7 @@
 pub(crate) mod field_index;
 
-use crate::{error::ApllodbResult, traits::sql_convertible::SqlConvertible, SqlValues};
+use crate::{error::ApllodbResult, traits::sql_convertible::SqlConvertible, SqlValue, SqlValues};
 use std::ops::Index;
-
-use super::value::sql_value::SqlValue;
 
 /// Record representation used in client and query processor.
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.

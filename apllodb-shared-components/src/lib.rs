@@ -12,6 +12,7 @@ pub(crate) mod error;
 pub(crate) mod session;
 pub(crate) mod traits;
 pub(crate) mod validation_helper;
+pub(crate) mod value;
 
 pub use crate::{
     ast_translator::AstTranslator,
@@ -43,14 +44,6 @@ pub use crate::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
         },
-        value::{
-            sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
-            sql_value::{
-                nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult,
-                sql_value_hash_key::SqlValueHashKey, SqlValue,
-            },
-            sql_values::SqlValues,
-        },
     },
     database::database_name::DatabaseName,
     error::{
@@ -64,6 +57,14 @@ pub use crate::{
         without_db::SessionWithoutDb, Session,
     },
     traits::sql_convertible::SqlConvertible,
+    value::{
+        sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
+        sql_value::{
+            nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult,
+            sql_value_hash_key::SqlValueHashKey, SqlValue,
+        },
+        sql_values::SqlValues,
+    },
 };
 
 #[cfg(feature = "test-support")]

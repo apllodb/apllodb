@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{data_structure::value::sql_type::SqlType, ColumnName};
+use crate::{ColumnName, SqlType};
 
 use super::column_definition::ColumnDefinition;
 

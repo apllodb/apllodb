@@ -5,12 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
-    Record, RecordFieldRefSchema,
+    Record, RecordFieldRefSchema, SqlValue,
 };
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
-
-use super::value::sql_value::SqlValue;
 
 /// Expression.
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]

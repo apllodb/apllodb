@@ -8,9 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use super::sql_compare_result::SqlCompareResult;
 
-use crate::data_structure::value::sql_type::{
-    NumericComparableType, SqlType, StringComparableLoseType,
-};
+use crate::{NumericComparableType, SqlType, StringComparableLoseType};
 
 /// NOT NULL value.
 #[derive(Clone, Debug, Serialize, Deserialize)]
