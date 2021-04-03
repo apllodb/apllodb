@@ -1,9 +1,7 @@
 use crate::error::{ApllodbError, ApllodbResult};
 use crate::{
-    data_structure::{
-        column::column_name::ColumnName, validation_helper::collection::find_dup_slow,
-    },
-    error::kind::ApllodbErrorKind,
+    data_structure::column::column_name::ColumnName, error::kind::ApllodbErrorKind,
+    validation_helper::collection::find_dup_slow,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
