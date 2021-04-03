@@ -6,9 +6,11 @@
 extern crate derive_new;
 
 pub(crate) mod ast_translator;
-pub(crate) mod data_structure;
+pub(crate) mod data_structure; // TODO remove
+pub(crate) mod database;
 pub(crate) mod error;
 pub(crate) mod traits;
+pub(crate) mod validation_helper;
 
 pub use crate::{
     ast_translator::AstTranslator,
@@ -20,7 +22,6 @@ pub use crate::{
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName,
         },
-        database::database_name::DatabaseName,
         expression::{
             boolean_expression::{
                 comparison_function::ComparisonFunction, logical_function::LogicalFunction,
@@ -54,6 +55,7 @@ pub use crate::{
             sql_values::SqlValues,
         },
     },
+    database::database_name::DatabaseName,
     error::{
         kind::ApllodbErrorKind,
         session_error::{ApllodbSessionError, ApllodbSessionResult},

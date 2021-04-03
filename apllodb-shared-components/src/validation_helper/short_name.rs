@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Short (64 chars in UTF-8 at maximum) object name used for table names, column names, and so on.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub(in crate::data_structure) struct ShortName(String);
+pub(crate) struct ShortName(String);
 
 impl ShortName {
     /// Constructor.
@@ -14,13 +14,13 @@ impl ShortName {
     /// # Failures
     /// - [NameTooLong](apllodb-shared-components::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
-    pub(in crate::data_structure) fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
+    pub(crate) fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
         let name = name.into();
         Self::validate_length(&name)?;
         Ok(Self(name))
     }
 
-    pub(in crate::data_structure) fn as_str(&self) -> &str {
+    pub(crate) fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
