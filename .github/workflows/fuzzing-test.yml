@@ -42,6 +42,7 @@ jobs:
           workflow: fuzzing-test.yml
           path: apllodb-server/fuzz/
 
+      - run: find .
       - run: rm -rf corpus # delete corrupt dir structure
 
       - run: cargo fuzz run random_string_with_session_without_db -- -max_total_time=10  # in seconds
