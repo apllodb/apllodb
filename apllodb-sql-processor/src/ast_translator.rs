@@ -21,4 +21,4 @@ pub mod unary_operator;
 
 /// Holds static translation methods.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct AstTranslator;
+pub(crate) struct AstTranslator;

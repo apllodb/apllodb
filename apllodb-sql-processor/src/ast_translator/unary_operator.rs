@@ -1,4 +1,4 @@
-use crate::UnaryOperator;
+use apllodb_shared_components::UnaryOperator;
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;

@@ -1,6 +1,8 @@
 use apllodb_sql_parser::apllodb_ast;
 
-use crate::{ast_translator::AstTranslator, AlterTableAction, ApllodbResult};
+use apllodb_shared_components::{AlterTableAction, ApllodbResult};
+
+use super::AstTranslator;
 
 impl AstTranslator {
     pub fn alter_table_action(

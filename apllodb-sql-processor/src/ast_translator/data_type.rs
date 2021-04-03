@@ -1,4 +1,4 @@
-use crate::SqlType;
+use apllodb_shared_components::SqlType;
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;

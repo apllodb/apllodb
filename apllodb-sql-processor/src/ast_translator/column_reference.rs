@@ -1,10 +1,8 @@
-use crate::{
-    data_structure::reference::{
-        correlation_reference::CorrelationReference, field_reference::FieldReference,
-    },
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, FullFieldReference,
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference,
+    FieldReference, FullFieldReference,
 };
-use apllodb_sql_parser::apllodb_ast::{self};
+use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
 
@@ -117,7 +115,7 @@ impl AstTranslator {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, AstTranslator, CorrelationReference, FullFieldReference};
+    use apllodb_shared_components::{ApllodbErrorKind, CorrelationReference, FullFieldReference};
     use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation};
     use pretty_assertions::assert_eq;
 

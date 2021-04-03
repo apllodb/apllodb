@@ -1,8 +1,8 @@
 pub mod constant;
 
-use crate::{
-    data_structure::expression::operator::BinaryOperator, ApllodbResult, BooleanExpression,
-    ComparisonFunction, CorrelationReference, Expression, TableName,
+use apllodb_shared_components::{
+    ApllodbResult, BinaryOperator, BooleanExpression, ComparisonFunction, CorrelationReference,
+    Expression, TableName,
 };
 use apllodb_sql_parser::apllodb_ast;
 

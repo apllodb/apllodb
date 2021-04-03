@@ -1,9 +1,7 @@
 use apllodb_immutable_schema_engine_domain::{
     version::active_version::ActiveVersion, vtable::VTable,
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, AstTranslator, ColumnDataType,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType};
 use apllodb_sql_parser::{
     apllodb_ast::{self, Command, CreateTableCommand, TableElement},
     ApllodbAst, ApllodbSqlParser,

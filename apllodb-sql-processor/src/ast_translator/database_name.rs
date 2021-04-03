@@ -1,4 +1,4 @@
-use crate::{ApllodbResult, DatabaseName};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
