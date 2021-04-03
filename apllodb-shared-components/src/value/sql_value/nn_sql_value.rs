@@ -2,7 +2,7 @@ use std::{fmt::Display, hash::Hash};
 
 use crate::{
     error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
-    traits::sql_convertible::SqlConvertible,
+    SqlConvertible,
 };
 use serde::{Deserialize, Serialize};
 

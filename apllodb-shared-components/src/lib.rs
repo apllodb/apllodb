@@ -10,7 +10,6 @@ pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
 pub(crate) mod error;
 pub(crate) mod session;
-pub(crate) mod traits;
 pub(crate) mod validation_helper;
 pub(crate) mod value;
 
@@ -56,8 +55,8 @@ pub use crate::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
         without_db::SessionWithoutDb, Session,
     },
-    traits::sql_convertible::SqlConvertible,
     value::{
+        sql_convertible::SqlConvertible,
         sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
         sql_value::{
             nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult,

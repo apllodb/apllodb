@@ -1,6 +1,6 @@
 pub(crate) mod field_index;
 
-use crate::{error::ApllodbResult, traits::sql_convertible::SqlConvertible, SqlValue, SqlValues};
+use crate::{error::ApllodbResult, SqlConvertible, SqlValue, SqlValues};
 use std::ops::Index;
 
 /// Record representation used in client and query processor.
