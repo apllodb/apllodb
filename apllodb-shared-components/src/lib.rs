@@ -9,6 +9,7 @@ pub(crate) mod ast_translator;
 pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
 pub(crate) mod error;
+pub(crate) mod session;
 pub(crate) mod traits;
 pub(crate) mod validation_helper;
 
@@ -38,10 +39,6 @@ pub use crate::{
             full_field_reference::FullFieldReference,
         },
         select::ordering::Ordering,
-        session::{
-            session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
-            without_db::SessionWithoutDb, Session,
-        },
         table::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
@@ -61,6 +58,10 @@ pub use crate::{
         session_error::{ApllodbSessionError, ApllodbSessionResult},
         sqlstate::SqlState,
         ApllodbError, ApllodbResult,
+    },
+    session::{
+        session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
+        without_db::SessionWithoutDb, Session,
     },
     traits::sql_convertible::SqlConvertible,
 };

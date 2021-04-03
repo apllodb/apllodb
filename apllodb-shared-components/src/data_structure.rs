@@ -8,6 +8,5 @@ pub(crate) mod record;
 pub(crate) mod records;
 pub(crate) mod reference;
 pub(crate) mod select;
-pub(crate) mod session;
 pub(crate) mod table;
 pub(crate) mod value;
