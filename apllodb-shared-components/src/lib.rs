@@ -6,9 +6,12 @@
 extern crate derive_new;
 
 pub(crate) mod ast_translator;
-pub(crate) mod data_structure;
+pub(crate) mod data_structure; // TODO remove
+pub(crate) mod database;
 pub(crate) mod error;
-pub(crate) mod traits;
+pub(crate) mod session;
+pub(crate) mod validation_helper;
+pub(crate) mod value;
 
 pub use crate::{
     ast_translator::AstTranslator,
@@ -20,7 +23,6 @@ pub use crate::{
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName,
         },
-        database::database_name::DatabaseName,
         expression::{
             boolean_expression::{
                 comparison_function::ComparisonFunction, logical_function::LogicalFunction,
@@ -37,30 +39,31 @@ pub use crate::{
             full_field_reference::FullFieldReference,
         },
         select::ordering::Ordering,
-        session::{
-            session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
-            without_db::SessionWithoutDb, Session,
-        },
         table::{
             table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
             table_name::TableName,
         },
-        value::{
-            sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
-            sql_value::{
-                nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult,
-                sql_value_hash_key::SqlValueHashKey, SqlValue,
-            },
-            sql_values::SqlValues,
-        },
     },
+    database::database_name::DatabaseName,
     error::{
         kind::ApllodbErrorKind,
         session_error::{ApllodbSessionError, ApllodbSessionResult},
         sqlstate::SqlState,
         ApllodbError, ApllodbResult,
     },
-    traits::sql_convertible::SqlConvertible,
+    session::{
+        session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
+        without_db::SessionWithoutDb, Session,
+    },
+    value::{
+        sql_convertible::SqlConvertible,
+        sql_type::{I64LooseType, NumericComparableType, SqlType, StringComparableLoseType},
+        sql_value::{
+            nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult,
+            sql_value_hash_key::SqlValueHashKey, SqlValue,
+        },
+        sql_values::SqlValues,
+    },
 };
 
 #[cfg(feature = "test-support")]

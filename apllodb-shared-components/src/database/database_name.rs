@@ -1,4 +1,4 @@
-use crate::{data_structure::validation_helper::short_name::ShortName, error::ApllodbResult};
+use crate::{error::ApllodbResult, validation_helper::short_name::ShortName};
 use serde::{Deserialize, Serialize};
 
 /// Database name.
