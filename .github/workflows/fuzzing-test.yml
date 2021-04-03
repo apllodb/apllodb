@@ -34,7 +34,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: fuzzing-test.yml
-          path: apllodb-server/fuzz/corpus
+          path: apllodb-server/fuzz/
 
       - run: cargo fuzz run random_string_with_session_without_db -- -max_total_time=3600  # in seconds
 
