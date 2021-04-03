@@ -1,8 +1,14 @@
 name: fuzzing_test
 
 on:
-  schedule:
-    - cron:  '30 6 * * *'  # UTC 6:30
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+# on:
+#   schedule:
+#     - cron:  '30 6 * * *'  # UTC 6:30
 
 jobs:
   run_fuzz:
@@ -34,9 +40,11 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: fuzzing-test.yml
-          path: apllodb-server/fuzz/corpus
+          path: apllodb-server/fuzz/
 
-      - run: cargo fuzz run random_string_with_session_without_db -- -max_total_time=3600  # in seconds
+      - run: rm -rf corpus # delete corrupt dir structure
+
+      - run: cargo fuzz run random_string_with_session_without_db -- -max_total_time=10  # in seconds
 
       - name: Archive corpus
         uses: actions/upload-artifact@v2
