@@ -111,7 +111,6 @@ dependencies = [
  "apllodb-immutable-schema-engine-application",
  "apllodb-immutable-schema-engine-domain",
  "apllodb-shared-components",
- "apllodb-sql-parser",
  "apllodb-storage-engine-interface",
  "apllodb-test-support",
  "async-trait",

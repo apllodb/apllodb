@@ -31,12 +31,13 @@ impl ActiveVersion {
     pub fn initial(
         vtable_id: &VTableId,
         non_pk_column_data_types: &[ColumnDataType],
-        // TODO constraints from TableConstraints
     ) -> ApllodbResult<Self> {
         Self::new(
             vtable_id,
             &VersionNumber::initial(),
             non_pk_column_data_types,
+            // TODO constraints from TableConstraints
+            VersionConstraints::default(),
         )
     }
 
@@ -45,21 +46,25 @@ impl ActiveVersion {
         vtable_id: &VTableId,
         version_number: &VersionNumber,
         non_pk_column_data_types: &[ColumnDataType],
-        // TODO constraints from TableConstraints
+        version_constraints: VersionConstraints,
     ) -> ApllodbResult<Self> {
         let id = VersionId::new(vtable_id, version_number);
 
         Ok(Self(Version {
             id,
             column_data_types: non_pk_column_data_types.to_vec(),
-            // TODO: カラム制約とテーブル制約からつくる
-            constraints: VersionConstraints::default(),
+            constraints: version_constraints,
         }))
     }
 
     /// Ref to columns and their data types.
     pub fn column_data_types(&self) -> &[ColumnDataType] {
         &self.0.column_data_types
+    }
+
+    /// Ref to version constraints.
+    pub fn version_constraints(&self) -> &VersionConstraints {
+        &self.0.constraints
     }
 
     /// Create v_(current+1) from v_current.

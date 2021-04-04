@@ -1,8 +1,10 @@
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, ColumnName, CorrelationReference, FieldReference,
+    ApllodbError, ApllodbResult, ColumnName, CorrelationReference, FieldReference,
     FullFieldReference, Record, RecordFieldRefSchema, Records, SqlValue, SqlValues, TableName,
 };
 use apllodb_sql_parser::apllodb_ast;
+
+use crate::ast_translator::AstTranslator;
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct InsertCommandAnalyzer {

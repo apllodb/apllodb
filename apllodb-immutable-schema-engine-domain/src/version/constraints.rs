@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Constraints that each record must satisfy.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
-pub(in crate::version) struct VersionConstraints {
+pub struct VersionConstraints {
     kinds: Vec<VersionConstraintKind>,
 }
 

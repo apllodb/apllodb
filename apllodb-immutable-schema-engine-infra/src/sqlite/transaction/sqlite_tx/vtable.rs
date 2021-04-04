@@ -1,3 +1,2 @@
-pub(crate) mod dao;
 pub(crate) mod repository_impl;
-mod sqlite_master;
+pub(crate) mod vtable_metadata_dao;
