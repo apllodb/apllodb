@@ -1,4 +1,5 @@
-#![deny(warnings,
+#![deny(
+    //warnings,
     // missing_docs,
     missing_debug_implementations
 )]

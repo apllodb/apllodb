@@ -1,10 +1,7 @@
 pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
 pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
-use crate::sqlite::{
-    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VrrEntriesInVersion,
-    to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
-};
+use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VrrEntriesInVersion, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx};
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
     query::projection::ProjectionResult,
@@ -20,9 +17,6 @@ use std::{
     collections::{hash_map::Entry, HashMap, VecDeque},
     rc::Rc,
 };
-
-#[cfg(test)]
-pub(in crate::sqlite::transaction::sqlite_tx) use create_table_sql_for_version::test_wrapper::CreateTableSqlForVersionTestWrapper;
 
 use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 

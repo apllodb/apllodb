@@ -24,6 +24,7 @@ impl AstTranslator {
 
 #[cfg(test)]
 mod tests {
+    use crate::ast_translator::AstTranslator;
     use apllodb_shared_components::{ApllodbErrorKind, CorrelationReference, FullFieldReference};
     use apllodb_sql_parser::apllodb_ast::{Alias, ColumnReference, Correlation};
     use pretty_assertions::assert_eq;

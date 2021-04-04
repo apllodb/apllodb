@@ -41,25 +41,3 @@ CREATE TABLE {table_name} (
         Self(sql)
     }
 }
-
-#[cfg(test)]
-pub(in crate::sqlite::transaction::sqlite_tx) mod test_wrapper {
-    use super::CreateTableSqlForVersion;
-    use apllodb_immutable_schema_engine_domain::version::active_version::ActiveVersion;
-
-    /// Provides access to other dao for unit tests.
-    pub(in crate::sqlite::transaction::sqlite_tx) struct CreateTableSqlForVersionTestWrapper(
-        CreateTableSqlForVersion,
-    );
-    impl CreateTableSqlForVersionTestWrapper {
-        pub(in crate::sqlite::transaction::sqlite_tx) fn from(version: &ActiveVersion) -> Self {
-            let inner = CreateTableSqlForVersion::from(version);
-            Self(inner)
-        }
-
-        pub(in crate::sqlite::transaction::sqlite_tx) fn as_str(&self) -> &str {
-            let inner = &self.0;
-            &inner.0
-        }
-    }
-}
