@@ -35,6 +35,39 @@ Note that Interface Adapters layer is not used for the following reasons.
 - **Presenters**: Similar to controllers, access methods implementations in infrastructure layer do the presenter work.
 - **Gateways**: Not used in apllodb-immutable-schema-engine. `ImmutableSchemaAbstractTypes` in apllodb-immutable-schema-engine-domain does the similar work in that it has abstract associated types of repositories.
 
+### SQLite schema design
+
+`apllodb-immutable-schema-engine-infra` internally uses SQLite to persist apllodb's tables and records (and also to make use of transaction implementation).
+
+When apllodb's client creates table `T`, the following SQLite tables are created.
+
+#### _vtable_metadata
+
+Has metadata for vtable `T`.
+
+| _column name_ | *`table_name` | `table_wide_constraints` |
+|--|--|--|
+| _description_ | Table name. | Table's constraints across all records in all active versions (primary key, unique, for example). |
+| _value example_ | `"T"` | ... |
+
+#### T__navi
+
+Has real primary key (= PK of T + revision) values or each record and version it belongs to.
+
+| _column name_ | *`rowid` | (Primary keys of T) | `revision` | `version_number` |
+|--|--|--|--|--|
+| _description_ | Physical primary key SQLite automatically sets. | Table's primary key. Split into multiple columns if T has compound primary key. | Revision of a record. When a record's non-PK column is updated, then new record is inserted with incremented revision (Immutable DML). | Version number a record belongs to.
+| _value example_ | `"T"` | ... | `1` | `1` |
+
+#### T__v?__active
+
+Active version table (? holds version number like 1, 2, ...). Records here hold non-PK columns.
+
+| _column name_ | *`_navi_rowid` | (Non-PKs of T) |
+|--|--|--|
+| _description_ | Foreign key to a record holding PK in `T__navi` table. | Table's non-primary key. Split into multiple columns if T has multiple non-primary key|
+| _value example_ | `3` | ... |
+
 ## Limitations
 
 `async-std` is the only tested async runtime for this storage engine.
