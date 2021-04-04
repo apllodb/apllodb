@@ -77,7 +77,7 @@ impl TryFrom<ImmutableRow> for VersionMetadataModel {
 }
 
 impl VersionMetadataModel {
-    pub(super) fn into_active_version(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersion> {
+    pub(super) fn to_active_version(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersion> {
         if self.is_active {
             ActiveVersion::new(
                 &vtable_id,

@@ -105,7 +105,7 @@ CREATE TABLE {tname} (
 
         models
             .into_iter()
-            .map(|m| m.into_active_version(vtable_id))
+            .map(|m| m.to_active_version(vtable_id))
             .collect()
     }
 
