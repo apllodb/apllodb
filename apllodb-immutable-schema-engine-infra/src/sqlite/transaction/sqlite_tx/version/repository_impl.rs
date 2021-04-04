@@ -1,4 +1,3 @@
-use super::dao::VersionDao;
 use crate::sqlite::transaction::sqlite_tx::{
     version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
 };
@@ -12,6 +11,8 @@ use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_shared_components::{ColumnName, SqlValue};
 use async_trait::async_trait;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+use super::dao::{version_dao::VersionDao, version_metadata_dao::VersionMetadataDao};
 
 #[derive(Debug)]
 pub struct VersionRepositoryImpl {

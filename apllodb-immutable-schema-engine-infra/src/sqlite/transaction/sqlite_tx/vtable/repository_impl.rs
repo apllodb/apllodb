@@ -6,9 +6,10 @@ use crate::{
     sqlite::{
         row_iterator::SqliteRowIterator,
         sqlite_types::{SqliteTypes, VrrEntries},
-        transaction::sqlite_tx::version::dao::VersionDao,
         transaction::sqlite_tx::{
-            version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
+            version::dao::{version_dao::VersionDao, version_metadata_dao::VersionMetadataDao},
+            version_revision_resolver::VersionRevisionResolverImpl,
+            SqliteTx,
         },
     },
 };
