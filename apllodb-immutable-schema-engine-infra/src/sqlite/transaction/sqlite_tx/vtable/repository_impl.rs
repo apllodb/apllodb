@@ -14,6 +14,7 @@ use crate::{
     },
 };
 use apllodb_immutable_schema_engine_domain::{
+    entity::Entity,
     query::projection::ProjectionResult,
     row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
@@ -89,7 +90,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
         let active_versions = self
             .version_metadata_dao()
-            .select_active_versions(vtable)
+            .select_active_versions(vtable.id())
             .await?;
         Ok(ActiveVersions::from(active_versions))
     }
@@ -119,12 +120,15 @@ impl VTableRepositoryImpl {
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
-        let vtable = self.vtable_metadata_dao().select(&vrr_entries.vtable_id()).await?;
+        let vtable = self
+            .vtable_metadata_dao()
+            .select(&vrr_entries.vtable_id())
+            .await?;
 
         for vrr_entries_in_version in vrr_entries.group_by_version_id() {
             let version = self
                 .version_metadata_dao()
-                .select_active_version(&vtable, vrr_entries_in_version.version_id())
+                .select_active_version(&vtable.id(), vrr_entries_in_version.version_id())
                 .await?;
 
             let ver_row_iter = self

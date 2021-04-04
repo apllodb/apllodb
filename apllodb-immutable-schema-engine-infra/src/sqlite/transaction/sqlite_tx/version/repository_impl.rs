@@ -35,7 +35,7 @@ impl VersionRepository for VersionRepositoryImpl {
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
-        self.version_metadata_dao().create_table(&version).await?;
+        self.version_metadata_dao().insert(&version).await?;
         self.version_dao().create_table(&version).await?;
         Ok(())
     }
