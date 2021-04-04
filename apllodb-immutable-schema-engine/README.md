@@ -43,12 +43,21 @@ When apllodb's client creates table `T`, the following SQLite tables are created
 
 #### _vtable_metadata
 
-Has metadata for vtable `T`.
+Has metadata of vtable `T`. Used for deserializing `VTable` from a `.sqlite3` file.
 
 | _column name_ | *`table_name` | `table_wide_constraints` |
 |--|--|--|
 | _description_ | Table name. | Table's constraints across all records in all active versions (primary key, unique, for example). |
 | _value example_ | `"T"` | ... |
+
+#### _version_metadata
+
+Has metadata of `T`'s versions. Used for deserializing `VTable` from a `.sqlite3` file.
+
+| _column name_ | \*`table_name` | \*`version_number` | `column_data_types` | `version_constraints` |
+|--|--|--|--|--|
+| _description_ | Table name (foreign key to `_vtable_metadata`). | Version number. | Non-PK column definitions. | Table's constraints for a single record (not null, default, for example). |
+| _value example_ | `"T"` | `1` | ... | ... |
 
 #### T__navi
 
