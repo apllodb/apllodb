@@ -143,7 +143,7 @@ CREATE TABLE {tname} (
         let sql = format!(
             r#"
             INSERT INTO {tname} ({cname_table_name}, {cname_version_number}, {cname_column_data_types}, {cname_version_constraints}, {cname_is_active})
-              VALUES ("{table_name}", {version_number}, {column_data_types}, {version_constraints}, {is_active});
+              VALUES ("{table_name}", {version_number}, "{column_data_types}", "{version_constraints}", {is_active});
             "#,
             tname = TNAME,
             cname_table_name = CNAME_TABLE_NAME,
