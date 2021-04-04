@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{ApllodbResult, AstTranslator, ColumnName, Expression, TableName};
+use apllodb_shared_components::{ApllodbResult, ColumnName, Expression, TableName};
 use apllodb_sql_parser::apllodb_ast;
+
+use crate::ast_translator::AstTranslator;
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct UpdateCommandAnalyzer {

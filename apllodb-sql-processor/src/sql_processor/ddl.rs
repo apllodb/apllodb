@@ -2,13 +2,14 @@ use std::sync::Arc;
 
 use apllodb_shared_components::{
     AlterTableAction, ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult,
-    AstTranslator, ColumnDefinition, Session, SessionWithTx, TableConstraintKind, TableConstraints,
-    TableName,
+    ColumnDefinition, Session, SessionWithTx, TableConstraintKind, TableConstraints, TableName,
 };
 use apllodb_sql_parser::apllodb_ast::{
     AlterTableCommand, Command, CreateTableCommand, TableElement,
 };
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
+
+use crate::ast_translator::AstTranslator;
 
 use super::sql_processor_context::SqlProcessorContext;
 

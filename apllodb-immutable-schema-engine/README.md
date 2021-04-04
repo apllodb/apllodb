@@ -43,12 +43,21 @@ When apllodb's client creates table `T`, the following SQLite tables are created
 
 #### _vtable_metadata
 
-Has metadata for vtable `T`.
+Has metadata of vtable `T`. Used for deserializing `VTable` from a `.sqlite3` file.
 
 | _column name_ | *`table_name` | `table_wide_constraints` |
 |--|--|--|
 | _description_ | Table name. | Table's constraints across all records in all active versions (primary key, unique, for example). |
 | _value example_ | `"T"` | ... |
+
+#### _version_metadata
+
+Has metadata of `T`'s versions. Used for deserializing `VTable` from a `.sqlite3` file.
+
+| _column name_ | \*`table_name` | \*`version_number` | `column_data_types` | `version_constraints` | `is_active` |
+|--|--|--|--|--|
+| _description_ | Table name (foreign key to `_vtable_metadata`). | Version number. | Non-PK column definitions. | Table's constraints for a single record (not null, default, for example). | Whether the version is active or not. |
+| _value example_ | `"T"` | `1` | ... | ... | `true` |
 
 #### T__navi
 
@@ -59,9 +68,9 @@ Has real primary key (= PK of T + revision) values or each record and version it
 | _description_ | Physical primary key SQLite automatically sets. | Table's primary key. Split into multiple columns if T has compound primary key. | Revision of a record. When a record's non-PK column is updated, then new record is inserted with incremented revision (Immutable DML). | Version number a record belongs to.
 | _value example_ | `"T"` | ... | `1` | `1` |
 
-#### T__v?__active
+#### T__v?
 
-Active version table (? holds version number like 1, 2, ...). Records here hold non-PK columns.
+Version's table (? holds version number like 1, 2, ...). Records here hold non-PK columns.
 
 | _column name_ | *`_navi_rowid` | (Non-PKs of T) |
 |--|--|--|

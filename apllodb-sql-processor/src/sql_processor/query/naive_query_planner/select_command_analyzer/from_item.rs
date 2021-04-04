@@ -1,12 +1,15 @@
 use super::SelectCommandAnalyzer;
-use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
-    node_id::QueryPlanNodeId,
-    node_kind::{QueryPlanNodeBinary, QueryPlanNodeKind},
-    node_repo::QueryPlanNodeRepository,
-    operation::BinaryPlanOperation,
+use crate::{
+    ast_translator::AstTranslator,
+    sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
+        node_id::QueryPlanNodeId,
+        node_kind::{QueryPlanNodeBinary, QueryPlanNodeKind},
+        node_repo::QueryPlanNodeRepository,
+        operation::BinaryPlanOperation,
+    },
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, AstTranslator, CorrelationIndex, CorrelationReference, FieldIndex,
+    ApllodbError, ApllodbResult, CorrelationIndex, CorrelationReference, FieldIndex,
     FullFieldReference, RecordFieldRefSchema,
 };
 use apllodb_sql_parser::apllodb_ast;

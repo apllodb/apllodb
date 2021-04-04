@@ -7,8 +7,7 @@ pub(crate) mod success;
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, AstTranslator,
-    Session,
+    ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, Session,
 };
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
@@ -19,6 +18,8 @@ use self::{
     ddl::DdlProcessor, modification::ModificationProcessor, query::QueryProcessor,
     sql_processor_context::SqlProcessorContext, success::SqlProcessorSuccess,
 };
+
+use crate::ast_translator::AstTranslator;
 
 /// Processes SQL.
 #[derive(Debug, new)]

@@ -8,6 +8,7 @@
 #[macro_use]
 extern crate derive_new;
 
+pub(crate) mod ast_translator;
 pub(crate) mod sql_processor;
 
 pub use sql_processor::{

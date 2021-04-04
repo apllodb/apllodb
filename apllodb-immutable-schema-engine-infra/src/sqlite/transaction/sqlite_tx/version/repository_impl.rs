@@ -1,4 +1,3 @@
-use super::dao::VersionDao;
 use crate::sqlite::transaction::sqlite_tx::{
     version_revision_resolver::VersionRevisionResolverImpl, SqliteTx,
 };
@@ -13,6 +12,8 @@ use apllodb_shared_components::{ColumnName, SqlValue};
 use async_trait::async_trait;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
+use super::dao::{version_dao::VersionDao, version_metadata_dao::VersionMetadataDao};
+
 #[derive(Debug)]
 pub struct VersionRepositoryImpl {
     tx: Rc<RefCell<SqliteTx>>,
@@ -26,12 +27,15 @@ impl VersionRepositoryImpl {
 
 #[async_trait(?Send)]
 impl VersionRepository for VersionRepositoryImpl {
+    /// Creates `T_v?_active` table and inserts version metadata into `_version_metadata` table.
+    ///
     /// # Failures
     ///
     /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {
+        self.version_metadata_dao().insert(&version).await?;
         self.version_dao().create_table(&version).await?;
         Ok(())
     }
@@ -64,5 +68,9 @@ impl VersionRepositoryImpl {
 
     fn version_dao(&self) -> VersionDao {
         VersionDao::new(self.tx.clone())
+    }
+
+    fn version_metadata_dao(&self) -> VersionMetadataDao {
+        VersionMetadataDao::new(self.tx.clone())
     }
 }

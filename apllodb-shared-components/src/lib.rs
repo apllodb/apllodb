@@ -5,7 +5,6 @@
 #[macro_use]
 extern crate derive_new;
 
-pub(crate) mod ast_translator;
 pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
 pub(crate) mod error;
@@ -14,7 +13,6 @@ pub(crate) mod validation_helper;
 pub(crate) mod value;
 
 pub use crate::{
-    ast_translator::AstTranslator,
     data_structure::{
         alias_name::AliasName,
         alter_table_action::AlterTableAction,
@@ -28,7 +26,7 @@ pub use crate::{
                 comparison_function::ComparisonFunction, logical_function::LogicalFunction,
                 BooleanExpression,
             },
-            operator::UnaryOperator,
+            operator::{BinaryOperator, UnaryOperator},
             Expression,
         },
         record::{field_index::FieldIndex, Record},
