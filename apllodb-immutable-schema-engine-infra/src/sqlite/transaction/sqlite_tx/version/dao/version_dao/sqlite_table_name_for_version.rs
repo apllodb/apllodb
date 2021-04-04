@@ -1,6 +1,4 @@
-use apllodb_immutable_schema_engine_domain::version::{
-    id::VersionId, version_number::VersionNumber,
-};
+use apllodb_immutable_schema_engine_domain::version::id::VersionId;
 use apllodb_shared_components::TableName;
 use serde::{Deserialize, Serialize};
 
@@ -25,18 +23,5 @@ impl SqliteTableNameForVersion {
 
     pub(in crate::sqlite::transaction::sqlite_tx) fn to_full_table_name(&self) -> TableName {
         TableName::new(self.0.clone()).unwrap()
-    }
-
-    pub(in crate::sqlite::transaction::sqlite_tx) fn to_version_number(&self) -> VersionNumber {
-        self.split().1
-    }
-
-    fn split(&self) -> (TableName, VersionNumber) {
-        let parts: Vec<&str> = self.0.split("__").collect();
-        assert_eq!(parts.len(), 3);
-        (
-            TableName::new(parts[0]).unwrap(),
-            VersionNumber::from(parts[1][1..].parse::<u64>().unwrap()),
-        )
     }
 }

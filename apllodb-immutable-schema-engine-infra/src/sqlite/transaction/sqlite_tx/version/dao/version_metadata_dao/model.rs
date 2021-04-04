@@ -1,4 +1,4 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
 use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow,
@@ -9,8 +9,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::id::VTableId,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, DatabaseName,
-    TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, TableName,
 };
 
 use super::{

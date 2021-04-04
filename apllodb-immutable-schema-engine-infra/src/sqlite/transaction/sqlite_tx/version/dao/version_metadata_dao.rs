@@ -6,7 +6,7 @@ use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
-    vtable::{id::VTableId, VTable},
+    vtable::id::VTableId,
 };
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
