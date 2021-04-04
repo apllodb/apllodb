@@ -1,9 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use super::dao::VTableDao;
 use crate::{
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
+        row_iterator::SqliteRowIterator,
         sqlite_types::{SqliteTypes, VrrEntries},
         transaction::sqlite_tx::version::dao::VersionDao,
         transaction::sqlite_tx::{
@@ -13,6 +14,7 @@ use crate::{
 };
 use apllodb_immutable_schema_engine_domain::{
     query::projection::ProjectionResult,
+    row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
@@ -83,14 +85,12 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         Ok(())
     }
 
-    async fn active_versions(&self, _vtable: &VTable) -> ApllodbResult<ActiveVersions> {
-        todo!()
-
-        // let active_versions = self
-        //     .sqlite_master_dao()
-        //     .select_active_versions(vtable)
-        //     .await?;
-        // Ok(ActiveVersions::from(active_versions))
+    async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
+        let active_versions = self
+            .version_metadata_dao()
+            .select_active_versions(vtable)
+            .await?;
+        Ok(ActiveVersions::from(active_versions))
     }
 }
 
@@ -107,30 +107,32 @@ impl VTableRepositoryImpl {
         VersionDao::new(self.tx.clone())
     }
 
+    fn version_metadata_dao(&self) -> VersionMetadataDao {
+        VersionMetadataDao::new(self.tx.clone())
+    }
+
     async fn probe_vrr_entries(
         &self,
         vrr_entries: VrrEntries,
         projection: ProjectionResult,
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
-        todo!()
+        let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
-        // let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
+        let vtable = self.vtable_dao().select(&vrr_entries.vtable_id()).await?;
 
-        // let vtable = self.vtable_dao().select(&vrr_entries.vtable_id()).await?;
+        for vrr_entries_in_version in vrr_entries.group_by_version_id() {
+            let version = self
+                .version_metadata_dao()
+                .select_active_version(&vtable, vrr_entries_in_version.version_id())
+                .await?;
 
-        // for vrr_entries_in_version in vrr_entries.group_by_version_id() {
-        //     let version = self
-        //         .sqlite_master_dao()
-        //         .select_active_version(&vtable, vrr_entries_in_version.version_id())
-        //         .await?;
+            let ver_row_iter = self
+                .version_dao()
+                .probe_in_version(&version, vrr_entries_in_version, &projection)
+                .await?;
+            ver_row_iters.push_back(ver_row_iter);
+        }
 
-        //     let ver_row_iter = self
-        //         .version_dao()
-        //         .probe_in_version(&version, vrr_entries_in_version, &projection)
-        //         .await?;
-        //     ver_row_iters.push_back(ver_row_iter);
-        // }
-
-        // Ok(ImmutableSchemaRowIter::chain_versions(ver_row_iters))
+        Ok(ImmutableSchemaRowIter::chain_versions(ver_row_iters))
     }
 }
