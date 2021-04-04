@@ -14,15 +14,11 @@ impl<S: Into<String>> From<S> for SqliteTableNameForVersion {
 }
 
 impl SqliteTableNameForVersion {
-    pub(in crate::sqlite::transaction::sqlite_tx) fn new(
-        version_id: &VersionId,
-        is_active: bool,
-    ) -> Self {
+    pub(in crate::sqlite::transaction::sqlite_tx) fn new(version_id: &VersionId) -> Self {
         let s = format!(
-            "{}__v{}__{}",
+            "{}__v{}",
             version_id.vtable_id().table_name().as_str(),
             version_id.version_number().to_u64(),
-            if is_active { "active" } else { "inactive" }
         );
         Self(s)
     }
@@ -35,20 +31,12 @@ impl SqliteTableNameForVersion {
         self.split().1
     }
 
-    fn split(&self) -> (TableName, VersionNumber, bool) {
+    fn split(&self) -> (TableName, VersionNumber) {
         let parts: Vec<&str> = self.0.split("__").collect();
         assert_eq!(parts.len(), 3);
         (
             TableName::new(parts[0]).unwrap(),
             VersionNumber::from(parts[1][1..].parse::<u64>().unwrap()),
-            match parts[2] {
-                "active" => true,
-                "inactive" => false,
-                _ => panic!(
-                    "unexpected activation kind from SQLite's table name `{}`",
-                    self.0
-                ),
-            },
         )
     }
 }

@@ -1,7 +1,10 @@
 pub(in crate::sqlite::transaction::sqlite_tx) mod create_table_sql_for_version;
 pub(in crate::sqlite::transaction::sqlite_tx) mod sqlite_table_name_for_version;
 
-use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VrrEntriesInVersion, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx};
+use crate::sqlite::{
+    row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid, sqlite_types::VrrEntriesInVersion,
+    to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
+};
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
     query::projection::ProjectionResult,
@@ -30,9 +33,8 @@ pub(in crate::sqlite::transaction::sqlite_tx) const CNAME_NAVI_ROWID: &str = "_n
 impl VersionDao {
     pub(in crate::sqlite::transaction::sqlite_tx) fn table_name(
         version_id: &VersionId,
-        is_active: bool,
     ) -> TableName {
-        SqliteTableNameForVersion::new(version_id, is_active).to_full_table_name()
+        SqliteTableNameForVersion::new(version_id).to_full_table_name()
     }
 }
 
@@ -68,7 +70,7 @@ impl VersionDao {
                 .collect::<ApllodbResult<VecDeque<ImmutableRow>>>()?;
             Ok(SqliteRowIterator::from(pk_rows))
         } else {
-            let sqlite_table_name = Self::table_name(version.id(), true);
+            let sqlite_table_name = Self::table_name(version.id());
 
             let non_pk_effective_projection =
                 projection.non_pk_effective_projection(version.id())?;
@@ -158,7 +160,7 @@ SELECT {version_navi_rowid}{comma_if_non_pk_column}{non_pk_column_names}{comma_i
         vrr_id: &SqliteRowid,
         column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<()> {
-        let sqlite_table_name = Self::table_name(version_id, true);
+        let sqlite_table_name = Self::table_name(version_id);
         let sql = format!(
             "
         INSERT INTO {tname}

@@ -16,7 +16,7 @@ impl From<&ActiveVersion> for CreateTableSqlForVersion {
         use crate::sqlite::to_sql_string::ToSqlString;
         use apllodb_immutable_schema_engine_domain::entity::Entity;
 
-        let version_table_name = VersionDao::table_name(version.id(), true);
+        let version_table_name = VersionDao::table_name(version.id());
 
         // TODO Make CNAME_NAVI_ROWID primary key for performance.
         let sql = format!(
