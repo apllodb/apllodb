@@ -1,6 +1,6 @@
 use crate::error::InfraError;
 
-use super::transaction::sqlite_tx::vtable::dao::VTableDao;
+use super::transaction::sqlite_tx::vtable::vtable_metadata_dao::VTableMetadataDao;
 use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName};
 use sqlx::{migrate::MigrateDatabase, Connection};
 use std::{path::PathBuf, str::FromStr, time::Duration};
@@ -42,7 +42,7 @@ impl SqliteDatabase {
                 .await
                 .map_err(InfraError::from)?;
 
-            VTableDao::create_table(&mut conn).await?;
+            VTableMetadataDao::create_table(&mut conn).await?;
 
             conn.close().await.map_err(InfraError::from)?;
             Ok(())

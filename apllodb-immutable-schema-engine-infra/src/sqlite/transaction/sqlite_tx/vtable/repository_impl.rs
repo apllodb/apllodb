@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
-use super::dao::VTableDao;
+use super::vtable_metadata_dao::VTableMetadataDao;
 use crate::{
     immutable_schema_row_iter::ImmutableSchemaRowIter,
     sqlite::{
@@ -43,7 +43,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.vtable_dao().insert(&vtable).await?;
+        self.vtable_metadata_dao().insert(&vtable).await?;
         self.vrr().create_table(&vtable).await?;
         Ok(())
     }
@@ -55,7 +55,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
     ///   - Table `table_name` is not visible to this transaction.
     async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
-        self.vtable_dao().select(&vtable_id).await
+        self.vtable_metadata_dao().select(&vtable_id).await
     }
 
     /// # Failures
@@ -100,8 +100,8 @@ impl VTableRepositoryImpl {
         VersionRevisionResolverImpl::new(self.tx.clone())
     }
 
-    fn vtable_dao(&self) -> VTableDao {
-        VTableDao::new(self.tx.clone())
+    fn vtable_metadata_dao(&self) -> VTableMetadataDao {
+        VTableMetadataDao::new(self.tx.clone())
     }
 
     fn version_dao(&self) -> VersionDao {
@@ -119,7 +119,7 @@ impl VTableRepositoryImpl {
     ) -> ApllodbResult<ImmutableSchemaRowIter> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
-        let vtable = self.vtable_dao().select(&vrr_entries.vtable_id()).await?;
+        let vtable = self.vtable_metadata_dao().select(&vrr_entries.vtable_id()).await?;
 
         for vrr_entries_in_version in vrr_entries.group_by_version_id() {
             let version = self

@@ -12,7 +12,7 @@ use apllodb_shared_components::{
 };
 
 #[derive(Debug)]
-pub(in crate::sqlite) struct VTableDao {
+pub(in crate::sqlite) struct VTableMetadataDao {
     sqlite_tx: Rc<RefCell<SqliteTx>>,
 }
 
@@ -20,7 +20,7 @@ const TNAME: &str = "_vtable_metadata";
 const CNAME_TABLE_NAME: &str = "table_name";
 const CNAME_TABLE_WIDE_CONSTRAINTS: &str = "table_wide_constraints";
 
-impl VTableDao {
+impl VTableMetadataDao {
     pub(in crate::sqlite) async fn create_table(
         sqlite_conn: &mut sqlx::SqliteConnection,
     ) -> ApllodbResult<()> {
