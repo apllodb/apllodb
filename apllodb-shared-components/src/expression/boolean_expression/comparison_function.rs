@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::data_structure::expression::Expression;
+use crate::Expression;
 
 /// Comparison function and its operands
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]

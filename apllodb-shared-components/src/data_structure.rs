@@ -3,7 +3,6 @@
 pub(crate) mod alias_name;
 pub(crate) mod alter_table_action;
 pub(crate) mod column;
-pub(crate) mod expression;
 pub(crate) mod record;
 pub(crate) mod records;
 pub(crate) mod reference;

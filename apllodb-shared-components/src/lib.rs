@@ -8,6 +8,7 @@ extern crate derive_new;
 pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
 pub(crate) mod error;
+pub(crate) mod expression;
 pub(crate) mod session;
 pub(crate) mod validation_helper;
 pub(crate) mod value;
@@ -20,14 +21,6 @@ pub use crate::{
             column_constraint_kind::ColumnConstraintKind, column_constraints::ColumnConstraints,
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName,
-        },
-        expression::{
-            boolean_expression::{
-                comparison_function::ComparisonFunction, logical_function::LogicalFunction,
-                BooleanExpression,
-            },
-            operator::{BinaryOperator, UnaryOperator},
-            Expression,
         },
         record::{field_index::FieldIndex, Record},
         records::{record_field_ref_schema::RecordFieldRefSchema, Records},
@@ -48,6 +41,14 @@ pub use crate::{
         session_error::{ApllodbSessionError, ApllodbSessionResult},
         sqlstate::SqlState,
         ApllodbError, ApllodbResult,
+    },
+    expression::{
+        boolean_expression::{
+            comparison_function::ComparisonFunction, logical_function::LogicalFunction,
+            BooleanExpression,
+        },
+        operator::{BinaryOperator, UnaryOperator},
+        Expression,
     },
     session::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
