@@ -3,25 +3,24 @@ pub(crate) mod record_field_ref_schema;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    ApllodbResult, Expression, FieldIndex, FullFieldReference, Ordering, Record, SqlValue,
-    SqlValueHashKey, SqlValues,
+    record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema,
+    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering, Record,
+    RecordIndex, SqlValue, SqlValueHashKey, SqlValues,
 };
-
-use self::record_field_ref_schema::RecordFieldRefSchema;
 
 use super::record::record_pos::RecordPos;
 
 /// Seq of [Record](crate::Record)s.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Records {
-    schema: Arc<RecordFieldRefSchema>,
+    schema: Arc<RecordSchema>,
     inner: Vec<SqlValues>,
 }
 
 impl Records {
     /// Constructor
     pub fn new<IntoValues: Into<SqlValues>, I: IntoIterator<Item = IntoValues>>(
-        schema: RecordFieldRefSchema,
+        schema: RecordSchema,
         it: I,
     ) -> Self {
         Self {
@@ -33,13 +32,8 @@ impl Records {
         }
     }
 
-    /// get FullFieldReferences
-    pub fn as_full_field_references(&self) -> &[FullFieldReference] {
-        self.schema.as_full_field_references()
-    }
-
     /// ref to schema
-    pub fn as_schema(&self) -> &RecordFieldRefSchema {
+    pub fn as_schema(&self) -> &RecordSchema {
         self.schema.as_ref()
     }
 
@@ -86,13 +80,16 @@ impl Records {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
-        let projection_positions = projection
-            .iter()
-            .map(|index| self.schema.resolve_index(index))
-            .collect::<ApllodbResult<Vec<RecordPos>>>()?;
+    pub fn projection(self, indexes: &[NamedRecordIndex]) -> ApllodbResult<Self> {
+        let new_schema = self.schema.projection(indexes)?;
 
-        let new_schema = self.schema.projection(projection)?;
+        let projection_positions = indexes
+            .iter()
+            .map(|idx| {
+                let (pos, _) = self.schema.index(idx)?;
+                Ok(pos)
+            })
+            .collect::<ApllodbResult<Vec<RecordPos>>>()?;
 
         let new_inner: Vec<SqlValues> = self
             .inner
@@ -104,7 +101,7 @@ impl Records {
     }
 
     /// ORDER BY
-    pub fn sort(mut self, field_orderings: &[(FieldIndex, Ordering)]) -> ApllodbResult<Self> {
+    pub fn sort(mut self, field_orderings: &[(NamedRecordIndex, Ordering)]) -> ApllodbResult<Self> {
         assert!(!field_orderings.is_empty(), "parser should avoid this case");
 
         // TODO check if type in FieldIndex is PartialOrd
@@ -115,8 +112,8 @@ impl Records {
             let mut res = std::cmp::Ordering::Equal;
 
             for (index, ord) in field_orderings {
-                let pos = schema
-                    .resolve_index(&index)
+                let (pos, _) = schema
+                    .index(&index)
                     .unwrap_or_else(|_| panic!("must be valid field: `{}`", index));
 
                 let a_val = a.get(pos);
@@ -180,46 +177,49 @@ impl Records {
     ///   - Specified field does not exist in any record.
     pub fn hash_join(
         self,
-        joined_schema: RecordFieldRefSchema,
+        joined_schema: RecordSchema,
         right_records: Records,
-        self_join_field: &FieldIndex,
-        right_join_field: &FieldIndex,
+        self_join_field: &NamedRecordIndex,
+        right_join_field: &NamedRecordIndex,
     ) -> ApllodbResult<Self> {
+        joined_schema.assert_all_named();
+
         fn helper_get_sql_value(
-            joined_ffr: &FullFieldReference,
-            schema: &RecordFieldRefSchema,
+            joined_name: &AliasedFieldName,
+            schema: &RecordSchema,
             record: &Record,
         ) -> Option<ApllodbResult<SqlValue>> {
             schema
-                .as_full_field_references()
-                .iter()
-                .enumerate()
-                .find_map(|(raw_pos, ffr)| {
-                    if ffr == joined_ffr {
-                        let res_sql_value = record
-                            .get_sql_value(RecordPos::new(raw_pos))
-                            .map(|v| v.clone());
+                .index(&NamedRecordIndex::from(joined_name))
+                .map_or_else(
+                    |e| {
+                        if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
+                            None
+                        } else {
+                            Some(Err(e))
+                        }
+                    },
+                    |(pos, _)| {
+                        let res_sql_value = record.get_sql_value(pos).map(|v| v.clone());
                         Some(res_sql_value)
-                    } else {
-                        None
-                    }
-                })
+                    },
+                )
         }
 
         fn helper_join_records(
-            joined_schema: &RecordFieldRefSchema,
-            left_schema: &RecordFieldRefSchema,
-            right_schema: &RecordFieldRefSchema,
+            joined_schema: &RecordSchema,
+            left_schema: &RecordSchema,
+            right_schema: &RecordSchema,
             left_record: Record,
             right_record: Record,
         ) -> ApllodbResult<Record> {
             let sql_values: Vec<SqlValue> = joined_schema
-                .as_full_field_references()
+                .to_aliased_field_names()
                 .iter()
-                .map(|joined_ffr| {
-                    helper_get_sql_value(joined_ffr, left_schema, &left_record)
-                        .or_else(|| helper_get_sql_value(joined_ffr, right_schema, &right_record))
-                        .expect("left or right must have FFR in joined_schema")
+                .map(|joined_name| {
+                    helper_get_sql_value(joined_name, left_schema, &left_record)
+                        .or_else(|| helper_get_sql_value(joined_name, right_schema, &right_record))
+                        .expect("left or right must have AliasedFieldName in joined_schema")
                 })
                 .collect::<ApllodbResult<_>>()?;
             let sql_values = SqlValues::new(sql_values);
@@ -229,8 +229,8 @@ impl Records {
         let self_schema = self.as_schema().clone();
         let right_schema = right_records.as_schema().clone();
 
-        let self_join_idx = self.as_schema().resolve_index(self_join_field)?;
-        let right_join_idx = right_records.as_schema().resolve_index(&right_join_field)?;
+        let (self_join_idx, _) = self.as_schema().index(self_join_field)?;
+        let (right_join_idx, _) = right_records.as_schema().index(&right_join_field)?;
 
         // TODO Create hash table from smaller input.
         let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();

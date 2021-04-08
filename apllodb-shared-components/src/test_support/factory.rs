@@ -7,6 +7,7 @@ use crate::{
         records::record_field_ref_schema::RecordFieldRefSchema,
         reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
     },
+    record_schema::RecordSchema,
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, FullFieldReference, LogicalFunction, NnSqlValue, Record, Records, SqlType,
     SqlValue, SqlValues, TableName, UnaryOperator,
@@ -153,7 +154,7 @@ impl Record {
 }
 
 impl Records {
-    pub fn factory(schema: RecordFieldRefSchema, records: Vec<Record>) -> Self {
+    pub fn factory(schema: RecordSchema, records: Vec<Record>) -> Self {
         Self::new(schema, records)
     }
 }

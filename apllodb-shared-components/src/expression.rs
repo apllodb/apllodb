@@ -4,8 +4,9 @@ pub(crate) mod operator;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    record_schema::RecordSchema, ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference,
-    LogicalFunction, NnSqlValue, Record, RecordFieldRefSchema, RecordIndex, SqlValue,
+    record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema, ApllodbResult,
+    ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue, Record,
+    RecordFieldRefSchema, RecordIndex, SqlValue,
 };
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
@@ -17,7 +18,7 @@ pub enum Expression {
     ConstantVariant(SqlValue),
 
     /// Field/Column index of a record
-    RecordIndexVariant(RecordIndex),
+    RecordIndexVariant(NamedRecordIndex),
 
     /// With unary operator
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
@@ -40,7 +41,7 @@ impl Expression {
                 let (record, schema) = record_for_index.expect(
                     "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
                 );
-                let pos = schema.index(idx)?;
+                let (pos, _) = schema.index(idx)?;
                 record.get_sql_value(pos).map(|v| v.clone())
             }
             Expression::UnaryOperatorVariant(uni_op, child) => {
@@ -87,9 +88,9 @@ impl Expression {
         }
     }
 
-    /// retrieves all RecordIndex in a expression
-    pub fn to_record_indexes(&self) -> Vec<RecordIndex> {
-        fn helper_boolean_expr(boolean_expr: &BooleanExpression) -> Vec<RecordIndex> {
+    /// retrieves all NamedRecordIndex in a expression
+    pub fn to_record_indexes(&self) -> Vec<NamedRecordIndex> {
+        fn helper_boolean_expr(boolean_expr: &BooleanExpression) -> Vec<NamedRecordIndex> {
             match boolean_expr {
                 BooleanExpression::LogicalFunctionVariant(logical_function) => {
                     match logical_function {

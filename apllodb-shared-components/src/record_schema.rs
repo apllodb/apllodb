@@ -30,7 +30,11 @@ pub(crate) struct RecordSchema {
 }
 
 impl RecordSchema {
-    /// Finds a RecordPos of a field specified by RecordIndex.
+    pub(crate) fn assert_all_named(&self) {
+        assert!(self.inner.iter().all(|(_, opt)| opt.is_some()));
+    }
+
+    /// Finds a pair of (RecordPos, AliasedFieldName) of a field specified by RecordIndex.
     ///
     /// # Failures
     ///
@@ -38,8 +42,11 @@ impl RecordSchema {
     ///   - no field matches to this RecordIndex.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of fields match to this FieldIndex.
-    pub(crate) fn index(&self, named_idx: &NamedRecordIndex) -> ApllodbResult<RecordPos> {
-        let matching_pos: Vec<RecordPos> = self
+    pub(crate) fn index(
+        &self,
+        named_idx: &NamedRecordIndex,
+    ) -> ApllodbResult<(RecordPos, AliasedFieldName)> {
+        let matching_pair: Vec<(RecordPos, AliasedFieldName)> = self
             .inner
             .iter()
             .filter_map(|(pos, opt_field)| {
@@ -47,7 +54,7 @@ impl RecordSchema {
                     .as_ref()
                     .map(|field| {
                         if field.matches(named_idx) {
-                            Some(*pos)
+                            Some((*pos, field.clone()))
                         } else {
                             None
                         }
@@ -56,12 +63,9 @@ impl RecordSchema {
             })
             .collect();
 
-        if matching_pos.len() == 1 {
-            matching_pos
-                .first()
-                .map(|p| *p)
-                .ok_or_else(|| unreachable!())
-        } else if matching_pos.is_empty() {
+        if matching_pair.len() == 1 {
+            matching_pair.first().cloned().ok_or_else(|| unreachable!())
+        } else if matching_pair.is_empty() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
                 format!("no field matches to: {:?}", named_idx),
@@ -81,10 +85,23 @@ impl RecordSchema {
         let new_inner: Vec<(RecordPos, Option<AliasedFieldName>)> = indexes
             .iter()
             .map(|index| {
-                let (_, ffr) = index.peek(&self.0)?;
-                Ok(ffr.clone())
+                let (pos, name) = self.index(index)?;
+                Ok((pos, Some(name)))
             })
             .collect::<ApllodbResult<_>>()?;
-        Ok(Self(new_inner))
+        Ok(Self { inner: new_inner })
+    }
+
+    /// get raw AliasFieldNames
+    ///
+    /// # Panics
+    ///
+    /// if any field is unnamed (even un-aliased) constant.
+    pub fn to_aliased_field_names(&self) -> Vec<AliasedFieldName> {
+        self.assert_all_named();
+        self.inner
+            .iter()
+            .map(|(_, opt_name)| opt_name.unwrap())
+            .collect()
     }
 }
