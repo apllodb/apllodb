@@ -20,7 +20,7 @@ impl AstTranslator {
             }
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
                 let ffr = Self::column_reference(ast_colref, correlations)?;
-                Expression::FullFieldReferenceVariant(ffr)
+                Expression::RecordIndexVariant(ffr)
             }
             apllodb_ast::Expression::UnaryOperatorVariant(uni_op, expr) => {
                 let uni_op = Self::unary_operator(uni_op);

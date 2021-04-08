@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
-    Record, RecordFieldRefSchema, SqlValue,
+    Record, RecordFieldRefSchema, RecordIndex, SqlValue,
 };
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
@@ -16,8 +16,8 @@ pub enum Expression {
     /// Constant
     ConstantVariant(SqlValue),
 
-    /// Reference to field
-    FullFieldReferenceVariant(FullFieldReference),
+    /// Field/Column index of a record
+    RecordIndexVariant(RecordIndex),
 
     /// With unary operator
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
@@ -36,7 +36,7 @@ impl Expression {
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
-            Expression::FullFieldReferenceVariant(ffr) => {
+            Expression::RecordIndexVariant(ffr) => {
                 let (record, schema) = record_for_field_ref.expect(
                     "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
                 );
@@ -118,7 +118,7 @@ impl Expression {
             Expression::ConstantVariant(_) => {
                 vec![]
             }
-            Expression::FullFieldReferenceVariant(ffr) => {
+            Expression::RecordIndexVariant(ffr) => {
                 vec![ffr.clone()]
             }
             Expression::UnaryOperatorVariant(_op, expr) => expr.to_full_field_references(),
@@ -165,7 +165,7 @@ mod tests {
             ),
             // FullFieldReference
             TestDatum::new(
-                Expression::FullFieldReferenceVariant(People::ffr_id()),
+                Expression::RecordIndexVariant(People::ffr_id()),
                 Some((PEOPLE_RECORD1.clone(), People::schema())),
                 SqlValue::factory_integer(1),
             ),

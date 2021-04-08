@@ -59,7 +59,7 @@ impl SelectCommandAnalyzer {
                         ast_order_by.expression,
                         &from_correlations,
                     )?;
-                    let ffr = if let Expression::FullFieldReferenceVariant(ffr) = expression {
+                    let ffr = if let Expression::RecordIndexVariant(ffr) = expression {
                         Ok(ffr)
                     } else {
                         Err(ApllodbError::feature_not_supported(
