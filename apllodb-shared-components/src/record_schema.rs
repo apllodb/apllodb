@@ -1,5 +1,6 @@
 use crate::{
-    AliasedFieldName, ApllodbError, ApllodbErrorKind, ApllodbResult, RecordIndex, RecordPos,
+    record_index::named_record_index::NamedRecordIndex, AliasedFieldName, ApllodbError,
+    ApllodbErrorKind, ApllodbResult, RecordIndex, RecordPos,
 };
 use serde::{Deserialize, Serialize};
 
@@ -33,62 +34,57 @@ impl RecordSchema {
     ///
     /// # Failures
     ///
-    /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
-    ///   - index is a form of RecordPos and it is out of range of this schema.
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - no field matches to this RecordIndex.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of fields match to this FieldIndex.
-    pub(crate) fn index(&self, idx: &RecordIndex) -> ApllodbResult<RecordPos> {
-        match idx {
-            RecordIndex::Pos(pos) => {
-                if pos.to_usize() > self.inner.len() - 1 {
-                    Err(ApllodbError::new(
-                        ApllodbErrorKind::InvalidColumnReference,
-                        format!("index out of range: {:?}", idx),
-                        None,
-                    ))
-                } else {
-                    Ok(*pos)
-                }
-            }
-            RecordIndex::Name(named_idx) => {
-                let matching_pos: Vec<RecordPos> = self
-                    .inner
-                    .iter()
-                    .filter_map(|(pos, opt_field)| {
-                        opt_field
-                            .as_ref()
-                            .map(|field| {
-                                if field.matches(named_idx) {
-                                    Some(*pos)
-                                } else {
-                                    None
-                                }
-                            })
-                            .flatten()
+    pub(crate) fn index(&self, named_idx: &NamedRecordIndex) -> ApllodbResult<RecordPos> {
+        let matching_pos: Vec<RecordPos> = self
+            .inner
+            .iter()
+            .filter_map(|(pos, opt_field)| {
+                opt_field
+                    .as_ref()
+                    .map(|field| {
+                        if field.matches(named_idx) {
+                            Some(*pos)
+                        } else {
+                            None
+                        }
                     })
-                    .collect();
+                    .flatten()
+            })
+            .collect();
 
-                if matching_pos.len() == 1 {
-                    matching_pos
-                        .first()
-                        .map(|p| *p)
-                        .ok_or_else(|| unreachable!())
-                } else if matching_pos.is_empty() {
-                    Err(ApllodbError::new(
-                        ApllodbErrorKind::InvalidName,
-                        format!("no field matches to: {:?}", idx),
-                        None,
-                    ))
-                } else {
-                    Err(ApllodbError::new(
-                        ApllodbErrorKind::AmbiguousColumn,
-                        format!("more than 1 fields match to: {:?}", idx),
-                        None,
-                    ))
-                }
-            }
+        if matching_pos.len() == 1 {
+            matching_pos
+                .first()
+                .map(|p| *p)
+                .ok_or_else(|| unreachable!())
+        } else if matching_pos.is_empty() {
+            Err(ApllodbError::new(
+                ApllodbErrorKind::InvalidName,
+                format!("no field matches to: {:?}", named_idx),
+                None,
+            ))
+        } else {
+            Err(ApllodbError::new(
+                ApllodbErrorKind::AmbiguousColumn,
+                format!("more than 1 fields match to: {:?}", named_idx),
+                None,
+            ))
         }
+    }
+
+    /// Filter specified fields
+    pub(crate) fn projection(&self, indexes: &[NamedRecordIndex]) -> ApllodbResult<Self> {
+        let new_inner: Vec<(RecordPos, Option<AliasedFieldName>)> = indexes
+            .iter()
+            .map(|index| {
+                let (_, ffr) = index.peek(&self.0)?;
+                Ok(ffr.clone())
+            })
+            .collect::<ApllodbResult<_>>()?;
+        Ok(Self(new_inner))
     }
 }
