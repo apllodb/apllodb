@@ -11,7 +11,7 @@ impl AliasName {
     /// # Failures
     /// - [NameTooLong](crate::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
-    pub fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
+    pub fn new(name: impl ToString) -> ApllodbResult<Self> {
         let sn = ShortName::new(name)?;
         Ok(Self(sn))
     }

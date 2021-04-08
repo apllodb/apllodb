@@ -14,8 +14,8 @@ impl ShortName {
     /// # Failures
     /// - [NameTooLong](apllodb-shared-components::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
-    pub(crate) fn new<S: Into<String>>(name: S) -> ApllodbResult<Self> {
-        let name = name.into();
+    pub(crate) fn new(name: impl ToString) -> ApllodbResult<Self> {
+        let name = name.to_string();
         Self::validate_length(&name)?;
         Ok(Self(name))
     }
