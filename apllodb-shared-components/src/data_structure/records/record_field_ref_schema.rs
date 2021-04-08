@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbResult, CorrelationIndex, FieldIndex, FullFieldReference, data_structure::record::record_pos::RecordPos};
+use crate::{
+    data_structure::record::record_pos::RecordPos, ApllodbResult, CorrelationIndex, FieldIndex,
+    FullFieldReference,
+};
 
 /// Internally has similar structure as `Vec<FullFieldReference>` and works with [SqlValues](crate::SqlValues) with the same length
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]

@@ -1,4 +1,7 @@
-use crate::{FieldIndex, FullFieldReference, NnSqlValue, Record, RecordFieldRefSchema, SqlValue, TableName, data_structure::record::record_pos::RecordPos};
+use crate::{
+    data_structure::record::record_pos::RecordPos, FieldIndex, FullFieldReference, NnSqlValue,
+    Record, RecordFieldRefSchema, SqlValue, TableName,
+};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
