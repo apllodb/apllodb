@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// An alias to a correlation.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
-pub struct AliasedCorrelationName {
+pub(crate) struct AliasedCorrelationName {
     name: CorrelationName,
     alias: Option<CorrelationAlias>,
 }

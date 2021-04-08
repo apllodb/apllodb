@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 /// | 6 | - |
 /// | 7 | - ; a888 |
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
-pub struct RecordSchema {
+pub(crate) struct RecordSchema {
     inner: Vec<(RecordPos, Option<AliasedFieldName>)>,
 }
 
@@ -39,7 +39,7 @@ impl RecordSchema {
     ///   - no field matches to this RecordIndex.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of fields match to this FieldIndex.
-    pub fn index(&self, idx: &RecordIndex) -> ApllodbResult<RecordPos> {
+    pub(crate) fn index(&self, idx: &RecordIndex) -> ApllodbResult<RecordPos> {
         match idx {
             RecordIndex::Pos(pos) => {
                 if pos.to_usize() > self.inner.len() - 1 {

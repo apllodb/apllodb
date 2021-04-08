@@ -1,4 +1,9 @@
-#![deny(warnings, missing_debug_implementations, missing_docs)]
+#![deny(
+    // TODO comment-in
+    // warnings,
+    missing_debug_implementations, 
+    missing_docs
+)]
 
 //! Data structures shared with multiple crates in the apllodb workspace.
 
@@ -19,8 +24,6 @@ pub(crate) mod validation_helper;
 pub(crate) mod value;
 
 pub use crate::{
-    attribute::attribute_name::AttributeName,
-    correlation::{correlation_alias::CorrelationAlias, correlation_name::CorrelationName},
     data_structure::{
         alias_name::AliasName,
         alter_table_action::AlterTableAction,
@@ -58,7 +61,6 @@ pub use crate::{
         Expression,
     },
     record_index::RecordIndex,
-    record_schema::RecordSchema,
     session::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
         without_db::SessionWithoutDb, Session,
@@ -74,8 +76,11 @@ pub use crate::{
     },
 };
 
-pub(crate) use crate::field::{
-    aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName,
+pub(crate) use crate::{
+    attribute::attribute_name::AttributeName,
+    correlation::{correlation_alias::CorrelationAlias, correlation_name::CorrelationName},
+    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
+    record_schema::RecordSchema,
 };
 
 #[cfg(feature = "test-support")]

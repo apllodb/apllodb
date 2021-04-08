@@ -10,7 +10,7 @@ pub(crate) struct AliasedFieldName {
 }
 
 impl AliasedFieldName {
-    pub(crate) fn matches(&self, _named_idx: &NamedRecordIndex) -> bool {
+    pub(crate) fn matches(&self, named_idx: &NamedRecordIndex) -> bool {
         todo!()
     }
 }
