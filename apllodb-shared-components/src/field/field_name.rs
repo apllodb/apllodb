@@ -8,13 +8,16 @@ use crate::{
 /// Name of a field.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 pub(crate) struct FieldName {
-    correlation: AliasedCorrelationName,
-    attribute: AttributeName,
+    pub(crate) aliased_correlation_name: AliasedCorrelationName,
+    pub(crate) attribute_name: AttributeName,
 }
 
 impl From<&FieldName> for NamedRecordIndex {
     fn from(n: &FieldName) -> Self {
-        let s = format!("{}.{}", n.correlation.name(), n.attribute);
+        let s = format!(
+            "{}.{}",
+            n.aliased_correlation_name.correlation_name, n.attribute_name
+        );
         NamedRecordIndex::from(s.as_str())
     }
 }

@@ -3,14 +3,17 @@
 //! Factory methods for testing
 
 use crate::{
-    data_structure::{
-        records::record_field_ref_schema::RecordFieldRefSchema,
-        reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
+    attribute::attribute_name::AttributeName,
+    correlation::{
+        aliased_correlation_name::AliasedCorrelationName, correlation_alias::CorrelationAlias,
+        correlation_name::CorrelationName,
     },
+    data_structure::reference::correlation_reference::CorrelationReference,
+    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     record_schema::RecordSchema,
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FullFieldReference, LogicalFunction, NnSqlValue, Record, Records, SqlType,
-    SqlValue, SqlValues, TableName, UnaryOperator,
+    Expression, LogicalFunction, NnSqlValue, Record, Records, SqlType, SqlValue, SqlValues,
+    TableName, UnaryOperator,
 };
 use rand::Rng;
 
@@ -28,34 +31,68 @@ impl TableName {
     }
 }
 
-impl CorrelationReference {
-    pub fn factory_tn(table_name: &str) -> Self {
-        Self::TableNameVariant(TableName::factory(table_name))
+impl AliasedFieldName {
+    pub fn factory(table_name: &str, column_name: &str) -> Self {
+        Self::new(FieldName::factory(table_name, column_name), None)
     }
 
-    pub fn factory_ta(table_name: &str, alias: &str) -> Self {
-        Self::TableAliasVariant {
-            table_name: TableName::factory(table_name),
-            alias_name: AliasName::factory(alias),
-        }
+    pub fn with_corr_alias(self, correlation_alias: &str) -> Self {
+        let field_name = self.field_name.with_corr_alias(correlation_alias);
+        Self::new(field_name, None)
+    }
+
+    pub fn with_field_alias(self, field_alias: &str) -> Self {
+        let alias = FieldAlias::factory(field_alias);
+        Self::new(self.field_name, Some(alias))
     }
 }
 
-impl FullFieldReference {
+impl FieldName {
     pub fn factory(table_name: &str, column_name: &str) -> Self {
-        let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
-        let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        Self::new(corr, field)
+        Self::new(
+            AliasedCorrelationName::factory(table_name),
+            AttributeName::factory(column_name),
+        )
     }
 
-    pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {
-        self.set_correlation_alias(AliasName::factory(correlation_alias));
-        self
+    pub fn with_corr_alias(self, correlation_alias: &str) -> Self {
+        let aliased_correlation_name = self.aliased_correlation_name.with_alias(correlation_alias);
+        Self::new(aliased_correlation_name, self.attribute_name)
+    }
+}
+
+impl FieldAlias {
+    pub fn factory(field_alias: &str) -> Self {
+        Self::new(field_alias).unwrap()
+    }
+}
+
+impl AliasedCorrelationName {
+    pub fn factory(table_name: &str) -> Self {
+        Self::new(CorrelationName::factory(table_name), None)
     }
 
-    pub fn with_field_alias(mut self, field_alias: &str) -> Self {
-        self.set_field_alias(AliasName::factory(field_alias));
-        self
+    pub fn with_alias(self, correlation_alias: &str) -> Self {
+        let alias = CorrelationAlias::factory(correlation_alias);
+        Self::new(self.correlation_name, Some(alias))
+    }
+}
+
+impl CorrelationName {
+    pub fn factory(table_name: &str) -> Self {
+        Self::TableNameVariant(TableName::factory(table_name))
+    }
+}
+
+impl CorrelationAlias {
+    pub fn factory(correlation_alias: &str) -> Self {
+        Self::new(correlation_alias).unwrap()
+    }
+}
+
+impl AttributeName {
+    pub fn factory(column_name: &str) -> Self {
+        Self::ColumnNameVariant(ColumnName::factory(column_name))
     }
 }
 
@@ -159,23 +196,16 @@ impl Records {
     }
 }
 
-impl RecordFieldRefSchema {
-    pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
-        Self::new(full_field_references)
+impl RecordSchema {
+    pub fn factory(aliased_field_names: Vec<AliasedFieldName>) -> Self {
+        Self::from(aliased_field_names)
     }
 
     pub fn joined(&self, right: &Self) -> Self {
-        let mut left = self.as_full_field_references().to_vec();
-        let mut right = right.as_full_field_references().to_vec();
+        let mut left = self.to_aliased_field_names().to_vec();
+        let mut right = right.to_aliased_field_names().to_vec();
         left.append(&mut right);
-        Self::new(left)
-    }
-
-    pub fn to_column_names(&self) -> Vec<ColumnName> {
-        self.as_full_field_references()
-            .iter()
-            .map(|ffr| ffr.as_column_name().clone())
-            .collect()
+        Self::from(left)
     }
 }
 

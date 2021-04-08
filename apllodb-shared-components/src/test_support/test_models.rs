@@ -1,6 +1,7 @@
 use crate::{
-    data_structure::record::record_pos::RecordPos, FieldIndex, FullFieldReference, NnSqlValue,
-    Record, RecordFieldRefSchema, SqlValue, TableName,
+    data_structure::record::record_pos::RecordPos,
+    record_index::named_record_index::NamedRecordIndex, AliasedFieldName, NnSqlValue, Record,
+    RecordIndex, RecordSchema, SqlValue, TableName,
 };
 
 /// - people:
@@ -13,21 +14,20 @@ impl People {
         TableName::new("people").unwrap()
     }
 
-    pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "id")
+    pub fn afn_id() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "id")
     }
-    pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "age")
-    }
-
-    pub fn schema() -> RecordFieldRefSchema {
-        RecordFieldRefSchema::factory(vec![Self::ffr_id(), Self::ffr_age()])
+    pub fn afn_age() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "age")
     }
 
-    pub fn field_pos(ffr: FullFieldReference) -> RecordPos {
-        Self::schema()
-            .resolve_index(&FieldIndex::from(ffr))
-            .unwrap()
+    pub fn schema() -> RecordSchema {
+        RecordSchema::factory(vec![Self::afn_id(), Self::afn_age()])
+    }
+
+    pub fn field_pos(afn: AliasedFieldName) -> RecordPos {
+        let (pos, _) = Self::schema().index(&NamedRecordIndex::from(&afn)).unwrap();
+        pos
     }
 
     pub fn record(id: i64, age: i32) -> Record {
@@ -49,21 +49,21 @@ impl Body {
         TableName::new("body").unwrap()
     }
 
-    pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "id")
+    pub fn afn_id() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "id")
     }
-    pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "people_id")
+    pub fn afn_people_id() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "people_id")
     }
-    pub fn ffr_height() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "height")
+    pub fn afn_height() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "height")
     }
 
-    pub fn schema() -> RecordFieldRefSchema {
-        RecordFieldRefSchema::factory(vec![
-            Self::ffr_id(),
-            Self::ffr_people_id(),
-            Self::ffr_height(),
+    pub fn schema() -> RecordSchema {
+        RecordSchema::factory(vec![
+            Self::afn_id(),
+            Self::afn_people_id(),
+            Self::afn_height(),
         ])
     }
 
@@ -88,25 +88,25 @@ impl Pet {
         TableName::new("pet").unwrap()
     }
 
-    pub fn ffr_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "id")
+    pub fn afn_id() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "id")
     }
-    pub fn ffr_people_id() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "people_id")
+    pub fn afn_people_id() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "people_id")
     }
-    pub fn ffr_kind() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "kind")
+    pub fn afn_kind() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "kind")
     }
-    pub fn ffr_age() -> FullFieldReference {
-        FullFieldReference::factory(Self::table_name().as_str(), "age")
+    pub fn afn_age() -> AliasedFieldName {
+        AliasedFieldName::factory(Self::table_name().as_str(), "age")
     }
 
-    pub fn schema() -> RecordFieldRefSchema {
-        RecordFieldRefSchema::factory(vec![
-            Self::ffr_id(),
-            Self::ffr_people_id(),
-            Self::ffr_kind(),
-            Self::ffr_age(),
+    pub fn schema() -> RecordSchema {
+        RecordSchema::factory(vec![
+            Self::afn_id(),
+            Self::afn_people_id(),
+            Self::afn_kind(),
+            Self::afn_age(),
         ])
     }
 

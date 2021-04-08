@@ -4,12 +4,6 @@ use serde::{Deserialize, Serialize};
 /// An alias to a correlation.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 pub(crate) struct AliasedCorrelationName {
-    name: CorrelationName,
-    alias: Option<CorrelationAlias>,
-}
-
-impl AliasedCorrelationName {
-    pub(crate) fn name(&self) -> &CorrelationName {
-        &self.name
-    }
+    pub(crate) correlation_name: CorrelationName,
+    pub(crate) correlation_alias: Option<CorrelationAlias>,
 }

@@ -105,3 +105,15 @@ impl RecordSchema {
             .collect()
     }
 }
+
+impl From<Vec<AliasedFieldName>> for RecordSchema {
+    fn from(names: Vec<AliasedFieldName>) -> Self {
+        Self {
+            inner: names
+                .into_iter()
+                .enumerate()
+                .map(|(raw_pos, name)| (RecordPos::new(raw_pos), Some(name)))
+                .collect(),
+        }
+    }
+}

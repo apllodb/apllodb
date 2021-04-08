@@ -5,8 +5,8 @@ use crate::{record_index::named_record_index::NamedRecordIndex, FieldAlias, Fiel
 /// An alias to a field.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 pub(crate) struct AliasedFieldName {
-    name: FieldName,
-    alias: Option<FieldAlias>,
+    pub(crate) field_name: FieldName,
+    pub(crate) field_alias: Option<FieldAlias>,
 }
 
 impl AliasedFieldName {
@@ -17,6 +17,6 @@ impl AliasedFieldName {
 
 impl From<&AliasedFieldName> for NamedRecordIndex {
     fn from(n: &AliasedFieldName) -> Self {
-        NamedRecordIndex::from(&n.name)
+        NamedRecordIndex::from(&n.field_name)
     }
 }
