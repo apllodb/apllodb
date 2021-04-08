@@ -12,6 +12,7 @@ pub(crate) mod database;
 pub(crate) mod error;
 pub(crate) mod expression;
 pub(crate) mod field; // TODO move to sql-processor
+pub(crate) mod record_index; // TODO move to sql-processor
 pub(crate) mod record_schema; // TODO move to sql-processor
 pub(crate) mod session;
 pub(crate) mod validation_helper;
@@ -57,6 +58,7 @@ pub use crate::{
         Expression,
     },
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
+    record_index::RecordIndex,
     record_schema::RecordSchema,
     session::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
