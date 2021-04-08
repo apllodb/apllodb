@@ -5,6 +5,7 @@
 #[macro_use]
 extern crate derive_new;
 
+pub(crate) mod attribute; // TODO move to sql-processor
 pub(crate) mod correlation; // TODO move to sql-processor
 pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
@@ -15,6 +16,7 @@ pub(crate) mod validation_helper;
 pub(crate) mod value;
 
 pub use crate::{
+    attribute::attribute_name::AttributeName,
     correlation::{correlation_alias::CorrelationAlias, correlation_name::CorrelationName},
     data_structure::{
         alias_name::AliasName,
