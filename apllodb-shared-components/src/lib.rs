@@ -11,6 +11,7 @@ pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
 pub(crate) mod error;
 pub(crate) mod expression;
+pub(crate) mod field; // TODO move to sql-processor
 pub(crate) mod session;
 pub(crate) mod validation_helper;
 pub(crate) mod value;
@@ -54,6 +55,7 @@ pub use crate::{
         operator::{BinaryOperator, UnaryOperator},
         Expression,
     },
+    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     session::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
         without_db::SessionWithoutDb, Session,
