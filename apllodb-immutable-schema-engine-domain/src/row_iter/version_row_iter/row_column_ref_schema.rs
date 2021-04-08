@@ -1,5 +1,5 @@
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, RecordPos, TableName,
 };
 use serde::{Deserialize, Serialize};
 
@@ -52,11 +52,11 @@ impl RowColumnRefSchema {
     ///
     /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `column_name` does not exist in this row.
-    pub(crate) fn resolve_index_with_rm(
+    pub(crate) fn resolve_pos_with_rm(
         &mut self,
         column_name: &ColumnName,
-    ) -> ApllodbResult<usize> {
-        let idx = self
+    ) -> ApllodbResult<RecordPos> {
+        let raw_pos = self
             .column_names
             .iter()
             .position(|cn| cn == column_name)
@@ -71,7 +71,7 @@ impl RowColumnRefSchema {
                 )
             })?;
 
-        self.column_names.remove(idx);
-        Ok(idx)
+        self.column_names.remove(raw_pos);
+        Ok(RecordPos::new(raw_pos))
     }
 }

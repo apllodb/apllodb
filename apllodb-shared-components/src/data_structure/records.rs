@@ -9,6 +9,8 @@ use crate::{
 
 use self::record_field_ref_schema::RecordFieldRefSchema;
 
+use super::record::record_pos::RecordPos;
+
 /// Seq of [Record](crate::Record)s.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Records {
@@ -85,17 +87,17 @@ impl Records {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn projection(self, projection: &[FieldIndex]) -> ApllodbResult<Self> {
-        let projection_idxs = projection
+        let projection_positions = projection
             .iter()
             .map(|index| self.schema.resolve_index(index))
-            .collect::<ApllodbResult<Vec<usize>>>()?;
+            .collect::<ApllodbResult<Vec<RecordPos>>>()?;
 
         let new_schema = self.schema.projection(projection)?;
 
         let new_inner: Vec<SqlValues> = self
             .inner
             .into_iter()
-            .map(|sql_values| sql_values.projection(&projection_idxs))
+            .map(|sql_values| sql_values.projection(&projection_positions))
             .collect();
 
         Ok(Self::new(new_schema, new_inner))
@@ -113,12 +115,12 @@ impl Records {
             let mut res = std::cmp::Ordering::Equal;
 
             for (index, ord) in field_orderings {
-                let idx = schema
+                let pos = schema
                     .resolve_index(&index)
                     .unwrap_or_else(|_| panic!("must be valid field: `{}`", index));
 
-                let a_val = a.get(idx);
-                let b_val = b.get(idx);
+                let a_val = a.get(pos);
+                let b_val = b.get(pos);
 
                 match a_val.sql_compare(&b_val).unwrap_or_else(|_| {
                     panic!(
@@ -192,9 +194,11 @@ impl Records {
                 .as_full_field_references()
                 .iter()
                 .enumerate()
-                .find_map(|(idx, ffr)| {
+                .find_map(|(raw_pos, ffr)| {
                     if ffr == joined_ffr {
-                        let res_sql_value = record.get_sql_value(idx).map(|v| v.clone());
+                        let res_sql_value = record
+                            .get_sql_value(RecordPos::new(raw_pos))
+                            .map(|v| v.clone());
                         Some(res_sql_value)
                     } else {
                         None

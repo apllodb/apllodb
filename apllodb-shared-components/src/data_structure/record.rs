@@ -1,7 +1,10 @@
 pub(crate) mod field_index;
+pub(crate) mod record_pos;
 
 use crate::{error::ApllodbResult, SqlConvertible, SqlValue, SqlValues};
 use std::ops::Index;
+
+use self::record_pos::RecordPos;
 
 /// Record representation used in client and query processor.
 /// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.
@@ -28,8 +31,8 @@ impl Record {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
-    pub fn get<T: SqlConvertible>(&self, index: usize) -> ApllodbResult<Option<T>> {
-        let sql_value = self.get_sql_value(index)?;
+    pub fn get<T: SqlConvertible>(&self, pos: RecordPos) -> ApllodbResult<Option<T>> {
+        let sql_value = self.get_sql_value(pos)?;
         let ret = match sql_value {
             SqlValue::Null => None,
             SqlValue::NotNull(nn) => Some(nn.unpack()?),
@@ -43,8 +46,8 @@ impl Record {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn get_sql_value(&self, index: usize) -> ApllodbResult<&SqlValue> {
-        let sql_value = self.values.index(index);
+    pub fn get_sql_value(&self, pos: RecordPos) -> ApllodbResult<&SqlValue> {
+        let sql_value = self.values.index(pos);
         Ok(sql_value)
     }
 
@@ -54,8 +57,8 @@ impl Record {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(mut self, indexes: &[usize]) -> ApllodbResult<Self> {
-        self.values = self.values.projection(&indexes);
+    pub fn projection(mut self, positions: &[RecordPos]) -> ApllodbResult<Self> {
+        self.values = self.values.projection(&positions);
         Ok(self)
     }
 

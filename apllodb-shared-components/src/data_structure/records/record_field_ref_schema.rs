@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{ApllodbResult, CorrelationIndex, FieldIndex, FullFieldReference};
+use crate::{ApllodbResult, CorrelationIndex, FieldIndex, FullFieldReference, data_structure::record::record_pos::RecordPos};
 
 /// Internally has similar structure as `Vec<FullFieldReference>` and works with [SqlValues](crate::SqlValues) with the same length
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -25,7 +25,7 @@ impl RecordFieldRefSchema {
     /// # Failures
     ///
     /// see: [FieldIndex::peek](crate::FieldIndex::peek)
-    pub fn resolve_index(&self, index: &FieldIndex) -> ApllodbResult<usize> {
+    pub fn resolve_index(&self, index: &FieldIndex) -> ApllodbResult<RecordPos> {
         let (idx, _) = index.peek(&self.0)?;
         Ok(idx)
     }

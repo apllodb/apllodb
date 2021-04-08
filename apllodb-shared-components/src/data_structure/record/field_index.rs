@@ -8,6 +8,8 @@ use crate::{
     FullFieldReference,
 };
 
+use super::record_pos::RecordPos;
+
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
 /// Used to get a value from a record.
 ///
@@ -45,8 +47,8 @@ impl FieldIndex {
     pub fn peek<'a>(
         &self,
         full_field_references: impl IntoIterator<Item = &'a FullFieldReference>,
-    ) -> ApllodbResult<(usize, &'a FullFieldReference)> {
-        let mut ret_idx: usize = 0;
+    ) -> ApllodbResult<(RecordPos, &'a FullFieldReference)> {
+        let mut ret_pos = RecordPos::new(0);
         let mut ret_ffr: Option<&'a FullFieldReference> = None;
 
         for ffr in full_field_references {
@@ -65,7 +67,7 @@ impl FieldIndex {
                 }
             }
             if ret_ffr.is_none() {
-                ret_idx += 1;
+                ret_pos.inc();
             }
         }
 
@@ -80,7 +82,7 @@ impl FieldIndex {
             ));
         }
 
-        Ok((ret_idx, ret_ffr.unwrap()))
+        Ok((ret_pos, ret_ffr.unwrap()))
     }
 
     fn matches(&self, full_field_reference: &FullFieldReference) -> bool {
@@ -210,7 +212,7 @@ impl From<FullFieldReference> for FieldIndex {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, FieldIndex, FullFieldReference};
+    use crate::{ApllodbErrorKind, FieldIndex, FullFieldReference, RecordPos};
 
     #[test]
     fn test_from_success() {
@@ -415,12 +417,18 @@ mod tests {
         for test_datum in test_data {
             let field_index = FieldIndex::from(test_datum.field_index);
             match field_index.peek(test_datum.full_field_references.iter().as_ref()) {
-                Ok((idx, ffr)) => {
-                    let expected_idx = test_datum
+                Ok((pos, ffr)) => {
+                    let expected_pos = test_datum
                         .expected_result
                         .expect("succeeded in peeking, should expect Ok()");
-                    assert_eq!(idx, expected_idx);
-                    assert_eq!(ffr, test_datum.full_field_references.get(idx).unwrap());
+                    assert_eq!(pos, RecordPos::new(expected_pos));
+                    assert_eq!(
+                        ffr,
+                        test_datum
+                            .full_field_references
+                            .get(pos.to_usize())
+                            .unwrap()
+                    );
                 }
                 Err(e) => {
                     assert_eq!(e.kind(), &test_datum.expected_result.unwrap_err());

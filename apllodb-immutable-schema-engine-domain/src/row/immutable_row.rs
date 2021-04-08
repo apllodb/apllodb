@@ -21,8 +21,8 @@ impl ImmutableRow {
     /// - [UndefinedColumn](apllodb-shared-components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - Specified column does not exist in this row.
     pub fn get_sql_value(&mut self, column_name: &ColumnName) -> ApllodbResult<SqlValue> {
-        let idx = self.schema.resolve_index_with_rm(column_name)?;
-        Ok(self.values.remove(idx))
+        let pos = self.schema.resolve_pos_with_rm(column_name)?;
+        Ok(self.values.remove(pos))
     }
 
     /// Retrieve (and remove) an SqlValue from this row and return it as Rust type.

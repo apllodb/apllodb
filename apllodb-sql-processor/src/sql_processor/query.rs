@@ -104,13 +104,13 @@ mod tests {
                 vec![
                     PEOPLE_RECORD1
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_id())])?,
+                        .projection(&[People::field_pos(People::ffr_id())])?,
                     PEOPLE_RECORD2
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_id())])?,
+                        .projection(&[People::field_pos(People::ffr_id())])?,
                     PEOPLE_RECORD3
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_id())])?,
+                        .projection(&[People::field_pos(People::ffr_id())])?,
                 ],
             ),
             TestDatum::new(
@@ -118,13 +118,13 @@ mod tests {
                 vec![
                     PEOPLE_RECORD1
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_age())])?,
+                        .projection(&[People::field_pos(People::ffr_age())])?,
                     PEOPLE_RECORD2
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_age())])?,
+                        .projection(&[People::field_pos(People::ffr_age())])?,
                     PEOPLE_RECORD3
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_age())])?,
+                        .projection(&[People::field_pos(People::ffr_age())])?,
                 ],
             ),
         ];

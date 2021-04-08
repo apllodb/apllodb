@@ -2,7 +2,7 @@ use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
     ComparisonFunction, CorrelationReference, Expression, FieldReference, FullFieldReference,
-    LogicalFunction, NnSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
+    LogicalFunction, NnSqlValue, RecordPos, SqlConvertible, SqlValue, SqlValues, TableName,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, ops::Index};
@@ -99,7 +99,7 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let idx = column_names
+                let raw_pos = column_names
                     .iter()
                     .position(|cn| cn == cdt.column_name())
                     .unwrap_or_else(|| {
@@ -109,7 +109,7 @@ impl ApparentPrimaryKey {
                             apk_cdts
                         )
                     });
-                let sql_value = sql_values.index(idx).clone();
+                let sql_value = sql_values.index(RecordPos::new(raw_pos)).clone();
                 if let SqlValue::NotNull(nn_sql_value) = sql_value {
                     nn_sql_value
                 } else {

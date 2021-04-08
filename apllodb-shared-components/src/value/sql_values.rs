@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Record, SqlValue};
+use crate::{data_structure::record::record_pos::RecordPos, Record, SqlValue};
 
 /// Seq of [SqlValue](crate::SqlValue).
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
@@ -15,11 +15,11 @@ impl From<Record> for SqlValues {
     }
 }
 
-impl Index<usize> for SqlValues {
+impl Index<RecordPos> for SqlValues {
     type Output = SqlValue;
 
-    fn index(&self, index: usize) -> &Self::Output {
-        self.0.get(index).expect("index out of range")
+    fn index(&self, pos: RecordPos) -> &Self::Output {
+        self.0.get(pos.to_usize()).expect("index out of range")
     }
 }
 
@@ -42,13 +42,13 @@ impl SqlValues {
     }
 
     /// get ref to SqlValue
-    pub fn get(&self, index: usize) -> &SqlValue {
-        self.0.index(index)
+    pub fn get(&self, pos: RecordPos) -> &SqlValue {
+        self.0.index(pos.to_usize())
     }
 
     /// extract SqlValue and remove from list
-    pub fn remove(&mut self, index: usize) -> SqlValue {
-        self.0.remove(index)
+    pub fn remove(&mut self, pos: RecordPos) -> SqlValue {
+        self.0.remove(pos.to_usize())
     }
 
     /// If SqlValues is like this:
@@ -62,17 +62,17 @@ impl SqlValues {
     /// ```text
     /// 'd', 'a'
     /// ```
-    pub fn projection(mut self, idxs: &[usize]) -> Self {
-        let mut sorted_idxs = idxs.to_vec();
+    pub fn projection(mut self, positions: &[RecordPos]) -> Self {
+        let mut sorted_idxs = positions.to_vec();
         sorted_idxs.sort_unstable();
 
         let mut cnt_moved = 0;
 
         let mut new_inner_with_order: Vec<(SqlValue, usize)> = sorted_idxs
             .into_iter()
-            .map(|idx| {
-                let order = idxs.iter().position(|x| *x == idx).unwrap();
-                let ret = (self.0.remove(idx - cnt_moved), order);
+            .map(|pos| {
+                let order = positions.iter().position(|x| *x == pos).unwrap();
+                let ret = (self.0.remove(pos.to_usize() - cnt_moved), order);
                 cnt_moved += 1;
                 ret
             })
@@ -88,7 +88,7 @@ impl SqlValues {
 
 #[cfg(test)]
 mod tests {
-    use crate::{NnSqlValue, SqlValue, SqlValues};
+    use crate::{NnSqlValue, RecordPos, SqlValue, SqlValues};
 
     #[test]
     fn test_projection() {
@@ -145,7 +145,14 @@ mod tests {
                     .collect(),
             );
             assert_eq!(
-                input.projection(&test_datum.projection),
+                input.projection(
+                    test_datum
+                        .projection
+                        .into_iter()
+                        .map(RecordPos::new)
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                ),
                 SqlValues::new(
                     test_datum
                         .output
