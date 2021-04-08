@@ -55,7 +55,7 @@ Has metadata of vtable `T`. Used for deserializing `VTable` from a `.sqlite3` fi
 Has metadata of `T`'s versions. Used for deserializing `VTable` from a `.sqlite3` file.
 
 | _column name_ | \*`table_name` | \*`version_number` | `column_data_types` | `version_constraints` | `is_active` |
-|--|--|--|--|--|
+|--|--|--|--|--|--|
 | _description_ | Table name (foreign key to `_vtable_metadata`). | Version number. | Non-PK column definitions. | Table's constraints for a single record (not null, default, for example). | Whether the version is active or not. |
 | _value example_ | `"T"` | `1` | ... | ... | `true` |
 
