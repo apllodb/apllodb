@@ -57,7 +57,6 @@ pub use crate::{
         operator::{BinaryOperator, UnaryOperator},
         Expression,
     },
-    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     record_index::RecordIndex,
     record_schema::RecordSchema,
     session::{
@@ -73,6 +72,10 @@ pub use crate::{
         },
         sql_values::SqlValues,
     },
+};
+
+pub(crate) use crate::field::{
+    aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName,
 };
 
 #[cfg(feature = "test-support")]
