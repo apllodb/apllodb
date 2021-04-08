@@ -7,3 +7,9 @@ pub(crate) struct AliasedCorrelationName {
     name: CorrelationName,
     alias: Option<CorrelationAlias>,
 }
+
+impl AliasedCorrelationName {
+    pub(crate) fn name(&self) -> &CorrelationName {
+        &self.name
+    }
+}

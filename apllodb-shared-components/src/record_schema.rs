@@ -25,7 +25,7 @@ use serde::{Deserialize, Serialize};
 /// | 6 | - |
 /// | 7 | - ; a888 |
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
-pub(crate) struct RecordSchema {
+pub struct RecordSchema {
     inner: Vec<(RecordPos, Option<AliasedFieldName>)>,
 }
 
@@ -97,11 +97,11 @@ impl RecordSchema {
     /// # Panics
     ///
     /// if any field is unnamed (even un-aliased) constant.
-    pub fn to_aliased_field_names(&self) -> Vec<AliasedFieldName> {
+    pub(crate) fn to_aliased_field_names(&self) -> Vec<AliasedFieldName> {
         self.assert_all_named();
         self.inner
             .iter()
-            .map(|(_, opt_name)| opt_name.unwrap())
+            .map(|(_, opt_name)| opt_name.as_ref().expect("already checked").clone())
             .collect()
     }
 }

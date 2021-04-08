@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::ColumnName;
 use serde::{Deserialize, Serialize};
 
@@ -6,4 +8,14 @@ use serde::{Deserialize, Serialize};
 pub(crate) enum AttributeName {
     /// Column
     ColumnNameVariant(ColumnName),
+}
+
+impl Display for AttributeName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AttributeName::ColumnNameVariant(cn) => {
+                write!(f, "{}", cn.as_str())
+            }
+        }
+    }
 }

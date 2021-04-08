@@ -14,3 +14,9 @@ impl AliasedFieldName {
         todo!()
     }
 }
+
+impl From<&AliasedFieldName> for NamedRecordIndex {
+    fn from(n: &AliasedFieldName) -> Self {
+        NamedRecordIndex::from(&n.name)
+    }
+}

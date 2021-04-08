@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::TableName;
 use serde::{Deserialize, Serialize};
 
@@ -6,4 +8,14 @@ use serde::{Deserialize, Serialize};
 pub(crate) enum CorrelationName {
     /// Table name
     TableNameVariant(TableName),
+}
+
+impl Display for CorrelationName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CorrelationName::TableNameVariant(tn) => {
+                write!(f, "{}", tn.as_str())
+            }
+        }
+    }
 }
