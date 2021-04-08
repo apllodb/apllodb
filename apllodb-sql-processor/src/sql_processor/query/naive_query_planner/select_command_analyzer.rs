@@ -96,7 +96,7 @@ impl SelectCommandAnalyzer {
             let from_correlations = self.from_item_correlation_references()?;
             let expression =
                 AstTranslator::condition_in_select(ast_condition.clone(), &from_correlations)?;
-            let ffrs = expression.to_full_field_references();
+            let ffrs = expression.to_record_indexes();
             Ok(ffrs.into_iter().collect())
         } else {
             Ok(vec![])

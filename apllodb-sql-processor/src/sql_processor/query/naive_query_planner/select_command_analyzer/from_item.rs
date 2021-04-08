@@ -139,7 +139,7 @@ impl SelectCommandAnalyzer {
                     &Self::ast_from_item_into_correlation_references(ast_from_item)?,
                 )?;
 
-                let mut ffrs = expression.to_full_field_references();
+                let mut ffrs = expression.to_record_indexes();
                 ffrs.append(&mut Self::ast_from_item_into_full_field_references(
                     left.as_ref(),
                 )?);

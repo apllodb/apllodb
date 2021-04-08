@@ -4,8 +4,8 @@ pub(crate) mod operator;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
-    Record, RecordFieldRefSchema, RecordIndex, SqlValue,
+    record_schema::RecordSchema, ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference,
+    LogicalFunction, NnSqlValue, Record, RecordFieldRefSchema, RecordIndex, SqlValue,
 };
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
@@ -29,22 +29,22 @@ pub enum Expression {
 impl Expression {
     /// # Panics
     ///
-    /// if `record_for_field_ref` is None for Expression::FullFieldReferenceVariant.
+    /// if `record_for_index` is None for Expression::FullFieldReferenceVariant.
     pub fn to_sql_value(
         &self,
-        record_for_field_ref: Option<(&Record, &RecordFieldRefSchema)>,
+        record_for_index: Option<(&Record, &RecordSchema)>,
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
-            Expression::RecordIndexVariant(ffr) => {
-                let (record, schema) = record_for_field_ref.expect(
+            Expression::RecordIndexVariant(idx) => {
+                let (record, schema) = record_for_index.expect(
                     "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
                 );
-                let idx = schema.resolve_index(&FieldIndex::from(ffr.clone()))?;
-                record.get_sql_value(idx).map(|v| v.clone())
+                let pos = schema.index(idx)?;
+                record.get_sql_value(pos).map(|v| v.clone())
             }
             Expression::UnaryOperatorVariant(uni_op, child) => {
-                let child_sql_value = child.to_sql_value(record_for_field_ref)?;
+                let child_sql_value = child.to_sql_value(record_for_index)?;
                 match (uni_op, child_sql_value) {
                     (UnaryOperator::Minus, SqlValue::Null) => Ok(SqlValue::Null),
                     (UnaryOperator::Minus, SqlValue::NotNull(nn_sql_value)) => {
@@ -56,8 +56,8 @@ impl Expression {
                 BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
                     match comparison_function {
                         ComparisonFunction::EqualVariant { left, right } => {
-                            let left_sql_value = left.to_sql_value(record_for_field_ref)?;
-                            let right_sql_value = right.to_sql_value(record_for_field_ref)?;
+                            let left_sql_value = left.to_sql_value(record_for_index)?;
+                            let right_sql_value = right.to_sql_value(record_for_index)?;
                             left_sql_value
                                 .sql_compare(&right_sql_value)
                                 .map(|sql_compare_result| {
@@ -73,10 +73,10 @@ impl Expression {
                         LogicalFunction::AndVariant { left, right } => {
                             let left_sql_value =
                                 Expression::BooleanExpressionVariant(*(left.clone()))
-                                    .to_sql_value(record_for_field_ref)?;
+                                    .to_sql_value(record_for_index)?;
                             let right_sql_value =
                                 Expression::BooleanExpressionVariant(*(right.clone()))
-                                    .to_sql_value(record_for_field_ref)?;
+                                    .to_sql_value(record_for_index)?;
 
                             let b = left_sql_value.to_bool()? && right_sql_value.to_bool()?;
                             Ok(SqlValue::NotNull(NnSqlValue::Boolean(b)))
@@ -87,9 +87,9 @@ impl Expression {
         }
     }
 
-    /// retrieves all FFR in a expression
-    pub fn to_full_field_references(&self) -> Vec<FullFieldReference> {
-        fn helper_boolean_expr(boolean_expr: &BooleanExpression) -> Vec<FullFieldReference> {
+    /// retrieves all RecordIndex in a expression
+    pub fn to_record_indexes(&self) -> Vec<RecordIndex> {
+        fn helper_boolean_expr(boolean_expr: &BooleanExpression) -> Vec<RecordIndex> {
             match boolean_expr {
                 BooleanExpression::LogicalFunctionVariant(logical_function) => {
                     match logical_function {
@@ -104,8 +104,8 @@ impl Expression {
                 BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
                     match comparison_function {
                         ComparisonFunction::EqualVariant { left, right } => {
-                            let mut left = left.to_full_field_references();
-                            let mut right = right.to_full_field_references();
+                            let mut left = left.to_record_indexes();
+                            let mut right = right.to_record_indexes();
                             left.append(&mut right);
                             left
                         }
@@ -118,10 +118,10 @@ impl Expression {
             Expression::ConstantVariant(_) => {
                 vec![]
             }
-            Expression::RecordIndexVariant(ffr) => {
-                vec![ffr.clone()]
+            Expression::RecordIndexVariant(idx) => {
+                vec![idx.clone()]
             }
-            Expression::UnaryOperatorVariant(_op, expr) => expr.to_full_field_references(),
+            Expression::UnaryOperatorVariant(_op, expr) => expr.to_record_indexes(),
             Expression::BooleanExpressionVariant(bool_expr) => helper_boolean_expr(bool_expr),
         }
     }
