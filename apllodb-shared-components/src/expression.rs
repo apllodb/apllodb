@@ -139,15 +139,16 @@ impl From<SqlValue> for Expression {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_support::{fixture::*, test_models::People};
-    use crate::{ApllodbResult, BooleanExpression, Expression, Row, SqlValue, UnaryOperator};
+    use crate::{
+        ApllodbResult, BooleanExpression, Expression, SchemaIndex, SqlValue, UnaryOperator,
+    };
 
     #[test]
     fn test_to_sql_value() -> ApllodbResult<()> {
-        #[derive(Clone, Debug, new)]
+        #[derive(new)]
         struct TestDatum {
             in_expr: Expression,
-            in_record_for_index: Option<(Row, RecordSchema)>,
+            in_value_from_index: Option<Box<dyn Fn(&SchemaIndex) -> ApllodbResult<SqlValue>>>,
             expected_sql_value: SqlValue,
         }
 
@@ -166,8 +167,8 @@ mod tests {
             ),
             // FullFieldReference
             TestDatum::new(
-                Expression::SchemaIndexVariant(People::ffr_id()),
-                Some((PEOPLE_RECORD1.clone(), People::schema())),
+                Expression::SchemaIndexVariant(SchemaIndex::from("x")),
+                Some(Box::new(|_| Ok(SqlValue::factory_integer(1)))),
                 SqlValue::factory_integer(1),
             ),
             // BooleanExpression
@@ -223,9 +224,7 @@ mod tests {
         ];
 
         for t in test_data {
-            let sql_value = t
-                .in_expr
-                .to_sql_value(t.in_record_for_index.as_ref().map(|(r, s)| (r, s)))?;
+            let sql_value = t.in_expr.to_sql_value(&t.in_value_from_index)?;
             assert_eq!(sql_value, t.expected_sql_value);
         }
 
