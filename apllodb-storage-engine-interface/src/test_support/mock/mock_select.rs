@@ -17,15 +17,15 @@ impl From<ModelsMock> for MockDatum {
             tables: vec![
                 MockRows {
                     table_name: People::table_name(),
-                    rows: Records::factory(People::schema(), models.people),
+                    rows: Rows::new(People::schema(), models.people),
                 },
                 MockRows {
                     table_name: Body::table_name(),
-                    rows: Records::factory(Body::schema(), models.body),
+                    rows: Rows::new(Body::schema(), models.body),
                 },
                 MockRows {
                     table_name: Pet::table_name(),
-                    rows: Records::factory(Pet::schema(), models.pet),
+                    rows: Rows::new(Pet::schema(), models.pet),
                 },
             ],
         }
@@ -62,7 +62,7 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
                         .map(|ffr| FieldIndex::from(ffr.clone()))
                         .collect();
 
-                    records.projection(&fields).unwrap()
+                    rows.projection(&fields).unwrap()
                 }
             };
 
