@@ -1,8 +1,9 @@
-use apllodb_shared_components::{
-    NnSqlValue, RPos, SchemaIndex, SqlValue, TableColumnName, TableName,
-};
+use apllodb_shared_components::{NnSqlValue, RPos, SchemaIndex, SqlValue, TableColumnName};
 
-use crate::rows::{row::Row, row_schema::RowSchema};
+use crate::{
+    rows::{row::Row, row_schema::RowSchema},
+    table::table_name::TableName,
+};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY

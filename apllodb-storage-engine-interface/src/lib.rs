@@ -48,6 +48,7 @@
 mod access_methods;
 mod row_projection_query;
 mod rows;
+mod table;
 
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
