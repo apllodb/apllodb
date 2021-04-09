@@ -49,17 +49,6 @@ impl Row {
         Ok(sql_value)
     }
 
-    /// Shrink a record into record with specified `fields`.
-    ///
-    /// # Failures
-    ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
-    ///   - Specified field does not exist in this record.
-    pub fn projection(mut self, positions: &[RPos]) -> ApllodbResult<Self> {
-        self.values = self.values.projection(&positions);
-        Ok(self)
-    }
-
     /// Get raw representation
     pub fn into_values(self) -> SqlValues {
         self.values
