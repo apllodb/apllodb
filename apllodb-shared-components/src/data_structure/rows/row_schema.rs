@@ -14,7 +14,10 @@ impl Schema for RowSchema {
 
     type Index = RowIndex;
 
-    fn names_with_pos(&self) -> &[(RPos, Self::Name)] {
-        &self.inner
+    fn names_with_pos(&self) -> Vec<(RPos, Option<TableColumnName>)> {
+        self.inner
+            .iter()
+            .map(|(pos, tn)| (*pos, Some(tn.clone())))
+            .collect()
     }
 }

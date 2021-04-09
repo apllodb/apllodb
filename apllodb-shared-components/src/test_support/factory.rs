@@ -8,12 +8,11 @@ use crate::{
         aliased_correlation_name::AliasedCorrelationName, correlation_alias::CorrelationAlias,
         correlation_name::CorrelationName,
     },
-    data_structure::reference::correlation_reference::CorrelationReference,
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     record_schema::RecordSchema,
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, LogicalFunction, NnSqlValue, Row, Records, SqlType, SqlValue, SqlValues,
-    TableName, UnaryOperator,
+    Expression, LogicalFunction, NnSqlValue, Records, Row, SqlType, SqlValue, SqlValues, TableName,
+    UnaryOperator,
 };
 use rand::Rng;
 

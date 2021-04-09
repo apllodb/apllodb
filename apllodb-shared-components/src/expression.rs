@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema, ApllodbResult,
-    ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue, Row,
-    RecordFieldRefSchema, RecordIndex, SqlValue,
+    ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
+    RecordFieldRefSchema, RecordIndex, Row, Schema, SqlValue,
 };
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
@@ -138,7 +138,7 @@ impl From<SqlValue> for Expression {
 mod tests {
     use crate::test_support::{fixture::*, test_models::People};
     use crate::{
-        ApllodbResult, BooleanExpression, Expression, Row, RecordFieldRefSchema, SqlValue,
+        ApllodbResult, BooleanExpression, Expression, RecordFieldRefSchema, Row, SqlValue,
         UnaryOperator,
     };
 

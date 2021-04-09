@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     correlation::aliased_correlation_name::AliasedCorrelationName,
-    record_index::named_record_index::NamedRecordIndex, AttributeName,
+    record_index::named_record_index::NamedRecordIndex, AttributeName, SchemaIndex,
 };
 
 /// Name of a field.
@@ -18,6 +18,6 @@ impl From<&FieldName> for NamedRecordIndex {
             "{}.{}",
             n.aliased_correlation_name.correlation_name, n.attribute_name
         );
-        NamedRecordIndex::from(s.as_str())
+        SchemaIndex::from(s.as_str())
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     record_index::named_record_index::NamedRecordIndex, AliasedFieldName, ApllodbError,
-    ApllodbErrorKind, ApllodbResult, RecordIndex, RPos,
+    ApllodbErrorKind, ApllodbResult, RPos, RecordIndex, Schema, SchemaName,
 };
 use serde::{Deserialize, Serialize};
 
@@ -29,55 +29,19 @@ pub struct RecordSchema {
     inner: Vec<(RPos, Option<AliasedFieldName>)>,
 }
 
+impl Schema for RecordSchema {
+    type Name = AliasedFieldName;
+
+    type Index = NamedRecordIndex;
+
+    fn names_with_pos(&self) -> Vec<(RPos, Option<AliasedFieldName>)> {
+        self.inner.clone()
+    }
+}
+
 impl RecordSchema {
     pub(crate) fn assert_all_named(&self) {
         assert!(self.inner.iter().all(|(_, opt)| opt.is_some()));
-    }
-
-    /// Finds a pair of (RecordPos, AliasedFieldName) of a field specified by RecordIndex.
-    ///
-    /// # Failures
-    ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
-    ///   - no field matches to this RecordIndex.
-    /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
-    ///   - more than 1 of fields match to this FieldIndex.
-    pub(crate) fn index(
-        &self,
-        named_idx: &NamedRecordIndex,
-    ) -> ApllodbResult<(RPos, AliasedFieldName)> {
-        let matching_pair: Vec<(RPos, AliasedFieldName)> = self
-            .inner
-            .iter()
-            .filter_map(|(pos, opt_field)| {
-                opt_field
-                    .as_ref()
-                    .map(|field| {
-                        if field.matches(named_idx) {
-                            Some((*pos, field.clone()))
-                        } else {
-                            None
-                        }
-                    })
-                    .flatten()
-            })
-            .collect();
-
-        if matching_pair.len() == 1 {
-            matching_pair.first().cloned().ok_or_else(|| unreachable!())
-        } else if matching_pair.is_empty() {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidName,
-                format!("no field matches to: {:?}", named_idx),
-                None,
-            ))
-        } else {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::AmbiguousColumn,
-                format!("more than 1 fields match to: {:?}", named_idx),
-                None,
-            ))
-        }
     }
 
     /// Filter specified fields

@@ -33,12 +33,17 @@ pub trait Schema: Sized {
         let matching_pair: Vec<(RPos, Self::Name)> = self
             .names_with_pos()
             .iter()
-            .filter_map(|(pos, name)| {
-                if name.matches(idx) {
-                    Some((*pos, name.clone()))
-                } else {
-                    None
-                }
+            .filter_map(|(pos, opt_name)| {
+                opt_name
+                    .as_ref()
+                    .map(|name| {
+                        if name.matches(idx) {
+                            Some((*pos, name.clone()))
+                        } else {
+                            None
+                        }
+                    })
+                    .flatten()
             })
             .collect();
 
@@ -47,18 +52,18 @@ pub trait Schema: Sized {
         } else if matching_pair.is_empty() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
-                format!("no field matches to: {}", idx.to_string()),
+                format!("no field matches to: {}", idx.display()),
                 None,
             ))
         } else {
             Err(ApllodbError::new(
                 ApllodbErrorKind::AmbiguousColumn,
-                format!("more than 1 fields match to: {}", idx.to_string()),
+                format!("more than 1 fields match to: {}", idx.display()),
                 None,
             ))
         }
     }
 
     /// Pairs of (RPos, Name).
-    fn names_with_pos(&self) -> &[(RPos, Self::Name)];
+    fn names_with_pos(&self) -> Vec<(RPos, Option<Self::Name>)>;
 }

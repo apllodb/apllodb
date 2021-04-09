@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use crate::SchemaIndex;
@@ -23,5 +25,17 @@ impl SchemaIndex for RowIndex {
 
     fn attr(&self) -> &str {
         &self.column
+    }
+}
+
+impl Display for RowIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.display())
+    }
+}
+
+impl From<&str> for RowIndex {
+    fn from(s: &str) -> Self {
+        SchemaIndex::from(s)
     }
 }

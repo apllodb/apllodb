@@ -1,7 +1,8 @@
 pub(crate) mod named_record_index;
 
-use crate::RPos;
 use serde::{Deserialize, Serialize};
+
+use crate::RPos;
 
 use self::named_record_index::NamedRecordIndex;
 

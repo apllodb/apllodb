@@ -4,8 +4,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema,
-    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering,
-    RecordIndex, RPos, Row, SqlValue, SqlValueHashKey, SqlValues,
+    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering, RPos,
+    RecordIndex, Row, Schema, SqlValue, SqlValueHashKey, SqlValues,
 };
 
 /// Seq of [Row](crate::Row)s.

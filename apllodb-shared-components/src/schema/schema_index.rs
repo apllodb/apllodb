@@ -12,7 +12,7 @@ pub trait SchemaIndex {
     fn attr(&self) -> &str;
 
     /// Returns "(prefix).(attr)" or "(attr)"
-    fn to_string(&self) -> String {
+    fn display(&self) -> String {
         let prefix = if let Some(p) = self.prefix() {
             format!("{}.", p)
         } else {
