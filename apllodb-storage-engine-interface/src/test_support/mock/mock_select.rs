@@ -1,30 +1,31 @@
 use crate::{
     test_support::test_models::{Body, ModelsMock, People, Pet},
     test_support::MockWithTxMethods,
-    ProjectionQuery,
+    RowProjectionQuery, Rows,
 };
+use apllodb_shared_components::TableName;
 use futures::FutureExt;
 
 #[derive(Clone, PartialEq, Debug)]
 struct MockDatum {
-    tables: Vec<MockDatumInTable>,
+    tables: Vec<MockRows>,
 }
 
 impl From<ModelsMock> for MockDatum {
     fn from(models: ModelsMock) -> Self {
         MockDatum {
             tables: vec![
-                MockDatumInTable {
+                MockRows {
                     table_name: People::table_name(),
-                    records: Records::factory(People::schema(), models.people),
+                    rows: Records::factory(People::schema(), models.people),
                 },
-                MockDatumInTable {
+                MockRows {
                     table_name: Body::table_name(),
-                    records: Records::factory(Body::schema(), models.body),
+                    rows: Records::factory(Body::schema(), models.body),
                 },
-                MockDatumInTable {
+                MockRows {
                     table_name: Pet::table_name(),
-                    records: Records::factory(Pet::schema(), models.pet),
+                    rows: Records::factory(Pet::schema(), models.pet),
                 },
             ],
         }
@@ -32,9 +33,9 @@ impl From<ModelsMock> for MockDatum {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-struct MockDatumInTable {
+struct MockRows {
     table_name: TableName,
-    records: Records,
+    rows: Rows,
 }
 
 pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock) {
@@ -50,11 +51,11 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
                 .find(|table| table.table_name == table_name)
                 .unwrap_or_else(|| panic!("table `{:?}` is undefined in ModelsMock", table_name));
 
-            let records = table.records.clone();
+            let rows = table.rows.clone();
 
-            let records = match projection {
-                ProjectionQuery::All => records,
-                ProjectionQuery::Schema(schema) => {
+            let rows = match projection {
+                RowProjectionQuery::All => rows,
+                RowProjectionQuery::Schema(schema) => {
                     let fields: Vec<FieldIndex> = schema
                         .as_full_field_references()
                         .iter()
@@ -65,6 +66,6 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
                 }
             };
 
-            async move { Ok((records, session)) }.boxed_local()
+            async move { Ok((rows, session)) }.boxed_local()
         });
 }

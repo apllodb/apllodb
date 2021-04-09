@@ -4,7 +4,7 @@ use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference,
     FieldReference, FullFieldReference, RecordFieldRefSchema,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::RowProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ProjectionResult {
     // to keep RecordFieldRefSchema (alias) info
-    query: ProjectionQuery,
+    query: RowProjectionQuery,
 
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
 }
@@ -27,7 +27,7 @@ impl ProjectionResult {
     pub fn new(
         vtable: &VTable,
         active_versions: ActiveVersions,
-        query: ProjectionQuery,
+        query: RowProjectionQuery,
     ) -> ApllodbResult<Self> {
         let pk_columns: HashSet<ColumnName> = vtable
             .table_wide_constraints()
@@ -49,8 +49,8 @@ impl ProjectionResult {
             .collect();
 
         let pk_query_columns: Vec<ColumnName> = match &query {
-            ProjectionQuery::All => pk_columns.iter().cloned().collect(),
-            ProjectionQuery::Schema(schema) => schema
+            RowProjectionQuery::All => pk_columns.iter().cloned().collect(),
+            RowProjectionQuery::Schema(schema) => schema
                 .as_full_field_references()
                 .iter()
                 .map(|ffr| ffr.as_column_name())
@@ -59,8 +59,8 @@ impl ProjectionResult {
                 .collect(),
         };
         let non_pk_query_columns: Vec<ColumnName> = match &query {
-            ProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
-            ProjectionQuery::Schema(schema) => schema
+            RowProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
+            RowProjectionQuery::Schema(schema) => schema
                 .as_full_field_references()
                 .iter()
                 .map(|ffr| ffr.as_column_name())
@@ -216,11 +216,11 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
         let ffrs: Vec<FullFieldReference> = all_column_names
             .into_iter()
             .map(|cn| match &projection_query {
-                ProjectionQuery::All => FullFieldReference::new(
+                RowProjectionQuery::All => FullFieldReference::new(
                     CorrelationReference::TableNameVariant(table_name.clone()),
                     FieldReference::ColumnNameVariant(cn),
                 ),
-                ProjectionQuery::Schema(schema) => schema
+                RowProjectionQuery::Schema(schema) => schema
                     .as_full_field_references()
                     .iter()
                     .find(|ffr| ffr.as_column_name() == &cn)

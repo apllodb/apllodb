@@ -46,14 +46,14 @@
 //! See [test_support module level doc](crate::test_support) for detail.
 
 mod access_methods;
-mod projection_query;
+mod row_projection_query;
 mod rows;
 
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
     without_db_methods::WithoutDbMethods,
 };
-pub use projection_query::ProjectionQuery;
+pub use row_projection_query::RowProjectionQuery;
 pub use rows::Rows;
 
 #[cfg(any(test, feature = "test-support"))]

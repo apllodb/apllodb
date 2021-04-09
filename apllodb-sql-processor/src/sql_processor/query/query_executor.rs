@@ -91,7 +91,7 @@ mod tests {
     };
     use apllodb_storage_engine_interface::{
         test_support::{default_mock_engine, mock_select, MockWithTxMethods},
-        MockStorageEngine, ProjectionQuery,
+        MockStorageEngine, RowProjectionQuery,
     };
     use pretty_assertions::assert_eq;
 
@@ -179,7 +179,7 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: ProjectionQuery::All,
+                        projection: RowProjectionQuery::All,
                     },
                 }))
             })
@@ -195,7 +195,7 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+                        projection: RowProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
                             People::ffr_id(),
                         ])),
                     },
@@ -219,7 +219,7 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+                        projection: RowProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
                             People::ffr_age(),
                         ])),
                     },
@@ -250,7 +250,7 @@ mod tests {
                     left: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                 }))
@@ -279,7 +279,7 @@ mod tests {
                     left: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                 }))
@@ -309,13 +309,13 @@ mod tests {
                     left: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                     right: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Body::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                 }))
@@ -338,13 +338,13 @@ mod tests {
                     left: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                     right: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Pet::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                 }))
@@ -368,13 +368,13 @@ mod tests {
                     left: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Pet::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                     right: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                 }))
@@ -398,13 +398,13 @@ mod tests {
                     left: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: People::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                     right: repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                         op: LeafPlanOperation::SeqScan {
                             table_name: Pet::table_name(),
-                            projection: ProjectionQuery::All,
+                            projection: RowProjectionQuery::All,
                         },
                     })),
                 }))

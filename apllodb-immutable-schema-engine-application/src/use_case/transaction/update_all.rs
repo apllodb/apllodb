@@ -14,7 +14,7 @@ use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression, SqlValue,
     SqlValues, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::RowProjectionQuery;
 // use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -88,7 +88,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         // Fetch all columns of from all versions and update requested columns later.
         // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
         let projection_result: ProjectionResult =
-            ProjectionResult::new(&vtable, active_versions, ProjectionQuery::All)?;
+            ProjectionResult::new(&vtable, active_versions, RowProjectionQuery::All)?;
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
 
         let new_columns_to_insert: Vec<ColumnName> = row_iter.schema().as_column_names().to_vec();

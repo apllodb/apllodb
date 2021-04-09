@@ -2,7 +2,7 @@ mod select_command_analyzer;
 
 use apllodb_shared_components::{ApllodbResult, CorrelationIndex, FieldIndex};
 use apllodb_sql_parser::apllodb_ast::{self};
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::RowProjectionQuery;
 
 use super::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
 use crate::sql_processor::query::query_plan::query_plan_tree::{
@@ -72,7 +72,7 @@ impl<'r> NaiveQueryPlanner<'r> {
                 .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: corref.as_table_name().clone(),
-                        projection: ProjectionQuery::Schema(
+                        projection: RowProjectionQuery::Schema(
                             widest_schema.filter_by_correlations(&[CorrelationIndex::from(corref)]),
                         ),
                     },

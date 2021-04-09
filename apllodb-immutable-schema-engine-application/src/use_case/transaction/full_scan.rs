@@ -9,7 +9,7 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     ApllodbResult, DatabaseName, RecordFieldRefSchema, Records, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::RowProjectionQuery;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -17,7 +17,7 @@ use std::{fmt::Debug, marker::PhantomData};
 pub struct FullScanUseCaseInput<'usecase> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
-    projection: ProjectionQuery,
+    projection: RowProjectionQuery,
 }
 impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
     fn validate(&self) -> ApllodbResult<()> {

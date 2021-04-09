@@ -72,7 +72,7 @@ impl Records {
         }
     }
 
-    /// Shrink records into record with specified `fields`.
+    /// Horizontally shrink records.
     ///
     /// # Failures
     ///

@@ -7,7 +7,7 @@ use apllodb_shared_components::{
 };
 use futures::FutureExt;
 
-use crate::{ProjectionQuery, Rows};
+use crate::{RowProjectionQuery, Rows};
 
 use super::BoxFut;
 
@@ -131,7 +131,7 @@ pub trait WithTxMethods: Sized + 'static {
         self,
         session: SessionWithTx,
         table_name: TableName,
-        projection: ProjectionQuery,
+        projection: RowProjectionQuery,
     ) -> BoxFut<ApllodbSessionResult<(Rows, SessionWithTx)>> {
         let sid = *session.get_id();
         async move {
@@ -148,7 +148,7 @@ pub trait WithTxMethods: Sized + 'static {
         self,
         sid: SessionId,
         table_name: TableName,
-        projection: ProjectionQuery,
+        projection: RowProjectionQuery,
     ) -> BoxFut<ApllodbResult<Rows>>;
 
     fn insert(

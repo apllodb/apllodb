@@ -18,7 +18,7 @@ use apllodb_shared_components::{
     AlterTableAction, ApllodbError, ColumnDefinition, ColumnName, Expression, Records, SessionId,
     SqlValues, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
+use apllodb_storage_engine_interface::{RowProjectionQuery, WithTxMethods};
 use futures::FutureExt;
 
 use super::BoxFutRes;
@@ -136,7 +136,7 @@ impl WithTxMethods for WithTxMethodsImpl {
         self,
         sid: SessionId,
         table_name: TableName,
-        projection: ProjectionQuery,
+        projection: RowProjectionQuery,
     ) -> BoxFutRes<Records> {
         async move {
             let tx_pool = self.tx_pool.borrow();

@@ -1,7 +1,7 @@
 use apllodb_shared_components::{
     Expression, FieldIndex, Ordering, RecordFieldRefSchema, Records, TableName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::RowProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 /// Leaf operations, which generates [RecordIterator](apllodb-shared-components::RecordIterator).
@@ -12,7 +12,7 @@ pub(crate) enum LeafPlanOperation {
     },
     SeqScan {
         table_name: TableName,
-        projection: ProjectionQuery,
+        projection: RowProjectionQuery,
     },
     // TODO extend.
     // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>

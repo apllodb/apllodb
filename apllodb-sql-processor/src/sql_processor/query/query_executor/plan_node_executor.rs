@@ -4,7 +4,7 @@ use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Row, RPos,
     Records, SessionWithTx, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{RowProjectionQuery, StorageEngine, WithTxMethods};
 
 use crate::sql_processor::{
     query::query_plan::query_plan_tree::query_plan_node::operation::{
@@ -65,7 +65,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         &self,
         session: SessionWithTx,
         table_name: TableName,
-        projection: ProjectionQuery,
+        projection: RowProjectionQuery,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         self.context
             .engine

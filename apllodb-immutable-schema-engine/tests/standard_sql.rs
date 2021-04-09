@@ -7,7 +7,7 @@ use apllodb_shared_components::{
     ColumnDefinition, Expression, FieldIndex, FullFieldReference, NnSqlValue, RecordFieldRefSchema,
     SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{RowProjectionQuery, StorageEngine, WithTxMethods};
 
 #[ctor::ctor]
 fn setup() {
@@ -125,7 +125,7 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
 
     let schema = records.as_schema().clone();
@@ -191,7 +191,7 @@ async fn test_update() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
 
     {
@@ -219,7 +219,7 @@ async fn test_update() -> ApllodbResult<()> {
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
 
     {
@@ -248,7 +248,7 @@ async fn test_update() -> ApllodbResult<()> {
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
     {
         let schema = records.as_schema().clone();
@@ -316,7 +316,7 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+            RowProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
                 FullFieldReference::factory(
                     t_name.as_str(),
                     c_id_def.column_data_type().column_name().as_str(),
@@ -332,7 +332,7 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
+            RowProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
                 FullFieldReference::factory(
                     t_name.as_str(),
                     c_id_def.column_data_type().column_name().as_str(),
