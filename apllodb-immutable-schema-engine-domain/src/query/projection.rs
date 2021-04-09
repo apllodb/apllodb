@@ -50,7 +50,7 @@ impl ProjectionResult {
 
         let pk_query_columns: Vec<ColumnName> = match &query {
             RowProjectionQuery::All => pk_columns.iter().cloned().collect(),
-            RowProjectionQuery::Schema(schema) => schema
+            RowProjectionQuery::Columns(schema) => schema
                 .as_full_field_references()
                 .iter()
                 .map(|ffr| ffr.as_column_name())
@@ -60,7 +60,7 @@ impl ProjectionResult {
         };
         let non_pk_query_columns: Vec<ColumnName> = match &query {
             RowProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
-            RowProjectionQuery::Schema(schema) => schema
+            RowProjectionQuery::Columns(schema) => schema
                 .as_full_field_references()
                 .iter()
                 .map(|ffr| ffr.as_column_name())
@@ -220,7 +220,7 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
                     CorrelationReference::TableNameVariant(table_name.clone()),
                     FieldReference::ColumnNameVariant(cn),
                 ),
-                RowProjectionQuery::Schema(schema) => schema
+                RowProjectionQuery::Columns(schema) => schema
                     .as_full_field_references()
                     .iter()
                     .find(|ffr| ffr.as_column_name() == &cn)
