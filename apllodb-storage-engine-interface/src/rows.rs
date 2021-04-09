@@ -1,7 +1,7 @@
 pub(crate) mod row;
 pub(crate) mod row_schema;
 
-use apllodb_shared_components::{ApllodbResult, RPos, Schema, SchemaIndex, SqlValues};
+use apllodb_shared_components::{ApllodbResult, RPos, Schema, SchemaIndex};
 use serde::{Deserialize, Serialize};
 
 use self::{row::Row, row_schema::RowSchema};
@@ -45,7 +45,7 @@ impl Rows {
             })
             .collect::<ApllodbResult<Vec<RPos>>>()?;
 
-        let new_inner: Vec<SqlValues> = self
+        let new_inner: Vec<Row> = self
             .inner
             .into_iter()
             .map(|row| row.projection(&projection_positions))

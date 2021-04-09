@@ -39,18 +39,6 @@ impl RecordSchema {
         assert!(self.inner.iter().all(|(_, opt)| opt.is_some()));
     }
 
-    /// Filter specified fields
-    pub(crate) fn projection(&self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
-        let new_inner: Vec<(RPos, Option<AliasedFieldName>)> = indexes
-            .iter()
-            .map(|index| {
-                let (pos, name) = self.index(index)?;
-                Ok((pos, Some(name)))
-            })
-            .collect::<ApllodbResult<_>>()?;
-        Ok(Self { inner: new_inner })
-    }
-
     /// get raw AliasFieldNames
     ///
     /// # Panics

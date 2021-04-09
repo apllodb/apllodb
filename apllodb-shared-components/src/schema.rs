@@ -18,6 +18,11 @@ pub trait Schema {
     /// Field's / Column's full name.
     type Name: SchemaName;
 
+    /// Default constructor
+    fn new(names_with_pos: Vec<(RPos, Option<Self::Name>)>) -> Self
+    where
+        Self: Sized;
+
     /// Finds a pair of (RPos, Name) of a field/column specified by Index.
     ///
     /// # Failures
@@ -59,6 +64,21 @@ pub trait Schema {
                 None,
             ))
         }
+    }
+
+    /// Filter specified fields
+    fn projection(&self, indexes: &[SchemaIndex]) -> ApllodbResult<Self>
+    where
+        Self: Sized,
+    {
+        let new_inner: Vec<(RPos, Option<Self::Name>)> = indexes
+            .iter()
+            .map(|index| {
+                let (pos, name) = self.index(index)?;
+                Ok((pos, Some(name)))
+            })
+            .collect::<ApllodbResult<_>>()?;
+        Ok(Self::new(new_inner))
     }
 
     /// Pairs of (RPos, Name).
