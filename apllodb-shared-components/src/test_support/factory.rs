@@ -10,7 +10,7 @@ use crate::{
     },
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, LogicalFunction, NnSqlValue, Row, SqlType, SqlValue, SqlValues, TableName,
+    Expression, LogicalFunction, NnSqlValue, SqlType, SqlValue, SqlValues, TableName,
     UnaryOperator,
 };
 use rand::Rng;
@@ -170,21 +170,6 @@ impl NnSqlValue {
 
     pub fn factory_bool(bool_: bool) -> Self {
         Self::Boolean(bool_)
-    }
-}
-
-impl Row {
-    pub fn factory(sql_values: Vec<SqlValue>) -> Self {
-        Self::new(SqlValues::new(sql_values))
-    }
-
-    /// WARN: internal SqlValues might get different from RecordFieldRefSchema
-    pub fn naive_join(self, right: Self) -> Self {
-        let mut sql_values = self.into_values();
-        for right_sql_value in right.into_values() {
-            sql_values.append(right_sql_value);
-        }
-        Self::new(sql_values)
     }
 }
 

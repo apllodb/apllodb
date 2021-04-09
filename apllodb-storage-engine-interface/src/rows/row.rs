@@ -52,3 +52,10 @@ impl Row {
         self.values
     }
 }
+
+/// used for `INSERT INTO t (a, b, c) SELECT x, y, z FROM s;`, for example.
+impl From<Row> for SqlValues {
+    fn from(r: Row) -> Self {
+        r.into_values()
+    }
+}

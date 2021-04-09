@@ -47,12 +47,14 @@
 
 mod access_methods;
 mod projection_query;
+mod rows;
 
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
     without_db_methods::WithoutDbMethods,
 };
 pub use projection_query::ProjectionQuery;
+pub use rows::Rows;
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;

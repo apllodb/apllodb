@@ -34,7 +34,6 @@ pub use crate::{
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName,
         },
-        rows::row::{Row},
         reference::{
             correlation_reference::{correlation_index::CorrelationIndex, CorrelationReference},
             field_reference::FieldReference,
