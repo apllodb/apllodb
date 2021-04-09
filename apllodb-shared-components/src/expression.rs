@@ -4,9 +4,8 @@ pub(crate) mod operator;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema, ApllodbResult,
-    ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
-    RecordFieldRefSchema, RecordIndex, Row, Schema, SqlValue,
+    ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
+    RecordIndex, Row, Schema, SqlValue,
 };
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};

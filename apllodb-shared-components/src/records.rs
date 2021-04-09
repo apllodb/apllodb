@@ -1,11 +1,11 @@
-pub(crate) mod record_field_ref_schema;
+pub(crate) mod record_index;
+pub(crate) mod record_schema;
 
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema,
     AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering, RPos,
-    RecordIndex, Row, Schema, SqlValue, SqlValueHashKey, SqlValues,
+    RecordIndex, RecordSchema, Row, Schema, SqlValue, SqlValueHashKey, SqlValues,
 };
 
 /// Seq of [Row](crate::Row)s.

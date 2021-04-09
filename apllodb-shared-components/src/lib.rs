@@ -19,8 +19,7 @@ pub(crate) mod error;
 pub(crate) mod expression;
 pub(crate) mod field; // TODO move to sql-processor
 pub(crate) mod table_column_name; // TODO move to storage-engine
-pub(crate) mod record_index; // TODO move to sql-processor
-pub(crate) mod record_schema; // TODO move to sql-processor
+pub(crate) mod records; // TODO move to sql-processor
 pub(crate) mod session;
 pub(crate) mod validation_helper;
 pub(crate) mod value;
@@ -28,6 +27,9 @@ pub(crate) mod value;
 pub use crate::{
     schema::{Schema, schema_name::SchemaName, schema_index::SchemaIndex, r_pos::RPos},
     table_column_name::TableColumnName,
+    records::{Records,     record_index::RecordIndex,    record_schema::RecordSchema,
+
+    },
     data_structure::{
         alias_name::AliasName,
         alter_table_action::AlterTableAction,
@@ -37,7 +39,6 @@ pub use crate::{
             column_name::ColumnName,
         },
         rows::row::{field_index::FieldIndex, Row},
-        records::{record_field_ref_schema::RecordFieldRefSchema, Records},
         reference::{
             correlation_reference::{correlation_index::CorrelationIndex, CorrelationReference},
             field_reference::FieldReference,
@@ -64,7 +65,6 @@ pub use crate::{
         operator::{BinaryOperator, UnaryOperator},
         Expression,
     },
-    record_index::RecordIndex,
     session::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
         without_db::SessionWithoutDb, Session,
@@ -84,7 +84,6 @@ pub(crate) use crate::{
     attribute::attribute_name::AttributeName,
     correlation::{correlation_alias::CorrelationAlias, correlation_name::CorrelationName},
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
-    record_schema::RecordSchema,
 };
 
 #[cfg(feature = "test-support")]

@@ -1,8 +1,7 @@
-use crate::{
-    record_index::named_record_index::NamedRecordIndex, AliasedFieldName, ApllodbError,
-    ApllodbErrorKind, ApllodbResult, RPos, RecordIndex, Schema, SchemaName,
-};
+use crate::{AliasedFieldName, ApllodbResult, RPos, Schema};
 use serde::{Deserialize, Serialize};
+
+use super::record_index::named_record_index::NamedRecordIndex;
 
 /// Schema of records.
 ///
