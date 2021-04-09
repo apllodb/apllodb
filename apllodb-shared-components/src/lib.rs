@@ -17,7 +17,6 @@ pub(crate) mod database;
 pub(crate) mod error;
 pub(crate) mod expression;
 pub(crate) mod field; // TODO move to sql-processor
-pub(crate) mod table_column_name; // TODO move to storage-engine
 pub(crate) mod record_index; // TODO move to sql-processor
 pub(crate) mod record_schema; // TODO move to sql-processor
 pub(crate) mod session;
@@ -25,7 +24,6 @@ pub(crate) mod validation_helper;
 pub(crate) mod value;
 
 pub use crate::{
-    table_column_name::TableColumnName,
     data_structure::{
         alias_name::AliasName,
         alter_table_action::AlterTableAction,
