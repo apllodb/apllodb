@@ -27,24 +27,33 @@ pub enum Expression {
 }
 
 impl Expression {
+    /// Fully evaluate an expression to SqlValue.
+    ///
+    /// Row or Record is necessary for SchemaIndexVariant and it is supposed to be indirectly passed via `value_from_index`.
+    ///
     /// # Panics
     ///
-    /// if `record_for_index` is None for Expression::SchemaIndexVariant.
-    pub fn to_sql_value<Sch: Schema>(
+    /// if `value_from_index` is None for Expression::SchemaIndexVariant.
+    pub fn to_sql_value(
         &self,
-        record_for_index: Option<(&Row, &Sch)>,
+        value_from_index: &Option<impl Fn(&SchemaIndex) -> ApllodbResult<SqlValue>>,
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
             Expression::SchemaIndexVariant(idx) => {
-                let (record, schema) = record_for_index.expect(
-                    "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
-                );
-                let (pos, _) = schema.index(idx)?;
-                record.get_sql_value(pos).map(|v| v.clone())
+                let f = value_from_index
+                    .as_ref()
+                    .expect("needs `value_from_index` to eval Expression::SchemaIndexVariant");
+                f(idx)
+
+                // let (record, schema) = value_from_index.expect(
+                //     "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
+                // );
+                // let (pos, _) = schema.index(idx)?;
+                // record.get_sql_value(pos).map(|v| v.clone())
             }
             Expression::UnaryOperatorVariant(uni_op, child) => {
-                let child_sql_value = child.to_sql_value(record_for_index)?;
+                let child_sql_value = child.to_sql_value(value_from_index)?;
                 match (uni_op, child_sql_value) {
                     (UnaryOperator::Minus, SqlValue::Null) => Ok(SqlValue::Null),
                     (UnaryOperator::Minus, SqlValue::NotNull(nn_sql_value)) => {
@@ -56,8 +65,8 @@ impl Expression {
                 BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
                     match comparison_function {
                         ComparisonFunction::EqualVariant { left, right } => {
-                            let left_sql_value = left.to_sql_value(record_for_index)?;
-                            let right_sql_value = right.to_sql_value(record_for_index)?;
+                            let left_sql_value = left.to_sql_value(value_from_index)?;
+                            let right_sql_value = right.to_sql_value(value_from_index)?;
                             left_sql_value
                                 .sql_compare(&right_sql_value)
                                 .map(|sql_compare_result| {
@@ -73,10 +82,10 @@ impl Expression {
                         LogicalFunction::AndVariant { left, right } => {
                             let left_sql_value =
                                 Expression::BooleanExpressionVariant(*(left.clone()))
-                                    .to_sql_value(record_for_index)?;
+                                    .to_sql_value(value_from_index)?;
                             let right_sql_value =
                                 Expression::BooleanExpressionVariant(*(right.clone()))
-                                    .to_sql_value(record_for_index)?;
+                                    .to_sql_value(value_from_index)?;
 
                             let b = left_sql_value.to_bool()? && right_sql_value.to_bool()?;
                             Ok(SqlValue::NotNull(NnSqlValue::Boolean(b)))
