@@ -9,12 +9,20 @@ use std::ops::Index;
 /// Row is meant to be read-only data, created while SELECT.
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct Row {
-    values: SqlValues,
+    values: Vec<SqlValue>,
+}
+
+impl Index<RPos> for Row {
+    type Output = SqlValue;
+
+    fn index(&self, pos: RPos) -> &Self::Output {
+        self.values.get(pos.to_usize()).expect("index out of range")
+    }
 }
 
 impl Row {
     /// Constructor
-    pub fn new(values: SqlValues) -> Self {
+    pub fn new(values: Vec<SqlValue>) -> Self {
         Self { values }
     }
 
@@ -43,19 +51,56 @@ impl Row {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, pos: RPos) -> ApllodbResult<&SqlValue> {
-        let sql_value = self.values.index(pos);
+        let sql_value = self.index(pos);
         Ok(sql_value)
     }
 
+    /// add SqlValue to list
+    pub fn append(&mut self, sql_value: SqlValue) {
+        self.values.push(sql_value)
+    }
+
+    /// extract SqlValue and remove from list
+    pub fn remove(&mut self, pos: RPos) -> SqlValue {
+        self.values.remove(pos.to_usize())
+    }
+
     /// Get raw representation
-    pub fn into_values(self) -> SqlValues {
+    pub fn into_values(self) -> Vec<SqlValue> {
         self.values
     }
-}
 
-/// used for `INSERT INTO t (a, b, c) SELECT x, y, z FROM s;`, for example.
-impl From<Row> for SqlValues {
-    fn from(r: Row) -> Self {
-        r.into_values()
+    /// If SqlValues is like this:
+    ///
+    /// ```text
+    /// 'a', 'b', 'c', 'd'
+    /// ```
+    ///
+    /// and `positions = [3, 0]`, then result is:
+    ///
+    /// ```text
+    /// 'd', 'a'
+    /// ```
+    pub fn projection(mut self, positions: &[RPos]) -> Self {
+        let mut sorted_idxs = positions.to_vec();
+        sorted_idxs.sort_unstable();
+
+        let mut cnt_moved = 0;
+
+        let mut new_inner_with_order: Vec<(SqlValue, usize)> = sorted_idxs
+            .into_iter()
+            .map(|pos| {
+                let order = positions.iter().position(|x| *x == pos).unwrap();
+                let ret = (self.remove(RPos::new(pos.to_usize() - cnt_moved)), order);
+                cnt_moved += 1;
+                ret
+            })
+            .collect();
+
+        let new_values: Vec<SqlValue> = {
+            new_inner_with_order.sort_by_key(|v| v.1);
+            new_inner_with_order.into_iter().map(|v| v.0).collect()
+        };
+        Self::new(new_values)
     }
 }
