@@ -1,13 +1,17 @@
 /// Key to find RecordPos from a record / row.
 ///
-/// Represented in a string either like "(prefix) . (attr)" or "(attr)".
+/// Represented in a string either like "(prefix).(attr)" or "(attr)".
 pub trait SchemaIndex {
+    /// Constructor
     fn new(prefix: Option<String>, attr: String) -> Self;
 
+    /// Optional prefix part
     fn prefix(&self) -> Option<&str>;
 
+    /// Main part
     fn attr(&self) -> &str;
 
+    /// Returns "(prefix).(attr)" or "(attr)"
     fn to_string(&self) -> String {
         let prefix = if let Some(p) = self.prefix() {
             format!("{}.", p)
@@ -17,6 +21,7 @@ pub trait SchemaIndex {
         format!("{}{}", prefix, self.attr())
     }
 
+    /// Easy-constructor.
     fn from(s: &str) -> Self
     where
         Self: Sized,

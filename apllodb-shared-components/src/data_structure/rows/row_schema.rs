@@ -1,7 +1,4 @@
-use crate::{
-    record_index::named_record_index::NamedRecordIndex, AliasedFieldName, ApllodbError,
-    ApllodbErrorKind, ApllodbResult, RecordIndex, RPos, TableColumnName,
-};
+use crate::{RPos, Schema, TableColumnName};
 use serde::{Deserialize, Serialize};
 
 use super::row_index::RowIndex;
@@ -12,47 +9,12 @@ pub struct RowSchema {
     inner: Vec<(RPos, TableColumnName)>,
 }
 
-impl RowSchema {
-    /// Finds a pair of (RecordPos, AliasedFieldName) of a field specified by RecordIndex.
-    ///
-    /// # Failures
-    ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
-    ///   - no field matches to this RowIndex.
-    /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
-    ///   - more than 1 of fields match to this FieldIndex.
-    pub(crate) fn index(&self, idx: &RowIndex) -> ApllodbResult<(RPos, TableColumnName)> {
-        let matching_pair: Vec<(RPos, TableColumnName)> = self
-            .inner
-            .iter()
-            .filter_map(|(pos, opt_tc)| {
-                opt_tc
-                    .as_ref()
-                    .map(|tc| {
-                        if tc.matches(idx) {
-                            Some((*pos, tc.clone()))
-                        } else {
-                            None
-                        }
-                    })
-                    .flatten()
-            })
-            .collect();
+impl Schema for RowSchema {
+    type Name = TableColumnName;
 
-        if matching_pair.len() == 1 {
-            matching_pair.first().cloned().ok_or_else(|| unreachable!())
-        } else if matching_pair.is_empty() {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidName,
-                format!("no field matches to: {:?}", idx),
-                None,
-            ))
-        } else {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::AmbiguousColumn,
-                format!("more than 1 fields match to: {:?}", idx),
-                None,
-            ))
-        }
+    type Index = RowIndex;
+
+    fn names_with_pos(&self) -> &[(RPos, Self::Name)] {
+        &self.inner
     }
 }

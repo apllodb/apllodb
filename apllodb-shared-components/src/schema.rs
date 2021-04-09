@@ -15,7 +15,10 @@ use self::{schema_index::SchemaIndex, schema_name::SchemaName};
 ///
 /// So a schema for rows consist of sequence of "table_name.column_name" but a schema for records may include unnamed field.
 pub trait Schema: Sized {
+    /// Field's / Column's full name.
     type Name: SchemaName<Self>;
+
+    /// Key to get RPos from Schema.
     type Index: SchemaIndex;
 
     /// Finds a pair of (RPos, Name) of a field/column specified by Index.
@@ -26,7 +29,6 @@ pub trait Schema: Sized {
     ///   - no field matches to this Index.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of fields match to this Index.
-
     fn index(&self, idx: &Self::Index) -> ApllodbResult<(RPos, Self::Name)> {
         let matching_pair: Vec<(RPos, Self::Name)> = self
             .names_with_pos()
@@ -57,5 +59,6 @@ pub trait Schema: Sized {
         }
     }
 
+    /// Pairs of (RPos, Name).
     fn names_with_pos(&self) -> &[(RPos, Self::Name)];
 }
