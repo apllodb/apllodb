@@ -1,6 +1,6 @@
 use crate::{
     record_index::named_record_index::NamedRecordIndex, AliasedFieldName, NnSqlValue, RecordIndex,
-    RecordPos, RecordSchema, Row, SqlValue, TableName,
+    RPos, RecordSchema, Row, SqlValue, TableName,
 };
 
 /// - people:
@@ -24,7 +24,7 @@ impl People {
         RecordSchema::factory(vec![Self::afn_id(), Self::afn_age()])
     }
 
-    pub fn field_pos(afn: AliasedFieldName) -> RecordPos {
+    pub fn field_pos(afn: AliasedFieldName) -> RPos {
         let (pos, _) = Self::schema().index(&NamedRecordIndex::from(&afn)).unwrap();
         pos
     }

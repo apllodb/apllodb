@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize, new,
 )]
-pub struct RecordPos(usize);
+pub struct RPos(usize);
 
-impl RecordPos {
+impl RPos {
     /// To raw u16.
     pub fn to_usize(&self) -> usize {
         self.0

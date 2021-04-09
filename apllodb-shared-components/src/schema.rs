@@ -1,7 +1,8 @@
 pub(crate) mod schema_index;
+pub(crate) mod r_pos;
 pub(crate) mod schema_name;
 
-use crate::{ApllodbResult, RecordPos};
+use crate::{ApllodbResult, RPos};
 
 use self::{schema_index::SchemaIndex, schema_name::SchemaName};
 
@@ -17,5 +18,5 @@ pub trait Schema {
     type Name: SchemaName;
     type Index: SchemaIndex;
 
-    fn index(&self, idx: &Self::Index) -> ApllodbResult<(RecordPos, Self::Name)>;
+    fn index(&self, idx: &Self::Index) -> ApllodbResult<(RPos, Self::Name)>;
 }

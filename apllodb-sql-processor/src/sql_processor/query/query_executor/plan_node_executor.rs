@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Row, RecordPos,
+    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Row, RPos,
     Records, SessionWithTx, TableName,
 };
 use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
@@ -78,7 +78,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
     fn projection(&self, input_left: Records, fields: Vec<FieldIndex>) -> ApllodbResult<Records> {
-        let positions: Vec<RecordPos> = fields
+        let positions: Vec<RPos> = fields
             .iter()
             .map(|f| input_left.as_schema().resolve_index(f))
             .collect::<ApllodbResult<_>>()?;

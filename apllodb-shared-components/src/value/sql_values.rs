@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{RecordPos, Row, SqlValue};
+use crate::{RPos, Row, SqlValue};
 
 /// Seq of [SqlValue](crate::SqlValue).
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
@@ -15,10 +15,10 @@ impl From<Row> for SqlValues {
     }
 }
 
-impl Index<RecordPos> for SqlValues {
+impl Index<RPos> for SqlValues {
     type Output = SqlValue;
 
-    fn index(&self, pos: RecordPos) -> &Self::Output {
+    fn index(&self, pos: RPos) -> &Self::Output {
         self.0.get(pos.to_usize()).expect("index out of range")
     }
 }
@@ -42,12 +42,12 @@ impl SqlValues {
     }
 
     /// get ref to SqlValue
-    pub fn get(&self, pos: RecordPos) -> &SqlValue {
+    pub fn get(&self, pos: RPos) -> &SqlValue {
         self.0.index(pos.to_usize())
     }
 
     /// extract SqlValue and remove from list
-    pub fn remove(&mut self, pos: RecordPos) -> SqlValue {
+    pub fn remove(&mut self, pos: RPos) -> SqlValue {
         self.0.remove(pos.to_usize())
     }
 
@@ -62,7 +62,7 @@ impl SqlValues {
     /// ```text
     /// 'd', 'a'
     /// ```
-    pub fn projection(mut self, positions: &[RecordPos]) -> Self {
+    pub fn projection(mut self, positions: &[RPos]) -> Self {
         let mut sorted_idxs = positions.to_vec();
         sorted_idxs.sort_unstable();
 
@@ -88,7 +88,7 @@ impl SqlValues {
 
 #[cfg(test)]
 mod tests {
-    use crate::{NnSqlValue, RecordPos, SqlValue, SqlValues};
+    use crate::{NnSqlValue, RPos, SqlValue, SqlValues};
 
     #[test]
     fn test_projection() {
@@ -149,7 +149,7 @@ mod tests {
                     test_datum
                         .projection
                         .into_iter()
-                        .map(RecordPos::new)
+                        .map(RPos::new)
                         .collect::<Vec<_>>()
                         .as_slice(),
                 ),

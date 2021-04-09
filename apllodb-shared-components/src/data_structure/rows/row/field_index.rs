@@ -7,10 +7,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     data_structure::reference::correlation_reference::correlation_index::CorrelationIndex,
     ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationReference, FieldReference,
-    FullFieldReference,
+    FullFieldReference, RPos,
 };
-
-use super::record_pos::RecordPos;
 
 /// Matcher to [FullFieldReference](crate::FullFieldReference).
 /// Used to get a value from a record.
@@ -49,8 +47,8 @@ impl FieldIndex {
     pub fn peek<'a>(
         &self,
         full_field_references: impl IntoIterator<Item = &'a FullFieldReference>,
-    ) -> ApllodbResult<(RecordPos, &'a FullFieldReference)> {
-        let mut ret_pos = RecordPos::new(0);
+    ) -> ApllodbResult<(RPos, &'a FullFieldReference)> {
+        let mut ret_pos = RPos::new(0);
         let mut ret_ffr: Option<&'a FullFieldReference> = None;
 
         for ffr in full_field_references {
@@ -214,7 +212,7 @@ impl From<FullFieldReference> for FieldIndex {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, FieldIndex, FullFieldReference, RecordPos};
+    use crate::{ApllodbErrorKind, FieldIndex, FullFieldReference, RPos};
 
     #[test]
     fn test_from_success() {
@@ -423,7 +421,7 @@ mod tests {
                     let expected_pos = test_datum
                         .expected_result
                         .expect("succeeded in peeking, should expect Ok()");
-                    assert_eq!(pos, RecordPos::new(expected_pos));
+                    assert_eq!(pos, RPos::new(expected_pos));
                     assert_eq!(
                         ffr,
                         test_datum

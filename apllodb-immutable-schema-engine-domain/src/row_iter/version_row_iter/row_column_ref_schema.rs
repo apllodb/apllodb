@@ -1,5 +1,5 @@
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, RecordPos, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, RPos, TableName,
 };
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +55,7 @@ impl RowColumnRefSchema {
     pub(crate) fn resolve_pos_with_rm(
         &mut self,
         column_name: &ColumnName,
-    ) -> ApllodbResult<RecordPos> {
+    ) -> ApllodbResult<RPos> {
         let raw_pos = self
             .column_names
             .iter()
@@ -72,6 +72,6 @@ impl RowColumnRefSchema {
             })?;
 
         self.column_names.remove(raw_pos);
-        Ok(RecordPos::new(raw_pos))
+        Ok(RPos::new(raw_pos))
     }
 }

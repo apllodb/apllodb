@@ -1,6 +1,6 @@
 use crate::{
     record_index::named_record_index::NamedRecordIndex, AliasedFieldName, ApllodbError,
-    ApllodbErrorKind, ApllodbResult, RecordIndex, RecordPos, TableColumnName,
+    ApllodbErrorKind, ApllodbResult, RecordIndex, RPos, TableColumnName,
 };
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ use super::row_index::RowIndex;
 /// Schema of [Row](crate::Row)s holding pairs of (RowPos, TableColumnName).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub struct RowSchema {
-    inner: Vec<(RecordPos, TableColumnName)>,
+    inner: Vec<(RPos, TableColumnName)>,
 }
 
 impl RowSchema {
@@ -21,8 +21,8 @@ impl RowSchema {
     ///   - no field matches to this RowIndex.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of fields match to this FieldIndex.
-    pub(crate) fn index(&self, idx: &RowIndex) -> ApllodbResult<(RecordPos, TableColumnName)> {
-        let matching_pair: Vec<(RecordPos, TableColumnName)> = self
+    pub(crate) fn index(&self, idx: &RowIndex) -> ApllodbResult<(RPos, TableColumnName)> {
+        let matching_pair: Vec<(RPos, TableColumnName)> = self
             .inner
             .iter()
             .filter_map(|(pos, opt_tc)| {

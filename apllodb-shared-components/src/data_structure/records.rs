@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 use crate::{
     record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema,
     AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering,
-    RecordIndex, RecordPos, Row, SqlValue, SqlValueHashKey, SqlValues,
+    RecordIndex, RPos, Row, SqlValue, SqlValueHashKey, SqlValues,
 };
 
 /// Seq of [Row](crate::Row)s.
@@ -87,7 +87,7 @@ impl Records {
                 let (pos, _) = self.schema.index(idx)?;
                 Ok(pos)
             })
-            .collect::<ApllodbResult<Vec<RecordPos>>>()?;
+            .collect::<ApllodbResult<Vec<RPos>>>()?;
 
         let new_inner: Vec<SqlValues> = self
             .inner

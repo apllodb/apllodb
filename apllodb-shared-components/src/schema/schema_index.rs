@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 /// Key to find RecordPos from a record / row.
 ///
 /// Represented in a string either like "(prefix) . (attr)" or "(attr)".
@@ -9,27 +7,20 @@ pub trait SchemaIndex {
     fn prefix(&self) -> Option<&str>;
 
     fn attr(&self) -> &str;
-}
 
-impl<I> Display for I
-where
-    I: SchemaIndex,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn to_string(&self) -> String {
         let prefix = if let Some(p) = self.prefix() {
             format!("{}.", p)
         } else {
             "".to_string()
         };
-        write!(f, "{}{}", prefix, self.attr())
+        format!("{}{}", prefix, self.attr())
     }
-}
 
-impl<I> From<&str> for I
-where
-    I: SchemaIndex,
-{
-    fn from(s: &str) -> Self {
+    fn from(s: &str) -> Self
+    where
+        Self: Sized,
+    {
         let parts: Vec<&str> = s.split('.').collect();
 
         debug_assert!(!parts.is_empty());

@@ -1,6 +1,6 @@
 pub(crate) mod named_record_index;
 
-use crate::RecordPos;
+use crate::RPos;
 use serde::{Deserialize, Serialize};
 
 use self::named_record_index::NamedRecordIndex;
@@ -9,7 +9,7 @@ use self::named_record_index::NamedRecordIndex;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum RecordIndex {
     /// 0-origin index
-    Pos(RecordPos),
+    Pos(RPos),
 
     /// Fuzzy reference to a field.
     ///
@@ -36,7 +36,7 @@ pub enum RecordIndex {
 
 impl From<usize> for RecordIndex {
     fn from(raw_pos: usize) -> Self {
-        Self::Pos(RecordPos::new(raw_pos))
+        Self::Pos(RPos::new(raw_pos))
     }
 }
 

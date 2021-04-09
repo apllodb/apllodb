@@ -26,6 +26,7 @@ pub(crate) mod validation_helper;
 pub(crate) mod value;
 
 pub use crate::{
+    schema::{Schema, schema_name::SchemaName, schema_index::SchemaIndex, r_pos::RPos},
     table_column_name::TableColumnName,
     data_structure::{
         alias_name::AliasName,
@@ -35,7 +36,7 @@ pub use crate::{
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName,
         },
-        rows::row::{field_index::FieldIndex, record_pos::RecordPos, Row},
+        rows::row::{field_index::FieldIndex, Row},
         records::{record_field_ref_schema::RecordFieldRefSchema, Records},
         reference::{
             correlation_reference::{correlation_index::CorrelationIndex, CorrelationReference},

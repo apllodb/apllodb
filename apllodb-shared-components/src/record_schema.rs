@@ -1,6 +1,6 @@
 use crate::{
     record_index::named_record_index::NamedRecordIndex, AliasedFieldName, ApllodbError,
-    ApllodbErrorKind, ApllodbResult, RecordIndex, RecordPos,
+    ApllodbErrorKind, ApllodbResult, RecordIndex, RPos,
 };
 use serde::{Deserialize, Serialize};
 
@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 /// | 7 | - ; a888 |
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct RecordSchema {
-    inner: Vec<(RecordPos, Option<AliasedFieldName>)>,
+    inner: Vec<(RPos, Option<AliasedFieldName>)>,
 }
 
 impl RecordSchema {
@@ -45,8 +45,8 @@ impl RecordSchema {
     pub(crate) fn index(
         &self,
         named_idx: &NamedRecordIndex,
-    ) -> ApllodbResult<(RecordPos, AliasedFieldName)> {
-        let matching_pair: Vec<(RecordPos, AliasedFieldName)> = self
+    ) -> ApllodbResult<(RPos, AliasedFieldName)> {
+        let matching_pair: Vec<(RPos, AliasedFieldName)> = self
             .inner
             .iter()
             .filter_map(|(pos, opt_field)| {
@@ -82,7 +82,7 @@ impl RecordSchema {
 
     /// Filter specified fields
     pub(crate) fn projection(&self, indexes: &[NamedRecordIndex]) -> ApllodbResult<Self> {
-        let new_inner: Vec<(RecordPos, Option<AliasedFieldName>)> = indexes
+        let new_inner: Vec<(RPos, Option<AliasedFieldName>)> = indexes
             .iter()
             .map(|index| {
                 let (pos, name) = self.index(index)?;
@@ -112,7 +112,7 @@ impl From<Vec<AliasedFieldName>> for RecordSchema {
             inner: names
                 .into_iter()
                 .enumerate()
-                .map(|(raw_pos, name)| (RecordPos::new(raw_pos), Some(name)))
+                .map(|(raw_pos, name)| (RPos::new(raw_pos), Some(name)))
                 .collect(),
         }
     }
