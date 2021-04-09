@@ -5,12 +5,10 @@ use std::{collections::HashMap, sync::Arc};
 use crate::{
     record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema,
     AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering,
-    RecordIndex, Row, SqlValue, SqlValueHashKey, SqlValues,
+    RecordIndex, RecordPos, Row, SqlValue, SqlValueHashKey, SqlValues,
 };
 
-use super::row::record_pos::RecordPos;
-
-/// Seq of [Record](crate::Record)s.
+/// Seq of [Row](crate::Row)s.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Records {
     schema: Arc<RecordSchema>,
