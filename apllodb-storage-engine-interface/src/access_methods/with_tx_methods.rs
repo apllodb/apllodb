@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 use apllodb_shared_components::{
     AlterTableAction, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnDefinition,
-    ColumnName, Expression, Session, SessionId, SessionWithDb, SessionWithTx, SqlValues,
-    TableConstraints, TableName,
+    ColumnName, Expression, Session, SessionId, SessionWithDb, SessionWithTx, TableConstraints,
+    TableName,
 };
 use futures::FutureExt;
 
-use crate::{RowProjectionQuery, Rows};
+use crate::{rows::row::Row, RowProjectionQuery, Rows};
 
 use super::BoxFut;
 
@@ -156,7 +156,7 @@ pub trait WithTxMethods: Sized + 'static {
         session: SessionWithTx,
         table_name: TableName,
         column_names: Vec<ColumnName>,
-        values: Vec<SqlValues>,
+        values: Vec<Row>,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
         let sid = *session.get_id();
         async move {
@@ -177,7 +177,7 @@ pub trait WithTxMethods: Sized + 'static {
         sid: SessionId,
         table_name: TableName,
         column_names: Vec<ColumnName>,
-        values: Vec<SqlValues>,
+        values: Vec<Row>,
     ) -> BoxFut<ApllodbResult<()>>;
 
     fn update(
