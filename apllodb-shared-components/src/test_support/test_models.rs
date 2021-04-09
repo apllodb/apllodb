@@ -1,6 +1,6 @@
 use crate::{
-    data_structure::record::record_pos::RecordPos,
-    record_index::named_record_index::NamedRecordIndex, AliasedFieldName, NnSqlValue, Record,
+    data_structure::row::record_pos::RecordPos,
+    record_index::named_record_index::NamedRecordIndex, AliasedFieldName, NnSqlValue, Row,
     RecordIndex, RecordSchema, SqlValue, TableName,
 };
 
@@ -30,8 +30,8 @@ impl People {
         pos
     }
 
-    pub fn record(id: i64, age: i32) -> Record {
-        Record::factory(vec![
+    pub fn record(id: i64, age: i32) -> Row {
+        Row::factory(vec![
             SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::Integer(age)),
         ])
@@ -67,8 +67,8 @@ impl Body {
         ])
     }
 
-    pub fn record(id: i64, people_id: i64, height: i32) -> Record {
-        Record::factory(vec![
+    pub fn record(id: i64, people_id: i64, height: i32) -> Row {
+        Row::factory(vec![
             SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
             SqlValue::NotNull(NnSqlValue::Integer(height)),
@@ -110,8 +110,8 @@ impl Pet {
         ])
     }
 
-    pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Record {
-        Record::factory(vec![
+    pub fn record(id: i64, people_id: i64, kind: &str, age: i16) -> Row {
+        Row::factory(vec![
             SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
             SqlValue::NotNull(NnSqlValue::Text(kind.to_string())),
@@ -122,7 +122,7 @@ impl Pet {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct ModelsMock {
-    pub people: Vec<Record>,
-    pub body: Vec<Record>,
-    pub pet: Vec<Record>,
+    pub people: Vec<Row>,
+    pub body: Vec<Row>,
+    pub pet: Vec<Row>,
 }

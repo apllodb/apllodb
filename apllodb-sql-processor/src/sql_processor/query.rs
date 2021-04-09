@@ -50,7 +50,7 @@ mod tests {
     use crate::sql_processor::sql_processor_context::SqlProcessorContext;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
-        ApllodbResult, Record,
+        ApllodbResult, Row,
     };
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
     use apllodb_storage_engine_interface::test_support::{
@@ -61,10 +61,10 @@ mod tests {
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
         in_select_sql: String,
-        expected_select_records: Vec<Record>,
+        expected_select_records: Vec<Row>,
     }
     impl TestDatum {
-        fn new(in_select_sql: &str, expected_select_records: Vec<Record>) -> Self {
+        fn new(in_select_sql: &str, expected_select_records: Vec<Row>) -> Self {
             Self {
                 in_select_sql: in_select_sql.to_string(),
                 expected_select_records,
@@ -142,7 +142,7 @@ mod tests {
             let result = QueryProcessor::run_directly(context.clone(), select_command).await?;
 
             assert_eq!(
-                result.collect::<Vec<Record>>(),
+                result.collect::<Vec<Row>>(),
                 test_datum.expected_select_records,
             );
         }

@@ -2,15 +2,15 @@ use std::ops::Index;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{data_structure::record::record_pos::RecordPos, Record, SqlValue};
+use crate::{RecordPos, Row, SqlValue};
 
 /// Seq of [SqlValue](crate::SqlValue).
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize, new)]
 pub struct SqlValues(Vec<SqlValue>);
 
 /// used for `INSERT INTO t (a, b, c) SELECT x, y, z FROM s;`, for example.
-impl From<Record> for SqlValues {
-    fn from(r: Record) -> Self {
+impl From<Row> for SqlValues {
+    fn from(r: Row) -> Self {
         r.into_values()
     }
 }

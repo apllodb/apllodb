@@ -6,17 +6,17 @@ use std::ops::Index;
 
 use self::record_pos::RecordPos;
 
-/// Record representation used in client and query processor.
-/// Storage engine uses Row, which does not treat `Expression`s but only does `ColumnName`.
+/// Primitive row representation used in storage engines and query processor
 ///
-/// Record is meant to be read-only data.
-/// It is created while SELECT by a storage engine or query processor.
+/// Clients do not directly use this struct but does [apllodb-server::Record](apllodb-server::Record) instead.
+///
+/// Row is meant to be read-only data, created while SELECT.
 #[derive(Clone, PartialEq, Debug)]
-pub struct Record {
+pub struct Row {
     values: SqlValues,
 }
 
-impl Record {
+impl Row {
     /// Constructor
     pub fn new(values: SqlValues) -> Self {
         Self { values }

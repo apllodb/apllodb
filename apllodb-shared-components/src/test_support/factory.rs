@@ -12,7 +12,7 @@ use crate::{
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     record_schema::RecordSchema,
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, LogicalFunction, NnSqlValue, Record, Records, SqlType, SqlValue, SqlValues,
+    Expression, LogicalFunction, NnSqlValue, Row, Records, SqlType, SqlValue, SqlValues,
     TableName, UnaryOperator,
 };
 use rand::Rng;
@@ -175,7 +175,7 @@ impl NnSqlValue {
     }
 }
 
-impl Record {
+impl Row {
     pub fn factory(sql_values: Vec<SqlValue>) -> Self {
         Self::new(SqlValues::new(sql_values))
     }
@@ -191,7 +191,7 @@ impl Record {
 }
 
 impl Records {
-    pub fn factory(schema: RecordSchema, records: Vec<Record>) -> Self {
+    pub fn factory(schema: RecordSchema, records: Vec<Row>) -> Self {
         Self::new(schema, records)
     }
 }

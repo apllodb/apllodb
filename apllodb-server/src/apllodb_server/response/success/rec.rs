@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, FieldIndex, FullFieldReference, Record, RecordFieldRefSchema, SqlConvertible,
+    ApllodbResult, FieldIndex, FullFieldReference, Row, RecordFieldRefSchema, SqlConvertible,
     SqlValue,
 };
 
@@ -9,11 +9,11 @@ use apllodb_shared_components::{
 #[derive(Clone, PartialEq, Debug)]
 pub struct Rec {
     schema: Arc<RecordFieldRefSchema>,
-    record: Record,
+    record: Row,
 }
 
 impl Rec {
-    pub(crate) fn new(schema: Arc<RecordFieldRefSchema>, record: Record) -> Self {
+    pub(crate) fn new(schema: Arc<RecordFieldRefSchema>, record: Row) -> Self {
         Self { schema, record }
     }
 

@@ -1,6 +1,6 @@
 use apllodb_shared_components::{
     ApllodbError, ApllodbResult, ColumnName, CorrelationReference, FieldReference,
-    FullFieldReference, Record, RecordFieldRefSchema, Records, SqlValue, SqlValues, TableName,
+    FullFieldReference, Row, RecordFieldRefSchema, Records, SqlValue, SqlValues, TableName,
 };
 use apllodb_sql_parser::apllodb_ast;
 
@@ -43,7 +43,7 @@ impl InsertCommandAnalyzer {
     pub(super) fn records_to_insert(&self) -> ApllodbResult<Records> {
         let schema = self.schema_to_insert()?;
 
-        let records: Vec<Record> = self
+        let records: Vec<Row> = self
             .command
             .values
             .clone()
@@ -70,7 +70,7 @@ impl InsertCommandAnalyzer {
                     .collect::<ApllodbResult<_>>()?;
 
                 let values = SqlValues::new(constant_values);
-                Ok(Record::new(values))
+                Ok(Row::new(values))
             })
             .collect::<ApllodbResult<_>>()?;
 

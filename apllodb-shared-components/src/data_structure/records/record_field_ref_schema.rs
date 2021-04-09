@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data_structure::record::record_pos::RecordPos, ApllodbResult, CorrelationIndex, FieldIndex,
+    data_structure::row::record_pos::RecordPos, ApllodbResult, CorrelationIndex, FieldIndex,
     FullFieldReference,
 };
 

@@ -5,13 +5,13 @@ use apllodb_shared_components::{
         fixture::*,
         test_models::{Body, People, Pet},
     },
-    Record, RecordFieldRefSchema,
+    Row, RecordFieldRefSchema,
 };
 use once_cell::sync::Lazy;
 
 use crate::Rec;
 
-fn record_to_rec(schema: RecordFieldRefSchema, record: Record) -> Rec {
+fn record_to_rec(schema: RecordFieldRefSchema, record: Row) -> Rec {
     Rec::new(Arc::new(schema), record)
 }
 

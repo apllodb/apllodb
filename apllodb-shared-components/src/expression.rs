@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema, ApllodbResult,
-    ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue, Record,
+    ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue, Row,
     RecordFieldRefSchema, RecordIndex, SqlValue,
 };
 
@@ -33,7 +33,7 @@ impl Expression {
     /// if `record_for_index` is None for Expression::FullFieldReferenceVariant.
     pub fn to_sql_value(
         &self,
-        record_for_index: Option<(&Record, &RecordSchema)>,
+        record_for_index: Option<(&Row, &RecordSchema)>,
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
@@ -138,7 +138,7 @@ impl From<SqlValue> for Expression {
 mod tests {
     use crate::test_support::{fixture::*, test_models::People};
     use crate::{
-        ApllodbResult, BooleanExpression, Expression, Record, RecordFieldRefSchema, SqlValue,
+        ApllodbResult, BooleanExpression, Expression, Row, RecordFieldRefSchema, SqlValue,
         UnaryOperator,
     };
 
@@ -147,7 +147,7 @@ mod tests {
         #[derive(Clone, Debug, new)]
         struct TestDatum {
             in_expr: Expression,
-            in_record_for_field_ref: Option<(Record, RecordFieldRefSchema)>,
+            in_record_for_field_ref: Option<(Row, RecordFieldRefSchema)>,
             expected_sql_value: SqlValue,
         }
 

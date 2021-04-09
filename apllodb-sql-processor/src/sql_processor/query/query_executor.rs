@@ -87,7 +87,7 @@ mod tests {
             fixture::*,
             test_models::{Body, People, Pet},
         },
-        ApllodbResult, FieldIndex, Record, RecordFieldRefSchema,
+        ApllodbResult, FieldIndex, Row, RecordFieldRefSchema,
     };
     use apllodb_storage_engine_interface::{
         test_support::{default_mock_engine, mock_select, MockWithTxMethods},
@@ -131,7 +131,7 @@ mod tests {
             context: Arc<SqlProcessorContext<MockStorageEngine>>,
 
             in_plan_tree: Option<QueryPlanTree>,
-            expected_select_records: Option<Vec<Record>>,
+            expected_select_records: Option<Vec<Row>>,
         }
         impl TestRunner {
             fn new() -> Self {
@@ -153,7 +153,7 @@ mod tests {
                 new_self
             }
 
-            fn expect(self, expected_select_records: Vec<Record>) -> Self {
+            fn expect(self, expected_select_records: Vec<Row>) -> Self {
                 let mut new_self = Self { ..self };
 
                 new_self.expected_select_records = Some(expected_select_records);
@@ -167,7 +167,7 @@ mod tests {
                 let query_plan = QueryPlan::new(in_plan_tree.clone());
                 let result = QueryExecutor::run_directly(self.context.clone(), query_plan).await?;
 
-                assert_eq!(result.collect::<Vec<Record>>(), expected_select_records);
+                assert_eq!(result.collect::<Vec<Row>>(), expected_select_records);
 
                 Ok(())
             }

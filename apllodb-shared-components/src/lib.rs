@@ -32,7 +32,7 @@ pub use crate::{
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName,
         },
-        record::{field_index::FieldIndex, record_pos::RecordPos, Record},
+        row::{field_index::FieldIndex, record_pos::RecordPos, Row},
         records::{record_field_ref_schema::RecordFieldRefSchema, Records},
         reference::{
             correlation_reference::{correlation_index::CorrelationIndex, CorrelationReference},

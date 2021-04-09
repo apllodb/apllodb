@@ -4,11 +4,11 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema,
-    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering, Record,
-    RecordIndex, SqlValue, SqlValueHashKey, SqlValues,
+    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering,
+    RecordIndex, Row, SqlValue, SqlValueHashKey, SqlValues,
 };
 
-use super::record::record_pos::RecordPos;
+use super::row::record_pos::RecordPos;
 
 /// Seq of [Record](crate::Record)s.
 #[derive(Clone, PartialEq, Debug)]
@@ -68,7 +68,7 @@ impl Records {
                             Err(e) => Some(Err(e)),
                         }
                     })
-                    .collect::<ApllodbResult<Vec<Record>>>()
+                    .collect::<ApllodbResult<Vec<Row>>>()
                     .map(|records| Self::new(schema, records))
             }
         }
@@ -187,7 +187,7 @@ impl Records {
         fn helper_get_sql_value(
             joined_name: &AliasedFieldName,
             schema: &RecordSchema,
-            record: &Record,
+            record: &Row,
         ) -> Option<ApllodbResult<SqlValue>> {
             schema
                 .index(&NamedRecordIndex::from(joined_name))
@@ -210,9 +210,9 @@ impl Records {
             joined_schema: &RecordSchema,
             left_schema: &RecordSchema,
             right_schema: &RecordSchema,
-            left_record: Record,
-            right_record: Record,
-        ) -> ApllodbResult<Record> {
+            left_record: Row,
+            right_record: Row,
+        ) -> ApllodbResult<Row> {
             let sql_values: Vec<SqlValue> = joined_schema
                 .to_aliased_field_names()
                 .iter()
@@ -223,7 +223,7 @@ impl Records {
                 })
                 .collect::<ApllodbResult<_>>()?;
             let sql_values = SqlValues::new(sql_values);
-            Ok(Record::new(sql_values))
+            Ok(Row::new(sql_values))
         }
 
         let self_schema = self.as_schema().clone();
@@ -233,7 +233,7 @@ impl Records {
         let (right_join_idx, _) = right_records.as_schema().index(&right_join_field)?;
 
         // TODO Create hash table from smaller input.
-        let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
+        let mut hash_table = HashMap::<SqlValueHashKey, Vec<Row>>::new();
 
         for left_record in self {
             let left_sql_value = left_record.get_sql_value(self_join_idx)?;
@@ -244,7 +244,7 @@ impl Records {
                 .or_insert_with(|| vec![left_record]);
         }
 
-        let mut records = Vec::<Record>::new();
+        let mut records = Vec::<Row>::new();
         for right_record in right_records {
             let right_sql_value = right_record.get_sql_value(right_join_idx)?;
             if let Some(left_records) = hash_table.get(&SqlValueHashKey::from(right_sql_value)) {
@@ -260,7 +260,7 @@ impl Records {
                                 right_record.clone(),
                             )
                         })
-                        .collect::<ApllodbResult<Vec<Record>>>()?,
+                        .collect::<ApllodbResult<Vec<Row>>>()?,
                 );
             }
         }
@@ -270,14 +270,14 @@ impl Records {
 }
 
 impl Iterator for Records {
-    type Item = Record;
+    type Item = Row;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.inner.is_empty() {
             None
         } else {
             let values = self.inner.remove(0);
-            Some(Record::new(values))
+            Some(Row::new(values))
         }
     }
 }
