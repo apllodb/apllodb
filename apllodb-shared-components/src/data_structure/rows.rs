@@ -9,7 +9,7 @@ use crate::Row;
 use self::row_schema::RowSchema;
 
 /// Iterator of [Row](crate::Row)s with [RowSchema](crate::RowSchema).
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct Rows {
     schema: RowSchema,
     inner: Vec<Row>,
@@ -32,6 +32,6 @@ impl Rows {
 
     /// ref to schema
     pub fn as_schema(&self) -> &RowSchema {
-        self.schema.as_ref()
+        &self.schema
     }
 }

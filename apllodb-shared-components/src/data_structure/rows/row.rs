@@ -1,6 +1,7 @@
 pub(crate) mod field_index;
 
-use crate::{RPos, SqlConvertible, SqlValue, SqlValues, error::ApllodbResult};
+use crate::{error::ApllodbResult, RPos, SqlConvertible, SqlValue, SqlValues};
+use serde::{Deserialize, Serialize};
 use std::ops::Index;
 
 /// Primitive row representation used in storage engines and query processor
@@ -8,7 +9,7 @@ use std::ops::Index;
 /// Clients do not directly use this struct but does [apllodb-server::Record](apllodb-server::Record) instead.
 ///
 /// Row is meant to be read-only data, created while SELECT.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct Row {
     values: SqlValues,
 }
