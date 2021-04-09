@@ -1,7 +1,7 @@
-use crate::{test_support::MockWithTxMethods, ProjectionQuery};
-use apllodb_shared_components::{
+use crate::{
     test_support::test_models::{Body, ModelsMock, People, Pet},
-    FieldIndex, Records, TableName,
+    test_support::MockWithTxMethods,
+    ProjectionQuery,
 };
 use futures::FutureExt;
 

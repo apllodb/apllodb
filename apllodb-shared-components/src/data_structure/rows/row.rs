@@ -1,5 +1,3 @@
-pub(crate) mod field_index;
-
 use crate::{error::ApllodbResult, RPos, SqlConvertible, SqlValue, SqlValues};
 use serde::{Deserialize, Serialize};
 use std::ops::Index;

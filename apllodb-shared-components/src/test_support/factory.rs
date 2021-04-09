@@ -10,8 +10,8 @@ use crate::{
     },
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, LogicalFunction, NnSqlValue, RecordSchema, Records, Row, SqlType, SqlValue,
-    SqlValues, TableName, UnaryOperator,
+    Expression, LogicalFunction, NnSqlValue, Row, SqlType, SqlValue, SqlValues, TableName,
+    UnaryOperator,
 };
 use rand::Rng;
 
@@ -185,25 +185,6 @@ impl Row {
             sql_values.append(right_sql_value);
         }
         Self::new(sql_values)
-    }
-}
-
-impl Records {
-    pub fn factory(schema: RecordSchema, records: Vec<Row>) -> Self {
-        Self::new(schema, records)
-    }
-}
-
-impl RecordSchema {
-    pub fn factory(aliased_field_names: Vec<AliasedFieldName>) -> Self {
-        Self::from(aliased_field_names)
-    }
-
-    pub fn joined(&self, right: &Self) -> Self {
-        let mut left = self.to_aliased_field_names().to_vec();
-        let mut right = right.to_aliased_field_names().to_vec();
-        left.append(&mut right);
-        Self::from(left)
     }
 }
 

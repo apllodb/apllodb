@@ -19,6 +19,7 @@ impl SchemaIndex {
         self.prefix.as_ref().map(|s| s.as_str())
     }
 
+    /// Attribute part
     pub fn attr(&self) -> &str {
         &self.attr
     }

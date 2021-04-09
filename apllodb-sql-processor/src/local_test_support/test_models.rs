@@ -1,6 +1,8 @@
-use crate::{
-    AliasedFieldName, NnSqlValue, RPos, RecordSchema, Row, Schema, SchemaIndex, SqlValue, TableName,
+use apllodb_shared_components::{
+    AliasedFieldName, NnSqlValue, RPos, Row, Schema, SchemaIndex, SqlValue, TableName,
 };
+
+use crate::records::record_schema::RecordSchema;
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY

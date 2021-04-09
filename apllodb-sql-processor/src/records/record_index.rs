@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{RPos, SchemaIndex};
+use apllodb_shared_components::{RPos, SchemaIndex};
 
 /// Key to extract an SqlValue from a Record.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]

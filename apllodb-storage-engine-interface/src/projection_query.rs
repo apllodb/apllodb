@@ -1,4 +1,3 @@
-use apllodb_shared_components::RecordFieldRefSchema;
 use serde::{Deserialize, Serialize};
 
 /// Projection query for single table columns.

@@ -3,9 +3,9 @@ pub(crate) mod record_schema;
 
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{
-    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering, RPos,
-    RecordIndex, RecordSchema, Row, Schema, SchemaIndex, SqlValue, SqlValueHashKey, SqlValues,
+use apllodb_shared_components::{
+    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, Ordering, RPos, Row, Schema,
+    SchemaIndex, SqlValue, SqlValueHashKey, SqlValues,
 };
 
 /// Seq of [Row](crate::Row)s.

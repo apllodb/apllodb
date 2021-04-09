@@ -19,7 +19,6 @@ pub(crate) mod error;
 pub(crate) mod expression;
 pub(crate) mod field; // TODO move to sql-processor
 pub(crate) mod table_column_name; // TODO move to storage-engine
-pub(crate) mod records; // TODO move to sql-processor
 pub(crate) mod session;
 pub(crate) mod validation_helper;
 pub(crate) mod value;
@@ -27,9 +26,6 @@ pub(crate) mod value;
 pub use crate::{
     schema::{Schema, schema_name::SchemaName, schema_index::SchemaIndex, r_pos::RPos},
     table_column_name::TableColumnName,
-    records::{Records,     record_index::RecordIndex,    record_schema::RecordSchema,
-
-    },
     data_structure::{
         alias_name::AliasName,
         alter_table_action::AlterTableAction,
@@ -38,7 +34,7 @@ pub use crate::{
             column_data_type::ColumnDataType, column_definition::ColumnDefinition,
             column_name::ColumnName,
         },
-        rows::row::{field_index::FieldIndex, Row},
+        rows::row::{Row},
         reference::{
             correlation_reference::{correlation_index::CorrelationIndex, CorrelationReference},
             field_reference::FieldReference,

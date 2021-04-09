@@ -1,4 +1,4 @@
-use crate::{AliasedFieldName, ApllodbResult, RPos, Schema, SchemaIndex};
+use apllodb_shared_components::{AliasedFieldName, ApllodbResult, RPos, Schema, SchemaIndex};
 use serde::{Deserialize, Serialize};
 
 /// Schema of records.

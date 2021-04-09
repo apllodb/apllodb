@@ -7,7 +7,7 @@ use crate::{
     SqlProcessorContext,
 };
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
-use apllodb_shared_components::{ApllodbError, ApllodbResult, Records};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_sql_parser::apllodb_ast;
 use apllodb_storage_engine_interface::MockStorageEngine;
 use std::sync::Arc;
@@ -73,5 +73,24 @@ impl QueryExecutor<MockStorageEngine> {
             .await
             .map(|(records, _)| records)
             .map_err(ApllodbError::from)
+    }
+}
+
+impl Records {
+    pub fn factory(schema: RecordSchema, records: Vec<Row>) -> Self {
+        Self::new(schema, records)
+    }
+}
+
+impl RecordSchema {
+    pub fn factory(aliased_field_names: Vec<AliasedFieldName>) -> Self {
+        Self::from(aliased_field_names)
+    }
+
+    pub fn joined(&self, right: &Self) -> Self {
+        let mut left = self.to_aliased_field_names().to_vec();
+        let mut right = right.to_aliased_field_names().to_vec();
+        left.append(&mut right);
+        Self::from(left)
     }
 }
