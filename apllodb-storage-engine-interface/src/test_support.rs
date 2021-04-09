@@ -1,5 +1,7 @@
 mod factory;
+mod fixture;
 mod mock;
+mod test_models;
 
 pub use crate::access_methods::{
     with_db_methods::MockWithDbMethods, with_tx_methods::MockWithTxMethods,

@@ -55,15 +55,7 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
 
             let rows = match projection {
                 RowProjectionQuery::All => rows,
-                RowProjectionQuery::Columns(schema) => {
-                    let fields: Vec<FieldIndex> = schema
-                        .as_full_field_references()
-                        .iter()
-                        .map(|ffr| FieldIndex::from(ffr.clone()))
-                        .collect();
-
-                    rows.projection(&fields).unwrap()
-                }
+                RowProjectionQuery::Columns(indexes) => rows.projection(&indexes).unwrap(),
             };
 
             async move { Ok((rows, session)) }.boxed_local()
