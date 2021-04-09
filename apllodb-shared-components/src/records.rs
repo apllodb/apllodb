@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, FieldIndex, Ordering, RPos,
-    RecordIndex, RecordSchema, Row, Schema, SqlValue, SqlValueHashKey, SqlValues,
+    RecordIndex, RecordSchema, Row, Schema, SchemaIndex, SqlValue, SqlValueHashKey, SqlValues,
 };
 
 /// Seq of [Row](crate::Row)s.
@@ -78,7 +78,7 @@ impl Records {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(self, indexes: &[NamedRecordIndex]) -> ApllodbResult<Self> {
+    pub fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
         let new_schema = self.schema.projection(indexes)?;
 
         let projection_positions = indexes
@@ -99,7 +99,7 @@ impl Records {
     }
 
     /// ORDER BY
-    pub fn sort(mut self, field_orderings: &[(NamedRecordIndex, Ordering)]) -> ApllodbResult<Self> {
+    pub fn sort(mut self, field_orderings: &[(SchemaIndex, Ordering)]) -> ApllodbResult<Self> {
         assert!(!field_orderings.is_empty(), "parser should avoid this case");
 
         // TODO check if type in FieldIndex is PartialOrd
@@ -177,8 +177,8 @@ impl Records {
         self,
         joined_schema: RecordSchema,
         right_records: Records,
-        self_join_field: &NamedRecordIndex,
-        right_join_field: &NamedRecordIndex,
+        self_join_field: &SchemaIndex,
+        right_join_field: &SchemaIndex,
     ) -> ApllodbResult<Self> {
         joined_schema.assert_all_named();
 
@@ -187,21 +187,19 @@ impl Records {
             schema: &RecordSchema,
             record: &Row,
         ) -> Option<ApllodbResult<SqlValue>> {
-            schema
-                .index(&NamedRecordIndex::from(joined_name))
-                .map_or_else(
-                    |e| {
-                        if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
-                            None
-                        } else {
-                            Some(Err(e))
-                        }
-                    },
-                    |(pos, _)| {
-                        let res_sql_value = record.get_sql_value(pos).map(|v| v.clone());
-                        Some(res_sql_value)
-                    },
-                )
+            schema.index(&SchemaIndex::from(joined_name)).map_or_else(
+                |e| {
+                    if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
+                        None
+                    } else {
+                        Some(Err(e))
+                    }
+                },
+                |(pos, _)| {
+                    let res_sql_value = record.get_sql_value(pos).map(|v| v.clone());
+                    Some(res_sql_value)
+                },
+            )
         }
 
         fn helper_join_records(

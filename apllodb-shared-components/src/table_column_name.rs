@@ -1,4 +1,4 @@
-use crate::{ColumnName, SchemaName, TableName, data_structure::rows::{row_index::RowIndex, row_schema::RowSchema}};
+use crate::{ColumnName, SchemaIndex, SchemaName, TableName};
 use serde::{Deserialize, Serialize};
 
 /// Full name in storage-engine: `TableName . ColumnName`.
@@ -8,8 +8,8 @@ pub struct TableColumnName {
     column: ColumnName,
 }
 
-impl SchemaName<RowSchema> for TableColumnName {
-    fn matches(&self, index: &RowIndex) -> bool {
+impl SchemaName for TableColumnName {
+    fn matches(&self, index: &SchemaIndex) -> bool {
         todo!()
     }
 }

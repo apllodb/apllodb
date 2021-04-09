@@ -59,7 +59,7 @@ impl SelectCommandAnalyzer {
                         ast_order_by.expression,
                         &from_correlations,
                     )?;
-                    let ffr = if let Expression::RecordIndexVariant(ffr) = expression {
+                    let ffr = if let Expression::SchemaIndexVariant(ffr) = expression {
                         Ok(ffr)
                     } else {
                         Err(ApllodbError::feature_not_supported(
@@ -96,7 +96,7 @@ impl SelectCommandAnalyzer {
             let from_correlations = self.from_item_correlation_references()?;
             let expression =
                 AstTranslator::condition_in_select(ast_condition.clone(), &from_correlations)?;
-            let ffrs = expression.to_record_indexes();
+            let ffrs = expression.to_schema_indexes();
             Ok(ffrs.into_iter().collect())
         } else {
             Ok(vec![])

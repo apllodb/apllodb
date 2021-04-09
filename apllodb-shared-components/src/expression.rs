@@ -4,8 +4,8 @@ pub(crate) mod operator;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ApllodbResult, ComparisonFunction, FieldIndex, FullFieldReference, LogicalFunction, NnSqlValue,
-    RecordIndex, Row, Schema, SqlValue,
+    ApllodbResult, ComparisonFunction, LogicalFunction, NnSqlValue, Row, Schema, SchemaIndex,
+    SqlValue,
 };
 
 use self::{boolean_expression::BooleanExpression, operator::UnaryOperator};
@@ -17,7 +17,7 @@ pub enum Expression {
     ConstantVariant(SqlValue),
 
     /// Field/Column index of a record
-    RecordIndexVariant(NamedRecordIndex),
+    SchemaIndexVariant(SchemaIndex),
 
     /// With unary operator
     UnaryOperatorVariant(UnaryOperator, Box<Expression>),
@@ -36,7 +36,7 @@ impl Expression {
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
-            Expression::RecordIndexVariant(idx) => {
+            Expression::SchemaIndexVariant(idx) => {
                 let (record, schema) = record_for_index.expect(
                     "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
                 );
@@ -87,9 +87,9 @@ impl Expression {
         }
     }
 
-    /// retrieves all NamedRecordIndex in a expression
-    pub fn to_record_indexes(&self) -> Vec<NamedRecordIndex> {
-        fn helper_boolean_expr(boolean_expr: &BooleanExpression) -> Vec<NamedRecordIndex> {
+    /// retrieves all SchemaIndex in a expression
+    pub fn to_schema_indexes(&self) -> Vec<SchemaIndex> {
+        fn helper_boolean_expr(boolean_expr: &BooleanExpression) -> Vec<SchemaIndex> {
             match boolean_expr {
                 BooleanExpression::LogicalFunctionVariant(logical_function) => {
                     match logical_function {
@@ -104,8 +104,8 @@ impl Expression {
                 BooleanExpression::ComparisonFunctionVariant(comparison_function) => {
                     match comparison_function {
                         ComparisonFunction::EqualVariant { left, right } => {
-                            let mut left = left.to_record_indexes();
-                            let mut right = right.to_record_indexes();
+                            let mut left = left.to_schema_indexes();
+                            let mut right = right.to_schema_indexes();
                             left.append(&mut right);
                             left
                         }
@@ -115,13 +115,9 @@ impl Expression {
         }
 
         match self {
-            Expression::ConstantVariant(_) => {
-                vec![]
-            }
-            Expression::RecordIndexVariant(idx) => {
-                vec![idx.clone()]
-            }
-            Expression::UnaryOperatorVariant(_op, expr) => expr.to_record_indexes(),
+            Expression::ConstantVariant(_) => vec![],
+            Expression::SchemaIndexVariant(idx) => vec![idx.clone()],
+            Expression::UnaryOperatorVariant(_op, expr) => expr.to_schema_indexes(),
             Expression::BooleanExpressionVariant(bool_expr) => helper_boolean_expr(bool_expr),
         }
     }
@@ -165,7 +161,7 @@ mod tests {
             ),
             // FullFieldReference
             TestDatum::new(
-                Expression::RecordIndexVariant(People::ffr_id()),
+                Expression::SchemaIndexVariant(People::ffr_id()),
                 Some((PEOPLE_RECORD1.clone(), People::schema())),
                 SqlValue::factory_integer(1),
             ),

@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    record_index::named_record_index::NamedRecordIndex, record_schema::RecordSchema, FieldAlias,
-    FieldName, SchemaName,
-};
+use crate::{FieldAlias, FieldName, SchemaIndex, SchemaName};
 
 /// An alias to a field.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
@@ -12,14 +9,14 @@ pub(crate) struct AliasedFieldName {
     pub(crate) field_alias: Option<FieldAlias>,
 }
 
-impl SchemaName<RecordSchema> for AliasedFieldName {
-    fn matches(&self, index: &NamedRecordIndex) -> bool {
+impl SchemaName for AliasedFieldName {
+    fn matches(&self, index: &SchemaIndex) -> bool {
         todo!()
     }
 }
 
-impl From<&AliasedFieldName> for NamedRecordIndex {
+impl From<&AliasedFieldName> for SchemaIndex {
     fn from(n: &AliasedFieldName) -> Self {
-        NamedRecordIndex::from(&n.field_name)
+        SchemaIndex::from(&n.field_name)
     }
 }

@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    correlation::aliased_correlation_name::AliasedCorrelationName,
-    record_index::named_record_index::NamedRecordIndex, AttributeName, SchemaIndex,
+    correlation::aliased_correlation_name::AliasedCorrelationName, AttributeName, SchemaIndex,
 };
 
 /// Name of a field.
@@ -12,12 +11,12 @@ pub(crate) struct FieldName {
     pub(crate) attribute_name: AttributeName,
 }
 
-impl From<&FieldName> for NamedRecordIndex {
+impl From<&FieldName> for SchemaIndex {
     fn from(n: &FieldName) -> Self {
         let s = format!(
             "{}.{}",
             n.aliased_correlation_name.correlation_name, n.attribute_name
         );
-        SchemaIndex::from(s.as_str())
+        Self::from(s.as_str())
     }
 }

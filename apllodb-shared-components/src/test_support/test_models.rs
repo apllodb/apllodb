@@ -1,4 +1,7 @@
-use crate::{AliasedFieldName, NnSqlValue, RPos, RecordIndex, RecordSchema, Row, Schema, SqlValue, TableName, record_index::named_record_index::NamedRecordIndex};
+use crate::{
+    record_index::named_record_index::SchemaIndex, AliasedFieldName, NnSqlValue, RPos, RecordIndex,
+    RecordSchema, Row, Schema, SchemaIndex, SqlValue, TableName,
+};
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
@@ -22,7 +25,7 @@ impl People {
     }
 
     pub fn field_pos(afn: AliasedFieldName) -> RPos {
-        let (pos, _) = Self::schema().index(&NamedRecordIndex::from(&afn)).unwrap();
+        let (pos, _) = Self::schema().index(&SchemaIndex::from(&afn)).unwrap();
         pos
     }
 

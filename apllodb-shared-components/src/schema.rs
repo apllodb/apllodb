@@ -14,12 +14,9 @@ use self::{schema_index::SchemaIndex, schema_name::SchemaName};
 /// records have higher level of fields like field references, constants, and operations.
 ///
 /// So a schema for rows consist of sequence of "table_name.column_name" but a schema for records may include unnamed field.
-pub trait Schema: Sized {
+pub trait Schema {
     /// Field's / Column's full name.
-    type Name: SchemaName<Self>;
-
-    /// Key to get RPos from Schema.
-    type Index: SchemaIndex;
+    type Name: SchemaName;
 
     /// Finds a pair of (RPos, Name) of a field/column specified by Index.
     ///
@@ -29,7 +26,7 @@ pub trait Schema: Sized {
     ///   - no field matches to this Index.
     /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
     ///   - more than 1 of fields match to this Index.
-    fn index(&self, idx: &Self::Index) -> ApllodbResult<(RPos, Self::Name)> {
+    fn index(&self, idx: &SchemaIndex) -> ApllodbResult<(RPos, Self::Name)> {
         let matching_pair: Vec<(RPos, Self::Name)> = self
             .names_with_pos()
             .iter()
@@ -52,13 +49,13 @@ pub trait Schema: Sized {
         } else if matching_pair.is_empty() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidName,
-                format!("no field matches to: {}", idx.display()),
+                format!("no field matches to: {}", idx),
                 None,
             ))
         } else {
             Err(ApllodbError::new(
                 ApllodbErrorKind::AmbiguousColumn,
-                format!("more than 1 fields match to: {}", idx.display()),
+                format!("more than 1 fields match to: {}", idx),
                 None,
             ))
         }

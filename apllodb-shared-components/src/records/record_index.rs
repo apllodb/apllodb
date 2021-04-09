@@ -1,10 +1,6 @@
-pub(crate) mod named_record_index;
-
 use serde::{Deserialize, Serialize};
 
-use crate::RPos;
-
-use self::named_record_index::NamedRecordIndex;
+use crate::{RPos, SchemaIndex};
 
 /// Key to extract an SqlValue from a Record.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
@@ -32,7 +28,7 @@ pub enum RecordIndex {
     /// - `RecordIndex::from("t.c2")`
     /// - `RecordIndex::from("ta.c2")`
     /// - `RecordIndex::from("c2a")`
-    Name(NamedRecordIndex),
+    Name(SchemaIndex),
 }
 
 impl From<usize> for RecordIndex {
@@ -43,6 +39,6 @@ impl From<usize> for RecordIndex {
 
 impl From<&str> for RecordIndex {
     fn from(s: &str) -> Self {
-        Self::Name(NamedRecordIndex::from(s))
+        Self::Name(SchemaIndex::from(s))
     }
 }

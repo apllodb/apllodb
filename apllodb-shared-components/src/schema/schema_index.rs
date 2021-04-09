@@ -1,31 +1,42 @@
+use std::fmt::Display;
+
+use serde::{Deserialize, Serialize};
+
 /// Key to find RecordPos from a record / row.
 ///
 /// Represented in a string either like "(prefix).(attr)" or "(attr)".
-pub trait SchemaIndex {
-    /// Constructor
-    fn new(prefix: Option<String>, attr: String) -> Self;
+#[derive(
+    Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize, new,
+)]
+pub struct SchemaIndex {
+    prefix: Option<String>,
+    attr: String,
+}
 
+impl SchemaIndex {
     /// Optional prefix part
-    fn prefix(&self) -> Option<&str>;
+    pub fn prefix(&self) -> Option<&str> {
+        self.prefix.as_ref().map(|s| s.as_str())
+    }
 
-    /// Main part
-    fn attr(&self) -> &str;
+    pub fn attr(&self) -> &str {
+        &self.attr
+    }
+}
 
-    /// Returns "(prefix).(attr)" or "(attr)"
-    fn display(&self) -> String {
+impl Display for SchemaIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let prefix = if let Some(p) = self.prefix() {
             format!("{}.", p)
         } else {
             "".to_string()
         };
-        format!("{}{}", prefix, self.attr())
+        write!(f, "{}{}", prefix, self.attr())
     }
+}
 
-    /// Easy-constructor.
-    fn from(s: &str) -> Self
-    where
-        Self: Sized,
-    {
+impl From<&str> for SchemaIndex {
+    fn from(s: &str) -> Self {
         let parts: Vec<&str> = s.split('.').collect();
 
         debug_assert!(!parts.is_empty());

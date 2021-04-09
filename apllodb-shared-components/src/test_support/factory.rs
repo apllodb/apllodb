@@ -9,7 +9,6 @@ use crate::{
         correlation_name::CorrelationName,
     },
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
-    record_schema::RecordSchema,
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
     Expression, LogicalFunction, NnSqlValue, Records, Row, SqlType, SqlValue, SqlValues, TableName,
     UnaryOperator,

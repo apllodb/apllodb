@@ -10,7 +10,7 @@ use crate::{
 };
 use apllodb_shared_components::{
     ApllodbError, ApllodbResult, CorrelationIndex, CorrelationReference, FieldIndex,
-    FullFieldReference, RecordFieldRefSchema,
+    FullFieldReference,
 };
 use apllodb_sql_parser::apllodb_ast;
 
@@ -139,7 +139,7 @@ impl SelectCommandAnalyzer {
                     &Self::ast_from_item_into_correlation_references(ast_from_item)?,
                 )?;
 
-                let mut ffrs = expression.to_record_indexes();
+                let mut ffrs = expression.to_schema_indexes();
                 ffrs.append(&mut Self::ast_from_item_into_full_field_references(
                     left.as_ref(),
                 )?);

@@ -1,5 +1,4 @@
 pub(crate) mod row;
-pub(crate) mod row_index;
 pub(crate) mod row_schema;
 
 use serde::{Deserialize, Serialize};

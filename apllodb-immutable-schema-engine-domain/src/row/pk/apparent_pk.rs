@@ -167,7 +167,7 @@ impl ApparentPrimaryKey {
                     FieldReference::ColumnNameVariant(column_name.clone()),
                 );
                 ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::RecordIndexVariant(ffr)),
+                    left: Box::new(Expression::SchemaIndexVariant(ffr)),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),
                     ))),

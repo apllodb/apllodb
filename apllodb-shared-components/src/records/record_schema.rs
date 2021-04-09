@@ -1,7 +1,5 @@
-use crate::{AliasedFieldName, ApllodbResult, RPos, Schema};
+use crate::{AliasedFieldName, ApllodbResult, RPos, Schema, SchemaIndex};
 use serde::{Deserialize, Serialize};
-
-use super::record_index::named_record_index::NamedRecordIndex;
 
 /// Schema of records.
 ///
@@ -31,8 +29,6 @@ pub struct RecordSchema {
 impl Schema for RecordSchema {
     type Name = AliasedFieldName;
 
-    type Index = NamedRecordIndex;
-
     fn names_with_pos(&self) -> Vec<(RPos, Option<AliasedFieldName>)> {
         self.inner.clone()
     }
@@ -44,7 +40,7 @@ impl RecordSchema {
     }
 
     /// Filter specified fields
-    pub(crate) fn projection(&self, indexes: &[NamedRecordIndex]) -> ApllodbResult<Self> {
+    pub(crate) fn projection(&self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
         let new_inner: Vec<(RPos, Option<AliasedFieldName>)> = indexes
             .iter()
             .map(|index| {
