@@ -10,6 +10,7 @@
 #[macro_use]
 extern crate derive_new;
 
+pub(crate) mod schema;
 pub(crate) mod attribute; // TODO move to sql-processor
 pub(crate) mod correlation; // TODO move to sql-processor
 pub(crate) mod data_structure; // TODO remove
