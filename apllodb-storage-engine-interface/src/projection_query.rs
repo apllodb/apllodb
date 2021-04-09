@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::rows::row_schema::RowSchema;
+
 /// Projection query for single table columns.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum ProjectionQuery {
@@ -8,5 +10,5 @@ pub enum ProjectionQuery {
     All,
 
     /// Some columns in a table.
-    Schema(RecordFieldRefSchema),
+    Schema(RowSchema),
 }

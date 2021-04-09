@@ -1,4 +1,4 @@
-use crate::{RPos, Schema, TableColumnName};
+use apllodb_shared_components::{RPos, Schema, TableColumnName};
 use serde::{Deserialize, Serialize};
 
 /// Schema of [Row](crate::Row)s holding pairs of (RowPos, TableColumnName).

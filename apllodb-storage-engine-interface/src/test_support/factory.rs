@@ -1,3 +1,7 @@
+use apllodb_shared_components::{SqlValue, SqlValues};
+
+use crate::rows::row::Row;
+
 impl Row {
     pub fn factory(sql_values: Vec<SqlValue>) -> Self {
         Self::new(SqlValues::new(sql_values))

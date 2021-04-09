@@ -3,9 +3,7 @@ pub(crate) mod row_schema;
 
 use serde::{Deserialize, Serialize};
 
-use crate::Row;
-
-use self::row_schema::RowSchema;
+use self::{row::Row, row_schema::RowSchema};
 
 /// Iterator of [Row](crate::Row)s with [RowSchema](crate::RowSchema).
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]

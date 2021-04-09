@@ -1,4 +1,4 @@
-use crate::{error::ApllodbResult, RPos, SqlConvertible, SqlValue, SqlValues};
+use apllodb_shared_components::{ApllodbResult, RPos, SqlConvertible, SqlValue, SqlValues};
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
 
