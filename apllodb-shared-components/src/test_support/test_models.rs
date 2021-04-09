@@ -1,6 +1,5 @@
 use crate::{
-    record_index::named_record_index::SchemaIndex, AliasedFieldName, NnSqlValue, RPos, RecordIndex,
-    RecordSchema, Row, Schema, SchemaIndex, SqlValue, TableName,
+    AliasedFieldName, NnSqlValue, RPos, RecordSchema, Row, Schema, SchemaIndex, SqlValue, TableName,
 };
 
 /// - people:

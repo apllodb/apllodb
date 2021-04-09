@@ -10,8 +10,8 @@ use crate::{
     },
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, LogicalFunction, NnSqlValue, Records, Row, SqlType, SqlValue, SqlValues, TableName,
-    UnaryOperator,
+    Expression, LogicalFunction, NnSqlValue, RecordSchema, Records, Row, SqlType, SqlValue,
+    SqlValues, TableName, UnaryOperator,
 };
 use rand::Rng;
 

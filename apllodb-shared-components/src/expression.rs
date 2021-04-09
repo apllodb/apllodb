@@ -29,10 +29,10 @@ pub enum Expression {
 impl Expression {
     /// # Panics
     ///
-    /// if `record_for_index` is None for Expression::FullFieldReferenceVariant.
-    pub fn to_sql_value(
+    /// if `record_for_index` is None for Expression::SchemaIndexVariant.
+    pub fn to_sql_value<Sch: Schema>(
         &self,
-        record_for_index: Option<(&Row, &RecordSchema)>,
+        record_for_index: Option<(&Row, &Sch)>,
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
@@ -132,17 +132,14 @@ impl From<SqlValue> for Expression {
 #[cfg(test)]
 mod tests {
     use crate::test_support::{fixture::*, test_models::People};
-    use crate::{
-        ApllodbResult, BooleanExpression, Expression, RecordFieldRefSchema, Row, SqlValue,
-        UnaryOperator,
-    };
+    use crate::{ApllodbResult, BooleanExpression, Expression, Row, SqlValue, UnaryOperator};
 
     #[test]
     fn test_to_sql_value() -> ApllodbResult<()> {
         #[derive(Clone, Debug, new)]
         struct TestDatum {
             in_expr: Expression,
-            in_record_for_field_ref: Option<(Row, RecordFieldRefSchema)>,
+            in_record_for_index: Option<(Row, RecordSchema)>,
             expected_sql_value: SqlValue,
         }
 
@@ -220,7 +217,7 @@ mod tests {
         for t in test_data {
             let sql_value = t
                 .in_expr
-                .to_sql_value(t.in_record_for_field_ref.as_ref().map(|(r, s)| (r, s)))?;
+                .to_sql_value(t.in_record_for_index.as_ref().map(|(r, s)| (r, s)))?;
             assert_eq!(sql_value, t.expected_sql_value);
         }
 
