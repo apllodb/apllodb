@@ -202,7 +202,7 @@ impl From<ProjectionResult> for RowSchema {
 
         let table_column_names: Vec<TableColumnName> = all_column_names
             .into_iter()
-            .map(|cn| TableColumnName::new(table_name, cn))
+            .map(|cn| TableColumnName::new(table_name.clone(), cn))
             .collect();
 
         RowSchema::from(table_column_names)

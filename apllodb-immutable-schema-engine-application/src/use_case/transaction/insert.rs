@@ -6,9 +6,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{
-    ApllodbResult, ColumnName, DatabaseName, SqlValue, SqlValues, TableName,
-};
+use apllodb_shared_components::{ApllodbResult, DatabaseName, SqlValue};
+use apllodb_storage_engine_interface::{ColumnName, Row, TableName};
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
@@ -17,7 +16,7 @@ pub struct InsertUseCaseInput<'usecase> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     columns: &'usecase [ColumnName],
-    values: Vec<SqlValues>,
+    rows: Vec<Row>,
 }
 impl<'usecase> UseCaseInput for InsertUseCaseInput<'usecase> {
     fn validate(&self) -> ApllodbResult<()> {
@@ -52,15 +51,15 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id).await?;
 
-        for sql_values in input.values {
+        for row in input.rows {
             // Construct ApparentPrimaryKey
-            let apk = ApparentPrimaryKey::from_table_pk_def(&vtable, &input.columns, &sql_values)?;
+            let apk = ApparentPrimaryKey::from_table_pk_def(&vtable, &input.columns, &row)?;
 
             let non_pk_col_vals: HashMap<ColumnName, SqlValue> = input
                 .columns
                 .iter()
                 .cloned()
-                .zip(sql_values)
+                .zip(row.into_values())
                 .filter_map(|(column_name, sql_value)| {
                     if apk.column_names().iter().any(|pk_cn| pk_cn == &column_name) {
                         None

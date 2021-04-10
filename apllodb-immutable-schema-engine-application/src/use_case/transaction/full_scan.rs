@@ -6,10 +6,8 @@ use apllodb_immutable_schema_engine_domain::{
     query::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{
-    ApllodbResult, DatabaseName, RecordFieldRefSchema, Records, TableName,
-};
-use apllodb_storage_engine_interface::RowProjectionQuery;
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::{RowProjectionQuery, RowSchema, Rows, TableName};
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -27,7 +25,7 @@ impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
 
 #[derive(Debug)]
 pub struct FullScanUseCaseOutput {
-    pub records: Records,
+    pub rows: Rows,
 }
 impl UseCaseOutput for FullScanUseCaseOutput {}
 
@@ -57,11 +55,11 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         let active_versions = vtable_repo.active_versions(&vtable).await?;
 
         let projection_result: ProjectionResult =
-            ProjectionResult::new(&vtable, active_versions, input.projection)?;
-        let schema = RecordFieldRefSchema::from(projection_result.clone());
+            ProjectionResult::new(&vtable, active_versions, &input.projection)?;
+        let schema = RowSchema::from(projection_result.clone());
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
 
-        let records = row_iter.into_rows(schema)?;
-        Ok(FullScanUseCaseOutput { records })
+        let rows = row_iter.into_rows(schema)?;
+        Ok(FullScanUseCaseOutput { rows })
     }
 }

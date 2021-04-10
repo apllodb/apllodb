@@ -151,7 +151,7 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(output.records)
+            Ok(output.rows)
         }
         .boxed_local()
     }

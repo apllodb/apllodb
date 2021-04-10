@@ -1,9 +1,9 @@
 use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ComparisonFunction,
-    Expression, LogicalFunction, NnSqlValue, RPos, SchemaIndex, SqlConvertible, SqlValue,
+    Expression, LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
 };
-use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, Row, TableName};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, Row, RowSchema, TableName};
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, ops::Index};
 
@@ -60,6 +60,7 @@ impl ApparentPrimaryKey {
 impl ApparentPrimaryKey {
     pub fn from_table_and_immutable_row(
         vtable: &VTable,
+        schema: &RowSchema,
         row: &mut ImmutableRow,
     ) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
@@ -71,8 +72,9 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                if let SqlValue::NotNull(sql_value) = row.row.get_sql_value(cdt.column_name())? {
-                    Ok(sql_value)
+                let (pos, _) = schema.index(&SchemaIndex::from(cdt.column_name()))?;
+                if let SqlValue::NotNull(sql_value) = row.row.get_sql_value(pos)? {
+                    Ok(sql_value.clone())
                 } else {
                     panic!("primary key's column must be NOT NULL")
                 }

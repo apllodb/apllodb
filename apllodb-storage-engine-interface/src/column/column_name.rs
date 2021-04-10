@@ -26,3 +26,9 @@ impl ColumnName {
         index.attr() == self.as_str()
     }
 }
+
+impl From<&ColumnName> for SchemaIndex {
+    fn from(cn: &ColumnName) -> Self {
+        SchemaIndex::from(cn.as_str())
+    }
+}

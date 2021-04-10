@@ -2,8 +2,6 @@ use apllodb_shared_components::{ApllodbResult, RPos, SqlConvertible, SqlValue};
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
 
-use crate::TableColumnName;
-
 /// Primitive row representation used in storage engines and query processor
 ///
 /// Clients do not directly use this struct but does [apllodb-server::Record](apllodb-server::Record) instead.
