@@ -58,7 +58,7 @@ impl ApparentPrimaryKey {
 }
 
 impl ApparentPrimaryKey {
-    pub fn from_table_and_immutable_row(
+    pub fn from_table_and_row(
         vtable: &VTable,
         schema: &RowSchema,
         row: &mut Row,

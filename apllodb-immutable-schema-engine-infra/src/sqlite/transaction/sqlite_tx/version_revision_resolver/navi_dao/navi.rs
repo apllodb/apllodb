@@ -74,7 +74,7 @@ impl ExistingNaviWithPk {
         let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(&mut r)? {
             Some(ExistingNaviWithPk {
                 navi: existing_navi,
-                pk: ApparentPrimaryKey::from_table_and_immutable_row(vtable, &mut r)?,
+                pk: ApparentPrimaryKey::from_table_and_row(vtable, &mut r)?,
             })
         } else {
             None
