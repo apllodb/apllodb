@@ -8,8 +8,8 @@ use crate::{
 };
 
 impl Row {
-    /// WARN: internal SqlValues might get different from RecordFieldRefSchema
-    pub fn naive_join(self, right: Self) -> Self {
+    /// WARN: internal Row might get different from RowSchema
+    pub fn naive_join(mut self, right: Self) -> Self {
         for right_sql_value in right.into_values() {
             self.append(right_sql_value);
         }

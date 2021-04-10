@@ -1,4 +1,4 @@
-use apllodb_shared_components::{NnSqlValue, RPos, SchemaIndex, SqlValue};
+use apllodb_shared_components::{NnSqlValue, SqlValue};
 
 use crate::{
     rows::{row::Row, row_schema::RowSchema},
@@ -24,16 +24,11 @@ impl People {
     }
 
     pub fn schema() -> RowSchema {
-        RowSchema::factory(vec![Self::tc_id(), Self::tc_age()])
-    }
-
-    pub fn pos(afn: TableColumnName) -> RPos {
-        let (pos, _) = Self::schema().index(&SchemaIndex::from(&afn)).unwrap();
-        pos
+        RowSchema::from(vec![Self::tc_id(), Self::tc_age()])
     }
 
     pub fn row(id: i64, age: i32) -> Row {
-        Row::factory(vec![
+        Row::new(vec![
             SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::Integer(age)),
         ])
@@ -62,11 +57,11 @@ impl Body {
     }
 
     pub fn schema() -> RowSchema {
-        RowSchema::factory(vec![Self::tc_id(), Self::tc_people_id(), Self::tc_height()])
+        RowSchema::from(vec![Self::tc_id(), Self::tc_people_id(), Self::tc_height()])
     }
 
     pub fn row(id: i64, people_id: i64, height: i32) -> Row {
-        Row::factory(vec![
+        Row::new(vec![
             SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
             SqlValue::NotNull(NnSqlValue::Integer(height)),
@@ -100,7 +95,7 @@ impl Pet {
     }
 
     pub fn schema() -> RowSchema {
-        RowSchema::factory(vec![
+        RowSchema::from(vec![
             Self::tc_id(),
             Self::tc_people_id(),
             Self::tc_kind(),
@@ -109,7 +104,7 @@ impl Pet {
     }
 
     pub fn row(id: i64, people_id: i64, kind: &str, age: i16) -> Row {
-        Row::factory(vec![
+        Row::new(vec![
             SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
             SqlValue::NotNull(NnSqlValue::Text(kind.to_string())),

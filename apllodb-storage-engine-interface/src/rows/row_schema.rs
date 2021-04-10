@@ -33,3 +33,15 @@ impl Schema for RowSchema {
             .collect()
     }
 }
+
+impl From<Vec<TableColumnName>> for RowSchema {
+    fn from(names: Vec<TableColumnName>) -> Self {
+        Self {
+            inner: names
+                .into_iter()
+                .enumerate()
+                .map(|(raw_pos, name)| (RPos::new(raw_pos), name))
+                .collect(),
+        }
+    }
+}

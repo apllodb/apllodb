@@ -1,4 +1,7 @@
-#![deny(warnings, missing_debug_implementations)]
+#![deny(
+    // TODO comment-in
+    // warnings,
+    missing_debug_implementations)]
 
 //! apllodb's storage engine interface.
 //!
