@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use super::{
     CNAME_COLUMN_DATA_TYPES, CNAME_IS_ACTIVE, CNAME_TABLE_NAME, CNAME_VERSION_CONSTRAINTS,
     CNAME_VERSION_NUMBER,
@@ -11,8 +9,10 @@ use apllodb_immutable_schema_engine_domain::{
     },
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
-use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, Schema, SchemaIndex,
+};
+use apllodb_storage_engine_interface::{ColumnDataType, Row, RowSchema, TableName};
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub(super) struct VersionMetadataModel {
@@ -35,10 +35,8 @@ impl From<&ActiveVersion> for VersionMetadataModel {
     }
 }
 
-impl TryFrom<ImmutableRow> for VersionMetadataModel {
-    type Error = ApllodbError;
-
-    fn try_from(mut r: ImmutableRow) -> ApllodbResult<Self> {
+impl VersionMetadataModel {
+    pub(super) fn from_row(schema: &RowSchema, mut row: Row) -> ApllodbResult<Self> {
         let col_not_found = || {
             ApllodbError::new(
                 ApllodbErrorKind::SystemError,
@@ -47,21 +45,22 @@ impl TryFrom<ImmutableRow> for VersionMetadataModel {
             )
         };
 
-        let table_name: String = r
-            .get(&ColumnName::new(CNAME_TABLE_NAME)?)?
+        let (pos_table_name, _) = schema.index(&SchemaIndex::from(CNAME_TABLE_NAME))?;
+        let (pos_version_number, _) = schema.index(&SchemaIndex::from(CNAME_VERSION_NUMBER))?;
+        let (pos_column_data_types, _) =
+            schema.index(&SchemaIndex::from(CNAME_COLUMN_DATA_TYPES))?;
+        let (pos_version_constraints, _) =
+            schema.index(&SchemaIndex::from(CNAME_VERSION_CONSTRAINTS))?;
+        let (pos_is_active, _) = schema.index(&SchemaIndex::from(CNAME_IS_ACTIVE))?;
+
+        let table_name: String = row.get(pos_table_name)?.ok_or_else(col_not_found)?;
+        let version_number: i64 = row.get(pos_version_number)?.ok_or_else(col_not_found)?;
+        let column_data_types: String =
+            row.get(pos_column_data_types)?.ok_or_else(col_not_found)?;
+        let version_constraints: String = row
+            .get(pos_version_constraints)?
             .ok_or_else(col_not_found)?;
-        let version_number: i64 = r
-            .get(&ColumnName::new(CNAME_VERSION_NUMBER)?)?
-            .ok_or_else(col_not_found)?;
-        let column_data_types: String = r
-            .get(&ColumnName::new(CNAME_COLUMN_DATA_TYPES)?)?
-            .ok_or_else(col_not_found)?;
-        let version_constraints: String = r
-            .get(&ColumnName::new(CNAME_VERSION_CONSTRAINTS)?)?
-            .ok_or_else(col_not_found)?;
-        let is_active: bool = r
-            .get(&ColumnName::new(CNAME_IS_ACTIVE)?)?
-            .ok_or_else(col_not_found)?;
+        let is_active: bool = row.get(pos_is_active)?.ok_or_else(col_not_found)?;
 
         Ok(Self {
             table_name: TableName::new(table_name)?,

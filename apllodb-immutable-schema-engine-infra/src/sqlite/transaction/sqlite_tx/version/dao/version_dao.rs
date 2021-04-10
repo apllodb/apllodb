@@ -18,11 +18,7 @@ use apllodb_storage_engine_interface::{
     ColumnDataType, ColumnName, Row, RowSchema, Rows, TableName,
 };
 use create_table_sql_for_version::CreateTableSqlForVersion;
-use std::{
-    cell::RefCell,
-    collections::{hash_map::Entry, HashMap},
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use self::sqlite_table_name_for_version::SqliteTableNameForVersion;
 

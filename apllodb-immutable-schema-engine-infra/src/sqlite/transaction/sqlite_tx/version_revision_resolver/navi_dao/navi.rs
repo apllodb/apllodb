@@ -5,8 +5,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::version_number::VersionNumber,
     vtable::VTable,
 };
-use apllodb_shared_components::ApllodbResult;
-use apllodb_storage_engine_interface::ColumnName;
+use apllodb_shared_components::{ApllodbResult, Schema, SchemaIndex};
+use apllodb_storage_engine_interface::{Row, RowSchema};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Navi {
@@ -23,22 +23,16 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) enum Na
 
 impl Navi {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn from_navi_row(
-        r: &mut ImmutableRow,
+        schema: &RowSchema,
+        row: &mut Row,
     ) -> ApllodbResult<Self> {
-        let rowid = SqliteRowid(
-            r.row
-                .get::<i64>(&ColumnName::new(CNAME_ROWID)?)?
-                .expect("must be NOT NULL"),
-        );
-        let revision = Revision::from(
-            r.row
-                .get::<i64>(&ColumnName::new(CNAME_REVISION)?)?
-                .expect("must be NOT NULL"),
-        );
-        let opt_version_number = r
-            .row
-            .get::<i64>(&ColumnName::new(CNAME_VERSION_NUMBER)?)?
-            .map(VersionNumber::from);
+        let (pos_rowid, _) = schema.index(&SchemaIndex::from(CNAME_ROWID))?;
+        let (pos_revision, _) = schema.index(&SchemaIndex::from(CNAME_REVISION))?;
+        let (pos_version_number, _) = schema.index(&SchemaIndex::from(CNAME_VERSION_NUMBER))?;
+
+        let rowid = SqliteRowid(row.get::<i64>(pos_rowid)?.expect("must be NOT NULL"));
+        let revision = Revision::from(row.get::<i64>(pos_revision)?.expect("must be NOT NULL"));
+        let opt_version_number = row.get::<i64>(pos_version_number)?.map(VersionNumber::from);
         match opt_version_number {
             None => Ok(Navi::Deleted { rowid, revision }),
             Some(version_number) => Ok(Navi::Exist(ExistingNavi {
@@ -69,12 +63,13 @@ pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) struct 
 impl ExistingNaviWithPk {
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) fn from_navi_row(
         vtable: &VTable,
-        mut r: ImmutableRow,
+        schema: &RowSchema,
+        mut row: Row,
     ) -> ApllodbResult<Option<Self>> {
-        let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(&mut r)? {
+        let ret = if let Navi::Exist(existing_navi) = Navi::from_navi_row(schema, &mut row)? {
             Some(ExistingNaviWithPk {
                 navi: existing_navi,
-                pk: ApparentPrimaryKey::from_table_and_row(vtable, &mut r)?,
+                pk: ApparentPrimaryKey::from_table_and_row(vtable, schema, &mut row)?,
             })
         } else {
             None
