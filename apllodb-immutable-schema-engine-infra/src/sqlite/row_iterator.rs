@@ -5,6 +5,8 @@ use apllodb_storage_engine_interface::{
 };
 use std::{collections::VecDeque, fmt::Debug};
 
+use super::immutable_row::FromSqliteRow;
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct SqliteRowIterator {
     schema: RowSchema,
@@ -30,8 +32,6 @@ impl SqliteRowIterator {
         column_data_types: &[&ColumnDataType],
         void_projection: &[ColumnName],
     ) -> ApllodbResult<Self> {
-        use crate::sqlite::from_sqlite_row::FromSqliteRow;
-
         let mut rows: VecDeque<ImmutableRow> = VecDeque::new();
 
         for sqlite_row in sqlite_rows {
