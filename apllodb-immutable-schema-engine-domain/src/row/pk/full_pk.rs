@@ -1,7 +1,7 @@
 pub mod revision;
 
 use super::apparent_pk::ApparentPrimaryKey;
-use apllodb_shared_components::ColumnName;
+use apllodb_storage_engine_interface::ColumnName;
 use revision::Revision;
 use serde::{Deserialize, Serialize};
 

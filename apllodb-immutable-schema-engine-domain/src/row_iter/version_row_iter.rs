@@ -1,5 +1,3 @@
-pub mod row_column_ref_schema;
-
 use crate::row::immutable_row::ImmutableRow;
 use std::fmt::Debug;
 

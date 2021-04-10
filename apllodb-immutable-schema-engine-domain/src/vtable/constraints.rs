@@ -1,7 +1,6 @@
 use super::constraint_kind::TableWideConstraintKind;
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnDefinition, ColumnName, TableConstraints,
-};
+use apllodb_shared_components::ApllodbResult;
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName};
 use serde::{Deserialize, Serialize};
 
 /// Table-wide constraints applied to record set.
