@@ -1,5 +1,5 @@
 use apllodb_immutable_schema_engine_domain::version::id::VersionId;
-use apllodb_shared_components::TableName;
+use apllodb_storage_engine_interface::TableName;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]

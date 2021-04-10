@@ -1,5 +1,9 @@
 use std::convert::TryFrom;
 
+use super::{
+    CNAME_COLUMN_DATA_TYPES, CNAME_IS_ACTIVE, CNAME_TABLE_NAME, CNAME_VERSION_CONSTRAINTS,
+    CNAME_VERSION_NUMBER,
+};
 use apllodb_immutable_schema_engine_domain::{
     row::immutable_row::ImmutableRow,
     version::{
@@ -8,14 +12,8 @@ use apllodb_immutable_schema_engine_domain::{
     },
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, TableName,
-};
-
-use super::{
-    CNAME_COLUMN_DATA_TYPES, CNAME_IS_ACTIVE, CNAME_TABLE_NAME, CNAME_VERSION_CONSTRAINTS,
-    CNAME_VERSION_NUMBER,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub(super) struct VersionMetadataModel {

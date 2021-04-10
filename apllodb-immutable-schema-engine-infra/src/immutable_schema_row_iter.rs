@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 
 use apllodb_immutable_schema_engine_domain::row::immutable_row::ImmutableRow;
-use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::{Row, RowSchema, Rows};
 
 use crate::sqlite::row_iterator::SqliteRowIterator;
@@ -25,13 +24,13 @@ impl Iterator for ImmutableSchemaRowIter {
 }
 
 impl ImmutableSchemaRowIter {
-    fn chain_versions(iters: impl IntoIterator<Item = SqliteRowIterator>) -> Self {
+    pub(crate) fn chain_versions(iters: impl IntoIterator<Item = SqliteRowIterator>) -> Self {
         Self(iters.into_iter().collect())
     }
 
-    fn into_rows(self, schema: RowSchema) -> ApllodbResult<Rows> {
+    pub(crate) fn into_rows(self, schema: RowSchema) -> Rows {
         if self.0.is_empty() {
-            Ok(Rows::new(schema, Vec::<Row>::new()))
+            Rows::new(schema, Vec::<Row>::new())
         } else {
             let mut rows: Vec<Row> = vec![];
 
@@ -40,11 +39,11 @@ impl ImmutableSchemaRowIter {
                 rows.append(&mut rs);
             }
 
-            Ok(Rows::new(schema, rows))
+            Rows::new(schema, rows)
         }
     }
 
-    fn schema(&self) -> RowSchema {
+    pub(crate) fn schema(&self) -> RowSchema {
         if self.0.is_empty() {
             RowSchema::empty()
         } else {

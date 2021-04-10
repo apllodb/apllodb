@@ -8,9 +8,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlType};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionMetadataDao {

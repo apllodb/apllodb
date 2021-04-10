@@ -16,13 +16,13 @@ use crate::{
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
     query::projection::ProjectionResult,
-    row_iter::ImmutableSchemaRowIterator,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::ApllodbResult;
+use apllodb_storage_engine_interface::Rows;
 use async_trait::async_trait;
 
 #[derive(Debug)]
@@ -77,7 +77,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         &self,
         vtable: &VTable,
         projection: ProjectionResult,
-    ) -> ApllodbResult<ImmutableSchemaRowIter> {
+    ) -> ApllodbResult<Rows> {
         let vrr_entries = self.vrr().scan(&vtable).await?;
         self.probe_vrr_entries(vrr_entries, projection).await
     }
@@ -117,7 +117,7 @@ impl VTableRepositoryImpl {
         &self,
         vrr_entries: VrrEntries,
         projection: ProjectionResult,
-    ) -> ApllodbResult<ImmutableSchemaRowIter> {
+    ) -> ApllodbResult<Rows> {
         let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
 
         let vtable = self
@@ -138,6 +138,7 @@ impl VTableRepositoryImpl {
             ver_row_iters.push_back(ver_row_iter);
         }
 
-        Ok(ImmutableSchemaRowIter::chain_versions(ver_row_iters))
+        let row_iter = ImmutableSchemaRowIter::chain_versions(ver_row_iters);
+        Ok(row_iter.into_rows())
     }
 }

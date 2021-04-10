@@ -11,9 +11,8 @@ use apllodb_immutable_schema_engine_domain::{
     row::{immutable_row::ImmutableRow, pk::apparent_pk::ApparentPrimaryKey},
     version::{active_version::ActiveVersion, id::VersionId},
 };
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, SqlType, SqlValue, TableName,
-};
+use apllodb_shared_components::{ApllodbResult, SqlType, SqlValue};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 use create_table_sql_for_version::CreateTableSqlForVersion;
 use std::{
     cell::RefCell,
