@@ -1,10 +1,7 @@
 use super::{CNAME_REVISION, CNAME_ROWID, CNAME_VERSION_NUMBER};
 use crate::sqlite::sqlite_rowid::SqliteRowid;
 use apllodb_immutable_schema_engine_domain::{
-    row::{
-        immutable_row::ImmutableRow,
-        pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
-    },
+    row::pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
     version::version_number::VersionNumber,
     vtable::VTable,
 };

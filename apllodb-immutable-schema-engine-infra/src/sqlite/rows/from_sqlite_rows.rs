@@ -1,37 +1,55 @@
-use apllodb_immutable_schema_engine_domain::row::immutable_row::{
-    builder::ImmutableRowBuilder, ImmutableRow,
-};
 use apllodb_shared_components::{
     ApllodbResult, I64LooseType, NumericComparableType, SqlConvertible, SqlType, SqlValue,
     StringComparableLoseType,
 };
-use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
-use sqlx::Row;
+use apllodb_storage_engine_interface::{
+    ColumnDataType, ColumnName, Row, RowSchema, Rows, TableColumnName, TableName,
+};
+use std::collections::VecDeque;
 
 use crate::error::InfraError;
 
-pub(crate) trait FromSqliteRow {
-    fn from_sqlite_row(
-        sqlite_row: &sqlx::sqlite::SqliteRow,
+pub(crate) trait FromSqliteRows {
+    /// # Arguments
+    ///
+    /// - `non_pk_column_data_types` - Only contains columns `sqlite_rows` have.
+    /// - `non_pk_void_projection` - Columns `sqlite_rows` do not have but another version has.
+    fn from_sqlite_rows(
+        sqlite_rows: &[sqlx::sqlite::SqliteRow],
         table_name: &TableName,
         column_data_types: &[&ColumnDataType],
-        void_projections: &[ColumnName],
-    ) -> ApllodbResult<ImmutableRow> {
-        let mut builder = ImmutableRowBuilder::new(table_name.clone());
+        void_projection: &[ColumnName],
+    ) -> ApllodbResult<Rows> {
+        let mut rows: VecDeque<Row> = VecDeque::new();
 
-        for cdt in column_data_types {
-            let non_pk_sql_value = Self::_sql_value(sqlite_row, cdt)?;
-            builder = builder.append(cdt.column_name().clone(), non_pk_sql_value)?;
-        }
+        let schema = RowSchema::from(
+            column_data_types
+                .iter()
+                .map(|cdt| cdt.column_name())
+                .chain(void_projection.iter())
+                .map(|cn| TableColumnName::new(table_name.clone(), cn.clone()))
+                .collect::<Vec<TableColumnName>>(),
+        );
 
-        // add requested (specified in projection) columns as NULL.
-        // (E.g. v1 has `c1` and v2 does not. This row is for v2 and `c1` is requested.)
-        for non_pk_void_projection in void_projections {
-            builder = builder.add_void_projection(non_pk_void_projection.clone())?;
-        }
+        let rows: Vec<Row> = sqlite_rows
+            .iter()
+            .map(|sqlite_row| {
+                let mut sql_values: Vec<SqlValue> = column_data_types
+                    .iter()
+                    .map(|cdt| Self::_sql_value(sqlite_row, cdt))
+                    .collect::<ApllodbResult<_>>()?;
 
-        let row = builder.build()?;
-        Ok(row)
+                // add requested (specified in projection) columns as NULL.
+                // (E.g. v1 has `c1` and v2 does not. This row is for v2 and `c1` is requested.)
+                void_projection
+                    .iter()
+                    .map(|_| sql_values.push(SqlValue::Null));
+
+                Ok(Row::new(sql_values))
+            })
+            .collect::<ApllodbResult<_>>()?;
+
+        Ok(Rows::new(schema, rows))
     }
 
     fn _sql_value(
@@ -74,6 +92,8 @@ pub(crate) trait FromSqliteRow {
             + sqlx::Type<sqlx::sqlite::Sqlite>
             + SqlConvertible,
     {
+        use sqlx::Row;
+
         let rust_value: Option<T> = sqlite_row
             .try_get(column_data_type.column_name().as_str())
             .map_err(InfraError::from)?;
@@ -90,4 +110,4 @@ pub(crate) trait FromSqliteRow {
     }
 }
 
-impl FromSqliteRow for ImmutableRow {}
+impl FromSqliteRows for Rows {}

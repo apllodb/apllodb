@@ -5,7 +5,6 @@ use super::{
     CNAME_VERSION_NUMBER,
 };
 use apllodb_immutable_schema_engine_domain::{
-    row::immutable_row::ImmutableRow,
     version::{
         active_version::ActiveVersion, constraints::VersionConstraints,
         version_number::VersionNumber,

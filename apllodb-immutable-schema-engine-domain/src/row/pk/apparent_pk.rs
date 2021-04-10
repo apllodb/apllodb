@@ -1,4 +1,4 @@
-use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
+use crate::vtable::VTable;
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ComparisonFunction,
     Expression, LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
@@ -61,7 +61,7 @@ impl ApparentPrimaryKey {
     pub fn from_table_and_immutable_row(
         vtable: &VTable,
         schema: &RowSchema,
-        row: &mut ImmutableRow,
+        row: &mut Row,
     ) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
@@ -73,7 +73,7 @@ impl ApparentPrimaryKey {
             .iter()
             .map(|cdt| {
                 let (pos, _) = schema.index(&SchemaIndex::from(cdt.column_name()))?;
-                if let SqlValue::NotNull(sql_value) = row.row.get_sql_value(pos)? {
+                if let SqlValue::NotNull(sql_value) = row.get_sql_value(pos)? {
                     Ok(sql_value.clone())
                 } else {
                     panic!("primary key's column must be NOT NULL")

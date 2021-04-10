@@ -1,16 +1,13 @@
-use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use super::vtable_metadata_dao::VTableMetadataDao;
-use crate::{
-    immutable_schema_row_iter::ImmutableSchemaRowIter,
-    sqlite::{
-        row_iterator::SqliteRowIterator,
-        sqlite_types::{SqliteTypes, VrrEntries},
-        transaction::sqlite_tx::{
-            version::dao::{version_dao::VersionDao, version_metadata_dao::VersionMetadataDao},
-            version_revision_resolver::VersionRevisionResolverImpl,
-            SqliteTx,
-        },
+use crate::sqlite::{
+    rows::chain_rows::ChainRows,
+    sqlite_types::{SqliteTypes, VrrEntries},
+    transaction::sqlite_tx::{
+        version::dao::{version_dao::VersionDao, version_metadata_dao::VersionMetadataDao},
+        version_revision_resolver::VersionRevisionResolverImpl,
+        SqliteTx,
     },
 };
 use apllodb_immutable_schema_engine_domain::{
@@ -118,12 +115,12 @@ impl VTableRepositoryImpl {
         vrr_entries: VrrEntries,
         projection: ProjectionResult,
     ) -> ApllodbResult<Rows> {
-        let mut ver_row_iters: VecDeque<SqliteRowIterator> = VecDeque::new();
-
         let vtable = self
             .vtable_metadata_dao()
             .select(&vrr_entries.vtable_id())
             .await?;
+
+        let mut all_ver_rows = Vec::<Rows>::new();
 
         for vrr_entries_in_version in vrr_entries.group_by_version_id() {
             let version = self
@@ -131,14 +128,15 @@ impl VTableRepositoryImpl {
                 .select_active_version(&vtable.id(), vrr_entries_in_version.version_id())
                 .await?;
 
-            let ver_row_iter = self
+            let ver_rows = self
                 .version_dao()
                 .probe_in_version(&version, vrr_entries_in_version, &projection)
                 .await?;
-            ver_row_iters.push_back(ver_row_iter);
+
+            all_ver_rows.push(ver_rows);
         }
 
-        let row_iter = ImmutableSchemaRowIter::chain_versions(ver_row_iters);
-        Ok(row_iter.into_rows())
+        let rows = ChainRows::chain(all_ver_rows);
+        Ok(rows)
     }
 }
