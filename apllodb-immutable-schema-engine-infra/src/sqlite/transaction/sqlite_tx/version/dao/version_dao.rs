@@ -31,7 +31,7 @@ pub(in crate::sqlite) struct VersionDao {
 
 struct Attributes(HashMap<ColumnName, SqlValue>);
 impl Attributes {
-    fn join(&mut self, attr: Self) -> Self {
+    fn join(self, attr: Self) -> Self {
         let h: HashMap<ColumnName, SqlValue> = self.0.into_iter().chain(attr.0).collect();
         Self(h)
     }
@@ -111,7 +111,7 @@ impl VersionDao {
                 navi_rowids
                     .iter()
                     .map(|navi_rowid| {
-                        let mut pk_attrs = pk_attrs.remove(navi_rowid).expect("checked");
+                        let pk_attrs = pk_attrs.remove(navi_rowid).expect("checked");
                         let non_pk_attrs = non_pk_attrs.remove(navi_rowid).expect("checked");
                         (navi_rowid.clone(), pk_attrs.join(non_pk_attrs))
                     })

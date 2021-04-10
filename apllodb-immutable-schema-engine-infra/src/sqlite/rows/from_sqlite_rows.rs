@@ -5,7 +5,6 @@ use apllodb_shared_components::{
 use apllodb_storage_engine_interface::{
     ColumnDataType, ColumnName, Row, RowSchema, Rows, TableColumnName, TableName,
 };
-use std::collections::VecDeque;
 
 use crate::error::InfraError;
 
@@ -20,8 +19,6 @@ pub(crate) trait FromSqliteRows {
         column_data_types: &[&ColumnDataType],
         void_projection: &[ColumnName],
     ) -> ApllodbResult<Rows> {
-        let mut rows: VecDeque<Row> = VecDeque::new();
-
         let schema = RowSchema::from(
             column_data_types
                 .iter()
@@ -43,7 +40,7 @@ pub(crate) trait FromSqliteRows {
                 // (E.g. v1 has `c1` and v2 does not. This row is for v2 and `c1` is requested.)
                 void_projection
                     .iter()
-                    .map(|_| sql_values.push(SqlValue::Null));
+                    .for_each(|_| sql_values.push(SqlValue::Null));
 
                 Ok(Row::new(sql_values))
             })

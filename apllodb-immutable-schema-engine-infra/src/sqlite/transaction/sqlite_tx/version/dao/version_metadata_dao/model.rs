@@ -36,7 +36,7 @@ impl From<&ActiveVersion> for VersionMetadataModel {
 }
 
 impl VersionMetadataModel {
-    pub(super) fn from_row(schema: &RowSchema, mut row: Row) -> ApllodbResult<Self> {
+    pub(super) fn from_row(schema: &RowSchema, row: Row) -> ApllodbResult<Self> {
         let col_not_found = || {
             ApllodbError::new(
                 ApllodbErrorKind::SystemError,
