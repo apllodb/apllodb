@@ -316,7 +316,7 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            RowProjectionQuery::Columns(RecordFieldRefSchema::factory(vec![
+            RowProjectionQuery::ColumnIndexes(RecordFieldRefSchema::factory(vec![
                 FullFieldReference::factory(
                     t_name.as_str(),
                     c_id_def.column_data_type().column_name().as_str(),
@@ -332,7 +332,7 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            RowProjectionQuery::Columns(RecordFieldRefSchema::factory(vec![
+            RowProjectionQuery::ColumnIndexes(RecordFieldRefSchema::factory(vec![
                 FullFieldReference::factory(
                     t_name.as_str(),
                     c_id_def.column_data_type().column_name().as_str(),

@@ -1,4 +1,4 @@
-use apllodb_shared_components::{ApllodbResult, ShortName};
+use apllodb_shared_components::{ApllodbResult, SchemaIndex, ShortName};
 use serde::{Deserialize, Serialize};
 
 /// Column name.
@@ -19,5 +19,10 @@ impl ColumnName {
     /// Ref to column name
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+
+    /// Whether the index hits to this column name
+    pub fn matches(&self, index: &SchemaIndex) -> bool {
+        index.attr() == self.as_str()
     }
 }

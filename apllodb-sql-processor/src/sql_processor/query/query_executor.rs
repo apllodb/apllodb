@@ -195,7 +195,7 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: RowProjectionQuery::Columns(RecordFieldRefSchema::factory(vec![
+                        projection: RowProjectionQuery::ColumnIndexes(RecordFieldRefSchema::factory(vec![
                             People::ffr_id(),
                         ])),
                     },
@@ -219,7 +219,7 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: RowProjectionQuery::Columns(RecordFieldRefSchema::factory(vec![
+                        projection: RowProjectionQuery::ColumnIndexes(RecordFieldRefSchema::factory(vec![
                             People::ffr_age(),
                         ])),
                     },

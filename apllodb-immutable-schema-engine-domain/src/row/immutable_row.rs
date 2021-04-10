@@ -1,8 +1,6 @@
 pub mod builder;
 
-use apllodb_shared_components::{ApllodbResult, ColumnName, SqlConvertible, SqlValue, SqlValues};
-
-use crate::row_iter::version_row_iter::row_column_ref_schema::RowColumnRefSchema;
+use apllodb_shared_components::{ApllodbResult, SqlConvertible, SqlValue};
 
 /// Immutable row which is never updated or deleted by any transaction.
 /// Only used for SELECT statement (or internally for UPDATE == SELECT + INSERT).

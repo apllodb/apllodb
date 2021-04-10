@@ -9,5 +9,5 @@ pub enum RowProjectionQuery {
     All,
 
     /// Some columns in a table.
-    Columns(Vec<SchemaIndex>),
+    ColumnIndexes(Vec<SchemaIndex>),
 }

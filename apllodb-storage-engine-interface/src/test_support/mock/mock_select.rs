@@ -55,7 +55,7 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
 
             let rows = match projection {
                 RowProjectionQuery::All => rows,
-                RowProjectionQuery::Columns(indexes) => rows.projection(&indexes).unwrap(),
+                RowProjectionQuery::ColumnIndexes(indexes) => rows.projection(&indexes).unwrap(),
             };
 
             async move { Ok((rows, session)) }.boxed_local()
