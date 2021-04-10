@@ -1,13 +1,18 @@
 use std::collections::HashMap;
 
 use apllodb_shared_components::{
-    AlterTableAction, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, ColumnDefinition,
-    ColumnName, Expression, Session, SessionId, SessionWithDb, SessionWithTx, TableConstraints,
-    TableName,
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, Expression, Session, SessionId,
+    SessionWithDb, SessionWithTx,
 };
 use futures::FutureExt;
 
-use crate::{rows::row::Row, RowProjectionQuery, Rows};
+use crate::{
+    alter_table_action::AlterTableAction,
+    column::{column_definition::ColumnDefinition, column_name::ColumnName},
+    rows::row::Row,
+    table::{table_constraints::TableConstraints, table_name::TableName},
+    RowProjectionQuery, Rows,
+};
 
 use super::BoxFut;
 

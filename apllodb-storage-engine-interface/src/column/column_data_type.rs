@@ -1,8 +1,7 @@
+use apllodb_shared_components::SqlType;
 use serde::{Deserialize, Serialize};
 
-use crate::{ColumnName, SqlType};
-
-use super::column_definition::ColumnDefinition;
+use super::{column_definition::ColumnDefinition, column_name::ColumnName};
 
 /// Column with data type.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, new)]

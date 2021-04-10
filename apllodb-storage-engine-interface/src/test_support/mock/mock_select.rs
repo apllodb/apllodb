@@ -1,9 +1,9 @@
 use crate::{
+    table::table_name::TableName,
     test_support::test_models::{Body, ModelsMock, People, Pet},
     test_support::MockWithTxMethods,
     RowProjectionQuery, Rows,
 };
-use apllodb_shared_components::TableName;
 use futures::FutureExt;
 
 #[derive(Clone, PartialEq, Debug)]

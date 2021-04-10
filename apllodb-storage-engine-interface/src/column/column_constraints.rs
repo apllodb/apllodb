@@ -1,5 +1,5 @@
 use super::column_constraint_kind::ColumnConstraintKind;
-use crate::error::ApllodbResult;
+use apllodb_shared_components::ApllodbResult;
 use serde::{Deserialize, Serialize};
 
 /// Constraints for column.

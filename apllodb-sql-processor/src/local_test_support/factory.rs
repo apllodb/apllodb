@@ -76,6 +76,71 @@ impl QueryExecutor<MockStorageEngine> {
     }
 }
 
+impl AliasedFieldName {
+    pub fn factory(table_name: &str, column_name: &str) -> Self {
+        Self::new(FieldName::factory(table_name, column_name), None)
+    }
+
+    pub fn with_corr_alias(self, correlation_alias: &str) -> Self {
+        let field_name = self.field_name.with_corr_alias(correlation_alias);
+        Self::new(field_name, None)
+    }
+
+    pub fn with_field_alias(self, field_alias: &str) -> Self {
+        let alias = FieldAlias::factory(field_alias);
+        Self::new(self.field_name, Some(alias))
+    }
+}
+
+impl FieldName {
+    pub fn factory(table_name: &str, column_name: &str) -> Self {
+        Self::new(
+            AliasedCorrelationName::factory(table_name),
+            AttributeName::factory(column_name),
+        )
+    }
+
+    pub fn with_corr_alias(self, correlation_alias: &str) -> Self {
+        let aliased_correlation_name = self.aliased_correlation_name.with_alias(correlation_alias);
+        Self::new(aliased_correlation_name, self.attribute_name)
+    }
+}
+
+impl FieldAlias {
+    pub fn factory(field_alias: &str) -> Self {
+        Self::new(field_alias).unwrap()
+    }
+}
+
+impl AliasedCorrelationName {
+    pub fn factory(table_name: &str) -> Self {
+        Self::new(CorrelationName::factory(table_name), None)
+    }
+
+    pub fn with_alias(self, correlation_alias: &str) -> Self {
+        let alias = CorrelationAlias::factory(correlation_alias);
+        Self::new(self.correlation_name, Some(alias))
+    }
+}
+
+impl CorrelationName {
+    pub fn factory(table_name: &str) -> Self {
+        Self::TableNameVariant(TableName::factory(table_name))
+    }
+}
+
+impl CorrelationAlias {
+    pub fn factory(correlation_alias: &str) -> Self {
+        Self::new(correlation_alias).unwrap()
+    }
+}
+
+impl AttributeName {
+    pub fn factory(column_name: &str) -> Self {
+        Self::ColumnNameVariant(ColumnName::factory(column_name))
+    }
+}
+
 impl Records {
     pub fn factory(schema: RecordSchema, records: Vec<Row>) -> Self {
         Self::new(schema, records)

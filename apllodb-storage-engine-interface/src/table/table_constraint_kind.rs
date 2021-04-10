@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::data_structure::column::column_name::ColumnName;
+use crate::column::column_name::ColumnName;
 
 /// A constraint parameter in a table definition.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]

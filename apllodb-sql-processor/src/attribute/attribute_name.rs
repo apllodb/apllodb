@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use crate::ColumnName;
 use serde::{Deserialize, Serialize};
 
 /// Name of an attribute.

@@ -1,10 +1,8 @@
-use crate::error::{ApllodbError, ApllodbResult};
-use crate::{
-    data_structure::column::column_name::ColumnName, error::kind::ApllodbErrorKind,
-    validation_helper::collection::find_dup_slow,
-};
+use apllodb_shared_components::{find_dup_slow, ApllodbError, ApllodbErrorKind, ApllodbResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+
+use crate::column::column_name::ColumnName;
 
 use super::table_constraint_kind::TableConstraintKind;
 
@@ -145,11 +143,6 @@ mod tests {
             }
         }}
     }
-
-    use crate::{
-        data_structure::table::table_constraint_kind::TableConstraintKind,
-        error::kind::ApllodbErrorKind,
-    };
 
     use super::TableConstraints;
 

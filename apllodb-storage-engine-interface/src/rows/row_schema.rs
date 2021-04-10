@@ -1,5 +1,7 @@
-use apllodb_shared_components::{RPos, Schema, TableColumnName};
+use apllodb_shared_components::{RPos, Schema};
 use serde::{Deserialize, Serialize};
+
+use crate::table_column_name::TableColumnName;
 
 /// Schema of [Row](crate::Row)s holding pairs of (RowPos, TableColumnName).
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]

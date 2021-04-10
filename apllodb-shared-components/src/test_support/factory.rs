@@ -3,14 +3,8 @@
 //! Factory methods for testing
 
 use crate::{
-    attribute::attribute_name::AttributeName,
-    correlation::{
-        aliased_correlation_name::AliasedCorrelationName, correlation_alias::CorrelationAlias,
-        correlation_name::CorrelationName,
-    },
-    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
-    AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, LogicalFunction, NnSqlValue, SqlType, SqlValue, TableName, UnaryOperator,
+    AliasName, BooleanExpression, ComparisonFunction, DatabaseName, Expression, LogicalFunction,
+    NnSqlValue, SqlValue, UnaryOperator,
 };
 use rand::Rng;
 
@@ -21,101 +15,12 @@ impl DatabaseName {
     }
 }
 
-impl TableName {
-    /// randomly generate a table name
-    pub fn random() -> Self {
-        Self::new(random_id()).unwrap()
-    }
-}
-
-impl AliasedFieldName {
-    pub fn factory(table_name: &str, column_name: &str) -> Self {
-        Self::new(FieldName::factory(table_name, column_name), None)
-    }
-
-    pub fn with_corr_alias(self, correlation_alias: &str) -> Self {
-        let field_name = self.field_name.with_corr_alias(correlation_alias);
-        Self::new(field_name, None)
-    }
-
-    pub fn with_field_alias(self, field_alias: &str) -> Self {
-        let alias = FieldAlias::factory(field_alias);
-        Self::new(self.field_name, Some(alias))
-    }
-}
-
-impl FieldName {
-    pub fn factory(table_name: &str, column_name: &str) -> Self {
-        Self::new(
-            AliasedCorrelationName::factory(table_name),
-            AttributeName::factory(column_name),
-        )
-    }
-
-    pub fn with_corr_alias(self, correlation_alias: &str) -> Self {
-        let aliased_correlation_name = self.aliased_correlation_name.with_alias(correlation_alias);
-        Self::new(aliased_correlation_name, self.attribute_name)
-    }
-}
-
-impl FieldAlias {
-    pub fn factory(field_alias: &str) -> Self {
-        Self::new(field_alias).unwrap()
-    }
-}
-
-impl AliasedCorrelationName {
-    pub fn factory(table_name: &str) -> Self {
-        Self::new(CorrelationName::factory(table_name), None)
-    }
-
-    pub fn with_alias(self, correlation_alias: &str) -> Self {
-        let alias = CorrelationAlias::factory(correlation_alias);
-        Self::new(self.correlation_name, Some(alias))
-    }
-}
-
-impl CorrelationName {
-    pub fn factory(table_name: &str) -> Self {
-        Self::TableNameVariant(TableName::factory(table_name))
-    }
-}
-
-impl CorrelationAlias {
-    pub fn factory(correlation_alias: &str) -> Self {
-        Self::new(correlation_alias).unwrap()
-    }
-}
-
-impl AttributeName {
-    pub fn factory(column_name: &str) -> Self {
-        Self::ColumnNameVariant(ColumnName::factory(column_name))
-    }
-}
-
-impl TableName {
-    pub fn factory(table_name: &str) -> Self {
-        Self::new(table_name).unwrap()
-    }
-}
-
-impl ColumnName {
-    pub fn factory(column_name: &str) -> Self {
-        Self::new(column_name).unwrap()
-    }
-}
-
 impl AliasName {
     pub fn factory(alias_name: &str) -> Self {
         Self::new(alias_name).unwrap()
     }
 }
 
-impl ColumnDataType {
-    pub fn factory(column_name: &str, sql_type: SqlType, nullable: bool) -> Self {
-        Self::new(ColumnName::factory(column_name), sql_type, nullable)
-    }
-}
 impl Expression {
     pub fn factory_null() -> Self {
         Self::ConstantVariant(SqlValue::Null)
@@ -172,7 +77,7 @@ impl NnSqlValue {
     }
 }
 
-fn random_id() -> String {
+pub fn random_id() -> String {
     rand::thread_rng()
         .sample_iter(&rand::distributions::Alphanumeric)
         .map(char::from)

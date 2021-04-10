@@ -1,8 +1,9 @@
-use apllodb_shared_components::{NnSqlValue, RPos, SchemaIndex, SqlValue, TableColumnName};
+use apllodb_shared_components::{NnSqlValue, RPos, SchemaIndex, SqlValue};
 
 use crate::{
     rows::{row::Row, row_schema::RowSchema},
     table::table_name::TableName,
+    table_column_name::TableColumnName,
 };
 
 /// - people:

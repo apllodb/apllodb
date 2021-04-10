@@ -9,6 +9,9 @@
 extern crate derive_new;
 
 pub(crate) mod ast_translator;
+pub(crate) mod attribute;
+pub(crate) mod correlation;
+pub(crate) mod field;
 pub(crate) mod records;
 pub(crate) mod sql_processor;
 

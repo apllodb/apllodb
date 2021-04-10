@@ -1,4 +1,4 @@
-use crate::{error::ApllodbResult, validation_helper::short_name::ShortName};
+use apllodb_shared_components::{ApllodbResult, ShortName};
 use serde::{Deserialize, Serialize};
 
 /// Table name.

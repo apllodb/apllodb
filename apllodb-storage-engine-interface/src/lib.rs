@@ -45,10 +45,16 @@
 //!
 //! See [test_support module level doc](crate::test_support) for detail.
 
+#[macro_use]
+extern crate derive_new;
+
 mod access_methods;
+mod alter_table_action;
+mod column;
 mod row_projection_query;
 mod rows;
 mod table;
+mod table_column_name;
 
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,

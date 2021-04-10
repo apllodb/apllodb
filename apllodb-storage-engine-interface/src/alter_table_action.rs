@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::ColumnDefinition;
-
-use super::column::column_name::ColumnName;
+use crate::column::{column_definition::ColumnDefinition, column_name::ColumnName};
 
 /// Actions to be done by ALTER TABLE statement.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
