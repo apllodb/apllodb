@@ -13,7 +13,7 @@ use apllodb_immutable_schema_engine_domain::{
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName, Expression, SqlValue,
 };
-use apllodb_storage_engine_interface::{ColumnName, RowProjectionQuery, TableName};
+use apllodb_storage_engine_interface::{ColumnName, Row, RowProjectionQuery, TableName};
 // use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -91,7 +91,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
 
         let new_columns_to_insert: Vec<ColumnName> = row_iter.schema().as_column_names().to_vec();
-        let mut new_values_to_insert: Vec<SqlValues> = vec![];
+        let mut new_rows_to_insert: Vec<Row> = vec![];
 
         for row in row_iter {
             let col_vals_before = row.into_zipped();
@@ -112,7 +112,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
                 vals_after.push(val_after);
             }
 
-            new_values_to_insert.push(SqlValues::new(vals_after));
+            new_rows_to_insert.push(SqlValues::new(vals_after));
         }
 
         // DELETE all
@@ -127,7 +127,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             input.database_name,
             input.table_name,
             &new_columns_to_insert,
-            new_values_to_insert,
+            new_rows_to_insert,
         );
         let _ = InsertUseCase::<'_, Types>::run(vtable_repo, version_repo, insert_usecase_input)
             .await?;

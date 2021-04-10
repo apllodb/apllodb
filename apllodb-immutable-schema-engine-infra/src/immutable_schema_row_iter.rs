@@ -1,12 +1,9 @@
 use std::collections::VecDeque;
 
 use apllodb_immutable_schema_engine_domain::{
-    row::immutable_row::ImmutableRow,
-    row_iter::{
-        version_row_iter::row_column_ref_schema::RowColumnRefSchema, ImmutableSchemaRowIterator,
-    },
+    row::immutable_row::ImmutableRow, row_iter::ImmutableSchemaRowIterator,
 };
-use apllodb_shared_components::{ApllodbResult, RecordFieldRefSchema, Records, SqlValues};
+use apllodb_shared_components::ApllodbResult;
 
 use crate::sqlite::{row_iterator::SqliteRowIterator, sqlite_types::SqliteTypes};
 
