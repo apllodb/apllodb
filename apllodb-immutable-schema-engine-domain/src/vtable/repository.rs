@@ -4,6 +4,7 @@ use crate::{
     version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::ApllodbResult;
+use apllodb_storage_engine_interface::Rows;
 use async_trait::async_trait;
 
 #[async_trait(?Send)]
@@ -33,11 +34,8 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///   - Table specified by `vtable.id` is not visible to this transaction.
     async fn update(&self, vtable: &VTable) -> ApllodbResult<()>;
 
-    async fn full_scan(
-        &self,
-        vtable: &VTable,
-        projection: ProjectionResult,
-    ) -> ApllodbResult<Types::ImmutableSchemaRowIter>;
+    async fn full_scan(&self, vtable: &VTable, projection: ProjectionResult)
+        -> ApllodbResult<Rows>;
 
     async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 

@@ -1,13 +1,13 @@
-use apllodb_immutable_schema_engine_domain::{
-    row::immutable_row::ImmutableRow,
-    row_iter::version_row_iter::{row_column_ref_schema::RowColumnRefSchema, VersionRowIterator},
+use apllodb_immutable_schema_engine_domain::row::immutable_row::ImmutableRow;
+use apllodb_shared_components::ApllodbResult;
+use apllodb_storage_engine_interface::{
+    ColumnDataType, ColumnName, RowSchema, TableColumnName, TableName,
 };
-use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnName, TableName};
 use std::{collections::VecDeque, fmt::Debug};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct SqliteRowIterator {
-    schema: RowColumnRefSchema,
+    schema: RowSchema,
     rows: VecDeque<ImmutableRow>,
 }
 
@@ -18,8 +18,6 @@ impl Iterator for SqliteRowIterator {
         self.rows.pop_front()
     }
 }
-
-impl VersionRowIterator for SqliteRowIterator {}
 
 impl SqliteRowIterator {
     /// # Arguments
@@ -46,39 +44,26 @@ impl SqliteRowIterator {
             rows.push_back(row);
         }
 
-        let schema = RowColumnRefSchema::new(
-            table_name.clone(),
+        let schema = RowSchema::from(
             column_data_types
                 .iter()
                 .map(|cdt| cdt.column_name())
                 .chain(void_projection.iter())
-                .cloned()
-                .collect(),
+                .map(|cn| TableColumnName::new(table_name.clone(), cn.clone()))
+                .collect::<Vec<TableColumnName>>(),
         );
 
         Ok(Self { schema, rows })
     }
 
-    pub(crate) fn schema(&self) -> &RowColumnRefSchema {
+    pub(crate) fn as_schema(&self) -> &RowSchema {
         &self.schema
-    }
-
-    pub(crate) fn empty() -> Self {
-        Self {
-            schema: RowColumnRefSchema::empty(),
-            rows: VecDeque::new(),
-        }
     }
 }
 
-impl From<VecDeque<ImmutableRow>> for SqliteRowIterator {
-    fn from(rows: VecDeque<ImmutableRow>) -> Self {
-        if rows.is_empty() {
-            Self::empty()
-        } else {
-            let r = rows.front().unwrap();
-            let schema = r.schema().clone();
-            Self { schema, rows }
-        }
+impl From<(RowSchema, VecDeque<ImmutableRow>)> for SqliteRowIterator {
+    fn from(f: (RowSchema, VecDeque<ImmutableRow>)) -> Self {
+        let (schema, rows) = f;
+        Self { schema, rows }
     }
 }

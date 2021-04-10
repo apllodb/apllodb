@@ -1,6 +1,8 @@
 pub(crate) mod row;
 pub(crate) mod row_schema;
 
+use std::collections::VecDeque;
+
 use apllodb_shared_components::{ApllodbResult, RPos, Schema, SchemaIndex};
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +12,7 @@ use self::{row::Row, row_schema::RowSchema};
 #[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct Rows {
     schema: RowSchema,
-    inner: Vec<Row>,
+    inner: VecDeque<Row>,
 }
 
 impl Rows {
@@ -20,7 +22,7 @@ impl Rows {
         it: I,
     ) -> Self {
         Self {
-            schema: schema,
+            schema,
             inner: it
                 .into_iter()
                 .map(|into_values| into_values.into())
@@ -57,5 +59,13 @@ impl Rows {
     /// ref to schema
     pub fn as_schema(&self) -> &RowSchema {
         &self.schema
+    }
+}
+
+impl Iterator for Rows {
+    type Item = Row;
+
+    fn next(&mut self) -> Option<Row> {
+        self.inner.pop_front()
     }
 }

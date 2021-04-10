@@ -2,9 +2,10 @@ use apllodb_immutable_schema_engine_domain::row::immutable_row::{
     builder::ImmutableRowBuilder, ImmutableRow,
 };
 use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, I64LooseType, NumericComparableType, SqlConvertible,
-    SqlType, SqlValue, StringComparableLoseType, TableName,
+    ApllodbResult, I64LooseType, NumericComparableType, SqlConvertible, SqlType, SqlValue,
+    StringComparableLoseType,
 };
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 use sqlx::Row;
 
 use crate::error::InfraError;

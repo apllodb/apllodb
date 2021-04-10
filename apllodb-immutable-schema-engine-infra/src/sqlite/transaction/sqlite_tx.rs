@@ -14,9 +14,8 @@ use crate::{
         database::SqliteDatabase, row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid,
     },
 };
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, DatabaseName, TableName,
-};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 use log::debug;
 
 /// Many transactions share 1 SQLite connection in `Database`.

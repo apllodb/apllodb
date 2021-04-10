@@ -1,4 +1,4 @@
-use apllodb_shared_components::TableName;
+use apllodb_storage_engine_interface::TableName;
 use serde::{Deserialize, Serialize};
 
 use crate::sqlite::to_sql_string::ToSqlString;

@@ -34,6 +34,24 @@ impl Schema for RowSchema {
     }
 }
 
+impl RowSchema {
+    pub fn empty() -> Self {
+        Self { inner: vec![] }
+    }
+
+    pub fn table_column_names(&self) -> Vec<TableColumnName> {
+        self.inner.iter().map(|(_, tc)| tc.clone()).collect()
+    }
+
+    pub fn table_column_names_with_pos(&self) -> Vec<(RPos, TableColumnName)> {
+        self.table_column_names()
+            .into_iter()
+            .enumerate()
+            .map(|(raw_pos, tc)| (RPos::new(raw_pos), tc))
+            .collect()
+    }
+}
+
 impl From<Vec<TableColumnName>> for RowSchema {
     fn from(names: Vec<TableColumnName>) -> Self {
         Self {

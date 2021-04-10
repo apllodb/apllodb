@@ -3,10 +3,10 @@ use apllodb_immutable_schema_engine_domain::{
     row::pk::full_pk::revision::Revision, version::version_number::VersionNumber,
 };
 use apllodb_shared_components::{
-    BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, Expression,
-    FullFieldReference, I64LooseType, LogicalFunction, NnSqlValue, NumericComparableType, SqlType,
-    SqlValue, StringComparableLoseType, TableName, UnaryOperator,
+    BooleanExpression, ComparisonFunction, Expression, I64LooseType, LogicalFunction, NnSqlValue,
+    NumericComparableType, SchemaIndex, SqlType, SqlValue, StringComparableLoseType, UnaryOperator,
 };
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
 pub(in crate::sqlite) trait ToSqlString {
     fn to_sql_string(&self) -> String;
@@ -59,12 +59,6 @@ impl ToSqlString for ColumnName {
     }
 }
 
-impl ToSqlString for FullFieldReference {
-    fn to_sql_string(&self) -> String {
-        self.to_string()
-    }
-}
-
 impl ToSqlString for SqlType {
     fn to_sql_string(&self) -> String {
         match self {
@@ -92,6 +86,12 @@ impl ToSqlString for ColumnDataType {
             self.sql_type().to_sql_string(),
             if self.nullable() { "" } else { "NOT NULL" }
         )
+    }
+}
+
+impl ToSqlString for SchemaIndex {
+    fn to_sql_string(&self) -> String {
+        format!("{}", self)
     }
 }
 
@@ -145,7 +145,7 @@ impl ToSqlString for Expression {
     fn to_sql_string(&self) -> String {
         match self {
             Expression::ConstantVariant(c) => c.to_sql_string(),
-            Expression::SchemaIndexVariant(ffr) => ffr.to_sql_string(),
+            Expression::SchemaIndexVariant(index) => index.to_sql_string(),
             Expression::BooleanExpressionVariant(boolean_expr) => boolean_expr.to_sql_string(),
             Expression::UnaryOperatorVariant(uni_op, expr) => {
                 format!("{} {}", uni_op.to_sql_string(), expr.to_sql_string())

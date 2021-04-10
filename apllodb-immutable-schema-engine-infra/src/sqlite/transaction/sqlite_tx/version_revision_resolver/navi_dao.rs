@@ -12,7 +12,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnName, SqlType};
+use apllodb_shared_components::{ApllodbResult, SqlType};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName};
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
 use self::{
