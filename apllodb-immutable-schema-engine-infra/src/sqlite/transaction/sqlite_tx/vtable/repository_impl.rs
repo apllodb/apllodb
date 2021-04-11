@@ -19,7 +19,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::ApllodbResult;
-use apllodb_storage_engine_interface::Rows;
+use apllodb_storage_engine_interface::{Row, RowSchema, Rows};
 use async_trait::async_trait;
 
 #[derive(Debug)]
@@ -136,7 +136,11 @@ impl VTableRepositoryImpl {
             all_ver_rows.push(ver_rows);
         }
 
-        let rows = ChainRows::chain(all_ver_rows);
-        Ok(rows)
+        if all_ver_rows.is_empty() {
+            Ok(Rows::new(RowSchema::from(projection), Vec::<Row>::new()))
+        } else {
+            let rows = ChainRows::chain(all_ver_rows);
+            Ok(rows)
+        }
     }
 }
