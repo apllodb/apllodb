@@ -144,7 +144,8 @@ mod tests {
         }}
     }
 
-    use super::TableConstraints;
+    use super::{super::table_constraint_kind::TableConstraintKind, TableConstraints};
+    use apllodb_shared_components::ApllodbErrorKind;
 
     #[test]
     fn test_success() {

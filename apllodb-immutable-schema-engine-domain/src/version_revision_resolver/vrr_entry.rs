@@ -1,7 +1,5 @@
 use std::{fmt::Debug, hash::Hash};
 
-use apllodb_shared_components::{ApllodbResult, SqlValue};
-
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, entity::Entity,
     row::pk::apparent_pk::ApparentPrimaryKey, row::pk::full_pk::revision::Revision,

@@ -5,7 +5,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use apllodb_storage_engine_interface::{RowProjectionQuery, RowSchema, Rows, TableName};
+use apllodb_storage_engine_interface::{RowProjectionQuery, Rows, TableName};
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -54,7 +54,6 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result: ProjectionResult =
             ProjectionResult::new(&vtable, active_versions, &input.projection)?;
-        let schema = RowSchema::from(projection_result.clone());
         let rows = vtable_repo.full_scan(&vtable, projection_result).await?;
 
         Ok(FullScanUseCaseOutput { rows })
