@@ -1,5 +1,5 @@
-mod factory;
-mod fixture;
+pub mod factory;
+pub mod fixture;
 mod mock;
 mod test_models;
 
