@@ -1,6 +1,7 @@
+use apllodb_shared_components::{SchemaIndex, SchemaName};
 use serde::{Deserialize, Serialize};
 
-use crate::{FieldAlias, FieldName, SchemaIndex, SchemaName};
+use super::{field_alias::FieldAlias, field_name::FieldName};
 
 /// An alias to a field.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
@@ -10,7 +11,11 @@ pub(crate) struct AliasedFieldName {
 }
 
 impl SchemaName for AliasedFieldName {
-    fn matches(&self, index: &SchemaIndex) -> bool {
+    fn _attr_matches(&self, attr: &str) -> bool {
+        todo!()
+    }
+
+    fn _prefix_attr_match(&self, prefix: &str, attr: &str) -> bool {
         todo!()
     }
 }

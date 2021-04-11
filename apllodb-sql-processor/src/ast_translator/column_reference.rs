@@ -1,6 +1,4 @@
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Schema, SchemaIndex,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::{

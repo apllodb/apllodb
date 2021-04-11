@@ -1,4 +1,4 @@
-use crate::{validation_helper::short_name::ShortName, ApllodbResult};
+use apllodb_shared_components::{ApllodbResult, ShortName};
 use serde::{Deserialize, Serialize};
 
 /// An alias to a correlation.

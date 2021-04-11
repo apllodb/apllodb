@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::TableName;
+use apllodb_storage_engine_interface::TableName;
 use serde::{Deserialize, Serialize};
 
 /// Name of a correlation.

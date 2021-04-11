@@ -1,6 +1,6 @@
 use apllodb_sql_parser::apllodb_ast;
 
-use apllodb_shared_components::Ordering;
+use crate::select::ordering::Ordering;
 
 use super::AstTranslator;
 
