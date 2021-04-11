@@ -1,10 +1,10 @@
-use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, ColumnName, CorrelationReference, FieldReference,
-    FullFieldReference, Row, RecordFieldRefSchema, Records, SqlValue, SqlValues, TableName,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
+use apllodb_storage_engine_interface::{ColumnName, Row, TableName};
 
-use crate::ast_translator::AstTranslator;
+use crate::{ast_translator::AstTranslator, attribute::attribute_name::AttributeName, correlation::{
+        aliased_correlation_name::AliasedCorrelationName, correlation_name::CorrelationName,
+    }, field::{aliased_field_name::AliasedFieldName, field_name::FieldName}, records::{Records, record_schema::RecordSchema}};
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct InsertCommandAnalyzer {
@@ -24,22 +24,26 @@ impl InsertCommandAnalyzer {
             .collect()
     }
 
-    fn ffrs_to_insert(&self) -> ApllodbResult<Vec<FullFieldReference>> {
+    fn naive_afn_to_insert(&self) -> ApllodbResult<Vec<AliasedFieldName>> {
         self.column_names_to_insert()?
             .into_iter()
             .map(|cn| {
-                Ok(FullFieldReference::new(
-                    CorrelationReference::TableNameVariant(self.table_name_to_insert()?),
-                    FieldReference::ColumnNameVariant(cn),
-                ))
+                let attr_name = AttributeName::ColumnNameVariant(cn);
+                let corr_name = CorrelationName::TableNameVariant(self.table_name_to_insert()?);
+                let aliased_corr_name = AliasedCorrelationName::new(corr_name, None);
+                let field_name = FieldName::new(aliased_corr_name, attr_name);
+                let aliased_field_name = AliasedFieldName::new(field_name, None);
+                Ok(aliased_field_name)
             })
             .collect()
     }
 
-    fn schema_to_insert(&self) -> ApllodbResult<RecordFieldRefSchema> {
-        Ok(RecordFieldRefSchema::new(self.ffrs_to_insert()?))
+    fn schema_to_insert(&self) -> ApllodbResult<RecordSchema> {
+        Ok(RecordSchema::from(self.naive_afn_to_insert()?))
     }
 
+    /// InsertNode takes its input as Records.
+    /// Here creates Records from VALUES.
     pub(super) fn records_to_insert(&self) -> ApllodbResult<Records> {
         let schema = self.schema_to_insert()?;
 

@@ -1,9 +1,13 @@
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SchemaIndex};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, SchemaIndex, SchemaName,
+};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::{
-    ast_translator::AstTranslator, attribute::attribute_name::AttributeName,
-    correlation::aliased_correlation_name::AliasedCorrelationName, field::field_name::FieldName,
+    ast_translator::AstTranslator,
+    attribute::attribute_name::AttributeName,
+    correlation::aliased_correlation_name::AliasedCorrelationName,
+    field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
 };
 
 impl AstTranslator {
@@ -64,9 +68,13 @@ impl AstTranslator {
         from_item_correlations
             .iter()
             .find_map(|from_item_corr| {
-                let field_name = FieldName::new(from_item_corr.clone(), attr.clone());
-                if field_name.matches(&index) {
-                    Some(field_name)
+                // creates AliasedFieldName to use .matches()
+                let aliased_field_name = AliasedFieldName::new(
+                    FieldName::new(from_item_corr.clone(), attr.clone()),
+                    None,
+                );
+                if aliased_field_name.matches(&index) {
+                    Some(aliased_field_name.field_name)
                 } else {
                     None
                 }

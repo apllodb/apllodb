@@ -32,6 +32,10 @@ impl Schema for RowSchema {
             .map(|(pos, tn)| (*pos, Some(tn.clone())))
             .collect()
     }
+
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
 }
 
 impl RowSchema {

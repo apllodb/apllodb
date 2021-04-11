@@ -66,6 +66,14 @@ pub trait Schema {
         }
     }
 
+    /// Length
+    fn len(&self) -> usize;
+
+    /// is empty?
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Filter specified fields
     fn projection(&self, indexes: &[SchemaIndex]) -> ApllodbResult<Self>
     where

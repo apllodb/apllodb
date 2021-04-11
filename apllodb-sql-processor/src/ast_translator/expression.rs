@@ -3,7 +3,7 @@ pub(crate) mod constant;
 pub(crate) mod unary_operator;
 
 use apllodb_shared_components::{
-    ApllodbResult, BinaryOperator, BooleanExpression, ComparisonFunction, Expression,
+    ApllodbResult, BinaryOperator, BooleanExpression, ComparisonFunction, Expression, SchemaIndex,
 };
 use apllodb_sql_parser::apllodb_ast;
 use apllodb_storage_engine_interface::TableName;
@@ -26,8 +26,8 @@ impl AstTranslator {
                 Expression::ConstantVariant(sql_value)
             }
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let ffr = Self::column_reference(ast_colref, from_item_correlations)?;
-                Expression::SchemaIndexVariant(ffr)
+                let field_name = Self::column_reference(ast_colref, from_item_correlations)?;
+                Expression::SchemaIndexVariant(SchemaIndex::from(&field_name))
             }
             apllodb_ast::Expression::UnaryOperatorVariant(uni_op, expr) => {
                 let uni_op = Self::unary_operator(uni_op);

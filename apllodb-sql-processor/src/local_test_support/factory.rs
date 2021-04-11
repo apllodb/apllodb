@@ -102,7 +102,7 @@ impl AliasedFieldName {
 impl FieldName {
     pub fn factory(table_name: &str, column_name: &str) -> Self {
         Self::new(
-            AliasedCorrelationName::factory(table_name),
+            AliasedCorrelationName::factory_tn(table_name),
             AttributeName::factory(column_name),
         )
     }

@@ -1,5 +1,7 @@
-use apllodb_shared_components::{AliasedFieldName, ApllodbResult, RPos, Schema, SchemaIndex};
+use apllodb_shared_components::{RPos, Schema};
 use serde::{Deserialize, Serialize};
+
+use crate::field::aliased_field_name::AliasedFieldName;
 
 /// Schema of records.
 ///
@@ -28,6 +30,15 @@ pub struct RecordSchema {
 
 impl Schema for RecordSchema {
     type Name = AliasedFieldName;
+
+    fn new(names_with_pos: Vec<(RPos, Option<AliasedFieldName>)>) -> Self
+    where
+        Self: Sized,
+    {
+        Self {
+            inner: names_with_pos,
+        }
+    }
 
     fn names_with_pos(&self) -> Vec<(RPos, Option<AliasedFieldName>)> {
         self.inner.clone()
