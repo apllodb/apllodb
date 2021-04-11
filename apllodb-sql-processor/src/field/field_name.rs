@@ -1,8 +1,10 @@
+use apllodb_shared_components::SchemaIndex;
 use serde::{Deserialize, Serialize};
 
-use crate::correlation::aliased_correlation_name::AliasedCorrelationName;
+use crate::{attribute::attribute_name::AttributeName, correlation::aliased_correlation_name::AliasedCorrelationName};
 
 /// Name of a field.
+/// Although correlation name is sometimes omitted in SQL, it must be supplied from context to create this struct.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 pub(crate) struct FieldName {
     pub(crate) aliased_correlation_name: AliasedCorrelationName,

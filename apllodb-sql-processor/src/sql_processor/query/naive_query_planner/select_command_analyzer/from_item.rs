@@ -112,7 +112,7 @@ impl SelectCommandAnalyzer {
                     None => CorrelationReference::TableNameVariant(table_name),
                     Some(alias) => CorrelationReference::TableAliasVariant {
                         table_name,
-                        alias_name: AstTranslator::alias(alias.clone())?,
+                        alias_name: AstTranslator::correlation_alias(alias.clone())?,
                     },
                 };
                 Ok(vec![corr_ref])

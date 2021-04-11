@@ -1,4 +1,6 @@
-pub mod constant;
+pub(crate) mod binary_operator;
+pub(crate) mod constant;
+pub(crate) mod unary_operator;
 
 use apllodb_shared_components::{
     ApllodbResult, BinaryOperator, BooleanExpression, ComparisonFunction, CorrelationReference,

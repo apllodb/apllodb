@@ -1,15 +1,17 @@
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference,
-    FieldReference, FullFieldReference,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, Schema, SchemaIndex,
 };
 use apllodb_sql_parser::apllodb_ast;
 
-use crate::ast_translator::AstTranslator;
+use crate::{
+    ast_translator::AstTranslator, attribute::attribute_name::AttributeName,
+    correlation::aliased_correlation_name::AliasedCorrelationName, field::field_name::FieldName,
+};
 
 impl AstTranslator {
     /// TODO may need Catalog value when:
     /// - ast_column_reference does not have correlation and
-    /// - ast_from_items are more than 1
+    /// - from_item_correlations are more than 1
     /// because this function has to determine which of `from1` or `from2` `field1` is from.
     ///
     /// # Failures
@@ -21,8 +23,8 @@ impl AstTranslator {
     ///   - `ast_column_reference` has a correlation but it is not any of `from_item_correlations`.
     pub fn column_reference(
         ast_column_reference: apllodb_ast::ColumnReference,
-        from_item_correlations: &[CorrelationReference],
-    ) -> ApllodbResult<FullFieldReference> {
+        from_item_correlations: &[AliasedCorrelationName],
+    ) -> ApllodbResult<FieldName> {
         if from_item_correlations.is_empty() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidColumnReference,
@@ -53,22 +55,20 @@ impl AstTranslator {
     fn column_reference_with_corr(
         ast_correlation: apllodb_ast::Correlation,
         ast_column_name: apllodb_ast::ColumnName,
-        from_item_correlations: &[CorrelationReference],
-    ) -> ApllodbResult<FullFieldReference> {
+        from_item_correlations: &[AliasedCorrelationName],
+    ) -> ApllodbResult<FieldName> {
         assert!(!from_item_correlations.is_empty());
 
-        let expr_corr = ast_correlation.0 .0;
-        let expr_colname = ColumnName::new(ast_column_name.0 .0)?;
+        let attr = AttributeName::ColumnNameVariant(Self::column_name(ast_column_name)?);
+        let index = SchemaIndex::from(format!("{}.{}", ast_correlation.0 .0, attr).as_str());
 
         // SELECT T.C FROM ...;
         from_item_correlations
             .iter()
             .find_map(|from_item_corr| {
-                if from_item_corr.matches(&expr_corr) {
-                    Some(FullFieldReference::new(
-                        from_item_corr.clone(),
-                        FieldReference::ColumnNameVariant(expr_colname.clone()),
-                    ))
+                let field_name = FieldName::new(from_item_corr.clone(), attr.clone());
+                if field_name.matches(&index) {
+                    Some(field_name)
                 } else {
                     None
                 }
@@ -77,10 +77,8 @@ impl AstTranslator {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedColumn,
                     format!(
-                        "expression `{}.{}` does not match any of FROM items: {:?}",
-                        expr_corr,
-                        expr_colname.as_str(),
-                        from_item_correlations
+                        "`{}` does not match any of FROM items: {:?}",
+                        index, from_item_correlations
                     ),
                     None,
                 )
@@ -89,10 +87,10 @@ impl AstTranslator {
 
     fn column_reference_without_corr(
         ast_column_name: apllodb_ast::ColumnName,
-        correlations: &[CorrelationReference],
-    ) -> ApllodbResult<FullFieldReference> {
-        assert!(!correlations.is_empty());
-        if correlations.len() > 1 {
+        from_item_correlations: &[AliasedCorrelationName],
+    ) -> ApllodbResult<FieldName> {
+        assert!(!from_item_correlations.is_empty());
+        if from_item_correlations.len() > 1 {
             return Err(ApllodbError::feature_not_supported(format!(
                 "needs catalog info to detect which table has the column `{:?}`",
                 ast_column_name
@@ -101,30 +99,28 @@ impl AstTranslator {
 
         // SELECT C FROM T (AS a)?;
         // -> C is from T
-        let correlation_reference = correlations[0].clone();
-
-        let field_reference =
-            FieldReference::ColumnNameVariant(ColumnName::new(ast_column_name.0 .0)?);
-
-        Ok(FullFieldReference::new(
-            correlation_reference,
-            field_reference,
-        ))
+        let from_item_correlation = from_item_correlations[0].clone();
+        let attr = AttributeName::ColumnNameVariant(Self::column_name(ast_column_name)?);
+        Ok(FieldName::new(from_item_correlation, attr))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::ast_translator::AstTranslator;
-    use apllodb_shared_components::{ApllodbErrorKind, CorrelationReference, FullFieldReference};
+    use crate::{
+        ast_translator::AstTranslator,
+        correlation::aliased_correlation_name::AliasedCorrelationName,
+        field::field_name::FieldName,
+    };
+    use apllodb_shared_components::ApllodbErrorKind;
     use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation};
     use pretty_assertions::assert_eq;
 
     #[derive(new)]
     struct TestDatum {
         ast_column_reference: ColumnReference,
-        correlations: Vec<CorrelationReference>,
-        expected_result: Result<FullFieldReference, ApllodbErrorKind>,
+        from_item_correlations: Vec<AliasedCorrelationName>,
+        expected_result: Result<FieldName, ApllodbErrorKind>,
     }
 
     #[test]
@@ -142,37 +138,37 @@ mod tests {
             ),
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
-                vec![CorrelationReference::factory_tn("t")],
-                Ok(FullFieldReference::factory("t", "c")),
+                vec![AliasedCorrelationName::factory_tn("t")],
+                Ok(FieldName::factory("t", "c")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
-                vec![CorrelationReference::factory_tn("t")],
-                Ok(FullFieldReference::factory("t", "c")),
+                vec![AliasedCorrelationName::factory_tn("t")],
+                Ok(FieldName::factory("t", "c")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t1")), "c"),
-                vec![CorrelationReference::factory_tn("t2")],
+                vec![AliasedCorrelationName::factory_tn("t2")],
                 Err(ApllodbErrorKind::UndefinedColumn),
             ),
             TestDatum::new(
                 ColumnReference::factory(None, "c"),
-                vec![CorrelationReference::factory_ta("t", "a")],
-                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
+                vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
+                Ok(FieldName::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("t")), "c"),
-                vec![CorrelationReference::factory_ta("t", "a")],
-                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
+                vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
+                Ok(FieldName::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("a")), "c"),
-                vec![CorrelationReference::factory_ta("t", "a")],
-                Ok(FullFieldReference::factory("t", "c").with_corr_alias("a")),
+                vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
+                Ok(FieldName::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
                 ColumnReference::factory(Some(Correlation::factory("x")), "c"),
-                vec![CorrelationReference::factory_ta("t", "a")],
+                vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
                 Err(ApllodbErrorKind::UndefinedColumn),
             ),
         ];
@@ -180,7 +176,7 @@ mod tests {
         for test_datum in test_data {
             match AstTranslator::column_reference(
                 test_datum.ast_column_reference,
-                &test_datum.correlations,
+                &test_datum.from_item_correlations,
             ) {
                 Ok(ffr) => {
                     assert_eq!(ffr, test_datum.expected_result.unwrap())

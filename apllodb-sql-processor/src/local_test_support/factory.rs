@@ -1,4 +1,11 @@
 use crate::{
+    attribute::attribute_name::AttributeName,
+    correlation::{
+        aliased_correlation_name::AliasedCorrelationName, correlation_alias::CorrelationAlias,
+        correlation_name::CorrelationName,
+    },
+    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
+    records::{record_schema::RecordSchema, Records},
     sql_processor::{
         ddl::DdlProcessor,
         modification::ModificationProcessor,
@@ -9,7 +16,7 @@ use crate::{
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
 use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_sql_parser::apllodb_ast;
-use apllodb_storage_engine_interface::MockStorageEngine;
+use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, Row, TableName};
 use std::sync::Arc;
 
 impl QueryProcessor<MockStorageEngine> {
@@ -113,7 +120,7 @@ impl FieldAlias {
 }
 
 impl AliasedCorrelationName {
-    pub fn factory(table_name: &str) -> Self {
+    pub fn factory_tn(table_name: &str) -> Self {
         Self::new(CorrelationName::factory(table_name), None)
     }
 

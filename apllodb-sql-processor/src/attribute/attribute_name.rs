@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use apllodb_storage_engine_interface::ColumnName;
 use serde::{Deserialize, Serialize};
 
 /// Name of an attribute.

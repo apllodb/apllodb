@@ -2,22 +2,20 @@
 
 //! Module to translate [ApllodbAst](apllodb_sql_parser::ApllodbAst) into [apllodb_shared_components](crate)' data structures.
 
-pub mod alias;
-pub mod alter_table_action;
-pub mod binary_operator;
-pub mod column_constraint;
-pub mod column_definition;
-pub mod column_name;
-pub mod column_reference;
-pub mod condition;
-pub mod data_type;
-pub mod database_name;
-pub mod expression;
-pub mod select;
-pub mod select_field;
-pub mod table_constraint;
-pub mod table_name;
-pub mod unary_operator;
+pub(crate) mod alias;
+pub(crate) mod alter_table_action;
+pub(crate) mod column_constraint;
+pub(crate) mod column_definition;
+pub(crate) mod column_name;
+pub(crate) mod column_reference;
+pub(crate) mod condition;
+pub(crate) mod data_type;
+pub(crate) mod database_name;
+pub(crate) mod expression;
+pub(crate) mod select;
+pub(crate) mod select_field;
+pub(crate) mod table_constraint;
+pub(crate) mod table_name;
 
 /// Holds static translation methods.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
