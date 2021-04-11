@@ -8,6 +8,7 @@ use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, Expression, RPos, Schema, SchemaIndex, SqlCompareResult,
     SqlValue, SqlValueHashKey,
 };
+use apllodb_storage_engine_interface::Row;
 
 use crate::select::ordering::Ordering;
 
@@ -41,8 +42,8 @@ impl Records {
     }
 
     /// makes SqlValues
-    pub fn into_sql_values(self) -> Vec<SqlValues> {
-        self.inner.into_iter().collect()
+    pub fn into_rows(self) -> Vec<Row> {
+        self.inner.into_iter().map(|record| record.row).collect()
     }
 
     /// Filter records that satisfy the given `condition`.
@@ -58,22 +59,22 @@ impl Records {
                     })
                 }
             }
-            _ => {
-                let schema = self.as_schema().clone();
-                self.into_iter()
-                    .filter_map(|r| {
-                        match condition
-                            .to_sql_value(Some((&r, &schema)))
-                            .and_then(|sql_value| sql_value.to_bool())
-                        {
-                            Ok(false) => None,
-                            Ok(true) => Some(Ok(r)),
-                            Err(e) => Some(Err(e)),
-                        }
-                    })
-                    .collect::<ApllodbResult<Vec<Row>>>()
-                    .map(|records| Self::new(schema, records))
-            }
+            _ => self
+                .into_iter()
+                .filter_map(|r| {
+                    match condition
+                        .to_sql_value_for_expr_with_index(&|index| {
+                            r.get_sql_value(index).map(|v| v.clone())
+                        })
+                        .and_then(|sql_value| sql_value.to_bool())
+                    {
+                        Ok(false) => None,
+                        Ok(true) => Some(Ok(r)),
+                        Err(e) => Some(Err(e)),
+                    }
+                })
+                .collect::<ApllodbResult<Vec<Record>>>()
+                .map(|records| Self::new(self.schema.clone(), records)),
         }
     }
 
@@ -95,7 +96,10 @@ impl Records {
         let new_inner: Vec<Record> = self
             .inner
             .into_iter()
-            .map(|record| record.projection(&projection_positions))
+            .map(|record| {
+                let row = record.row.projection(&projection_positions);
+                Record::new(record.schema.clone(), row)
+            })
             .collect();
 
         let new_schema = self.schema.projection(indexes)?;
@@ -110,16 +114,16 @@ impl Records {
 
         let schema = self.schema.clone();
 
-        self.inner.sort_by(|a, b| {
+        self.inner.sort_by(|a_record, b_record| {
             let mut res = std::cmp::Ordering::Equal;
 
             for (index, ord) in field_orderings {
-                let (pos, _) = schema
-                    .index(&index)
-                    .unwrap_or_else(|_| panic!("must be valid field: `{}`", index));
-
-                let a_val = a.get(pos);
-                let b_val = b.get(pos);
+                let a_val = a_record
+                    .get_sql_value(index)
+                    .expect(format!("must be valid field: `{}`", index).as_str());
+                let b_val = b_record
+                    .get_sql_value(index)
+                    .expect(format!("must be valid field: `{}`", index).as_str());
 
                 match a_val.sql_compare(&b_val).unwrap_or_else(|_| {
                     panic!(
