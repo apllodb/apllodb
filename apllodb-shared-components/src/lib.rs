@@ -11,7 +11,6 @@
 extern crate derive_new;
 
 pub(crate) mod schema;
-pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
 pub(crate) mod error;
 pub(crate) mod expression;
@@ -21,9 +20,6 @@ pub(crate) mod value;
 
 pub use crate::{
     schema::{Schema, schema_name::SchemaName, schema_index::SchemaIndex, r_pos::RPos},
-    data_structure::{
-        select::ordering::Ordering,
-    },
     database::database_name::DatabaseName,
     error::{
         kind::ApllodbErrorKind,
