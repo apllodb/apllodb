@@ -84,8 +84,6 @@ impl Records {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
-        let new_schema = self.schema.projection(indexes)?;
-
         let projection_positions = indexes
             .iter()
             .map(|idx| {
@@ -94,13 +92,14 @@ impl Records {
             })
             .collect::<ApllodbResult<Vec<RPos>>>()?;
 
-        let new_inner: Vec<SqlValues> = self
+        let new_inner: Vec<Record> = self
             .inner
             .into_iter()
-            .map(|sql_values| sql_values.projection(&projection_positions))
+            .map(|record| record.projection(&projection_positions))
             .collect();
 
-        Ok(Self::new(new_schema, new_inner))
+        let new_schema = self.schema.projection(indexes)?;
+        Ok(Self::new(Arc::new(new_schema), new_inner))
     }
 
     /// ORDER BY
@@ -271,14 +270,14 @@ impl Records {
 }
 
 impl Iterator for Records {
-    type Item = Row;
+    type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.inner.is_empty() {
             None
         } else {
-            let values = self.inner.remove(0);
-            Some(Row::new(values))
+            let record = self.inner.remove(0);
+            Some(record)
         }
     }
 }
