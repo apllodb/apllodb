@@ -1,25 +1,19 @@
-#![deny(
-    // TODO comment-in
-    // warnings,
-    missing_debug_implementations, 
-    missing_docs
-)]
+#![deny(warnings, missing_debug_implementations, missing_docs)]
 
 //! Data structures shared with multiple crates in the apllodb workspace.
 
 #[macro_use]
 extern crate derive_new;
 
-pub(crate) mod schema;
 pub(crate) mod database;
 pub(crate) mod error;
 pub(crate) mod expression;
+pub(crate) mod schema;
 pub(crate) mod session;
 pub(crate) mod validation_helper;
 pub(crate) mod value;
 
 pub use crate::{
-    schema::{Schema, schema_name::SchemaName, schema_index::SchemaIndex, r_pos::RPos},
     database::database_name::DatabaseName,
     error::{
         kind::ApllodbErrorKind,
@@ -35,9 +29,14 @@ pub use crate::{
         operator::{BinaryOperator, UnaryOperator},
         Expression,
     },
+    schema::{r_pos::RPos, schema_index::SchemaIndex, schema_name::SchemaName, Schema},
     session::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
         without_db::SessionWithoutDb, Session,
+    },
+    validation_helper::{
+        collection::{find_dup, find_dup_slow},
+        short_name::ShortName,
     },
     value::{
         sql_convertible::SqlConvertible,
@@ -47,9 +46,7 @@ pub use crate::{
             sql_value_hash_key::SqlValueHashKey, SqlValue,
         },
     },
-    validation_helper::{short_name::ShortName, collection::{find_dup, find_dup_slow}},
 };
-
 
 #[cfg(feature = "test-support")]
 pub mod test_support;
