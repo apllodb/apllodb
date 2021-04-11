@@ -1,4 +1,7 @@
-#![deny(warnings, missing_debug_implementations, missing_docs)]
+#![deny(
+    // TODO comment-in
+    //warnings,
+    missing_debug_implementations, missing_docs)]
 
 //! SQL processor.
 //!
