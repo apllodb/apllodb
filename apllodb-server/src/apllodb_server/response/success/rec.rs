@@ -1,7 +1,9 @@
+// TODO remove in favor of sql-processor::Record
+
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, FieldIndex, FullFieldReference, Row, RecordFieldRefSchema, SqlConvertible,
+    ApllodbResult, FieldIndex, FullFieldReference, RecordFieldRefSchema, Row, SqlConvertible,
     SqlValue,
 };
 

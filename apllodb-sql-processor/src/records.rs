@@ -1,3 +1,4 @@
+pub(crate) mod record;
 pub(crate) mod record_index;
 pub(crate) mod record_schema;
 
@@ -8,11 +9,13 @@ use apllodb_shared_components::{
     SchemaIndex, SqlValue, SqlValueHashKey,
 };
 
-/// Seq of [Row](crate::Row)s.
+use self::{record::Record, record_schema::RecordSchema};
+
+/// Seq of [Record](crate::Record)s.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Records {
     schema: Arc<RecordSchema>,
-    inner: Vec<SqlValues>,
+    records: Vec<Record>,
 }
 
 impl Records {
