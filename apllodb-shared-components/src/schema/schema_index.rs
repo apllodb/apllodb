@@ -61,3 +61,46 @@ impl From<&str> for SchemaIndex {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::SchemaIndex;
+
+    #[test]
+    fn test_from_success() {
+        let from_to_data: Vec<(&str, &str)> = vec![
+            ("c", "c"),
+            ("  c ", "c"),
+            ("t.c", "t.c"),
+            ("   t  .  c    ", "t.c"),
+        ];
+
+        for (from, to) in from_to_data {
+            assert_eq!(SchemaIndex::from(from).to_string(), to);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_panic1() {
+        SchemaIndex::from("");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_panic2() {
+        SchemaIndex::from(".c");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_panic3() {
+        SchemaIndex::from("t.");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_panic4() {
+        SchemaIndex::from("a.b.c");
+    }
+}
