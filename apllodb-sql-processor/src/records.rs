@@ -10,7 +10,7 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::Row;
 
-use crate::select::ordering::Ordering;
+use crate::{field::aliased_field_name::AliasedFieldName, select::ordering::Ordering};
 
 use self::{record::Record, record_schema::RecordSchema};
 
@@ -183,7 +183,7 @@ impl Records {
     ///   - Specified field does not exist in any record.
     pub fn hash_join(
         self,
-        joined_schema: RecordSchema,
+        joined_schema: Arc<RecordSchema>,
         right_records: Records,
         self_join_field: &SchemaIndex,
         right_join_field: &SchemaIndex,
@@ -192,55 +192,45 @@ impl Records {
 
         fn helper_get_sql_value(
             joined_name: &AliasedFieldName,
-            schema: &RecordSchema,
-            record: &Row,
+            record: &Record,
         ) -> Option<ApllodbResult<SqlValue>> {
-            schema.index(&SchemaIndex::from(joined_name)).map_or_else(
-                |e| {
-                    if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
-                        None
-                    } else {
-                        Some(Err(e))
-                    }
-                },
-                |(pos, _)| {
-                    let res_sql_value = record.get_sql_value(pos).map(|v| v.clone());
-                    Some(res_sql_value)
-                },
-            )
+            record
+                .get_sql_value(&SchemaIndex::from(joined_name))
+                .map_or_else(
+                    |e| {
+                        if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
+                            None
+                        } else {
+                            Some(Err(e))
+                        }
+                    },
+                    |sql_value| Some(Ok(sql_value.clone())),
+                )
         }
 
         fn helper_join_records(
-            joined_schema: &RecordSchema,
-            left_schema: &RecordSchema,
-            right_schema: &RecordSchema,
-            left_record: Row,
-            right_record: Row,
-        ) -> ApllodbResult<Row> {
+            joined_schema: Arc<RecordSchema>,
+            left_record: Record,
+            right_record: Record,
+        ) -> ApllodbResult<Record> {
             let sql_values: Vec<SqlValue> = joined_schema
                 .to_aliased_field_names()
                 .iter()
                 .map(|joined_name| {
-                    helper_get_sql_value(joined_name, left_schema, &left_record)
-                        .or_else(|| helper_get_sql_value(joined_name, right_schema, &right_record))
+                    helper_get_sql_value(joined_name, &left_record)
+                        .or_else(|| helper_get_sql_value(joined_name, &right_record))
                         .expect("left or right must have AliasedFieldName in joined_schema")
                 })
                 .collect::<ApllodbResult<_>>()?;
-            let sql_values = SqlValues::new(sql_values);
-            Ok(Row::new(sql_values))
+
+            Ok(Record::new(joined_schema.clone(), Row::new(sql_values)))
         }
 
-        let self_schema = self.as_schema().clone();
-        let right_schema = right_records.as_schema().clone();
-
-        let (self_join_idx, _) = self.as_schema().index(self_join_field)?;
-        let (right_join_idx, _) = right_records.as_schema().index(&right_join_field)?;
-
         // TODO Create hash table from smaller input.
-        let mut hash_table = HashMap::<SqlValueHashKey, Vec<Row>>::new();
+        let mut hash_table = HashMap::<SqlValueHashKey, Vec<Record>>::new();
 
         for left_record in self {
-            let left_sql_value = left_record.get_sql_value(self_join_idx)?;
+            let left_sql_value = left_record.get_sql_value(self_join_field)?;
             hash_table
                 .entry(SqlValueHashKey::from(left_sql_value))
                 // FIXME Clone less. If join keys are unique, no need for clone.
@@ -248,28 +238,26 @@ impl Records {
                 .or_insert_with(|| vec![left_record]);
         }
 
-        let mut records = Vec::<Row>::new();
+        let mut records = Vec::<Record>::new();
         for right_record in right_records {
-            let right_sql_value = right_record.get_sql_value(right_join_idx)?;
+            let right_sql_value = right_record.get_sql_value(right_join_field)?;
             if let Some(left_records) = hash_table.get(&SqlValueHashKey::from(right_sql_value)) {
                 records.append(
                     &mut left_records
                         .iter()
                         .map(|left_record| {
                             helper_join_records(
-                                &joined_schema,
-                                &self_schema,
-                                &right_schema,
+                                joined_schema.clone(),
                                 left_record.clone(),
                                 right_record.clone(),
                             )
                         })
-                        .collect::<ApllodbResult<Vec<Row>>>()?,
+                        .collect::<ApllodbResult<Vec<Record>>>()?,
                 );
             }
         }
 
-        Ok(Records::new(joined_schema, records))
+        Ok(Records::new(joined_schema.clone(), records))
     }
 }
 
