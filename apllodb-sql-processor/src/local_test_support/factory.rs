@@ -5,7 +5,7 @@ use crate::{
         correlation_name::CorrelationName,
     },
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
-    records::{record_schema::RecordSchema, Records},
+    records::{record::Record, record_schema::RecordSchema, Records},
     sql_processor::{
         ddl::DdlProcessor,
         modification::ModificationProcessor,
@@ -16,7 +16,7 @@ use crate::{
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
 use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_sql_parser::apllodb_ast;
-use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, Row, TableName};
+use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, TableName};
 use std::sync::Arc;
 
 impl QueryProcessor<MockStorageEngine> {
@@ -149,8 +149,8 @@ impl AttributeName {
 }
 
 impl Records {
-    pub fn factory(schema: RecordSchema, records: Vec<Row>) -> Self {
-        Self::new(schema, records)
+    pub fn factory(schema: RecordSchema, records: Vec<Record>) -> Self {
+        Self::new(Arc::new(schema), records)
     }
 }
 
