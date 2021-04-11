@@ -77,7 +77,7 @@ impl InsertCommandAnalyzer {
                             ast_expression,
                             vec![self.table_name_to_insert()?],
                         )?;
-                        expression.to_sql_value(&None)
+                        expression.to_sql_value_for_expr_without_index()
                     })
                     .collect::<ApllodbResult<_>>()?;
 
