@@ -1,4 +1,4 @@
-use apllodb_shared_components::{SchemaIndex, SchemaName};
+use apllodb_shared_components::SchemaName;
 use serde::{Deserialize, Serialize};
 
 use crate::{column::column_name::ColumnName, table::table_name::TableName};
@@ -11,8 +11,12 @@ pub struct TableColumnName {
 }
 
 impl SchemaName for TableColumnName {
-    fn matches(&self, index: &SchemaIndex) -> bool {
-        todo!()
+    fn _attr_matches(&self, attr: &str) -> bool {
+        self.column.as_str() == attr
+    }
+
+    fn _prefix_attr_match(&self, prefix: &str, attr: &str) -> bool {
+        self.table.as_str() == prefix && self.column.as_str() == attr
     }
 }
 
