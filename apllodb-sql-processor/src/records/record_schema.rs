@@ -43,6 +43,10 @@ impl Schema for RecordSchema {
     fn names_with_pos(&self) -> Vec<(RPos, Option<AliasedFieldName>)> {
         self.inner.clone()
     }
+
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
 }
 
 impl RecordSchema {

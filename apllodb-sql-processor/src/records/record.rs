@@ -12,6 +12,10 @@ pub struct Record {
 }
 
 impl Record {
+    pub(crate) fn new(schema: Arc<RecordSchema>, row: Row) -> Self {
+        Self { schema, row }
+    }
+
     /// Get Rust value from rec field.
     ///
     /// Returns `None` for NULL.

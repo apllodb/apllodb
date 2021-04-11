@@ -23,11 +23,11 @@ pub struct Records {
 impl Records {
     /// Constructor
     pub fn new<IntoRecord: Into<Record>, I: IntoIterator<Item = IntoRecord>>(
-        schema: RecordSchema,
+        schema: Arc<RecordSchema>,
         it: I,
     ) -> Self {
         Self {
-            schema: Arc::new(schema),
+            schema,
             inner: it
                 .into_iter()
                 .map(|into_values| into_values.into())

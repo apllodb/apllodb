@@ -1,10 +1,18 @@
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlValue};
+use std::sync::Arc;
+
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Schema, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 use apllodb_storage_engine_interface::{ColumnName, Row, TableName};
 
-use crate::{ast_translator::AstTranslator, attribute::attribute_name::AttributeName, correlation::{
+use crate::{
+    ast_translator::AstTranslator,
+    attribute::attribute_name::AttributeName,
+    correlation::{
         aliased_correlation_name::AliasedCorrelationName, correlation_name::CorrelationName,
-    }, field::{aliased_field_name::AliasedFieldName, field_name::FieldName}, records::{Records, record_schema::RecordSchema}};
+    },
+    field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
+    records::{record::Record, record_schema::RecordSchema, Records},
+};
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct InsertCommandAnalyzer {
@@ -45,9 +53,9 @@ impl InsertCommandAnalyzer {
     /// InsertNode takes its input as Records.
     /// Here creates Records from VALUES.
     pub(super) fn records_to_insert(&self) -> ApllodbResult<Records> {
-        let schema = self.schema_to_insert()?;
+        let schema = Arc::new(self.schema_to_insert()?);
 
-        let records: Vec<Row> = self
+        let records: Vec<Record> = self
             .command
             .values
             .clone()
@@ -69,12 +77,12 @@ impl InsertCommandAnalyzer {
                             ast_expression,
                             vec![self.table_name_to_insert()?],
                         )?;
-                        expression.to_sql_value(None)
+                        expression.to_sql_value(&None)
                     })
                     .collect::<ApllodbResult<_>>()?;
 
-                let values = SqlValues::new(constant_values);
-                Ok(Row::new(values))
+                let row = Row::new(constant_values);
+                Ok(Record::new(schema.clone(), row))
             })
             .collect::<ApllodbResult<_>>()?;
 
