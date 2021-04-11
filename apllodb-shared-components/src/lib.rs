@@ -22,7 +22,6 @@ pub(crate) mod value;
 pub use crate::{
     schema::{Schema, schema_name::SchemaName, schema_index::SchemaIndex, r_pos::RPos},
     data_structure::{
-        alias_name::AliasName,
         select::ordering::Ordering,
     },
     database::database_name::DatabaseName,

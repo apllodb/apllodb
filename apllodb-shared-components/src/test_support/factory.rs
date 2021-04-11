@@ -3,8 +3,8 @@
 //! Factory methods for testing
 
 use crate::{
-    AliasName, BooleanExpression, ComparisonFunction, DatabaseName, Expression, LogicalFunction,
-    NnSqlValue, SqlValue, UnaryOperator,
+    BooleanExpression, ComparisonFunction, DatabaseName, Expression, LogicalFunction, NnSqlValue,
+    SqlValue, UnaryOperator,
 };
 use rand::Rng;
 
@@ -12,12 +12,6 @@ impl DatabaseName {
     /// randomly generate a database name
     pub fn random() -> Self {
         Self::new(random_id()).unwrap()
-    }
-}
-
-impl AliasName {
-    pub fn factory(alias_name: &str) -> Self {
-        Self::new(alias_name).unwrap()
     }
 }
 
