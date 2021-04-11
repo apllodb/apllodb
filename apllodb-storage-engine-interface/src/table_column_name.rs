@@ -31,3 +31,59 @@ impl TableColumnName {
         &self.column
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TableColumnName;
+    use apllodb_shared_components::{SchemaIndex, SchemaName};
+
+    #[test]
+    fn test_matches() {
+        struct TestDatum {
+            schema_index: &'static str,
+            table_column_name: TableColumnName,
+            matches: bool,
+        }
+
+        let test_data: Vec<TestDatum> = vec![
+            TestDatum {
+                schema_index: "c",
+                table_column_name: TableColumnName::factory("t", "c"),
+                matches: true,
+            },
+            TestDatum {
+                schema_index: "xxx",
+                table_column_name: TableColumnName::factory("t", "c"),
+                matches: false,
+            },
+            TestDatum {
+                schema_index: "t.c",
+                table_column_name: TableColumnName::factory("t", "c"),
+                matches: true,
+            },
+            TestDatum {
+                schema_index: "xxx.c",
+                table_column_name: TableColumnName::factory("t", "c"),
+                matches: false,
+            },
+            TestDatum {
+                schema_index: "t",
+                table_column_name: TableColumnName::factory("t", "c"),
+                matches: false,
+            },
+            TestDatum {
+                schema_index: "c.t",
+                table_column_name: TableColumnName::factory("t", "c"),
+                matches: false,
+            },
+        ];
+
+        for test_datum in test_data {
+            let index = SchemaIndex::from(test_datum.schema_index);
+            assert_eq!(
+                test_datum.table_column_name.matches(&index),
+                test_datum.matches
+            );
+        }
+    }
+}
