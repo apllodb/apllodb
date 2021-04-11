@@ -29,22 +29,13 @@ impl Expression {
     /// Fully evaluate an expression to SqlValue.
     ///
     /// Row or Record is necessary for SchemaIndexVariant and it is supposed to be indirectly passed via `value_from_index`.
-    ///
-    /// # Panics
-    ///
-    /// if `value_from_index` is None for Expression::SchemaIndexVariant.
-    pub fn to_sql_value(
+    fn to_sql_value(
         &self,
-        value_from_index: &Option<impl Fn(&SchemaIndex) -> ApllodbResult<SqlValue>>,
+        value_from_index: &dyn Fn(&SchemaIndex) -> ApllodbResult<SqlValue>,
     ) -> ApllodbResult<SqlValue> {
         match self {
             Expression::ConstantVariant(sql_value) => Ok(sql_value.clone()),
-            Expression::SchemaIndexVariant(idx) => {
-                let f = value_from_index
-                    .as_ref()
-                    .expect("needs `value_from_index` to eval Expression::SchemaIndexVariant");
-                f(idx)
-            }
+            Expression::SchemaIndexVariant(idx) => value_from_index(idx),
             Expression::UnaryOperatorVariant(uni_op, child) => {
                 let child_sql_value = child.to_sql_value(value_from_index)?;
                 match (uni_op, child_sql_value) {
@@ -87,6 +78,25 @@ impl Expression {
                 }
             },
         }
+    }
+
+    /// Fully evaluate an expression (including SchemaIndexVariant) to SqlValue.
+    ///
+    /// Row or Record is necessary for SchemaIndexVariant and it is supposed to be indirectly passed via `value_from_index`.
+    pub fn to_sql_value_for_expr_with_index(
+        &self,
+        value_from_index: &dyn Fn(&SchemaIndex) -> ApllodbResult<SqlValue>,
+    ) -> ApllodbResult<SqlValue> {
+        self.to_sql_value(value_from_index)
+    }
+
+    /// Fully evaluate an expression (without SchemaIndexVariant) to SqlValue.
+    ///
+    /// # Panics
+    ///
+    /// if this expression includes at least 1 Expression::SchemaIndexVariant.
+    pub fn to_sql_value_for_expr_without_index(&self) -> ApllodbResult<SqlValue> {
+        self.to_sql_value(&|_| panic!("this expression includes SchemaIndexVariant so you must use to_sql_value_for_expr_with_index to get an SqlValue: {:#?}", self))
     }
 
     /// retrieves all SchemaIndex in a expression
@@ -218,7 +228,12 @@ mod tests {
         ];
 
         for t in test_data {
-            let sql_value = t.in_expr.to_sql_value(&t.in_value_from_index)?;
+            let sql_value = match t.in_value_from_index {
+                Some(value_from_index) => t
+                    .in_expr
+                    .to_sql_value_for_expr_with_index(value_from_index.as_ref())?,
+                None => t.in_expr.to_sql_value_for_expr_without_index()?,
+            };
             assert_eq!(sql_value, t.expected_sql_value);
         }
 
