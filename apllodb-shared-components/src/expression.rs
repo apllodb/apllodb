@@ -44,12 +44,6 @@ impl Expression {
                     .as_ref()
                     .expect("needs `value_from_index` to eval Expression::SchemaIndexVariant");
                 f(idx)
-
-                // let (record, schema) = value_from_index.expect(
-                //     "needs `record_for_field_ref` to eval Expression::FullFieldReferenceVariant",
-                // );
-                // let (pos, _) = schema.index(idx)?;
-                // record.get_sql_value(pos).map(|v| v.clone())
             }
             Expression::UnaryOperatorVariant(uni_op, child) => {
                 let child_sql_value = child.to_sql_value(value_from_index)?;
@@ -165,7 +159,7 @@ mod tests {
                 None,
                 SqlValue::factory_integer(-1),
             ),
-            // FullFieldReference
+            // SchemaIndex
             TestDatum::new(
                 Expression::SchemaIndexVariant(SchemaIndex::from("x")),
                 Some(Box::new(|_| Ok(SqlValue::factory_integer(1)))),
