@@ -17,7 +17,7 @@ pub struct Rows {
 
 impl Rows {
     /// Constructor
-    pub fn new<IntoRows: Into<Row>, I: IntoIterator<Item = IntoRows>>(
+    pub fn new<IntoRow: Into<Row>, I: IntoIterator<Item = IntoRow>>(
         schema: RowSchema,
         it: I,
     ) -> Self {

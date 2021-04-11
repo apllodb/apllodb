@@ -3,17 +3,22 @@ pub(crate) mod constant;
 pub(crate) mod unary_operator;
 
 use apllodb_shared_components::{
-    ApllodbResult, BinaryOperator, BooleanExpression, ComparisonFunction, CorrelationReference,
-    Expression, TableName,
+    ApllodbResult, BinaryOperator, BooleanExpression, ComparisonFunction, Expression,
 };
 use apllodb_sql_parser::apllodb_ast;
+use apllodb_storage_engine_interface::TableName;
 
-use crate::ast_translator::AstTranslator;
+use crate::{
+    ast_translator::AstTranslator,
+    correlation::{
+        aliased_correlation_name::AliasedCorrelationName, correlation_name::CorrelationName,
+    },
+};
 
 impl AstTranslator {
     pub fn expression_in_select(
         ast_expression: apllodb_ast::Expression,
-        correlations: &[CorrelationReference],
+        from_item_correlations: &[AliasedCorrelationName],
     ) -> ApllodbResult<Expression> {
         let expression: Expression = match ast_expression {
             apllodb_ast::Expression::ConstantVariant(c) => {
@@ -21,18 +26,18 @@ impl AstTranslator {
                 Expression::ConstantVariant(sql_value)
             }
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let ffr = Self::column_reference(ast_colref, correlations)?;
+                let ffr = Self::column_reference(ast_colref, from_item_correlations)?;
                 Expression::SchemaIndexVariant(ffr)
             }
             apllodb_ast::Expression::UnaryOperatorVariant(uni_op, expr) => {
                 let uni_op = Self::unary_operator(uni_op);
-                let expr = Self::expression_in_select(*expr, correlations)?;
+                let expr = Self::expression_in_select(*expr, from_item_correlations)?;
                 Expression::UnaryOperatorVariant(uni_op, Box::new(expr))
             }
             apllodb_ast::Expression::BinaryOperatorVariant(bin_op, left, right) => {
                 let bin_op = Self::binary_operator(bin_op);
-                let left = Self::expression_in_select(*left, correlations)?;
-                let right = Self::expression_in_select(*right, correlations)?;
+                let left = Self::expression_in_select(*left, from_item_correlations)?;
+                let right = Self::expression_in_select(*right, from_item_correlations)?;
 
                 match bin_op {
                     BinaryOperator::Equal => Expression::BooleanExpressionVariant(
@@ -53,10 +58,13 @@ impl AstTranslator {
         ast_expression: apllodb_ast::Expression,
         table_names: Vec<TableName>,
     ) -> ApllodbResult<Expression> {
-        let corr_refs: Vec<CorrelationReference> = table_names
+        let corrs: Vec<AliasedCorrelationName> = table_names
             .into_iter()
-            .map(|table_name| Ok(CorrelationReference::TableNameVariant(table_name)))
-            .collect::<ApllodbResult<_>>()?;
-        Self::expression_in_select(ast_expression, &corr_refs)
+            .map(|table_name| {
+                let corr_name = CorrelationName::TableNameVariant(table_name);
+                AliasedCorrelationName::new(corr_name, None)
+            })
+            .collect();
+        Self::expression_in_select(ast_expression, &corrs)
     }
 }

@@ -5,9 +5,11 @@ pub(crate) mod record_schema;
 use std::{collections::HashMap, sync::Arc};
 
 use apllodb_shared_components::{
-    AliasedFieldName, ApllodbErrorKind, ApllodbResult, Expression, Ordering, RPos, Schema,
-    SchemaIndex, SqlValue, SqlValueHashKey,
+    ApllodbErrorKind, ApllodbResult, Expression, RPos, Schema, SchemaIndex, SqlCompareResult,
+    SqlValue, SqlValueHashKey,
 };
+
+use crate::select::ordering::Ordering;
 
 use self::{record::Record, record_schema::RecordSchema};
 
@@ -15,12 +17,12 @@ use self::{record::Record, record_schema::RecordSchema};
 #[derive(Clone, PartialEq, Debug)]
 pub struct Records {
     schema: Arc<RecordSchema>,
-    records: Vec<Record>,
+    inner: Vec<Record>,
 }
 
 impl Records {
     /// Constructor
-    pub fn new<IntoValues: Into<SqlValues>, I: IntoIterator<Item = IntoValues>>(
+    pub fn new<IntoRecord: Into<Record>, I: IntoIterator<Item = IntoRecord>>(
         schema: RecordSchema,
         it: I,
     ) -> Self {
@@ -126,8 +128,8 @@ impl Records {
                     index
                 )
                 }) {
-                    crate::SqlCompareResult::Eq => res = std::cmp::Ordering::Equal,
-                    crate::SqlCompareResult::LessThan => {
+                    SqlCompareResult::Eq => res = std::cmp::Ordering::Equal,
+                    SqlCompareResult::LessThan => {
                         match ord {
                             Ordering::Asc => {
                                 res = std::cmp::Ordering::Less;
@@ -138,7 +140,7 @@ impl Records {
                         }
                         break;
                     }
-                    crate::SqlCompareResult::GreaterThan => {
+                    SqlCompareResult::GreaterThan => {
                         match ord {
                             Ordering::Asc => {
                                 res = std::cmp::Ordering::Greater;
@@ -149,7 +151,7 @@ impl Records {
                         }
                         break;
                     }
-                    crate::SqlCompareResult::Null => {
+                    SqlCompareResult::Null => {
                         // NULL comes last, regardless of ASC/DESC
                         if let SqlValue::Null = a_val {
                             res = std::cmp::Ordering::Greater
@@ -158,7 +160,7 @@ impl Records {
                         }
                         break;
                     }
-                    crate::SqlCompareResult::NotEq => {
+                    SqlCompareResult::NotEq => {
                         unreachable!("sort key `{}` must be at least PartialOrd", index)
                     }
                 }
