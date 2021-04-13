@@ -12,7 +12,6 @@ pub(crate) mod data_type;
 pub(crate) mod database_name;
 pub(crate) mod expression;
 pub(crate) mod select;
-pub(crate) mod select_field;
 pub(crate) mod table_constraint;
 pub(crate) mod table_name;
 

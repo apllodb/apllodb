@@ -129,7 +129,7 @@ impl<'r> NaiveQueryPlanner<'r> {
     }
 
     fn create_projection_node(&self) -> ApllodbResult<()> {
-        let ffrs = self.analyzer.projection_ffrs()?;
+        let ffrs = self.analyzer.aliased_field_names_in_projection()?;
 
         let projection_op = UnaryPlanOperation::Projection {
             fields: ffrs.into_iter().map(FieldIndex::from).collect(),

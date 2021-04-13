@@ -6,7 +6,12 @@ use std::collections::HashSet;
 use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression};
 use apllodb_sql_parser::apllodb_ast;
 
-use crate::{ast_translator::AstTranslator, select::ordering::Ordering};
+use crate::{
+    ast_translator::AstTranslator,
+    correlation::aliased_correlation_name::AliasedCorrelationName,
+    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias},
+    select::ordering::Ordering,
+};
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct SelectCommandAnalyzer {
@@ -27,7 +32,7 @@ impl SelectCommandAnalyzer {
         for ffr in self.ffrs_in_sort()? {
             widest_ffrs.insert(ffr);
         }
-        for ffr in self.projection_ffrs()? {
+        for ffr in self.aliased_field_names_in_projection()? {
             widest_ffrs.insert(ffr);
         }
 
@@ -75,13 +80,15 @@ impl SelectCommandAnalyzer {
         }
     }
 
-    pub(super) fn projection_ffrs(&self) -> ApllodbResult<Vec<FullFieldReference>> {
-        let from_correlations = self.from_item_correlation_references()?;
+    pub(super) fn aliased_field_names_in_projection(&self) -> ApllodbResult<Vec<AliasedFieldName>> {
+        let from_item_correlations = self.from_item_correlation_references()?;
         let ast_select_fields = self.select_command.select_fields.as_vec().clone();
 
         ast_select_fields
             .iter()
-            .map(|select_field| Self::select_field_into_ffr(select_field, &from_correlations))
+            .map(|select_field| {
+                Self::select_field_into_aliased_field_name(select_field, &from_item_correlations)
+            })
             .collect::<ApllodbResult<_>>()
     }
 
@@ -105,29 +112,33 @@ impl SelectCommandAnalyzer {
         Ok(ffr_orderings.into_iter().map(|(ffr, _)| ffr).collect())
     }
 
-    fn select_field_into_ffr(
+    fn select_field_into_aliased_field_name(
         ast_select_field: &apllodb_ast::SelectField,
-        from_correlations: &[CorrelationReference],
-    ) -> ApllodbResult<FullFieldReference> {
-        match &ast_select_field.expression {
-            apllodb_ast::Expression::ConstantVariant(_) => {
-                Err(ApllodbError::feature_not_supported(
-                    "constant in select field is not supported currently",
-                ))
-            }
-            apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                AstTranslator::select_field_column_reference(
-                    ast_colref.clone(),
-                    ast_select_field.alias.clone(),
-                    from_correlations,
-                )
-            }
-            apllodb_ast::Expression::UnaryOperatorVariant(_, _)
-            | apllodb_ast::Expression::BinaryOperatorVariant(_, _, _) => {
+        from_item_correlations: &[AliasedCorrelationName],
+    ) -> ApllodbResult<AliasedFieldName> {
+        let expression = AstTranslator::expression_in_select(
+            ast_select_field.expression,
+            from_item_correlations,
+        )?;
+
+        match expression {
+            Expression::ConstantVariant(_) => Err(ApllodbError::feature_not_supported(
+                "constant in select field is not supported currently",
+            )),
+            Expression::UnaryOperatorVariant(_, _) | Expression::BooleanExpressionVariant(_) => {
                 // TODO このレイヤーで計算しちゃいたい
                 Err(ApllodbError::feature_not_supported(
                     "unary/binary operation in select field is not supported currently",
                 ))
+            }
+            Expression::SchemaIndexVariant(index) => {
+                let field_name = Self::field_name(&index, from_item_correlations)?;
+                let afn = if let Some(a) = ast_select_field.alias {
+                    AliasedFieldName::new(field_name, Some(FieldAlias::new(a.0 .0)?))
+                } else {
+                    AliasedFieldName::new(field_name, None)
+                };
+                Ok(afn)
             }
         }
     }
