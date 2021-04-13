@@ -8,10 +8,7 @@ use crate::{
         operation::BinaryPlanOperation,
     },
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, CorrelationIndex, CorrelationReference, FieldIndex,
-    FullFieldReference,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_sql_parser::apllodb_ast;
 
 impl SelectCommandAnalyzer {

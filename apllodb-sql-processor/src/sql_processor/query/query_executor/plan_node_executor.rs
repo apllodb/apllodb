@@ -1,16 +1,21 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, FieldIndex, Ordering, Row, RPos,
-    Records, SessionWithTx, TableName,
+    ApllodbResult, ApllodbSessionResult, Expression, RPos, SchemaIndex, SessionWithTx,
 };
-use apllodb_storage_engine_interface::{RowProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{
+    Row, RowProjectionQuery, StorageEngine, TableName, WithTxMethods,
+};
 
-use crate::sql_processor::{
-    query::query_plan::query_plan_tree::query_plan_node::operation::{
-        BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
+use crate::{
+    records::Records,
+    select::ordering::Ordering,
+    sql_processor::{
+        query::query_plan::query_plan_tree::query_plan_node::operation::{
+            BinaryPlanOperation, LeafPlanOperation, UnaryPlanOperation,
+        },
+        sql_processor_context::SqlProcessorContext,
     },
-    sql_processor_context::SqlProcessorContext,
 };
 
 #[derive(Clone, Debug, new)]
@@ -67,11 +72,14 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         table_name: TableName,
         projection: RowProjectionQuery,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
-        self.context
+        let (rows, session) = self
+            .context
             .engine
             .with_tx()
             .select(session, table_name, projection)
-            .await
+            .await?;
+
+        // ここで rows -> records が必要になる
     }
 
     /// # Failures
@@ -99,7 +107,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     fn sort(
         &self,
         input_left: Records,
-        field_orderings: Vec<(FieldIndex, Ordering)>,
+        field_orderings: Vec<(SchemaIndex, Ordering)>,
     ) -> ApllodbResult<Records> {
         input_left.sort(&field_orderings)
     }

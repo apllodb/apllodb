@@ -1,4 +1,6 @@
-use apllodb_shared_components::{Records, Session, SessionWithDb, SessionWithTx};
+use apllodb_shared_components::{Session, SessionWithDb, SessionWithTx};
+
+use crate::records::Records;
 
 /// Successful result from [SqlProcessor](crate::SqlProcessor).
 #[derive(Debug)]

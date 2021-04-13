@@ -1,6 +1,6 @@
 mod select_command_analyzer;
 
-use apllodb_shared_components::{ApllodbResult, CorrelationIndex, FieldIndex};
+use apllodb_shared_components::ApllodbResult;
 use apllodb_sql_parser::apllodb_ast::{self};
 use apllodb_storage_engine_interface::RowProjectionQuery;
 

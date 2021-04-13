@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{ColumnName, Expression, TableName};
+use apllodb_shared_components::Expression;
+use apllodb_storage_engine_interface::{ColumnName, TableName};
 
 use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeId;
 

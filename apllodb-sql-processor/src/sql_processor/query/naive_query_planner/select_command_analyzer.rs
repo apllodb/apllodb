@@ -2,13 +2,10 @@ mod from_item;
 
 use std::collections::HashSet;
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, CorrelationReference, Expression, FullFieldReference, Ordering,
-    RecordFieldRefSchema,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression};
 use apllodb_sql_parser::apllodb_ast;
 
-use crate::ast_translator::AstTranslator;
+use crate::{ast_translator::AstTranslator, select::ordering::Ordering};
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct SelectCommandAnalyzer {

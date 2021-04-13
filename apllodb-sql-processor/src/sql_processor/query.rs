@@ -3,10 +3,12 @@ pub(crate) mod query_executor;
 pub(crate) mod query_plan;
 
 use apllodb_shared_components::{
-    ApllodbSessionError, ApllodbSessionResult, Records, Session, SessionWithTx,
+    ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
 };
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
 use apllodb_storage_engine_interface::StorageEngine;
+
+use crate::records::Records;
 
 use self::{
     naive_query_planner::NaiveQueryPlanner, query_executor::QueryExecutor, query_plan::QueryPlan,
@@ -50,11 +52,12 @@ mod tests {
     use crate::sql_processor::sql_processor_context::SqlProcessorContext;
     use apllodb_shared_components::{
         test_support::{fixture::*, test_models::People},
-        ApllodbResult, Row,
+        ApllodbResult,
     };
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
-    use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, mock_select, MockWithTxMethods,
+    use apllodb_storage_engine_interface::{
+        test_support::{default_mock_engine, mock_select, MockWithTxMethods},
+        Row,
     };
     use std::sync::Arc;
 

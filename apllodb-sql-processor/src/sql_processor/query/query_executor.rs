@@ -87,7 +87,7 @@ mod tests {
             fixture::*,
             test_models::{Body, People, Pet},
         },
-        ApllodbResult, FieldIndex, Row, RecordFieldRefSchema,
+        ApllodbResult,
     };
     use apllodb_storage_engine_interface::{
         test_support::{default_mock_engine, mock_select, MockWithTxMethods},
@@ -195,9 +195,9 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: RowProjectionQuery::ColumnIndexes(RecordFieldRefSchema::factory(vec![
-                            People::ffr_id(),
-                        ])),
+                        projection: RowProjectionQuery::ColumnIndexes(
+                            RecordFieldRefSchema::factory(vec![People::ffr_id()]),
+                        ),
                     },
                 }))
             })
@@ -219,9 +219,9 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: RowProjectionQuery::ColumnIndexes(RecordFieldRefSchema::factory(vec![
-                            People::ffr_age(),
-                        ])),
+                        projection: RowProjectionQuery::ColumnIndexes(
+                            RecordFieldRefSchema::factory(vec![People::ffr_age()]),
+                        ),
                     },
                 }))
             })
