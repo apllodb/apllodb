@@ -1,18 +1,18 @@
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, SchemaIndex, SchemaName,
-};
-use apllodb_sql_parser::apllodb_ast;
-
 use crate::{
-    ast_translator::AstTranslator,
     attribute::attribute_name::AttributeName,
     correlation::aliased_correlation_name::AliasedCorrelationName,
     field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
 };
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, SchemaIndex, SchemaName,
+};
+use apllodb_storage_engine_interface::ColumnName;
 
-impl AstTranslator {
+use super::SelectCommandAnalyzer;
+
+impl SelectCommandAnalyzer {
     /// TODO may need Catalog value when:
-    /// - ast_column_reference does not have correlation and
+    /// - index does not have prefix part and
     /// - from_item_correlations are more than 1
     /// because this function has to determine which of `from1` or `from2` `field1` is from.
     ///
@@ -23,30 +23,23 @@ impl AstTranslator {
     /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
     ///   - none of `from_item_correlations` has field named `ast_column_reference.column_name`
     ///   - `ast_column_reference` has a correlation but it is not any of `from_item_correlations`.
-    pub fn column_reference(
-        ast_column_reference: apllodb_ast::ColumnReference,
+    pub(super) fn field_name(
+        index: &SchemaIndex,
         from_item_correlations: &[AliasedCorrelationName],
     ) -> ApllodbResult<FieldName> {
         if from_item_correlations.is_empty() {
             Err(ApllodbError::new(
                 ApllodbErrorKind::InvalidColumnReference,
                 format!(
-                    "no FROM item. cannot detect where `{:?}` field is from",
-                    ast_column_reference
+                    "no FROM item. cannot detect where `{}` field is from",
+                    index
                 ),
                 None,
             ))
-        } else if let Some(ast_corr) = ast_column_reference.correlation {
-            Self::column_reference_with_corr(
-                ast_corr,
-                ast_column_reference.column_name,
-                from_item_correlations,
-            )
+        } else if let Some(corr) = index.prefix() {
+            Self::field_name_with_prefix(corr, index.attr(), from_item_correlations)
         } else {
-            Self::column_reference_without_corr(
-                ast_column_reference.column_name,
-                from_item_correlations,
-            )
+            Self::field_name_without_prefix(index.attr(), from_item_correlations)
         }
     }
 
@@ -54,27 +47,27 @@ impl AstTranslator {
     ///
     /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `ast_correlation` does not match any of `from_item_correlations`.
-    fn column_reference_with_corr(
-        ast_correlation: apllodb_ast::Correlation,
-        ast_column_name: apllodb_ast::ColumnName,
+    fn field_name_with_prefix(
+        prefix: &str,
+        attr: &str,
         from_item_correlations: &[AliasedCorrelationName],
     ) -> ApllodbResult<FieldName> {
         assert!(!from_item_correlations.is_empty());
 
-        let attr = AttributeName::ColumnNameVariant(Self::column_name(ast_column_name)?);
-        let index = SchemaIndex::from(format!("{}.{}", ast_correlation.0 .0, attr).as_str());
+        let attr = AttributeName::ColumnNameVariant(ColumnName::new(attr)?);
+        let index = SchemaIndex::from(format!("{}.{}", prefix, attr).as_str());
 
         // SELECT T.C FROM ...;
         from_item_correlations
             .iter()
             .find_map(|from_item_corr| {
                 // creates AliasedFieldName to use .matches()
-                let aliased_field_name = AliasedFieldName::new(
+                let field_name_candidate = AliasedFieldName::new(
                     FieldName::new(from_item_corr.clone(), attr.clone()),
                     None,
                 );
-                if aliased_field_name.matches(&index) {
-                    Some(aliased_field_name.field_name)
+                if field_name_candidate.matches(&index) {
+                    Some(field_name_candidate.field_name)
                 } else {
                     None
                 }
@@ -91,40 +84,39 @@ impl AstTranslator {
             })
     }
 
-    fn column_reference_without_corr(
-        ast_column_name: apllodb_ast::ColumnName,
+    fn field_name_without_prefix(
+        attr: &str,
         from_item_correlations: &[AliasedCorrelationName],
     ) -> ApllodbResult<FieldName> {
         assert!(!from_item_correlations.is_empty());
         if from_item_correlations.len() > 1 {
             return Err(ApllodbError::feature_not_supported(format!(
                 "needs catalog info to detect which table has the column `{:?}`",
-                ast_column_name
+                attr
             )));
         }
 
         // SELECT C FROM T (AS a)?;
         // -> C is from T
         let from_item_correlation = from_item_correlations[0].clone();
-        let attr = AttributeName::ColumnNameVariant(Self::column_name(ast_column_name)?);
+        let attr = AttributeName::ColumnNameVariant(ColumnName::new(attr)?);
         Ok(FieldName::new(from_item_correlation, attr))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::super::SelectCommandAnalyzer;
     use crate::{
-        ast_translator::AstTranslator,
-        correlation::aliased_correlation_name::AliasedCorrelationName,
-        field::field_name::FieldName,
+        correlation::aliased_correlation_name::AliasedCorrelationName, field::field_name::FieldName,
     };
-    use apllodb_shared_components::ApllodbErrorKind;
+    use apllodb_shared_components::{ApllodbErrorKind, SchemaIndex};
     use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation};
     use pretty_assertions::assert_eq;
 
     #[derive(new)]
     struct TestDatum {
-        ast_column_reference: ColumnReference,
+        index: SchemaIndex,
         from_item_correlations: Vec<AliasedCorrelationName>,
         expected_result: Result<FieldName, ApllodbErrorKind>,
     }
@@ -133,59 +125,59 @@ mod tests {
     fn test_column_reference() {
         let test_data: Vec<TestDatum> = vec![
             TestDatum::new(
-                ColumnReference::factory(None, "c"),
+                SchemaIndex::from("c"),
                 vec![],
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),
             TestDatum::new(
-                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                SchemaIndex::from("t.c"),
                 vec![],
                 Err(ApllodbErrorKind::InvalidColumnReference),
             ),
             TestDatum::new(
-                ColumnReference::factory(None, "c"),
+                SchemaIndex::from("c"),
                 vec![AliasedCorrelationName::factory_tn("t")],
                 Ok(FieldName::factory("t", "c")),
             ),
             TestDatum::new(
-                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                SchemaIndex::from("t.c"),
                 vec![AliasedCorrelationName::factory_tn("t")],
                 Ok(FieldName::factory("t", "c")),
             ),
             TestDatum::new(
-                ColumnReference::factory(Some(Correlation::factory("t1")), "c"),
+                SchemaIndex::from("t1.c"),
                 vec![AliasedCorrelationName::factory_tn("t2")],
                 Err(ApllodbErrorKind::UndefinedColumn),
             ),
             TestDatum::new(
-                ColumnReference::factory(None, "c"),
+                SchemaIndex::from("c"),
                 vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
                 Ok(FieldName::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
-                ColumnReference::factory(Some(Correlation::factory("t")), "c"),
+                SchemaIndex::from("t.c"),
                 vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
                 Ok(FieldName::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
-                ColumnReference::factory(Some(Correlation::factory("a")), "c"),
+                SchemaIndex::from("a.c"),
                 vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
                 Ok(FieldName::factory("t", "c").with_corr_alias("a")),
             ),
             TestDatum::new(
-                ColumnReference::factory(Some(Correlation::factory("x")), "c"),
+                SchemaIndex::from("x.c"),
                 vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
                 Err(ApllodbErrorKind::UndefinedColumn),
             ),
         ];
 
         for test_datum in test_data {
-            match AstTranslator::column_reference(
-                test_datum.ast_column_reference,
+            match SelectCommandAnalyzer::field_name(
+                &test_datum.index,
                 &test_datum.from_item_correlations,
             ) {
-                Ok(ffr) => {
-                    assert_eq!(ffr, test_datum.expected_result.unwrap())
+                Ok(field_name) => {
+                    assert_eq!(field_name, test_datum.expected_result.unwrap())
                 }
                 Err(e) => {
                     assert_eq!(e.kind(), &test_datum.expected_result.unwrap_err())

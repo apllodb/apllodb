@@ -7,7 +7,6 @@ pub(crate) mod alter_table_action;
 pub(crate) mod column_constraint;
 pub(crate) mod column_definition;
 pub(crate) mod column_name;
-pub(crate) mod column_reference;
 pub(crate) mod condition;
 pub(crate) mod data_type;
 pub(crate) mod database_name;

@@ -1,4 +1,5 @@
 mod from_item;
+mod schema;
 
 use std::collections::HashSet;
 

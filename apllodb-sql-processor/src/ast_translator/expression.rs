@@ -26,8 +26,19 @@ impl AstTranslator {
                 Expression::ConstantVariant(sql_value)
             }
             apllodb_ast::Expression::ColumnReferenceVariant(ast_colref) => {
-                let field_name = Self::column_reference(ast_colref, from_item_correlations)?;
-                Expression::SchemaIndexVariant(SchemaIndex::from(&field_name))
+                let index = SchemaIndex::from(
+                    format!(
+                        "{}{}",
+                        if let Some(corr) = ast_colref.correlation {
+                            format!("{}.", corr.0 .0)
+                        } else {
+                            "".to_string()
+                        },
+                        ast_colref.column_name.0 .0
+                    )
+                    .as_str(),
+                );
+                Expression::SchemaIndexVariant(index)
             }
             apllodb_ast::Expression::UnaryOperatorVariant(uni_op, expr) => {
                 let uni_op = Self::unary_operator(uni_op);
