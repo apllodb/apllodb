@@ -10,6 +10,7 @@ use crate::{
     ast_translator::AstTranslator,
     correlation::aliased_correlation_name::AliasedCorrelationName,
     field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias},
+    records::record_schema::RecordSchema,
     select::ordering::Ordering,
 };
 
@@ -20,7 +21,7 @@ pub(crate) struct SelectCommandAnalyzer {
 
 impl SelectCommandAnalyzer {
     /// including all fields used during a SELECT execution
-    pub(super) fn widest_schema(&self) -> ApllodbResult<RecordFieldRefSchema> {
+    pub(super) fn widest_schema(&self) -> ApllodbResult<RecordSchema> {
         let mut widest_ffrs = HashSet::<FullFieldReference>::new();
 
         for ffr in self.ffrs_in_join()? {
