@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use apllodb_shared_components::{RPos, Schema};
 use serde::{Deserialize, Serialize};
 
@@ -68,10 +70,15 @@ impl RecordSchema {
     }
 }
 
-impl From<Vec<AliasedFieldName>> for RecordSchema {
-    fn from(names: Vec<AliasedFieldName>) -> Self {
+impl From<HashSet<AliasedFieldName>> for RecordSchema {
+    /// Makes unique & sorted AliasedFieldNames
+    fn from(names: HashSet<AliasedFieldName>) -> Self {
+        let mut vec: Vec<AliasedFieldName> = names.into_iter().collect();
+        vec.sort();
+        vec.dedup();
+
         Self {
-            inner: names
+            inner: vec
                 .into_iter()
                 .enumerate()
                 .map(|(raw_pos, name)| (RPos::new(raw_pos), Some(name)))
