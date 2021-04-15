@@ -3,7 +3,7 @@ mod schema;
 
 use std::collections::HashSet;
 
-use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::{
@@ -22,16 +22,16 @@ pub(crate) struct SelectCommandAnalyzer {
 impl SelectCommandAnalyzer {
     /// including all fields used during a SELECT execution
     pub(super) fn widest_schema(&self) -> ApllodbResult<RecordSchema> {
-        let mut field_names = HashSet::<FieldName>::new();
+        let mut indexes = HashSet::<SchemaIndex>::new();
 
-        for fn_ in self.join_fns()? {
-            field_names.insert(fn_);
+        for idx in self.join_indexes()? {
+            indexes.insert(idx);
         }
-        for fn_ in self.selection_fns()? {
-            field_names.insert(fn_);
+        for idx in self.selection_indexes()? {
+            indexes.insert(idx);
         }
-        for fn_ in self.sort_fns()? {
-            field_names.insert(fn_);
+        for idx in self.sort_indexes()? {
+            indexes.insert(idx);
         }
 
         let mut widest_afns = Vec::<AliasedFieldName>::new();
@@ -40,9 +40,11 @@ impl SelectCommandAnalyzer {
             widest_afns.push(afn);
         }
         // insert unaliased FieldNames if widest_afns do not contain aliased version.
-        for fn_ in field_names {
-            if !widest_afns.iter().any(|afn| afn.field_name == fn_) {
-                let afn = AliasedFieldName::new(fn_, None);
+        let from_item_correlations = self.from_item_correlations()?;
+        for idx in indexes {
+            let field_name = Self::field_name(&idx, &from_item_correlations)?;
+            if !widest_afns.iter().any(|afn| afn.field_name == field_name) {
+                let afn = AliasedFieldName::new(field_name, None);
                 widest_afns.push(afn);
             }
         }
@@ -54,7 +56,7 @@ impl SelectCommandAnalyzer {
 
     pub(super) fn selection_condition(&self) -> ApllodbResult<Option<Expression>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
-            let from_correlations = self.from_item_correlation_references()?;
+            let from_correlations = self.from_item_correlations()?;
             let expr =
                 AstTranslator::condition_in_select(ast_condition.clone(), &from_correlations)?;
             Ok(Some(expr))
@@ -65,7 +67,7 @@ impl SelectCommandAnalyzer {
 
     pub(super) fn sort_ffr_orderings(&self) -> ApllodbResult<Vec<(FullFieldReference, Ordering)>> {
         if let Some(ast_order_bys) = &self.select_command.order_bys {
-            let from_correlations = self.from_item_correlation_references()?;
+            let from_correlations = self.from_item_correlations()?;
             let ast_order_bys = ast_order_bys.clone().into_vec();
 
             let ffr_orderings: Vec<(FullFieldReference, Ordering)> = ast_order_bys
@@ -94,7 +96,7 @@ impl SelectCommandAnalyzer {
     }
 
     pub(super) fn aliased_field_names_in_projection(&self) -> ApllodbResult<Vec<AliasedFieldName>> {
-        let from_item_correlations = self.from_item_correlation_references()?;
+        let from_item_correlations = self.from_item_correlations()?;
         let ast_select_fields = self.select_command.select_fields.as_vec().clone();
 
         ast_select_fields
@@ -105,22 +107,22 @@ impl SelectCommandAnalyzer {
             .collect::<ApllodbResult<_>>()
     }
 
-    fn join_fns(&self) -> ApllodbResult<Vec<FieldName>> {
+    fn join_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
         self.from_item_indexes()
             .map(|ffrs| ffrs.into_iter().collect())
     }
-    fn selection_fns(&self) -> ApllodbResult<Vec<FieldName>> {
+    fn selection_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
-            let from_correlations = self.from_item_correlation_references()?;
+            let from_correlations = self.from_item_correlations()?;
             let expression =
                 AstTranslator::condition_in_select(ast_condition.clone(), &from_correlations)?;
-            let ffrs = expression.to_schema_indexes();
-            Ok(ffrs.into_iter().collect())
+            let indexes = expression.to_schema_indexes();
+            Ok(indexes)
         } else {
             Ok(vec![])
         }
     }
-    fn sort_fns(&self) -> ApllodbResult<Vec<FieldName>> {
+    fn sort_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
         let ffr_orderings = self.sort_ffr_orderings()?;
         Ok(ffr_orderings.into_iter().map(|(ffr, _)| ffr).collect())
     }

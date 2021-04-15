@@ -13,7 +13,7 @@ use apllodb_shared_components::{ApllodbError, ApllodbResult, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 
 impl SelectCommandAnalyzer {
-    pub(in super::super) fn from_item_correlation_references(
+    pub(in super::super) fn from_item_correlations(
         &self,
     ) -> ApllodbResult<Vec<AliasedCorrelationName>> {
         if let Some(ast_from_item) = self.ast_from_item() {

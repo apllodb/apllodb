@@ -63,7 +63,7 @@ impl<'r> NaiveQueryPlanner<'r> {
     }
 
     fn create_correlation_nodes(&self) -> ApllodbResult<()> {
-        let from_correlations = self.analyzer.from_item_correlation_references()?;
+        let from_correlations = self.analyzer.from_item_correlations()?;
         let widest_schema = self.analyzer.widest_schema()?;
 
         for corref in from_correlations {
