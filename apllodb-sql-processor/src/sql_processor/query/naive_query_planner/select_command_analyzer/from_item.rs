@@ -2,8 +2,7 @@ use super::SelectCommandAnalyzer;
 use crate::{
     ast_translator::AstTranslator,
     correlation::{
-        aliased_correlation_name::AliasedCorrelationName, correlation_alias::CorrelationAlias,
-        correlation_name::CorrelationName,
+        aliased_correlation_name::AliasedCorrelationName, correlation_name::CorrelationName,
     },
     records::record_schema::RecordSchema,
     sql_processor::query::query_plan::query_plan_tree::query_plan_node::{

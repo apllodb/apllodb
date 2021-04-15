@@ -11,6 +11,7 @@
 #[macro_use]
 extern crate derive_new;
 
+pub(crate) mod aliaser;
 pub(crate) mod ast_translator;
 pub(crate) mod attribute;
 pub(crate) mod correlation;

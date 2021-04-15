@@ -8,6 +8,7 @@ use apllodb_storage_engine_interface::{
 };
 
 use crate::{
+    aliaser::Aliaser,
     records::Records,
     select::ordering::Ordering,
     sql_processor::{
@@ -34,7 +35,8 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             LeafPlanOperation::SeqScan {
                 table_name,
                 projection,
-            } => self.seq_scan(session, table_name, projection).await,
+                aliaser,
+            } => self.seq_scan(session, table_name, projection, aliaser).await,
         }
     }
 
@@ -78,6 +80,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         session: SessionWithTx,
         table_name: TableName,
         projection: RowProjectionQuery,
+        aliaser: Aliaser,
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         let (rows, session) = self
             .context
@@ -86,7 +89,8 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             .select(session, table_name, projection)
             .await?;
 
-        // ここで rows -> records が必要になる
+        let records = Records::from_rows(rows, aliaser);
+        Ok((records, session))
     }
 
     /// # Failures

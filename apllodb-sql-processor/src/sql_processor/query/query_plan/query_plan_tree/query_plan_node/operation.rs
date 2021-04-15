@@ -3,6 +3,7 @@ use apllodb_storage_engine_interface::{RowProjectionQuery, TableName};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    aliaser::Aliaser,
     records::{record_schema::RecordSchema, Records},
     select::ordering::Ordering,
 };
@@ -16,6 +17,7 @@ pub(crate) enum LeafPlanOperation {
     SeqScan {
         table_name: TableName,
         projection: RowProjectionQuery,
+        aliaser: Aliaser,
     },
     // TODO extend.
     // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>

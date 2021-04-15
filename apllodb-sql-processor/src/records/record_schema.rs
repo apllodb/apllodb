@@ -1,10 +1,11 @@
 use std::collections::HashSet;
 
 use apllodb_shared_components::{RPos, Schema};
+use apllodb_storage_engine_interface::RowSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    correlation::aliased_correlation_name::AliasedCorrelationName,
+    aliaser::Aliaser, correlation::aliased_correlation_name::AliasedCorrelationName,
     field::aliased_field_name::AliasedFieldName,
 };
 
@@ -29,7 +30,7 @@ use crate::{
 /// | 6 | - |
 /// | 7 | - ; a888 |
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
-pub struct RecordSchema {
+pub(crate) struct RecordSchema {
     inner: Vec<(RPos, Option<AliasedFieldName>)>,
 }
 
@@ -57,6 +58,15 @@ impl Schema for RecordSchema {
 impl RecordSchema {
     pub(crate) fn assert_all_named(&self) {
         assert!(self.inner.iter().all(|(_, opt)| opt.is_some()));
+    }
+
+    pub(crate) fn from_row_schema(row_schema: &RowSchema, aliaser: Aliaser) -> Self {
+        let aliased_field_names: HashSet<AliasedFieldName> = row_schema
+            .table_column_names()
+            .iter()
+            .map(|tc| aliaser.alias(tc))
+            .collect();
+        Self::from(aliased_field_names)
     }
 
     /// get raw AliasFieldNames

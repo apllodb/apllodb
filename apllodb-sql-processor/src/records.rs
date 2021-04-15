@@ -8,9 +8,11 @@ use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, Expression, RPos, Schema, SchemaIndex, SqlCompareResult,
     SqlValue, SqlValueHashKey,
 };
-use apllodb_storage_engine_interface::Row;
+use apllodb_storage_engine_interface::{Row, Rows};
 
-use crate::{field::aliased_field_name::AliasedFieldName, select::ordering::Ordering};
+use crate::{
+    aliaser::Aliaser, field::aliased_field_name::AliasedFieldName, select::ordering::Ordering,
+};
 
 use self::{record::Record, record_schema::RecordSchema};
 
@@ -23,7 +25,7 @@ pub struct Records {
 
 impl Records {
     /// Constructor
-    pub fn new<IntoRecord: Into<Record>, I: IntoIterator<Item = IntoRecord>>(
+    pub(crate) fn new<IntoRecord: Into<Record>, I: IntoIterator<Item = IntoRecord>>(
         schema: Arc<RecordSchema>,
         it: I,
     ) -> Self {
@@ -36,18 +38,26 @@ impl Records {
         }
     }
 
+    pub(crate) fn from_rows(rows: Rows, aliaser: Aliaser) -> Self {
+        let record_schema = Arc::new(RecordSchema::from_row_schema(rows.as_schema(), aliaser));
+        Self::new(
+            record_schema.clone(),
+            rows.map(|row| Record::new(record_schema.clone(), row)),
+        )
+    }
+
     /// ref to schema
-    pub fn as_schema(&self) -> &RecordSchema {
+    pub(crate) fn as_schema(&self) -> &RecordSchema {
         self.schema.as_ref()
     }
 
     /// makes SqlValues
-    pub fn into_rows(self) -> Vec<Row> {
+    pub(crate) fn into_rows(self) -> Vec<Row> {
         self.inner.into_iter().map(|record| record.row).collect()
     }
 
     /// Filter records that satisfy the given `condition`.
-    pub fn selection(self, condition: &Expression) -> ApllodbResult<Self> {
+    pub(crate) fn selection(self, condition: &Expression) -> ApllodbResult<Self> {
         match condition {
             Expression::ConstantVariant(sql_value) => {
                 if sql_value.to_bool()? {
@@ -59,22 +69,24 @@ impl Records {
                     })
                 }
             }
-            _ => self
-                .into_iter()
-                .filter_map(|r| {
-                    match condition
-                        .to_sql_value_for_expr_with_index(&|index| {
-                            r.get_sql_value(index).map(|v| v.clone())
-                        })
-                        .and_then(|sql_value| sql_value.to_bool())
-                    {
-                        Ok(false) => None,
-                        Ok(true) => Some(Ok(r)),
-                        Err(e) => Some(Err(e)),
-                    }
-                })
-                .collect::<ApllodbResult<Vec<Record>>>()
-                .map(|records| Self::new(self.schema.clone(), records)),
+            _ => {
+                let schema = self.schema.clone();
+                self.into_iter()
+                    .filter_map(|r| {
+                        match condition
+                            .to_sql_value_for_expr_with_index(&|index| {
+                                r.get_sql_value(index).map(|v| v.clone())
+                            })
+                            .and_then(|sql_value| sql_value.to_bool())
+                        {
+                            Ok(false) => None,
+                            Ok(true) => Some(Ok(r)),
+                            Err(e) => Some(Err(e)),
+                        }
+                    })
+                    .collect::<ApllodbResult<Vec<Record>>>()
+                    .map(|records| Self::new(schema, records))
+            }
         }
     }
 
@@ -84,7 +96,7 @@ impl Records {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
+    pub(crate) fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
         let projection_positions = indexes
             .iter()
             .map(|idx| {
@@ -107,7 +119,10 @@ impl Records {
     }
 
     /// ORDER BY
-    pub fn sort(mut self, field_orderings: &[(SchemaIndex, Ordering)]) -> ApllodbResult<Self> {
+    pub(crate) fn sort(
+        mut self,
+        field_orderings: &[(SchemaIndex, Ordering)],
+    ) -> ApllodbResult<Self> {
         assert!(!field_orderings.is_empty(), "parser should avoid this case");
 
         // TODO check if type in FieldIndex is PartialOrd
@@ -181,7 +196,7 @@ impl Records {
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in any record.
-    pub fn hash_join(
+    pub(crate) fn hash_join(
         self,
         joined_schema: Arc<RecordSchema>,
         right_records: Records,

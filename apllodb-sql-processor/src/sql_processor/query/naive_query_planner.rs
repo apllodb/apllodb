@@ -69,25 +69,25 @@ impl<'r> NaiveQueryPlanner<'r> {
         let from_item_correlations = self.analyzer.from_item_correlations()?;
         let widest_schema = self.analyzer.widest_schema()?;
 
-        for aliased_correlation_name in from_item_correlations {
-            if let CorrelationName::TableNameVariant(table_name) =
-                &aliased_correlation_name.correlation_name
-            {
-                let prj_idxs: Vec<SchemaIndex> = widest_schema
-                    .filter_by_correlations(&[aliased_correlation_name])
-                    .to_aliased_field_names()
-                    .iter()
-                    .map(|afn| SchemaIndex::from(afn))
-                    .collect();
+        for aliased_correlation_name in &from_item_correlations {
+            match &aliased_correlation_name.correlation_name {
+                CorrelationName::TableNameVariant(table_name) => {
+                    let prj_idxs: Vec<SchemaIndex> = widest_schema
+                        .filter_by_correlations(&[aliased_correlation_name.clone()])
+                        .to_aliased_field_names()
+                        .iter()
+                        .map(|afn| SchemaIndex::from(afn))
+                        .collect();
 
-                let _ = self
-                    .node_repo
-                    .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
-                        op: LeafPlanOperation::SeqScan {
-                            table_name: table_name.clone(),
-                            projection: RowProjectionQuery::ColumnIndexes(prj_idxs),
-                        },
-                    }));
+                    self.node_repo
+                        .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            op: LeafPlanOperation::SeqScan {
+                                table_name: table_name.clone(),
+                                projection: RowProjectionQuery::ColumnIndexes(prj_idxs),
+                                aliaser: self.analyzer.aliaser()?,
+                            },
+                        }));
+                }
             }
         }
 

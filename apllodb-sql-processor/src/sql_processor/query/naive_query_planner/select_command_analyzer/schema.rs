@@ -68,7 +68,7 @@ impl SelectCommandAnalyzer {
         from_item_correlations: &[AliasedCorrelationName],
     ) -> ApllodbResult<AliasedFieldName> {
         let expression = AstTranslator::expression_in_select(
-            ast_select_field.expression,
+            ast_select_field.expression.clone(),
             from_item_correlations,
         )?;
 
@@ -84,8 +84,8 @@ impl SelectCommandAnalyzer {
             }
             Expression::SchemaIndexVariant(index) => {
                 let field_name = Self::field_name(&index, from_item_correlations)?;
-                let afn = if let Some(a) = ast_select_field.alias {
-                    AliasedFieldName::new(field_name, Some(FieldAlias::new(a.0 .0)?))
+                let afn = if let Some(a) = &ast_select_field.alias {
+                    AliasedFieldName::new(field_name, Some(AstTranslator::field_alias(a.clone())?))
                 } else {
                     AliasedFieldName::new(field_name, None)
                 };
