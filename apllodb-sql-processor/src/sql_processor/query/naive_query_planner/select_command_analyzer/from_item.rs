@@ -1,6 +1,7 @@
 use super::SelectCommandAnalyzer;
 use crate::{
     ast_translator::AstTranslator,
+    correlation::aliased_correlation_name::AliasedCorrelationName,
     sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
         node_id::QueryPlanNodeId,
         node_kind::{QueryPlanNodeBinary, QueryPlanNodeKind},
@@ -8,13 +9,13 @@ use crate::{
         operation::BinaryPlanOperation,
     },
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 
 impl SelectCommandAnalyzer {
     pub(in super::super) fn from_item_correlation_references(
         &self,
-    ) -> ApllodbResult<Vec<CorrelationReference>> {
+    ) -> ApllodbResult<Vec<AliasedCorrelationName>> {
         if let Some(ast_from_item) = self.ast_from_item() {
             Self::ast_from_item_into_correlation_references(ast_from_item)
         } else {
@@ -22,10 +23,8 @@ impl SelectCommandAnalyzer {
         }
     }
 
-    /// FFRs appear in JOIN ... ON ... condition.
-    pub(in super::super) fn from_item_full_field_references(
-        &self,
-    ) -> ApllodbResult<Vec<FullFieldReference>> {
+    /// Indexes appear in JOIN ... *ON ...* condition.
+    pub(in super::super) fn from_item_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
         if let Some(ast_from_item) = self.ast_from_item() {
             Self::ast_from_item_into_full_field_references(ast_from_item)
         } else {

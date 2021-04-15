@@ -17,7 +17,7 @@ use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
 use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_sql_parser::apllodb_ast;
 use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, TableName};
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 impl QueryProcessor<MockStorageEngine> {
     pub async fn run_directly(
@@ -156,13 +156,13 @@ impl Records {
 
 impl RecordSchema {
     pub fn factory(aliased_field_names: Vec<AliasedFieldName>) -> Self {
-        Self::from(aliased_field_names)
+        Self::from(aliased_field_names.into_iter().collect::<HashSet<_>>())
     }
 
     pub fn joined(&self, right: &Self) -> Self {
         let mut left = self.to_aliased_field_names().to_vec();
         let mut right = right.to_aliased_field_names().to_vec();
         left.append(&mut right);
-        Self::from(left)
+        Self::factory(left)
     }
 }

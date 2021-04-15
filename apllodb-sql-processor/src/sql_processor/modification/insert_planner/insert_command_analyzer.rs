@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use apllodb_shared_components::{ApllodbError, ApllodbResult, Schema, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
@@ -32,7 +32,7 @@ impl InsertCommandAnalyzer {
             .collect()
     }
 
-    fn naive_afn_to_insert(&self) -> ApllodbResult<Vec<AliasedFieldName>> {
+    fn naive_afn_to_insert(&self) -> ApllodbResult<HashSet<AliasedFieldName>> {
         self.column_names_to_insert()?
             .into_iter()
             .map(|cn| {

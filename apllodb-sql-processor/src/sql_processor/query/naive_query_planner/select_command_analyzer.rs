@@ -106,7 +106,7 @@ impl SelectCommandAnalyzer {
     }
 
     fn join_fns(&self) -> ApllodbResult<Vec<FieldName>> {
-        self.from_item_full_field_references()
+        self.from_item_indexes()
             .map(|ffrs| ffrs.into_iter().collect())
     }
     fn selection_fns(&self) -> ApllodbResult<Vec<FieldName>> {

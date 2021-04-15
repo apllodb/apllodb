@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, RPos, SchemaIndex, SessionWithTx,
+    ApllodbResult, ApllodbSessionResult, Expression, RPos, Schema, SchemaIndex, SessionWithTx,
 };
 use apllodb_storage_engine_interface::{
     Row, RowProjectionQuery, StorageEngine, TableName, WithTxMethods,
@@ -85,19 +85,25 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     /// # Failures
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
-    fn projection(&self, input_left: Records, fields: Vec<FieldIndex>) -> ApllodbResult<Records> {
-        let positions: Vec<RPos> = fields
+    fn projection(&self, input_left: Records, indexes: &[SchemaIndex]) -> ApllodbResult<Records> {
+        let positions: Vec<RPos> = indexes
             .iter()
-            .map(|f| input_left.as_schema().resolve_index(f))
+            .map(|idx| {
+                let (pos, _) = input_left.as_schema().index(idx)?;
+                Ok(pos)
+            })
             .collect::<ApllodbResult<_>>()?;
 
-        let schema = input_left.as_schema().projection(&fields)?;
+        let schema = input_left.as_schema().projection(&indexes)?;
 
         let records = input_left
-            .map(|record| record.projection(&positions))
+            .map(|record| {
+                let (pos, _) = record.projection(&positions)?;
+                Ok(pos)
+            })
             .collect::<ApllodbResult<Vec<Row>>>()?;
 
-        Ok(Records::new(schema, records))
+        Ok(Records::new(Arc::new(schema), records))
     }
 
     fn selection(&self, input_left: Records, condition: Expression) -> ApllodbResult<Records> {
