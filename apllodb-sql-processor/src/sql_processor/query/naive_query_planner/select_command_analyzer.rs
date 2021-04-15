@@ -9,7 +9,7 @@ use apllodb_sql_parser::apllodb_ast;
 use crate::{
     ast_translator::AstTranslator,
     correlation::aliased_correlation_name::AliasedCorrelationName,
-    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias},
+    field::{aliased_field_name::AliasedFieldName, field_alias::FieldAlias, field_name::FieldName},
     records::record_schema::RecordSchema,
     select::ordering::Ordering,
 };
@@ -22,22 +22,34 @@ pub(crate) struct SelectCommandAnalyzer {
 impl SelectCommandAnalyzer {
     /// including all fields used during a SELECT execution
     pub(super) fn widest_schema(&self) -> ApllodbResult<RecordSchema> {
-        let mut widest_ffrs = HashSet::<FullFieldReference>::new();
+        let mut field_names = HashSet::<FieldName>::new();
 
-        for ffr in self.ffrs_in_join()? {
-            widest_ffrs.insert(ffr);
+        for fn_ in self.join_fns()? {
+            field_names.insert(fn_);
         }
-        for ffr in self.ffrs_in_selection()? {
-            widest_ffrs.insert(ffr);
+        for fn_ in self.selection_fns()? {
+            field_names.insert(fn_);
         }
-        for ffr in self.ffrs_in_sort()? {
-            widest_ffrs.insert(ffr);
-        }
-        for ffr in self.aliased_field_names_in_projection()? {
-            widest_ffrs.insert(ffr);
+        for fn_ in self.sort_fns()? {
+            field_names.insert(fn_);
         }
 
-        Ok(RecordFieldRefSchema::new(widest_ffrs.into_iter().collect()))
+        let mut widest_afns = Vec::<AliasedFieldName>::new();
+        // insert AliasedFieldNames first.
+        for afn in self.aliased_field_names_in_projection()? {
+            widest_afns.push(afn);
+        }
+        // insert unaliased FieldNames if widest_afns do not contain aliased version.
+        for fn_ in field_names {
+            if !widest_afns.iter().any(|afn| afn.field_name == fn_) {
+                let afn = AliasedFieldName::new(fn_, None);
+                widest_afns.push(afn);
+            }
+        }
+
+        Ok(RecordSchema::from(
+            widest_afns.into_iter().collect::<HashSet<_>>(),
+        ))
     }
 
     pub(super) fn selection_condition(&self) -> ApllodbResult<Option<Expression>> {
@@ -93,11 +105,11 @@ impl SelectCommandAnalyzer {
             .collect::<ApllodbResult<_>>()
     }
 
-    fn ffrs_in_join(&self) -> ApllodbResult<Vec<FullFieldReference>> {
+    fn join_fns(&self) -> ApllodbResult<Vec<FieldName>> {
         self.from_item_full_field_references()
             .map(|ffrs| ffrs.into_iter().collect())
     }
-    fn ffrs_in_selection(&self) -> ApllodbResult<Vec<FullFieldReference>> {
+    fn selection_fns(&self) -> ApllodbResult<Vec<FieldName>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
             let from_correlations = self.from_item_correlation_references()?;
             let expression =
@@ -108,7 +120,7 @@ impl SelectCommandAnalyzer {
             Ok(vec![])
         }
     }
-    fn ffrs_in_sort(&self) -> ApllodbResult<Vec<FullFieldReference>> {
+    fn sort_fns(&self) -> ApllodbResult<Vec<FieldName>> {
         let ffr_orderings = self.sort_ffr_orderings()?;
         Ok(ffr_orderings.into_iter().map(|(ffr, _)| ffr).collect())
     }
