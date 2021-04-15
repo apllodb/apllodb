@@ -33,7 +33,7 @@ pub(crate) enum UnaryPlanOperation {
         condition: Expression,
     },
     Sort {
-        field_orderings: Vec<(SchemaIndex, Ordering)>,
+        index_orderings: Vec<(SchemaIndex, Ordering)>,
     }, // TODO extend.
        // See PostgreSQL's plan nodes: <https://github.com/postgres/postgres/blob/master/src/include/nodes/nodes.h#L42-L95>
 }

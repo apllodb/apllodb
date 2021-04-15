@@ -17,7 +17,7 @@ use super::SelectCommandAnalyzer;
 
 impl SelectCommandAnalyzer {
     /// including all fields used during a SELECT execution
-    pub(super) fn widest_schema(&self) -> ApllodbResult<RecordSchema> {
+    pub(in super::super) fn widest_schema(&self) -> ApllodbResult<RecordSchema> {
         let mut indexes = HashSet::<SchemaIndex>::new();
 
         for idx in self.join_indexes()? {
@@ -50,7 +50,9 @@ impl SelectCommandAnalyzer {
         ))
     }
 
-    fn aliased_field_names_in_projection(&self) -> ApllodbResult<Vec<AliasedFieldName>> {
+    pub(in super::super) fn aliased_field_names_in_projection(
+        &self,
+    ) -> ApllodbResult<Vec<AliasedFieldName>> {
         let from_item_correlations = self.from_item_correlations()?;
         let ast_select_fields = self.select_command.select_fields.as_vec().clone();
 

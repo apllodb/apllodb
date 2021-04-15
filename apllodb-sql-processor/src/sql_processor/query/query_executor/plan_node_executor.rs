@@ -46,7 +46,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         match op_unary {
             UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
             UnaryPlanOperation::Selection { condition } => self.selection(input_left, condition),
-            UnaryPlanOperation::Sort { field_orderings } => self.sort(input_left, field_orderings),
+            UnaryPlanOperation::Sort { index_orderings: field_orderings } => self.sort(input_left, field_orderings),
         }
     }
 
