@@ -36,7 +36,10 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 table_name,
                 projection,
                 aliaser,
-            } => self.seq_scan(session, table_name, projection, aliaser).await,
+            } => {
+                self.seq_scan(session, table_name, projection, aliaser)
+                    .await
+            }
         }
     }
 

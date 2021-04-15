@@ -5,7 +5,7 @@ use apllodb_shared_components::{
         fixture::*,
         test_models::{Body, People, Pet},
     },
-    Row, RecordFieldRefSchema,
+    RecordFieldRefSchema, Row,
 };
 use once_cell::sync::Lazy;
 
