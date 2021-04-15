@@ -2,6 +2,7 @@ use super::SelectCommandAnalyzer;
 use crate::{
     ast_translator::AstTranslator,
     correlation::aliased_correlation_name::AliasedCorrelationName,
+    records::record_schema::RecordSchema,
     sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
         node_id::QueryPlanNodeId,
         node_kind::{QueryPlanNodeBinary, QueryPlanNodeKind},
@@ -44,8 +45,7 @@ impl SelectCommandAnalyzer {
         /// returns NodeId of node created from cur_from_item
         fn rec_create(
             cur_from_item: &apllodb_ast::FromItem,
-
-            widest_schema: &RecordFieldRefSchema,
+            widest_schema: &RecordSchema,
             node_repo: &QueryPlanNodeRepository,
         ) -> ApllodbResult<QueryPlanNodeId> {
             let from_item_correlations =

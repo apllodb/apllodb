@@ -105,7 +105,7 @@ impl<'r> NaiveQueryPlanner<'r> {
     }
 
     fn create_sort_node(&self) -> ApllodbResult<()> {
-        let ffr_orderings = self.analyzer.sort_ffr_orderings()?;
+        let ffr_orderings = self.analyzer.sort_index_orderings()?;
         if ffr_orderings.is_empty() {
             Ok(())
         } else {

@@ -3,7 +3,10 @@ use std::collections::HashSet;
 use apllodb_shared_components::{RPos, Schema};
 use serde::{Deserialize, Serialize};
 
-use crate::field::aliased_field_name::AliasedFieldName;
+use crate::{
+    correlation::aliased_correlation_name::AliasedCorrelationName,
+    field::aliased_field_name::AliasedFieldName,
+};
 
 /// Schema of records.
 ///
@@ -67,6 +70,25 @@ impl RecordSchema {
             .iter()
             .map(|(_, opt_name)| opt_name.as_ref().expect("already checked").clone())
             .collect()
+    }
+
+    /// Filter fields specified by AliasedCorrelationName.
+    /// Used for a storage engine access.
+    pub(crate) fn filter_by_correlations(
+        &self,
+        from_item_correlations: &[AliasedCorrelationName],
+    ) -> Self {
+        let new_afns: HashSet<AliasedFieldName> = self
+            .to_aliased_field_names()
+            .iter()
+            .filter(|afn| {
+                from_item_correlations
+                    .iter()
+                    .any(|need_corr| need_corr == &afn.field_name.aliased_correlation_name)
+            })
+            .cloned()
+            .collect();
+        Self::from(new_afns)
     }
 }
 
