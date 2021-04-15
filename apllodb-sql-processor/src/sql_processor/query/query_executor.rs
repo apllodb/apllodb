@@ -3,16 +3,19 @@ mod plan_node_executor;
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbSessionError, ApllodbSessionResult, Records, Session, SessionWithTx,
+    ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
 };
 use apllodb_storage_engine_interface::StorageEngine;
 
 use self::plan_node_executor::PlanNodeExecutor;
-use crate::sql_processor::{
-    query::query_plan::{
-        query_plan_tree::query_plan_node::node_kind::QueryPlanNodeKind, QueryPlan,
+use crate::{
+    records::Records,
+    sql_processor::{
+        query::query_plan::{
+            query_plan_tree::query_plan_node::node_kind::QueryPlanNodeKind, QueryPlan,
+        },
+        sql_processor_context::SqlProcessorContext,
     },
-    sql_processor_context::SqlProcessorContext,
 };
 use async_recursion::async_recursion;
 

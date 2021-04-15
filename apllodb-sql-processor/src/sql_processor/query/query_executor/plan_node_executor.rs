@@ -44,9 +44,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         input_left: Records,
     ) -> ApllodbResult<Records> {
         match op_unary {
-            UnaryPlanOperation::Projection { fields } => self.projection(input_left, fields),
+            UnaryPlanOperation::Projection { fields } => self.projection(input_left, &fields),
             UnaryPlanOperation::Selection { condition } => self.selection(input_left, condition),
-            UnaryPlanOperation::Sort { index_orderings: field_orderings } => self.sort(input_left, field_orderings),
+            UnaryPlanOperation::Sort {
+                index_orderings: field_orderings,
+            } => self.sort(input_left, field_orderings),
         }
     }
 
@@ -62,7 +64,12 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 joined_schema,
                 left_field,
                 right_field,
-            } => input_left.hash_join(joined_schema, input_right, &left_field, &right_field),
+            } => input_left.hash_join(
+                Arc::new(joined_schema),
+                input_right,
+                &left_field,
+                &right_field,
+            ),
         }
     }
 
@@ -86,24 +93,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
     fn projection(&self, input_left: Records, indexes: &[SchemaIndex]) -> ApllodbResult<Records> {
-        let positions: Vec<RPos> = indexes
-            .iter()
-            .map(|idx| {
-                let (pos, _) = input_left.as_schema().index(idx)?;
-                Ok(pos)
-            })
-            .collect::<ApllodbResult<_>>()?;
-
-        let schema = input_left.as_schema().projection(&indexes)?;
-
-        let records = input_left
-            .map(|record| {
-                let (pos, _) = record.projection(&positions)?;
-                Ok(pos)
-            })
-            .collect::<ApllodbResult<Vec<Row>>>()?;
-
-        Ok(Records::new(Arc::new(schema), records))
+        input_left.projection(indexes)
     }
 
     fn selection(&self, input_left: Records, condition: Expression) -> ApllodbResult<Records> {

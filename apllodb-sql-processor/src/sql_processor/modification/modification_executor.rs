@@ -3,12 +3,15 @@ use std::sync::Arc;
 use apllodb_shared_components::{ApllodbSessionResult, SessionWithTx};
 use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
 
-use crate::sql_processor::{
-    query::{
-        query_executor::QueryExecutor,
-        query_plan::{query_plan_tree::QueryPlanTree, QueryPlan},
+use crate::{
+    attribute::attribute_name::AttributeName,
+    sql_processor::{
+        query::{
+            query_executor::QueryExecutor,
+            query_plan::{query_plan_tree::QueryPlanTree, QueryPlan},
+        },
+        sql_processor_context::SqlProcessorContext,
     },
-    sql_processor_context::SqlProcessorContext,
 };
 
 use super::modification_plan::{
@@ -47,12 +50,16 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
                         session,
                         insert_node.table_name,
                         input
-                            .as_full_field_references()
+                            .as_schema()
+                            .to_aliased_field_names()
                             .iter()
-                            .map(|ffr| ffr.as_column_name())
+                            .map(|afn| match afn.as_attribute_name() {
+                                AttributeName::ColumnNameVariant(cn) => cn,
+                                _ => unreachable!("must be column name"),
+                            })
                             .cloned()
                             .collect(),
-                        input.into_sql_values(),
+                        input.into_rows(),
                     )
                     .await?;
 

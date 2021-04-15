@@ -1,7 +1,10 @@
 use super::SelectCommandAnalyzer;
 use crate::{
     ast_translator::AstTranslator,
-    correlation::aliased_correlation_name::AliasedCorrelationName,
+    correlation::{
+        aliased_correlation_name::AliasedCorrelationName, correlation_alias::CorrelationAlias,
+        correlation_name::CorrelationName,
+    },
     records::record_schema::RecordSchema,
     sql_processor::query::query_plan::query_plan_tree::query_plan_node::{
         node_id::QueryPlanNodeId,
@@ -10,7 +13,7 @@ use crate::{
         operation::BinaryPlanOperation,
     },
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SchemaIndex};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 
 impl SelectCommandAnalyzer {
@@ -27,7 +30,7 @@ impl SelectCommandAnalyzer {
     /// Indexes appear in JOIN ... *ON ...* condition.
     pub(in super::super) fn from_item_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
         if let Some(ast_from_item) = self.ast_from_item() {
-            Self::ast_from_item_into_full_field_references(ast_from_item)
+            Self::ast_from_item_into_indexes(ast_from_item)
         } else {
             Ok(vec![])
         }
@@ -50,17 +53,14 @@ impl SelectCommandAnalyzer {
         ) -> ApllodbResult<QueryPlanNodeId> {
             let from_item_correlations =
                 SelectCommandAnalyzer::ast_from_item_into_correlation_references(cur_from_item)?;
-            let joined_schema = widest_schema.filter_by_correlations(
-                &from_item_correlations
-                    .iter()
-                    .map(|cr| CorrelationIndex::from(cr.clone()))
-                    .collect::<Vec<_>>(),
-            );
+            let joined_schema = widest_schema.filter_by_correlations(&from_item_correlations);
 
             match cur_from_item {
                 apllodb_ast::FromItem::TableNameVariant { table_name, .. } => {
-                    let corr_index = CorrelationIndex::from(&table_name.0 .0);
-                    let node_id = node_repo.find_correlation_node(&corr_index)?;
+                    let corr_name = CorrelationName::TableNameVariant(AstTranslator::table_name(
+                        table_name.clone(),
+                    )?);
+                    let node_id = node_repo.find_correlation_node(&corr_name)?;
                     Ok(node_id)
                 }
                 apllodb_ast::FromItem::JoinVariant {
@@ -97,21 +97,21 @@ impl SelectCommandAnalyzer {
     fn ast_from_item(&self) -> Option<&apllodb_ast::FromItem> {
         self.select_command.from_item.as_ref()
     }
-
     fn ast_from_item_into_correlation_references(
         ast_from_item: &apllodb_ast::FromItem,
-    ) -> ApllodbResult<Vec<CorrelationReference>> {
+    ) -> ApllodbResult<Vec<AliasedCorrelationName>> {
         match ast_from_item {
             apllodb_ast::FromItem::TableNameVariant { table_name, alias } => {
                 let table_name = AstTranslator::table_name(table_name.clone())?;
-                let corr_ref = match alias {
-                    None => CorrelationReference::TableNameVariant(table_name),
-                    Some(alias) => CorrelationReference::TableAliasVariant {
-                        table_name,
-                        alias_name: AstTranslator::correlation_alias(alias.clone())?,
-                    },
+                let correlation_name = CorrelationName::TableNameVariant(table_name);
+                let correlation_alias = match alias {
+                    Some(a) => Some(AstTranslator::correlation_alias(a.clone())?),
+                    None => None,
                 };
-                Ok(vec![corr_ref])
+                let aliased_correlation_name =
+                    AliasedCorrelationName::new(correlation_name, correlation_alias);
+
+                Ok(vec![aliased_correlation_name])
             }
             apllodb_ast::FromItem::JoinVariant { left, right, .. } => {
                 let mut left_corr_ref = Self::ast_from_item_into_correlation_references(left)?;
@@ -122,9 +122,9 @@ impl SelectCommandAnalyzer {
         }
     }
 
-    fn ast_from_item_into_full_field_references(
+    fn ast_from_item_into_indexes(
         ast_from_item: &apllodb_ast::FromItem,
-    ) -> ApllodbResult<Vec<FullFieldReference>> {
+    ) -> ApllodbResult<Vec<SchemaIndex>> {
         match ast_from_item {
             apllodb_ast::FromItem::TableNameVariant { .. } => Ok(vec![]),
             apllodb_ast::FromItem::JoinVariant {
@@ -135,14 +135,10 @@ impl SelectCommandAnalyzer {
                     &Self::ast_from_item_into_correlation_references(ast_from_item)?,
                 )?;
 
-                let mut ffrs = expression.to_schema_indexes();
-                ffrs.append(&mut Self::ast_from_item_into_full_field_references(
-                    left.as_ref(),
-                )?);
-                ffrs.append(&mut Self::ast_from_item_into_full_field_references(
-                    right.as_ref(),
-                )?);
-                Ok(ffrs)
+                let mut idxs = expression.to_schema_indexes();
+                idxs.append(&mut Self::ast_from_item_into_indexes(left.as_ref())?);
+                idxs.append(&mut Self::ast_from_item_into_indexes(right.as_ref())?);
+                Ok(idxs)
             }
         }
     }
@@ -150,9 +146,8 @@ impl SelectCommandAnalyzer {
     fn join_variant_into_join_op(
         join_type: &apllodb_ast::JoinType,
         on: &apllodb_ast::Condition,
-
-        joined_schema: RecordFieldRefSchema,
-        from_item_correlations: &[CorrelationReference],
+        joined_schema: RecordSchema,
+        from_item_correlations: &[AliasedCorrelationName],
     ) -> ApllodbResult<BinaryPlanOperation> {
         assert!(
             matches!(join_type, apllodb_ast::JoinType::InnerJoin,),
@@ -161,22 +156,21 @@ impl SelectCommandAnalyzer {
 
         match &on.expression {
             apllodb_ast::Expression::BinaryOperatorVariant(bin_op, left, right) => {
-                match (bin_op, *left.clone(), *right.clone()) {
+                let left =
+                    AstTranslator::expression_in_select(*left.clone(), from_item_correlations)?;
+                let right =
+                    AstTranslator::expression_in_select(*right.clone(), from_item_correlations)?;
+
+                match (bin_op, left, right) {
                     (
                         apllodb_ast::BinaryOperator::Equal,
-                        apllodb_ast::Expression::ColumnReferenceVariant(left_colref),
-                        apllodb_ast::Expression::ColumnReferenceVariant(right_colref),
-                    ) => {
-                        let left_ffr =
-                            AstTranslator::column_reference(left_colref, from_item_correlations)?;
-                        let right_ffr =
-                            AstTranslator::column_reference(right_colref, from_item_correlations)?;
-                        Ok(BinaryPlanOperation::HashJoin {
-                            left_field: FieldIndex::from(left_ffr),
-                            right_field: FieldIndex::from(right_ffr),
-                            joined_schema,
-                        })
-                    }
+                        Expression::SchemaIndexVariant(left_field),
+                        Expression::SchemaIndexVariant(right_field),
+                    ) => Ok(BinaryPlanOperation::HashJoin {
+                        left_field,
+                        right_field,
+                        joined_schema,
+                    }),
                     _ => Err(ApllodbError::feature_not_supported(
                         "only `ON a = b` JOIN condition is supported currently",
                     )),
