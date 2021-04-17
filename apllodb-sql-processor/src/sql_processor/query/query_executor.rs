@@ -85,15 +85,13 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
 mod tests {
     use std::sync::Arc;
 
-    use apllodb_shared_components::{
-        test_support::{
-            fixture::*,
-            test_models::{Body, People, Pet},
-        },
-        ApllodbResult,
-    };
+    use apllodb_shared_components::{test_support::fixture::*, ApllodbResult};
     use apllodb_storage_engine_interface::{
-        test_support::{default_mock_engine, mock_select, MockWithTxMethods},
+        test_support::{
+            default_mock_engine, mock_select,
+            test_models::{Body, People, Pet},
+            MockWithTxMethods,
+        },
         MockStorageEngine, RowProjectionQuery,
     };
     use pretty_assertions::assert_eq;

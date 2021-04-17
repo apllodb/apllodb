@@ -14,7 +14,7 @@ use crate::{
     SqlProcessorContext,
 };
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
-use apllodb_shared_components::{ApllodbError, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, TableName};
 use std::{collections::HashSet, sync::Arc};
@@ -164,5 +164,14 @@ impl RecordSchema {
         let mut right = right.to_aliased_field_names().to_vec();
         left.append(&mut right);
         Self::factory(left)
+    }
+}
+
+impl Record {
+    pub fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
+        let schema = self.schema.clone();
+        let records = Records::new(schema, vec![self]);
+        let records = records.projection(indexes)?;
+        records.next().ok_or_else(|| unreachable!())
     }
 }

@@ -49,14 +49,16 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 #[cfg(test)]
 mod tests {
     use super::QueryProcessor;
-    use crate::sql_processor::sql_processor_context::SqlProcessorContext;
-    use apllodb_shared_components::{
-        test_support::{fixture::*, test_models::People},
-        ApllodbResult,
+    use crate::{
+        local_test_support::fixture::*, records::record::Record,
+        sql_processor::sql_processor_context::SqlProcessorContext,
     };
+    use apllodb_shared_components::ApllodbResult;
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
     use apllodb_storage_engine_interface::{
-        test_support::{default_mock_engine, mock_select, MockWithTxMethods},
+        test_support::{
+            default_mock_engine, fixture::*, mock_select, test_models::People, MockWithTxMethods,
+        },
         Row,
     };
     use std::sync::Arc;
@@ -64,10 +66,10 @@ mod tests {
     #[derive(Clone, PartialEq, Debug)]
     struct TestDatum {
         in_select_sql: String,
-        expected_select_records: Vec<Row>,
+        expected_select_records: Vec<Record>,
     }
     impl TestDatum {
-        fn new(in_select_sql: &str, expected_select_records: Vec<Row>) -> Self {
+        fn new(in_select_sql: &str, expected_select_records: Vec<Record>) -> Self {
             Self {
                 in_select_sql: in_select_sql.to_string(),
                 expected_select_records,
@@ -107,13 +109,13 @@ mod tests {
                 vec![
                     PEOPLE_RECORD1
                         .clone()
-                        .projection(&[People::field_pos(People::ffr_id())])?,
+                        .projection(&[People::tc_id().into()])?,
                     PEOPLE_RECORD2
                         .clone()
-                        .projection(&[People::field_pos(People::ffr_id())])?,
+                        .projection(&[People::tc_id().into()])?,
                     PEOPLE_RECORD3
                         .clone()
-                        .projection(&[People::field_pos(People::ffr_id())])?,
+                        .projection(&[People::tc_id().into()])?,
                 ],
             ),
             TestDatum::new(
@@ -121,13 +123,13 @@ mod tests {
                 vec![
                     PEOPLE_RECORD1
                         .clone()
-                        .projection(&[People::field_pos(People::ffr_age())])?,
+                        .projection(&[People::tc_age().into()])?,
                     PEOPLE_RECORD2
                         .clone()
-                        .projection(&[People::field_pos(People::ffr_age())])?,
+                        .projection(&[People::tc_age().into()])?,
                     PEOPLE_RECORD3
                         .clone()
-                        .projection(&[People::field_pos(People::ffr_age())])?,
+                        .projection(&[People::tc_age().into()])?,
                 ],
             ),
         ];
@@ -145,7 +147,7 @@ mod tests {
             let result = QueryProcessor::run_directly(context.clone(), select_command).await?;
 
             assert_eq!(
-                result.collect::<Vec<Row>>(),
+                result.collect::<Vec<Record>>(),
                 test_datum.expected_select_records,
             );
         }

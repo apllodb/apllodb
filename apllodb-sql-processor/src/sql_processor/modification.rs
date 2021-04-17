@@ -74,12 +74,10 @@ mod tests {
     use std::sync::Arc;
 
     use crate::sql_processor::sql_processor_context::SqlProcessorContext;
-    use apllodb_shared_components::{
-        test_support::test_models::People, ApllodbResult, NnSqlValue, SqlValue,
-    };
+    use apllodb_shared_components::{ApllodbResult, NnSqlValue, SqlValue};
     use apllodb_sql_parser::ApllodbSqlParser;
     use apllodb_storage_engine_interface::{
-        test_support::{default_mock_engine, MockWithTxMethods},
+        test_support::{default_mock_engine, test_models::People, MockWithTxMethods},
         ColumnName, Row, TableName,
     };
     use futures::FutureExt;
@@ -106,8 +104,8 @@ mod tests {
                 "INSERT INTO people (id, age) VALUES (1, 13)",
                 People::table_name(),
                 vec![
-                    People::ffr_id().as_column_name().clone(),
-                    People::ffr_age().as_column_name().clone(),
+                    People::tc_id().as_column_name().clone(),
+                    People::tc_age().as_column_name().clone(),
                 ],
                 vec![Row::new(vec![
                     SqlValue::NotNull(NnSqlValue::Integer(1)),

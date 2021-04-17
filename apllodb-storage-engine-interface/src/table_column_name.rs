@@ -1,4 +1,4 @@
-use apllodb_shared_components::SchemaName;
+use apllodb_shared_components::{SchemaIndex, SchemaName};
 use serde::{Deserialize, Serialize};
 
 use crate::{column::column_name::ColumnName, table::table_name::TableName};
@@ -29,6 +29,17 @@ impl TableColumnName {
     /// ref to column name
     pub fn as_column_name(&self) -> &ColumnName {
         &self.column
+    }
+}
+
+impl From<TableColumnName> for SchemaIndex {
+    fn from(tc: TableColumnName) -> Self {
+        let s = format!(
+            "{}.{}",
+            tc.as_table_name().as_str(),
+            tc.as_column_name().as_str()
+        );
+        SchemaIndex::from(s.as_str())
     }
 }
 
