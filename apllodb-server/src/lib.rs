@@ -41,7 +41,7 @@ pub use crate::apllodb_server::{response::success::ApllodbCommandSuccess, Apllod
 pub use apllodb_shared_components::{
     ApllodbErrorKind, ApllodbResult, ApllodbSessionResult, SchemaIndex, Session,
 };
-pub use apllodb_sql_processor::{RecordIndex, Records};
+pub use apllodb_sql_processor::{Record, RecordIndex, Records};
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;

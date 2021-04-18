@@ -32,6 +32,16 @@ impl Record {
         self.row.get(self.pos(index)?)
     }
 
+    /// Get sequence of field name vs SqlValue.
+    pub fn into_name_values(self) -> Vec<(String, SqlValue)> {
+        self.schema
+            .to_aliased_field_names()
+            .into_iter()
+            .map(|afn| format!("{}", SchemaIndex::from(&afn)))
+            .zip(self.row.into_values())
+            .collect()
+    }
+
     pub(crate) fn get_sql_value(&self, index: &SchemaIndex) -> ApllodbResult<&SqlValue> {
         self.row
             .get_sql_value(self.pos(&RecordIndex::Name(index.clone()))?)
