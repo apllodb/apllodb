@@ -32,9 +32,10 @@ impl People {
     }
 
     pub fn row(id: i64, age: i32) -> Row {
+        // note: order by column name (see RowSchema implementation)
         Row::new(vec![
-            SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::Integer(age)),
+            SqlValue::NotNull(NnSqlValue::BigInt(id)),
         ])
     }
 }
@@ -69,10 +70,11 @@ impl Body {
     }
 
     pub fn row(id: i64, people_id: i64, height: i32) -> Row {
+        // note: order by column name (see RowSchema implementation)
         Row::new(vec![
+            SqlValue::NotNull(NnSqlValue::Integer(height)),
             SqlValue::NotNull(NnSqlValue::BigInt(id)),
             SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
-            SqlValue::NotNull(NnSqlValue::Integer(height)),
         ])
     }
 }
@@ -116,11 +118,12 @@ impl Pet {
     }
 
     pub fn row(id: i64, people_id: i64, kind: &str, age: i16) -> Row {
+        // note: order by column name (see RowSchema implementation)
         Row::new(vec![
-            SqlValue::NotNull(NnSqlValue::BigInt(id)),
-            SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
-            SqlValue::NotNull(NnSqlValue::Text(kind.to_string())),
             SqlValue::NotNull(NnSqlValue::SmallInt(age)),
+            SqlValue::NotNull(NnSqlValue::BigInt(id)),
+            SqlValue::NotNull(NnSqlValue::Text(kind.to_string())),
+            SqlValue::NotNull(NnSqlValue::BigInt(people_id)),
         ])
     }
 }
