@@ -104,12 +104,13 @@ mod tests {
                 "INSERT INTO people (id, age) VALUES (1, 13)",
                 People::table_name(),
                 vec![
-                    People::tc_id().as_column_name().clone(),
+                    // note: re-ordered internally
                     People::tc_age().as_column_name().clone(),
+                    People::tc_id().as_column_name().clone(),
                 ],
                 vec![Row::new(vec![
-                    SqlValue::NotNull(NnSqlValue::Integer(1)),
                     SqlValue::NotNull(NnSqlValue::Integer(13)),
+                    SqlValue::NotNull(NnSqlValue::Integer(1)),
                 ])],
             )]
             .into_boxed_slice()

@@ -61,6 +61,7 @@ mod tests {
         },
         Row,
     };
+    use pretty_assertions::assert_eq;
     use std::sync::Arc;
 
     #[derive(Clone, PartialEq, Debug)]
@@ -98,9 +99,15 @@ mod tests {
             TestDatum::new(
                 "SELECT id, age FROM people",
                 vec![
-                    PEOPLE_RECORD1.clone(),
-                    PEOPLE_RECORD2.clone(),
-                    PEOPLE_RECORD3.clone(),
+                    PEOPLE_RECORD1
+                        .clone()
+                        .projection(&[People::tc_id().into(), People::tc_age().into()])?,
+                    PEOPLE_RECORD2
+                        .clone()
+                        .projection(&[People::tc_id().into(), People::tc_age().into()])?,
+                    PEOPLE_RECORD3
+                        .clone()
+                        .projection(&[People::tc_id().into(), People::tc_age().into()])?,
                 ],
             ),
             // projection
