@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use apllodb_shared_components::{RPos, Schema};
 use apllodb_storage_engine_interface::RowSchema;
-use serde::{Deserialize, Serialize};
+use sorted_vec::SortedSet;
 
 use crate::{
     aliaser::Aliaser, correlation::aliased_correlation_name::AliasedCorrelationName,
@@ -29,35 +29,48 @@ use crate::{
 /// | 5 | (t;ta).c6 ; c6a |
 /// | 6 | - |
 /// | 7 | - ; a888 |
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub(crate) struct RecordSchema {
-    inner: Vec<(RPos, Option<AliasedFieldName>)>,
+    named: SortedSet<AliasedFieldName>,
+    unnamed_len: usize,
 }
 
 impl Schema for RecordSchema {
     type Name = AliasedFieldName;
 
-    fn new(names_with_pos: Vec<(RPos, Option<AliasedFieldName>)>) -> Self
+    fn new(names: HashSet<AliasedFieldName>, unnamed_fields_len: usize) -> Self
     where
         Self: Sized,
     {
         Self {
-            inner: names_with_pos,
+            named: SortedSet::from_unsorted(names.into_iter().collect()),
+            unnamed_len: unnamed_fields_len,
         }
     }
 
     fn names_with_pos(&self) -> Vec<(RPos, Option<AliasedFieldName>)> {
-        self.inner.clone()
+        let mut v: Vec<(RPos, Option<AliasedFieldName>)> = self
+            .named
+            .iter()
+            .enumerate()
+            .map(|(raw_pos, afn)| (RPos::new(raw_pos), Some(afn.clone())))
+            .collect();
+
+        for _ in 0..self.unnamed_len {
+            let pos = v.len();
+            v.push((RPos::new(pos), None))
+        }
+        v
     }
 
     fn len(&self) -> usize {
-        self.inner.len()
+        self.named.len() + self.unnamed_len
     }
 }
 
 impl RecordSchema {
     pub(crate) fn assert_all_named(&self) {
-        assert!(self.inner.iter().all(|(_, opt)| opt.is_some()));
+        assert!(self.unnamed_len == 0);
     }
 
     pub(crate) fn from_row_schema(row_schema: &RowSchema, aliaser: Aliaser) -> Self {
@@ -76,10 +89,7 @@ impl RecordSchema {
     /// if any field is unnamed (even un-aliased) constant.
     pub(crate) fn to_aliased_field_names(&self) -> Vec<AliasedFieldName> {
         self.assert_all_named();
-        self.inner
-            .iter()
-            .map(|(_, opt_name)| opt_name.as_ref().expect("already checked").clone())
-            .collect()
+        self.named.iter().cloned().collect()
     }
 
     /// Filter fields specified by AliasedCorrelationName.
@@ -103,18 +113,7 @@ impl RecordSchema {
 }
 
 impl From<HashSet<AliasedFieldName>> for RecordSchema {
-    /// Makes unique & sorted AliasedFieldNames
     fn from(names: HashSet<AliasedFieldName>) -> Self {
-        let mut vec: Vec<AliasedFieldName> = names.into_iter().collect();
-        vec.sort();
-        vec.dedup();
-
-        Self {
-            inner: vec
-                .into_iter()
-                .enumerate()
-                .map(|(raw_pos, name)| (RPos::new(raw_pos), Some(name)))
-                .collect(),
-        }
+        Self::new(names, 0)
     }
 }

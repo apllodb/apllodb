@@ -41,7 +41,7 @@ pub(crate) enum UnaryPlanOperation {
 }
 
 /// Binary operations, which inputs two [RecordIterator](apllodb-shared-components::RecordIterator) and outputs one [RecordIterator](apllodb-shared-components::RecordIterator).
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(crate) enum BinaryPlanOperation {
     HashJoin {
         joined_schema: RecordSchema,

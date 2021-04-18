@@ -207,6 +207,7 @@ dependencies = [
  "once_cell",
  "pretty_assertions",
  "serde",
+ "sorted-vec",
 ]
 
 [[package]]
