@@ -1,7 +1,8 @@
 mod sql_test;
 
-use apllodb_server::test_support::{fixture::PEOPLE_REC1, test_setup};
-use apllodb_shared_components::FieldIndex;
+use apllodb_server::test_support::test_setup;
+use apllodb_server::SchemaIndex;
+use apllodb_sql_processor::test_support::fixture::*;
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -20,8 +21,10 @@ async fn test_update() {
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("age")).unwrap(),
-                    PEOPLE_REC1.get::<i32>(&FieldIndex::from("age")).unwrap()
+                    r.get::<i32>(&SchemaIndex::from("age")).unwrap(),
+                    PEOPLE_RECORD1
+                        .get::<i32>(&SchemaIndex::from("age"))
+                        .unwrap()
                 );
                 Ok(())
             })),
@@ -35,8 +38,10 @@ async fn test_update() {
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("age")).unwrap(),
-                    PEOPLE_REC1.get::<i32>(&FieldIndex::from("age")).unwrap()
+                    r.get::<i32>(&SchemaIndex::from("age")).unwrap(),
+                    PEOPLE_RECORD1
+                        .get::<i32>(&SchemaIndex::from("age"))
+                        .unwrap()
                 );
                 Ok(())
             })),
@@ -49,7 +54,7 @@ async fn test_update() {
             "SELECT id, age FROM people WHERE id = 1",
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i32>(&FieldIndex::from("age")).unwrap(), Some(100));
+                assert_eq!(r.get::<i32>(&SchemaIndex::from("age")).unwrap(), Some(100));
                 Ok(())
             })),
         ))
@@ -58,7 +63,7 @@ async fn test_update() {
             "SELECT id, age FROM people WHERE id = 1",
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i32>(&FieldIndex::from("age")).unwrap(), Some(200));
+                assert_eq!(r.get::<i32>(&SchemaIndex::from("age")).unwrap(), Some(200));
                 Ok(())
             })),
         ))
@@ -71,7 +76,7 @@ async fn test_update() {
             "SELECT id, age FROM people WHERE age = 200",
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("id")).unwrap(), Some(0));
+                assert_eq!(r.get::<i64>(&SchemaIndex::from("id")).unwrap(), Some(0));
                 Ok(())
             })),
         ))

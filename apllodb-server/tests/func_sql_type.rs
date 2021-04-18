@@ -82,7 +82,7 @@ async fn test_big_int() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = FieldIndex::from("c");
+                let index = SchemaIndex::from("c");
 
                 let r = records.next().unwrap();
                 assert_eq!(
@@ -119,7 +119,7 @@ async fn test_text() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = FieldIndex::from("c");
+                let index = SchemaIndex::from("c");
 
                 let r = records.next().unwrap();
                 assert_eq!(

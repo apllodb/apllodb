@@ -22,7 +22,7 @@ pub use sql_processor::{
     sql_processor_context::SqlProcessorContext, success::SqlProcessorSuccess, SqlProcessor,
 };
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
 
 #[cfg(test)]

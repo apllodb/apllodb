@@ -1,7 +1,6 @@
 mod sql_test;
 
-use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ApllodbErrorKind, FieldIndex};
+use apllodb_server::{test_support::test_setup, ApllodbErrorKind, SchemaIndex};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -14,94 +13,94 @@ async fn test_select_with_various_field_spec() {
     #[derive(Clone)]
     struct TestDatum {
         sql: &'static str,
-        index: FieldIndex,
+        index: SchemaIndex,
         expected_result: Result<(), ApllodbErrorKind>,
     }
 
     let test_data = vec![
         TestDatum {
             sql: "SELECT id FROM people",
-            index: FieldIndex::from("id"),
+            index: SchemaIndex::from("id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id FROM people",
-            index: FieldIndex::from("people.id"),
+            index: SchemaIndex::from("people.id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id FROM people",
-            index: FieldIndex::from("xxx"),
+            index: SchemaIndex::from("xxx"),
             expected_result: Err(ApllodbErrorKind::InvalidName),
         },
         TestDatum {
             sql: "SELECT id FROM people",
-            index: FieldIndex::from("people.xxx"),
+            index: SchemaIndex::from("people.xxx"),
             expected_result: Err(ApllodbErrorKind::InvalidName),
         },
         TestDatum {
             sql: "SELECT id FROM people",
-            index: FieldIndex::from("xxx.id"),
+            index: SchemaIndex::from("xxx.id"),
             expected_result: Err(ApllodbErrorKind::InvalidName),
         },
         TestDatum {
             sql: "SELECT people.id FROM people",
-            index: FieldIndex::from("id"),
+            index: SchemaIndex::from("id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT people.id FROM people",
-            index: FieldIndex::from("people.id"),
+            index: SchemaIndex::from("people.id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id FROM people t_alias",
-            index: FieldIndex::from("id"),
+            index: SchemaIndex::from("id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id FROM people t_alias",
-            index: FieldIndex::from("people.id"),
+            index: SchemaIndex::from("people.id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id FROM people t_alias",
-            index: FieldIndex::from("t_alias.id"),
+            index: SchemaIndex::from("t_alias.id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id c_alias FROM people",
-            index: FieldIndex::from("id"),
+            index: SchemaIndex::from("id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id c_alias FROM people",
-            index: FieldIndex::from("c_alias"),
+            index: SchemaIndex::from("c_alias"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id c_alias FROM people",
-            index: FieldIndex::from("people.id"),
+            index: SchemaIndex::from("people.id"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id c_alias FROM people",
-            index: FieldIndex::from("people.c_alias"),
+            index: SchemaIndex::from("people.c_alias"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id c_alias FROM people t_alias",
-            index: FieldIndex::from("c_alias"),
+            index: SchemaIndex::from("c_alias"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id c_alias FROM people t_alias",
-            index: FieldIndex::from("people.c_alias"),
+            index: SchemaIndex::from("people.c_alias"),
             expected_result: Ok(()),
         },
         TestDatum {
             sql: "SELECT id c_alias FROM people t_alias",
-            index: FieldIndex::from("t_alias.c_alias"),
+            index: SchemaIndex::from("t_alias.c_alias"),
             expected_result: Ok(()),
         },
     ];
@@ -119,7 +118,7 @@ async fn test_select_with_various_field_spec() {
                 match r.get::<i64>(&test_datum.clone().index) {
                     Ok(_) => assert!(
                         test_datum.expected_result.is_ok(),
-                        "FieldIndex `{:?}` should be valid for Record::get() with this SQL: {}",
+                        "SchemaIndex `{:?}` should be valid for Record::get() with this SQL: {}",
                         test_datum.index,
                         test_datum.sql
                     ),
@@ -128,7 +127,7 @@ async fn test_select_with_various_field_spec() {
                         assert_eq!(
                             e.kind(),
                             &test_datum.clone().expected_result.unwrap_err(),
-                            "FieldIndex: `{:?}`, SQL: {}",
+                            "SchemaIndex: `{:?}`, SQL: {}",
                             test_datum.index,
                             test_datum.sql
                         )
