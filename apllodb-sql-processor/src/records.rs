@@ -97,6 +97,8 @@ impl Records {
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub(crate) fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
+        let new_schema = Arc::new(self.schema.projection(indexes)?);
+
         let projection_positions = indexes
             .iter()
             .map(|idx| {
@@ -110,12 +112,11 @@ impl Records {
             .into_iter()
             .map(|record| {
                 let row = record.row.projection(&projection_positions);
-                Record::new(record.schema.clone(), row)
+                Record::new(new_schema.clone(), row)
             })
             .collect();
 
-        let new_schema = self.schema.projection(indexes)?;
-        Ok(Self::new(Arc::new(new_schema), new_inner))
+        Ok(Self::new(new_schema.clone(), new_inner))
     }
 
     /// ORDER BY
