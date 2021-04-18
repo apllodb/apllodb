@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use apllodb_shared_components::{
     ApllodbResult, I64LooseType, NumericComparableType, SqlConvertible, SqlType, SqlValue,
     StringComparableLoseType,
@@ -25,15 +27,21 @@ pub(crate) trait FromSqliteRows {
                 .map(|cdt| cdt.column_name())
                 .chain(void_projection.iter())
                 .map(|cn| TableColumnName::new(table_name.clone(), cn.clone()))
-                .collect::<Vec<TableColumnName>>(),
+                .collect::<HashSet<TableColumnName>>(),
         );
 
         let rows: Vec<Row> = sqlite_rows
             .iter()
             .map(|sqlite_row| {
-                let mut sql_values: Vec<SqlValue> = column_data_types
+                let mut sql_values: Vec<SqlValue> = schema
+                    .table_column_names()
                     .iter()
-                    .map(|cdt| Self::_sql_value(sqlite_row, cdt))
+                    .filter_map(|tc| {
+                        column_data_types
+                            .iter()
+                            .find(|cdt| cdt.column_name() == tc.as_column_name())
+                            .map(|cdt| Self::_sql_value(sqlite_row, cdt))
+                    })
                     .collect::<ApllodbResult<_>>()?;
 
                 // add requested (specified in projection) columns as NULL.

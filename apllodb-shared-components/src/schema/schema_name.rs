@@ -1,7 +1,8 @@
 use crate::SchemaIndex;
+use std::hash::Hash;
 
 /// Fully-qualified names of parts of Schema.
-pub trait SchemaName: Clone {
+pub trait SchemaName: Clone + Eq + Hash {
     /// Whether the index matches to this name.
     fn matches(&self, index: &SchemaIndex) -> bool {
         match index.prefix() {

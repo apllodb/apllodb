@@ -1,50 +1,46 @@
+use std::collections::HashSet;
+
 use apllodb_shared_components::{RPos, Schema};
-use serde::{Deserialize, Serialize};
 
 use crate::table_column_name::TableColumnName;
 
+use sorted_vec::SortedSet;
+
 /// Schema of [Row](crate::Row)s holding pairs of (RowPos, TableColumnName).
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub struct RowSchema {
-    inner: Vec<(RPos, TableColumnName)>,
-}
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct RowSchema(SortedSet<TableColumnName>);
 
 impl Schema for RowSchema {
     type Name = TableColumnName;
 
-    fn new(names_with_pos: Vec<(RPos, Option<TableColumnName>)>) -> Self
+    fn new(names: HashSet<TableColumnName>, _: usize) -> Self
     where
         Self: Sized,
     {
-        let inner = names_with_pos
-            .into_iter()
-            .map(|(pos, opt_tc)| {
-                let tc = opt_tc.expect("All parts in RowSchema must have TableColumnName");
-                (pos, tc)
-            })
-            .collect();
-        Self { inner }
+        let inner = SortedSet::from_unsorted(names.into_iter().collect());
+        Self(inner)
     }
 
     fn names_with_pos(&self) -> Vec<(RPos, Option<TableColumnName>)> {
-        self.inner
+        self.0
             .iter()
-            .map(|(pos, tn)| (*pos, Some(tn.clone())))
+            .enumerate()
+            .map(|(raw_pos, tn)| (RPos::new(raw_pos), Some(tn.clone())))
             .collect()
     }
 
     fn len(&self) -> usize {
-        self.inner.len()
+        self.0.len()
     }
 }
 
 impl RowSchema {
     pub fn empty() -> Self {
-        Self { inner: vec![] }
+        Self(SortedSet::new())
     }
 
     pub fn table_column_names(&self) -> Vec<TableColumnName> {
-        self.inner.iter().map(|(_, tc)| tc.clone()).collect()
+        self.0.iter().cloned().collect()
     }
 
     pub fn table_column_names_with_pos(&self) -> Vec<(RPos, TableColumnName)> {
@@ -56,14 +52,8 @@ impl RowSchema {
     }
 }
 
-impl From<Vec<TableColumnName>> for RowSchema {
-    fn from(names: Vec<TableColumnName>) -> Self {
-        Self {
-            inner: names
-                .into_iter()
-                .enumerate()
-                .map(|(raw_pos, name)| (RPos::new(raw_pos), name))
-                .collect(),
-        }
+impl From<HashSet<TableColumnName>> for RowSchema {
+    fn from(names: HashSet<TableColumnName>) -> Self {
+        Self::new(names, 0)
     }
 }

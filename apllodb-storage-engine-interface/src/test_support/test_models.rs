@@ -1,10 +1,10 @@
-use apllodb_shared_components::{NnSqlValue, SqlValue};
-
 use crate::{
     rows::{row::Row, row_schema::RowSchema},
     table::table_name::TableName,
     table_column_name::TableColumnName,
 };
+use apllodb_shared_components::{NnSqlValue, SqlValue};
+use std::collections::HashSet;
 
 /// - people:
 ///   - id BIGINT NOT NULL, PRIMARY KEY
@@ -24,7 +24,11 @@ impl People {
     }
 
     pub fn schema() -> RowSchema {
-        RowSchema::from(vec![Self::tc_id(), Self::tc_age()])
+        RowSchema::from(
+            vec![Self::tc_id(), Self::tc_age()]
+                .into_iter()
+                .collect::<HashSet<_>>(),
+        )
     }
 
     pub fn row(id: i64, age: i32) -> Row {
@@ -57,7 +61,11 @@ impl Body {
     }
 
     pub fn schema() -> RowSchema {
-        RowSchema::from(vec![Self::tc_id(), Self::tc_people_id(), Self::tc_height()])
+        RowSchema::from(
+            vec![Self::tc_id(), Self::tc_people_id(), Self::tc_height()]
+                .into_iter()
+                .collect::<HashSet<_>>(),
+        )
     }
 
     pub fn row(id: i64, people_id: i64, height: i32) -> Row {
@@ -95,12 +103,16 @@ impl Pet {
     }
 
     pub fn schema() -> RowSchema {
-        RowSchema::from(vec![
-            Self::tc_id(),
-            Self::tc_people_id(),
-            Self::tc_kind(),
-            Self::tc_age(),
-        ])
+        RowSchema::from(
+            vec![
+                Self::tc_id(),
+                Self::tc_people_id(),
+                Self::tc_kind(),
+                Self::tc_age(),
+            ]
+            .into_iter()
+            .collect::<HashSet<_>>(),
+        )
     }
 
     pub fn row(id: i64, people_id: i64, kind: &str, age: i16) -> Row {

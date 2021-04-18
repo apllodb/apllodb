@@ -22,6 +22,8 @@ derive-new = "0.5"
 
 futures = "0.3"
 
+sorted-vec = "0.5"
+
 mockall = {version = "0.9", optional = true}
 
 once_cell = {version = "1.7", optional = true}

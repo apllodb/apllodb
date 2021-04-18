@@ -197,11 +197,7 @@ impl From<ProjectionResult> for RowSchema {
             all_column_names.append(&mut projection_result_in_version.non_pk_void);
         }
 
-        // unique & sort to make same schema from a ProjectionResult
-        all_column_names.sort();
-        all_column_names.dedup();
-
-        let table_column_names: Vec<TableColumnName> = all_column_names
+        let table_column_names: HashSet<TableColumnName> = all_column_names
             .into_iter()
             .map(|cn| TableColumnName::new(table_name.clone(), cn))
             .collect();

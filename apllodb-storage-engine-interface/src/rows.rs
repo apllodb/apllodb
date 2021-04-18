@@ -4,12 +4,11 @@ pub(crate) mod row_schema;
 use std::collections::VecDeque;
 
 use apllodb_shared_components::{ApllodbResult, RPos, Schema, SchemaIndex};
-use serde::{Deserialize, Serialize};
 
 use self::{row::Row, row_schema::RowSchema};
 
 /// Iterator of [Row](crate::Row)s with [RowSchema](crate::RowSchema).
-#[derive(Clone, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Hash, Debug)]
 pub struct Rows {
     schema: RowSchema,
     inner: VecDeque<Row>,

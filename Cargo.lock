@@ -222,6 +222,7 @@ dependencies = [
  "mockall",
  "once_cell",
  "serde",
+ "sorted-vec",
  "version-sync",
 ]
 
@@ -1927,6 +1928,12 @@ name = "smallvec"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae524f056d7d770e174287294f562e95044c68e88dec909a00d2094805db9d75"
+
+[[package]]
+name = "sorted-vec"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c026467316e4ed9196f9ebe09c7801e4541c9052bf9f0d34b6f6c504ffccc233"
 
 [[package]]
 name = "sqlformat"

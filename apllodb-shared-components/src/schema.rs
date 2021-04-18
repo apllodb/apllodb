@@ -2,6 +2,8 @@ pub(crate) mod r_pos;
 pub(crate) mod schema_index;
 pub(crate) mod schema_name;
 
+use std::collections::HashSet;
+
 use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, RPos};
 
 use self::{schema_index::SchemaIndex, schema_name::SchemaName};
@@ -19,7 +21,7 @@ pub trait Schema {
     type Name: SchemaName;
 
     /// Default constructor
-    fn new(names_with_pos: Vec<(RPos, Option<Self::Name>)>) -> Self
+    fn new(names: HashSet<Self::Name>, unnamed_fields_len: usize) -> Self
     where
         Self: Sized;
 
@@ -79,14 +81,14 @@ pub trait Schema {
     where
         Self: Sized,
     {
-        let new_inner: Vec<(RPos, Option<Self::Name>)> = indexes
+        let new_inner: HashSet<Self::Name> = indexes
             .iter()
             .map(|index| {
-                let (pos, name) = self.index(index)?;
-                Ok((pos, Some(name)))
+                let (_, name) = self.index(index)?;
+                Ok(name)
             })
             .collect::<ApllodbResult<_>>()?;
-        Ok(Self::new(new_inner))
+        Ok(Self::new(new_inner, 0))
     }
 
     /// Pairs of (RPos, Name).
