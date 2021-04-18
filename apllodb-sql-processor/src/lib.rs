@@ -23,7 +23,7 @@ pub use sql_processor::{
 };
 
 #[cfg(test)]
-mod local_test_support;
+pub mod test_support;
 
 #[cfg(test)]
 mod tests {

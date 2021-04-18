@@ -102,7 +102,7 @@ mod tests {
     use crate::sql_processor::sql_processor_context::SqlProcessorContext;
     use crate::{
         aliaser::Aliaser,
-        local_test_support::fixture::*,
+        test_support::fixture::*,
         records::{record::Record, record_schema::RecordSchema},
         sql_processor::query::query_plan::{
             query_plan_tree::{

@@ -50,7 +50,7 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 mod tests {
     use super::QueryProcessor;
     use crate::{
-        local_test_support::fixture::*, records::record::Record,
+        test_support::fixture::*, records::record::Record,
         sql_processor::sql_processor_context::SqlProcessorContext,
     };
     use apllodb_shared_components::ApllodbResult;
