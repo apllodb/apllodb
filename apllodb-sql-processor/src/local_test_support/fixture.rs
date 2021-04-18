@@ -31,13 +31,21 @@ static PET_SCHEMA: Lazy<Arc<RecordSchema>> = Lazy::new(|| {
     ))
 });
 
-pub static PEOPLE_RECORD1: Lazy<Record> = Lazy::new(|| Record::new(*PEOPLE_SCHEMA, *PEOPLE_ROW1));
-pub static PEOPLE_RECORD2: Lazy<Record> = Lazy::new(|| Record::new(*PEOPLE_SCHEMA, *PEOPLE_ROW2));
-pub static PEOPLE_RECORD3: Lazy<Record> = Lazy::new(|| Record::new(*PEOPLE_SCHEMA, *PEOPLE_ROW3));
+pub static PEOPLE_RECORD1: Lazy<Record> =
+    Lazy::new(|| Record::new(PEOPLE_SCHEMA.clone(), PEOPLE_ROW1.clone()));
+pub static PEOPLE_RECORD2: Lazy<Record> =
+    Lazy::new(|| Record::new(PEOPLE_SCHEMA.clone(), PEOPLE_ROW2.clone()));
+pub static PEOPLE_RECORD3: Lazy<Record> =
+    Lazy::new(|| Record::new(PEOPLE_SCHEMA.clone(), PEOPLE_ROW3.clone()));
 
-pub static BODY_RECORD1: Lazy<Record> = Lazy::new(|| Record::new(*BODY_SCHEMA, *BODY_ROW1));
-pub static BODY_RECORD3: Lazy<Record> = Lazy::new(|| Record::new(*BODY_SCHEMA, *BODY_ROW3));
+pub static BODY_RECORD1: Lazy<Record> =
+    Lazy::new(|| Record::new(BODY_SCHEMA.clone(), BODY_ROW1.clone()));
+pub static BODY_RECORD3: Lazy<Record> =
+    Lazy::new(|| Record::new(BODY_SCHEMA.clone(), BODY_ROW3.clone()));
 
-pub static PET_RECORD1: Lazy<Record> = Lazy::new(|| Record::new(*PET_SCHEMA, *PET_ROW1));
-pub static PET_RECORD3_1: Lazy<Record> = Lazy::new(|| Record::new(*PET_SCHEMA, *PET_ROW3_1));
-pub static PET_RECORD3_2: Lazy<Record> = Lazy::new(|| Record::new(*PET_SCHEMA, *PET_ROW3_2));
+pub static PET_RECORD1: Lazy<Record> =
+    Lazy::new(|| Record::new(PET_SCHEMA.clone(), PET_ROW1.clone()));
+pub static PET_RECORD3_1: Lazy<Record> =
+    Lazy::new(|| Record::new(PET_SCHEMA.clone(), PET_ROW3_1.clone()));
+pub static PET_RECORD3_2: Lazy<Record> =
+    Lazy::new(|| Record::new(PET_SCHEMA.clone(), PET_ROW3_2.clone()));
