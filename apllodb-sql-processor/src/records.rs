@@ -127,8 +127,6 @@ impl Records {
 
         // TODO check if type in FieldIndex is PartialOrd
 
-        let schema = self.schema.clone();
-
         self.inner.sort_by(|a_record, b_record| {
             let mut res = std::cmp::Ordering::Equal;
 

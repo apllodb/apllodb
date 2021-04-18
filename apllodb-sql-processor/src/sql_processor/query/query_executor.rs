@@ -103,7 +103,7 @@ mod tests {
     use crate::{
         aliaser::Aliaser,
         local_test_support::fixture::*,
-        records::record::Record,
+        records::{record::Record, record_schema::RecordSchema},
         sql_processor::query::query_plan::{
             query_plan_tree::{
                 query_plan_node::{
@@ -310,7 +310,14 @@ mod tests {
             .add_query_plan_root(|repo| {
                 repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        joined_schema: People::schema().joined(&Body::schema()),
+                        joined_schema: RecordSchema::from_row_schema(
+                            &People::schema(),
+                            Aliaser::default(),
+                        )
+                        .joined(&RecordSchema::from_row_schema(
+                            &Body::schema(),
+                            Aliaser::default(),
+                        )),
                         left_field: People::tc_id().into(),
                         right_field: Body::tc_people_id().into(),
                     },
@@ -341,7 +348,14 @@ mod tests {
             .add_query_plan_root(|repo| {
                 repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        joined_schema: People::schema().joined(&Pet::schema()),
+                        joined_schema: RecordSchema::from_row_schema(
+                            &People::schema(),
+                            Aliaser::default(),
+                        )
+                        .joined(&RecordSchema::from_row_schema(
+                            &Pet::schema(),
+                            Aliaser::default(),
+                        )),
                         left_field: People::tc_id().into(),
                         right_field: Pet::tc_people_id().into(),
                     },
@@ -373,7 +387,14 @@ mod tests {
             .add_query_plan_root(|repo| {
                 repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        joined_schema: Pet::schema().joined(&People::schema()),
+                        joined_schema: RecordSchema::from_row_schema(
+                            &Pet::schema(),
+                            Aliaser::default(),
+                        )
+                        .joined(&RecordSchema::from_row_schema(
+                            &People::schema(),
+                            Aliaser::default(),
+                        )),
                         left_field: Pet::tc_people_id().into(),
                         right_field: People::tc_id().into(),
                     },
@@ -405,7 +426,14 @@ mod tests {
             .add_query_plan_root(|repo| {
                 repo.create(QueryPlanNodeKind::Binary(QueryPlanNodeBinary {
                     op: BinaryPlanOperation::HashJoin {
-                        joined_schema: People::schema().joined(&Pet::schema()),
+                        joined_schema: RecordSchema::from_row_schema(
+                            &People::schema(),
+                            Aliaser::default(),
+                        )
+                        .joined(&RecordSchema::from_row_schema(
+                            &Pet::schema(),
+                            Aliaser::default(),
+                        )),
                         left_field: People::tc_age().into(),
                         right_field: Pet::tc_age().into(),
                     },

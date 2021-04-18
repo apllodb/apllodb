@@ -14,9 +14,9 @@ use crate::{
     SqlProcessorContext,
 };
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SchemaIndex};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SchemaIndex, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
-use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, TableName};
+use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, Row, TableName};
 use std::{collections::HashSet, sync::Arc};
 
 impl QueryProcessor<MockStorageEngine> {
@@ -173,5 +173,14 @@ impl Record {
         let records = Records::new(schema, vec![self]);
         let records = records.projection(indexes)?;
         records.next().ok_or_else(|| unreachable!())
+    }
+
+    pub fn naive_join(mut self, right: Self) -> Self {
+        let joined_schema = self.schema.joined(right.schema.as_ref());
+
+        let mut joined_values: Vec<SqlValue> = self.row.into_values();
+        joined_values.append(&mut right.row.into_values());
+
+        Self::new(Arc::new(joined_schema), Row::new(joined_values))
     }
 }

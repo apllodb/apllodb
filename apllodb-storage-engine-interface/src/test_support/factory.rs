@@ -2,20 +2,9 @@ use apllodb_shared_components::{test_support::factory::random_id, SqlType};
 
 use crate::{
     column::{column_data_type::ColumnDataType, column_name::ColumnName},
-    rows::row::Row,
     table::table_name::TableName,
     table_column_name::TableColumnName,
 };
-
-impl Row {
-    /// WARN: internal Row might get different from RowSchema
-    pub fn naive_join(mut self, right: Self) -> Self {
-        for right_sql_value in right.into_values() {
-            self.append(right_sql_value);
-        }
-        self
-    }
-}
 
 impl TableName {
     /// randomly generate a table name
