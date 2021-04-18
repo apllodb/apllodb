@@ -71,3 +71,134 @@ impl From<&TableColumnName> for AliasedFieldName {
         Self::new(field_name, None)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::AliasedFieldName;
+    use apllodb_shared_components::{SchemaIndex, SchemaName};
+
+    #[test]
+    fn test_matches() {
+        struct TestDatum {
+            index: &'static str,
+            aliased_field_name: AliasedFieldName,
+            matches: bool,
+        }
+
+        let test_data: Vec<TestDatum> = vec![
+            TestDatum {
+                index: "c",
+                aliased_field_name: AliasedFieldName::factory("t", "c"),
+                matches: true,
+            },
+            TestDatum {
+                index: "xxx",
+                aliased_field_name: AliasedFieldName::factory("t", "c"),
+                matches: false,
+            },
+            TestDatum {
+                index: "c",
+                aliased_field_name: AliasedFieldName::factory("t", "c").with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "ca",
+                aliased_field_name: AliasedFieldName::factory("t", "c").with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "t.ca",
+                aliased_field_name: AliasedFieldName::factory("t", "c").with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "xxx",
+                aliased_field_name: AliasedFieldName::factory("t", "c").with_field_alias("ca"),
+                matches: false,
+            },
+            TestDatum {
+                index: "t.c",
+                aliased_field_name: AliasedFieldName::factory("t", "c"),
+                matches: true,
+            },
+            TestDatum {
+                index: "xxx.c",
+                aliased_field_name: AliasedFieldName::factory("t", "c"),
+                matches: false,
+            },
+            TestDatum {
+                index: "c",
+                aliased_field_name: AliasedFieldName::factory("t", "c").with_corr_alias("ta"),
+                matches: true,
+            },
+            TestDatum {
+                index: "t.c",
+                aliased_field_name: AliasedFieldName::factory("t", "c").with_corr_alias("ta"),
+                matches: true,
+            },
+            TestDatum {
+                index: "ta.c",
+                aliased_field_name: AliasedFieldName::factory("t", "c").with_corr_alias("ta"),
+                matches: true,
+            },
+            TestDatum {
+                index: "c",
+                aliased_field_name: AliasedFieldName::factory("t", "c")
+                    .with_corr_alias("ta")
+                    .with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "ca",
+                aliased_field_name: AliasedFieldName::factory("t", "c")
+                    .with_corr_alias("ta")
+                    .with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "t.c",
+                aliased_field_name: AliasedFieldName::factory("t", "c")
+                    .with_corr_alias("ta")
+                    .with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "ta.c",
+                aliased_field_name: AliasedFieldName::factory("t", "c")
+                    .with_corr_alias("ta")
+                    .with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "t.ca",
+                aliased_field_name: AliasedFieldName::factory("t", "c")
+                    .with_corr_alias("ta")
+                    .with_field_alias("ca"),
+                matches: true,
+            },
+            TestDatum {
+                index: "ta.ca",
+                aliased_field_name: AliasedFieldName::factory("t", "c")
+                    .with_corr_alias("ta")
+                    .with_field_alias("ca"),
+                matches: true,
+            },
+        ];
+
+        for test_datum in test_data {
+            let index = SchemaIndex::from(test_datum.index);
+
+            log::debug!(
+                "Testing `{:?}.matches({:?})` ; Expected - {}",
+                test_datum.aliased_field_name,
+                test_datum.index,
+                test_datum.matches
+            );
+
+            assert_eq!(
+                test_datum.aliased_field_name.matches(&index),
+                test_datum.matches
+            );
+        }
+    }
+}
