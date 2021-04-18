@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
+use crate::field::aliased_field_name::AliasedFieldName;
+
 use super::{record_index::RecordIndex, record_schema::RecordSchema};
 use apllodb_shared_components::{
-    ApllodbResult, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
+    ApllodbErrorKind, ApllodbResult, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
 };
 use apllodb_storage_engine_interface::Row;
 
@@ -43,5 +45,22 @@ impl Record {
                 Ok(pos)
             }
         }
+    }
+
+    pub(crate) fn helper_get_sql_value(
+        &self,
+        joined_name: &AliasedFieldName,
+    ) -> Option<ApllodbResult<SqlValue>> {
+        self.get_sql_value(&SchemaIndex::from(joined_name))
+            .map_or_else(
+                |e| {
+                    if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
+                        None
+                    } else {
+                        Some(Err(e))
+                    }
+                },
+                |sql_value| Some(Ok(sql_value.clone())),
+            )
     }
 }

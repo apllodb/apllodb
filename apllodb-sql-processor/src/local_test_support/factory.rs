@@ -14,9 +14,7 @@ use crate::{
     SqlProcessorContext,
 };
 use apllodb_immutable_schema_engine_infra::test_support::session_with_tx;
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, SchemaIndex, SqlValue,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SchemaIndex, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 use apllodb_storage_engine_interface::{ColumnName, MockStorageEngine, Row, TableName};
 use std::{collections::HashSet, sync::Arc};
@@ -178,30 +176,12 @@ impl Record {
             .to_aliased_field_names()
             .iter()
             .map(|joined_name| {
-                Self::helper_get_sql_value(joined_name, &self)
-                    .or_else(|| Self::helper_get_sql_value(joined_name, &right))
+                self.helper_get_sql_value(joined_name)
+                    .or_else(|| right.helper_get_sql_value(joined_name))
                     .expect("left or right must have AliasedFieldName in joined_schema")
             })
             .collect::<ApllodbResult<_>>()?;
 
         Ok(Self::new(Arc::new(joined_schema), Row::new(sql_values)))
-    }
-
-    fn helper_get_sql_value(
-        joined_name: &AliasedFieldName,
-        record: &Self,
-    ) -> Option<ApllodbResult<SqlValue>> {
-        record
-            .get_sql_value(&SchemaIndex::from(joined_name))
-            .map_or_else(
-                |e| {
-                    if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
-                        None
-                    } else {
-                        Some(Err(e))
-                    }
-                },
-                |sql_value| Some(Ok(sql_value.clone())),
-            )
     }
 }

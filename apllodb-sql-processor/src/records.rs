@@ -5,14 +5,12 @@ pub(crate) mod record_schema;
 use std::{collections::HashMap, sync::Arc};
 
 use apllodb_shared_components::{
-    ApllodbErrorKind, ApllodbResult, Expression, RPos, Schema, SchemaIndex, SqlCompareResult,
-    SqlValue, SqlValueHashKey,
+    ApllodbResult, Expression, RPos, Schema, SchemaIndex, SqlCompareResult, SqlValue,
+    SqlValueHashKey,
 };
 use apllodb_storage_engine_interface::{Row, Rows};
 
-use crate::{
-    aliaser::Aliaser, field::aliased_field_name::AliasedFieldName, select::ordering::Ordering,
-};
+use crate::{aliaser::Aliaser, select::ordering::Ordering};
 
 use self::{record::Record, record_schema::RecordSchema};
 
@@ -204,24 +202,6 @@ impl Records {
     ) -> ApllodbResult<Self> {
         joined_schema.assert_all_named();
 
-        fn helper_get_sql_value(
-            joined_name: &AliasedFieldName,
-            record: &Record,
-        ) -> Option<ApllodbResult<SqlValue>> {
-            record
-                .get_sql_value(&SchemaIndex::from(joined_name))
-                .map_or_else(
-                    |e| {
-                        if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
-                            None
-                        } else {
-                            Some(Err(e))
-                        }
-                    },
-                    |sql_value| Some(Ok(sql_value.clone())),
-                )
-        }
-
         fn helper_join_records(
             joined_schema: Arc<RecordSchema>,
             left_record: Record,
@@ -231,8 +211,9 @@ impl Records {
                 .to_aliased_field_names()
                 .iter()
                 .map(|joined_name| {
-                    helper_get_sql_value(joined_name, &left_record)
-                        .or_else(|| helper_get_sql_value(joined_name, &right_record))
+                    left_record
+                        .helper_get_sql_value(joined_name)
+                        .or_else(|| right_record.helper_get_sql_value(joined_name))
                         .expect("left or right must have AliasedFieldName in joined_schema")
                 })
                 .collect::<ApllodbResult<_>>()?;
