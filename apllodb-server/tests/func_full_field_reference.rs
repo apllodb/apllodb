@@ -1,6 +1,6 @@
 mod sql_test;
 
-use apllodb_server::{test_support::test_setup, ApllodbErrorKind, SchemaIndex};
+use apllodb_server::{test_support::test_setup, ApllodbErrorKind, RecordIndex, SchemaIndex};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -115,7 +115,7 @@ async fn test_select_with_various_field_spec() {
             StepRes::OkQuery(Box::new(move |mut records| {
                 let r = records.next().unwrap();
 
-                match r.get::<i64>(&test_datum.clone().index) {
+                match r.get::<i64>(&RecordIndex::Name(test_datum.clone().index)) {
                     Ok(_) => assert!(
                         test_datum.expected_result.is_ok(),
                         "SchemaIndex `{:?}` should be valid for Record::get() with this SQL: {}",

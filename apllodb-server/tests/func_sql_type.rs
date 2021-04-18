@@ -1,6 +1,6 @@
 mod sql_test;
 
-use apllodb_server::{test_support::test_setup, ApllodbErrorKind, SchemaIndex};
+use apllodb_server::{test_support::test_setup, ApllodbErrorKind, RecordIndex, SchemaIndex};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -23,7 +23,7 @@ async fn test_small_int() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = SchemaIndex::from("c");
+                let index = RecordIndex::Name(SchemaIndex::from("c"));
 
                 let r = records.next().unwrap();
                 assert_eq!(r.get::<i16>(&index).unwrap().unwrap(), i16::MAX);
@@ -51,7 +51,7 @@ async fn test_integer() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = SchemaIndex::from("c");
+                let index = RecordIndex::Name(SchemaIndex::from("c"));
 
                 let r = records.next().unwrap();
                 assert_eq!(
@@ -82,7 +82,7 @@ async fn test_big_int() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = SchemaIndex::from("c");
+                let index = RecordIndex::Name(SchemaIndex::from("c"));
 
                 let r = records.next().unwrap();
                 assert_eq!(
@@ -119,7 +119,7 @@ async fn test_text() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = SchemaIndex::from("c");
+                let index = RecordIndex::Name(SchemaIndex::from("c"));
 
                 let r = records.next().unwrap();
                 assert_eq!(

@@ -2,8 +2,7 @@
 
 mod sql_test;
 
-use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::FieldIndex;
+use apllodb_server::{test_support::test_setup, RecordIndex, SchemaIndex};
 use sql_test::{SqlTest, Step, StepRes};
 
 #[ctor::ctor]
@@ -70,76 +69,104 @@ async fn test_scenario_010_pre_demo() {
             r#"SELECT ID, 名前, 本社の地域, 従業員数 FROM 会社 ORDER BY ID;"#,
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    101
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソニー"
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("本社の地域"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("本社の地域")))
                         .unwrap()
                         .unwrap(),
                     "東京"
                 );
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("従業員数"))
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("従業員数")))
                         .unwrap()
                         .unwrap(),
                     3000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 102);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    102
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "コナミ"
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("本社の地域"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("本社の地域")))
                         .unwrap()
                         .unwrap(),
                     "東京"
                 );
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("従業員数"))
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("従業員数")))
                         .unwrap()
                         .unwrap(),
                     1000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    103
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ハドソン"
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("本社の地域"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("本社の地域")))
                         .unwrap()
                         .unwrap(),
                     "東京"
                 );
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("従業員数"))
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("従業員数")))
                         .unwrap()
                         .unwrap(),
                     500
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 104);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    104
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "エリクソン"
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("本社の地域"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("本社の地域")))
                         .unwrap()
                         .unwrap(),
                     "スウェーデン"
                 );
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("従業員数"))
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("従業員数")))
                         .unwrap()
                         .unwrap(),
                     1200
@@ -153,23 +180,44 @@ async fn test_scenario_010_pre_demo() {
             r#"SELECT ID, 名前 FROM 会社 WHERE 本社の地域 = "東京" ORDER BY 名前 ASC;"#,
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 102);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    102
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "コナミ"
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    101
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソニー"
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    103
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ハドソン"
                 );
 
@@ -186,25 +234,27 @@ async fn test_scenario_010_pre_demo() {
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("会社合併史.存続会社ID"))
-                        .unwrap()
-                        .unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from(
+                        "会社合併史.存続会社ID"
+                    )))
+                    .unwrap()
+                    .unwrap(),
                     102
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("会社.名前"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("会社.名前")))
                         .unwrap()
                         .unwrap(),
                     "コナミ"
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("会社.本社の地域"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("会社.本社の地域")))
                         .unwrap()
                         .unwrap(),
                     "東京"
                 );
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("会社.従業員数"))
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("会社.従業員数")))
                         .unwrap()
                         .unwrap(),
                     1000
@@ -212,25 +262,27 @@ async fn test_scenario_010_pre_demo() {
 
                 let r = rec_iter.next().unwrap();
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("会社合併史.存続会社ID"))
-                        .unwrap()
-                        .unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from(
+                        "会社合併史.存続会社ID"
+                    )))
+                    .unwrap()
+                    .unwrap(),
                     101
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("会社.名前"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("会社.名前")))
                         .unwrap()
                         .unwrap(),
                     "ソニー"
                 );
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("会社.本社の地域"))
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("会社.本社の地域")))
                         .unwrap()
                         .unwrap(),
                     "東京"
                 );
                 assert_eq!(
-                    r.get::<i32>(&FieldIndex::from("会社.従業員数"))
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("会社.従業員数")))
                         .unwrap()
                         .unwrap(),
                     3000
@@ -255,46 +307,74 @@ async fn test_scenario_010_pre_demo() {
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY ID;"#,
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    101
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソニー"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 102);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    102
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "コナミ"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    103
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ハドソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 104);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    104
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "エリクソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
@@ -327,70 +407,112 @@ async fn test_scenario_010_pre_demo() {
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY ID;"#,
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    101
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソニー"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 102);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    102
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "コナミ"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    103
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ハドソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 104);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    104
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "エリクソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 105);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    105
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "スカラ"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     12900000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 106);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    106
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソフトブレーン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
@@ -417,74 +539,116 @@ async fn test_scenario_010_pre_demo() {
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY ID;"#,
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    101
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソニー"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     50000000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 102);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    102
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "コナミ"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     20000000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    103
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ハドソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 104);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    104
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "エリクソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 105);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    105
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "スカラ"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     12900000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 106);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    106
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソフトブレーン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
@@ -499,74 +663,116 @@ async fn test_scenario_010_pre_demo() {
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY 時価総額 DESC, ID ASC;"#,
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    101
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソニー"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     50000000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 102);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    102
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "コナミ"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     20000000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 105);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    105
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "スカラ"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     12900000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    103
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ハドソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 104);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    104
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "エリクソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 106);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    106
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソフトブレーン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
@@ -578,74 +784,116 @@ async fn test_scenario_010_pre_demo() {
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY 時価総額 ASC, ID ASC;"#,
             StepRes::OkQuery(Box::new(|mut rec_iter| {
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 105);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    105
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "スカラ"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     12900000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 102);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    102
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "コナミ"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     20000000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 101);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    101
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソニー"
                 );
                 assert_eq!(
-                    r.get::<i64>(&FieldIndex::from("時価総額"))
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                         .unwrap()
                         .unwrap(),
                     50000000000
                 );
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 103);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    103
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ハドソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 104);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    104
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "エリクソン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 
                 let r = rec_iter.next().unwrap();
-                assert_eq!(r.get::<i64>(&FieldIndex::from("ID")).unwrap().unwrap(), 106);
                 assert_eq!(
-                    r.get::<String>(&FieldIndex::from("名前")).unwrap().unwrap(),
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
+                        .unwrap()
+                        .unwrap(),
+                    106
+                );
+                assert_eq!(
+                    r.get::<String>(&RecordIndex::Name(SchemaIndex::from("名前")))
+                        .unwrap()
+                        .unwrap(),
                     "ソフトブレーン"
                 );
                 assert!(r
-                    .get::<i64>(&FieldIndex::from("時価総額"))
+                    .get::<i64>(&RecordIndex::Name(SchemaIndex::from("時価総額")))
                     .unwrap()
                     .is_none());
 

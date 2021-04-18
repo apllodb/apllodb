@@ -17,7 +17,7 @@ pub(crate) mod records;
 pub(crate) mod select;
 pub(crate) mod sql_processor;
 
-pub use records::Records;
+pub use records::{record_index::RecordIndex, Records};
 pub use sql_processor::{
     sql_processor_context::SqlProcessorContext, success::SqlProcessorSuccess, SqlProcessor,
 };

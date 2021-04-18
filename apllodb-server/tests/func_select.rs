@@ -1,6 +1,6 @@
 mod sql_test;
 
-use apllodb_server::{test_support::test_setup, ApllodbErrorKind, SchemaIndex};
+use apllodb_server::{test_support::test_setup, ApllodbErrorKind, RecordIndex, SchemaIndex};
 use apllodb_sql_processor::test_support::fixture::*;
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
@@ -19,8 +19,11 @@ async fn test_fullscan() {
         .add_step(Step::new(
             "SELECT id, age FROM people",
             StepRes::OkQuery(Box::new(|records| {
-                let mut records = records
-                    .sorted_by_key(|r| r.get::<i64>(&SchemaIndex::from("id")).unwrap().unwrap());
+                let mut records = records.sorted_by_key(|r| {
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id")))
+                        .unwrap()
+                        .unwrap()
+                });
                 assert_eq!(records.next(), Some(PEOPLE_RECORD1.clone()));
                 assert_eq!(records.next(), Some(PEOPLE_RECORD2.clone()));
                 assert_eq!(records.next(), Some(PEOPLE_RECORD3.clone()));
@@ -34,7 +37,9 @@ async fn test_fullscan() {
                 "SELECT id, people_id, kind, age FROM pet",
                 StepRes::OkQuery(Box::new(|records| {
                     let mut records = records.sorted_by_key(|r| {
-                        r.get::<i64>(&SchemaIndex::from("id")).unwrap().unwrap()
+                        r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id")))
+                            .unwrap()
+                            .unwrap()
                     });
                     assert_eq!(records.next(), Some(PET_RECORD1.clone()));
                     assert_eq!(records.next(), Some(PET_RECORD3_1.clone()));
@@ -58,7 +63,7 @@ async fn test_projection() {
             Step::new(
                 "SELECT id FROM people",
                 StepRes::OkQuery(Box::new(|records| {
-                    let id_index = SchemaIndex::from("id");
+                    let id_index = RecordIndex::Name(SchemaIndex::from("id"));
 
                     let mut records =
                         records.sorted_by_key(|r| r.get::<i64>(&id_index).unwrap().unwrap());
@@ -69,7 +74,9 @@ async fn test_projection() {
                         PEOPLE_RECORD1.get::<i64>(&id_index).unwrap()
                     );
                     assert_eq!(
-                        r.get::<i32>(&SchemaIndex::from("age")).unwrap_err().kind(),
+                        r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age")))
+                            .unwrap_err()
+                            .kind(),
                         &ApllodbErrorKind::InvalidName
                     );
 
@@ -82,7 +89,7 @@ async fn test_projection() {
             Step::new(
                 "SELECT age FROM people",
                 StepRes::OkQuery(Box::new(|records| {
-                    let age_index = SchemaIndex::from("age");
+                    let age_index = RecordIndex::Name(SchemaIndex::from("age"));
                     let mut records =
                         records.sorted_by_key(|r| r.get::<i32>(&age_index).unwrap().unwrap());
                     let r = records.next().unwrap();
@@ -91,7 +98,7 @@ async fn test_projection() {
                         PEOPLE_RECORD1.get::<i32>(&age_index).unwrap()
                     );
                     assert_eq!(
-                        r.get::<i64>(&SchemaIndex::from("id")).unwrap_err().kind(),
+                        r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id"))).unwrap_err().kind(),
                         &ApllodbErrorKind::InvalidName
                     );
                     Ok(())
@@ -112,7 +119,7 @@ async fn test_selection() {
             Step::new(
                 "SELECT id, age FROM people WHERE id = 2",
                 StepRes::OkQuery(Box::new(|mut records| {
-                    let id_index = SchemaIndex::from("id");
+                    let id_index = RecordIndex::Name(SchemaIndex::from("id"));
 
                     let r = records.next().unwrap();
                     assert_eq!(r.get::<i64>(&id_index).unwrap(), Some(2));
@@ -127,7 +134,7 @@ async fn test_selection() {
             Step::new(
                 "SELECT id, age FROM people WHERE age = 35",
                 StepRes::OkQuery(Box::new(|mut records| {
-                    let age_index = SchemaIndex::from("age");
+                    let age_index = RecordIndex::Name(SchemaIndex::from("age"));
 
                     let r = records.next().unwrap();
                     assert_eq!(r.get::<i32>(&age_index).unwrap(), Some(35));
@@ -264,34 +271,34 @@ async fn test_inner_join() {
             "SELECT people.id, people.age, body.height FROM people INNER JOIN body ON people.id = body.people_id",
             StepRes::OkQuery(Box::new(| records| {
                 let mut records =
-                records.sorted_by_key(|r| r.get::<i64>(&SchemaIndex::from("people.id")).unwrap().unwrap());
+                records.sorted_by_key(|r| r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("people.id"))).unwrap().unwrap());
 
                 let r = records.next().unwrap();
                 assert_eq!(
-                    r.get::<i64>(&SchemaIndex::from("people.id")).unwrap(), 
-                    PEOPLE_RECORD1.get::<i64>(&SchemaIndex::from("id")).unwrap()
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("people.id"))).unwrap(), 
+                    PEOPLE_RECORD1.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id"))).unwrap()
                 );
                 assert_eq!(
-                    r.get::<i32>(&SchemaIndex::from("age")).unwrap(), 
-                    PEOPLE_RECORD1.get::<i32>(&SchemaIndex::from("age")).unwrap()
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age"))).unwrap(), 
+                    PEOPLE_RECORD1.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age"))).unwrap()
                 );
                 assert_eq!(
-                    r.get::<i32>(&SchemaIndex::from("height")).unwrap(), 
-                    BODY_RECORD1.get::<i32>(&SchemaIndex::from("height")).unwrap()
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("height"))).unwrap(), 
+                    BODY_RECORD1.get::<i32>(&RecordIndex::Name(SchemaIndex::from("height"))).unwrap()
                 );
 
                 let r = records.next().unwrap();
                 assert_eq!(
-                    r.get::<i64>(&SchemaIndex::from("people.id")).unwrap(), 
-                    PEOPLE_RECORD3.get::<i64>(&SchemaIndex::from("id")).unwrap()
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("people.id"))).unwrap(), 
+                    PEOPLE_RECORD3.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id"))).unwrap()
                 );
                 assert_eq!(
-                    r.get::<i32>(&SchemaIndex::from("age")).unwrap(), 
-                    PEOPLE_RECORD3.get::<i32>(&SchemaIndex::from("age")).unwrap()
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age"))).unwrap(), 
+                    PEOPLE_RECORD3.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age"))).unwrap()
                 );
                 assert_eq!(
-                    r.get::<i32>(&SchemaIndex::from("height")).unwrap(), 
-                    BODY_RECORD3.get::<i32>(&SchemaIndex::from("height")).unwrap()
+                    r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("height"))).unwrap(), 
+                    BODY_RECORD3.get::<i32>(&RecordIndex::Name(SchemaIndex::from("height"))).unwrap()
                 );
 
                 assert!(records.next().is_none());
@@ -303,18 +310,18 @@ async fn test_inner_join() {
             "SELECT people.id FROM people INNER JOIN body ON people.id = body.people_id",
             StepRes::OkQuery(Box::new(| records| {
                 let mut records =
-                records.sorted_by_key(|r| r.get::<i64>(&SchemaIndex::from("people.id")).unwrap().unwrap());
+                records.sorted_by_key(|r| r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("people.id"))).unwrap().unwrap());
 
                 let r = records.next().unwrap();
                 assert_eq!(
-                    r.get::<i64>(&SchemaIndex::from("people.id")).unwrap(), 
-                    PEOPLE_RECORD1.get::<i64>(&SchemaIndex::from("id")).unwrap()
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("people.id"))).unwrap(), 
+                    PEOPLE_RECORD1.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id"))).unwrap()
                 );
 
                 let r = records.next().unwrap();
                 assert_eq!(
-                    r.get::<i64>(&SchemaIndex::from("people.id")).unwrap(), 
-                    PEOPLE_RECORD3.get::<i64>(&SchemaIndex::from("id")).unwrap()
+                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("people.id"))).unwrap(), 
+                    PEOPLE_RECORD3.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id"))).unwrap()
                 );
 
                 assert!(records.next().is_none());
