@@ -55,7 +55,6 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
                             .iter()
                             .map(|afn| match afn.as_attribute_name() {
                                 AttributeName::ColumnNameVariant(cn) => cn,
-                                _ => unreachable!("must be column name"),
                             })
                             .cloned()
                             .collect(),

@@ -3,13 +3,13 @@ use std::collections::HashSet;
 use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 
+use crate::attribute::attribute_name::AttributeName;
 use crate::{
     ast_translator::AstTranslator,
     correlation::aliased_correlation_name::AliasedCorrelationName,
     field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
     records::record_schema::RecordSchema,
 };
-use crate::{attribute::attribute_name::AttributeName, field::field_alias::FieldAlias};
 use apllodb_shared_components::{ApllodbErrorKind, SchemaName};
 use apllodb_storage_engine_interface::ColumnName;
 
@@ -214,7 +214,6 @@ mod tests {
         correlation::aliased_correlation_name::AliasedCorrelationName, field::field_name::FieldName,
     };
     use apllodb_shared_components::{ApllodbErrorKind, SchemaIndex};
-    use apllodb_sql_parser::apllodb_ast::{ColumnReference, Correlation};
     use pretty_assertions::assert_eq;
 
     #[derive(new)]

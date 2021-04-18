@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, RPos, Schema, SchemaIndex, SessionWithTx,
+    ApllodbResult, ApllodbSessionResult, Expression, SchemaIndex, SessionWithTx,
 };
 use apllodb_storage_engine_interface::{
-    Row, RowProjectionQuery, StorageEngine, TableName, WithTxMethods,
+    RowProjectionQuery, StorageEngine, TableName, WithTxMethods,
 };
 
 use crate::{
@@ -36,7 +36,10 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
                 table_name,
                 projection,
                 aliaser,
-            } => self.seq_scan(session, table_name, projection, aliaser).await,
+            } => {
+                self.seq_scan(session, table_name, projection, aliaser)
+                    .await
+            }
         }
     }
 

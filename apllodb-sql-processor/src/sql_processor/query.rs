@@ -55,11 +55,8 @@ mod tests {
     };
     use apllodb_shared_components::ApllodbResult;
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
-    use apllodb_storage_engine_interface::{
-        test_support::{
-            default_mock_engine, fixture::*, mock_select, test_models::People, MockWithTxMethods,
-        },
-        Row,
+    use apllodb_storage_engine_interface::test_support::{
+        default_mock_engine, fixture::*, mock_select, test_models::People, MockWithTxMethods,
     };
     use pretty_assertions::assert_eq;
     use std::sync::Arc;

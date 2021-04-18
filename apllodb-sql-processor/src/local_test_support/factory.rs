@@ -150,12 +150,6 @@ impl AttributeName {
     }
 }
 
-impl Records {
-    pub(crate) fn factory(schema: RecordSchema, records: Vec<Record>) -> Self {
-        Self::new(Arc::new(schema), records)
-    }
-}
-
 impl RecordSchema {
     pub(crate) fn factory(aliased_field_names: Vec<AliasedFieldName>) -> Self {
         Self::from(aliased_field_names.into_iter().collect::<HashSet<_>>())
