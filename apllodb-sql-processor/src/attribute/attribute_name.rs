@@ -10,12 +10,16 @@ pub(crate) enum AttributeName {
     ColumnNameVariant(ColumnName),
 }
 
+impl AttributeName {
+    pub(crate) fn as_str(&self) -> &str {
+        match self {
+            AttributeName::ColumnNameVariant(cn) => cn.as_str(),
+        }
+    }
+}
+
 impl Display for AttributeName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AttributeName::ColumnNameVariant(cn) => {
-                write!(f, "{}", cn.as_str())
-            }
-        }
+        write!(f, "{}", self.as_str())
     }
 }

@@ -20,11 +20,20 @@ pub(crate) struct AliasedFieldName {
 
 impl SchemaName for AliasedFieldName {
     fn _attr_matches(&self, attr: &str) -> bool {
-        todo!()
+        self.field_name.attribute_name.as_str() == attr
+            || self
+                .field_alias
+                .as_ref()
+                .map_or_else(|| false, |alias| alias.as_str() == attr)
     }
 
-    fn _prefix_attr_match(&self, prefix: &str, attr: &str) -> bool {
-        todo!()
+    fn _prefix_matches(&self, prefix: &str) -> bool {
+        let aliased_correlation_name = &self.field_name.aliased_correlation_name;
+        aliased_correlation_name.correlation_name.as_str() == prefix
+            || aliased_correlation_name
+                .correlation_alias
+                .as_ref()
+                .map_or_else(|| false, |alias| alias.as_str() == prefix)
     }
 }
 

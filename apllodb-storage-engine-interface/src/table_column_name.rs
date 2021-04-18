@@ -15,8 +15,8 @@ impl SchemaName for TableColumnName {
         self.column.as_str() == attr
     }
 
-    fn _prefix_attr_match(&self, prefix: &str, attr: &str) -> bool {
-        self.table.as_str() == prefix && self.column.as_str() == attr
+    fn _prefix_matches(&self, prefix: &str) -> bool {
+        self.table.as_str() == prefix
     }
 }
 
