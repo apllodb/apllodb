@@ -1,16 +1,12 @@
-pub(crate) mod rec;
-pub(crate) mod rec_iter;
-
 use apllodb_shared_components::{Session, SessionWithDb, SessionWithTx};
-
-use crate::RecIter;
+use apllodb_sql_processor::Records;
 
 /// Successful response from apllodb-server's [command()](crate::ApllodbServer::command).
 #[derive(Debug)]
 pub enum ApllodbCommandSuccess {
     QueryResponse {
         session: SessionWithTx,
-        records: RecIter,
+        records: Records,
     },
     ModificationResponse {
         session: SessionWithTx,

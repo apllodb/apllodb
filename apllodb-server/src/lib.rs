@@ -37,12 +37,11 @@ extern crate derive_new;
 mod apllodb_server;
 
 // re-export from apllodb-shared-components
-pub use apllodb_shared_components::{ApllodbResult, ApllodbSessionResult, Session};
-
-pub use crate::apllodb_server::{
-    response::success::{rec::Rec, rec_iter::RecIter, ApllodbCommandSuccess},
-    ApllodbServer,
+pub use crate::apllodb_server::{response::success::ApllodbCommandSuccess, ApllodbServer};
+pub use apllodb_shared_components::{
+    ApllodbErrorKind, ApllodbResult, ApllodbSessionResult, SchemaIndex, Session,
 };
+pub use apllodb_sql_processor::Records;
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;

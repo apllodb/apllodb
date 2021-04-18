@@ -1,7 +1,6 @@
 mod sql_test;
 
-use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::{ApllodbErrorKind, FieldIndex};
+use apllodb_server::{test_support::test_setup, ApllodbErrorKind, SchemaIndex};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -24,7 +23,7 @@ async fn test_small_int() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = FieldIndex::from("c");
+                let index = SchemaIndex::from("c");
 
                 let r = records.next().unwrap();
                 assert_eq!(r.get::<i16>(&index).unwrap().unwrap(), i16::MAX);
@@ -52,7 +51,7 @@ async fn test_integer() {
         .add_step(Step::new(
             "SELECT c FROM t",
             StepRes::OkQuery(Box::new(|mut records| {
-                let index = FieldIndex::from("c");
+                let index = SchemaIndex::from("c");
 
                 let r = records.next().unwrap();
                 assert_eq!(
