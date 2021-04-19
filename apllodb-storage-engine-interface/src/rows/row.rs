@@ -87,9 +87,16 @@ impl Row {
         let mut sorted_positions: Vec<RPos> = positions.iter().cloned().collect();
         sorted_positions.sort_unstable();
 
+        // removed inner shrinks. this adjusts index.
+        let mut cnt_moved = 0;
+
         let new_values: Vec<SqlValue> = sorted_positions
             .into_iter()
-            .map(|pos| self.remove(pos))
+            .map(|pos| {
+                let v = self.remove(RPos::new(pos.to_usize() - cnt_moved));
+                cnt_moved += 1;
+                v
+            })
             .collect();
 
         Self::new(new_values)
