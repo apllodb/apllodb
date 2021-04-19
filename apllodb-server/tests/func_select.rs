@@ -98,7 +98,9 @@ async fn test_projection() {
                         PEOPLE_RECORD1.get::<i32>(&age_index).unwrap()
                     );
                     assert_eq!(
-                        r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id"))).unwrap_err().kind(),
+                        r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id")))
+                            .unwrap_err()
+                            .kind(),
                         &ApllodbErrorKind::InvalidName
                     );
                     Ok(())
