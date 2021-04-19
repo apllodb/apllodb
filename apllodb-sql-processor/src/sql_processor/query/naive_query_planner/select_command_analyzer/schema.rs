@@ -96,7 +96,7 @@ impl SelectCommandAnalyzer {
 
     fn join_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
         self.from_item_indexes()
-            .map(|ffrs| ffrs.into_iter().collect())
+            .map(|idxs| idxs.into_iter().collect())
     }
     fn selection_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
@@ -110,8 +110,8 @@ impl SelectCommandAnalyzer {
         }
     }
     fn sort_indexes(&self) -> ApllodbResult<Vec<SchemaIndex>> {
-        let ffr_orderings = self.sort_index_orderings()?;
-        Ok(ffr_orderings.into_iter().map(|(ffr, _)| ffr).collect())
+        let idx_orderings = self.sort_index_orderings()?;
+        Ok(idx_orderings.into_iter().map(|(idx, _)| idx).collect())
     }
 
     /// TODO may need Catalog value when:
