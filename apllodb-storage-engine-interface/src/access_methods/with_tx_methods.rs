@@ -9,6 +9,7 @@ use futures::FutureExt;
 use crate::{
     alter_table_action::AlterTableAction,
     column::{column_definition::ColumnDefinition, column_name::ColumnName},
+    row_selection_query::RowSelectionQuery,
     rows::row::Row,
     table::{table_constraints::TableConstraints, table_name::TableName},
     RowProjectionQuery, Rows,
@@ -137,10 +138,14 @@ pub trait WithTxMethods: Sized + 'static {
         session: SessionWithTx,
         table_name: TableName,
         projection: RowProjectionQuery,
+        selection: RowSelectionQuery,
     ) -> BoxFut<ApllodbSessionResult<(Rows, SessionWithTx)>> {
         let sid = *session.get_id();
         async move {
-            match self.select_core(sid, table_name, projection).await {
+            match self
+                .select_core(sid, table_name, projection, selection)
+                .await
+            {
                 Ok(rows) => Ok((rows, session)),
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             }
@@ -154,6 +159,7 @@ pub trait WithTxMethods: Sized + 'static {
         sid: SessionId,
         table_name: TableName,
         projection: RowProjectionQuery,
+        selection: RowSelectionQuery,
     ) -> BoxFut<ApllodbResult<Rows>>;
 
     fn insert(
@@ -190,10 +196,14 @@ pub trait WithTxMethods: Sized + 'static {
         session: SessionWithTx,
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
+        selection: RowSelectionQuery,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
         let sid = *session.get_id();
         async move {
-            match self.update_core(sid, table_name, column_values).await {
+            match self
+                .update_core(sid, table_name, column_values, selection)
+                .await
+            {
                 Ok(_) => Ok(session),
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             }
@@ -207,6 +217,7 @@ pub trait WithTxMethods: Sized + 'static {
         sid: SessionId,
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
+        selection: RowSelectionQuery,
     ) -> BoxFut<ApllodbResult<()>>;
 
     fn delete(
