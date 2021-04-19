@@ -53,7 +53,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             UnaryPlanOperation::Selection { condition } => self.selection(input_left, condition),
             UnaryPlanOperation::Sort {
                 index_orderings: field_orderings,
-            } => self.sort(input_left, field_orderings),
+            } => Ok(self.sort(input_left, field_orderings)),
         }
     }
 
@@ -111,11 +111,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         input_left.selection(&condition)
     }
 
-    fn sort(
-        &self,
-        input_left: Records,
-        field_orderings: Vec<(SchemaIndex, Ordering)>,
-    ) -> ApllodbResult<Records> {
+    fn sort(&self, input_left: Records, field_orderings: Vec<(SchemaIndex, Ordering)>) -> Records {
         input_left.sort(&field_orderings)
     }
 }

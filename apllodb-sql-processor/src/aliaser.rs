@@ -22,7 +22,7 @@ impl Aliaser {
                     None
                 }
             })
-            .unwrap_or(AliasedFieldName::from(table_column_name))
+            .unwrap_or_else(|| AliasedFieldName::from(table_column_name))
     }
 }
 

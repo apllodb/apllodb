@@ -117,14 +117,11 @@ impl Records {
             })
             .collect();
 
-        Ok(Self::new(new_schema.clone(), new_inner))
+        Ok(Self::new(new_schema, new_inner))
     }
 
     /// ORDER BY
-    pub(crate) fn sort(
-        mut self,
-        field_orderings: &[(SchemaIndex, Ordering)],
-    ) -> ApllodbResult<Self> {
+    pub(crate) fn sort(mut self, field_orderings: &[(SchemaIndex, Ordering)]) -> Self {
         assert!(!field_orderings.is_empty(), "parser should avoid this case");
 
         // TODO check if type in FieldIndex is PartialOrd
@@ -135,10 +132,10 @@ impl Records {
             for (index, ord) in field_orderings {
                 let a_val = a_record
                     .get_sql_value(index)
-                    .expect(format!("must be valid field: `{}`", index).as_str());
+                    .unwrap_or_else(|_| panic!("must be valid field: `{}`", index));
                 let b_val = b_record
                     .get_sql_value(index)
-                    .expect(format!("must be valid field: `{}`", index).as_str());
+                    .unwrap_or_else(|_| panic!("must be valid field: `{}`", index));
 
                 match a_val.sql_compare(&b_val).unwrap_or_else(|_| {
                     panic!(
@@ -185,7 +182,7 @@ impl Records {
             }
             res
         });
-        Ok(self)
+        self
     }
 
     /// Join algorithm using hash table.
@@ -221,7 +218,7 @@ impl Records {
                 })
                 .collect::<ApllodbResult<_>>()?;
 
-            Ok(Record::new(joined_schema.clone(), Row::new(sql_values)))
+            Ok(Record::new(joined_schema, Row::new(sql_values)))
         }
 
         // TODO Create hash table from smaller input.
@@ -255,7 +252,7 @@ impl Records {
             }
         }
 
-        Ok(Records::new(joined_schema.clone(), records))
+        Ok(Records::new(joined_schema, records))
     }
 }
 

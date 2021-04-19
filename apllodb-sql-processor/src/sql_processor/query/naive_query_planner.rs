@@ -78,7 +78,7 @@ impl<'r> NaiveQueryPlanner<'r> {
                         .filter_by_correlations(&[aliased_correlation_name.clone()])
                         .to_aliased_field_names()
                         .iter()
-                        .map(|afn| SchemaIndex::from(afn))
+                        .map(SchemaIndex::from)
                         .collect();
 
                     self.node_repo
