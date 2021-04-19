@@ -9,7 +9,7 @@ impl CorrelationAlias {
     /// Constructor.
     ///
     /// # Failures
-    /// - [NameTooLong](crate::ApllodbErrorKind::NameTooLong) when:
+    /// - [NameTooLong](apllodb_shared_components::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub(crate) fn new<S: ToString>(name: S) -> ApllodbResult<Self> {
         let sn = ShortName::new(name)?;

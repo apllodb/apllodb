@@ -33,7 +33,7 @@ impl Rows {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
         let new_schema = self.schema.projection(indexes)?;

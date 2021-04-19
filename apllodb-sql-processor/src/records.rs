@@ -95,7 +95,7 @@ impl Records {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub(crate) fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
         let new_schema = Arc::new(self.schema.projection(indexes)?);
@@ -194,7 +194,7 @@ impl Records {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in any record.
     pub(crate) fn hash_join(
         self,

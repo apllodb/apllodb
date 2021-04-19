@@ -22,7 +22,7 @@ impl TableConstraints {
     /// Constructor.
     ///
     /// # Failures
-    /// - [InvalidTableDefinition](crate::ApllodbErrorKind::InvalidTableDefinition) when:
+    /// - [InvalidTableDefinition](apllodb_shared_components::ApllodbErrorKind::InvalidTableDefinition) when:
     ///   - No [PrimaryKey](crate::TableConstraintKind::PrimaryKey) is specified.
     ///   - Multiple [PrimaryKey](crate::TableConstraintKind::PrimaryKey)s appear.
     ///   - More than 1 [PrimaryKey](crate::TableConstraintKind::PrimaryKey) /

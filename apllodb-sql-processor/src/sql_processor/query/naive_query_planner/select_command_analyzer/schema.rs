@@ -121,9 +121,9 @@ impl SelectCommandAnalyzer {
     ///
     /// # Failures
     ///
-    /// - [InvalidColumnReference](crate::ApllodbErrorKind::InvalidColumnReference) when:
+    /// - [InvalidColumnReference](apllodb_shared_components::ApllodbErrorKind::InvalidColumnReference) when:
     ///   - `from_item_correlations` is empty.
-    /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - none of `from_item_correlations` has field named `ast_column_reference.column_name`
     ///   - `ast_column_reference` has a correlation but it is not any of `from_item_correlations`.
     pub(super) fn field_name(
@@ -148,7 +148,7 @@ impl SelectCommandAnalyzer {
 
     /// # Failures
     ///
-    /// - [UndefinedColumn](crate::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
     ///   - `ast_correlation` does not match any of `from_item_correlations`.
     fn field_name_with_prefix(
         prefix: &str,

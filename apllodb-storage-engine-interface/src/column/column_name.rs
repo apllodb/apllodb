@@ -9,7 +9,7 @@ impl ColumnName {
     /// Constructor.
     ///
     /// # Failures
-    /// - [NameTooLong](crate::ApllodbErrorKind::NameTooLong) when:
+    /// - [NameTooLong](apllodb_shared_components::ApllodbErrorKind::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub fn new(name: impl ToString) -> ApllodbResult<Self> {
         let sn = ShortName::new(name)?;

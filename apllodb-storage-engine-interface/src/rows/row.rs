@@ -28,11 +28,11 @@ impl Row {
 
     /// Get Rust value from record's field.
     ///
-    /// Returns `None` if matching [SqlValue](crate::SqlValue) is NULL.
+    /// Returns `None` if matching [SqlValue](apllodb_shared_components::SqlValue) is NULL.
     ///
     /// # Failures
     ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
     pub fn get<T: SqlConvertible>(&self, pos: RPos) -> ApllodbResult<Option<T>> {
@@ -44,11 +44,11 @@ impl Row {
         Ok(ret)
     }
 
-    /// Get [SqlValue](crate::SqlValue) from record's field.
+    /// Get [SqlValue](apllodb_shared_components::SqlValue) from record's field.
     ///
     /// # Failures
     ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, pos: RPos) -> ApllodbResult<&SqlValue> {
         let sql_value = self.index(pos);
