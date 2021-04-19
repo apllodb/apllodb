@@ -1,6 +1,7 @@
 use apllodb_sql_parser::apllodb_ast;
 
-use apllodb_shared_components::{AlterTableAction, ApllodbResult};
+use apllodb_shared_components::ApllodbResult;
+use apllodb_storage_engine_interface::AlterTableAction;
 
 use super::AstTranslator;
 

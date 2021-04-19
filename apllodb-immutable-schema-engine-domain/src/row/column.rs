@@ -1,4 +1,4 @@
-use apllodb_shared_components::{ColumnDefinition, ColumnName};
+use apllodb_storage_engine_interface::{ColumnDefinition, ColumnName};
 
 pub fn filter_non_pk_column_names(
     all_column_names: &[ColumnName],

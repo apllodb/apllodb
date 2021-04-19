@@ -10,10 +10,15 @@ readme = "README.md"
 repository = "https://github.com/darwin-education/apllodb"
 version = "0.1.0"
 
+[features]
+test-support = ["once_cell", "apllodb-immutable-schema-engine-infra"]
+
 [dependencies]
 apllodb-shared-components = {path = "../apllodb-shared-components"}
 apllodb-sql-parser = {path = "../apllodb-sql-parser", features = ["serde"]}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface"}
+
+apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", optional = true}
 
 serde = {version = "1.0", features = ["derive"]}
 
@@ -21,11 +26,14 @@ derive-new = "0.5"
 
 async-recursion = "0.3"
 
+sorted-vec = "0.5"
+
 env_logger = "0.8"
 log = "0.4"
 
+once_cell = {version = "1.7", optional = true}
+
 [dev-dependencies]
-apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"]}
 apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
@@ -39,5 +47,3 @@ pretty_assertions = "0.7"
 async-std = {version = "1.9", features = ["attributes"]}
 
 futures = "0.3"
-
-once_cell = "1.7"

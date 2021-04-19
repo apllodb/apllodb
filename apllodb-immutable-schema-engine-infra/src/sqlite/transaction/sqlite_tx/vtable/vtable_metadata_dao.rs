@@ -8,8 +8,9 @@ use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, Schema, SchemaIndex, SqlType,
 };
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VTableMetadataDao {
@@ -78,24 +79,29 @@ CREATE TABLE {} (
 
         let tname = TableName::new(TNAME)?;
 
-        let mut row_iter = self
+        let mut rows = self
             .sqlite_tx
             .borrow_mut()
             .query(&sql, &tname, &[&self.cdt_table_wide_constraints()], &[])
             .await?;
-        let mut row = row_iter.next().ok_or_else(|| {
-            ApllodbError::new(
-                ApllodbErrorKind::UndefinedTable,
-                format!(
-                    "table `{:?}`'s metadata is not visible from this transaction",
-                    vtable_id.table_name()
-                ),
-                None,
-            )
-        })?;
 
-        let table_wide_constraints_str: String = row
-            .get(&ColumnName::new(CNAME_TABLE_WIDE_CONSTRAINTS)?)?
+        let (pos_table_wide_constraints, _) = rows
+            .as_schema()
+            .index(&SchemaIndex::from(CNAME_TABLE_WIDE_CONSTRAINTS))?;
+
+        let table_wide_constraints_str: String = rows
+            .next()
+            .ok_or_else(|| {
+                ApllodbError::new(
+                    ApllodbErrorKind::UndefinedTable,
+                    format!(
+                        "table `{:?}`'s metadata is not visible from this transaction",
+                        vtable_id.table_name()
+                    ),
+                    None,
+                )
+            })
+            .and_then(|row| row.get(pos_table_wide_constraints))?
             .expect("must be NOT NULL");
 
         let table_wide_constraints: TableWideConstraints =

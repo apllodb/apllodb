@@ -3,11 +3,13 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::{session_with_tx, test_setup};
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType,
-    ColumnDefinition, Expression, FieldIndex, FullFieldReference, NnSqlValue, RecordFieldRefSchema,
-    SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, Expression, NnSqlValue, Schema, SchemaIndex,
+    SqlType, SqlValue,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{
+    ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery, StorageEngine,
+    TableConstraintKind, TableConstraints, TableName, WithTxMethods,
+};
 
 #[ctor::ctor]
 fn setup() {
@@ -116,7 +118,7 @@ async fn test_insert() -> ApllodbResult<()> {
                 c_id_def.column_data_type().column_name().clone(),
                 c1_def.column_data_type().column_name().clone(),
             ],
-            vec![SqlValues::new(vec![
+            vec![Row::new(vec![
                 SqlValue::NotNull(NnSqlValue::Integer(1)),
                 SqlValue::NotNull(NnSqlValue::Integer(100)),
             ])],
@@ -125,20 +127,20 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
 
     let schema = records.as_schema().clone();
-    let id_idx = schema.resolve_index(&FieldIndex::from(
+    let (id_pos, _) = schema.index(&SchemaIndex::from(
         c_id_def.column_data_type().column_name().as_str(),
     ))?;
-    let c1_idx = schema.resolve_index(&FieldIndex::from(
+    let (c1_pos, _) = schema.index(&SchemaIndex::from(
         c1_def.column_data_type().column_name().as_str(),
     ))?;
 
     let record = records.next().unwrap();
-    assert_eq!(record.get::<i32>(id_idx)?, Some(1));
-    assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
+    assert_eq!(record.get::<i32>(id_pos)?, Some(1));
+    assert_eq!(record.get::<i32>(c1_pos)?, Some(100));
 
     assert!(records.next().is_none());
 
@@ -182,7 +184,7 @@ async fn test_update() -> ApllodbResult<()> {
                 c_id_def.column_data_type().column_name().clone(),
                 c1_def.column_data_type().column_name().clone(),
             ],
-            vec![SqlValues::new(vec![
+            vec![Row::new(vec![
                 SqlValue::NotNull(NnSqlValue::Integer(1)),
                 SqlValue::NotNull(NnSqlValue::Integer(100)),
             ])],
@@ -191,21 +193,21 @@ async fn test_update() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
 
     {
         let schema = records.as_schema().clone();
-        let id_idx = schema.resolve_index(&FieldIndex::from(
+        let (id_pos, _) = schema.index(&SchemaIndex::from(
             c_id_def.column_data_type().column_name().as_str(),
         ))?;
-        let c1_idx = schema.resolve_index(&FieldIndex::from(
+        let (c1_pos, _) = schema.index(&SchemaIndex::from(
             c1_def.column_data_type().column_name().as_str(),
         ))?;
 
         let record = records.next().unwrap();
-        assert_eq!(record.get::<i32>(id_idx)?, Some(1));
-        assert_eq!(record.get::<i32>(c1_idx)?, Some(100));
+        assert_eq!(record.get::<i32>(id_pos)?, Some(1));
+        assert_eq!(record.get::<i32>(c1_pos)?, Some(100));
         assert!(records.next().is_none());
     }
 
@@ -219,21 +221,21 @@ async fn test_update() -> ApllodbResult<()> {
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
 
     {
         let schema = records.as_schema().clone();
-        let id_idx = schema.resolve_index(&FieldIndex::from(
+        let (id_pos, _) = schema.index(&SchemaIndex::from(
             c_id_def.column_data_type().column_name().as_str(),
         ))?;
-        let c1_idx = schema.resolve_index(&FieldIndex::from(
+        let (c1_pos, _) = schema.index(&SchemaIndex::from(
             c1_def.column_data_type().column_name().as_str(),
         ))?;
 
         let record = records.next().unwrap();
-        assert_eq!(record.get::<i32>(id_idx)?, Some(1));
-        assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
+        assert_eq!(record.get::<i32>(id_pos)?, Some(1));
+        assert_eq!(record.get::<i32>(c1_pos)?, Some(200));
         assert!(records.next().is_none());
     }
 
@@ -248,19 +250,19 @@ async fn test_update() -> ApllodbResult<()> {
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
     {
         let schema = records.as_schema().clone();
-        let id_idx = schema.resolve_index(&FieldIndex::from(
+        let (id_pos, _) = schema.index(&SchemaIndex::from(
             c_id_def.column_data_type().column_name().as_str(),
         ))?;
-        let c1_idx = schema.resolve_index(&FieldIndex::from(
+        let (c1_pos, _) = schema.index(&SchemaIndex::from(
             c1_def.column_data_type().column_name().as_str(),
         ))?;
         let record = records.next().unwrap();
-        assert_eq!(record.get::<i32>(id_idx)?, Some(2));
-        assert_eq!(record.get::<i32>(c1_idx)?, Some(200));
+        assert_eq!(record.get::<i32>(id_pos)?, Some(2));
+        assert_eq!(record.get::<i32>(c1_pos)?, Some(200));
         assert!(records.next().is_none());
     }
 
@@ -304,7 +306,7 @@ async fn test_delete() -> ApllodbResult<()> {
                 c_id_def.column_data_type().column_name().clone(),
                 c1_def.column_data_type().column_name().clone(),
             ],
-            vec![SqlValues::new(vec![
+            vec![Row::new(vec![
                 SqlValue::NotNull(NnSqlValue::Integer(1)),
                 SqlValue::NotNull(NnSqlValue::Integer(100)),
             ])],
@@ -316,12 +318,18 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
-                FullFieldReference::factory(
-                    t_name.as_str(),
-                    c_id_def.column_data_type().column_name().as_str(),
-                ),
-            ])),
+            RowProjectionQuery::ColumnIndexes(
+                vec![SchemaIndex::new(
+                    Some(t_name.as_str().to_string()),
+                    c_id_def
+                        .column_data_type()
+                        .column_name()
+                        .as_str()
+                        .to_string(),
+                )]
+                .into_iter()
+                .collect(),
+            ),
         )
         .await?;
     assert_eq!(rows.count(), 1);
@@ -332,12 +340,18 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            ProjectionQuery::Schema(RecordFieldRefSchema::factory(vec![
-                FullFieldReference::factory(
-                    t_name.as_str(),
-                    c_id_def.column_data_type().column_name().as_str(),
-                ),
-            ])),
+            RowProjectionQuery::ColumnIndexes(
+                vec![SchemaIndex::new(
+                    Some(t_name.as_str().to_string()),
+                    c_id_def
+                        .column_data_type()
+                        .column_name()
+                        .as_str()
+                        .to_string(),
+                )]
+                .into_iter()
+                .collect(),
+            ),
         )
         .await?;
     assert_eq!(rows.count(), 0);

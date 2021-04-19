@@ -1,15 +1,8 @@
 use std::{fmt::Debug, hash::Hash};
 
-use apllodb_shared_components::{ApllodbResult, SqlValue};
-
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes,
-    entity::Entity,
-    row::pk::apparent_pk::ApparentPrimaryKey,
-    row::{
-        immutable_row::{builder::ImmutableRowBuilder, ImmutableRow},
-        pk::full_pk::revision::Revision,
-    },
+    abstract_types::ImmutableSchemaAbstractTypes, entity::Entity,
+    row::pk::apparent_pk::ApparentPrimaryKey, row::pk::full_pk::revision::Revision,
     version::id::VersionId,
 };
 
@@ -24,16 +17,6 @@ pub struct VrrEntry<Types: ImmutableSchemaAbstractTypes> {
 impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
     pub fn into_pk(self) -> ApparentPrimaryKey {
         self.pk
-    }
-
-    pub fn into_pk_only_row(self) -> ApllodbResult<ImmutableRow> {
-        let table_name = self.pk.table_name().clone();
-
-        let mut builder = ImmutableRowBuilder::new(table_name);
-        for (column_name, nn_sql_value) in self.pk.into_zipped() {
-            builder = builder.append(column_name, SqlValue::NotNull(nn_sql_value))?;
-        }
-        builder.build()
     }
 }
 

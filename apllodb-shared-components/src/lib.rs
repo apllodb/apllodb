@@ -5,43 +5,15 @@
 #[macro_use]
 extern crate derive_new;
 
-pub(crate) mod data_structure; // TODO remove
 pub(crate) mod database;
 pub(crate) mod error;
+pub(crate) mod expression;
+pub(crate) mod schema;
 pub(crate) mod session;
 pub(crate) mod validation_helper;
 pub(crate) mod value;
 
 pub use crate::{
-    data_structure::{
-        alias_name::AliasName,
-        alter_table_action::AlterTableAction,
-        column::{
-            column_constraint_kind::ColumnConstraintKind, column_constraints::ColumnConstraints,
-            column_data_type::ColumnDataType, column_definition::ColumnDefinition,
-            column_name::ColumnName,
-        },
-        expression::{
-            boolean_expression::{
-                comparison_function::ComparisonFunction, logical_function::LogicalFunction,
-                BooleanExpression,
-            },
-            operator::{BinaryOperator, UnaryOperator},
-            Expression,
-        },
-        record::{field_index::FieldIndex, Record},
-        records::{record_field_ref_schema::RecordFieldRefSchema, Records},
-        reference::{
-            correlation_reference::{correlation_index::CorrelationIndex, CorrelationReference},
-            field_reference::FieldReference,
-            full_field_reference::FullFieldReference,
-        },
-        select::ordering::Ordering,
-        table::{
-            table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
-            table_name::TableName,
-        },
-    },
     database::database_name::DatabaseName,
     error::{
         kind::ApllodbErrorKind,
@@ -49,9 +21,22 @@ pub use crate::{
         sqlstate::SqlState,
         ApllodbError, ApllodbResult,
     },
+    expression::{
+        boolean_expression::{
+            comparison_function::ComparisonFunction, logical_function::LogicalFunction,
+            BooleanExpression,
+        },
+        operator::{BinaryOperator, UnaryOperator},
+        Expression,
+    },
+    schema::{r_pos::RPos, schema_index::SchemaIndex, schema_name::SchemaName, Schema},
     session::{
         session_id::SessionId, with_db::SessionWithDb, with_tx::SessionWithTx,
         without_db::SessionWithoutDb, Session,
+    },
+    validation_helper::{
+        collection::{find_dup, find_dup_slow},
+        short_name::ShortName,
     },
     value::{
         sql_convertible::SqlConvertible,
@@ -60,7 +45,6 @@ pub use crate::{
             nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult,
             sql_value_hash_key::SqlValueHashKey, SqlValue,
         },
-        sql_values::SqlValues,
     },
 };
 

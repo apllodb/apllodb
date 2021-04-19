@@ -2,7 +2,7 @@ use std::{collections::HashSet, hash::Hash};
 
 /// Find a first element that is equal to another element in `s`.
 #[allow(dead_code)]
-pub(crate) fn find_dup<T>(iter: T) -> Option<T::Item>
+pub fn find_dup<T>(iter: T) -> Option<T::Item>
 where
     T: Iterator,
     T::Item: Eq + Hash + Clone,
@@ -18,7 +18,7 @@ where
 
 /// Find a first element that is equal to another element in `s`.
 /// It uses O(n^2) nested loop algorithm. Use [find_dup()](method.find_dup.html) if `T` implements `Hash` instead.
-pub(crate) fn find_dup_slow<T>(iter: T) -> Option<T::Item>
+pub fn find_dup_slow<T>(iter: T) -> Option<T::Item>
 where
     T: Iterator,
     T::Item: Eq + Clone,

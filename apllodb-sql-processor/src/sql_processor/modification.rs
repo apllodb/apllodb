@@ -74,12 +74,12 @@ mod tests {
     use std::sync::Arc;
 
     use crate::sql_processor::sql_processor_context::SqlProcessorContext;
-    use apllodb_shared_components::{
-        test_support::test_models::People, ApllodbResult, ColumnName, NnSqlValue, SqlValue,
-        SqlValues, TableName,
-    };
+    use apllodb_shared_components::{ApllodbResult, NnSqlValue, SqlValue};
     use apllodb_sql_parser::ApllodbSqlParser;
-    use apllodb_storage_engine_interface::test_support::{default_mock_engine, MockWithTxMethods};
+    use apllodb_storage_engine_interface::{
+        test_support::{default_mock_engine, test_models::People, MockWithTxMethods},
+        ColumnName, Row, TableName,
+    };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
@@ -91,7 +91,7 @@ mod tests {
         in_insert_sql: &'static str,
         expected_insert_table: TableName,
         expected_insert_columns: Vec<ColumnName>,
-        expected_insert_values: Vec<SqlValues>,
+        expected_insert_values: Vec<Row>,
     }
 
     #[async_std::test]
@@ -104,12 +104,13 @@ mod tests {
                 "INSERT INTO people (id, age) VALUES (1, 13)",
                 People::table_name(),
                 vec![
-                    People::ffr_id().as_column_name().clone(),
-                    People::ffr_age().as_column_name().clone(),
+                    // note: re-ordered internally
+                    People::tc_age().as_column_name().clone(),
+                    People::tc_id().as_column_name().clone(),
                 ],
-                vec![SqlValues::new(vec![
-                    SqlValue::NotNull(NnSqlValue::Integer(1)),
+                vec![Row::new(vec![
                     SqlValue::NotNull(NnSqlValue::Integer(13)),
+                    SqlValue::NotNull(NnSqlValue::Integer(1)),
                 ])],
             )]
             .into_boxed_slice()

@@ -1,16 +1,21 @@
 mod select_command_analyzer;
 
-use apllodb_shared_components::{ApllodbResult, CorrelationIndex, FieldIndex};
+use std::collections::HashSet;
+
+use apllodb_shared_components::{ApllodbResult, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast::{self};
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::RowProjectionQuery;
 
 use super::query_plan::query_plan_tree::query_plan_node::node_repo::QueryPlanNodeRepository;
-use crate::sql_processor::query::query_plan::query_plan_tree::{
-    query_plan_node::{
-        node_kind::{QueryPlanNodeKind, QueryPlanNodeLeaf, QueryPlanNodeUnary},
-        operation::{LeafPlanOperation, UnaryPlanOperation},
+use crate::{
+    correlation::correlation_name::CorrelationName,
+    sql_processor::query::query_plan::query_plan_tree::{
+        query_plan_node::{
+            node_kind::{QueryPlanNodeKind, QueryPlanNodeLeaf, QueryPlanNodeUnary},
+            operation::{LeafPlanOperation, UnaryPlanOperation},
+        },
+        QueryPlanTree,
     },
-    QueryPlanTree,
 };
 use select_command_analyzer::SelectCommandAnalyzer;
 
@@ -63,20 +68,29 @@ impl<'r> NaiveQueryPlanner<'r> {
     }
 
     fn create_correlation_nodes(&self) -> ApllodbResult<()> {
-        let from_correlations = self.analyzer.from_item_correlation_references()?;
+        let from_item_correlations = self.analyzer.from_item_correlations()?;
         let widest_schema = self.analyzer.widest_schema()?;
 
-        for corref in from_correlations {
-            let _ = self
-                .node_repo
-                .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
-                    op: LeafPlanOperation::SeqScan {
-                        table_name: corref.as_table_name().clone(),
-                        projection: ProjectionQuery::Schema(
-                            widest_schema.filter_by_correlations(&[CorrelationIndex::from(corref)]),
-                        ),
-                    },
-                }));
+        for aliased_correlation_name in &from_item_correlations {
+            match &aliased_correlation_name.correlation_name {
+                CorrelationName::TableNameVariant(table_name) => {
+                    let prj_idxs: HashSet<SchemaIndex> = widest_schema
+                        .filter_by_correlations(&[aliased_correlation_name.clone()])
+                        .to_aliased_field_names()
+                        .iter()
+                        .map(SchemaIndex::from)
+                        .collect();
+
+                    self.node_repo
+                        .create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
+                            op: LeafPlanOperation::SeqScan {
+                                table_name: table_name.clone(),
+                                projection: RowProjectionQuery::ColumnIndexes(prj_idxs),
+                                aliaser: self.analyzer.aliaser()?,
+                            },
+                        }));
+                }
+            }
         }
 
         Ok(())
@@ -105,16 +119,11 @@ impl<'r> NaiveQueryPlanner<'r> {
     }
 
     fn create_sort_node(&self) -> ApllodbResult<()> {
-        let ffr_orderings = self.analyzer.sort_ffr_orderings()?;
-        if ffr_orderings.is_empty() {
+        let index_orderings = self.analyzer.sort_index_orderings()?;
+        if index_orderings.is_empty() {
             Ok(())
         } else {
-            let field_orderings = ffr_orderings
-                .into_iter()
-                .map(|(ffr, ordering)| (FieldIndex::from(ffr), ordering))
-                .collect();
-
-            let sort_op = UnaryPlanOperation::Sort { field_orderings };
+            let sort_op = UnaryPlanOperation::Sort { index_orderings };
             let child_id = self.node_repo.latest_node_id()?;
 
             let _ = self
@@ -129,10 +138,10 @@ impl<'r> NaiveQueryPlanner<'r> {
     }
 
     fn create_projection_node(&self) -> ApllodbResult<()> {
-        let ffrs = self.analyzer.projection_ffrs()?;
+        let afns = self.analyzer.aliased_field_names_in_projection()?;
 
         let projection_op = UnaryPlanOperation::Projection {
-            fields: ffrs.into_iter().map(FieldIndex::from).collect(),
+            fields: afns.iter().map(SchemaIndex::from).collect(),
         };
         let child_id = self.node_repo.latest_node_id()?;
 

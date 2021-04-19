@@ -3,7 +3,9 @@ use std::{
     sync::{Mutex, RwLock},
 };
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, CorrelationIndex};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+
+use crate::correlation::correlation_name::CorrelationName;
 
 use super::{
     node_id::{QueryPlanNodeId, QueryPlanNodeIdGenerator},
@@ -51,16 +53,16 @@ impl QueryPlanNodeRepository {
     ///    - no matching node is found.
     pub(crate) fn find_correlation_node(
         &self,
-        correlation_index: &CorrelationIndex,
+        correlation_name: &CorrelationName,
     ) -> ApllodbResult<QueryPlanNodeId> {
         self.hmap
             .read()
             .unwrap()
             .iter()
             .find_map(|(id, node)| {
-                node.source_correlation_reference()
-                    .map(|corr_ref| {
-                        if correlation_index.matches(&corr_ref) {
+                node.source_correlation_name()
+                    .map(|corr_name| {
+                        if correlation_name == &corr_name {
                             Some(*id)
                         } else {
                             None

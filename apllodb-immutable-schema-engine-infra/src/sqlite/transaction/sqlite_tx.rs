@@ -11,12 +11,11 @@ use self::{
 use crate::{
     error::InfraError,
     sqlite::{
-        database::SqliteDatabase, row_iterator::SqliteRowIterator, sqlite_rowid::SqliteRowid,
+        database::SqliteDatabase, rows::from_sqlite_rows::FromSqliteRows, sqlite_rowid::SqliteRowid,
     },
 };
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnName, DatabaseName, TableName,
-};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, Rows, TableName};
 use log::debug;
 
 /// Many transactions share 1 SQLite connection in `Database`.
@@ -97,14 +96,14 @@ impl SqliteTx {
         table_name: &TableName,
         column_data_types: &[&ColumnDataType],
         void_projection: &[ColumnName],
-    ) -> ApllodbResult<SqliteRowIterator> {
+    ) -> ApllodbResult<Rows> {
         debug!("SqliteTx::query():\n    {}", sql);
 
         let rows = sqlx::query(sql)
             .fetch_all(self.sqlx_tx.as_mut().unwrap())
             .await
             .map_err(InfraError::from)?;
-        SqliteRowIterator::new(&rows, table_name, column_data_types, void_projection)
+        Rows::from_sqlite_rows(&rows, table_name, column_data_types, void_projection)
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx) async fn execute(

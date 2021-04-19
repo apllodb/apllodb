@@ -1,7 +1,6 @@
 use super::active_version::ActiveVersion;
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, SqlValue,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlValue};
+use apllodb_storage_engine_interface::ColumnName;
 use std::collections::HashMap;
 
 /// Collection of [ActiveVersion](x.html) sorted from latest to oldest.

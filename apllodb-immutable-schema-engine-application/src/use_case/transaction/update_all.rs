@@ -7,14 +7,12 @@ use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     query::projection::ProjectionResult,
-    row_iter::ImmutableSchemaRowIterator,
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, DatabaseName, Expression, SqlValue,
-    SqlValues, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName, Expression, SqlValue,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
+use apllodb_storage_engine_interface::{ColumnName, Row, RowProjectionQuery, TableName};
 // use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -42,7 +40,7 @@ impl<'usecase> UpdateAllUseCaseInput<'usecase> {
             match expr {
                 Expression::ConstantVariant(_) => {}
                 Expression::UnaryOperatorVariant(_, _) => {}
-                Expression::FullFieldReferenceVariant(_) | Expression::BooleanExpressionVariant(_) => {
+                Expression::SchemaIndexVariant(_) | Expression::BooleanExpressionVariant(_) => {
                     return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
                         format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
                         column_name, expr
@@ -88,17 +86,23 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         // Fetch all columns of from all versions and update requested columns later.
         // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
         let projection_result: ProjectionResult =
-            ProjectionResult::new(&vtable, active_versions, ProjectionQuery::All)?;
-        let row_iter = vtable_repo.full_scan(&vtable, projection_result).await?;
+            ProjectionResult::new(&vtable, active_versions, &RowProjectionQuery::All)?;
+        let rows = vtable_repo.full_scan(&vtable, projection_result).await?;
+        let schema = rows.as_schema().clone();
 
-        let new_columns_to_insert: Vec<ColumnName> = row_iter.schema().as_column_names().to_vec();
-        let mut new_values_to_insert: Vec<SqlValues> = vec![];
+        let new_columns_to_insert: Vec<ColumnName> = schema
+            .table_column_names()
+            .into_iter()
+            .map(|tc| tc.as_column_name().clone())
+            .collect();
+        let mut new_rows_to_insert: Vec<Row> = vec![];
 
-        for row in row_iter {
-            let col_vals_before = row.into_zipped();
+        for row in rows {
             let mut vals_after: Vec<SqlValue> = Vec::new();
 
-            for (column_name, val_before) in col_vals_before {
+            for (pos, tc) in schema.table_column_names_with_pos() {
+                let column_name = tc.as_column_name();
+
                 let val_after = if let Some(expr) = input.column_values.remove(&column_name) {
                     if let Expression::ConstantVariant(sql_value) = expr {
                         Ok(sql_value)
@@ -108,12 +112,13 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
                         ))
                     }
                 } else {
-                    Ok(val_before)
+                    let val_before = row.get_sql_value(pos)?;
+                    Ok(val_before.clone())
                 }?;
                 vals_after.push(val_after);
             }
 
-            new_values_to_insert.push(SqlValues::new(vals_after));
+            new_rows_to_insert.push(Row::new(vals_after));
         }
 
         // DELETE all
@@ -128,7 +133,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             input.database_name,
             input.table_name,
             &new_columns_to_insert,
-            new_values_to_insert,
+            new_rows_to_insert,
         );
         let _ = InsertUseCase::<'_, Types>::run(vtable_repo, version_repo, insert_usecase_input)
             .await?;

@@ -1,9 +1,9 @@
-use crate::{row::immutable_row::ImmutableRow, vtable::VTable};
+use crate::vtable::VTable;
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ColumnDataType, ColumnName,
-    ComparisonFunction, CorrelationReference, Expression, FieldReference, FullFieldReference,
-    LogicalFunction, NnSqlValue, SqlConvertible, SqlValue, SqlValues, TableName,
+    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ComparisonFunction,
+    Expression, LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
 };
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, Row, RowSchema, TableName};
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, ops::Index};
 
@@ -58,9 +58,10 @@ impl ApparentPrimaryKey {
 }
 
 impl ApparentPrimaryKey {
-    pub fn from_table_and_immutable_row(
+    pub fn from_table_and_row(
         vtable: &VTable,
-        row: &mut ImmutableRow,
+        schema: &RowSchema,
+        row: &mut Row,
     ) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
@@ -71,8 +72,9 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                if let SqlValue::NotNull(sql_value) = row.get_sql_value(cdt.column_name())? {
-                    Ok(sql_value)
+                let (pos, _) = schema.index(&SchemaIndex::from(cdt.column_name()))?;
+                if let SqlValue::NotNull(sql_value) = row.get_sql_value(pos)? {
+                    Ok(sql_value.clone())
                 } else {
                     panic!("primary key's column must be NOT NULL")
                 }
@@ -89,7 +91,7 @@ impl ApparentPrimaryKey {
     pub fn from_table_pk_def(
         vtable: &VTable,
         column_names: &[ColumnName],
-        sql_values: &SqlValues,
+        row: &Row,
     ) -> ApllodbResult<Self> {
         let apk_cdts = vtable.table_wide_constraints().pk_column_data_types();
         let apk_column_names = apk_cdts
@@ -99,7 +101,7 @@ impl ApparentPrimaryKey {
         let apk_sql_values = apk_cdts
             .iter()
             .map(|cdt| {
-                let idx = column_names
+                let raw_pos = column_names
                     .iter()
                     .position(|cn| cn == cdt.column_name())
                     .unwrap_or_else(|| {
@@ -109,7 +111,7 @@ impl ApparentPrimaryKey {
                             apk_cdts
                         )
                     });
-                let sql_value = sql_values.index(idx).clone();
+                let sql_value = row.index(RPos::new(raw_pos)).clone();
                 if let SqlValue::NotNull(nn_sql_value) = sql_value {
                     nn_sql_value
                 } else {
@@ -162,12 +164,11 @@ impl ApparentPrimaryKey {
             .zipped()
             .into_iter()
             .map(|(column_name, sql_value)| {
-                let ffr = FullFieldReference::new(
-                    CorrelationReference::TableNameVariant(self.table_name.clone()),
-                    FieldReference::ColumnNameVariant(column_name.clone()),
+                let index = SchemaIndex::from(
+                    format!("{}.{}", self.table_name.as_str(), column_name.as_str()).as_str(),
                 );
                 ComparisonFunction::EqualVariant {
-                    left: Box::new(Expression::FullFieldReferenceVariant(ffr)),
+                    left: Box::new(Expression::SchemaIndexVariant(index)),
                     right: Box::new(Expression::ConstantVariant(SqlValue::NotNull(
                         sql_value.clone(),
                     ))),

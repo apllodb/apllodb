@@ -1,10 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnName, CorrelationReference,
-    FieldReference, FullFieldReference, RecordFieldRefSchema,
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_storage_engine_interface::{
+    ColumnName, RowProjectionQuery, RowSchema, TableColumnName,
 };
-use apllodb_storage_engine_interface::ProjectionQuery;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -16,9 +15,6 @@ use crate::{
 /// Has projected columns for each version in a VTable.
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ProjectionResult {
-    // to keep RecordFieldRefSchema (alias) info
-    query: ProjectionQuery,
-
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
 }
 
@@ -27,7 +23,7 @@ impl ProjectionResult {
     pub fn new(
         vtable: &VTable,
         active_versions: ActiveVersions,
-        query: ProjectionQuery,
+        query: &RowProjectionQuery,
     ) -> ApllodbResult<Self> {
         let pk_columns: HashSet<ColumnName> = vtable
             .table_wide_constraints()
@@ -48,23 +44,19 @@ impl ProjectionResult {
             .cloned()
             .collect();
 
-        let pk_query_columns: Vec<ColumnName> = match &query {
-            ProjectionQuery::All => pk_columns.iter().cloned().collect(),
-            ProjectionQuery::Schema(schema) => schema
-                .as_full_field_references()
+        let pk_query_columns: Vec<ColumnName> = match query {
+            RowProjectionQuery::All => pk_columns.iter().cloned().collect(),
+            RowProjectionQuery::ColumnIndexes(idxs) => pk_columns
                 .iter()
-                .map(|ffr| ffr.as_column_name())
-                .filter(|cn| pk_columns.contains(cn))
+                .filter(|cn| idxs.iter().any(|idx| cn.matches(idx)))
                 .cloned()
                 .collect(),
         };
         let non_pk_query_columns: Vec<ColumnName> = match &query {
-            ProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
-            ProjectionQuery::Schema(schema) => schema
-                .as_full_field_references()
+            RowProjectionQuery::All => versions_available_columns.iter().cloned().collect(),
+            RowProjectionQuery::ColumnIndexes(idxs) => versions_available_columns
                 .iter()
-                .map(|ffr| ffr.as_column_name())
-                .filter(|cn| versions_available_columns.contains(cn))
+                .filter(|cn| idxs.iter().any(|idx| cn.matches(idx)))
                 .cloned()
                 .collect(),
         };
@@ -121,10 +113,7 @@ impl ProjectionResult {
             result_per_version.insert(version_id.clone(), result_in_version);
         }
 
-        Ok(Self {
-            query,
-            result_per_version,
-        })
+        Ok(Self { result_per_version })
     }
 
     /// Columns included in [ProjectionQuery](apllodb-shared-components::ProjectionQuery) and primary key for this version.
@@ -189,14 +178,12 @@ struct ProjectionResultInVersion {
     non_pk_void: Vec<ColumnName>,
 }
 
-impl From<ProjectionResult> for RecordFieldRefSchema {
+impl From<ProjectionResult> for RowSchema {
     fn from(pr: ProjectionResult) -> Self {
         assert!(
             !pr.result_per_version.is_empty(),
             "at least 1 pr.result_per_version should exist for CREATEd table"
         );
-
-        let projection_query = pr.query.clone();
 
         let (version_id, _) = pr.result_per_version.iter().next().unwrap();
         let table_name = version_id.vtable_id().table_name().clone();
@@ -210,25 +197,11 @@ impl From<ProjectionResult> for RecordFieldRefSchema {
             all_column_names.append(&mut projection_result_in_version.non_pk_void);
         }
 
-        // unique
-        let all_column_names: HashSet<ColumnName> = all_column_names.into_iter().collect();
-
-        let ffrs: Vec<FullFieldReference> = all_column_names
+        let table_column_names: HashSet<TableColumnName> = all_column_names
             .into_iter()
-            .map(|cn| match &projection_query {
-                ProjectionQuery::All => FullFieldReference::new(
-                    CorrelationReference::TableNameVariant(table_name.clone()),
-                    FieldReference::ColumnNameVariant(cn),
-                ),
-                ProjectionQuery::Schema(schema) => schema
-                    .as_full_field_references()
-                    .iter()
-                    .find(|ffr| ffr.as_column_name() == &cn)
-                    .expect("this ProjectionResult is created from this ProjectionQuery")
-                    .clone(),
-            })
+            .map(|cn| TableColumnName::new(table_name.clone(), cn))
             .collect();
 
-        RecordFieldRefSchema::new(ffrs)
+        RowSchema::from(table_column_names)
     }
 }

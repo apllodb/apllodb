@@ -3,10 +3,12 @@ pub(crate) mod query_executor;
 pub(crate) mod query_plan;
 
 use apllodb_shared_components::{
-    ApllodbSessionError, ApllodbSessionResult, Records, Session, SessionWithTx,
+    ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
 };
 use apllodb_sql_parser::apllodb_ast::SelectCommand;
 use apllodb_storage_engine_interface::StorageEngine;
+
+use crate::records::Records;
 
 use self::{
     naive_query_planner::NaiveQueryPlanner, query_executor::QueryExecutor, query_plan::QueryPlan,
@@ -47,15 +49,16 @@ impl<Engine: StorageEngine> QueryProcessor<Engine> {
 #[cfg(test)]
 mod tests {
     use super::QueryProcessor;
-    use crate::sql_processor::sql_processor_context::SqlProcessorContext;
-    use apllodb_shared_components::{
-        test_support::{fixture::*, test_models::People},
-        ApllodbResult, Record,
+    use crate::{
+        records::record::Record, sql_processor::sql_processor_context::SqlProcessorContext,
+        test_support::fixture::*,
     };
+    use apllodb_shared_components::ApllodbResult;
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
     use apllodb_storage_engine_interface::test_support::{
-        default_mock_engine, mock_select, MockWithTxMethods,
+        default_mock_engine, fixture::*, mock_select, test_models::People, MockWithTxMethods,
     };
+    use pretty_assertions::assert_eq;
     use std::sync::Arc;
 
     #[derive(Clone, PartialEq, Debug)]
@@ -93,9 +96,21 @@ mod tests {
             TestDatum::new(
                 "SELECT id, age FROM people",
                 vec![
-                    PEOPLE_RECORD1.clone(),
-                    PEOPLE_RECORD2.clone(),
-                    PEOPLE_RECORD3.clone(),
+                    PEOPLE_RECORD1.clone().projection(
+                        &vec![People::tc_id().into(), People::tc_age().into()]
+                            .into_iter()
+                            .collect(),
+                    )?,
+                    PEOPLE_RECORD2.clone().projection(
+                        &vec![People::tc_id().into(), People::tc_age().into()]
+                            .into_iter()
+                            .collect(),
+                    )?,
+                    PEOPLE_RECORD3.clone().projection(
+                        &vec![People::tc_id().into(), People::tc_age().into()]
+                            .into_iter()
+                            .collect(),
+                    )?,
                 ],
             ),
             // projection
@@ -104,13 +119,13 @@ mod tests {
                 vec![
                     PEOPLE_RECORD1
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_id())])?,
+                        .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                     PEOPLE_RECORD2
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_id())])?,
+                        .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                     PEOPLE_RECORD3
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_id())])?,
+                        .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                 ],
             ),
             TestDatum::new(
@@ -118,13 +133,13 @@ mod tests {
                 vec![
                     PEOPLE_RECORD1
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_age())])?,
+                        .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                     PEOPLE_RECORD2
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_age())])?,
+                        .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                     PEOPLE_RECORD3
                         .clone()
-                        .projection(&[People::field_idx(People::ffr_age())])?,
+                        .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                 ],
             ),
         ];

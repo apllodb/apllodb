@@ -7,8 +7,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId, repository::VersionRepository},
     version_revision_resolver::VersionRevisionResolver,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult};
-use apllodb_shared_components::{ColumnName, SqlValue};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlValue};
+use apllodb_storage_engine_interface::ColumnName;
 use async_trait::async_trait;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
