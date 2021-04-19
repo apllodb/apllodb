@@ -52,6 +52,7 @@ mod access_methods;
 mod alter_table_action;
 mod column;
 mod row_projection_query;
+mod row_selection_query;
 mod rows;
 mod table;
 mod table_column_name;
