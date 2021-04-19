@@ -8,15 +8,22 @@
 #[macro_use]
 extern crate derive_new;
 
+pub(crate) mod aliaser;
 pub(crate) mod ast_translator;
+pub(crate) mod attribute;
+pub(crate) mod correlation;
+pub(crate) mod field;
+pub(crate) mod records;
+pub(crate) mod select;
 pub(crate) mod sql_processor;
 
+pub use records::{record::Record, record_index::RecordIndex, Records};
 pub use sql_processor::{
     sql_processor_context::SqlProcessorContext, success::SqlProcessorSuccess, SqlProcessor,
 };
 
-#[cfg(test)]
-mod local_test_support;
+#[cfg(any(test, feature = "test-support"))]
+pub mod test_support;
 
 #[cfg(test)]
 mod tests {

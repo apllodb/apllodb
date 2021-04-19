@@ -4,8 +4,9 @@ pub mod id;
 pub mod repository;
 
 use crate::entity::Entity;
-use apllodb_shared_components::{
-    AlterTableAction, ApllodbResult, ColumnDefinition, DatabaseName, TableConstraints, TableName,
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::{
+    AlterTableAction, ColumnDefinition, TableConstraints, TableName,
 };
 use constraints::TableWideConstraints;
 use id::VTableId;

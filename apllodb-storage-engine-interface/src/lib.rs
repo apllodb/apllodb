@@ -45,14 +45,33 @@
 //!
 //! See [test_support module level doc](crate::test_support) for detail.
 
+#[macro_use]
+extern crate derive_new;
+
 mod access_methods;
-mod projection_query;
+mod alter_table_action;
+mod column;
+mod row_projection_query;
+mod rows;
+mod table;
+mod table_column_name;
 
 pub use access_methods::{
     with_db_methods::WithDbMethods, with_tx_methods::WithTxMethods,
     without_db_methods::WithoutDbMethods,
 };
-pub use projection_query::ProjectionQuery;
+pub use alter_table_action::AlterTableAction;
+pub use column::{
+    column_constraint_kind::ColumnConstraintKind, column_constraints::ColumnConstraints,
+    column_data_type::ColumnDataType, column_definition::ColumnDefinition, column_name::ColumnName,
+};
+pub use row_projection_query::RowProjectionQuery;
+pub use rows::{row::Row, row_schema::RowSchema, Rows};
+pub use table::{
+    table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
+    table_name::TableName,
+};
+pub use table_column_name::TableColumnName;
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;

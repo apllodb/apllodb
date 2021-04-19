@@ -1,13 +1,15 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    AlterTableAction, ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult,
-    ColumnDefinition, Session, SessionWithTx, TableConstraintKind, TableConstraints, TableName,
+    ApllodbError, ApllodbResult, ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
 };
 use apllodb_sql_parser::apllodb_ast::{
     AlterTableCommand, Command, CreateTableCommand, TableElement,
 };
-use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{
+    AlterTableAction, ColumnDefinition, StorageEngine, TableConstraintKind, TableConstraints,
+    TableName, WithTxMethods,
+};
 
 use crate::ast_translator::AstTranslator;
 
@@ -127,12 +129,13 @@ mod tests {
 
     use super::DdlProcessor;
     use crate::sql_processor::sql_processor_context::SqlProcessorContext;
-    use apllodb_shared_components::{
-        test_support::test_models::People, ApllodbResult, ColumnConstraints, ColumnDataType,
-        ColumnDefinition, SqlType, TableConstraintKind, TableConstraints, TableName,
-    };
+    use apllodb_shared_components::{ApllodbResult, SqlType};
     use apllodb_sql_parser::ApllodbSqlParser;
-    use apllodb_storage_engine_interface::test_support::{default_mock_engine, MockWithTxMethods};
+    use apllodb_storage_engine_interface::{
+        test_support::{default_mock_engine, test_models::People, MockWithTxMethods},
+        ColumnConstraints, ColumnDataType, ColumnDefinition, TableConstraintKind, TableConstraints,
+        TableName,
+    };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
     use once_cell::sync::Lazy;
@@ -160,12 +163,12 @@ mod tests {
             )",
                 People::table_name(),
                 vec![TableConstraintKind::PrimaryKey {
-                    column_names: vec![People::ffr_id().as_column_name().clone()],
+                    column_names: vec![People::tc_id().as_column_name().clone()],
                 }],
                 vec![
                     ColumnDefinition::new(
                         ColumnDataType::new(
-                            People::ffr_id().as_column_name().clone(),
+                            People::tc_id().as_column_name().clone(),
                             SqlType::integer(),
                             true,
                         ),
@@ -173,7 +176,7 @@ mod tests {
                     ),
                     ColumnDefinition::new(
                         ColumnDataType::new(
-                            People::ffr_age().as_column_name().clone(),
+                            People::tc_age().as_column_name().clone(),
                             SqlType::integer(),
                             true,
                         ),

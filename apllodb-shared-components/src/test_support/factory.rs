@@ -3,13 +3,8 @@
 //! Factory methods for testing
 
 use crate::{
-    data_structure::{
-        records::record_field_ref_schema::RecordFieldRefSchema,
-        reference::{correlation_reference::CorrelationReference, field_reference::FieldReference},
-    },
-    AliasName, BooleanExpression, ColumnDataType, ColumnName, ComparisonFunction, DatabaseName,
-    Expression, FullFieldReference, LogicalFunction, NnSqlValue, Record, Records, SqlType,
-    SqlValue, SqlValues, TableName, UnaryOperator,
+    BooleanExpression, ComparisonFunction, DatabaseName, Expression, LogicalFunction, NnSqlValue,
+    SqlValue, UnaryOperator,
 };
 use rand::Rng;
 
@@ -20,67 +15,6 @@ impl DatabaseName {
     }
 }
 
-impl TableName {
-    /// randomly generate a table name
-    pub fn random() -> Self {
-        Self::new(random_id()).unwrap()
-    }
-}
-
-impl CorrelationReference {
-    pub fn factory_tn(table_name: &str) -> Self {
-        Self::TableNameVariant(TableName::factory(table_name))
-    }
-
-    pub fn factory_ta(table_name: &str, alias: &str) -> Self {
-        Self::TableAliasVariant {
-            table_name: TableName::factory(table_name),
-            alias_name: AliasName::factory(alias),
-        }
-    }
-}
-
-impl FullFieldReference {
-    pub fn factory(table_name: &str, column_name: &str) -> Self {
-        let corr = CorrelationReference::TableNameVariant(TableName::factory(table_name));
-        let field = FieldReference::ColumnNameVariant(ColumnName::factory(column_name));
-        Self::new(corr, field)
-    }
-
-    pub fn with_corr_alias(mut self, correlation_alias: &str) -> Self {
-        self.set_correlation_alias(AliasName::factory(correlation_alias));
-        self
-    }
-
-    pub fn with_field_alias(mut self, field_alias: &str) -> Self {
-        self.set_field_alias(AliasName::factory(field_alias));
-        self
-    }
-}
-
-impl TableName {
-    pub fn factory(table_name: &str) -> Self {
-        Self::new(table_name).unwrap()
-    }
-}
-
-impl ColumnName {
-    pub fn factory(column_name: &str) -> Self {
-        Self::new(column_name).unwrap()
-    }
-}
-
-impl AliasName {
-    pub fn factory(alias_name: &str) -> Self {
-        Self::new(alias_name).unwrap()
-    }
-}
-
-impl ColumnDataType {
-    pub fn factory(column_name: &str, sql_type: SqlType, nullable: bool) -> Self {
-        Self::new(ColumnName::factory(column_name), sql_type, nullable)
-    }
-}
 impl Expression {
     pub fn factory_null() -> Self {
         Self::ConstantVariant(SqlValue::Null)
@@ -137,48 +71,7 @@ impl NnSqlValue {
     }
 }
 
-impl Record {
-    pub fn factory(sql_values: Vec<SqlValue>) -> Self {
-        Self::new(SqlValues::new(sql_values))
-    }
-
-    /// WARN: internal SqlValues might get different from RecordFieldRefSchema
-    pub fn naive_join(self, right: Self) -> Self {
-        let mut sql_values = self.into_values();
-        for right_sql_value in right.into_values() {
-            sql_values.append(right_sql_value);
-        }
-        Self::new(sql_values)
-    }
-}
-
-impl Records {
-    pub fn factory(schema: RecordFieldRefSchema, records: Vec<Record>) -> Self {
-        Self::new(schema, records)
-    }
-}
-
-impl RecordFieldRefSchema {
-    pub fn factory(full_field_references: Vec<FullFieldReference>) -> Self {
-        Self::new(full_field_references)
-    }
-
-    pub fn joined(&self, right: &Self) -> Self {
-        let mut left = self.as_full_field_references().to_vec();
-        let mut right = right.as_full_field_references().to_vec();
-        left.append(&mut right);
-        Self::new(left)
-    }
-
-    pub fn to_column_names(&self) -> Vec<ColumnName> {
-        self.as_full_field_references()
-            .iter()
-            .map(|ffr| ffr.as_column_name().clone())
-            .collect()
-    }
-}
-
-fn random_id() -> String {
+pub fn random_id() -> String {
     rand::thread_rng()
         .sample_iter(&rand::distributions::Alphanumeric)
         .map(char::from)

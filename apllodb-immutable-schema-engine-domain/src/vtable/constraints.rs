@@ -1,6 +1,7 @@
 use super::constraint_kind::TableWideConstraintKind;
-use apllodb_shared_components::{
-    ApllodbResult, ColumnDataType, ColumnDefinition, ColumnName, TableConstraints,
+use apllodb_shared_components::ApllodbResult;
+use apllodb_storage_engine_interface::{
+    ColumnDataType, ColumnDefinition, ColumnName, TableConstraints,
 };
 use serde::{Deserialize, Serialize};
 
@@ -62,9 +63,10 @@ impl TableWideConstraints {
 #[cfg(test)]
 mod tests {
     use super::TableWideConstraints;
-    use apllodb_shared_components::{
-        ApllodbErrorKind, ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition,
-        ColumnName, SqlType, TableConstraintKind, TableConstraints,
+    use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, SqlType};
+    use apllodb_storage_engine_interface::{
+        ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind,
+        TableConstraints,
     };
 
     #[test]

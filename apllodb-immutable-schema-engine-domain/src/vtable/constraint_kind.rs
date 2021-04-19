@@ -1,6 +1,6 @@
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnDefinition, ColumnName,
-    TableConstraintKind,
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_storage_engine_interface::{
+    ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind,
 };
 use serde::{Deserialize, Serialize};
 

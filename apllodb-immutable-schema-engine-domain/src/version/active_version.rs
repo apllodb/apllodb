@@ -1,7 +1,7 @@
 use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
 use crate::{entity::Entity, vtable::id::VTableId};
-use apllodb_shared_components::{AlterTableAction, ColumnDataType, ColumnName, SqlValue};
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlValue};
+use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -228,8 +228,8 @@ impl ActiveVersion {
 mod tests {
     use super::ActiveVersion;
     use crate::vtable::id::VTableId;
-    use apllodb_shared_components::{AlterTableAction, ColumnDataType, ColumnName, SqlType};
-    use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult};
+    use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, SqlType};
+    use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {

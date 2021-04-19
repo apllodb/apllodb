@@ -1,4 +1,7 @@
+mod record_cli_display;
+
 use apllodb_server::{ApllodbCommandSuccess, ApllodbServer, ApllodbSessionResult, Session};
+use record_cli_display::RecordCliDisplay;
 
 #[derive(Debug, new)]
 pub(crate) struct CmdProcessor<'main> {
@@ -18,12 +21,7 @@ impl<'main> CmdProcessor<'main> {
 
                 for r in records {
                     cnt += 1;
-
-                    let mut s = String::new();
-                    for (ffr, value) in r.into_ffr_vals() {
-                        s.push_str(&format!("{}: {}\t", ffr, value));
-                    }
-                    println!("{}", s);
+                    println!("{}", r.cli_display());
                 }
 
                 println!("\n{} records in total\n", cnt);

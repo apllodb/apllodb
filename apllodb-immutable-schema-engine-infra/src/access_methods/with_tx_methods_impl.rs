@@ -14,11 +14,11 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_shared_components::{
-    AlterTableAction, ApllodbError, ColumnDefinition, ColumnName, Expression, Records, SessionId,
-    SqlValues, TableConstraints, TableName,
+use apllodb_shared_components::{ApllodbError, Expression, SessionId};
+use apllodb_storage_engine_interface::{
+    AlterTableAction, ColumnDefinition, ColumnName, Row, RowProjectionQuery, Rows,
+    TableConstraints, TableName, WithTxMethods,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, WithTxMethods};
 use futures::FutureExt;
 
 use super::BoxFutRes;
@@ -136,8 +136,8 @@ impl WithTxMethods for WithTxMethodsImpl {
         self,
         sid: SessionId,
         table_name: TableName,
-        projection: ProjectionQuery,
-    ) -> BoxFutRes<Records> {
+        projection: RowProjectionQuery,
+    ) -> BoxFutRes<Rows> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;
@@ -151,7 +151,7 @@ impl WithTxMethods for WithTxMethodsImpl {
             )
             .await?;
 
-            Ok(output.records)
+            Ok(output.rows)
         }
         .boxed_local()
     }
@@ -161,14 +161,14 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         column_names: Vec<ColumnName>,
-        values: Vec<SqlValues>,
+        rows: Vec<Row>,
     ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = InsertUseCaseInput::new(&database_name, &table_name, &column_names, values);
+            let input = InsertUseCaseInput::new(&database_name, &table_name, &column_names, rows);
             InsertUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),

@@ -2,15 +2,14 @@ mod model;
 
 use crate::{error::InfraError, sqlite::transaction::sqlite_tx::SqliteTx};
 use model::VersionMetadataModel;
-use std::{cell::RefCell, convert::TryFrom, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, ColumnDataType, ColumnName, SqlType, TableName,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlType};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
 #[derive(Debug)]
 pub(in crate::sqlite) struct VersionMetadataDao {
@@ -84,7 +83,7 @@ CREATE TABLE {tname} (
 
         let tname = TableName::new(TNAME)?;
 
-        let models: Vec<VersionMetadataModel> = self
+        let rows = self
             .sqlite_tx
             .borrow_mut()
             .query(
@@ -99,8 +98,11 @@ CREATE TABLE {tname} (
                 ],
                 &[],
             )
-            .await?
-            .map(VersionMetadataModel::try_from)
+            .await?;
+        let schema = rows.as_schema().clone();
+
+        let models: Vec<VersionMetadataModel> = rows
+            .map(|row| VersionMetadataModel::from_row(&schema, row))
             .collect::<ApllodbResult<_>>()?;
 
         models

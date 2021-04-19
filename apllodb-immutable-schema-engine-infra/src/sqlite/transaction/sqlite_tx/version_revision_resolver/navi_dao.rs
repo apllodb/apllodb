@@ -12,7 +12,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::id::VersionId,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::{ApllodbResult, ColumnDataType, ColumnName, SqlType};
+use apllodb_shared_components::{ApllodbResult, SqlType};
+use apllodb_storage_engine_interface::{ColumnDataType, ColumnName};
 use create_table_sql_for_navi::CreateTableSqlForNavi;
 
 use self::{
@@ -79,7 +80,7 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
             column_data_types.push(pk_cdt);
         }
 
-        let row_iter = self
+        let rows = self
             .sqlite_tx
             .borrow_mut()
             .query(
@@ -89,9 +90,10 @@ SELECT {pk_column_names}, {cname_rowid}, {cname_revision}, {cname_version_number
                 &[],
             )
             .await?;
+        let schema = rows.as_schema().clone();
 
-        let ret: Vec<ExistingNaviWithPk> = row_iter
-            .map(|r| ExistingNaviWithPk::from_navi_row(vtable, r))
+        let ret: Vec<ExistingNaviWithPk> = rows
+            .map(|r| ExistingNaviWithPk::from_navi_row(vtable, &schema, r))
             .collect::<ApllodbResult<Vec<Option<ExistingNaviWithPk>>>>()?
             .into_iter()
             .flatten()
@@ -128,7 +130,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
         let cdt_version_number = self.cdt_version_number();
         let column_data_types = vec![&cdt_rowid, &cdt_revision, &cdt_version_number];
 
-        let mut row_iter = self
+        let mut rows = self
             .sqlite_tx
             .borrow_mut()
             .query(
@@ -138,11 +140,11 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
                 &[],
             )
             .await?;
-        let opt_row = row_iter.next();
+        let schema = rows.as_schema().clone();
 
-        let navi = match opt_row {
+        let navi = match rows.next() {
             None => Navi::NotExist,
-            Some(mut r) => Navi::from_navi_row(&mut r)?,
+            Some(mut r) => Navi::from_navi_row(&schema, &mut r)?,
         };
         Ok(navi)
     }

@@ -3,10 +3,12 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::{session_with_tx, test_setup};
 use apllodb_shared_components::{
-    ApllodbResult, ColumnConstraints, ColumnDataType, ColumnDefinition, FieldIndex, NnSqlValue,
-    SqlType, SqlValue, SqlValues, TableConstraintKind, TableConstraints, TableName,
+    ApllodbResult, NnSqlValue, Schema, SchemaIndex, SqlType, SqlValue,
 };
-use apllodb_storage_engine_interface::{ProjectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{
+    ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery, StorageEngine,
+    TableConstraintKind, TableConstraints, TableName, WithTxMethods,
+};
 
 #[ctor::ctor]
 fn setup() {
@@ -51,7 +53,7 @@ async fn test_compound_pk() -> ApllodbResult<()> {
                 c_country_code_def.column_data_type().column_name().clone(),
                 c_postal_code_def.column_data_type().column_name().clone(),
             ],
-            vec![SqlValues::new(vec![
+            vec![Row::new(vec![
                 SqlValue::NotNull(NnSqlValue::SmallInt(100)),
                 SqlValue::NotNull(NnSqlValue::Integer(1000001)),
             ])],
@@ -60,26 +62,26 @@ async fn test_compound_pk() -> ApllodbResult<()> {
 
     let (records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), ProjectionQuery::All)
+        .select(session, t_name.clone(), RowProjectionQuery::All)
         .await?;
 
     let schema = records.as_schema().clone();
-    let country_code_idx = schema.resolve_index(&FieldIndex::from(
+    let (country_code_pos, _) = schema.index(&SchemaIndex::from(
         c_country_code_def.column_data_type().column_name().as_str(),
     ))?;
-    let postal_code_idx = schema.resolve_index(&FieldIndex::from(
+    let (postal_code_pos, _) = schema.index(&SchemaIndex::from(
         c_postal_code_def.column_data_type().column_name().as_str(),
     ))?;
 
     for record in records {
         assert_eq!(
             record.get::<i16>(
-                country_code_idx
+                country_code_pos
             )?,
             Some(100i16),
             "although `country_code` is not specified in SELECT projection, it's available since it's a part of PK"
         );
-        assert_eq!(record.get::<i32>(postal_code_idx)?, Some(1000001i32),);
+        assert_eq!(record.get::<i32>(postal_code_pos)?, Some(1000001i32),);
     }
 
     engine.with_tx().commit_transaction(session).await?;

@@ -1,4 +1,5 @@
-use apllodb_shared_components::{DatabaseName, TableName};
+use apllodb_shared_components::DatabaseName;
+use apllodb_storage_engine_interface::TableName;
 use serde::{Deserialize, Serialize};
 
 /// ID of VTable

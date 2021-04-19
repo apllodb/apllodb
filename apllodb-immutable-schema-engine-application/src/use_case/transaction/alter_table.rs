@@ -4,7 +4,8 @@ use apllodb_immutable_schema_engine_domain::{
     version::repository::VersionRepository,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{AlterTableAction, ApllodbResult, DatabaseName, TableName};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::{AlterTableAction, TableName};
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 

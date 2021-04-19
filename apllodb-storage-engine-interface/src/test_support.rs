@@ -1,3 +1,7 @@
+pub mod factory;
+pub mod fixture;
+pub mod test_models;
+
 mod mock;
 
 pub use crate::access_methods::{

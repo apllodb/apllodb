@@ -1,10 +1,18 @@
-use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, ColumnName, CorrelationReference, FieldReference,
-    FullFieldReference, Record, RecordFieldRefSchema, Records, SqlValue, SqlValues, TableName,
-};
-use apllodb_sql_parser::apllodb_ast;
+use std::{collections::HashSet, sync::Arc};
 
-use crate::ast_translator::AstTranslator;
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Schema, SchemaIndex, SqlValue};
+use apllodb_sql_parser::apllodb_ast;
+use apllodb_storage_engine_interface::{ColumnName, Row, TableName};
+
+use crate::{
+    ast_translator::AstTranslator,
+    attribute::attribute_name::AttributeName,
+    correlation::{
+        aliased_correlation_name::AliasedCorrelationName, correlation_name::CorrelationName,
+    },
+    field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
+    records::{record::Record, record_schema::RecordSchema, Records},
+};
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct InsertCommandAnalyzer {
@@ -24,24 +32,28 @@ impl InsertCommandAnalyzer {
             .collect()
     }
 
-    fn ffrs_to_insert(&self) -> ApllodbResult<Vec<FullFieldReference>> {
+    fn naive_afn_to_insert(&self) -> ApllodbResult<HashSet<AliasedFieldName>> {
         self.column_names_to_insert()?
             .into_iter()
             .map(|cn| {
-                Ok(FullFieldReference::new(
-                    CorrelationReference::TableNameVariant(self.table_name_to_insert()?),
-                    FieldReference::ColumnNameVariant(cn),
-                ))
+                let attr_name = AttributeName::ColumnNameVariant(cn);
+                let corr_name = CorrelationName::TableNameVariant(self.table_name_to_insert()?);
+                let aliased_corr_name = AliasedCorrelationName::new(corr_name, None);
+                let field_name = FieldName::new(aliased_corr_name, attr_name);
+                let aliased_field_name = AliasedFieldName::new(field_name, None);
+                Ok(aliased_field_name)
             })
             .collect()
     }
 
-    fn schema_to_insert(&self) -> ApllodbResult<RecordFieldRefSchema> {
-        Ok(RecordFieldRefSchema::new(self.ffrs_to_insert()?))
+    fn schema_to_insert(&self) -> ApllodbResult<RecordSchema> {
+        Ok(RecordSchema::from(self.naive_afn_to_insert()?))
     }
 
+    /// InsertNode takes its input as Records.
+    /// Here creates Records from VALUES.
     pub(super) fn records_to_insert(&self) -> ApllodbResult<Records> {
-        let schema = self.schema_to_insert()?;
+        let schema = Arc::new(self.schema_to_insert()?);
 
         let records: Vec<Record> = self
             .command
@@ -50,27 +62,39 @@ impl InsertCommandAnalyzer {
             .into_vec()
             .into_iter()
             .map(|insert_value| {
-                let expressions = insert_value.expressions.into_vec();
+                let ast_expressions = insert_value.expressions.as_vec();
 
-                if schema.len() != expressions.len() {
+                if schema.len() != ast_expressions.len() {
                     ApllodbError::feature_not_supported(
                         "VALUES expressions and column names must have same length currently",
                     );
                 }
 
-                let constant_values: Vec<SqlValue> = expressions
-                    .into_iter()
-                    .map(|ast_expression| {
-                        let expression = AstTranslator::expression_in_non_select(
-                            ast_expression,
-                            vec![self.table_name_to_insert()?],
-                        )?;
-                        expression.to_sql_value(None)
-                    })
-                    .collect::<ApllodbResult<_>>()?;
+                // prepare enough length vec first.
+                let mut constant_values: Vec<SqlValue> = vec![];
+                for _ in 0..schema.len() {
+                    constant_values.push(SqlValue::Null);
+                }
+                // insert SqlValue from VALUES following column names order.
+                for (cn, ast_expr) in self
+                    .command
+                    .column_names
+                    .as_vec()
+                    .iter()
+                    .zip(ast_expressions)
+                {
+                    let expr = AstTranslator::expression_in_non_select(
+                        ast_expr.clone(),
+                        vec![self.table_name_to_insert()?],
+                    )?;
+                    let sql_value = expr.to_sql_value_for_expr_without_index()?;
 
-                let values = SqlValues::new(constant_values);
-                Ok(Record::new(values))
+                    let (pos, _) = schema.index(&SchemaIndex::from(cn.0 .0.as_str()))?;
+                    constant_values[pos.to_usize()] = sql_value;
+                }
+
+                let row = Row::new(constant_values);
+                Ok(Record::new(schema.clone(), row))
             })
             .collect::<ApllodbResult<_>>()?;
 

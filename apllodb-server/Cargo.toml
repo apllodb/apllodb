@@ -30,6 +30,7 @@ once_cell = {version = "1.7", optional = true}
 apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"]}
 apllodb-server = {path = ".", features = ["test-support"]}
 apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
+apllodb-sql-processor = {path = "../apllodb-sql-processor", features = ["test-support"]}
 apllodb-storage-engine-interface = {path = "../apllodb-storage-engine-interface", features = ["test-support"]}
 apllodb-test-support = {path = "../apllodb-test-support"}
 

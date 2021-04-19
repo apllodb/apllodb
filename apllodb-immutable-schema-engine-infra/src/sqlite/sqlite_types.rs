@@ -1,9 +1,6 @@
 use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 
-use crate::immutable_schema_row_iter::ImmutableSchemaRowIter;
-
 use super::{
-    row_iterator::SqliteRowIterator,
     sqlite_rowid::SqliteRowid,
     transaction::sqlite_tx::{
         version::repository_impl::VersionRepositoryImpl,
@@ -16,9 +13,6 @@ pub struct SqliteTypes;
 
 impl ImmutableSchemaAbstractTypes for SqliteTypes {
     type VrrId = SqliteRowid;
-
-    type ImmutableSchemaRowIter = ImmutableSchemaRowIter;
-    type VersionRowIter = SqliteRowIterator;
 
     type VTableRepo = VTableRepositoryImpl;
     type VersionRepo = VersionRepositoryImpl;
