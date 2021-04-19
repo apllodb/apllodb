@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use apllodb_shared_components::{Expression, SchemaIndex};
 use apllodb_storage_engine_interface::{RowProjectionQuery, TableName};
 use serde::{Deserialize, Serialize};
@@ -27,7 +29,7 @@ pub(crate) enum LeafPlanOperation {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub(crate) enum UnaryPlanOperation {
     Projection {
-        fields: Vec<SchemaIndex>,
+        fields: HashSet<SchemaIndex>,
     },
     Selection {
         /// Expression here must be evaluated as BOOLEAN (NULL is FALSE in BOOLEAN context).

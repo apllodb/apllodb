@@ -1,6 +1,6 @@
 use apllodb_shared_components::{ApllodbResult, RPos, SqlConvertible, SqlValue};
 use serde::{Deserialize, Serialize};
-use std::ops::Index;
+use std::{collections::HashSet, ops::Index};
 
 /// Primitive row representation used in storage engines and query processor
 ///
@@ -76,31 +76,22 @@ impl Row {
     /// 'a', 'b', 'c', 'd'
     /// ```
     ///
-    /// and `positions = [3, 0]`, then result is:
+    /// and `positions = (3, 0)`, then result is:
     ///
     /// ```text
-    /// 'd', 'a'
+    /// 'a', 'd'
     /// ```
-    pub fn projection(mut self, positions: &[RPos]) -> Self {
-        let mut sorted_idxs = positions.to_vec();
-        sorted_idxs.sort_unstable();
+    ///
+    /// Note that order of columns are kept.
+    pub fn projection(mut self, positions: &HashSet<RPos>) -> Self {
+        let mut sorted_positions: Vec<RPos> = positions.iter().cloned().collect();
+        sorted_positions.sort_unstable();
 
-        let mut cnt_moved = 0;
-
-        let mut new_inner_with_order: Vec<(SqlValue, usize)> = sorted_idxs
+        let new_values: Vec<SqlValue> = sorted_positions
             .into_iter()
-            .map(|pos| {
-                let order = positions.iter().position(|x| *x == pos).unwrap();
-                let ret = (self.remove(RPos::new(pos.to_usize() - cnt_moved)), order);
-                cnt_moved += 1;
-                ret
-            })
+            .map(|pos| self.remove(pos))
             .collect();
 
-        let new_values: Vec<SqlValue> = {
-            new_inner_with_order.sort_by_key(|v| v.1);
-            new_inner_with_order.into_iter().map(|v| v.0).collect()
-        };
         Self::new(new_values)
     }
 }

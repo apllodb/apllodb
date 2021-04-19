@@ -2,7 +2,10 @@ pub(crate) mod record;
 pub(crate) mod record_index;
 pub(crate) mod record_schema;
 
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use apllodb_shared_components::{
     ApllodbResult, Expression, RPos, Schema, SchemaIndex, SqlCompareResult, SqlValue,
@@ -88,13 +91,13 @@ impl Records {
         }
     }
 
-    /// Horizontally shrink records.
+    /// Horizontally shrink records. Order of fields is kept between input Record and output.
     ///
     /// # Failures
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub(crate) fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
+    pub(crate) fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
         let new_schema = Arc::new(self.schema.projection(indexes)?);
 
         let projection_positions = indexes
@@ -103,7 +106,7 @@ impl Records {
                 let (pos, _) = self.schema.index(idx)?;
                 Ok(pos)
             })
-            .collect::<ApllodbResult<Vec<RPos>>>()?;
+            .collect::<ApllodbResult<HashSet<RPos>>>()?;
 
         let new_inner: Vec<Record> = self
             .inner

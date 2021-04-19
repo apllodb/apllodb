@@ -102,7 +102,6 @@ mod tests {
     use crate::sql_processor::sql_processor_context::SqlProcessorContext;
     use crate::{
         aliaser::Aliaser,
-        test_support::fixture::*,
         records::{record::Record, record_schema::RecordSchema},
         sql_processor::query::query_plan::{
             query_plan_tree::{
@@ -119,6 +118,7 @@ mod tests {
             },
             QueryPlan,
         },
+        test_support::fixture::*,
     };
 
     #[async_std::test]
@@ -205,7 +205,9 @@ mod tests {
                 repo.create(QueryPlanNodeKind::Leaf(QueryPlanNodeLeaf {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
-                        projection: RowProjectionQuery::ColumnIndexes(vec![People::tc_id().into()]),
+                        projection: RowProjectionQuery::ColumnIndexes(
+                            vec![People::tc_id().into()].into_iter().collect(),
+                        ),
                         aliaser: Aliaser::default(),
                     },
                 }))
@@ -213,13 +215,13 @@ mod tests {
             .expect(vec![
                 PEOPLE_RECORD1
                     .clone()
-                    .projection(&[People::tc_id().into()])?,
+                    .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                 PEOPLE_RECORD2
                     .clone()
-                    .projection(&[People::tc_id().into()])?,
+                    .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                 PEOPLE_RECORD3
                     .clone()
-                    .projection(&[People::tc_id().into()])?,
+                    .projection(&vec![People::tc_id().into()].into_iter().collect())?,
             ])
             .run()
             .await?;
@@ -229,7 +231,7 @@ mod tests {
                     op: LeafPlanOperation::SeqScan {
                         table_name: People::table_name(),
                         projection: RowProjectionQuery::ColumnIndexes(
-                            vec![People::tc_age().into()],
+                            vec![People::tc_age().into()].into_iter().collect(),
                         ),
                         aliaser: Aliaser::default(),
                     },
@@ -238,13 +240,13 @@ mod tests {
             .expect(vec![
                 PEOPLE_RECORD1
                     .clone()
-                    .projection(&[People::tc_age().into()])?,
+                    .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                 PEOPLE_RECORD2
                     .clone()
-                    .projection(&[People::tc_age().into()])?,
+                    .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                 PEOPLE_RECORD3
                     .clone()
-                    .projection(&[People::tc_age().into()])?,
+                    .projection(&vec![People::tc_age().into()].into_iter().collect())?,
             ])
             .run()
             .await?;
@@ -267,13 +269,13 @@ mod tests {
             .expect(vec![
                 PEOPLE_RECORD1
                     .clone()
-                    .projection(&[People::tc_id().into()])?,
+                    .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                 PEOPLE_RECORD2
                     .clone()
-                    .projection(&[People::tc_id().into()])?,
+                    .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                 PEOPLE_RECORD3
                     .clone()
-                    .projection(&[People::tc_id().into()])?,
+                    .projection(&vec![People::tc_id().into()].into_iter().collect())?,
             ])
             .run()
             .await?;
@@ -295,13 +297,13 @@ mod tests {
             .expect(vec![
                 PEOPLE_RECORD1
                     .clone()
-                    .projection(&[People::tc_age().into()])?,
+                    .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                 PEOPLE_RECORD2
                     .clone()
-                    .projection(&[People::tc_age().into()])?,
+                    .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                 PEOPLE_RECORD3
                     .clone()
-                    .projection(&[People::tc_age().into()])?,
+                    .projection(&vec![People::tc_age().into()].into_iter().collect())?,
             ])
             .run()
             .await?;

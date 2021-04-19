@@ -318,14 +318,18 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            RowProjectionQuery::ColumnIndexes(vec![SchemaIndex::new(
-                Some(t_name.as_str().to_string()),
-                c_id_def
-                    .column_data_type()
-                    .column_name()
-                    .as_str()
-                    .to_string(),
-            )]),
+            RowProjectionQuery::ColumnIndexes(
+                vec![SchemaIndex::new(
+                    Some(t_name.as_str().to_string()),
+                    c_id_def
+                        .column_data_type()
+                        .column_name()
+                        .as_str()
+                        .to_string(),
+                )]
+                .into_iter()
+                .collect(),
+            ),
         )
         .await?;
     assert_eq!(rows.count(), 1);
@@ -336,14 +340,18 @@ async fn test_delete() -> ApllodbResult<()> {
         .select(
             session,
             t_name.clone(),
-            RowProjectionQuery::ColumnIndexes(vec![SchemaIndex::new(
-                Some(t_name.as_str().to_string()),
-                c_id_def
-                    .column_data_type()
-                    .column_name()
-                    .as_str()
-                    .to_string(),
-            )]),
+            RowProjectionQuery::ColumnIndexes(
+                vec![SchemaIndex::new(
+                    Some(t_name.as_str().to_string()),
+                    c_id_def
+                        .column_data_type()
+                        .column_name()
+                        .as_str()
+                        .to_string(),
+                )]
+                .into_iter()
+                .collect(),
+            ),
         )
         .await?;
     assert_eq!(rows.count(), 0);

@@ -162,7 +162,7 @@ impl RecordSchema {
 }
 
 impl Record {
-    pub(crate) fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
+    pub(crate) fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
         let schema = self.schema.clone();
         let records = Records::new(schema, vec![self]);
         let mut records = records.projection(indexes)?;

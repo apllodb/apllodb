@@ -77,7 +77,7 @@ pub trait Schema {
     }
 
     /// Filter specified fields
-    fn projection(&self, indexes: &[SchemaIndex]) -> ApllodbResult<Self>
+    fn projection(&self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self>
     where
         Self: Sized,
     {

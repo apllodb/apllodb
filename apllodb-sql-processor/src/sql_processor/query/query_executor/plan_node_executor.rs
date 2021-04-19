@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionResult, Expression, SchemaIndex, SessionWithTx,
@@ -99,7 +99,11 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
     /// # Failures
     ///
     /// Failures from [Record::projection()](apllodb_shared_components::Record::projection).
-    fn projection(&self, input_left: Records, indexes: &[SchemaIndex]) -> ApllodbResult<Records> {
+    fn projection(
+        &self,
+        input_left: Records,
+        indexes: &HashSet<SchemaIndex>,
+    ) -> ApllodbResult<Records> {
         input_left.projection(indexes)
     }
 

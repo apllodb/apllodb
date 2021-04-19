@@ -1,7 +1,7 @@
 pub(crate) mod row;
 pub(crate) mod row_schema;
 
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 
 use apllodb_shared_components::{ApllodbResult, RPos, Schema, SchemaIndex};
 
@@ -29,13 +29,13 @@ impl Rows {
         }
     }
 
-    /// Horizontally shrink records.
+    /// Horizontally shrink records. Order of columns are kept between input Row and output.
     ///
     /// # Failures
     ///
     /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
     ///   - Specified field does not exist in this record.
-    pub fn projection(self, indexes: &[SchemaIndex]) -> ApllodbResult<Self> {
+    pub fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
         let new_schema = self.schema.projection(indexes)?;
 
         let projection_positions = indexes
@@ -44,7 +44,7 @@ impl Rows {
                 let (pos, _) = self.schema.index(idx)?;
                 Ok(pos)
             })
-            .collect::<ApllodbResult<Vec<RPos>>>()?;
+            .collect::<ApllodbResult<HashSet<RPos>>>()?;
 
         let new_inner: Vec<Row> = self
             .inner

@@ -1,5 +1,7 @@
 mod select_command_analyzer;
 
+use std::collections::HashSet;
+
 use apllodb_shared_components::{ApllodbResult, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast::{self};
 use apllodb_storage_engine_interface::RowProjectionQuery;
@@ -72,7 +74,7 @@ impl<'r> NaiveQueryPlanner<'r> {
         for aliased_correlation_name in &from_item_correlations {
             match &aliased_correlation_name.correlation_name {
                 CorrelationName::TableNameVariant(table_name) => {
-                    let prj_idxs: Vec<SchemaIndex> = widest_schema
+                    let prj_idxs: HashSet<SchemaIndex> = widest_schema
                         .filter_by_correlations(&[aliased_correlation_name.clone()])
                         .to_aliased_field_names()
                         .iter()
