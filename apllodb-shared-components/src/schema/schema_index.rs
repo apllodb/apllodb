@@ -16,7 +16,7 @@ pub struct SchemaIndex {
 impl SchemaIndex {
     /// Optional prefix part
     pub fn prefix(&self) -> Option<&str> {
-        self.prefix.as_ref().map(|s| s.as_str())
+        self.prefix.as_deref()
     }
 
     /// Attribute part

@@ -14,6 +14,6 @@ impl RPos {
 
     /// Increment pos.
     pub fn inc(&mut self) {
-        self.0 = self.0 + 1
+        self.0 += 1
     }
 }
