@@ -137,6 +137,7 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         projection: RowProjectionQuery,
+        selection: RowSelectionQuery,
     ) -> BoxFutRes<Rows> {
         async move {
             let tx_pool = self.tx_pool.borrow();
@@ -186,6 +187,7 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
+        selection: RowSelectionQuery,
     ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
