@@ -144,15 +144,24 @@ impl WithTxMethods for WithTxMethodsImpl {
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = FullScanUseCaseInput::new(&database_name, &table_name, projection);
-            let output = FullScanUseCase::<'_, SqliteTypes>::run(
-                &SqliteTx::vtable_repo(tx.clone()),
-                &SqliteTx::version_repo(tx.clone()),
-                input,
-            )
-            .await?;
 
-            Ok(output.rows)
+            let rows = match selection {
+                RowSelectionQuery::FullScan => {
+                    let input = FullScanUseCaseInput::new(&database_name, &table_name, projection);
+                    let output = FullScanUseCase::<'_, SqliteTypes>::run(
+                        &SqliteTx::vtable_repo(tx.clone()),
+                        &SqliteTx::version_repo(tx.clone()),
+                        input,
+                    )
+                    .await?;
+                    Ok(output.rows)
+                }
+                RowSelectionQuery::Probe { .. } => Err(ApllodbError::feature_not_supported(
+                    "Probe in immutable storage engine is unimplemented",
+                )),
+            }?;
+
+            Ok(rows)
         }
         .boxed_local()
     }
