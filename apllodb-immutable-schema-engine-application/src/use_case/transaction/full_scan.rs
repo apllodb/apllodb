@@ -1,7 +1,7 @@
 use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
 use apllodb_immutable_schema_engine_domain::{
-    query::projection::ProjectionResult,
+    query_result::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{ApllodbResult, DatabaseName};

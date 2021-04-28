@@ -47,7 +47,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
             RowSelectionQuery::FullScan => {
                 vtable_repo.delete_all(&vtable).await?;
             }
-            RowSelectionQuery::Probe { column, value } => {}
+            RowSelectionQuery::Probe { .. } => {}
         }
 
         Ok(DeleteUseCaseOutput)

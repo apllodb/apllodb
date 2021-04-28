@@ -1,6 +1,6 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes, query::projection::ProjectionResult,
+    abstract_types::ImmutableSchemaAbstractTypes, query_result::projection::ProjectionResult,
     row::pk::apparent_pk::ApparentPrimaryKey, version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::{ApllodbResult, SchemaIndex, SqlValue};

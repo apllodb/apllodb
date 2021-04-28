@@ -7,7 +7,7 @@ extern crate derive_new;
 
 pub mod abstract_types;
 pub mod entity;
-pub mod query;
+pub mod query_result;
 pub mod row;
 pub mod version;
 pub mod version_revision_resolver;

@@ -7,7 +7,7 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    query::projection::ProjectionResult,
+    query_result::projection::ProjectionResult,
     row::pk::apparent_pk::ApparentPrimaryKey,
     version::{active_version::ActiveVersion, id::VersionId},
 };
