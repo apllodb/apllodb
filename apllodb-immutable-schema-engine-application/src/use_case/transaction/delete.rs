@@ -4,35 +4,36 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository},
 };
 use apllodb_shared_components::{ApllodbResult, DatabaseName};
-use apllodb_storage_engine_interface::TableName;
+use apllodb_storage_engine_interface::{RowSelectionQuery, TableName};
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
-#[derive(Eq, PartialEq, Debug, new)]
-pub struct DeleteAllUseCaseInput<'usecase> {
+#[derive(PartialEq, Debug, new)]
+pub struct DeleteUseCaseInput<'usecase> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
+    selection: &'usecase RowSelectionQuery,
 }
-impl<'usecase> UseCaseInput for DeleteAllUseCaseInput<'usecase> {
+impl<'usecase> UseCaseInput for DeleteUseCaseInput<'usecase> {
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
     }
 }
 
 #[derive(Debug)]
-pub struct DeleteAllUseCaseOutput;
-impl UseCaseOutput for DeleteAllUseCaseOutput {}
+pub struct DeleteUseCaseOutput;
+impl UseCaseOutput for DeleteUseCaseOutput {}
 
-pub struct DeleteAllUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+pub struct DeleteUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
     _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
 impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
-    for DeleteAllUseCase<'usecase, Types>
+    for DeleteUseCase<'usecase, Types>
 {
-    type In = DeleteAllUseCaseInput<'usecase>;
-    type Out = DeleteAllUseCaseOutput;
+    type In = DeleteUseCaseInput<'usecase>;
+    type Out = DeleteUseCaseOutput;
 
     async fn run_core(
         vtable_repo: &Types::VTableRepo,
@@ -42,8 +43,13 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id).await?;
 
-        vtable_repo.delete_all(&vtable).await?;
+        match input.selection {
+            RowSelectionQuery::FullScan => {
+                vtable_repo.delete_all(&vtable).await?;
+            }
+            RowSelectionQuery::Probe { column, value } => {}
+        }
 
-        Ok(DeleteAllUseCaseOutput)
+        Ok(DeleteUseCaseOutput)
     }
 }

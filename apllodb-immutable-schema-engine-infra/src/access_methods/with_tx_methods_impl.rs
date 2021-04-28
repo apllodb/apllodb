@@ -8,14 +8,17 @@ use crate::sqlite::{
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
     create_table::{CreateTableUseCase, CreateTableUseCaseInput},
-    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
+    delete::{DeleteUseCase, DeleteUseCaseInput},
     full_scan::{FullScanUseCase, FullScanUseCaseInput},
     insert::{InsertUseCase, InsertUseCaseInput},
     update::{UpdateUseCase, UpdateUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_shared_components::{ApllodbError, Expression, SessionId};
-use apllodb_storage_engine_interface::{AlterTableAction, ColumnDefinition, ColumnName, Row, RowProjectionQuery, RowSelectionQuery, Rows, TableConstraints, TableName, WithTxMethods};
+use apllodb_storage_engine_interface::{
+    AlterTableAction, ColumnDefinition, ColumnName, Row, RowProjectionQuery, RowSelectionQuery,
+    Rows, TableConstraints, TableName, WithTxMethods,
+};
 use futures::FutureExt;
 
 use super::BoxFutRes;
@@ -200,7 +203,8 @@ impl WithTxMethods for WithTxMethodsImpl {
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = UpdateUseCaseInput::new(&database_name, &table_name, column_values, &selection);
+            let input =
+                UpdateUseCaseInput::new(&database_name, &table_name, column_values, &selection);
             UpdateUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
@@ -219,8 +223,9 @@ impl WithTxMethods for WithTxMethodsImpl {
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = DeleteAllUseCaseInput::new(&database_name, &table_name);
-            DeleteAllUseCase::<'_, SqliteTypes>::run(
+            let input =
+                DeleteUseCaseInput::new(&database_name, &table_name, &RowSelectionQuery::FullScan);
+            DeleteUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
                 input,

@@ -6,7 +6,7 @@ use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 // };
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
-    query::projection::{self, ProjectionResult},
+    query::projection::ProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository, VTable},
 };
 use apllodb_shared_components::{
@@ -20,7 +20,7 @@ use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 use super::{
-    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
+    delete::{DeleteUseCase, DeleteUseCaseInput},
     insert::{InsertUseCase, InsertUseCaseInput},
 };
 
@@ -135,13 +135,9 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Type
         table_name: &TableName,
         selection: &RowSelectionQuery,
     ) -> ApllodbResult<()> {
-        let delete_all_usecase_input = DeleteAllUseCaseInput::new(database_name, table_name);
-
-        todo!("selection を見てdelete");
-
-        let _ =
-            DeleteAllUseCase::<'_, Types>::run(vtable_repo, version_repo, delete_all_usecase_input)
-                .await?;
+        let delete_usecase_input = DeleteUseCaseInput::new(database_name, table_name, selection);
+        let _ = DeleteUseCase::<'_, Types>::run(vtable_repo, version_repo, delete_usecase_input)
+            .await?;
 
         Ok(())
     }

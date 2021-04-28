@@ -1,7 +1,7 @@
 use super::{id::VTableId, VTable};
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, query::projection::ProjectionResult,
-    version::active_versions::ActiveVersions,
+    row::pk::apparent_pk::ApparentPrimaryKey, version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::{ApllodbResult, SchemaIndex, SqlValue};
 use apllodb_storage_engine_interface::Rows;
@@ -46,6 +46,9 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
         probe_value: &SqlValue,
     ) -> ApllodbResult<Rows>;
 
+    async fn delete(&self, vtable: &VTable, pks: &[ApparentPrimaryKey]) -> ApllodbResult<()>;
+
+    /// Use this function instead of `delete()` for performance.
     async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions>;

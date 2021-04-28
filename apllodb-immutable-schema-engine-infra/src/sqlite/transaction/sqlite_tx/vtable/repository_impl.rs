@@ -13,6 +13,7 @@ use crate::sqlite::{
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
     query::projection::ProjectionResult,
+    row::pk::apparent_pk::ApparentPrimaryKey,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
@@ -89,6 +90,10 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         _probe_index: &SchemaIndex,
         _probe_value: &SqlValue,
     ) -> ApllodbResult<Rows> {
+        todo!()
+    }
+
+    async fn delete(&self, _vtable: &VTable, _pks: &[ApparentPrimaryKey]) -> ApllodbResult<()> {
         todo!()
     }
 
