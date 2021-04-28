@@ -34,4 +34,8 @@ pub(crate) struct InsertNode {
 pub(crate) struct UpdateNode {
     pub(crate) table_name: TableName,
     pub(crate) column_values: HashMap<ColumnName, Expression>,
+
+    /// Expression here must be evaluated as BOOLEAN (NULL is FALSE in BOOLEAN context).
+    /// Otherwise [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch).
+    pub(crate) where_condition: Option<Expression>,
 }
