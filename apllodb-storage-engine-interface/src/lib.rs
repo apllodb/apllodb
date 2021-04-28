@@ -67,6 +67,7 @@ pub use column::{
     column_data_type::ColumnDataType, column_definition::ColumnDefinition, column_name::ColumnName,
 };
 pub use row_projection_query::RowProjectionQuery;
+pub use row_selection_query::RowSelectionQuery;
 pub use rows::{row::Row, row_schema::RowSchema, Rows};
 pub use table::{
     table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,

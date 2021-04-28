@@ -4,7 +4,7 @@ use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionResult, Expression, SchemaIndex, SessionWithTx,
 };
 use apllodb_storage_engine_interface::{
-    RowProjectionQuery, StorageEngine, TableName, WithTxMethods,
+    RowProjectionQuery, RowSelectionQuery, StorageEngine, TableName, WithTxMethods,
 };
 
 use crate::{
@@ -89,7 +89,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
             .context
             .engine
             .with_tx()
-            .select(session, table_name, projection)
+            .select(session, table_name, projection, RowSelectionQuery::FullScan)
             .await?;
 
         let records = Records::from_rows(rows, aliaser);

@@ -7,7 +7,8 @@ use apllodb_shared_components::{
 };
 use apllodb_storage_engine_interface::{
     AlterTableAction, ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery,
-    StorageEngine, TableConstraintKind, TableConstraints, TableName, WithTxMethods,
+    RowSelectionQuery, StorageEngine, TableConstraintKind, TableConstraints, TableName,
+    WithTxMethods,
 };
 
 #[ctor::ctor]
@@ -132,7 +133,12 @@ async fn test_success_select_column_available_only_in_1_of_2_versions() -> Apllo
     // although v2 does not have column "c".
     let (records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), RowProjectionQuery::All)
+        .select(
+            session,
+            t_name.clone(),
+            RowProjectionQuery::All,
+            RowSelectionQuery::FullScan,
+        )
         .await?;
 
     assert_eq!(records.clone().count(), 3);

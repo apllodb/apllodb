@@ -15,10 +15,7 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_shared_components::{ApllodbError, Expression, SessionId};
-use apllodb_storage_engine_interface::{
-    AlterTableAction, ColumnDefinition, ColumnName, Row, RowProjectionQuery, Rows,
-    TableConstraints, TableName, WithTxMethods,
-};
+use apllodb_storage_engine_interface::{AlterTableAction, ColumnDefinition, ColumnName, Row, RowProjectionQuery, RowSelectionQuery, Rows, TableConstraints, TableName, WithTxMethods};
 use futures::FutureExt;
 
 use super::BoxFutRes;
@@ -196,7 +193,7 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
-        selection: RowSelectionQuery,
+        _selection: RowSelectionQuery,
     ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();

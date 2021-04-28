@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use apllodb_shared_components::{ApllodbSessionResult, SessionWithTx};
-use apllodb_storage_engine_interface::{StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{RowSelectionQuery, StorageEngine, WithTxMethods};
 
 use crate::{
     attribute::attribute_name::AttributeName,
@@ -69,7 +69,12 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
                     .context
                     .engine
                     .with_tx()
-                    .update(session, update_node.table_name, update_node.column_values)
+                    .update(
+                        session,
+                        update_node.table_name,
+                        update_node.column_values,
+                        RowSelectionQuery::FullScan,
+                    )
                     .await?;
 
                 Ok(session)
