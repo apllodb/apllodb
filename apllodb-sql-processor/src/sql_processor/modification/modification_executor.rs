@@ -96,7 +96,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
                 session,
                 update_node.table_name,
                 update_node.column_values,
-                RowSelectionQuery::FullScan,
+                RowSelectionQuery::FullScan, // TODO ここを update_node.where_condition から作る
             )
             .await?;
 

@@ -1,14 +1,13 @@
 use std::{collections::HashSet, sync::Arc};
 
-use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionResult, Expression, SchemaIndex, SessionWithTx,
-};
+use apllodb_shared_components::{ApllodbResult, ApllodbSessionResult, SchemaIndex, SessionWithTx};
 use apllodb_storage_engine_interface::{
     RowProjectionQuery, RowSelectionQuery, StorageEngine, TableName, WithTxMethods,
 };
 
 use crate::{
     aliaser::Aliaser,
+    condition::Condition,
     records::Records,
     select::ordering::Ordering,
     sql_processor::{
@@ -107,7 +106,7 @@ impl<Engine: StorageEngine> PlanNodeExecutor<Engine> {
         input_left.projection(indexes)
     }
 
-    fn selection(&self, input_left: Records, condition: Expression) -> ApllodbResult<Records> {
+    fn selection(&self, input_left: Records, condition: Condition) -> ApllodbResult<Records> {
         input_left.selection(&condition)
     }
 

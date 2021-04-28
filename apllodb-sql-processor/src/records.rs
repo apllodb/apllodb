@@ -8,12 +8,11 @@ use std::{
 };
 
 use apllodb_shared_components::{
-    ApllodbResult, Expression, RPos, Schema, SchemaIndex, SqlCompareResult, SqlValue,
-    SqlValueHashKey,
+    ApllodbResult, RPos, Schema, SchemaIndex, SqlCompareResult, SqlValue, SqlValueHashKey,
 };
 use apllodb_storage_engine_interface::{Row, Rows};
 
-use crate::{aliaser::Aliaser, select::ordering::Ordering};
+use crate::{aliaser::Aliaser, condition::Condition, select::ordering::Ordering};
 
 use self::{record::Record, record_schema::RecordSchema};
 
@@ -58,10 +57,10 @@ impl Records {
     }
 
     /// Filter records that satisfy the given `condition`.
-    pub(crate) fn selection(self, condition: &Expression) -> ApllodbResult<Self> {
-        match condition {
-            Expression::ConstantVariant(sql_value) => {
-                if sql_value.to_bool()? {
+    pub(crate) fn selection(self, condition: &Condition) -> ApllodbResult<Self> {
+        match condition.eval_as_constant() {
+            Ok(b) => {
+                if b {
                     Ok(self)
                 } else {
                     Ok(Self {
@@ -70,20 +69,13 @@ impl Records {
                     })
                 }
             }
-            _ => {
+            Err(_) => {
                 let schema = self.schema.clone();
                 self.into_iter()
-                    .filter_map(|r| {
-                        match condition
-                            .to_sql_value_for_expr_with_index(&|index| {
-                                r.get_sql_value(index).map(|v| v.clone())
-                            })
-                            .and_then(|sql_value| sql_value.to_bool())
-                        {
-                            Ok(false) => None,
-                            Ok(true) => Some(Ok(r)),
-                            Err(e) => Some(Err(e)),
-                        }
+                    .filter_map(|r| match condition.eval_with_record(&r) {
+                        Ok(false) => None,
+                        Ok(true) => Some(Ok(r)),
+                        Err(e) => Some(Err(e)),
                     })
                     .collect::<ApllodbResult<Vec<Record>>>()
                     .map(|records| Self::new(schema, records))

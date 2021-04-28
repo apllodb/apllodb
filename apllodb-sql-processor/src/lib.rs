@@ -11,6 +11,7 @@ extern crate derive_new;
 pub(crate) mod aliaser;
 pub(crate) mod ast_translator;
 pub(crate) mod attribute;
+pub(crate) mod condition;
 pub(crate) mod correlation;
 pub(crate) mod field;
 pub(crate) mod records;

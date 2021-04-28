@@ -4,7 +4,10 @@ mod schema;
 use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression, SchemaIndex};
 use apllodb_sql_parser::apllodb_ast;
 
-use crate::{aliaser::Aliaser, ast_translator::AstTranslator, select::ordering::Ordering};
+use crate::{
+    aliaser::Aliaser, ast_translator::AstTranslator, condition::Condition,
+    select::ordering::Ordering,
+};
 
 #[derive(Clone, Debug, new)]
 pub(crate) struct SelectCommandAnalyzer {
@@ -17,12 +20,12 @@ impl SelectCommandAnalyzer {
         Ok(Aliaser::from(afns))
     }
 
-    pub(super) fn selection_condition(&self) -> ApllodbResult<Option<Expression>> {
+    pub(super) fn selection_condition(&self) -> ApllodbResult<Option<Condition>> {
         if let Some(ast_condition) = &self.select_command.where_condition {
             let from_correlations = self.from_item_correlations()?;
             let expr =
                 AstTranslator::condition_in_select(ast_condition.clone(), &from_correlations)?;
-            Ok(Some(expr))
+            Ok(Some(Condition::new(expr)))
         } else {
             Ok(None)
         }
