@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
-use apllodb_shared_components::{ApllodbSessionResult, SessionWithTx};
+use apllodb_shared_components::{
+    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
+};
 use apllodb_storage_engine_interface::{RowSelectionQuery, StorageEngine, WithTxMethods};
 
 use crate::{
     attribute::attribute_name::AttributeName,
+    condition::Condition,
     sql_processor::{
         query::{
             query_executor::QueryExecutor,
@@ -88,18 +91,33 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         session: SessionWithTx,
         update_node: UpdateNode,
     ) -> ApllodbSessionResult<SessionWithTx> {
-        let session = self
-            .context
-            .engine
-            .with_tx()
-            .update(
-                session,
-                update_node.table_name,
-                update_node.column_values,
-                RowSelectionQuery::FullScan, // TODO ここを update_node.where_condition から作る
-            )
-            .await?;
+        match Self::condition_into_selection(update_node.where_condition) {
+            Ok(selection) => {
+                let session = self
+                    .context
+                    .engine
+                    .with_tx()
+                    .update(
+                        session,
+                        update_node.table_name,
+                        update_node.column_values,
+                        selection,
+                    )
+                    .await?;
 
-        Ok(session)
+                Ok(session)
+            }
+            Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
+        }
+    }
+
+    fn condition_into_selection(condition: Option<Condition>) -> ApllodbResult<RowSelectionQuery> {
+        match condition {
+            None => Ok(RowSelectionQuery::FullScan),
+            Some(cond) => {
+                let (column, value) = cond.into_probe()?;
+                Ok(RowSelectionQuery::Probe { column, value })
+            }
+        }
     }
 }

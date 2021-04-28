@@ -1,4 +1,7 @@
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, Expression};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ComparisonFunction,
+    Expression, SchemaIndex, SqlValue,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::Record;
@@ -34,5 +37,38 @@ impl Condition {
                 record.get_sql_value(index).map(|v| v.clone())
             })
             .and_then(|sql_value| sql_value.to_bool())
+    }
+
+    /// # Failures
+    ///
+    /// - [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch) when:
+    ///   - Expression is not a form of single probe.
+    pub(crate) fn into_probe(self) -> ApllodbResult<(SchemaIndex, SqlValue)> {
+        let err = ApllodbError::new(
+            ApllodbErrorKind::DatatypeMismatch,
+            "Expression is not a form of single probe (e.g. `c1 = 123`)",
+            None,
+        );
+
+        match self.0 {
+            Expression::BooleanExpressionVariant(b_expr) => match b_expr {
+                BooleanExpression::ComparisonFunctionVariant(c_func) => match c_func {
+                    ComparisonFunction::EqualVariant { left, right } => match (*left, *right) {
+                        (
+                            Expression::ConstantVariant(sql_value),
+                            Expression::SchemaIndexVariant(schema_index),
+                        )
+                        | (
+                            Expression::SchemaIndexVariant(schema_index),
+                            Expression::ConstantVariant(sql_value),
+                        ) => Ok((schema_index, sql_value)),
+
+                        _ => Err(err),
+                    },
+                },
+                _ => Err(err),
+            },
+            _ => Err(err),
+        }
     }
 }
