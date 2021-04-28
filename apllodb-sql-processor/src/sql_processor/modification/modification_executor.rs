@@ -15,7 +15,10 @@ use crate::{
 };
 
 use super::modification_plan::{
-    modification_plan_tree::modification_plan_node::ModificationPlanNode, ModificationPlan,
+    modification_plan_tree::modification_plan_node::{
+        InsertNode, ModificationPlanNode, UpdateNode,
+    },
+    ModificationPlan,
 };
 
 /// Modification (INSERT, UPDATE, and DELETE) executor which inputs a ModificationPlan requests to storage engine.
@@ -30,55 +33,73 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         session: SessionWithTx,
         plan: ModificationPlan,
     ) -> ApllodbSessionResult<SessionWithTx> {
-        let query_executor = QueryExecutor::new(self.context.clone());
         let plan_tree = plan.plan_tree;
+
         match plan_tree.root {
             ModificationPlanNode::Insert(insert_node) => {
-                let input_query_plan_root_id = insert_node.child;
-                let (input, session) = query_executor
-                    .run(
-                        session,
-                        QueryPlan::new(QueryPlanTree::new(input_query_plan_root_id)),
-                    )
-                    .await?;
-
-                let session = self
-                    .context
-                    .engine
-                    .with_tx()
-                    .insert(
-                        session,
-                        insert_node.table_name,
-                        input
-                            .as_schema()
-                            .to_aliased_field_names()
-                            .iter()
-                            .map(|afn| match afn.as_attribute_name() {
-                                AttributeName::ColumnNameVariant(cn) => cn,
-                            })
-                            .cloned()
-                            .collect(),
-                        input.into_rows(),
-                    )
-                    .await?;
-
-                Ok(session)
+                self.run_insert(session, insert_node).await
             }
             ModificationPlanNode::Update(update_node) => {
-                let session = self
-                    .context
-                    .engine
-                    .with_tx()
-                    .update(
-                        session,
-                        update_node.table_name,
-                        update_node.column_values,
-                        RowSelectionQuery::FullScan,
-                    )
-                    .await?;
-
-                Ok(session)
+                self.run_update(session, update_node).await
             }
         }
+    }
+
+    async fn run_insert(
+        &self,
+        session: SessionWithTx,
+        insert_node: InsertNode,
+    ) -> ApllodbSessionResult<SessionWithTx> {
+        let query_executor = QueryExecutor::new(self.context.clone());
+
+        let input_query_plan_root_id = insert_node.child;
+        let (input, session) = query_executor
+            .run(
+                session,
+                QueryPlan::new(QueryPlanTree::new(input_query_plan_root_id)),
+            )
+            .await?;
+
+        let session = self
+            .context
+            .engine
+            .with_tx()
+            .insert(
+                session,
+                insert_node.table_name,
+                input
+                    .as_schema()
+                    .to_aliased_field_names()
+                    .iter()
+                    .map(|afn| match afn.as_attribute_name() {
+                        AttributeName::ColumnNameVariant(cn) => cn,
+                    })
+                    .cloned()
+                    .collect(),
+                input.into_rows(),
+            )
+            .await?;
+
+        Ok(session)
+    }
+
+    async fn run_update(
+        &self,
+        session: SessionWithTx,
+        update_node: UpdateNode,
+    ) -> ApllodbSessionResult<SessionWithTx> {
+        let session = self
+            .context
+            .engine
+            .with_tx()
+            .update(
+                session,
+                update_node.table_name,
+                update_node.column_values,
+                RowSelectionQuery::FullScan,
+            )
+            .await?;
+
+        Ok(session)
     }
 }
