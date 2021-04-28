@@ -11,7 +11,7 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
     full_scan::{FullScanUseCase, FullScanUseCaseInput},
     insert::{InsertUseCase, InsertUseCaseInput},
-    update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
+    update::{UpdateUseCase, UpdateUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
 use apllodb_shared_components::{ApllodbError, Expression, SessionId};
@@ -193,15 +193,15 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
-        _selection: RowSelectionQuery,
+        selection: RowSelectionQuery,
     ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = UpdateAllUseCaseInput::new(&database_name, &table_name, column_values);
-            UpdateAllUseCase::<'_, SqliteTypes>::run(
+            let input = UpdateUseCaseInput::new(&database_name, &table_name, column_values, &selection);
+            UpdateUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
                 input,

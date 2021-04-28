@@ -18,7 +18,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ApllodbResult, SchemaIndex, SqlValue};
 use apllodb_storage_engine_interface::{Row, RowSchema, Rows};
 use async_trait::async_trait;
 
@@ -77,6 +77,19 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     ) -> ApllodbResult<Rows> {
         let vrr_entries = self.vrr().scan(&vtable).await?;
         self.probe_vrr_entries(vrr_entries, projection).await
+    }
+
+    /// Every PK column is included in resulting row although it is not specified in `projection`.
+    ///
+    /// FIXME Exclude unnecessary PK column in resulting row for performance.
+    async fn probe(
+        &self,
+        _vtable: &VTable,
+        _projection: ProjectionResult,
+        _probe_index: &SchemaIndex,
+        _probe_value: &SqlValue,
+    ) -> ApllodbResult<Rows> {
+        todo!()
     }
 
     async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {

@@ -3,7 +3,7 @@ use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, query::projection::ProjectionResult,
     version::active_versions::ActiveVersions,
 };
-use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ApllodbResult, SchemaIndex, SqlValue};
 use apllodb_storage_engine_interface::Rows;
 use async_trait::async_trait;
 
@@ -36,6 +36,15 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
 
     async fn full_scan(&self, vtable: &VTable, projection: ProjectionResult)
         -> ApllodbResult<Rows>;
+
+    /// Simple probe (e.g. `c1 = 777`)
+    async fn probe(
+        &self,
+        vtable: &VTable,
+        projection: ProjectionResult,
+        probe_index: &SchemaIndex,
+        probe_value: &SqlValue,
+    ) -> ApllodbResult<Rows>;
 
     async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
 
