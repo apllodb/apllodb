@@ -54,7 +54,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result =
             RowProjectionResult::new(&vtable, active_versions, &input.projection)?;
-        let rows = vtable_repo.full_scan(&vtable, projection_result).await?;
+        let rows = vtable_repo._full_scan(&vtable, projection_result).await?;
 
         Ok(FullScanUseCaseOutput { rows })
     }

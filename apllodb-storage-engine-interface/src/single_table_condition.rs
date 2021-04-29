@@ -45,7 +45,7 @@ impl SingleTableCondition {
                     BooleanExpression::ComparisonFunctionVariant(cf) => match cf {
                         ComparisonFunction::EqualVariant { left, right } => {
                             validate_unknown_table_in_defendants(tbl, left.as_ref());
-                            validate_unknown_table_in_defendants(tbl, left.as_ref());
+                            validate_unknown_table_in_defendants(tbl, right.as_ref());
                         }
                     },
                 },
@@ -61,7 +61,12 @@ impl SingleTableCondition {
     }
 
     /// Table name
-    pub fn table_name(&self) -> &TableName {
+    pub fn as_table_name(&self) -> &TableName {
         &self.table_name
+    }
+
+    /// Expression
+    pub fn as_expression(&self) -> &Expression {
+        &self.expression
     }
 }

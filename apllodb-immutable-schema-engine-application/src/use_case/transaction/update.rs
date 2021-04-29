@@ -7,13 +7,14 @@ use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     row_projection_result::RowProjectionResult,
+    row_selection_plan::RowSelectionPlan,
     vtable::{id::VTableId, repository::VTableRepository, VTable},
 };
 use apllodb_shared_components::{
     ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName, Expression, SqlValue,
 };
 use apllodb_storage_engine_interface::{
-    ColumnName, Row, RowProjectionQuery, RowSchema, RowSelectionQuery, Rows, TableName,
+    ColumnName, Row, RowProjectionQuery, RowSchema, Rows, TableName,
 };
 // use apllodb_storage_engine_interface::ProjectionQuery;
 use async_trait::async_trait;
@@ -25,19 +26,21 @@ use super::{
 };
 
 #[derive(PartialEq, Debug, new)]
-pub struct UpdateUseCaseInput<'usecase> {
+pub struct UpdateUseCaseInput<'usecase, Types: ImmutableSchemaAbstractTypes> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     column_values: HashMap<ColumnName, Expression>,
-    selection: &'usecase RowSelectionQuery,
+    selection: &'usecase RowSelectionPlan<Types>,
 }
-impl<'usecase> UseCaseInput for UpdateUseCaseInput<'usecase> {
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> UseCaseInput
+    for UpdateUseCaseInput<'usecase, Types>
+{
     fn validate(&self) -> ApllodbResult<()> {
         self.validate_expression_type()?;
         Ok(())
     }
 }
-impl<'usecase> UpdateUseCaseInput<'usecase> {
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCaseInput<'usecase, Types> {
     fn validate_expression_type(&self) -> ApllodbResult<()> {
         for (column_name, expr) in &self.column_values {
             match expr {
@@ -66,10 +69,10 @@ pub struct UpdateUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
     for UpdateUseCase<'usecase, Types>
 {
-    type In = UpdateUseCaseInput<'usecase>;
+    type In = UpdateUseCaseInput<'usecase, Types>;
     type Out = UpdateUseCaseOutput;
 
     /// # Failures
@@ -86,16 +89,11 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result = Self::projection_result(vtable_repo, &vtable).await?;
 
-        let rows = Self::select(vtable_repo, &vtable, projection_result, input.selection).await?;
+        let rows = vtable_repo
+            .select(&vtable, projection_result, input.selection)
+            .await?;
 
-        Self::delete_rows_to_update(
-            vtable_repo,
-            version_repo,
-            &input.database_name,
-            &input.table_name,
-            input.selection,
-        )
-        .await?;
+        vtable_repo.delete(&vtable, input.selection).await?;
 
         Self::insert_updated_rows(
             vtable_repo,
@@ -112,36 +110,6 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 }
 
 impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Types> {
-    async fn select(
-        vtable_repo: &Types::VTableRepo,
-        vtable: &VTable,
-        projection_result: RowProjectionResult,
-        selection: &RowSelectionQuery,
-    ) -> ApllodbResult<Rows> {
-        match selection {
-            RowSelectionQuery::FullScan => vtable_repo.full_scan(&vtable, projection_result).await,
-            RowSelectionQuery::Probe { column, value } => {
-                vtable_repo
-                    .probe(&vtable, projection_result, column, value)
-                    .await
-            }
-        }
-    }
-
-    async fn delete_rows_to_update(
-        vtable_repo: &Types::VTableRepo,
-        version_repo: &Types::VersionRepo,
-        database_name: &DatabaseName,
-        table_name: &TableName,
-        selection: &RowSelectionQuery,
-    ) -> ApllodbResult<()> {
-        let delete_usecase_input = DeleteUseCaseInput::new(database_name, table_name, selection);
-        let _ = DeleteUseCase::<'_, Types>::run(vtable_repo, version_repo, delete_usecase_input)
-            .await?;
-
-        Ok(())
-    }
-
     async fn insert_updated_rows(
         vtable_repo: &Types::VTableRepo,
         version_repo: &Types::VersionRepo,

@@ -3,7 +3,7 @@ use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName};
 use apllodb_storage_engine_interface::{RowSelectionQuery, TableName};
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
@@ -44,11 +44,11 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         let vtable = vtable_repo.read(&vtable_id).await?;
 
         match input.selection {
-            RowSelectionQuery::FullScan => {
-                vtable_repo.delete_all(&vtable).await?;
-            }
-            RowSelectionQuery::Probe { .. } => {}
-        }
+            RowSelectionQuery::FullScan => vtable_repo._delete_all(&vtable).await,
+            RowSelectionQuery::Condition(_) => Err(ApllodbError::feature_not_supported(
+                "DELETE ... WHERE ... is not supported currently",
+            )),
+        }?;
 
         Ok(DeleteUseCaseOutput)
     }
