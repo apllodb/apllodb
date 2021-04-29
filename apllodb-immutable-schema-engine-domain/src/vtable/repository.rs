@@ -1,7 +1,7 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes, query_result::projection::ProjectionResult,
-    row::pk::apparent_pk::ApparentPrimaryKey, version::active_versions::ActiveVersions,
+    abstract_types::ImmutableSchemaAbstractTypes, row::pk::apparent_pk::ApparentPrimaryKey,
+    row_projection_result::RowProjectionResult, version::active_versions::ActiveVersions,
 };
 use apllodb_shared_components::{ApllodbResult, SchemaIndex, SqlValue};
 use apllodb_storage_engine_interface::Rows;
@@ -34,14 +34,15 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///   - Table specified by `vtable.id` is not visible to this transaction.
     async fn update(&self, vtable: &VTable) -> ApllodbResult<()>;
 
-    async fn full_scan(&self, vtable: &VTable, projection: ProjectionResult)
+    async fn full_scan(&self, vtable: &VTable, projection: RowProjectionResult)
         -> ApllodbResult<Rows>;
 
     /// Simple probe (e.g. `c1 = 777`)
+    /// TODO 要らない・・・？SelectionResultを返すもののほうが必要そう
     async fn probe(
         &self,
         vtable: &VTable,
-        projection: ProjectionResult,
+        projection: RowProjectionResult,
         probe_index: &SchemaIndex,
         probe_value: &SqlValue,
     ) -> ApllodbResult<Rows>;

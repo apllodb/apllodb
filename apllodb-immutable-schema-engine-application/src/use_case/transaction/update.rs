@@ -6,7 +6,7 @@ use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 // };
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
-    query_result::projection::ProjectionResult,
+    row_projection_result::RowProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository, VTable},
 };
 use apllodb_shared_components::{
@@ -115,7 +115,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Type
     async fn select(
         vtable_repo: &Types::VTableRepo,
         vtable: &VTable,
-        projection_result: ProjectionResult,
+        projection_result: RowProjectionResult,
         selection: &RowSelectionQuery,
     ) -> ApllodbResult<Rows> {
         match selection {
@@ -169,13 +169,13 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Type
     async fn projection_result(
         vtable_repo: &Types::VTableRepo,
         vtable: &VTable,
-    ) -> ApllodbResult<ProjectionResult> {
+    ) -> ApllodbResult<RowProjectionResult> {
         let active_versions = vtable_repo.active_versions(&vtable).await?;
 
         // Fetch all columns from all versions and update requested columns later.
         // FIXME Consider CoW to reduce disk usage (append only updated column to a new version).
         let projection_result =
-            ProjectionResult::new(&vtable, active_versions, &RowProjectionQuery::All)?;
+            RowProjectionResult::new(&vtable, active_versions, &RowProjectionQuery::All)?;
 
         Ok(projection_result)
     }

@@ -12,8 +12,8 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    query_result::projection::ProjectionResult,
     row::pk::apparent_pk::ApparentPrimaryKey,
+    row_projection_result::RowProjectionResult,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
@@ -74,7 +74,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     async fn full_scan(
         &self,
         vtable: &VTable,
-        projection: ProjectionResult,
+        projection: RowProjectionResult,
     ) -> ApllodbResult<Rows> {
         let vrr_entries = self.vrr().scan(&vtable).await?;
         self.probe_vrr_entries(vrr_entries, projection).await
@@ -86,7 +86,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     async fn probe(
         &self,
         _vtable: &VTable,
-        _projection: ProjectionResult,
+        _projection: RowProjectionResult,
         _probe_index: &SchemaIndex,
         _probe_value: &SqlValue,
     ) -> ApllodbResult<Rows> {
@@ -131,7 +131,7 @@ impl VTableRepositoryImpl {
     async fn probe_vrr_entries(
         &self,
         vrr_entries: VrrEntries,
-        projection: ProjectionResult,
+        projection: RowProjectionResult,
     ) -> ApllodbResult<Rows> {
         let vtable = self
             .vtable_metadata_dao()

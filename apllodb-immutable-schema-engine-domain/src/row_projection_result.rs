@@ -14,11 +14,11 @@ use crate::{
 
 /// Has projected columns for each version in a VTable.
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub struct ProjectionResult {
+pub struct RowProjectionResult {
     result_per_version: HashMap<VersionId, ProjectionResultInVersion>,
 }
 
-impl ProjectionResult {
+impl RowProjectionResult {
     /// Calculate and construct ProjectionResult
     pub fn new(
         vtable: &VTable,
@@ -178,8 +178,8 @@ struct ProjectionResultInVersion {
     non_pk_void: Vec<ColumnName>,
 }
 
-impl From<ProjectionResult> for RowSchema {
-    fn from(pr: ProjectionResult) -> Self {
+impl From<RowProjectionResult> for RowSchema {
+    fn from(pr: RowProjectionResult) -> Self {
         assert!(
             !pr.result_per_version.is_empty(),
             "at least 1 pr.result_per_version should exist for CREATEd table"
