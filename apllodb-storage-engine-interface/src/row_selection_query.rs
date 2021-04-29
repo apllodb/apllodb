@@ -1,5 +1,6 @@
-use apllodb_shared_components::{SchemaIndex, SqlValue};
 use serde::{Deserialize, Serialize};
+
+use crate::SingleTableCondition;
 
 /// Selection query for single table.
 ///
@@ -9,9 +10,6 @@ pub enum RowSelectionQuery {
     /// Full scan
     FullScan,
 
-    /// Simple probe (e.g. `c1 = 777`)
-    Probe {
-        column: SchemaIndex,
-        value: SqlValue,
-    },
+    /// WHERE condition for a single table.
+    Condition(SingleTableCondition),
 }
