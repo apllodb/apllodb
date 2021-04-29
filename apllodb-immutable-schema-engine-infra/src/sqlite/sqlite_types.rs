@@ -29,3 +29,5 @@ pub(crate) type VrrEntry =
     apllodb_immutable_schema_engine_domain::version_revision_resolver::vrr_entry::VrrEntry<
         SqliteTypes,
     >;
+pub(crate) type RowSelectionPlan =
+    apllodb_immutable_schema_engine_domain::row_selection_plan::RowSelectionPlan<SqliteTypes>;
