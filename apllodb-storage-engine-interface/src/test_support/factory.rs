@@ -1,12 +1,12 @@
 use apllodb_shared_components::{
-    test_support::factory::random_id, ApllodbResult, Schema, SchemaIndex, SqlType, SqlValue,
+    test_support::factory::random_id, ApllodbResult, Expression, Schema, SqlType,
 };
 
 use crate::{
     column::{column_data_type::ColumnDataType, column_name::ColumnName},
     table::table_name::TableName,
     table_column_name::TableColumnName,
-    Row, RowSelectionQuery, Rows,
+    Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
 };
 
 impl TableName {
@@ -53,26 +53,24 @@ impl Rows {
     pub fn selection(self, selection_query: &RowSelectionQuery) -> ApllodbResult<Self> {
         match selection_query {
             RowSelectionQuery::FullScan => Ok(self),
-            RowSelectionQuery::Probe { column, value } => self.probe(&column, &value),
+            RowSelectionQuery::Condition(c) => self.filter_by_condition(c),
         }
     }
 
-    fn probe(self, index: &SchemaIndex, value: &SqlValue) -> ApllodbResult<Self> {
+    fn filter_by_condition(self, condition: &SingleTableCondition) -> ApllodbResult<Self> {
         let schema = self.as_schema().clone();
-        let (pos, _) = schema.index(index)?;
 
-        let rows = self
-            .filter_map(|row| {
-                let v = row
-                    .get_sql_value(pos)
-                    .expect("valid RPos must find an SqlValue");
-                if v == value {
-                    Some(row)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<Row>>();
+        fn eval_expression(schema: &RowSchema, row: Row, expr: &Expression) -> ApllodbResult<bool> {
+            let sql_value = expr.to_sql_value_for_expr_with_index(&|index| {
+                let (pos, _) = schema.index(index)?;
+                row.get_sql_value(pos).map(|v| v.clone())
+            })?;
+            sql_value.to_bool()
+        }
+
+        let rows: Vec<Row> = self
+            .filter(|row| eval_expression(&schema, row.clone(), condition.as_expression()).unwrap())
+            .collect();
 
         Ok(Self::new(schema, rows))
     }
