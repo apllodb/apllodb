@@ -20,10 +20,7 @@ use apllodb_storage_engine_interface::{
 use async_trait::async_trait;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
-use super::{
-    delete::{DeleteUseCase, DeleteUseCaseInput},
-    insert::{InsertUseCase, InsertUseCaseInput},
-};
+use super::insert::{InsertUseCase, InsertUseCaseInput};
 
 #[derive(PartialEq, Debug, new)]
 pub struct UpdateUseCaseInput<'usecase, Types: ImmutableSchemaAbstractTypes> {

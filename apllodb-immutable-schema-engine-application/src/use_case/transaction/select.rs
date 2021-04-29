@@ -1,5 +1,7 @@
 use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
-use apllodb_immutable_schema_engine_domain::abstract_types::ImmutableSchemaAbstractTypes;
+use apllodb_immutable_schema_engine_domain::{
+    abstract_types::ImmutableSchemaAbstractTypes, row_selection_plan::RowSelectionPlan,
+};
 use apllodb_immutable_schema_engine_domain::{
     row_projection_result::RowProjectionResult,
     vtable::{id::VTableId, repository::VTableRepository},
@@ -9,34 +11,37 @@ use apllodb_storage_engine_interface::{RowProjectionQuery, Rows, TableName};
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
-#[derive(Eq, PartialEq, Debug, new)]
-pub struct FullScanUseCaseInput<'usecase> {
+#[derive(PartialEq, Debug, new)]
+pub struct SelectUseCaseInput<'usecase, Types: ImmutableSchemaAbstractTypes> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     projection: RowProjectionQuery,
+    selection: &'usecase RowSelectionPlan<Types>,
 }
-impl<'usecase> UseCaseInput for FullScanUseCaseInput<'usecase> {
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> UseCaseInput
+    for SelectUseCaseInput<'usecase, Types>
+{
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
     }
 }
 
 #[derive(Debug)]
-pub struct FullScanUseCaseOutput {
+pub struct SelectUseCaseOutput {
     pub rows: Rows,
 }
-impl UseCaseOutput for FullScanUseCaseOutput {}
+impl UseCaseOutput for SelectUseCaseOutput {}
 
-pub struct FullScanUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
+pub struct SelectUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
     _marker: PhantomData<(&'usecase (), Types)>,
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
-    for FullScanUseCase<'usecase, Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
+    for SelectUseCase<'usecase, Types>
 {
-    type In = FullScanUseCaseInput<'usecase>;
-    type Out = FullScanUseCaseOutput;
+    type In = SelectUseCaseInput<'usecase, Types>;
+    type Out = SelectUseCaseOutput;
 
     /// # Failures
     ///
@@ -54,8 +59,10 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let projection_result =
             RowProjectionResult::new(&vtable, active_versions, &input.projection)?;
-        let rows = vtable_repo._full_scan(&vtable, projection_result).await?;
+        let rows = vtable_repo
+            .select(&vtable, projection_result, &input.selection)
+            .await?;
 
-        Ok(FullScanUseCaseOutput { rows })
+        Ok(SelectUseCaseOutput { rows })
     }
 }

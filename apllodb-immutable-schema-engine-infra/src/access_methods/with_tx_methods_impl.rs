@@ -9,8 +9,8 @@ use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
     create_table::{CreateTableUseCase, CreateTableUseCaseInput},
     delete::{DeleteUseCase, DeleteUseCaseInput},
-    full_scan::{FullScanUseCase, FullScanUseCaseInput},
     insert::{InsertUseCase, InsertUseCaseInput},
+    select::{SelectUseCase, SelectUseCaseInput},
     update::{UpdateUseCase, UpdateUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
@@ -147,8 +147,8 @@ impl WithTxMethods for WithTxMethodsImpl {
 
             let rows = match selection {
                 RowSelectionQuery::FullScan => {
-                    let input = FullScanUseCaseInput::new(&database_name, &table_name, projection);
-                    let output = FullScanUseCase::<'_, SqliteTypes>::run(
+                    let input = SelectUseCaseInput::new(&database_name, &table_name, projection);
+                    let output = SelectUseCase::<'_, SqliteTypes>::run(
                         &SqliteTx::vtable_repo(tx.clone()),
                         &SqliteTx::version_repo(tx.clone()),
                         input,
