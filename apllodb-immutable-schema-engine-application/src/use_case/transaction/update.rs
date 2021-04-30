@@ -155,7 +155,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Type
 
     fn new_rows_to_insert(
         rows_before: Rows,
-        mut column_values_to_set: HashMap<ColumnName, Expression>,
+        column_values_to_set: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<Vec<Row>> {
         let mut ret: Vec<Row> = vec![];
 
@@ -167,9 +167,9 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Type
             for (pos, tc) in schema.table_column_names_with_pos() {
                 let column_name = tc.as_column_name();
 
-                let val_after = if let Some(expr) = column_values_to_set.remove(&column_name) {
+                let val_after = if let Some(expr) = column_values_to_set.get(&column_name) {
                     if let Expression::ConstantVariant(sql_value) = expr {
-                        Ok(sql_value)
+                        Ok(sql_value.clone())
                     } else {
                         Err(ApllodbError::feature_not_supported(
                             "only ConstantVariant is acceptable for now",
