@@ -65,7 +65,7 @@ Has real primary key (= PK of T + revision) values or each record and version it
 
 | _column name_ | *`rowid` | (Primary keys of T) | `revision` | `version_number` |
 |--|--|--|--|--|
-| _description_ | Physical primary key SQLite automatically sets. | Table's primary key. Split into multiple columns if T has compound primary key. | Revision of a record. When a record's non-PK column is updated, then new record is inserted with incremented revision (Immutable DML). | Version number a record belongs to.
+| _description_ | Physical primary key SQLite automatically sets. | Table's primary key. Split into multiple columns if T has compound primary key. | Revision of a record. When a record's non-PK column is updated, then new record is inserted with incremented revision (Immutable DML). | Version number a record belongs to. `NULL` means "record in this `revision` is deleted". |
 | _value example_ | `"T"` | ... | `1` | `1` |
 
 #### T__v?
