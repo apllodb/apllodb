@@ -167,7 +167,7 @@ impl WithTxMethods for WithTxMethodsImpl {
             let selection_plan = self.plan_selection(sid, &table_name, selection).await?;
 
             let input =
-                SelectUseCaseInput::new(&database_name, &table_name, projection, &selection_plan);
+                SelectUseCaseInput::new(&database_name, &table_name, projection, selection_plan);
             let output = SelectUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
@@ -222,7 +222,7 @@ impl WithTxMethods for WithTxMethodsImpl {
                 &database_name,
                 &table_name,
                 column_values,
-                &selection_plan,
+                selection_plan,
             );
             UpdateUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),

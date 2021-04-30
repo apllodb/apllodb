@@ -27,7 +27,7 @@ pub struct UpdateUseCaseInput<'usecase, Types: ImmutableSchemaAbstractTypes> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     column_values: HashMap<ColumnName, Expression>,
-    selection: &'usecase RowSelectionPlan<Types>,
+    selection: RowSelectionPlan<Types>,
 }
 impl<'usecase, Types: ImmutableSchemaAbstractTypes> UseCaseInput
     for UpdateUseCaseInput<'usecase, Types>
@@ -66,7 +66,7 @@ pub struct UpdateUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes + Clone + 'usecase> TxUseCase<Types>
     for UpdateUseCase<'usecase, Types>
 {
     type In = UpdateUseCaseInput<'usecase, Types>;
@@ -87,7 +87,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
         let projection_result = Self::projection_result(vtable_repo, &vtable).await?;
 
         let rows = vtable_repo
-            .select(&vtable, projection_result, input.selection)
+            .select(&vtable, projection_result, input.selection.clone())
             .await?;
 
         vtable_repo.delete(&vtable, input.selection).await?;

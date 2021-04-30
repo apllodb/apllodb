@@ -101,11 +101,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         Ok(())
     }
 
-    async fn _delete_probe(
-        &self,
-        _vtable: &VTable,
-        _vrr_entries: &VrrEntries,
-    ) -> ApllodbResult<()> {
+    async fn _delete_probe(&self, _vtable: &VTable, _vrr_entries: VrrEntries) -> ApllodbResult<()> {
         Err(ApllodbError::feature_not_supported(
             "DELETE ... WHERE ... is not supported currently",
         ))
