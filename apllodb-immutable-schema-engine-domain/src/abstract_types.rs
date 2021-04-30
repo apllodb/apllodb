@@ -1,7 +1,8 @@
 use std::fmt::Debug;
 
 use crate::{
-    version::repository::VersionRepository, version_revision_resolver::vrr_id::VrrId,
+    version::repository::VersionRepository,
+    version_revision_resolver::{vrr_id::VrrId, VersionRevisionResolver},
     vtable::repository::VTableRepository,
 };
 
@@ -11,4 +12,6 @@ pub trait ImmutableSchemaAbstractTypes: Debug + Sized {
 
     type VTableRepo: VTableRepository<Self>;
     type VersionRepo: VersionRepository;
+
+    type Vrr: VersionRevisionResolver<Self>;
 }
