@@ -105,7 +105,6 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         Err(ApllodbError::feature_not_supported(
             "DELETE ... WHERE ... is not supported currently",
         ))
-
     }
 
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
