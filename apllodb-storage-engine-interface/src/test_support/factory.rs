@@ -45,21 +45,14 @@ impl ColumnDataType {
 
 impl Rows {
     /// Filter Rows. Note that production code should not filter Rows after scan (for performance).
-    ///
-    /// # Failures
-    ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
-    ///   - Specified field does not exist in this record.
-    pub fn selection(self, selection_query: &RowSelectionQuery) -> ApllodbResult<Self> {
+    pub fn selection(self, selection_query: &RowSelectionQuery) -> Self {
         match selection_query {
-            RowSelectionQuery::FullScan => Ok(self),
+            RowSelectionQuery::FullScan => self,
             RowSelectionQuery::Condition(c) => self.filter_by_condition(c),
         }
     }
 
-    fn filter_by_condition(self, condition: &SingleTableCondition) -> ApllodbResult<Self> {
-        let schema = self.as_schema().clone();
-
+    fn filter_by_condition(self, condition: &SingleTableCondition) -> Self {
         fn eval_expression(schema: &RowSchema, row: Row, expr: &Expression) -> ApllodbResult<bool> {
             let sql_value = expr.to_sql_value_for_expr_with_index(&|index| {
                 let (pos, _) = schema.index(index)?;
@@ -68,10 +61,12 @@ impl Rows {
             sql_value.to_bool()
         }
 
+        let schema = self.as_schema().clone();
+
         let rows: Vec<Row> = self
             .filter(|row| eval_expression(&schema, row.clone(), condition.as_expression()).unwrap())
             .collect();
 
-        Ok(Self::new(schema, rows))
+        Self::new(schema, rows)
     }
 }

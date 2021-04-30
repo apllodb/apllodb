@@ -53,7 +53,7 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
 
             let rows = table.rows.clone();
 
-            let rows = rows.selection(&selection).unwrap();
+            let rows = rows.selection(&selection);
 
             let rows = match projection {
                 RowProjectionQuery::All => rows,
