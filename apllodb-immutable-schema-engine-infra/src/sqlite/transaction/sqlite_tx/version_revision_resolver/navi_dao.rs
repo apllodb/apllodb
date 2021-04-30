@@ -184,9 +184,9 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
             let sql = format!(
                 "
                 INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
-                SELECT {pk_column_names}, {cname_revision} + 1 AS {cname_revision}
-                FROM {navi_table_name}
-                WHERE
+                  SELECT {pk_column_names}, {cname_revision} + 1 AS {cname_revision}
+                  FROM {navi_table_name} AS {vtable_name}
+                  WHERE
                     {vrr_entry_condition}
                 ",
                 cname_revision = CNAME_REVISION,
@@ -195,6 +195,7 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
                     .table_wide_constraints()
                     .pk_column_names()
                     .to_sql_string(),
+                vtable_name = vtable.table_name().to_sql_string(),
                 vrr_entry_condition = vrr_entry
                     .to_condition_expression(self.cdt_revision().column_name())?
                     .to_sql_string(),
