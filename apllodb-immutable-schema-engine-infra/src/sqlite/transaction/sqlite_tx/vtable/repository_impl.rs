@@ -18,7 +18,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::ApllodbResult;
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_storage_engine_interface::{
     Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
 };
@@ -102,7 +102,10 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         _vtable: &VTable,
         _vrr_entries: &VrrEntries,
     ) -> ApllodbResult<()> {
-        todo!()
+        Err(ApllodbError::feature_not_supported(
+            "DELETE ... WHERE ... is not supported currently",
+        ))
+
     }
 
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
@@ -170,6 +173,8 @@ impl VTableRepositoryImpl {
         _vtable: &VTable,
         _condition: SingleTableCondition,
     ) -> ApllodbResult<RowSelectionPlan> {
-        todo!()
+        Err(ApllodbError::feature_not_supported(
+            "storage-engine selection is not supported currently",
+        ))
     }
 }
