@@ -1,5 +1,7 @@
 use std::{fmt::Debug, hash::Hash};
 
+use apllodb_shared_components::{ApllodbResult, BooleanExpression};
+
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, entity::Entity,
     row::pk::apparent_pk::ApparentPrimaryKey, row::pk::full_pk::revision::Revision,
@@ -17,6 +19,10 @@ pub struct VrrEntry<Types: ImmutableSchemaAbstractTypes> {
 impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
     pub fn into_pk(self) -> ApparentPrimaryKey {
         self.pk
+    }
+
+    pub fn to_condition_expression(&self) -> ApllodbResult<BooleanExpression> {
+        todo!()
     }
 }
 

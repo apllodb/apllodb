@@ -35,7 +35,7 @@ pub trait VersionRevisionResolver<Types: ImmutableSchemaAbstractTypes> {
     async fn deregister(
         &self,
         vtable: &VTable,
-        vrr_entries: &VrrEntries<Types>,
+        vrr_entries: VrrEntries<Types>,
     ) -> ApllodbResult<()>;
 
     async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()>;

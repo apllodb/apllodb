@@ -85,7 +85,7 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
         match selection_plan {
             RowSelectionPlan::FullScan => self.vrr().deregister_all(vtable).await?,
             RowSelectionPlan::VrrProbe(vrr_entries) => {
-                self.vrr().deregister(vtable, &vrr_entries).await?
+                self.vrr().deregister(vtable, vrr_entries).await?
             }
         };
         Ok(())
