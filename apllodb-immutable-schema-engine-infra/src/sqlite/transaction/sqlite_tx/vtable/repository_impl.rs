@@ -118,24 +118,6 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
             .await?;
         Ok(ActiveVersions::from(active_versions))
     }
-}
-
-impl VTableRepositoryImpl {
-    fn vrr(&self) -> VersionRevisionResolverImpl {
-        VersionRevisionResolverImpl::new(self.tx.clone())
-    }
-
-    fn vtable_metadata_dao(&self) -> VTableMetadataDao {
-        VTableMetadataDao::new(self.tx.clone())
-    }
-
-    fn version_dao(&self) -> VersionDao {
-        VersionDao::new(self.tx.clone())
-    }
-
-    fn version_metadata_dao(&self) -> VersionMetadataDao {
-        VersionMetadataDao::new(self.tx.clone())
-    }
 
     async fn probe_vrr_entries(
         &self,
@@ -169,6 +151,24 @@ impl VTableRepositoryImpl {
             let rows = ChainRows::chain(all_ver_rows);
             Ok(rows)
         }
+    }
+}
+
+impl VTableRepositoryImpl {
+    fn vrr(&self) -> VersionRevisionResolverImpl {
+        VersionRevisionResolverImpl::new(self.tx.clone())
+    }
+
+    fn vtable_metadata_dao(&self) -> VTableMetadataDao {
+        VTableMetadataDao::new(self.tx.clone())
+    }
+
+    fn version_dao(&self) -> VersionDao {
+        VersionDao::new(self.tx.clone())
+    }
+
+    fn version_metadata_dao(&self) -> VersionMetadataDao {
+        VersionMetadataDao::new(self.tx.clone())
     }
 
     async fn plan_selection_from_condition(

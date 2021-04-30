@@ -86,4 +86,10 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ) -> ApllodbResult<()>;
 
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions>;
+
+    async fn probe_vrr_entries(
+        &self,
+        vrr_entries: VrrEntries<Types>,
+        projection: RowProjectionResult,
+    ) -> ApllodbResult<Rows>;
 }
