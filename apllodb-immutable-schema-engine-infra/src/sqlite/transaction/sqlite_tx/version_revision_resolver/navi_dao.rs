@@ -195,7 +195,9 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
                     .table_wide_constraints()
                     .pk_column_names()
                     .to_sql_string(),
-                vrr_entry_condition = vrr_entry.to_condition_expression()?.to_sql_string(),
+                vrr_entry_condition = vrr_entry
+                    .to_condition_expression(self.cdt_revision().column_name())?
+                    .to_sql_string(),
             );
 
             let _ = self.sqlite_tx.borrow_mut().execute(&sql).await?;
