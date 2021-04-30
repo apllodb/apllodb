@@ -1,8 +1,8 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes, row::pk::apparent_pk::ApparentPrimaryKey,
-    row_projection_result::RowProjectionResult, row_selection_plan::RowSelectionPlan,
-    version::active_versions::ActiveVersions, version_revision_resolver::vrr_entries::VrrEntries,
+    abstract_types::ImmutableSchemaAbstractTypes, row_projection_result::RowProjectionResult,
+    row_selection_plan::RowSelectionPlan, version::active_versions::ActiveVersions,
+    version_revision_resolver::vrr_entries::VrrEntries,
 };
 use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_storage_engine_interface::{RowSelectionQuery, Rows};
