@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use super::vtable_metadata_dao::VTableMetadataDao;
 use crate::sqlite::{
     rows::chain_rows::ChainRows,
-    sqlite_types::{SqliteTypes, VrrEntries},
+    sqlite_types::{RowSelectionPlan, SqliteTypes, VrrEntries},
     transaction::sqlite_tx::{
         version::dao::{version_dao::VersionDao, version_metadata_dao::VersionMetadataDao},
         version_revision_resolver::VersionRevisionResolverImpl,
@@ -12,15 +12,14 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    row::pk::apparent_pk::ApparentPrimaryKey,
     row_projection_result::RowProjectionResult,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::{ApllodbResult, SchemaIndex, SqlValue};
-use apllodb_storage_engine_interface::{Row, RowSchema, Rows};
+use apllodb_shared_components::ApllodbResult;
+use apllodb_storage_engine_interface::{Row, RowSchema, RowSelectionQuery, Rows};
 use async_trait::async_trait;
 
 #[derive(Debug)]
@@ -68,10 +67,18 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         Ok(())
     }
 
+    async fn plan_selection(
+        &self,
+        _vtable: &VTable,
+        _selection_query: RowSelectionQuery,
+    ) -> ApllodbResult<RowSelectionPlan> {
+        todo!()
+    }
+
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    async fn full_scan(
+    async fn _full_scan(
         &self,
         vtable: &VTable,
         projection: RowProjectionResult,
@@ -80,26 +87,17 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         self.probe_vrr_entries(vrr_entries, projection).await
     }
 
-    /// Every PK column is included in resulting row although it is not specified in `projection`.
-    ///
-    /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    async fn probe(
-        &self,
-        _vtable: &VTable,
-        _projection: RowProjectionResult,
-        _probe_index: &SchemaIndex,
-        _probe_value: &SqlValue,
-    ) -> ApllodbResult<Rows> {
-        todo!()
-    }
-
-    async fn delete(&self, _vtable: &VTable, _pks: &[ApparentPrimaryKey]) -> ApllodbResult<()> {
-        todo!()
-    }
-
-    async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
+    async fn _delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.vrr().deregister_all(vtable).await?;
         Ok(())
+    }
+
+    async fn _delete_probe(
+        &self,
+        _vtable: &VTable,
+        _vrr_entries: &VrrEntries,
+    ) -> ApllodbResult<()> {
+        todo!()
     }
 
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
