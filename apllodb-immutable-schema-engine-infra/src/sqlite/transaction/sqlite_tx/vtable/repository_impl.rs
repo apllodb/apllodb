@@ -19,7 +19,9 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::ApllodbResult;
-use apllodb_storage_engine_interface::{Row, RowSchema, RowSelectionQuery, Rows};
+use apllodb_storage_engine_interface::{
+    Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
+};
 use async_trait::async_trait;
 
 #[derive(Debug)]
@@ -69,10 +71,13 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
 
     async fn plan_selection(
         &self,
-        _vtable: &VTable,
-        _selection_query: RowSelectionQuery,
+        vtable: &VTable,
+        selection_query: RowSelectionQuery,
     ) -> ApllodbResult<RowSelectionPlan> {
-        todo!()
+        match selection_query {
+            RowSelectionQuery::FullScan => Ok(RowSelectionPlan::FullScan),
+            RowSelectionQuery::Condition(c) => self.plan_selection_from_condition(vtable, c).await,
+        }
     }
 
     /// Every PK column is included in resulting row although it is not specified in `projection`.
@@ -158,5 +163,13 @@ impl VTableRepositoryImpl {
             let rows = ChainRows::chain(all_ver_rows);
             Ok(rows)
         }
+    }
+
+    async fn plan_selection_from_condition(
+        &self,
+        _vtable: &VTable,
+        _condition: SingleTableCondition,
+    ) -> ApllodbResult<RowSelectionPlan> {
+        todo!()
     }
 }
