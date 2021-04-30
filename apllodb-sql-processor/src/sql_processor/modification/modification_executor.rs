@@ -3,7 +3,9 @@ use std::sync::Arc;
 use apllodb_shared_components::{
     ApllodbResult, ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
 };
-use apllodb_storage_engine_interface::{RowSelectionQuery, StorageEngine, WithTxMethods};
+use apllodb_storage_engine_interface::{
+    RowSelectionQuery, StorageEngine, TableName, WithTxMethods,
+};
 
 use crate::{
     attribute::attribute_name::AttributeName,
@@ -91,7 +93,7 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         session: SessionWithTx,
         update_node: UpdateNode,
     ) -> ApllodbSessionResult<SessionWithTx> {
-        match Self::condition_into_selection(update_node.where_condition) {
+        match Self::condition_into_selection(&update_node.table_name, update_node.where_condition) {
             Ok(selection) => {
                 let session = self
                     .context
@@ -111,13 +113,13 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         }
     }
 
-    fn condition_into_selection(condition: Option<Condition>) -> ApllodbResult<RowSelectionQuery> {
+    fn condition_into_selection(
+        table_name: &TableName,
+        condition: Option<Condition>,
+    ) -> ApllodbResult<RowSelectionQuery> {
         match condition {
             None => Ok(RowSelectionQuery::FullScan),
-            Some(cond) => {
-                let (column, value) = cond.into_probe()?;
-                Ok(RowSelectionQuery::Probe { column, value })
-            }
+            Some(cond) => Ok(cond.into_row_selection_query(table_name.clone())),
         }
     }
 }

@@ -16,7 +16,7 @@ pub struct SingleTableCondition {
 impl SingleTableCondition {
     /// # Panics
     ///
-    /// Expression contain two or more tables in SchemaIndexVariant's.
+    /// Expression contain different table(s) than `table_name` in SchemaIndexVariants.
     pub fn new(table_name: TableName, expression: Expression) -> Self {
         fn validate_unknown_table_in_defendants(tbl: &TableName, expr: &Expression) {
             match expr {
