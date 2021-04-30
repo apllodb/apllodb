@@ -31,7 +31,7 @@ impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
     ) -> ApllodbResult<BooleanExpression> {
         let apk_condition = self.pk.to_condition_expression()?;
 
-        let revision_condition = self.to_revision_condition(revision_column_name)?;
+        let revision_condition = self.to_revision_condition(revision_column_name);
 
         let apk_and_revison_condition =
             BooleanExpression::LogicalFunctionVariant(LogicalFunction::AndVariant {
@@ -42,10 +42,7 @@ impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
         Ok(apk_and_revison_condition)
     }
 
-    fn to_revision_condition(
-        &self,
-        revision_column_name: &ColumnName,
-    ) -> ApllodbResult<BooleanExpression> {
+    fn to_revision_condition(&self, revision_column_name: &ColumnName) -> BooleanExpression {
         let index = SchemaIndex::from(
             format!(
                 "{}.{}",
@@ -65,7 +62,7 @@ impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
                 right: Box::new(Expression::ConstantVariant(sql_value)),
             });
 
-        Ok(eq_expr)
+        eq_expr
     }
 }
 
