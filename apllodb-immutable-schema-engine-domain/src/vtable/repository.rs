@@ -1,10 +1,12 @@
 use super::{id::VTableId, VTable};
 use crate::{
-    abstract_types::ImmutableSchemaAbstractTypes, row_projection_result::RowProjectionResult,
-    row_selection_plan::RowSelectionPlan, version::active_versions::ActiveVersions,
-    version_revision_resolver::vrr_entries::VrrEntries,
+    abstract_types::ImmutableSchemaAbstractTypes,
+    row_projection_result::RowProjectionResult,
+    row_selection_plan::RowSelectionPlan,
+    version::active_versions::ActiveVersions,
+    version_revision_resolver::{vrr_entries::VrrEntries, VersionRevisionResolver},
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult};
+use apllodb_shared_components::ApllodbResult;
 use apllodb_storage_engine_interface::{RowSelectionQuery, Rows};
 use async_trait::async_trait;
 
@@ -46,44 +48,56 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
         &self,
         vtable: &VTable,
         projection: RowProjectionResult,
-        selection_plan: &RowSelectionPlan<Types>,
-    ) -> ApllodbResult<Rows> {
+        selection_plan: RowSelectionPlan<Types>,
+    ) -> ApllodbResult<Rows>
+    where
+        Types: 'async_trait,
+    {
         let rows = match selection_plan {
             RowSelectionPlan::FullScan => self._full_scan(vtable, projection).await,
-            RowSelectionPlan::VrrProbe(_vrr_entries) => Err(ApllodbError::feature_not_supported(
-                "SELECT ... WHERE ... in storage engine is not supported currently",
-            )),
+            RowSelectionPlan::VrrProbe(vrr_entries) => {
+                self.probe_vrr_entries(vrr_entries, projection).await
+            }
         }?;
         Ok(rows)
     }
 
+    /// Every PK column is included in resulting row although it is not specified in `projection`.
+    ///
+    /// FIXME Exclude unnecessary PK column in resulting row for performance.
     async fn _full_scan(
         &self,
         vtable: &VTable,
         projection: RowProjectionResult,
-    ) -> ApllodbResult<Rows>;
+    ) -> ApllodbResult<Rows> {
+        let vrr_entries = self.vrr().scan(&vtable).await?;
+        self.probe_vrr_entries(vrr_entries, projection).await
+    }
 
     async fn delete(
         &self,
         vtable: &VTable,
-        selection_plan: &RowSelectionPlan<Types>,
-    ) -> ApllodbResult<()> {
+        selection_plan: RowSelectionPlan<Types>,
+    ) -> ApllodbResult<()>
+    where
+        Types: 'async_trait,
+    {
         match selection_plan {
-            RowSelectionPlan::FullScan => self._delete_all(vtable).await?,
+            RowSelectionPlan::FullScan => self.vrr().deregister_all(vtable).await?,
             RowSelectionPlan::VrrProbe(vrr_entries) => {
-                self._delete_probe(vtable, vrr_entries).await?
+                self.vrr().deregister(vtable, vrr_entries).await?
             }
         };
         Ok(())
     }
 
-    async fn _delete_all(&self, vtable: &VTable) -> ApllodbResult<()>;
-
-    async fn _delete_probe(
-        &self,
-        vtable: &VTable,
-        vrr_entries: &VrrEntries<Types>,
-    ) -> ApllodbResult<()>;
-
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions>;
+
+    async fn probe_vrr_entries(
+        &self,
+        vrr_entries: VrrEntries<Types>,
+        projection: RowProjectionResult,
+    ) -> ApllodbResult<Rows>;
+
+    fn vrr(&self) -> Types::Vrr;
 }

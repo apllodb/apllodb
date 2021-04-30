@@ -16,7 +16,7 @@ pub struct SelectUseCaseInput<'usecase, Types: ImmutableSchemaAbstractTypes> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     projection: RowProjectionQuery,
-    selection: &'usecase RowSelectionPlan<Types>,
+    selection: RowSelectionPlan<Types>,
 }
 impl<'usecase, Types: ImmutableSchemaAbstractTypes> UseCaseInput
     for SelectUseCaseInput<'usecase, Types>
@@ -60,7 +60,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
         let projection_result =
             RowProjectionResult::new(&vtable, active_versions, &input.projection)?;
         let rows = vtable_repo
-            .select(&vtable, projection_result, &input.selection)
+            .select(&vtable, projection_result, input.selection)
             .await?;
 
         Ok(SelectUseCaseOutput { rows })

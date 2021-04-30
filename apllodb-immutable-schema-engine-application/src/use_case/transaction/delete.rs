@@ -1,20 +1,23 @@
 use crate::use_case::{TxUseCase, UseCaseInput, UseCaseOutput};
 use apllodb_immutable_schema_engine_domain::{
     abstract_types::ImmutableSchemaAbstractTypes,
+    row_selection_plan::RowSelectionPlan,
     vtable::{id::VTableId, repository::VTableRepository},
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName};
-use apllodb_storage_engine_interface::{RowSelectionQuery, TableName};
+use apllodb_shared_components::{ApllodbResult, DatabaseName};
+use apllodb_storage_engine_interface::TableName;
 use async_trait::async_trait;
 use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(PartialEq, Debug, new)]
-pub struct DeleteUseCaseInput<'usecase> {
+pub struct DeleteUseCaseInput<'usecase, Types: ImmutableSchemaAbstractTypes> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
-    selection: &'usecase RowSelectionQuery,
+    selection: RowSelectionPlan<Types>,
 }
-impl<'usecase> UseCaseInput for DeleteUseCaseInput<'usecase> {
+impl<'usecase, Types: ImmutableSchemaAbstractTypes> UseCaseInput
+    for DeleteUseCaseInput<'usecase, Types>
+{
     fn validate(&self) -> ApllodbResult<()> {
         Ok(())
     }
@@ -32,7 +35,7 @@ pub struct DeleteUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
 impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
     for DeleteUseCase<'usecase, Types>
 {
-    type In = DeleteUseCaseInput<'usecase>;
+    type In = DeleteUseCaseInput<'usecase, Types>;
     type Out = DeleteUseCaseOutput;
 
     async fn run_core(
@@ -43,12 +46,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
         let vtable_id = VTableId::new(input.database_name, input.table_name);
         let vtable = vtable_repo.read(&vtable_id).await?;
 
-        match input.selection {
-            RowSelectionQuery::FullScan => vtable_repo._delete_all(&vtable).await,
-            RowSelectionQuery::Condition(_) => Err(ApllodbError::feature_not_supported(
-                "DELETE ... WHERE ... is not supported currently",
-            )),
-        }?;
+        vtable_repo.delete(&vtable, input.selection).await?;
 
         Ok(DeleteUseCaseOutput)
     }

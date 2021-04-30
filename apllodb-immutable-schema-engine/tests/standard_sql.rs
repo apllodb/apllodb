@@ -358,7 +358,10 @@ async fn test_delete() -> ApllodbResult<()> {
         .await?;
     assert_eq!(rows.count(), 1);
 
-    let session = engine.with_tx().delete(session, t_name.clone()).await?;
+    let session = engine
+        .with_tx()
+        .delete(session, t_name.clone(), RowSelectionQuery::FullScan)
+        .await?;
     let (rows, session) = engine
         .with_tx()
         .select(
