@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use apllodb_shared_components::{
-    ApllodbResult, ApllodbSessionError, ApllodbSessionResult, Session, SessionWithTx,
-};
+use apllodb_shared_components::{ApllodbSessionResult, SessionWithTx};
 use apllodb_storage_engine_interface::{
     RowSelectionQuery, StorageEngine, TableName, WithTxMethods,
 };
@@ -93,33 +91,31 @@ impl<Engine: StorageEngine> ModificationExecutor<Engine> {
         session: SessionWithTx,
         update_node: UpdateNode,
     ) -> ApllodbSessionResult<SessionWithTx> {
-        match Self::condition_into_selection(&update_node.table_name, update_node.where_condition) {
-            Ok(selection) => {
-                let session = self
-                    .context
-                    .engine
-                    .with_tx()
-                    .update(
-                        session,
-                        update_node.table_name,
-                        update_node.column_values,
-                        selection,
-                    )
-                    .await?;
+        let selection =
+            Self::condition_into_selection(&update_node.table_name, update_node.where_condition);
 
-                Ok(session)
-            }
-            Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
-        }
+        let session = self
+            .context
+            .engine
+            .with_tx()
+            .update(
+                session,
+                update_node.table_name,
+                update_node.column_values,
+                selection,
+            )
+            .await?;
+
+        Ok(session)
     }
 
     fn condition_into_selection(
         table_name: &TableName,
         condition: Option<Condition>,
-    ) -> ApllodbResult<RowSelectionQuery> {
+    ) -> RowSelectionQuery {
         match condition {
-            None => Ok(RowSelectionQuery::FullScan),
-            Some(cond) => Ok(cond.into_row_selection_query(table_name.clone())),
+            None => RowSelectionQuery::FullScan,
+            Some(cond) => cond.into_row_selection_query(table_name.clone()),
         }
     }
 }
