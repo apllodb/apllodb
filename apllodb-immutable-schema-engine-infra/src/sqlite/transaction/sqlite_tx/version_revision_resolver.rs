@@ -103,11 +103,7 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
         Ok(VrrEntry::new(rowid, pk, version_id.clone(), revision))
     }
 
-    async fn deregister(
-        &self,
-        _vtable_id: &VTableId,
-        _vrr_entries: &VrrEntries,
-    ) -> ApllodbResult<()> {
+    async fn deregister(&self, _vtable: &VTable, _vrr_entries: &VrrEntries) -> ApllodbResult<()> {
         Err(ApllodbError::feature_not_supported(
             "Vrr::deregister() is unimplemented",
         ))

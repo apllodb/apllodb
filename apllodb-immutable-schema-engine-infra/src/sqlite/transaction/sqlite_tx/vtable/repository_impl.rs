@@ -84,29 +84,6 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         }
     }
 
-    /// Every PK column is included in resulting row although it is not specified in `projection`.
-    ///
-    /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    async fn _full_scan(
-        &self,
-        vtable: &VTable,
-        projection: RowProjectionResult,
-    ) -> ApllodbResult<Rows> {
-        let vrr_entries = self.vrr().scan(&vtable).await?;
-        self.probe_vrr_entries(vrr_entries, projection).await
-    }
-
-    async fn _delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
-        self.vrr().deregister_all(vtable).await?;
-        Ok(())
-    }
-
-    async fn _delete_probe(&self, _vtable: &VTable, _vrr_entries: VrrEntries) -> ApllodbResult<()> {
-        Err(ApllodbError::feature_not_supported(
-            "DELETE ... WHERE ... is not supported currently",
-        ))
-    }
-
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
         let active_versions = self
             .version_metadata_dao()
@@ -148,13 +125,13 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
             Ok(rows)
         }
     }
-}
 
-impl VTableRepositoryImpl {
     fn vrr(&self) -> VersionRevisionResolverImpl {
         VersionRevisionResolverImpl::new(self.tx.clone())
     }
+}
 
+impl VTableRepositoryImpl {
     fn vtable_metadata_dao(&self) -> VTableMetadataDao {
         VTableMetadataDao::new(self.tx.clone())
     }

@@ -218,12 +218,8 @@ impl WithTxMethods for WithTxMethodsImpl {
 
             let database_name = tx.borrow().database_name().clone();
             let selection_plan = self.plan_selection(sid, &table_name, selection).await?;
-            let input = UpdateUseCaseInput::new(
-                &database_name,
-                &table_name,
-                column_values,
-                selection_plan,
-            );
+            let input =
+                UpdateUseCaseInput::new(&database_name, &table_name, column_values, selection_plan);
             UpdateUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
@@ -236,14 +232,19 @@ impl WithTxMethods for WithTxMethodsImpl {
         .boxed_local()
     }
 
-    fn delete_core(self, sid: SessionId, table_name: TableName) -> BoxFutRes<()> {
+    fn delete_core(
+        self,
+        sid: SessionId,
+        table_name: TableName,
+        selection: RowSelectionQuery,
+    ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input =
-                DeleteUseCaseInput::new(&database_name, &table_name, &RowSelectionQuery::FullScan);
+            let selection_plan = self.plan_selection(sid, &table_name, selection).await?;
+            let input = DeleteUseCaseInput::new(&database_name, &table_name, selection_plan);
             DeleteUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),

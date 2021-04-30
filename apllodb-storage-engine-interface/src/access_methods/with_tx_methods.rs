@@ -224,10 +224,11 @@ pub trait WithTxMethods: Sized + 'static {
         self,
         session: SessionWithTx,
         table_name: TableName,
+        selection: RowSelectionQuery,
     ) -> BoxFut<ApllodbSessionResult<SessionWithTx>> {
         let sid = *session.get_id();
         async move {
-            match self.delete_core(sid, table_name).await {
+            match self.delete_core(sid, table_name, selection).await {
                 Ok(_) => Ok(session),
                 Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
             }
@@ -236,5 +237,10 @@ pub trait WithTxMethods: Sized + 'static {
     }
 
     #[doc(hidden)]
-    fn delete_core(self, sid: SessionId, table_name: TableName) -> BoxFut<ApllodbResult<()>>;
+    fn delete_core(
+        self,
+        sid: SessionId,
+        table_name: TableName,
+        selection: RowSelectionQuery,
+    ) -> BoxFut<ApllodbResult<()>>;
 }
