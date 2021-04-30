@@ -1,5 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
+use apllodb_shared_components::{ApllodbResult, BooleanExpression};
+
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, version::id::VersionId, vtable::id::VTableId,
 };
@@ -39,6 +41,10 @@ impl<Types: ImmutableSchemaAbstractTypes> VrrEntries<Types> {
 
     pub fn vtable_id(&self) -> &VTableId {
         &self.vtable_id
+    }
+
+    pub fn to_condition_expression(&self) -> ApllodbResult<BooleanExpression> {
+        todo!()
     }
 }
 

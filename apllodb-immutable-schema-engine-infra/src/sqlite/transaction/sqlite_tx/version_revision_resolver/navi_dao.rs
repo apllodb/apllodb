@@ -5,7 +5,8 @@ mod navi_table_name;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::sqlite::{
-    sqlite_rowid::SqliteRowid, to_sql_string::ToSqlString, transaction::sqlite_tx::SqliteTx,
+    sqlite_rowid::SqliteRowid, sqlite_types::VrrEntries, to_sql_string::ToSqlString,
+    transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_domain::{
     row::pk::{apparent_pk::ApparentPrimaryKey, full_pk::revision::Revision},
@@ -172,6 +173,33 @@ SELECT {cname_rowid}, {cname_version_number}, {cname_revision}
         let rowid = self.sqlite_tx.borrow_mut().execute(&sql).await?;
 
         Ok(rowid)
+    }
+
+    pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn insert_deleted_records(
+        &self,
+        vtable: &VTable,
+        vrr_entries: &VrrEntries,
+    ) -> ApllodbResult<()> {
+        let sql = format!(
+            "
+INSERT INTO {navi_table_name} ({pk_column_names}, {cname_revision})
+  SELECT {pk_column_names}, {cname_revision} + 1 AS {cname_revision}
+    FROM {navi_table_name}
+    WHERE
+      {vrr_entries_condition}
+",
+            cname_revision = CNAME_REVISION,
+            navi_table_name = NaviTableName::from(vtable.table_name().clone()).to_sql_string(),
+            pk_column_names = vtable
+                .table_wide_constraints()
+                .pk_column_names()
+                .to_sql_string(),
+            vrr_entries_condition = vrr_entries.to_condition_expression()?.to_sql_string(),
+        );
+
+        let _ = self.sqlite_tx.borrow_mut().execute(&sql).await?;
+
+        Ok(())
     }
 
     pub(in crate::sqlite::transaction::sqlite_tx::version_revision_resolver) async fn insert_deleted_records_all(
