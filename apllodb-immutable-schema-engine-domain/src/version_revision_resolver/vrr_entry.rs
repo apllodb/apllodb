@@ -56,13 +56,10 @@ impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
             .expect(&format!("too large revision number: {:#?}", self));
         let sql_value = SqlValue::NotNull(NnSqlValue::BigInt(rev));
 
-        let eq_expr =
-            BooleanExpression::ComparisonFunctionVariant(ComparisonFunction::EqualVariant {
-                left: Box::new(Expression::SchemaIndexVariant(index)),
-                right: Box::new(Expression::ConstantVariant(sql_value)),
-            });
-
-        eq_expr
+        BooleanExpression::ComparisonFunctionVariant(ComparisonFunction::EqualVariant {
+            left: Box::new(Expression::SchemaIndexVariant(index)),
+            right: Box::new(Expression::ConstantVariant(sql_value)),
+        })
     }
 }
 
