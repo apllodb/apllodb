@@ -4,18 +4,21 @@ use super::{
     sqlite_rowid::SqliteRowid,
     transaction::sqlite_tx::{
         version::repository_impl::VersionRepositoryImpl,
+        version_revision_resolver::VersionRevisionResolverImpl,
         vtable::repository_impl::VTableRepositoryImpl,
     },
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct SqliteTypes;
+pub(crate) struct SqliteTypes;
 
 impl ImmutableSchemaAbstractTypes for SqliteTypes {
     type VrrId = SqliteRowid;
 
     type VTableRepo = VTableRepositoryImpl;
     type VersionRepo = VersionRepositoryImpl;
+
+    type Vrr = VersionRevisionResolverImpl;
 }
 
 // Fill structs' type parameters in domain / application layers.

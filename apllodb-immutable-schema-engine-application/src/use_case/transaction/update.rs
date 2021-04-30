@@ -27,7 +27,7 @@ pub struct UpdateUseCaseInput<'usecase, Types: ImmutableSchemaAbstractTypes> {
     database_name: &'usecase DatabaseName,
     table_name: &'usecase TableName,
     column_values: HashMap<ColumnName, Expression>,
-    selection: &'usecase RowSelectionPlan<Types>,
+    selection: RowSelectionPlan<Types>,
 }
 impl<'usecase, Types: ImmutableSchemaAbstractTypes> UseCaseInput
     for UpdateUseCaseInput<'usecase, Types>
@@ -66,7 +66,7 @@ pub struct UpdateUseCase<'usecase, Types: ImmutableSchemaAbstractTypes> {
 }
 
 #[async_trait(?Send)]
-impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
+impl<'usecase, Types: ImmutableSchemaAbstractTypes + Clone + 'usecase> TxUseCase<Types>
     for UpdateUseCase<'usecase, Types>
 {
     type In = UpdateUseCaseInput<'usecase, Types>;
@@ -87,7 +87,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
         let projection_result = Self::projection_result(vtable_repo, &vtable).await?;
 
         let rows = vtable_repo
-            .select(&vtable, projection_result, input.selection)
+            .select(&vtable, projection_result, input.selection.clone())
             .await?;
 
         vtable_repo.delete(&vtable, input.selection).await?;
@@ -155,7 +155,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Type
 
     fn new_rows_to_insert(
         rows_before: Rows,
-        mut column_values_to_set: HashMap<ColumnName, Expression>,
+        column_values_to_set: HashMap<ColumnName, Expression>,
     ) -> ApllodbResult<Vec<Row>> {
         let mut ret: Vec<Row> = vec![];
 
@@ -167,9 +167,9 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCase<'usecase, Type
             for (pos, tc) in schema.table_column_names_with_pos() {
                 let column_name = tc.as_column_name();
 
-                let val_after = if let Some(expr) = column_values_to_set.remove(&column_name) {
+                let val_after = if let Some(expr) = column_values_to_set.get(&column_name) {
                     if let Expression::ConstantVariant(sql_value) = expr {
-                        Ok(sql_value)
+                        Ok(sql_value.clone())
                     } else {
                         Err(ApllodbError::feature_not_supported(
                             "only ConstantVariant is acceptable for now",

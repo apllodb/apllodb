@@ -1,4 +1,10 @@
-use std::{fmt::Debug, hash::Hash};
+use std::{convert::TryFrom, fmt::Debug, hash::Hash};
+
+use apllodb_shared_components::{
+    ApllodbResult, BooleanExpression, ComparisonFunction, Expression, LogicalFunction, NnSqlValue,
+    SchemaIndex, SqlValue,
+};
+use apllodb_storage_engine_interface::ColumnName;
 
 use crate::{
     abstract_types::ImmutableSchemaAbstractTypes, entity::Entity,
@@ -17,6 +23,43 @@ pub struct VrrEntry<Types: ImmutableSchemaAbstractTypes> {
 impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
     pub fn into_pk(self) -> ApparentPrimaryKey {
         self.pk
+    }
+
+    pub fn to_condition_expression(
+        &self,
+        revision_column_name: &ColumnName,
+    ) -> ApllodbResult<BooleanExpression> {
+        let apk_condition = self.pk.to_condition_expression()?;
+
+        let revision_condition = self.to_revision_condition(revision_column_name);
+
+        let apk_and_revison_condition =
+            BooleanExpression::LogicalFunctionVariant(LogicalFunction::AndVariant {
+                left: Box::new(apk_condition),
+                right: Box::new(revision_condition),
+            });
+
+        Ok(apk_and_revison_condition)
+    }
+
+    fn to_revision_condition(&self, revision_column_name: &ColumnName) -> BooleanExpression {
+        let index = SchemaIndex::from(
+            format!(
+                "{}.{}",
+                self.pk.table_name().as_str(),
+                revision_column_name.as_str()
+            )
+            .as_str(),
+        );
+
+        let rev: i64 = TryFrom::try_from(self.revision.to_u64())
+            .unwrap_or_else(|_| panic!("too large revision number: {:#?}", self));
+        let sql_value = SqlValue::NotNull(NnSqlValue::BigInt(rev));
+
+        BooleanExpression::ComparisonFunctionVariant(ComparisonFunction::EqualVariant {
+            left: Box::new(Expression::SchemaIndexVariant(index)),
+            right: Box::new(Expression::ConstantVariant(sql_value)),
+        })
     }
 }
 

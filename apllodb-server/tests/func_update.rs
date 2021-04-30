@@ -10,7 +10,6 @@ fn setup() {
     test_setup();
 }
 
-#[ignore]
 #[async_std::test]
 async fn test_update() {
     SqlTest::default()
@@ -73,23 +72,6 @@ async fn test_update() {
                     r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age")))
                         .unwrap(),
                     Some(200)
-                );
-                Ok(())
-            })),
-        ))
-        // updates PK
-        .add_step(Step::new(
-            "UPDATE people SET id = 0 WHERE age = 200",
-            StepRes::Ok,
-        ))
-        .add_step(Step::new(
-            "SELECT id, age FROM people WHERE age = 200",
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
-                assert_eq!(
-                    r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id")))
-                        .unwrap(),
-                    Some(0)
                 );
                 Ok(())
             })),
