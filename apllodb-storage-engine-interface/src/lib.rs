@@ -52,7 +52,9 @@ mod access_methods;
 mod alter_table_action;
 mod column;
 mod row_projection_query;
+mod row_selection_query;
 mod rows;
+mod single_table_condition;
 mod table;
 mod table_column_name;
 
@@ -66,7 +68,9 @@ pub use column::{
     column_data_type::ColumnDataType, column_definition::ColumnDefinition, column_name::ColumnName,
 };
 pub use row_projection_query::RowProjectionQuery;
+pub use row_selection_query::RowSelectionQuery;
 pub use rows::{row::Row, row_schema::RowSchema, Rows};
+pub use single_table_condition::SingleTableCondition;
 pub use table::{
     table_constraint_kind::TableConstraintKind, table_constraints::TableConstraints,
     table_name::TableName,

@@ -7,8 +7,8 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    query::projection::ProjectionResult,
     row::pk::apparent_pk::ApparentPrimaryKey,
+    row_projection_result::RowProjectionResult,
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
@@ -87,7 +87,7 @@ impl VersionDao {
         &self,
         version: &ActiveVersion,
         vrr_entries_in_version: VrrEntriesInVersion,
-        projection: &ProjectionResult,
+        projection: &RowProjectionResult,
     ) -> ApllodbResult<Rows> {
         let ret_schema = RowSchema::from(projection.clone());
 
