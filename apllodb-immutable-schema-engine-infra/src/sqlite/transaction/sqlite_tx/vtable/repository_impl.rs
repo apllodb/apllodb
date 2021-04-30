@@ -12,13 +12,17 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
+    row::pk::apparent_pk::ApparentPrimaryKey,
     row_projection_result::RowProjectionResult,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult};
+use apllodb_shared_components::{
+    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ComparisonFunction,
+    Expression, SqlValue,
+};
 use apllodb_storage_engine_interface::{
     Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
 };
@@ -169,11 +173,83 @@ impl VTableRepositoryImpl {
 
     async fn plan_selection_from_condition(
         &self,
-        _vtable: &VTable,
-        _condition: SingleTableCondition,
+        vtable: &VTable,
+        condition: SingleTableCondition,
     ) -> ApllodbResult<RowSelectionPlan> {
-        Err(ApllodbError::feature_not_supported(
-            "storage-engine selection is not supported currently",
-        ))
+        match self.try_condition_into_apk(vtable, &condition) {
+            Ok(apk) => {
+                let vrr_entries = self.vrr().probe(vtable.id(), vec![apk]).await?;
+                Ok(RowSelectionPlan::VrrProbe(vrr_entries))
+            }
+            Err(e) => match e.kind() {
+                ApllodbErrorKind::FeatureNotSupported | ApllodbErrorKind::UndefinedPrimaryKey => {
+                    Err(ApllodbError::feature_not_supported("for storage-engine selection, only expression like `pk_col = 123` is supported currently"))
+                }
+                _ => Err(e)
+            }
+        }
+    }
+
+    /// # Failures
+    ///
+    /// - [UndefinedPrimaryKey](apllodb_shared_components::ApllodbErrorKind::UndefinedPrimaryKey) when:
+    ///   - `condition` is not like: `pk_col = 123`
+    ///   - TODO support: `pk_col1 = 123 AND pk_col2 = 456`
+    /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
+    ///   - PK contains multiple columns.
+    ///   - `condition` is like: `pk_col1 = 123 AND pk_col2 = 456`
+    fn try_condition_into_apk(
+        &self,
+        vtable: &VTable,
+        // FIXME no clone of SqlValue inside (pass ownership and return it on error?)
+        condition: &SingleTableCondition,
+    ) -> ApllodbResult<ApparentPrimaryKey> {
+        let pk_column_names = vtable.table_wide_constraints().pk_column_names();
+        let pk_column_name = if pk_column_names.len() == 1 {
+            Ok(pk_column_names.first().expect("length checked"))
+        } else {
+            Err(ApllodbError::feature_not_supported(
+                "storage-engine selection with compound PK is not supported currently",
+            ))
+        }?;
+
+        let err = ApllodbError::new(ApllodbErrorKind::UndefinedPrimaryKey, "", None);
+
+        let expr = condition.as_expression();
+        match expr {
+            Expression::BooleanExpressionVariant(b_expr) => match b_expr {
+                BooleanExpression::ComparisonFunctionVariant(cf) => match cf {
+                    ComparisonFunction::EqualVariant { left, right } => {
+                        match (left.as_ref(), right.as_ref()) {
+                            (
+                                Expression::ConstantVariant(sql_value),
+                                Expression::SchemaIndexVariant(index),
+                            )
+                            | (
+                                Expression::SchemaIndexVariant(index),
+                                Expression::ConstantVariant(sql_value),
+                            ) => {
+                                if index.attr() == pk_column_name.as_str() {
+                                    if let SqlValue::NotNull(nn_sql_value) = sql_value {
+                                        Ok(ApparentPrimaryKey::new(
+                                            vtable.table_name().clone(),
+                                            vec![pk_column_name.clone()],
+                                            vec![nn_sql_value.clone()],
+                                        ))
+                                    } else {
+                                        Err(err)
+                                    }
+                                } else {
+                                    Err(err)
+                                }
+                            }
+                            _ => Err(err),
+                        }
+                    }
+                },
+                _ => Err(err),
+            },
+            _ => Err(err),
+        }
     }
 }
