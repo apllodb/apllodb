@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use apllodb_shared_components::Expression;
 use apllodb_storage_engine_interface::{ColumnName, TableName};
 
-use crate::sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeId;
+use crate::{
+    condition::Condition,
+    sql_processor::query::query_plan::query_plan_tree::query_plan_node::node_id::QueryPlanNodeId,
+};
 
 #[derive(Clone, PartialEq, Debug)]
 /// Root node of modification plan tree.
@@ -34,4 +37,5 @@ pub(crate) struct InsertNode {
 pub(crate) struct UpdateNode {
     pub(crate) table_name: TableName,
     pub(crate) column_values: HashMap<ColumnName, Expression>,
+    pub(crate) where_condition: Option<Condition>,
 }

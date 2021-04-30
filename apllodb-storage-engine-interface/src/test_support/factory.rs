@@ -1,9 +1,12 @@
-use apllodb_shared_components::{test_support::factory::random_id, SqlType};
+use apllodb_shared_components::{
+    test_support::factory::random_id, ApllodbResult, Expression, Schema, SqlType,
+};
 
 use crate::{
     column::{column_data_type::ColumnDataType, column_name::ColumnName},
     table::table_name::TableName,
     table_column_name::TableColumnName,
+    Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
 };
 
 impl TableName {
@@ -37,5 +40,33 @@ impl TableColumnName {
 impl ColumnDataType {
     pub fn factory(column_name: &str, sql_type: SqlType, nullable: bool) -> Self {
         Self::new(ColumnName::factory(column_name), sql_type, nullable)
+    }
+}
+
+impl Rows {
+    /// Filter Rows. Note that production code should not filter Rows after scan (for performance).
+    pub fn selection(self, selection_query: &RowSelectionQuery) -> Self {
+        match selection_query {
+            RowSelectionQuery::FullScan => self,
+            RowSelectionQuery::Condition(c) => self.filter_by_condition(c),
+        }
+    }
+
+    fn filter_by_condition(self, condition: &SingleTableCondition) -> Self {
+        fn eval_expression(schema: &RowSchema, row: Row, expr: &Expression) -> ApllodbResult<bool> {
+            let sql_value = expr.to_sql_value_for_expr_with_index(&|index| {
+                let (pos, _) = schema.index(index)?;
+                row.get_sql_value(pos).map(|v| v.clone())
+            })?;
+            sql_value.to_bool()
+        }
+
+        let schema = self.as_schema().clone();
+
+        let rows: Vec<Row> = self
+            .filter(|row| eval_expression(&schema, row.clone(), condition.as_expression()).unwrap())
+            .collect();
+
+        Self::new(schema, rows)
     }
 }

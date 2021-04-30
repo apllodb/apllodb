@@ -7,8 +7,9 @@ use apllodb_shared_components::{
     SqlType, SqlValue,
 };
 use apllodb_storage_engine_interface::{
-    ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery, StorageEngine,
-    TableConstraintKind, TableConstraints, TableName, WithTxMethods,
+    ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery,
+    RowSelectionQuery, StorageEngine, TableConstraintKind, TableConstraints, TableName,
+    WithTxMethods,
 };
 
 #[ctor::ctor]
@@ -127,7 +128,12 @@ async fn test_insert() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), RowProjectionQuery::All)
+        .select(
+            session,
+            t_name.clone(),
+            RowProjectionQuery::All,
+            RowSelectionQuery::FullScan,
+        )
         .await?;
 
     let schema = records.as_schema().clone();
@@ -193,7 +199,12 @@ async fn test_update() -> ApllodbResult<()> {
 
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), RowProjectionQuery::All)
+        .select(
+            session,
+            t_name.clone(),
+            RowProjectionQuery::All,
+            RowSelectionQuery::FullScan,
+        )
         .await?;
 
     {
@@ -218,10 +229,16 @@ async fn test_update() -> ApllodbResult<()> {
         hmap! {
             c1_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NnSqlValue::Integer(200)))
         },
+        RowSelectionQuery::FullScan,
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), RowProjectionQuery::All)
+        .select(
+            session,
+            t_name.clone(),
+            RowProjectionQuery::All,
+            RowSelectionQuery::FullScan,
+        )
         .await?;
 
     {
@@ -247,10 +264,16 @@ async fn test_update() -> ApllodbResult<()> {
         hmap! {
             c_id_def.column_data_type().column_name().clone() => Expression::ConstantVariant(SqlValue::NotNull(NnSqlValue::Integer(2)))
         },
+        RowSelectionQuery::FullScan,
     ).await?;
     let (mut records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), RowProjectionQuery::All)
+        .select(
+            session,
+            t_name.clone(),
+            RowProjectionQuery::All,
+            RowSelectionQuery::FullScan,
+        )
         .await?;
     {
         let schema = records.as_schema().clone();
@@ -330,6 +353,7 @@ async fn test_delete() -> ApllodbResult<()> {
                 .into_iter()
                 .collect(),
             ),
+            RowSelectionQuery::FullScan,
         )
         .await?;
     assert_eq!(rows.count(), 1);
@@ -352,6 +376,7 @@ async fn test_delete() -> ApllodbResult<()> {
                 .into_iter()
                 .collect(),
             ),
+            RowSelectionQuery::FullScan,
         )
         .await?;
     assert_eq!(rows.count(), 0);

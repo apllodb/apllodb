@@ -41,7 +41,7 @@ struct MockRows {
 pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock) {
     with_tx
         .expect_select()
-        .returning(move |session, table_name, projection| {
+        .returning(move |session, table_name, projection, selection| {
             let models = models.clone();
             let datum = MockDatum::from(models);
 
@@ -52,6 +52,8 @@ pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock)
                 .unwrap_or_else(|| panic!("table `{:?}` is undefined in ModelsMock", table_name));
 
             let rows = table.rows.clone();
+
+            let rows = rows.selection(&selection);
 
             let rows = match projection {
                 RowProjectionQuery::All => rows,

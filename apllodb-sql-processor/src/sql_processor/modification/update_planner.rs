@@ -26,10 +26,12 @@ impl UpdatePlanner {
     pub(crate) fn run(&self) -> ApllodbResult<ModificationPlanTree> {
         let table_name = self.analyzer.table_name_to_update()?;
         let column_values = self.analyzer.update_column_values()?;
+        let where_condition = self.analyzer.where_condition()?;
 
         let plan_node = ModificationPlanNode::Update(UpdateNode {
             table_name,
             column_values,
+            where_condition,
         });
 
         Ok(ModificationPlanTree::new(plan_node))

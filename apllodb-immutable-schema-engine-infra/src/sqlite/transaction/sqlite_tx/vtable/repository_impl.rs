@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use super::vtable_metadata_dao::VTableMetadataDao;
 use crate::sqlite::{
     rows::chain_rows::ChainRows,
-    sqlite_types::{SqliteTypes, VrrEntries},
+    sqlite_types::{RowSelectionPlan, SqliteTypes, VrrEntries},
     transaction::sqlite_tx::{
         version::dao::{version_dao::VersionDao, version_metadata_dao::VersionMetadataDao},
         version_revision_resolver::VersionRevisionResolverImpl,
@@ -12,14 +12,16 @@ use crate::sqlite::{
 };
 use apllodb_immutable_schema_engine_domain::{
     entity::Entity,
-    query::projection::ProjectionResult,
+    row_projection_result::RowProjectionResult,
     version::active_versions::ActiveVersions,
     version_revision_resolver::VersionRevisionResolver,
     vtable::repository::VTableRepository,
     vtable::{id::VTableId, VTable},
 };
-use apllodb_shared_components::ApllodbResult;
-use apllodb_storage_engine_interface::{Row, RowSchema, Rows};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
+use apllodb_storage_engine_interface::{
+    Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
+};
 use async_trait::async_trait;
 
 #[derive(Debug)]
@@ -67,21 +69,42 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
         Ok(())
     }
 
+    async fn plan_selection(
+        &self,
+        vtable: &VTable,
+        selection_query: RowSelectionQuery,
+    ) -> ApllodbResult<RowSelectionPlan> {
+        match selection_query {
+            RowSelectionQuery::FullScan => Ok(RowSelectionPlan::FullScan),
+            RowSelectionQuery::Condition(c) => self.plan_selection_from_condition(vtable, c).await,
+        }
+    }
+
     /// Every PK column is included in resulting row although it is not specified in `projection`.
     ///
     /// FIXME Exclude unnecessary PK column in resulting row for performance.
-    async fn full_scan(
+    async fn _full_scan(
         &self,
         vtable: &VTable,
-        projection: ProjectionResult,
+        projection: RowProjectionResult,
     ) -> ApllodbResult<Rows> {
         let vrr_entries = self.vrr().scan(&vtable).await?;
         self.probe_vrr_entries(vrr_entries, projection).await
     }
 
-    async fn delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
+    async fn _delete_all(&self, vtable: &VTable) -> ApllodbResult<()> {
         self.vrr().deregister_all(vtable).await?;
         Ok(())
+    }
+
+    async fn _delete_probe(
+        &self,
+        _vtable: &VTable,
+        _vrr_entries: &VrrEntries,
+    ) -> ApllodbResult<()> {
+        Err(ApllodbError::feature_not_supported(
+            "DELETE ... WHERE ... is not supported currently",
+        ))
     }
 
     async fn active_versions(&self, vtable: &VTable) -> ApllodbResult<ActiveVersions> {
@@ -113,7 +136,7 @@ impl VTableRepositoryImpl {
     async fn probe_vrr_entries(
         &self,
         vrr_entries: VrrEntries,
-        projection: ProjectionResult,
+        projection: RowProjectionResult,
     ) -> ApllodbResult<Rows> {
         let vtable = self
             .vtable_metadata_dao()
@@ -142,5 +165,15 @@ impl VTableRepositoryImpl {
             let rows = ChainRows::chain(all_ver_rows);
             Ok(rows)
         }
+    }
+
+    async fn plan_selection_from_condition(
+        &self,
+        _vtable: &VTable,
+        _condition: SingleTableCondition,
+    ) -> ApllodbResult<RowSelectionPlan> {
+        Err(ApllodbError::feature_not_supported(
+            "storage-engine selection is not supported currently",
+        ))
     }
 }

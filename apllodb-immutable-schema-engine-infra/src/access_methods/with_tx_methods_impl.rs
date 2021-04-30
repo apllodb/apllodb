@@ -2,22 +2,23 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::sqlite::{
     sqlite_resource_pool::{db_pool::SqliteDatabasePool, tx_pool::SqliteTxPool},
-    sqlite_types::SqliteTypes,
+    sqlite_types::{RowSelectionPlan, SqliteTypes},
     transaction::sqlite_tx::SqliteTx,
 };
 use apllodb_immutable_schema_engine_application::use_case::transaction::{
     alter_table::{AlterTableUseCase, AlterTableUseCaseInput},
     create_table::{CreateTableUseCase, CreateTableUseCaseInput},
-    delete_all::{DeleteAllUseCase, DeleteAllUseCaseInput},
-    full_scan::{FullScanUseCase, FullScanUseCaseInput},
+    delete::{DeleteUseCase, DeleteUseCaseInput},
     insert::{InsertUseCase, InsertUseCaseInput},
-    update_all::{UpdateAllUseCase, UpdateAllUseCaseInput},
+    select::{SelectUseCase, SelectUseCaseInput},
+    update::{UpdateUseCase, UpdateUseCaseInput},
 };
 use apllodb_immutable_schema_engine_application::use_case::TxUseCase;
-use apllodb_shared_components::{ApllodbError, Expression, SessionId};
+use apllodb_immutable_schema_engine_domain::vtable::{id::VTableId, repository::VTableRepository};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression, SessionId};
 use apllodb_storage_engine_interface::{
-    AlterTableAction, ColumnDefinition, ColumnName, Row, RowProjectionQuery, Rows,
-    TableConstraints, TableName, WithTxMethods,
+    AlterTableAction, ColumnDefinition, ColumnName, Row, RowProjectionQuery, RowSelectionQuery,
+    Rows, TableConstraints, TableName, WithTxMethods,
 };
 use futures::FutureExt;
 
@@ -35,6 +36,24 @@ impl WithTxMethodsImpl {
         tx_pool: Rc<RefCell<SqliteTxPool>>,
     ) -> Self {
         Self { db_pool, tx_pool }
+    }
+
+    async fn plan_selection(
+        &self,
+        sid: SessionId,
+        table_name: &TableName,
+        selection: RowSelectionQuery,
+    ) -> ApllodbResult<RowSelectionPlan> {
+        let tx_pool = self.tx_pool.borrow();
+        let tx = tx_pool.get_tx(&sid)?;
+
+        let vtable_repo = SqliteTx::vtable_repo(tx.clone());
+
+        let database_name = tx.borrow().database_name().clone();
+        let vtable_id = VTableId::new(&database_name, table_name);
+        let vtable = vtable_repo.read(&vtable_id).await?;
+
+        vtable_repo.plan_selection(&vtable, selection).await
     }
 }
 
@@ -137,14 +156,19 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         projection: RowProjectionQuery,
+        selection: RowSelectionQuery,
     ) -> BoxFutRes<Rows> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = FullScanUseCaseInput::new(&database_name, &table_name, projection);
-            let output = FullScanUseCase::<'_, SqliteTypes>::run(
+
+            let selection_plan = self.plan_selection(sid, &table_name, selection).await?;
+
+            let input =
+                SelectUseCaseInput::new(&database_name, &table_name, projection, &selection_plan);
+            let output = SelectUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
                 input,
@@ -186,14 +210,21 @@ impl WithTxMethods for WithTxMethodsImpl {
         sid: SessionId,
         table_name: TableName,
         column_values: HashMap<ColumnName, Expression>,
+        selection: RowSelectionQuery,
     ) -> BoxFutRes<()> {
         async move {
             let tx_pool = self.tx_pool.borrow();
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = UpdateAllUseCaseInput::new(&database_name, &table_name, column_values);
-            UpdateAllUseCase::<'_, SqliteTypes>::run(
+            let selection_plan = self.plan_selection(sid, &table_name, selection).await?;
+            let input = UpdateUseCaseInput::new(
+                &database_name,
+                &table_name,
+                column_values,
+                &selection_plan,
+            );
+            UpdateUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
                 input,
@@ -211,8 +242,9 @@ impl WithTxMethods for WithTxMethodsImpl {
             let tx = tx_pool.get_tx(&sid)?;
 
             let database_name = tx.borrow().database_name().clone();
-            let input = DeleteAllUseCaseInput::new(&database_name, &table_name);
-            DeleteAllUseCase::<'_, SqliteTypes>::run(
+            let input =
+                DeleteUseCaseInput::new(&database_name, &table_name, &RowSelectionQuery::FullScan);
+            DeleteUseCase::<'_, SqliteTypes>::run(
                 &SqliteTx::vtable_repo(tx.clone()),
                 &SqliteTx::version_repo(tx.clone()),
                 input,

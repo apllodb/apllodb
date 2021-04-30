@@ -1,11 +1,12 @@
 use std::collections::HashSet;
 
-use apllodb_shared_components::{Expression, SchemaIndex};
+use apllodb_shared_components::SchemaIndex;
 use apllodb_storage_engine_interface::{RowProjectionQuery, TableName};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     aliaser::Aliaser,
+    condition::Condition,
     records::{record_schema::RecordSchema, Records},
     select::ordering::Ordering,
 };
@@ -32,9 +33,7 @@ pub(crate) enum UnaryPlanOperation {
         fields: HashSet<SchemaIndex>,
     },
     Selection {
-        /// Expression here must be evaluated as BOOLEAN (NULL is FALSE in BOOLEAN context).
-        /// Otherwise [DatatypeMismatch](apllodb-shared-components::ApllodbErrorKind::DatatypeMismatch).
-        condition: Expression,
+        condition: Condition,
     },
     Sort {
         index_orderings: Vec<(SchemaIndex, Ordering)>,

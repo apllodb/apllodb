@@ -6,8 +6,9 @@ use apllodb_shared_components::{
     ApllodbResult, NnSqlValue, Schema, SchemaIndex, SqlType, SqlValue,
 };
 use apllodb_storage_engine_interface::{
-    ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery, StorageEngine,
-    TableConstraintKind, TableConstraints, TableName, WithTxMethods,
+    ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery,
+    RowSelectionQuery, StorageEngine, TableConstraintKind, TableConstraints, TableName,
+    WithTxMethods,
 };
 
 #[ctor::ctor]
@@ -62,7 +63,12 @@ async fn test_compound_pk() -> ApllodbResult<()> {
 
     let (records, session) = engine
         .with_tx()
-        .select(session, t_name.clone(), RowProjectionQuery::All)
+        .select(
+            session,
+            t_name.clone(),
+            RowProjectionQuery::All,
+            RowSelectionQuery::FullScan,
+        )
         .await?;
 
     let schema = records.as_schema().clone();
