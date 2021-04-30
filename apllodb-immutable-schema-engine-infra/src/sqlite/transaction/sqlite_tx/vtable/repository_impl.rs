@@ -190,37 +190,36 @@ impl VTableRepositoryImpl {
 
         let expr = condition.as_expression();
         match expr {
-            Expression::BooleanExpressionVariant(b_expr) => match b_expr {
-                BooleanExpression::ComparisonFunctionVariant(cf) => match cf {
-                    ComparisonFunction::EqualVariant { left, right } => {
-                        match (left.as_ref(), right.as_ref()) {
-                            (
-                                Expression::ConstantVariant(sql_value),
-                                Expression::SchemaIndexVariant(index),
-                            )
-                            | (
-                                Expression::SchemaIndexVariant(index),
-                                Expression::ConstantVariant(sql_value),
-                            ) => {
-                                if index.attr() == pk_column_name.as_str() {
-                                    if let SqlValue::NotNull(nn_sql_value) = sql_value {
-                                        Ok(ApparentPrimaryKey::new(
-                                            vtable.table_name().clone(),
-                                            vec![pk_column_name.clone()],
-                                            vec![nn_sql_value.clone()],
-                                        ))
-                                    } else {
-                                        Err(err)
-                                    }
+            Expression::BooleanExpressionVariant(BooleanExpression::ComparisonFunctionVariant(
+                cf,
+            )) => match cf {
+                ComparisonFunction::EqualVariant { left, right } => {
+                    match (left.as_ref(), right.as_ref()) {
+                        (
+                            Expression::ConstantVariant(sql_value),
+                            Expression::SchemaIndexVariant(index),
+                        )
+                        | (
+                            Expression::SchemaIndexVariant(index),
+                            Expression::ConstantVariant(sql_value),
+                        ) => {
+                            if index.attr() == pk_column_name.as_str() {
+                                if let SqlValue::NotNull(nn_sql_value) = sql_value {
+                                    Ok(ApparentPrimaryKey::new(
+                                        vtable.table_name().clone(),
+                                        vec![pk_column_name.clone()],
+                                        vec![nn_sql_value.clone()],
+                                    ))
                                 } else {
                                     Err(err)
                                 }
+                            } else {
+                                Err(err)
                             }
-                            _ => Err(err),
                         }
+                        _ => Err(err),
                     }
-                },
-                _ => Err(err),
+                }
             },
             _ => Err(err),
         }
