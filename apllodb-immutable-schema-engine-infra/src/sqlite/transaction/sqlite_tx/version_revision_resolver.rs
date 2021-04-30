@@ -104,7 +104,9 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
     }
 
     async fn deregister(&self, vtable: &VTable, vrr_entries: VrrEntries) -> ApllodbResult<()> {
-        self.navi_dao().insert_deleted_records(vtable, vrr_entries).await
+        self.navi_dao()
+            .insert_deleted_records(vtable, vrr_entries)
+            .await
     }
 
     async fn deregister_all(&self, vtable: &VTable) -> ApllodbResult<()> {
