@@ -49,11 +49,11 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
         selection_plan: &RowSelectionPlan<Types>,
     ) -> ApllodbResult<Rows> {
         let rows = match selection_plan {
-            RowSelectionPlan::FullScan => self._full_scan(vtable, projection).await?,
+            RowSelectionPlan::FullScan => self._full_scan(vtable, projection).await,
             RowSelectionPlan::VrrProbe(_vrr_entries) => Err(ApllodbError::feature_not_supported(
                 "SELECT ... WHERE ... in storage engine is not supported currently",
-            ))?,
-        };
+            )),
+        }?;
         Ok(rows)
     }
 
