@@ -1,6 +1,7 @@
 use apllodb_shared_components::{
     test_support::factory::random_id, ApllodbResult, Expression, Schema, SqlType,
 };
+use std::collections::HashSet;
 
 use crate::{
     column::{column_data_type::ColumnDataType, column_name::ColumnName},
@@ -8,6 +9,7 @@ use crate::{
     table_column_name::TableColumnName,
     Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
 };
+use apllodb_shared_components::{RPos, SchemaIndex};
 
 impl TableName {
     /// randomly generate a table name
@@ -44,6 +46,30 @@ impl ColumnDataType {
 }
 
 impl Rows {
+    /// Horizontally shrink records. Order of columns are kept between input Row and output.
+    ///
+    /// # Failures
+    ///
+    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    ///   - Specified field does not exist in this record.
+    pub fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
+        let new_schema = self.as_schema().projection(indexes)?;
+
+        let projection_positions = indexes
+            .iter()
+            .map(|idx| {
+                let (pos, _) = self.as_schema().index(idx)?;
+                Ok(pos)
+            })
+            .collect::<ApllodbResult<HashSet<RPos>>>()?;
+
+        let new_inner: Vec<Row> = self
+            .map(|row| row.projection(&projection_positions))
+            .collect();
+
+        Ok(Self::new(new_schema, new_inner))
+    }
+
     /// Filter Rows. Note that production code should not filter Rows after scan (for performance).
     pub fn selection(self, selection_query: &RowSelectionQuery) -> Self {
         match selection_query {
