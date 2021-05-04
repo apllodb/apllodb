@@ -160,12 +160,20 @@ impl Records {
                     }
                     SqlCompareResult::Null => {
                         // NULL comes last, regardless of ASC/DESC
-                        if let SqlValue::Null = a_val {
-                            res = std::cmp::Ordering::Greater
-                        } else {
-                            res = std::cmp::Ordering::Less
+                        match (a_val, b_val) {
+                            (SqlValue::Null, SqlValue::Null) => res = std::cmp::Ordering::Equal,
+                            (SqlValue::Null, SqlValue::NotNull(_)) => {
+                                res = std::cmp::Ordering::Greater;
+                                break;
+                            }
+                            (SqlValue::NotNull(_), SqlValue::Null) => {
+                                res = std::cmp::Ordering::Less;
+                                break;
+                            }
+                            (SqlValue::NotNull(_), SqlValue::NotNull(_)) => unreachable!(
+                                "at least 1 should be NULL to get SqlCompareResult::Null"
+                            ),
                         }
-                        break;
                     }
                     SqlCompareResult::NotEq => {
                         unreachable!("sort key `{}` must be at least PartialOrd", index)

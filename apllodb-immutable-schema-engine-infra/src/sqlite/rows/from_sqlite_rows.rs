@@ -13,8 +13,8 @@ use crate::error::InfraError;
 pub(crate) trait FromSqliteRows {
     /// # Arguments
     ///
-    /// - `non_pk_column_data_types` - Only contains columns `sqlite_rows` have.
-    /// - `non_pk_void_projection` - Columns `sqlite_rows` do not have but another version has.
+    /// - `column_data_types` - Only contains columns `sqlite_rows` have.
+    /// - `void_projection` - Columns `sqlite_rows` do not have but another version has.
     fn from_sqlite_rows(
         sqlite_rows: &[sqlx::sqlite::SqliteRow],
         table_name: &TableName,
@@ -36,11 +36,17 @@ pub(crate) trait FromSqliteRows {
                 let mut sql_values: Vec<SqlValue> = schema
                     .table_column_names()
                     .iter()
-                    .filter_map(|tc| {
-                        column_data_types
+                    .map(|tc| {
+                        if let Some(cdt) = column_data_types
                             .iter()
                             .find(|cdt| cdt.column_name() == tc.as_column_name())
-                            .map(|cdt| Self::_sql_value(sqlite_row, cdt))
+                        {
+                            // effective projection
+                            Self::_sql_value(sqlite_row, cdt)
+                        } else {
+                            // void projection
+                            Ok(SqlValue::Null)
+                        }
                     })
                     .collect::<ApllodbResult<_>>()?;
 
