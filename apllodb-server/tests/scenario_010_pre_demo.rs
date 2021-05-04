@@ -66,8 +66,8 @@ async fn test_scenario_010_pre_demo() {
         .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             r#"SELECT ID, 名前, 本社の地域, 従業員数 FROM 会社 ORDER BY ID;"#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -93,7 +93,7 @@ async fn test_scenario_010_pre_demo() {
                     3000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -119,7 +119,7 @@ async fn test_scenario_010_pre_demo() {
                     1000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -145,7 +145,7 @@ async fn test_scenario_010_pre_demo() {
                     500
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -171,14 +171,14 @@ async fn test_scenario_010_pre_demo() {
                     1200
                 );
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
         .add_step(Step::new(
             r#"SELECT ID, 名前 FROM 会社 WHERE 本社の地域 = "東京" ORDER BY 名前 ASC;"#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -192,7 +192,7 @@ async fn test_scenario_010_pre_demo() {
                     "コナミ"
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -206,7 +206,7 @@ async fn test_scenario_010_pre_demo() {
                     "ソニー"
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -220,7 +220,7 @@ async fn test_scenario_010_pre_demo() {
                     "ハドソン"
                 );
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
@@ -230,8 +230,8 @@ async fn test_scenario_010_pre_demo() {
               FROM 会社 INNER JOIN 会社合併史 ON 会社.ID = 会社合併史.存続会社ID
               ORDER BY 会社合併史.ID;
             "#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from(
                         "会社合併史.存続会社ID"
@@ -259,7 +259,7 @@ async fn test_scenario_010_pre_demo() {
                     1000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from(
                         "会社合併史.存続会社ID"
@@ -287,7 +287,7 @@ async fn test_scenario_010_pre_demo() {
                     3000
                 );
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
@@ -304,8 +304,8 @@ async fn test_scenario_010_pre_demo() {
         ))
         .add_step(Step::new(
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY ID;"#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -323,7 +323,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -341,7 +341,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -359,7 +359,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -377,7 +377,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
@@ -404,8 +404,8 @@ async fn test_scenario_010_pre_demo() {
         ))
         .add_step(Step::new(
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY ID;"#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -423,7 +423,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -441,7 +441,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -459,7 +459,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -477,7 +477,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -497,7 +497,7 @@ async fn test_scenario_010_pre_demo() {
                     12900000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -515,7 +515,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
@@ -536,8 +536,8 @@ async fn test_scenario_010_pre_demo() {
         ))
         .add_step(Step::new(
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY ID;"#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -557,7 +557,7 @@ async fn test_scenario_010_pre_demo() {
                     50000000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -577,7 +577,7 @@ async fn test_scenario_010_pre_demo() {
                     20000000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -595,7 +595,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -613,7 +613,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -633,7 +633,7 @@ async fn test_scenario_010_pre_demo() {
                     12900000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -651,7 +651,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
@@ -660,8 +660,8 @@ async fn test_scenario_010_pre_demo() {
         .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY 時価総額 DESC, ID ASC;"#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -681,7 +681,7 @@ async fn test_scenario_010_pre_demo() {
                     50000000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -701,7 +701,7 @@ async fn test_scenario_010_pre_demo() {
                     20000000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -721,7 +721,7 @@ async fn test_scenario_010_pre_demo() {
                     12900000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -739,7 +739,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -757,7 +757,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -775,14 +775,14 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
         .add_step(Step::new(
             r#"SELECT ID, 名前, 時価総額 FROM 会社 ORDER BY 時価総額 ASC, ID ASC;"#,
-            StepRes::OkQuery(Box::new(|mut rec_iter| {
-                let r = rec_iter.next().unwrap();
+            StepRes::OkQuery(Box::new(|mut records| {
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -802,7 +802,7 @@ async fn test_scenario_010_pre_demo() {
                     12900000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -822,7 +822,7 @@ async fn test_scenario_010_pre_demo() {
                     20000000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -842,7 +842,7 @@ async fn test_scenario_010_pre_demo() {
                     50000000000
                 );
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -860,7 +860,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -878,7 +878,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                let r = rec_iter.next().unwrap();
+                let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("ID")))
                         .unwrap()
@@ -896,7 +896,7 @@ async fn test_scenario_010_pre_demo() {
                     .unwrap()
                     .is_none());
 
-                assert!(rec_iter.next().is_none());
+                assert!(records.next().is_none());
                 Ok(())
             })),
         ))
