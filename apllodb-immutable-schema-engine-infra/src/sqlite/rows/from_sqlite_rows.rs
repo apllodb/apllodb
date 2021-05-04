@@ -44,6 +44,9 @@ pub(crate) trait FromSqliteRows {
                     })
                     .collect::<ApllodbResult<_>>()?;
 
+                // FIXME ここで void_projection は問答無用で最後にpushしているが、その結果として
+                // void である 時価総額 のvalue (NULL) が本社の地域よりも後に入っている。
+
                 // add requested (specified in projection) columns as NULL.
                 // (E.g. v1 has `c1` and v2 does not. This row is for v2 and `c1` is requested.)
                 void_projection
