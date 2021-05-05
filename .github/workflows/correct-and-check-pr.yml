@@ -126,18 +126,12 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --all-features
+          args: --all-features --all-targets
 
       - name: checks if CLI client runs without crash
         run: |
           echo 'CREATE DATABASE abc' | ./target/debug/apllodb-cli
           rm *.sqlite3*
-
-      - name: cargo build --tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --tests --all-features
 
       - name: cargo test
         uses: actions-rs/cargo@v1
