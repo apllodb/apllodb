@@ -124,6 +124,8 @@ jobs:
 
       - name: cargo build
         uses: actions-rs/cargo@v1
+        env:
+          RUSTFLAGS: -D warnings
         with:
           command: build
           args: --all-features --all-targets
