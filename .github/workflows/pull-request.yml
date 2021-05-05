@@ -150,7 +150,7 @@ jobs:
     env:
       RUSTFLAGS: -Zinstrument-coverage
       RUSTDOCFLAGS: -Zinstrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins
-      LLVM_PROFILE_FILE: json5format-%m.profraw
+      LLVM_PROFILE_FILE: apllodb-coverage-%m.profraw
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/install-apllodb-dep
@@ -184,6 +184,31 @@ jobs:
           command: test
 
       - run: ls -l
+
+      - name: Merge .profraw into .profdata
+        uses: actions-rs/cargo@v1
+        with:
+          command: profdata
+          args: -- merge -sparse apllodb-coverage-*.profraw -o apllodb-coverage.profdata
+
+      - name: report
+        uses: actions-rs/cargo@v1
+        with:
+          command: cov
+          args: |
+            -- report \
+              $( \
+                for file in \
+                $( \
+                  cargo test --tests --no-run --message-format=json \
+                    | jq -r "select(.profile.test == true) | .filenames[]" \
+                    | grep -v dSYM - \
+                ); \
+                do \
+                  printf "%s %s " -object $file; \
+                done \
+              ) \
+              --instr-profile=apllodb-coverage.profdata --summary-only
 
   check_rustdoc:
     runs-on: ubuntu-latest
