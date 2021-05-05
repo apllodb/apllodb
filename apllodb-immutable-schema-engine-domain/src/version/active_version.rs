@@ -233,6 +233,8 @@ mod tests {
 
     #[test]
     fn test_initial_success() -> ApllodbResult<()> {
+        let x = 42;
+
         let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
 
         let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
