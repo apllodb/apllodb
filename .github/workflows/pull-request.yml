@@ -252,6 +252,7 @@ jobs:
     needs:
       - lint
       - test
+      - coverage
       - check_rustdoc
     name: workflow notification to slack
     runs-on: ubuntu-latest
