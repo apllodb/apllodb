@@ -1,7 +1,8 @@
 [config]
+skip_core_tasks = true
 default_to_workspace = false
 
-[tasks.fmt]
+[tasks.format]
 script = ['''
 #!/usr/bin/env bash -eux
 cargo fmt --all

@@ -32,7 +32,7 @@ cargo make build
 cargo make test
 
 # (before making pull-request)
-cargo make fmt
+cargo make format
 cargo make lint
 
 # (generate rustdoc)
