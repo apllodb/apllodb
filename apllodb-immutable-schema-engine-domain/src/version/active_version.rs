@@ -169,7 +169,7 @@ impl ActiveVersion {
                     ApllodbErrorKind::InvalidColumnReference,
                     format!(
                         "inserted column `{:?}` is not defined in version `{:?}`",
-                        cn, self
+                        &cn.clone(), self
                     ),
                     None,
                 ));
