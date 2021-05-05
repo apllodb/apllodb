@@ -153,6 +153,16 @@ jobs:
       LLVM_PROFILE_FILE: apllodb-coverage-%m.profraw
     steps:
       - uses: actions/checkout@v2
+
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: ./.github/actions/install-apllodb-dep
 
       - name: Install nightly toolchain
@@ -168,15 +178,6 @@ jobs:
         with:
           command: install
           args: rustfilt cargo-binutils
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: cargo test
         uses: actions-rs/cargo@v1
