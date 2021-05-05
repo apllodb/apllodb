@@ -145,6 +145,46 @@ jobs:
         run: |
            [ $(find . -name '*.sqlite3*' |wc -l) = '0' ] || ( find . -name '*.sqlite3*' ; false )
 
+  coverage:  # see: https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html#test-coverage
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -Zinstrument-coverage
+      RUSTDOCFLAGS: -Zinstrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins
+      LLVM_PROFILE_FILE: json5format-%m.profraw
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/install-apllodb-dep
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: llvm-tools-preview
+
+      - name: Install dependencies to generate source-based coverage
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: rustfilt cargo-binutils
+
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - run: ls -l
+
   check_rustdoc:
     runs-on: ubuntu-latest
     steps:
