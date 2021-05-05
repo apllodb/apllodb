@@ -2,8 +2,10 @@
 default_to_workspace = false
 
 [tasks.fmt]
-command = "cargo"
-args = ["fmt", "--all"]
+script = ['''
+#!/usr/bin/env bash -eux
+cargo fmt --all
+''']
 
 [tasks.lint]
 env = { RUSTFLAGS = "-D warnings" }
