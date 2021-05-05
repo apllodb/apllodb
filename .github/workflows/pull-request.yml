@@ -29,13 +29,9 @@ jobs:
         with:
           profile: minimal
           override: true
-          components: rustfmt
 
-      - name: cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - name: fmt
+        run: cargo make fmt
 
   lint:
     runs-on: ubuntu-latest
