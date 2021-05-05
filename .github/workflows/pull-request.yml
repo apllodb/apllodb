@@ -39,6 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - name: checks if any `todo!()` or `unimplemented!()` is used (to prevent easy server crash)
         run: |
           git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
@@ -50,15 +59,6 @@ jobs:
           profile: minimal
           override: true
           components: clippy
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
@@ -80,6 +80,16 @@ jobs:
             - 1.48.0  # MSRV
     steps:
       - uses: actions/checkout@v2
+
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: ./.github/actions/install-apllodb-dep
 
       # https://github.com/actions-rs/meta/blob/master/recipes/matrix.md
@@ -97,15 +107,6 @@ jobs:
         with:
           profile: minimal
           override: true
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: cargo build
         uses: actions-rs/cargo@v1
@@ -134,15 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
                 
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-        
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
         with:
@@ -152,6 +145,12 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         
+      - name: rustup override set `cat rust-toolchain`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+
       - name: cargo clean --doc
         uses: actions-rs/cargo@v1
         with:
