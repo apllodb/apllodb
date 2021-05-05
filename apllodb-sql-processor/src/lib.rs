@@ -1,4 +1,4 @@
-#![deny(warnings, missing_debug_implementations, missing_docs)]
+#![deny(missing_debug_implementations, missing_docs)]
 
 //! SQL processor.
 //!

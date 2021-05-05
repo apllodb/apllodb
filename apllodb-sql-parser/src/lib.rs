@@ -1,4 +1,4 @@
-#![deny(warnings, missing_docs, missing_debug_implementations)]
+#![deny(missing_docs, missing_debug_implementations)]
 
 //! apllodb's parser that inputs apllodb-SQL and emit apllodb-AST.
 //!
