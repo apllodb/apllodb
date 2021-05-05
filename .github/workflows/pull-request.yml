@@ -7,25 +7,10 @@ on:
       - synchronize
 
 jobs:
-  auto_correct:
+  format:
     runs-on: ubuntu-latest
-    env:
-      # PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW:
-      #   Instead of GITHUB_TOKEN (which cannot trigger another workflow: https://docs.github.com/ja/free-pro-team@latest/actions/reference/authentication-in-a-workflow#%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E5%86%85%E3%81%A7%E3%81%AEgithub_token%E3%81%AE%E5%88%A9%E7%94%A8),
-      #   issue your personal token and set it to secret.
-      REPO: https://${{github.actor}}:${{secrets.PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW}}@github.com/${{github.repository}}.git
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          persist-credentials: false
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt
 
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
@@ -36,25 +21,32 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: rustup override set `cat rust-toolchain`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          components: rustfmt
+
       - name: cargo fmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all
-
-      - name: commit formatted sources and push
-        run: |
-          git config --global user.email "workflow@example.com"
-          git config --global user.name "workflow user"
-          git add .
-          if git commit -m '(auto commit) cargo fmt' ; then
-            git push ${REPO} HEAD:${{github.event.pull_request.head.ref}}
-          fi
+          args: --all -- --check
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: checks if any `todo!()` or `unimplemented!()` is used (to prevent easy server crash)
         run: |
@@ -68,20 +60,13 @@ jobs:
           override: true
           components: clippy
 
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
       - name: cargo clippy
         uses: actions-rs/cargo@v1
+        env:
+          RUSTFLAGS: -D warnings
         with:
           command: clippy
-          args: --workspace --all-targets --all-features -- -D warnings
+          args: --workspace --all-targets --all-features
 
   test:
     runs-on: ubuntu-latest
@@ -95,6 +80,16 @@ jobs:
             - 1.48.0  # MSRV
     steps:
       - uses: actions/checkout@v2
+
+      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: ./.github/actions/install-apllodb-dep
 
       # https://github.com/actions-rs/meta/blob/master/recipes/matrix.md
@@ -112,15 +107,6 @@ jobs:
         with:
           profile: minimal
           override: true
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: cargo build
         uses: actions-rs/cargo@v1
@@ -149,15 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
                 
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-        
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
         with:
@@ -167,6 +145,12 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         
+      - name: rustup override set `cat rust-toolchain`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+
       - name: cargo clean --doc
         uses: actions-rs/cargo@v1
         with:
@@ -185,6 +169,7 @@ jobs:
   slack-notify:
     if: always()
     needs:
+      - format
       - lint
       - test
       - check_rustdoc
