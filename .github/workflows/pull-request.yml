@@ -219,7 +219,7 @@ jobs:
   slack-notify:
     if: always()
     needs:
-      - format
+      - fmt
       - lint
       - test
       - check_rustdoc
