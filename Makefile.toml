@@ -19,3 +19,12 @@ args = ["build", "--workspace", "--all-targets", "--all-features"]
 [tasks.test]
 command = "cargo"
 args = ["test", "--workspace", "--all-targets", "--all-features"]
+
+[tasks.doc]
+run_task = { name = ["_doc-clean", "_doc"] }
+[tasks._doc-clean]
+command = "cargo"
+args = ["clean", "--doc"]
+[tasks._doc]
+command = "cargo"
+args = ["doc", "--no-deps", "--all-features"]
