@@ -38,3 +38,19 @@ script = ['''
 git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
 git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
 ''']
+
+[tasks.check-trash]
+script = ['''
+#!/usr/bin/env bash -eux
+if [ ! $(find . -name '*.sqlite3*' |wc -l) = '0' ]; then
+    echo 'Trash files:'
+    find . -name '*.sqlite3*'
+    false
+fi
+''']
+
+[tasks.clean-trash]
+script = ['''
+#!/usr/bin/env bash -eux
+find . -name '*.sqlite3*' |xargs rm
+''']
