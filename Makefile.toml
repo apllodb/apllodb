@@ -2,7 +2,6 @@
 default_to_workspace = false
 
 [tasks.fmt]
-install_crate = "rustfmt"
 command = "cargo"
 args = ["fmt", "--all"]
 
