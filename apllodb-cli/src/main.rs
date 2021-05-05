@@ -17,6 +17,10 @@ use shell::ReadLine;
 async fn main() {
     env_logger::init();
 
+    let x = std::f64::consts::PI;
+    let r = 8.0;
+    println!("the area of the circle is {}", x * r * r);
+
     let server = ApllodbServer::default();
     let mut rl = ReadLine::default();
     let cmd_processor = CmdProcessor::new(&server);
