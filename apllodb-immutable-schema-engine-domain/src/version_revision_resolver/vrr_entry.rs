@@ -53,7 +53,7 @@ impl<Types: ImmutableSchemaAbstractTypes> VrrEntry<Types> {
         );
 
         let rev: i64 = TryFrom::try_from(self.revision.to_u64())
-            .unwrap_or_else(|_| panic!("too large revision number: {:#?}", self));
+            .expect(&format!("too large revision number: {:#?}", self));
         let sql_value = SqlValue::NotNull(NnSqlValue::BigInt(rev));
 
         BooleanExpression::ComparisonFunctionVariant(ComparisonFunction::EqualVariant {
