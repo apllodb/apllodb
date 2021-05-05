@@ -31,3 +31,10 @@ script = ['''
 cargo clean --doc
 cargo doc --no-deps --all-features
 ''']
+
+[tasks.check-easy-panic]
+script = ['''
+#!/usr/bin/env bash -eux
+git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
+git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
+''']
