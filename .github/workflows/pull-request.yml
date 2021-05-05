@@ -7,25 +7,10 @@ on:
       - synchronize
 
 jobs:
-  auto_correct:
+  format:
     runs-on: ubuntu-latest
-    env:
-      # PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW:
-      #   Instead of GITHUB_TOKEN (which cannot trigger another workflow: https://docs.github.com/ja/free-pro-team@latest/actions/reference/authentication-in-a-workflow#%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E5%86%85%E3%81%A7%E3%81%AEgithub_token%E3%81%AE%E5%88%A9%E7%94%A8),
-      #   issue your personal token and set it to secret.
-      REPO: https://${{github.actor}}:${{secrets.PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW}}@github.com/${{github.repository}}.git
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          persist-credentials: false
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt
 
       # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
       - uses: actions/cache@v2
@@ -36,20 +21,18 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: rustup override set `cat rust-toolchain`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          components: rustfmt
+
       - name: cargo fmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all
-
-      - name: commit formatted sources and push
-        run: |
-          git config --global user.email "workflow@example.com"
-          git config --global user.name "workflow user"
-          git add .
-          if git commit -m '(auto commit) cargo fmt' ; then
-            git push ${REPO} HEAD:${{github.event.pull_request.head.ref}}
-          fi
+          args: --all -- --check
 
   lint:
     runs-on: ubuntu-latest
@@ -187,6 +170,7 @@ jobs:
   slack-notify:
     if: always()
     needs:
+      - format
       - lint
       - test
       - check_rustdoc
