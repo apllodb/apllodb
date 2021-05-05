@@ -5,3 +5,8 @@ default_to_workspace = false
 install_crate = "rustfmt"
 command = "cargo"
 args = ["fmt", "--all"]
+
+[tasks.lint]
+env = { RUSTFLAGS = "-D warnings" }
+command = "cargo"
+args = ["clippy", "--workspace", "--all-targets", "--all-features"]
