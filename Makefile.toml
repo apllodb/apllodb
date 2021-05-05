@@ -8,24 +8,26 @@ cargo fmt --all
 ''']
 
 [tasks.lint]
-env = { RUSTFLAGS = "-D warnings" }
-command = "cargo"
-args = ["clippy", "--workspace", "--all-targets", "--all-features"]
+script = ['''
+#!/usr/bin/env bash -eux
+RUSTFLAGS='-D warnings' cargo clippy --workspace --all-targets --all-features
+''']
 
 [tasks.build]
-env = { RUSTFLAGS = "-D warnings" }
-command = "cargo"
-args = ["build", "--workspace", "--all-targets", "--all-features"]
+script = ['''
+#!/usr/bin/env bash -eux
+RUSTFLAGS='-D warnings' cargo build --workspace --all-targets --all-features
+''']
 
 [tasks.test]
-command = "cargo"
-args = ["test", "--workspace", "--all-targets", "--all-features"]
+script = ['''
+#!/usr/bin/env bash -eux
+cargo test --workspace --all-targets --all-features
+''']
 
 [tasks.doc]
-run_task = { name = ["_doc-clean", "_doc"] }
-[tasks._doc-clean]
-command = "cargo"
-args = ["clean", "--doc"]
-[tasks._doc]
-command = "cargo"
-args = ["doc", "--no-deps", "--all-features"]
+script = ['''
+#!/usr/bin/env bash -eux
+cargo clean --doc
+cargo doc --no-deps --all-features
+''']
