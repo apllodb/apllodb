@@ -93,7 +93,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal
-          components: rustfmt, clippy
+          components: rustfmt, clippy, llvm-tools-preview
           override: true
 
       - name: Cache cargo registry
