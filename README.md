@@ -19,14 +19,24 @@ Also, we have plan to develop the following unique features:
 
 This repository is a [multi-package project](https://doc.rust-lang.org/edition-guide/rust-2018/cargo-and-crates-io/cargo-workspaces-for-multi-package-projects.html).
 
-You are supposed to have installed [Cargo](https://github.com/rust-lang/cargo).
+You are supposed to have installed [Cargo](https://github.com/rust-lang/cargo) and [cargo-make](https://github.com/sagiegurari/cargo-make).
 
 ```bash
 # (clone repository)
 
 cd apllodb
-cargo build
-cargo test
+cargo make test
+
+# (write your code)
+cargo make build
+cargo make test
+
+# (before making pull-request)
+cargo make format
+cargo make lint
+
+# (generate rustdoc)
+cargo make doc
 ```
 
 ## Architecture

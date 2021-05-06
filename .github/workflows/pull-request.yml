@@ -5,256 +5,134 @@ on:
     types:
       - opened
       - synchronize
+  workflow_dispatch:
 
 jobs:
-  auto_correct:
-    runs-on: ubuntu-latest
-    env:
-      # PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW:
-      #   Instead of GITHUB_TOKEN (which cannot trigger another workflow: https://docs.github.com/ja/free-pro-team@latest/actions/reference/authentication-in-a-workflow#%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E5%86%85%E3%81%A7%E3%81%AEgithub_token%E3%81%AE%E5%88%A9%E7%94%A8),
-      #   issue your personal token and set it to secret.
-      REPO: https://${{github.actor}}:${{secrets.PERSONAL_TOKEN_TO_TRIGGER_ANOTHER_WORKFLOW}}@github.com/${{github.repository}}.git
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          persist-credentials: false
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all
-
-      - name: commit formatted sources and push
-        run: |
-          git config --global user.email "workflow@example.com"
-          git config --global user.name "workflow user"
-          git add .
-          if git commit -m '(auto commit) cargo fmt' ; then
-            git push ${REPO} HEAD:${{github.event.pull_request.head.ref}}
-          fi
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: checks if any `todo!()` or `unimplemented!()` is used (to prevent easy server crash)
-        run: |
-          git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
-          git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: clippy
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --workspace --all-targets --all-features -- -D warnings
-
-  test:
-    runs-on: ubuntu-latest
-    env:
-      RUST_LOG: debug
-      RUST_BACKTRACE: 1
+  job-matrix:
+    name: ${{ matrix.make.name }} (${{ matrix.rust }}; ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
-        matrix:
-          rust:
-            - ""      # `rust-toolchain`
-            - 1.48.0  # MSRV
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/install-apllodb-dep
-
-      # https://github.com/actions-rs/meta/blob/master/recipes/matrix.md
-      - name: rustup override set {{ matrix.rust }}
-        if: matrix.rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: rustup override set `cat rust-toolchain`
-        if: matrix.rust == ''
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: cargo build
-        uses: actions-rs/cargo@v1
-        env:
-          RUSTFLAGS: -D warnings
-        with:
-          command: build
-          args: --all-features --all-targets
-
-      - name: checks if CLI client runs without crash
-        run: |
-          echo 'CREATE DATABASE abc' | ./target/debug/apllodb-cli
-          rm *.sqlite3*
-
-      - name: cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features
-
-      - name: checks if tests clean .sqlite3* files (use SqliteDatabaseCleaner if fails)
-        run: |
-           [ $(find . -name '*.sqlite3*' |wc -l) = '0' ] || ( find . -name '*.sqlite3*' ; false )
-
-  coverage:  # see: https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html#test-coverage
-    runs-on: ubuntu-latest
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        rust:
+          - stable
+          - 1.48.0  # MSRV
+        make:
+          - name: format
+            task: format
+          - name: lint
+            task: lint
+          - name: check-easy-panic
+            task: check-easy-panic
+            rust-free: true
+          - name: test
+            task: build test-cli clean-trash test check-trash
+          - name: doc
+            task: doc
+        include:
+          - os: ubuntu-latest
+            sccache-path: /home/runner/.cache/sccache
+        exclude:
+          - rust: 1.48.0
+            make:
+              name: format
+          - rust: 1.48.0
+            make:
+              name: lint
+          - rust: 1.48.0
+            make:
+              name: check-easy-panic
+          - rust: 1.48.0
+            make:
+              name: doc
     env:
-      RUSTFLAGS: -Zinstrument-coverage
-      RUSTDOCFLAGS: -Zinstrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins
-      LLVM_PROFILE_FILE: apllodb-coverage-%m.profraw
+      RUST_BACKTRACE: full
+      RUSTC_WRAPPER: sccache
+      SCCACHE_CACHE_SIZE: 2G
+      SCCACHE_DIR: ${{ matrix.sccache-path }}
+      CACHE_RESET_KEY: 20210506123551
     steps:
       - uses: actions/checkout@v2
 
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
+      - name: Install sccache (ubuntu-latest)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        env:
+          BASE_URL: https://github.com/mozilla/sccache/releases/download
+          SCCACHE_VERSION: 0.2.15
+        run: |
+          SCCACHE_FILE_BASE=sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl
+          mkdir -p $HOME/.local/bin
+          curl -L "${BASE_URL}/v${SCCACHE_VERSION}/${SCCACHE_FILE_BASE}.tar.gz" | tar xz
+          mv -f ${SCCACHE_FILE_BASE}/sccache ${HOME}/.local/bin/sccache
+          chmod +x ${HOME}/.local/bin/sccache
+          echo "${HOME}/.local/bin" >> ${GITHUB_PATH}
+
+      - name: Install Rust ${{ matrix.rust }}
+        if: ${{ ! matrix.rust-free }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          components: rustfmt, clippy
+          override: true
+
+      - name: Cache cargo registry
+        if: ${{ ! matrix.rust-free }}
+        uses: actions/cache@v2
+        continue-on-error: false
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ matrix.make.name }}-
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-
 
-      - uses: ./.github/actions/install-apllodb-dep
+      - name: Save sccache
+        if: ${{ ! matrix.rust-free }}
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: ${{ matrix.sccache-path }}
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-
 
-      - name: Install nightly toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          components: llvm-tools-preview
+      - name: Install cargo-make
+        env:
+          BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
+          CARGO_MAKE_VERSION: 0.32.17
+        run: |
+          CARGO_MAKE_FILE_BASE=cargo-make-v${CARGO_MAKE_VERSION}-x86_64-unknown-linux-musl
+          mkdir -p ${HOME}/.local/bin
+          curl -L "${BASE_URL}/${CARGO_MAKE_VERSION}/${CARGO_MAKE_FILE_BASE}.zip" --output /tmp/cargo-make.zip
+          unzip /tmp/cargo-make.zip -d /tmp/cargo-make
+          mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Install dependencies to generate source-based coverage
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: rustfilt cargo-binutils
+      - name: Start sccache server
+        run: sccache --start-server
 
-      - name: cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - name: ${{ matrix.make.name }}
+        run: |
+          for task in ${{ matrix.make.task }} ; do
+            cargo make ${task}
+          done
 
-      - run: ls -l
+      - name: Print sccache stats
+        run: sccache --show-stats
 
-      - name: Merge .profraw into .profdata
-        uses: actions-rs/cargo@v1
-        with:
-          command: profdata
-          args: -- merge -sparse apllodb-coverage-*.profraw -o apllodb-coverage.profdata
-
-      - name: report
-        uses: actions-rs/cargo@v1
-        with:
-          command: cov
-          args: |
-            -- report \
-              $( \
-                for file in \
-                $( \
-                  cargo test --tests --no-run --message-format=json \
-                    | jq -r "select(.profile.test == true) | .filenames[]" \
-                    | grep -v dSYM - \
-                ); \
-                do \
-                  printf "%s %s " -object $file; \
-                done \
-              ) \
-              --instr-profile=apllodb-coverage.profdata --summary-only
-
-  check_rustdoc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-                
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-        
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-        
-      - name: cargo clean --doc
-        uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: --doc
-      - name: cargo doc
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps --all-features
-          
-      # TODO comment-in
-      # - run: cargo install cargo-deadlinks
-      # - run: cargo deadlinks
+      - name: Stop sccache server
+        run: sccache --stop-server || true
 
   slack-notify:
     if: always()
     needs:
-      - lint
-      - test
-      - coverage
-      - check_rustdoc
+      - job-matrix
     name: workflow notification to slack
     runs-on: ubuntu-latest
     steps:
