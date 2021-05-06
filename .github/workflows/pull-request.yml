@@ -52,6 +52,7 @@ jobs:
       RUSTC_WRAPPER: sccache
       SCCACHE_CACHE_SIZE: 2G
       SCCACHE_DIR: ${{ matrix.sccache-path }}
+      CACHE_RESET_KEY: 20210506110602
     steps:
       - uses: actions/checkout@v2
 
@@ -85,9 +86,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.rust }}-cargo-
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-
 
       - name: Save sccache
         if: ${{ ! matrix.rust-free }}
@@ -95,9 +96,9 @@ jobs:
         continue-on-error: false
         with:
           path: ${{ matrix.sccache-path }}
-          key: ${{ runner.os }}-${{ matrix.rust }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.rust }}-sccache-
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-
 
       - name: Install cargo-make
         env:
