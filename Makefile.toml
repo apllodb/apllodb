@@ -51,6 +51,7 @@ cargo install rustfilt cargo-binutils
 cargo test --workspace --all-targets --all-features
 
 cargo profdata -- merge -sparse apllodb-coverage-*.profraw -o apllodb-coverage.profdata
+
 cargo cov -- report --use-color --ignore-filename-regex='/.cargo/registry' \
   $( \
     for file in $( \
@@ -63,6 +64,20 @@ cargo cov -- report --use-color --ignore-filename-regex='/.cargo/registry' \
     done \
   ) \
   --instr-profile=apllodb-coverage.profdata --summary-only
+
+cargo cov -- show --use-color --ignore-filename-regex='/.cargo/registry' --show-instantiations --show-line-counts-or-regions --Xdemangler=rustfilt \
+  $( \
+    for file in $( \
+      cargo test --tests --no-run --message-format=json \
+        | jq -r "select(.profile.test == true) | .filenames[]" \
+        | grep -v dSYM - \
+    ); \
+    do \
+      printf "%s %s " -object $file; \
+    done \
+  ) \
+  --instr-profile=apllodb-coverage.profdata --summary-only
+
 ''']
 
 [tasks.check-easy-panic]
