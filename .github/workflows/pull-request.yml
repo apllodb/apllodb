@@ -18,7 +18,7 @@ jobs:
           - ubuntu-latest
         rust:
           - stable
-          - 1.48.0  # MSRV
+          - ${{ env.MSRV }}
         make:
           - name: format
             task: format
@@ -35,19 +35,20 @@ jobs:
           - os: ubuntu-latest
             sccache-path: /home/runner/.cache/sccache
         exclude:
-          - rust: 1.48.0
+          - rust: ${{ env.MSRV }}
             make:
               name: format
-          - rust: 1.48.0
+          - rust: ${{ env.MSRV }}
             make:
               name: lint
-          - rust: 1.48.0
+          - rust: ${{ env.MSRV }}
             make:
               name: check-easy-panic
-          - rust: 1.48.0
+          - rust: ${{ env.MSRV }}
             make:
               name: doc
     env:
+      MSRV: 1.48.0
       RUST_BACKTRACE: full
       RUSTC_WRAPPER: sccache
       SCCACHE_CACHE_SIZE: 2G
