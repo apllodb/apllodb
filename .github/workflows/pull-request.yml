@@ -17,6 +17,7 @@ jobs:
         os:
           - ubuntu-latest
         rust:
+          - nightly
           - stable
           - 1.48.0  # MSRV
         make:
@@ -31,27 +32,44 @@ jobs:
             task: build test-cli clean-trash test check-trash
           - name: doc
             task: doc
-        include:
-          - os: ubuntu-latest
-            sccache-path: /home/runner/.cache/sccache
+          - name: coverage
+            task: coverage
         exclude:
-          - rust: 1.48.0
+          - rust: nightly
             make:
               name: format
           - rust: 1.48.0
             make:
+              name: format
+          - rust: nightly
+            make:
               name: lint
           - rust: 1.48.0
+            make:
+              name: lint
+          - rust: nightly
             make:
               name: check-easy-panic
           - rust: 1.48.0
             make:
+              name: check-easy-panic
+          - rust: nightly
+            make:
               name: doc
+          - rust: 1.48.0
+            make:
+              name: doc
+          - rust: stable
+            make:
+              name: coverage
+          - rust: 1.48.0
+            make:
+              name: coverage
     env:
       RUST_BACKTRACE: full
       RUSTC_WRAPPER: sccache
       SCCACHE_CACHE_SIZE: 2G
-      SCCACHE_DIR: ${{ matrix.sccache-path }}
+      SCCACHE_DIR: /home/runner/.cache/sccache
       CACHE_RESET_KEY: 20210506123551
     steps:
       - uses: actions/checkout@v2
@@ -75,7 +93,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal
-          components: rustfmt, clippy
+          components: rustfmt, clippy, llvm-tools-preview
           override: true
 
       - name: Cache cargo registry
@@ -96,7 +114,7 @@ jobs:
         uses: actions/cache@v2
         continue-on-error: false
         with:
-          path: ${{ matrix.sccache-path }}
+          path: ${{ env.SCCACHE_DIR }}
           key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-
