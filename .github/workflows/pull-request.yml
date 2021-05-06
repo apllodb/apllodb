@@ -31,12 +31,13 @@ jobs:
             task: build test-cli clean-trash test check-trash
           - name: doc
             task: doc
+          - name: coverage
+            task: coverage
         include:
           - os: ubuntu-latest
-            rust: nightly
             make:
               - name: coverage
-                task: coverage
+            rust: nightly
         exclude:
           - rust: 1.48.0
             make:
@@ -50,6 +51,13 @@ jobs:
           - rust: 1.48.0
             make:
               name: doc
+          # coverage uses nightly-only features
+          - rust: stable
+            make:
+              name: coverage
+          - rust: 1.48.0
+            make:
+              name: coverage
     env:
       RUST_BACKTRACE: full
       RUSTC_WRAPPER: sccache
