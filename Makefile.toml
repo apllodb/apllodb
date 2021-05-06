@@ -26,6 +26,12 @@ script = ['''
 cargo test --workspace --all-targets --all-features
 ''']
 
+[tasks.test-cli]
+script = ['''
+#!/usr/bin/env bash -eux
+echo 'CREATE DATABASE abc' | ./target/debug/apllodb-cli
+''']
+
 [tasks.doc]
 script = ['''
 #!/usr/bin/env bash -eux
