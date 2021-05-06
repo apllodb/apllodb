@@ -8,6 +8,42 @@ on:
   workflow_dispatch:
 
 jobs:
+  job-matrix:
+    name: ${{ matrix.make.name }} (${{ matrix.rust }}; ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        rust:
+          - rust-toolchain
+          - 1.48.0  # MSRV
+        make:
+          - name: format
+            task: format
+          - name: lint
+            task: lint
+          - name: check-easy-panic
+            task: check-easy-panic
+            rust-free: true
+          - name: test
+            task: build test-cli clean-trash test check-trash
+          - name: doc
+            task: doc
+        include:
+          - os: ubuntu-latest
+            sccache-path: /home/runner/.cache/sccache
+          - os: macos-latest
+            sccache-path: /Users/runner/Library/Caches/Mozilla.sccache
+        exclude:
+          - os: macos-latest
+            rust: stable
+            make:
+              name: Clippy
+
+
+
   format:
     runs-on: ubuntu-latest
     steps:
