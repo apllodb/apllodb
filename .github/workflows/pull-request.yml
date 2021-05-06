@@ -83,7 +83,10 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: ${{ matrix.make.name }}
-        run: echo ${{ matrix.make.task }} |xargs cargo make 
+        run: |
+          for task in ${{ matrix.make.task }} ; do
+            cargo make ${task}
+          done
 
   slack-notify:
     if: always()
