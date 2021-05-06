@@ -17,6 +17,7 @@ jobs:
         os:
           - ubuntu-latest
         rust:
+          - nightly
           - stable
           - 1.48.0  # MSRV
         make:
@@ -33,25 +34,31 @@ jobs:
             task: doc
           - name: coverage
             task: coverage
-        include:
-          - os: ubuntu-latest
-            make:
-              - name: coverage
-            rust: nightly
         exclude:
-          - rust: 1.48.0
+          - rust: nightly
             make:
               name: format
           - rust: 1.48.0
             make:
+              name: format
+          - rust: nightly
+            make:
               name: lint
           - rust: 1.48.0
+            make:
+              name: lint
+          - rust: nightly
             make:
               name: check-easy-panic
           - rust: 1.48.0
             make:
+              name: check-easy-panic
+          - rust: nightly
+            make:
               name: doc
-          # coverage uses nightly-only features
+          - rust: 1.48.0
+            make:
+              name: doc
           - rust: stable
             make:
               name: coverage
