@@ -17,7 +17,7 @@ jobs:
         os:
           - ubuntu-latest
         rust:
-          - rust-toolchain
+          - stable
           - 1.48.0  # MSRV
         make:
           - name: format
@@ -31,42 +31,34 @@ jobs:
             task: build test-cli clean-trash test check-trash
           - name: doc
             task: doc
-        include:
-          - os: ubuntu-latest
-            sccache-path: /home/runner/.cache/sccache
-          - os: macos-latest
-            sccache-path: /Users/runner/Library/Caches/Mozilla.sccache
-        exclude:
-          - os: macos-latest
-            rust: stable
-            make:
-              name: Clippy
-
-
-
-  format:
-    runs-on: ubuntu-latest
+        # TODO exclude
+    env:
+      RUST_BACKTRACE: full
+      RUST_LOG: debug
     steps:
       - uses: actions/checkout@v2
 
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
+      - name: Install Rust ${{ matrix.rust }}
+        if: ${{ ! matrix.rust-free }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          components: rustfmt, clippy
+          override: true
+
+      - name: Cache cargo registry
+        if: ${{ ! matrix.rust-free }}
+        uses: actions/cache@v2
+        continue-on-error: false
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt, clippy
-
       - name: Install cargo-make
         env:
           BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
@@ -79,217 +71,22 @@ jobs:
           mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: format
-        run: cargo make format
+      - name: ${{ matrix.make.name }}
+        run: cargo make ${{ matrix.make.task }}
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt, clippy
-
-      - name: Install cargo-make
-        env:
-          BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
-          CARGO_MAKE_VERSION: 0.32.17
-        run: |
-          CARGO_MAKE_FILE_BASE=cargo-make-v${CARGO_MAKE_VERSION}-x86_64-unknown-linux-musl
-          mkdir -p ${HOME}/.local/bin
-          curl -L "${BASE_URL}/${CARGO_MAKE_VERSION}/${CARGO_MAKE_FILE_BASE}.zip" --output /tmp/cargo-make.zip
-          unzip /tmp/cargo-make.zip -d /tmp/cargo-make
-          mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: lint
-        run: cargo make lint
-
-  check-easy-panic:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      # # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      # - uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       ~/.cargo/registry
-      #       ~/.cargo/git
-      #       target
-      #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-cargo-
-
-      # - name: rustup override set `cat rust-toolchain`
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     profile: minimal
-      #     override: true
-      #     components: rustfmt, clippy
-
-      - name: Install cargo-make
-        env:
-          BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
-          CARGO_MAKE_VERSION: 0.32.17
-        run: |
-          CARGO_MAKE_FILE_BASE=cargo-make-v${CARGO_MAKE_VERSION}-x86_64-unknown-linux-musl
-          mkdir -p ${HOME}/.local/bin
-          curl -L "${BASE_URL}/${CARGO_MAKE_VERSION}/${CARGO_MAKE_FILE_BASE}.zip" --output /tmp/cargo-make.zip
-          unzip /tmp/cargo-make.zip -d /tmp/cargo-make
-          mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: check-easy-panic
-        run: cargo make check-easy-panic
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt, clippy
-
-      - name: Install cargo-make
-        env:
-          BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
-          CARGO_MAKE_VERSION: 0.32.17
-        run: |
-          CARGO_MAKE_FILE_BASE=cargo-make-v${CARGO_MAKE_VERSION}-x86_64-unknown-linux-musl
-          mkdir -p ${HOME}/.local/bin
-          curl -L "${BASE_URL}/${CARGO_MAKE_VERSION}/${CARGO_MAKE_FILE_BASE}.zip" --output /tmp/cargo-make.zip
-          unzip /tmp/cargo-make.zip -d /tmp/cargo-make
-          mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: build
-        run: cargo make build
-
-      # TODO ここで binary を artifact に上げて、後続のjobでrun checkする
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt, clippy
-
-      - name: Install cargo-make
-        env:
-          BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
-          CARGO_MAKE_VERSION: 0.32.17
-        run: |
-          CARGO_MAKE_FILE_BASE=cargo-make-v${CARGO_MAKE_VERSION}-x86_64-unknown-linux-musl
-          mkdir -p ${HOME}/.local/bin
-          curl -L "${BASE_URL}/${CARGO_MAKE_VERSION}/${CARGO_MAKE_FILE_BASE}.zip" --output /tmp/cargo-make.zip
-          unzip /tmp/cargo-make.zip -d /tmp/cargo-make
-          mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: test
-        run: cargo make test
-
-      - name: check-trash ((use SqliteDatabaseCleaner if fails))
-        run: cargo make check-trash
-
-  doc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt, clippy
-
-      - name: Install cargo-make
-        env:
-          BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
-          CARGO_MAKE_VERSION: 0.32.17
-        run: |
-          CARGO_MAKE_FILE_BASE=cargo-make-v${CARGO_MAKE_VERSION}-x86_64-unknown-linux-musl
-          mkdir -p ${HOME}/.local/bin
-          curl -L "${BASE_URL}/${CARGO_MAKE_VERSION}/${CARGO_MAKE_FILE_BASE}.zip" --output /tmp/cargo-make.zip
-          unzip /tmp/cargo-make.zip -d /tmp/cargo-make
-          mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: test
-        run: cargo make doc
-
-  slack-notify:
-    if: always()
-    needs:
-      - format
-      - lint
-      - check-easy-panic
-      - build
-      - test
-      - doc
-    name: workflow notification to slack
-    runs-on: ubuntu-latest
-    steps:
-      - uses: Gamesight/slack-workflow-status@master
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          slack_webhook_url: ${{ secrets.SLACK_APLLODB_CI_WEBHOOK_URL }}
+  # slack-notify:
+  #   if: always()
+  #   needs:
+  #     - format
+  #     - lint
+  #     - check-easy-panic
+  #     - build
+  #     - test
+  #     - doc
+  #   name: workflow notification to slack
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: Gamesight/slack-workflow-status@master
+  #       with:
+  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #         slack_webhook_url: ${{ secrets.SLACK_APLLODB_CI_WEBHOOK_URL }}
