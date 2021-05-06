@@ -102,6 +102,8 @@ jobs:
             ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-
             ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-
 
+      - run: find ${{ matrix.sccache-path }}
+
       - name: Install cargo-make
         env:
           BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
