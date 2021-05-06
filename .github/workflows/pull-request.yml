@@ -34,7 +34,6 @@ jobs:
         # TODO exclude
     env:
       RUST_BACKTRACE: full
-      RUST_LOG: debug
     steps:
       - uses: actions/checkout@v2
 
