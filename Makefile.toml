@@ -1,0 +1,63 @@
+[config]
+skip_core_tasks = true
+default_to_workspace = false
+
+[tasks.format]
+script = ['''
+#!/usr/bin/env bash -eux
+cargo fmt --all
+''']
+
+[tasks.lint]
+script = ['''
+#!/usr/bin/env bash -eux
+RUSTFLAGS='-D warnings' cargo clippy --workspace --all-targets --all-features
+''']
+
+[tasks.build]
+script = ['''
+#!/usr/bin/env bash -eux
+RUSTFLAGS='-D warnings' cargo build --workspace --all-targets --all-features
+''']
+
+[tasks.test]
+script = ['''
+#!/usr/bin/env bash -eux
+cargo test --workspace --all-targets --all-features
+''']
+
+[tasks.test-cli]
+script = ['''
+#!/usr/bin/env bash -eux
+echo 'CREATE DATABASE abc' | ./target/debug/apllodb-cli
+''']
+
+[tasks.doc]
+script = ['''
+#!/usr/bin/env bash -eux
+cargo clean --doc
+cargo doc --no-deps --all-features
+''']
+
+[tasks.check-easy-panic]
+script = ['''
+#!/usr/bin/env bash -eux
+git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
+git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
+''']
+
+[tasks.check-trash]
+script = ['''
+#!/usr/bin/env bash -eux
+if [ ! $(find . -name '*.sqlite3*' |wc -l) = '0' ]; then
+    echo 'Trash files:'
+    find . -name '*.sqlite3*'
+    false
+fi
+''']
+
+[tasks.clean-trash]
+script = ['''
+#!/usr/bin/env bash -eux
+find . -name '*.sqlite3*' |xargs rm
+''']
