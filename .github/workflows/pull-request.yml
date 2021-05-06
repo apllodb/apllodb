@@ -49,6 +49,9 @@ jobs:
               name: doc
     env:
       RUST_BACKTRACE: full
+      RUSTC_WRAPPER: sccache
+      SCCACHE_CACHE_SIZE: 2G
+      SCCACHE_DIR: ${{ matrix.sccache-path }}
     steps:
       - uses: actions/checkout@v2
 
