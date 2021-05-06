@@ -12,20 +12,27 @@ jobs:
         working-directory: apllodb-server/fuzz/
     steps:
       - uses: actions/checkout@v2
-      - name: rustup override set `cat rust-toolchain`
+
+      - name: Install Rust ${{ matrix.rust }}
+        if: ${{ ! matrix.rust-free }}
         uses: actions-rs/toolchain@v1
         with:
+          toolchain: stable
           profile: minimal
+          components: rustfmt, clippy
           override: true
 
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
+      - name: Cache cargo registry
+        if: ${{ ! matrix.rust-free }}
+        uses: actions/cache@v2
+        continue-on-error: false
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - run: cargo install cargo-fuzz
 
