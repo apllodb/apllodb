@@ -33,6 +33,11 @@ jobs:
             task: doc
         include:
           - os: ubuntu-latest
+            rust: nightly
+            make:
+              - name: coverage
+                task: coverage
+          - os: ubuntu-latest
             sccache-path: /home/runner/.cache/sccache
         exclude:
           - rust: 1.48.0
