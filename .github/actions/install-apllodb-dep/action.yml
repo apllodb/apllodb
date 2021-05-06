@@ -1,9 +1,0 @@
-description: "Install apllodb's dependencies"
-runs:
-  using: "composite"
-  steps:
-    - run: |
-        set -xe
-        sudo apt update -y
-        sudo apt install -y libsqlite3-dev
-      shell: bash
