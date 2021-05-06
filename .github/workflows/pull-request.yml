@@ -52,7 +52,7 @@ jobs:
       RUSTC_WRAPPER: sccache
       SCCACHE_CACHE_SIZE: 2G
       SCCACHE_DIR: ${{ matrix.sccache-path }}
-      CACHE_RESET_KEY: 20210506110602
+      CACHE_RESET_KEY: 20210506123551
     steps:
       - uses: actions/checkout@v2
 
