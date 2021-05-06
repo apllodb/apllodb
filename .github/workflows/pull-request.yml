@@ -86,8 +86,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ matrix.make.name }}-
             ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-
 
       - name: Save sccache
@@ -96,8 +97,9 @@ jobs:
         continue-on-error: false
         with:
           path: ${{ matrix.sccache-path }}
-          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-
             ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-
 
       - name: Install cargo-make
