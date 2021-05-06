@@ -31,15 +31,10 @@ jobs:
             task: build test-cli clean-trash test check-trash
           - name: doc
             task: doc
-
-        # Exclude unnecessary jobs from matrix
-        rust-stable-only:
-          - ${{ matrix.make.name == 'lint' }}
-        rust-stable:
-          - ${{ matrix.rust == 'stable' }}
         exclude:
-          - rust-stable-only: true
-            rust-stable: false
+          - rust: 1.48.0
+            make:
+              name: lint
 
     env:
       RUST_BACKTRACE: full
