@@ -17,7 +17,7 @@ RUSTFLAGS='-D warnings' cargo clippy --workspace --all-targets --all-features
 [tasks.build]
 script = ['''
 #!/usr/bin/env bash -eux
-RUSTFLAGS='-D warnings' cargo build --workspace --all-targets --all-features
+RUSTFLAGS='-D warnings' cargo build --workspace --all-targets --all-features --verbose
 ''']
 
 [tasks.test]
