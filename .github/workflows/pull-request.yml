@@ -5,174 +5,134 @@ on:
     types:
       - opened
       - synchronize
+  workflow_dispatch:
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: rustfmt
-
-      - name: cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: checks if any `todo!()` or `unimplemented!()` is used (to prevent easy server crash)
-        run: |
-          git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
-          git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
-
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-          components: clippy
-
-      - name: cargo clippy
-        uses: actions-rs/cargo@v1
-        env:
-          RUSTFLAGS: -D warnings
-        with:
-          command: clippy
-          args: --workspace --all-targets --all-features
-
-  test:
-    runs-on: ubuntu-latest
-    env:
-      RUST_LOG: debug
-      RUST_BACKTRACE: 1
+  job-matrix:
+    name: ${{ matrix.make.name }} (${{ matrix.rust }}; ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
-        matrix:
-          rust:
-            - ""      # `rust-toolchain`
-            - 1.48.0  # MSRV
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        rust:
+          - stable
+          - 1.48.0  # MSRV
+        make:
+          - name: format
+            task: format
+          - name: lint
+            task: lint
+          - name: check-easy-panic
+            task: check-easy-panic
+            rust-free: true
+          - name: test
+            task: build test-cli clean-trash test check-trash
+          - name: doc
+            task: doc
+        include:
+          - os: ubuntu-latest
+            sccache-path: /home/runner/.cache/sccache
+        exclude:
+          - rust: 1.48.0
+            make:
+              name: format
+          - rust: 1.48.0
+            make:
+              name: lint
+          - rust: 1.48.0
+            make:
+              name: check-easy-panic
+          - rust: 1.48.0
+            make:
+              name: doc
+    env:
+      RUST_BACKTRACE: full
+      RUSTC_WRAPPER: sccache
+      SCCACHE_CACHE_SIZE: 2G
+      SCCACHE_DIR: ${{ matrix.sccache-path }}
+      CACHE_RESET_KEY: 20210506123551
     steps:
       - uses: actions/checkout@v2
 
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - uses: ./.github/actions/install-apllodb-dep
-
-      # https://github.com/actions-rs/meta/blob/master/recipes/matrix.md
-      - name: rustup override set {{ matrix.rust }}
-        if: matrix.rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: rustup override set `cat rust-toolchain`
-        if: matrix.rust == ''
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
-
-      - name: cargo build
-        uses: actions-rs/cargo@v1
+      - name: Install sccache (ubuntu-latest)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         env:
-          RUSTFLAGS: -D warnings
-        with:
-          command: build
-          args: --all-features --all-targets
-
-      - name: checks if CLI client runs without crash
+          BASE_URL: https://github.com/mozilla/sccache/releases/download
+          SCCACHE_VERSION: 0.2.15
         run: |
-          echo 'CREATE DATABASE abc' | ./target/debug/apllodb-cli
-          rm *.sqlite3*
+          SCCACHE_FILE_BASE=sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl
+          mkdir -p $HOME/.local/bin
+          curl -L "${BASE_URL}/v${SCCACHE_VERSION}/${SCCACHE_FILE_BASE}.tar.gz" | tar xz
+          mv -f ${SCCACHE_FILE_BASE}/sccache ${HOME}/.local/bin/sccache
+          chmod +x ${HOME}/.local/bin/sccache
+          echo "${HOME}/.local/bin" >> ${GITHUB_PATH}
 
-      - name: cargo test
-        uses: actions-rs/cargo@v1
+      - name: Install Rust ${{ matrix.rust }}
+        if: ${{ ! matrix.rust-free }}
+        uses: actions-rs/toolchain@v1
         with:
-          command: test
-          args: --all-features
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          components: rustfmt, clippy
+          override: true
 
-      - name: checks if tests clean .sqlite3* files (use SqliteDatabaseCleaner if fails)
-        run: |
-           [ $(find . -name '*.sqlite3*' |wc -l) = '0' ] || ( find . -name '*.sqlite3*' ; false )
-
-  check_rustdoc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-                
-      # https://github.com/actions/cache/blob/master/examples.md#rust---cargo
-      - uses: actions/cache@v2
+      - name: Cache cargo registry
+        if: ${{ ! matrix.rust-free }}
+        uses: actions/cache@v2
+        continue-on-error: false
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-        
-      - name: rustup override set `cat rust-toolchain`
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          override: true
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ matrix.make.name }}-
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-
 
-      - name: cargo clean --doc
-        uses: actions-rs/cargo@v1
+      - name: Save sccache
+        if: ${{ ! matrix.rust-free }}
+        uses: actions/cache@v2
+        continue-on-error: false
         with:
-          command: clean
-          args: --doc
-      - name: cargo doc
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps --all-features
-          
-      # TODO comment-in
-      # - run: cargo install cargo-deadlinks
-      # - run: cargo deadlinks
+          path: ${{ matrix.sccache-path }}
+          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-
+            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-
+
+      - name: Install cargo-make
+        env:
+          BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
+          CARGO_MAKE_VERSION: 0.32.17
+        run: |
+          CARGO_MAKE_FILE_BASE=cargo-make-v${CARGO_MAKE_VERSION}-x86_64-unknown-linux-musl
+          mkdir -p ${HOME}/.local/bin
+          curl -L "${BASE_URL}/${CARGO_MAKE_VERSION}/${CARGO_MAKE_FILE_BASE}.zip" --output /tmp/cargo-make.zip
+          unzip /tmp/cargo-make.zip -d /tmp/cargo-make
+          mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Start sccache server
+        run: sccache --start-server
+
+      - name: ${{ matrix.make.name }}
+        run: |
+          for task in ${{ matrix.make.task }} ; do
+            cargo make ${task}
+          done
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
 
   slack-notify:
     if: always()
     needs:
-      - format
-      - lint
-      - test
-      - check_rustdoc
+      - job-matrix
     name: workflow notification to slack
     runs-on: ubuntu-latest
     steps:
