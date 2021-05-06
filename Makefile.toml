@@ -40,6 +40,7 @@ cargo doc --no-deps --all-features
 ''']
 
 [tasks.coverage]
+# see: https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html#test-coverage
 script = ['''
 #!/usr/bin/env bash -eux
 export RUSTFLAGS='-Zinstrument-coverage'
@@ -50,7 +51,7 @@ cargo install rustfilt cargo-binutils
 cargo test --workspace --all-targets --all-features
 
 cargo profdata -- merge -sparse apllodb-coverage-*.profraw -o apllodb-coverage.profdata
-cargo cov -- report \
+cargo cov -- report --use-color --ignore-filename-regex='/.cargo/registry' \
   $( \
     for file in $( \
       cargo test --tests --no-run --message-format=json \
