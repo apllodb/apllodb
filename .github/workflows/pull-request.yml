@@ -34,7 +34,16 @@ jobs:
         exclude:
           - rust: 1.48.0
             make:
+              name: format
+          - rust: 1.48.0
+            make:
               name: lint
+          - rust: 1.48.0
+            make:
+              name: check-easy-panic
+          - rust: 1.48.0
+            make:
+              name: doc
 
     env:
       RUST_BACKTRACE: full
