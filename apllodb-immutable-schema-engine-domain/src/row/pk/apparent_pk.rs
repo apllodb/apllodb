@@ -28,13 +28,7 @@ impl ApparentPrimaryKey {
         let target_sql_value = self
             .zipped()
             .iter()
-            .find_map(|(cn, sql_value)| {
-                if *cn == column_name {
-                    Some(*sql_value)
-                } else {
-                    None
-                }
-            })
+            .find_map(|(cn, sql_value)| (*cn == column_name).then(|| *sql_value))
             .ok_or_else(|| {
                 ApllodbError::new(
                     ApllodbErrorKind::UndefinedColumn,

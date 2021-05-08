@@ -61,13 +61,7 @@ impl QueryPlanNodeRepository {
             .iter()
             .find_map(|(id, node)| {
                 node.source_correlation_name()
-                    .map(|corr_name| {
-                        if correlation_name == &corr_name {
-                            Some(*id)
-                        } else {
-                            None
-                        }
-                    })
+                    .map(|corr_name| (correlation_name == &corr_name).then(|| *id))
                     .flatten()
             })
             .ok_or_else(|| {
