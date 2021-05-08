@@ -40,13 +40,7 @@ pub trait Schema {
             .filter_map(|(pos, opt_name)| {
                 opt_name
                     .as_ref()
-                    .map(|name| {
-                        if name.matches(idx) {
-                            Some((*pos, name.clone()))
-                        } else {
-                            None
-                        }
-                    })
+                    .map(|name| name.matches(idx).then(|| (*pos, name.clone())))
                     .flatten()
             })
             .collect();
