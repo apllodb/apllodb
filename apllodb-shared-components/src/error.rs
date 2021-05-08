@@ -58,10 +58,7 @@ impl ApllodbError {
 
 impl Error for ApllodbError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match &self.source {
-            Some(s) => Some(s.as_ref()),
-            None => None,
-        }
+        self.source.as_ref().map(|s| s.as_ref())
     }
 }
 
