@@ -91,7 +91,7 @@ mod tests {
             default_mock_engine,
             fixture::*,
             mock_select,
-            test_models::{Body, People, Pet},
+            test_models::{Body, ModelsMock, People, Pet},
             MockWithTxMethods,
         },
         MockStorageEngine, RowProjectionQuery,
@@ -129,7 +129,7 @@ mod tests {
             engine.expect_with_tx().returning(|| {
                 let mut with_tx = MockWithTxMethods::new();
                 // mocking select()
-                mock_select(&mut with_tx, &FULL_MODELS);
+                mock_select(&mut with_tx, ModelsMock::fx_full());
                 with_tx
             });
             engine

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use apllodb_storage_engine_interface::test_support::{
-    fixture::*,
-    test_models::{Body, People, Pet},
+use apllodb_storage_engine_interface::{
+    test_support::test_models::{Body, People, Pet},
+    Row,
 };
 
 use crate::{
@@ -26,29 +26,29 @@ impl RecordSchema {
 
 impl Record {
     pub fn fx_people1() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_people()), PEOPLE_ROW1.clone())
+        Self::new(Arc::new(RecordSchema::fx_people()), Row::fx_people1())
     }
     pub fn fx_people2() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_people()), PEOPLE_ROW2.clone())
+        Self::new(Arc::new(RecordSchema::fx_people()), Row::fx_people2())
     }
     pub fn fx_people3() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_people()), PEOPLE_ROW3.clone())
+        Self::new(Arc::new(RecordSchema::fx_people()), Row::fx_people3())
     }
 
     pub fn fx_body1() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_body()), BODY_ROW1.clone())
+        Self::new(Arc::new(RecordSchema::fx_body()), Row::fx_body1())
     }
     pub fn fx_body3() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_body()), BODY_ROW3.clone())
+        Self::new(Arc::new(RecordSchema::fx_body()), Row::fx_body3())
     }
 
     pub fn fx_pet1() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_pet()), PET_ROW1.clone())
+        Self::new(Arc::new(RecordSchema::fx_pet()), Row::fx_pet1())
     }
     pub fn fx_pet3_1() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_pet()), PET_ROW3_1.clone())
+        Self::new(Arc::new(RecordSchema::fx_pet()), Row::fx_pet3_1())
     }
     pub fn fx_pet3_2() -> Self {
-        Self::new(Arc::new(RecordSchema::fx_pet()), PET_ROW3_2.clone())
+        Self::new(Arc::new(RecordSchema::fx_pet()), Row::fx_pet3_2())
     }
 }
