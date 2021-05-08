@@ -51,7 +51,6 @@ mod tests {
     use super::QueryProcessor;
     use crate::{
         records::record::Record, sql_processor::sql_processor_context::SqlProcessorContext,
-        test_support::fixture::*,
     };
     use apllodb_shared_components::ApllodbResult;
     use apllodb_sql_parser::{apllodb_ast::Command, ApllodbSqlParser};
@@ -96,17 +95,17 @@ mod tests {
             TestDatum::new(
                 "SELECT id, age FROM people",
                 vec![
-                    PEOPLE_RECORD1.clone().projection(
+                    Record::fx_people1().projection(
                         &vec![People::tc_id().into(), People::tc_age().into()]
                             .into_iter()
                             .collect(),
                     )?,
-                    PEOPLE_RECORD2.clone().projection(
+                    Record::fx_people2().projection(
                         &vec![People::tc_id().into(), People::tc_age().into()]
                             .into_iter()
                             .collect(),
                     )?,
-                    PEOPLE_RECORD3.clone().projection(
+                    Record::fx_people3().projection(
                         &vec![People::tc_id().into(), People::tc_age().into()]
                             .into_iter()
                             .collect(),
@@ -117,28 +116,22 @@ mod tests {
             TestDatum::new(
                 "SELECT id FROM people",
                 vec![
-                    PEOPLE_RECORD1
-                        .clone()
+                    Record::fx_people1()
                         .projection(&vec![People::tc_id().into()].into_iter().collect())?,
-                    PEOPLE_RECORD2
-                        .clone()
+                    Record::fx_people2()
                         .projection(&vec![People::tc_id().into()].into_iter().collect())?,
-                    PEOPLE_RECORD3
-                        .clone()
+                    Record::fx_people3()
                         .projection(&vec![People::tc_id().into()].into_iter().collect())?,
                 ],
             ),
             TestDatum::new(
                 "SELECT age FROM people",
                 vec![
-                    PEOPLE_RECORD1
-                        .clone()
+                    Record::fx_people1()
                         .projection(&vec![People::tc_age().into()].into_iter().collect())?,
-                    PEOPLE_RECORD2
-                        .clone()
+                    Record::fx_people2()
                         .projection(&vec![People::tc_age().into()].into_iter().collect())?,
-                    PEOPLE_RECORD3
-                        .clone()
+                    Record::fx_people3()
                         .projection(&vec![People::tc_age().into()].into_iter().collect())?,
                 ],
             ),
