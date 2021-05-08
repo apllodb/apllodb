@@ -91,7 +91,7 @@ mod tests {
             default_mock_engine,
             fixture::*,
             mock_select,
-            test_models::{Body, People, Pet},
+            test_models::{Body, ModelsMock, People, Pet},
             MockWithTxMethods,
         },
         MockStorageEngine, RowProjectionQuery,
@@ -129,7 +129,7 @@ mod tests {
             engine.expect_with_tx().returning(|| {
                 let mut with_tx = MockWithTxMethods::new();
                 // mocking select()
-                mock_select(&mut with_tx, &FULL_MODELS);
+                mock_select(&mut with_tx, ModelsMock::fx_full());
                 with_tx
             });
             engine
@@ -194,9 +194,9 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1.clone(),
-                PEOPLE_RECORD2.clone(),
-                PEOPLE_RECORD3.clone(),
+                Record::fx_people1(),
+                Record::fx_people2(),
+                Record::fx_people3(),
             ])
             .run()
             .await?;
@@ -213,14 +213,11 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1
-                    .clone()
+                Record::fx_people1()
                     .projection(&vec![People::tc_id().into()].into_iter().collect())?,
-                PEOPLE_RECORD2
-                    .clone()
+                Record::fx_people2()
                     .projection(&vec![People::tc_id().into()].into_iter().collect())?,
-                PEOPLE_RECORD3
-                    .clone()
+                Record::fx_people3()
                     .projection(&vec![People::tc_id().into()].into_iter().collect())?,
             ])
             .run()
@@ -238,14 +235,11 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1
-                    .clone()
+                Record::fx_people1()
                     .projection(&vec![People::tc_age().into()].into_iter().collect())?,
-                PEOPLE_RECORD2
-                    .clone()
+                Record::fx_people2()
                     .projection(&vec![People::tc_age().into()].into_iter().collect())?,
-                PEOPLE_RECORD3
-                    .clone()
+                Record::fx_people3()
                     .projection(&vec![People::tc_age().into()].into_iter().collect())?,
             ])
             .run()
@@ -267,14 +261,11 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1
-                    .clone()
+                Record::fx_people1()
                     .projection(&vec![People::tc_id().into()].into_iter().collect())?,
-                PEOPLE_RECORD2
-                    .clone()
+                Record::fx_people2()
                     .projection(&vec![People::tc_id().into()].into_iter().collect())?,
-                PEOPLE_RECORD3
-                    .clone()
+                Record::fx_people3()
                     .projection(&vec![People::tc_id().into()].into_iter().collect())?,
             ])
             .run()
@@ -295,14 +286,11 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1
-                    .clone()
+                Record::fx_people1()
                     .projection(&vec![People::tc_age().into()].into_iter().collect())?,
-                PEOPLE_RECORD2
-                    .clone()
+                Record::fx_people2()
                     .projection(&vec![People::tc_age().into()].into_iter().collect())?,
-                PEOPLE_RECORD3
-                    .clone()
+                Record::fx_people3()
                     .projection(&vec![People::tc_age().into()].into_iter().collect())?,
             ])
             .run()
@@ -340,8 +328,8 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1.clone().join(BODY_RECORD1.clone())?,
-                PEOPLE_RECORD3.clone().join(BODY_RECORD3.clone())?,
+                Record::fx_people1().join(Record::fx_body1().clone())?,
+                Record::fx_people3().join(Record::fx_body3().clone())?,
             ])
             .run()
             .await?;
@@ -378,9 +366,9 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PEOPLE_RECORD1.clone().join(PET_RECORD1.clone())?,
-                PEOPLE_RECORD3.clone().join(PET_RECORD3_1.clone())?,
-                PEOPLE_RECORD3.clone().join(PET_RECORD3_2.clone())?,
+                Record::fx_people1().join(Record::fx_pet1().clone())?,
+                Record::fx_people3().join(Record::fx_pet3_1().clone())?,
+                Record::fx_people3().join(Record::fx_pet3_2().clone())?,
             ])
             .run()
             .await?;
@@ -417,9 +405,9 @@ mod tests {
                 }))
             })
             .expect(vec![
-                PET_RECORD1.clone().join(PEOPLE_RECORD1.clone())?,
-                PET_RECORD3_1.clone().join(PEOPLE_RECORD3.clone())?,
-                PET_RECORD3_2.clone().join(PEOPLE_RECORD3.clone())?,
+                Record::fx_pet1().clone().join(Record::fx_people1())?,
+                Record::fx_pet3_1().clone().join(Record::fx_people3())?,
+                Record::fx_pet3_2().clone().join(Record::fx_people3())?,
             ])
             .run()
             .await?;
@@ -455,7 +443,7 @@ mod tests {
                     })),
                 }))
             })
-            .expect(vec![PEOPLE_RECORD1.clone().join(PET_RECORD1.clone())?])
+            .expect(vec![Record::fx_people1().join(Record::fx_pet1().clone())?])
             .run()
             .await?;
 

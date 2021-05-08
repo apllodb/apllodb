@@ -82,13 +82,12 @@ mod tests {
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
-    use once_cell::sync::Lazy;
 
     use super::ModificationProcessor;
 
     #[derive(Clone, PartialEq, Debug, new)]
     struct TestDatum {
-        in_insert_sql: &'static str,
+        in_insert_sql: String,
         expected_insert_table: TableName,
         expected_insert_columns: Vec<ColumnName>,
         expected_insert_values: Vec<Row>,
@@ -99,9 +98,9 @@ mod tests {
     async fn test_modification_processor_with_sql() -> ApllodbResult<()> {
         let parser = ApllodbSqlParser::default();
 
-        static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
+        fn test_data() -> Vec<TestDatum> {
             vec![TestDatum::new(
-                "INSERT INTO people (id, age) VALUES (1, 13)",
+                "INSERT INTO people (id, age) VALUES (1, 13)".to_string(),
                 People::table_name(),
                 vec![
                     // note: re-ordered internally
@@ -113,11 +112,12 @@ mod tests {
                     SqlValue::NotNull(NnSqlValue::Integer(1)),
                 ])],
             )]
-            .into_boxed_slice()
-        });
+        }
 
-        for test_datum in TEST_DATA.iter() {
-            log::debug!("testing with SQL: {}", test_datum.in_insert_sql);
+        for test_datum in test_data().into_iter() {
+            let sql = test_datum.in_insert_sql.clone();
+
+            log::debug!("testing with SQL: {}", &sql);
 
             // mocking insert()
             let mut engine = default_mock_engine();
@@ -140,7 +140,7 @@ mod tests {
 
             let context = Arc::new(SqlProcessorContext::new(engine));
 
-            let ast = parser.parse(test_datum.in_insert_sql).unwrap();
+            let ast = parser.parse(&sql).unwrap();
             ModificationProcessor::run_directly(context.clone(), ast.0).await?;
         }
 
