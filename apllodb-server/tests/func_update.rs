@@ -1,8 +1,7 @@
 mod sql_test;
 
-use apllodb_server::test_support::test_setup;
+use apllodb_server::{test_support::test_setup, Record};
 use apllodb_server::{RecordIndex, SchemaIndex};
-use apllodb_sql_processor::test_support::fixture::*;
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -22,7 +21,7 @@ async fn test_update() {
                 assert_eq!(
                     r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age")))
                         .unwrap(),
-                    PEOPLE_RECORD1
+                    Record::fx_people1()
                         .get::<i32>(&RecordIndex::Name(SchemaIndex::from("age")))
                         .unwrap()
                 );
@@ -40,7 +39,7 @@ async fn test_update() {
                 assert_eq!(
                     r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age")))
                         .unwrap(),
-                    PEOPLE_RECORD1
+                    Record::fx_people1()
                         .get::<i32>(&RecordIndex::Name(SchemaIndex::from("age")))
                         .unwrap()
                 );

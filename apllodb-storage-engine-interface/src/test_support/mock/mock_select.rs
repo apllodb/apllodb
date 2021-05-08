@@ -38,7 +38,7 @@ struct MockRows {
     rows: Rows,
 }
 
-pub fn mock_select(with_tx: &mut MockWithTxMethods, models: &'static ModelsMock) {
+pub fn mock_select(with_tx: &mut MockWithTxMethods, models: ModelsMock) {
     with_tx
         .expect_select()
         .returning(move |session, table_name, projection, selection| {

@@ -11,7 +11,7 @@ repository = "https://github.com/darwin-education/apllodb"
 version = "0.1.0"
 
 [features]
-test-support = ["once_cell", "apllodb-immutable-schema-engine-infra"]
+test-support = ["apllodb-immutable-schema-engine-infra"]
 
 [dependencies]
 apllodb-shared-components = {path = "../apllodb-shared-components"}
@@ -30,8 +30,6 @@ sorted-vec = "0.5"
 
 env_logger = "0.8"
 log = "0.4"
-
-once_cell = {version = "1.7", optional = true}
 
 [dev-dependencies]
 apllodb-shared-components = {path = "../apllodb-shared-components", features = ["test-support"]}
