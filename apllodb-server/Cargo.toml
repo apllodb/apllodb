@@ -5,7 +5,7 @@ name = "apllodb-server"
 version = "0.1.0"
 
 [features]
-test-support = ["apllodb-test-support", "apllodb-immutable-schema-engine-infra", "once_cell"]
+test-support = ["apllodb-test-support", "apllodb-immutable-schema-engine-infra"]
 
 [dependencies]
 apllodb-immutable-schema-engine = {path = "../apllodb-immutable-schema-engine"}
@@ -23,8 +23,6 @@ derive-new = "0.5"
 
 futures = "0.3"
 serde = {version = "1.0"}
-
-once_cell = {version = "1.7", optional = true}
 
 [dev-dependencies]
 apllodb-immutable-schema-engine-infra = {path = "../apllodb-immutable-schema-engine-infra", features = ["test-support"]}
