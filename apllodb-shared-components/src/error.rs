@@ -58,7 +58,13 @@ impl ApllodbError {
 
 impl Error for ApllodbError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.source.as_ref().map(|s| s.as_ref())
+        // FIXME `self.source.as_ref().map(|s| s.as_ref())` produces compile error
+
+        #[allow(clippy::manual_map)]
+        match &self.source {
+            Some(s) => Some(s.as_ref()),
+            None => None,
+        }
     }
 }
 
