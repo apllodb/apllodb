@@ -138,11 +138,10 @@ mod tests {
     };
     use futures::FutureExt;
     use mockall::predicate::{always, eq};
-    use once_cell::sync::Lazy;
 
     #[derive(Clone, PartialEq, Debug, new)]
-    struct TestDatum<'test> {
-        in_create_table_sql: &'test str,
+    struct TestDatum {
+        in_create_table_sql: String,
         expected_table_name: TableName,
         expected_table_constraints: Vec<TableConstraintKind>,
         expected_column_definitions: Vec<ColumnDefinition>,
@@ -153,14 +152,15 @@ mod tests {
     async fn test_ddl_processor_with_sql() -> ApllodbResult<()> {
         let parser = ApllodbSqlParser::default();
 
-        static TEST_DATA: Lazy<Box<[TestDatum]>> = Lazy::new(|| {
+        fn test_data() -> Vec<TestDatum> {
             vec![TestDatum::new(
                 "
             CREATE TABLE people (
                 id INTEGER, 
                 age INTEGER,
                 PRIMARY KEY (id)
-            )",
+            )"
+                .to_string(),
                 People::table_name(),
                 vec![TableConstraintKind::PrimaryKey {
                     column_names: vec![People::tc_id().as_column_name().clone()],
@@ -184,11 +184,12 @@ mod tests {
                     ),
                 ],
             )]
-            .into_boxed_slice()
-        });
+        }
 
-        for test_datum in TEST_DATA.iter() {
-            log::debug!("testing with SQL: {}", test_datum.in_create_table_sql);
+        for test_datum in test_data().into_iter() {
+            let sql = test_datum.in_create_table_sql.clone();
+
+            log::debug!("testing with SQL: {}", &sql);
 
             // mocking create_table()
             let mut engine = default_mock_engine();
@@ -210,7 +211,7 @@ mod tests {
 
             let context = Arc::new(SqlProcessorContext::new(engine));
 
-            let ast = parser.parse(test_datum.in_create_table_sql).unwrap();
+            let ast = parser.parse(&sql).unwrap();
             DdlProcessor::run_directly(context.clone(), ast.0).await?;
         }
 
