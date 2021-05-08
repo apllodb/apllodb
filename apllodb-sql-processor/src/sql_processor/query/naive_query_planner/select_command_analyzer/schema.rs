@@ -169,11 +169,9 @@ impl SelectCommandAnalyzer {
                     FieldName::new(from_item_corr.clone(), attr.clone()),
                     None,
                 );
-                if field_name_candidate.matches(&index) {
-                    Some(field_name_candidate.field_name)
-                } else {
-                    None
-                }
+                field_name_candidate
+                    .matches(&index)
+                    .then(|| field_name_candidate.field_name)
             })
             .ok_or_else(|| {
                 ApllodbError::new(
