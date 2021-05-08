@@ -19,22 +19,20 @@ impl Drop for SqliteDatabaseCleaner {
         let sqlite3_path = SqliteDatabase::sqlite_db_path(&self.0);
         let sqlite3_files_pattern = format!("{}*", sqlite3_path.as_os_str().to_str().unwrap());
 
-        for entry in glob(&sqlite3_files_pattern).unwrap() {
-            if let Ok(path) = entry {
-                log::debug!(
-                    "SqliteDatabaseCleaner: found {}. removing...",
-                    path.as_os_str().to_str().unwrap()
-                );
+        for path in glob(&sqlite3_files_pattern).unwrap().flatten() {
+            log::debug!(
+                "SqliteDatabaseCleaner: found {}. removing...",
+                path.as_os_str().to_str().unwrap()
+            );
 
-                std::fs::remove_file(&path)
-                    .or_else(|ioerr| match ioerr.kind() {
-                        std::io::ErrorKind::NotFound => Ok(()),
-                        _ => Err(ioerr),
-                    })
-                    .unwrap();
+            std::fs::remove_file(&path)
+                .or_else(|ioerr| match ioerr.kind() {
+                    std::io::ErrorKind::NotFound => Ok(()),
+                    _ => Err(ioerr),
+                })
+                .unwrap();
 
-                log::debug!("SqliteDatabaseCleaner: done");
-            }
+            log::debug!("SqliteDatabaseCleaner: done");
         }
     }
 }
