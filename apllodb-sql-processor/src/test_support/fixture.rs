@@ -12,6 +12,20 @@ use crate::{
     records::{record::Record, record_schema::RecordSchema},
 };
 
+impl RecordSchema {
+    fn fx_people() -> Self {
+        Self::from_row_schema(&People::schema(), Aliaser::default())
+    }
+
+    fn fx_body() -> Self {
+        Self::from_row_schema(&Body::schema(), Aliaser::default())
+    }
+
+    fn fx_people() -> Self {
+        Self::from_row_schema(&People::schema(), Aliaser::default())
+    }
+}
+
 static PEOPLE_SCHEMA: Lazy<Arc<RecordSchema>> = Lazy::new(|| {
     Arc::new(RecordSchema::from_row_schema(
         &People::schema(),
