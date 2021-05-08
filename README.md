@@ -1,6 +1,6 @@
 # apllodb
 
-![MSRV](https://img.shields.io/badge/rustc-1.48+-lightgray.svg)
+![MSRV](https://img.shields.io/badge/rustc-1.51+-lightgray.svg)
 
 apllodb is a RDBMS purely written in Rust.
 
