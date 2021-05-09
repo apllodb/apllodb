@@ -133,7 +133,7 @@ CREATE TABLE {tname} (
 
     /// # Failures
     ///
-    /// - [SerializationError](apllodb_shared_components::SqlState::SerializationError) when:
+    /// - [SystemError](apllodb_shared_components::SqlState::SystemError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
     pub(in crate::sqlite) async fn insert(&self, version: &ActiveVersion) -> ApllodbResult<()> {
         let model = VersionMetadataModel::from(version);
