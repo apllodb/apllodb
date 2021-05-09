@@ -20,8 +20,8 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ComparisonFunction,
-    Expression, SqlValue,
+    ApllodbError, ApllodbResult, BooleanExpression, ComparisonFunction, Expression, SqlState,
+    SqlValue,
 };
 use apllodb_storage_engine_interface::{
     Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
@@ -43,7 +43,7 @@ impl VTableRepositoryImpl {
 impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     /// # Failures
     ///
-    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
+    /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, vtable: &VTable) -> ApllodbResult<()> {
@@ -54,9 +54,9 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
 
     /// # Failures
     ///
-    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
+    /// - [IoError](apllodb_shared_components::SqlState::IoError) when:
     ///   - sqlx raises an error.
-    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table `table_name` is not visible to this transaction.
     async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
         self.vtable_metadata_dao().select(&vtable_id).await
@@ -64,9 +64,9 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
 
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table `table_name` is not visible to this transaction.
-    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
+    /// - [IoError](apllodb_shared_components::SqlState::IoError) when:
     ///   - sqlx raises an error.
     async fn update(&self, _vtable: &VTable) -> ApllodbResult<()> {
         // TODO update VTable on TableWideConstraints change.
@@ -155,7 +155,7 @@ impl VTableRepositoryImpl {
                 Ok(RowSelectionPlan::VrrProbe(vrr_entries))
             }
             Err(e) => match e.kind() {
-                ApllodbErrorKind::FeatureNotSupported | ApllodbErrorKind::UndefinedPrimaryKey => {
+                SqlState::FeatureNotSupported => {
                     Err(ApllodbError::feature_not_supported("for storage-engine selection, only expression like `pk_col = 123` is supported currently"))
                 }
                 _ => Err(e)
@@ -165,10 +165,9 @@ impl VTableRepositoryImpl {
 
     /// # Failures
     ///
-    /// - [UndefinedPrimaryKey](apllodb_shared_components::ApllodbErrorKind::UndefinedPrimaryKey) when:
+    /// - [FeatureNotSupported](apllodb_shared_components::SqlState::FeatureNotSupported) when:
     ///   - `condition` is not like: `pk_col = 123`
-    ///   - TODO support: `pk_col1 = 123 AND pk_col2 = 456`
-    /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
+    ///     - TODO support: `pk_col1 = 123 AND pk_col2 = 456`
     ///   - PK contains multiple columns.
     ///   - `condition` is like: `pk_col1 = 123 AND pk_col2 = 456`
     fn try_condition_into_apk(
@@ -186,7 +185,9 @@ impl VTableRepositoryImpl {
             ))
         }?;
 
-        let err = ApllodbError::new(ApllodbErrorKind::UndefinedPrimaryKey, "", None);
+        let err = ApllodbError::feature_not_supported(
+            "storage-engine selection supports onlu single PK match currently",
+        );
 
         let expr = condition.as_expression();
         match expr {

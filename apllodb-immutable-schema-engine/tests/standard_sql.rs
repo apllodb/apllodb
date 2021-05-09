@@ -3,8 +3,8 @@ mod test_support;
 use apllodb_immutable_schema_engine::ApllodbImmutableSchemaEngine;
 use apllodb_immutable_schema_engine_infra::test_support::{session_with_tx, test_setup};
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Expression, NnSqlValue, Schema, SchemaIndex,
-    SqlType, SqlValue,
+    ApllodbError, ApllodbResult, Expression, NnSqlValue, Schema, SchemaIndex, SqlState, SqlType,
+    SqlValue,
 };
 use apllodb_storage_engine_interface::{
     ColumnConstraints, ColumnDataType, ColumnDefinition, Row, RowProjectionQuery,
@@ -74,10 +74,7 @@ async fn test_create_table_failure_duplicate_table() -> ApllodbResult<()> {
     {
         // Internally, new record is trying to be INSERTed but it is made wait by tx2.
         // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
-        Err(e) => assert_eq!(
-            ApllodbError::from(e).kind(),
-            &ApllodbErrorKind::DuplicateTable
-        ),
+        Err(e) => assert_eq!(ApllodbError::from(e).kind(), &SqlState::NameErrorDuplicate),
         Ok(_) => panic!("should rollback"),
     }
 

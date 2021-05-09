@@ -1,4 +1,4 @@
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_storage_engine_interface::{
     ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind,
 };
@@ -26,10 +26,8 @@ impl TableWideConstraintKind {
             TableConstraintKind::PrimaryKey { column_names } => {
                 let pk_column_data_types = column_names.iter().map(|pk_cn| {
                     let pk_cd = column_definitions.iter().find(|cd| cd.column_data_type().column_name() == pk_cn).ok_or_else(||
-                        ApllodbError::new(
-                            ApllodbErrorKind::InvalidTableDefinition,
+                        ApllodbError::ddl_error(
                             format!("column `{:?}` does not exist in ColumnDefinition while it is declared as PRIMARY KEY", pk_cn),
-                            None,
                         )
                     )?;
                     Ok(pk_cd.column_data_type().clone())

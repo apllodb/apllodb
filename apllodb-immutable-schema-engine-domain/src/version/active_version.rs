@@ -1,6 +1,6 @@
 use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
 use crate::{entity::Entity, vtable::id::VTableId};
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlValue};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlValue};
 use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -28,10 +28,7 @@ impl ActiveVersion {
     }
 
     /// Create v_1.
-    pub fn initial(
-        vtable_id: &VTableId,
-        non_pk_column_data_types: &[ColumnDataType],
-    ) -> ApllodbResult<Self> {
+    pub fn initial(vtable_id: &VTableId, non_pk_column_data_types: &[ColumnDataType]) -> Self {
         Self::new(
             vtable_id,
             &VersionNumber::initial(),
@@ -47,14 +44,14 @@ impl ActiveVersion {
         version_number: &VersionNumber,
         non_pk_column_data_types: &[ColumnDataType],
         version_constraints: VersionConstraints,
-    ) -> ApllodbResult<Self> {
+    ) -> Self {
         let id = VersionId::new(vtable_id, version_number);
 
-        Ok(Self(Version {
+        Self(Version {
             id,
             column_data_types: non_pk_column_data_types.to_vec(),
             constraints: version_constraints,
-        }))
+        })
     }
 
     /// Ref to columns and their data types.
@@ -71,9 +68,9 @@ impl ActiveVersion {
     ///
     /// # Failures
     ///
-    /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
+    /// - [DdlError](variant.DdlError.html)
     ///   - If no column would exist after the specified action.
-    /// - [UndefinedColumn](variant.UndefinedColumn.html)
+    /// - [NameErrorNotFound](variant.NameErrorNotFound.html)
     ///   - If column to alter does not exist.
     pub fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
         match action {
@@ -127,12 +124,12 @@ impl ActiveVersion {
     ///
     /// # Failures
     ///
-    /// - [NotNullViolation](apllodb_shared_components::ApllodbErrorKind::NotNullViolation) when:
+    /// - [NotNullViolation](apllodb_shared_components::SqlState::NotNullViolation) when:
     ///   - Not inserting into a NOT NULL column.
     ///   - Inserting NULL to column with NOT NULL constraint.
-    /// - [InvalidColumnReference](apllodb-shared-components::ApllodbErrorKind::InvalidColumnReference) when:
+    /// - [NameErrorNotFound](apllodb-shared-components::SqlState::NameErrorNotFound) when:
     ///   - `column_values` includes any column not defined in this version.
-    /// - [CheckViolation](apllodb_shared_components::ApllodbErrorKind::CheckViolation) when:
+    /// - [CheckViolation](apllodb_shared_components::SqlState::CheckViolation) when:
     ///   - Column value does not satisfy CHECK constraint.
     pub(in crate::version) fn check_version_constraint(
         &self,
@@ -146,13 +143,11 @@ impl ActiveVersion {
             .filter(|cdt| !cdt.nullable());
         for not_null_column_name in version_not_null_columns.map(|cdt| cdt.column_name()) {
             if !column_values.contains_key(not_null_column_name) {
-                return Err(ApllodbError::new(
-                    ApllodbErrorKind::NotNullViolation,
+                return Err(ApllodbError::integrity_constraint_not_null_violation(
                     format!(
                         "column `{:?}` (NOT NULL) must be included in INSERT command",
                         not_null_column_name
                     ),
-                    None,
                 ));
             }
         }
@@ -165,14 +160,10 @@ impl ActiveVersion {
         // Check if all columns in `column_values` are included in version's definition.
         for cn in column_values.keys() {
             if !version_column_names.contains(&cn) {
-                return Err(ApllodbError::new(
-                    ApllodbErrorKind::InvalidColumnReference,
-                    format!(
-                        "inserted column `{:?}` is not defined in version `{:?}`",
-                        cn, self
-                    ),
-                    None,
-                ));
+                return Err(ApllodbError::name_error_not_found(format!(
+                    "inserted column `{:?}` is not defined in version `{:?}`",
+                    cn, self
+                )));
             }
         }
 
@@ -192,14 +183,10 @@ impl ActiveVersion {
             .iter()
             .any(|cdt| cdt.column_name() == column_name)
         {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::DuplicateColumn,
-                format!(
-                    "column `{:?}` already exists in current version",
-                    column_name
-                ),
-                None,
-            ))
+            Err(ApllodbError::name_error_duplicate(format!(
+                "column `{:?}` already exists in current version",
+                column_name
+            )))
         } else {
             Ok(())
         }
@@ -212,14 +199,10 @@ impl ActiveVersion {
             .find(|cdt| cdt.column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::UndefinedColumn,
-                    format!(
-                        "column `{:?}` does not exist in current version",
-                        column_name
-                    ),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "column `{:?}` does not exist in current version",
+                    column_name
+                ))
             })
     }
 }
@@ -228,17 +211,15 @@ impl ActiveVersion {
 mod tests {
     use super::ActiveVersion;
     use crate::vtable::id::VTableId;
-    use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, SqlType};
+    use apllodb_shared_components::{ApllodbResult, SqlState, SqlType};
     use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 
     #[test]
-    fn test_initial_success() -> ApllodbResult<()> {
+    fn test_initial_success() {
         let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
 
-        let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
+        let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt]);
         assert_eq!(v.number().to_u64(), 1);
-
-        Ok(())
     }
 
     #[test]
@@ -248,7 +229,7 @@ mod tests {
 
         let column_data_types = vec![c1_cdt.clone(), c2_cdt.clone()];
 
-        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types)?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types);
 
         let action = AlterTableAction::DropColumn {
             column_name: c1_cdt.column_name().clone(),
@@ -271,14 +252,14 @@ mod tests {
     #[test]
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
         let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
-        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt]);
 
         let action = AlterTableAction::DropColumn {
             column_name: ColumnName::factory("c404"),
         };
         match v1.create_next(&action) {
             Err(e) => match e.kind() {
-                ApllodbErrorKind::UndefinedColumn => Ok(()),
+                SqlState::NameErrorNotFound => Ok(()),
                 _ => panic!("unexpected error kind: {}", e),
             },
             Ok(_) => panic!("should be error"),

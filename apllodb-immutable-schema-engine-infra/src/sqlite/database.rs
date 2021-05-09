@@ -4,7 +4,7 @@ use crate::sqlite::transaction::sqlite_tx::{
     version::dao::version_metadata_dao::VersionMetadataDao,
     vtable::vtable_metadata_dao::VTableMetadataDao,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName};
 use sqlx::{migrate::MigrateDatabase, Connection};
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
@@ -20,7 +20,7 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
-    /// - [DuplicateDatabase](apllodb_shared_components::ApllodbErrorKind::DuplicateDatabase) when:
+    /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - specified database already exists
     pub(crate) async fn create_database(name: DatabaseName) -> ApllodbResult<()> {
         let path = Self::sqlite_db_path(&name);
@@ -30,11 +30,10 @@ impl SqliteDatabase {
             .await
             .map_err(InfraError::from)?
         {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::DuplicateDatabase,
-                format!("database {:?} already exists", name),
-                None,
-            ))
+            Err(ApllodbError::name_error_duplicate(format!(
+                "database {:?} already exists",
+                name
+            )))
         } else {
             log::debug!("creates new database file: {}", path);
 
@@ -57,9 +56,9 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb_shared_components::ApllodbErrorKind::UndefinedObject) when:
+    /// - [ConnectionExceptionDatabaseNotOpen](apllodb_shared_components::SqlState::ConnectionExceptionDatabaseNotOpen) when:
     ///   - database named `name` has not been created yet.
-    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
+    /// - [IoError](apllodb_shared_components::SqlState::IoError) when:
     ///   - sqlx raises an error.
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
         let pool = Self::connect_existing_sqlite(&name).await?;

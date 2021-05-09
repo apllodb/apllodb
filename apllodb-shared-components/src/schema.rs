@@ -4,7 +4,7 @@ pub(crate) mod schema_name;
 
 use std::collections::HashSet;
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, RPos};
+use crate::{ApllodbError, ApllodbResult, RPos};
 
 use self::{schema_index::SchemaIndex, schema_name::SchemaName};
 
@@ -29,9 +29,9 @@ pub trait Schema {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](crate::SqlState::NameErrorNotFound) when:
     ///   - no field matches to this Index.
-    /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
+    /// - [NameErrorAmbiguous](crate::SqlState::NameErrorAmbiguous) when:
     ///   - more than 1 of fields match to this Index.
     fn index(&self, idx: &SchemaIndex) -> ApllodbResult<(RPos, Self::Name)> {
         let matching_pair: Vec<(RPos, Self::Name)> = self
@@ -48,17 +48,15 @@ pub trait Schema {
         if matching_pair.len() == 1 {
             matching_pair.first().cloned().ok_or_else(|| unreachable!())
         } else if matching_pair.is_empty() {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidName,
-                format!("no field matches to: {}", idx),
-                None,
-            ))
+            Err(ApllodbError::name_error_not_found(format!(
+                "no field matches to: {}",
+                idx
+            )))
         } else {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::AmbiguousColumn,
-                format!("more than 1 fields match to: {}", idx),
-                None,
-            ))
+            Err(ApllodbError::name_error_ambiguous(format!(
+                "more than 1 fields match to: {}",
+                idx
+            )))
         }
     }
 

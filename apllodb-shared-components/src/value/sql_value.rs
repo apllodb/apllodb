@@ -5,7 +5,7 @@ pub(crate) mod sql_value_hash_key;
 use std::{fmt::Display, hash::Hash};
 
 use crate::error::ApllodbResult;
-use crate::{ApllodbError, ApllodbErrorKind};
+use crate::ApllodbError;
 use serde::{Deserialize, Serialize};
 
 use self::{nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult};
@@ -29,7 +29,7 @@ use self::{nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult};
 ///
 /// ## Failures on comparison
 ///
-/// Comparing non-**comparable** values and ordered comparison to non-**ordered** values cause [ApllodbErrorKind::DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch).
+/// Comparing non-**comparable** values and ordered comparison to non-**ordered** values cause [SqlState::DataExceptionIllegalComparison](crate::SqlState::DataExceptionIllegalComparison).
 ///
 /// ## Comparison with NULL
 ///
@@ -115,14 +115,14 @@ impl SqlValue {
     ///
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalComparison](crate::SqlState::DataExceptionIllegalComparison) when:
     ///   - `self` and `other` have different top-level variant of [SqlType](crate::SqlType).
     ///
     /// # Examples
     ///
     /// ```
     /// use std::collections::HashSet;
-    /// use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, NnSqlValue, SqlCompareResult, SqlType, SqlValue};
+    /// use apllodb_shared_components::{SqlState, ApllodbResult, NnSqlValue, SqlCompareResult, SqlType, SqlValue};
     ///
     /// fn main() -> ApllodbResult<()> {
     ///     let v_integer = SqlValue::NotNull(NnSqlValue::Integer(42));
@@ -143,7 +143,7 @@ impl SqlValue {
     ///     matches!(
     ///         v_integer.sql_compare(&v_text)
     ///             .expect_err("comparing totally different types").kind(),
-    ///         ApllodbErrorKind::DatatypeMismatch
+    ///         SqlState::DataExceptionIllegalComparison
     ///     );
     ///
     ///     Ok(())
@@ -162,21 +162,17 @@ impl SqlValue {
     ///
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalOperation](crate::SqlState::DataExceptionIllegalOperation) when:
     ///   - this SqlValue cannot be evaluated as SQL BOOLEAN
     pub fn to_bool(&self) -> ApllodbResult<bool> {
         match self {
             SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
             SqlValue::NotNull(nn_sql_value) => match nn_sql_value {
                 NnSqlValue::Boolean(b) => Ok(*b),
-                _ => Err(ApllodbError::new(
-                    ApllodbErrorKind::DatatypeMismatch,
-                    format!(
-                        "{:?} cannot be evaluated as BOOLEAN",
-                        nn_sql_value.sql_type()
-                    ),
-                    None,
-                )),
+                _ => Err(ApllodbError::data_exception_illegal_operation(format!(
+                    "{:?} cannot be evaluated as BOOLEAN",
+                    nn_sql_value.sql_type()
+                ))),
             },
         }
     }

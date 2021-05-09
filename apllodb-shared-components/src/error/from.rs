@@ -1,8 +1,10 @@
-use super::{kind::ApllodbErrorKind, ApllodbError};
+use crate::SqlState;
+
+use super::ApllodbError;
 use std::io;
 
 impl From<io::Error> for ApllodbError {
     fn from(ioerr: io::Error) -> Self {
-        ApllodbError::new(ApllodbErrorKind::IoError, "IO error", Some(Box::new(ioerr)))
+        ApllodbError::new(SqlState::IoError, "IO error", Some(Box::new(ioerr)))
     }
 }

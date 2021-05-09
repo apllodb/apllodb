@@ -58,7 +58,7 @@ impl Records {
 
     /// Filter records that satisfy the given `condition`.
     pub(crate) fn selection(self, condition: &Condition) -> ApllodbResult<Self> {
-        match condition.eval_as_constant() {
+        match condition.eval_as_boolean_constant() {
             Ok(b) => {
                 if b {
                     Ok(self)
@@ -87,7 +87,7 @@ impl Records {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Specified field does not exist in this record.
     pub(crate) fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
         let new_schema = Arc::new(self.schema.projection(indexes)?);
@@ -191,7 +191,7 @@ impl Records {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Specified field does not exist in any record.
     pub(crate) fn hash_join(
         self,

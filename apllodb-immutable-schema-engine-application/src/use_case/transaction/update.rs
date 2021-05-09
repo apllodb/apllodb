@@ -10,9 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     row_selection_plan::RowSelectionPlan,
     vtable::{id::VTableId, repository::VTableRepository, VTable},
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName, Expression, SqlValue,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName, Expression, SqlValue};
 use apllodb_storage_engine_interface::{
     ColumnName, Row, RowProjectionQuery, RowSchema, Rows, TableName,
 };
@@ -44,11 +42,11 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCaseInput<'usecase,
                 Expression::ConstantVariant(_) => {}
                 Expression::UnaryOperatorVariant(_, _) => {}
                 Expression::SchemaIndexVariant(_) | Expression::BooleanExpressionVariant(_) => {
-                    return Err(ApllodbError::new(ApllodbErrorKind::FeatureNotSupported,
-                        format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
-                        column_name, expr
-                    ),
-                    None
+                    return Err(
+                        ApllodbError::feature_not_supported(
+                            format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
+                            column_name, expr
+                        ),
                     ))
                 }
             }
@@ -74,7 +72,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes + Clone + 'usecase> TxUseCase
 
     /// # Failures
     ///
-    /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
+    /// - [FeatureNotSupported](apllodb_shared_components::SqlState::FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
     async fn run_core(
         vtable_repo: &Types::VTableRepo,

@@ -1,4 +1,4 @@
-use apllodb_shared_components::{find_dup_slow, ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{find_dup_slow, ApllodbError, ApllodbResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -22,7 +22,7 @@ impl TableConstraints {
     /// Constructor.
     ///
     /// # Failures
-    /// - [InvalidTableDefinition](apllodb_shared_components::ApllodbErrorKind::InvalidTableDefinition) when:
+    /// - [DdlError](apllodb_shared_components::SqlState::DdlError) when:
     ///   - No [PrimaryKey](crate::TableConstraintKind::PrimaryKey) is specified.
     ///   - Multiple [PrimaryKey](crate::TableConstraintKind::PrimaryKey)s appear.
     ///   - More than 1 [PrimaryKey](crate::TableConstraintKind::PrimaryKey) /
@@ -50,13 +50,7 @@ impl TableConstraints {
                 TableConstraintKind::PrimaryKey { .. } => Some(()),
                 _ => None,
             })
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::InvalidTableDefinition,
-                    "PRIMARY KEY is not specified",
-                    None,
-                )
-            })
+            .ok_or_else(|| ApllodbError::ddl_error("PRIMARY KEY is not specified"))
     }
 
     fn validate_multiple_pks(constraints: &[TableConstraintKind]) -> ApllodbResult<()> {
@@ -71,11 +65,7 @@ impl TableConstraints {
             .count();
 
         if pk_constraints_count > 1 {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTableDefinition,
-                "more than 1 PRIMARY KEY found",
-                None,
-            ))
+            Err(ApllodbError::ddl_error("more than 1 PRIMARY KEY found"))
         } else {
             Ok(())
         }
@@ -98,14 +88,10 @@ impl TableConstraints {
             .collect();
 
         if let Some(colset) = find_dup_slow(pk_unique_column_sets.iter()) {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTableDefinition,
-                format!(
-                    "more than 1 PRIMARY KEY / UNIQUE are applied to the same column set: `{:?}`",
-                    colset
-                ),
-                None,
-            ))
+            Err(ApllodbError::ddl_error(format!(
+                "more than 1 PRIMARY KEY / UNIQUE are applied to the same column set: `{:?}`",
+                colset
+            )))
         } else {
             Ok(())
         }
@@ -145,7 +131,7 @@ mod tests {
     }
 
     use super::{super::table_constraint_kind::TableConstraintKind, TableConstraints};
-    use apllodb_shared_components::ApllodbErrorKind;
+    use apllodb_shared_components::SqlState;
 
     #[test]
     fn test_success() {
@@ -189,7 +175,7 @@ mod tests {
         for constraints in testset {
             match TableConstraints::new(constraints) {
                 Err(e) => match e.kind() {
-                    ApllodbErrorKind::InvalidTableDefinition => {
+                    SqlState::DdlError => {
                         println!("{:?}", e);
                     }
                     _ => panic!("unexpected error kind: {}", e),

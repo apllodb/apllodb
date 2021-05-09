@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::id::VTableId,
     vtable::VTable,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 
 use crate::sqlite::sqlite_types::{SqliteTypes, VrrEntries, VrrEntry};
 
@@ -90,10 +90,8 @@ impl VersionRevisionResolver<SqliteTypes> for VersionRevisionResolverImpl {
             .probe_latest_revision(version_id.vtable_id(), &pk)
             .await?
         {
-            Navi::Exist { .. } => Err(ApllodbError::new(
-                ApllodbErrorKind::UniqueViolation,
+            Navi::Exist { .. } => Err(ApllodbError::integrity_constraint_unique_violation(
                 format!("record with the same primary key already exists: {:?}", pk),
-                None,
             )),
             Navi::NotExist => Ok(Revision::initial()),
             Navi::Deleted { revision, .. } => Ok(revision.next()),

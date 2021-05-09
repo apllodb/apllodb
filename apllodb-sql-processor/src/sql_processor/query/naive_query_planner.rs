@@ -64,7 +64,7 @@ impl<'r> NaiveQueryPlanner<'r> {
         // aggregation
         self.create_projection_node()?;
 
-        Ok(QueryPlanTree::new(self.node_repo.latest_node_id()?))
+        Ok(QueryPlanTree::new(self.node_repo.latest_node_id()))
     }
 
     fn create_correlation_nodes(&self) -> ApllodbResult<()> {
@@ -106,7 +106,7 @@ impl<'r> NaiveQueryPlanner<'r> {
     fn create_selection_node(&self) -> ApllodbResult<()> {
         if let Some(condition) = self.analyzer.selection_condition()? {
             let selection_op = UnaryPlanOperation::Selection { condition };
-            let child_id = self.node_repo.latest_node_id()?;
+            let child_id = self.node_repo.latest_node_id();
 
             let _ = self
                 .node_repo
@@ -124,7 +124,7 @@ impl<'r> NaiveQueryPlanner<'r> {
             Ok(())
         } else {
             let sort_op = UnaryPlanOperation::Sort { index_orderings };
-            let child_id = self.node_repo.latest_node_id()?;
+            let child_id = self.node_repo.latest_node_id();
 
             let _ = self
                 .node_repo
@@ -143,7 +143,7 @@ impl<'r> NaiveQueryPlanner<'r> {
         let projection_op = UnaryPlanOperation::Projection {
             fields: afns.iter().map(SchemaIndex::from).collect(),
         };
-        let child_id = self.node_repo.latest_node_id()?;
+        let child_id = self.node_repo.latest_node_id();
 
         let _ = self
             .node_repo

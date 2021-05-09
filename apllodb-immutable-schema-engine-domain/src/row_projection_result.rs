@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_storage_engine_interface::{
     ColumnName, RowProjectionQuery, RowSchema, TableColumnName,
 };
@@ -61,7 +61,7 @@ impl RowProjectionResult {
                 .collect(),
         };
 
-        // check UndefinedColumn
+        // check NameErrorNotFound
         {
             let available_columns: Vec<&ColumnName> = pk_columns
                 .iter()
@@ -70,11 +70,10 @@ impl RowProjectionResult {
 
             for q_cn in pk_query_columns.iter().chain(non_pk_query_columns.iter()) {
                 if !available_columns.contains(&q_cn) {
-                    return Err(ApllodbError::new(
-                        ApllodbErrorKind::UndefinedColumn,
-                        format!("undefined column `{:?}` is queried", q_cn),
-                        None,
-                    ));
+                    return Err(ApllodbError::name_error_not_found(format!(
+                        "undefined column `{:?}` is queried",
+                        q_cn
+                    )));
                 }
             }
         }
@@ -160,11 +159,10 @@ impl RowProjectionResult {
             .get(version_id)
             .map(columns_from_result_in_version)
             .ok_or_else(|| {
-                ApllodbError::new(
-                    ApllodbErrorKind::InvalidVersion,
-                    format!("invalid version `{:?}` is queried", version_id),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "invalid columns are queried from version `{:?}`",
+                    version_id
+                ))
             })
     }
 }

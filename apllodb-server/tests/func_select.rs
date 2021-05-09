@@ -1,8 +1,6 @@
 mod sql_test;
 
-use apllodb_server::{
-    test_support::test_setup, ApllodbErrorKind, Record, RecordIndex, SchemaIndex,
-};
+use apllodb_server::{test_support::test_setup, Record, RecordIndex, SchemaIndex, SqlState};
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
 use sql_test::{SqlTest, Step, StepRes, Steps};
@@ -78,7 +76,7 @@ async fn test_projection() {
                         r.get::<i32>(&RecordIndex::Name(SchemaIndex::from("age")))
                             .unwrap_err()
                             .kind(),
-                        &ApllodbErrorKind::InvalidName
+                        &SqlState::NameErrorNotFound
                     );
 
                     Ok(())
@@ -102,7 +100,7 @@ async fn test_projection() {
                         r.get::<i64>(&RecordIndex::Name(SchemaIndex::from("id")))
                             .unwrap_err()
                             .kind(),
-                        &ApllodbErrorKind::InvalidName
+                        &SqlState::NameErrorNotFound
                     );
                     Ok(())
                 })),
@@ -158,10 +156,10 @@ async fn test_selection() {
             ),
         )
         .add_step(
-            // DatatypeMismatch
+            // DataExceptionIllegalOperation
             Step::new(
                 "SELECT id, age FROM people WHERE 1",
-                StepRes::Err(ApllodbErrorKind::DatatypeMismatch),
+                StepRes::Err(SqlState::DataExceptionIllegalOperation),
             ),
         )
         .run()

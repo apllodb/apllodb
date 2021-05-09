@@ -32,7 +32,7 @@ impl Row {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Specified field does not exist in this record.
     /// - Errors from [SqlValue::unpack()](x.html).
     pub fn get<T: SqlConvertible>(&self, pos: RPos) -> ApllodbResult<Option<T>> {
@@ -48,7 +48,7 @@ impl Row {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Specified field does not exist in this record.
     pub fn get_sql_value(&self, pos: RPos) -> ApllodbResult<&SqlValue> {
         let sql_value = self.index(pos);
