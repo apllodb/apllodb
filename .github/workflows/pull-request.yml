@@ -32,25 +32,9 @@ jobs:
               name: coverage
     env:
       RUST_BACKTRACE: full
-      RUSTC_WRAPPER: sccache
-      SCCACHE_CACHE_SIZE: 2G
-      SCCACHE_DIR: /home/runner/.cache/sccache
       CACHE_RESET_KEY: 20210509214020
     steps:
       - uses: actions/checkout@v2
-
-      - name: Install sccache (ubuntu-latest)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        env:
-          BASE_URL: https://github.com/mozilla/sccache/releases/download
-          SCCACHE_VERSION: 0.2.15
-        run: |
-          SCCACHE_FILE_BASE=sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl
-          mkdir -p $HOME/.local/bin
-          curl -L "${BASE_URL}/v${SCCACHE_VERSION}/${SCCACHE_FILE_BASE}.tar.gz" | tar xz
-          mv -f ${SCCACHE_FILE_BASE}/sccache ${HOME}/.local/bin/sccache
-          chmod +x ${HOME}/.local/bin/sccache
-          echo "${HOME}/.local/bin" >> ${GITHUB_PATH}
 
       - name: Install Rust ${{ matrix.rust }}
         if: ${{ ! matrix.rust-free }}
@@ -74,17 +58,6 @@ jobs:
             ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-${{ matrix.make.name }}-
             ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-cargo-
 
-      - name: Save sccache
-        if: ${{ ! matrix.rust-free }}
-        uses: actions/cache@v2
-        continue-on-error: false
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-${{ matrix.make.name }}-
-            ${{ env.CACHE_RESET_KEY }}-${{ runner.os }}-${{ matrix.rust }}-sccache-
-
       - name: Install cargo-make
         env:
           BASE_URL: https://github.com/sagiegurari/cargo-make/releases/download
@@ -97,20 +70,11 @@ jobs:
           mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Start sccache server
-        run: sccache --start-server
-
       - name: ${{ matrix.make.name }}
         run: |
           for task in ${{ matrix.make.task }} ; do
             cargo make ${task}
           done
-
-      - name: Print sccache stats
-        run: sccache --show-stats
-
-      - name: Stop sccache server
-        run: sccache --stop-server || true
 
   slack-notify:
     if: always()
