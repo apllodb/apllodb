@@ -159,11 +159,10 @@ impl RowProjectionResult {
             .get(version_id)
             .map(columns_from_result_in_version)
             .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::InvalidVersion,
-                    format!("invalid version `{:?}` is queried", version_id),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "invalid columns are queried from version `{:?}`",
+                    version_id
+                ))
             })
     }
 }

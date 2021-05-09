@@ -9,9 +9,7 @@ use apllodb_immutable_schema_engine_domain::{
     },
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, Schema, SchemaIndex,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Schema, SchemaIndex, SqlState};
 use apllodb_storage_engine_interface::{ColumnDataType, Row, RowSchema, TableName};
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -73,21 +71,21 @@ impl VersionMetadataModel {
 }
 
 impl VersionMetadataModel {
-    pub(super) fn to_active_version(&self, vtable_id: &VTableId) -> ApllodbResult<ActiveVersion> {
-        if self.is_active {
-            ActiveVersion::new(
-                &vtable_id,
-                &self.version_number,
-                &self.column_data_types,
-                self.version_constraints.clone(),
-            )
-        } else {
-            Err(ApllodbError::new(
-                SqlState::InvalidVersion,
-                format!("not an active version: {:?}", self),
-                None,
-            ))
-        }
+    /// # Panics
+    ///
+    /// if this version is inactive.
+    pub(super) fn to_active_version(&self, vtable_id: &VTableId) -> ActiveVersion {
+        assert!(
+            self.is_active,
+            "internal error: version here must be active"
+        );
+
+        ActiveVersion::new(
+            &vtable_id,
+            &self.version_number,
+            &self.column_data_types,
+            self.version_constraints.clone(),
+        )
     }
 
     pub(super) fn serialized_table_name(&self) -> String {
