@@ -155,7 +155,7 @@ impl NnSqlValue {
 
     /// # Failures
     ///
-    /// - [InvalidParameterValue](apllodb_shared_components::SqlState::InvalidParameterValue) when:
+    /// - [DataExceptionIllegalOperation](apllodb_shared_components::SqlState::DataExceptionIllegalOperation) when:
     ///   - inner value cannot negate
     pub(crate) fn negate(self) -> ApllodbResult<Self> {
         match self {
