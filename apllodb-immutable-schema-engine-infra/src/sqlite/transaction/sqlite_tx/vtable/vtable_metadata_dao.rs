@@ -62,7 +62,7 @@ CREATE TABLE {} (
     ///
     /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - `table` is not visible from this transaction.
-    /// - [DeserializationError](apllodb_shared_components::SqlState::DeserializationError) when:
+    /// - [SystemError](apllodb_shared_components::SqlState::SystemError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
     pub(in crate::sqlite::transaction::sqlite_tx) async fn select(
         &self,
@@ -102,14 +102,13 @@ CREATE TABLE {} (
 
         let table_wide_constraints: TableWideConstraints =
             serde_yaml::from_str(&table_wide_constraints_str).map_err(|e| {
-                ApllodbError::new(
-                    SqlState::DeserializationError,
+                ApllodbError::system_error(
                     format!(
                         "failed to deserialize table `{:?}`'s metadata: `{:?}`",
                         vtable_id.table_name(),
                         table_wide_constraints_str
                     ),
-                    Some(Box::new(e)),
+                    Box::new(e),
                 )
             })?;
 
@@ -123,20 +122,19 @@ CREATE TABLE {} (
     ///   - transaction lock to metadata table takes too long time.
     /// - [DuplicateTable](apllodb_shared_components::SqlState::DuplicateTable) when:
     ///   - `table` is already created.
-    /// - [SerializationError](apllodb_shared_components::SqlState::SerializationError) when:
+    /// - [SystemError](apllodb_shared_components::SqlState::SystemError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
     async fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let table_wide_constraints = vtable.table_wide_constraints();
         let table_wide_constraints_str =
             serde_yaml::to_string(table_wide_constraints).map_err(|e| {
-                ApllodbError::new(
-                    SqlState::SerializationError,
+                ApllodbError::system_error(
                     format!(
                         "failed to serialize `{:?}`'s table wide constraints: `{:?}`",
                         vtable.table_name(),
                         table_wide_constraints
                     ),
-                    Some(Box::new(e)),
+                    Box::new(e),
                 )
             })?;
 
@@ -156,10 +154,8 @@ CREATE TABLE {} (
             .execute(&sql)
             .await
             .map_err(|e| match e.kind() {
-                SqlState::UniqueViolation => ApllodbError::new(
-                    SqlState::DuplicateTable,
+                SqlState::IntegrityConstraintUniqueViolation => ApllodbError::name_error_duplicate(
                     format!("table `{:?}` is already created", vtable.table_name()),
-                    Some(Box::new(e)),
                 ),
                 _ => e,
             })?;
