@@ -11,13 +11,13 @@ pub(crate) struct Condition(Expression);
 impl Condition {
     /// # Failures
     ///
-    /// - [DataExceptionIllegalEvaluation](apllodb-shared-components::SqlState::DataExceptionIllegalEvaluation) when:
+    /// - [DataExceptionIllegalOperation](apllodb-shared-components::SqlState::DataExceptionIllegalOperation) when:
     ///   - Expression is not a constant.
     ///   - Expression is a constant but it cannot be evaluated as boolean.
     pub(crate) fn eval_as_boolean_constant(&self) -> ApllodbResult<bool> {
         match &self.0 {
             Expression::ConstantVariant(sql_value) => sql_value.to_bool(),
-            _ => Err(ApllodbError::data_exception_illegal_evaluation(
+            _ => Err(ApllodbError::data_exception_illegal_operation(
                 "expression cannot be evaluated as a constant",
             )),
         }
@@ -25,7 +25,7 @@ impl Condition {
 
     /// # Failures
     ///
-    /// - [DataExceptionIllegalEvaluation](apllodb-shared-components::SqlState::DataExceptionIllegalEvaluation) when:
+    /// - [DataExceptionIllegalOperation](apllodb-shared-components::SqlState::DataExceptionIllegalOperation) when:
     ///   - Expression cannot be evaluated as BOOLEAN (NULL is OK and evaluated as FALSE).
     pub(crate) fn eval_with_record(&self, record: &Record) -> ApllodbResult<bool> {
         self.0

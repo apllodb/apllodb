@@ -162,14 +162,14 @@ impl SqlValue {
     ///
     /// # Failures
     ///
-    /// - [DataExceptionIllegalEvaluation](crate::SqlState::DataExceptionIllegalEvaluation) when:
+    /// - [DataExceptionIllegalOperation](crate::SqlState::DataExceptionIllegalOperation) when:
     ///   - this SqlValue cannot be evaluated as SQL BOOLEAN
     pub fn to_bool(&self) -> ApllodbResult<bool> {
         match self {
             SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
             SqlValue::NotNull(nn_sql_value) => match nn_sql_value {
                 NnSqlValue::Boolean(b) => Ok(*b),
-                _ => Err(ApllodbError::data_exception_illegal_evaluation(format!(
+                _ => Err(ApllodbError::data_exception_illegal_operation(format!(
                     "{:?} cannot be evaluated as BOOLEAN",
                     nn_sql_value.sql_type()
                 ))),

@@ -162,11 +162,9 @@ impl NnSqlValue {
             NnSqlValue::SmallInt(v) => Ok(Self::SmallInt(-v)),
             NnSqlValue::Integer(v) => Ok(Self::Integer(-v)),
             NnSqlValue::BigInt(v) => Ok(Self::BigInt(-v)),
-            NnSqlValue::Text(_) | NnSqlValue::Boolean(_) => Err(ApllodbError::new(
-                SqlState::InvalidParameterValue,
-                format!("{} cannot negate", self),
-                None,
-            )),
+            NnSqlValue::Text(_) | NnSqlValue::Boolean(_) => Err(
+                ApllodbError::data_exception_illegal_operation(format!("{} cannot negate", self)),
+            ),
         }
     }
 }

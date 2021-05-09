@@ -61,9 +61,9 @@ impl ApllodbError {
         Self::new(SqlState::DataExceptionIllegalComparison, desc, None)
     }
 
-    /// Constructor of [SqlState::DataExceptionIllegalEvaluation](crate::SqlState::DataExceptionIllegalEvaluation).
-    pub fn data_exception_illegal_evaluation(desc: impl ToString) -> Self {
-        Self::new(SqlState::DataExceptionIllegalEvaluation, desc, None)
+    /// Constructor of [SqlState::DataExceptionIllegalOperation](crate::SqlState::DataExceptionIllegalOperation).
+    pub fn data_exception_illegal_operation(desc: impl ToString) -> Self {
+        Self::new(SqlState::DataExceptionIllegalOperation, desc, None)
     }
 
     /// Constructor of [SqlState::NameErrorNotFound](crate::SqlState::NameErrorNotFound).
