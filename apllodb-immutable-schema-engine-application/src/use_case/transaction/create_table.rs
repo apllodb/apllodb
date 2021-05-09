@@ -62,7 +62,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
                 .map(|coldef| coldef.into())
                 .collect();
 
-        let v1 = ActiveVersion::initial(vtable.id(), &column_data_types)?;
+        let v1 = ActiveVersion::initial(vtable.id(), &column_data_types);
 
         vtable_repo.create(&vtable).await?;
         version_repo.create(&v1).await?;

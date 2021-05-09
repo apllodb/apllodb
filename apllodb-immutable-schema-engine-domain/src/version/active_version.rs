@@ -215,13 +215,11 @@ mod tests {
     use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 
     #[test]
-    fn test_initial_success() -> ApllodbResult<()> {
+    fn test_initial_success() {
         let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
 
-        let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
+        let v = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt]);
         assert_eq!(v.number().to_u64(), 1);
-
-        Ok(())
     }
 
     #[test]
@@ -231,7 +229,7 @@ mod tests {
 
         let column_data_types = vec![c1_cdt.clone(), c2_cdt.clone()];
 
-        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types)?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &column_data_types);
 
         let action = AlterTableAction::DropColumn {
             column_name: c1_cdt.column_name().clone(),
@@ -254,7 +252,7 @@ mod tests {
     #[test]
     fn test_create_next_drop_column_fail_undefined_column() -> ApllodbResult<()> {
         let c1_cdt = ColumnDataType::factory("c1", SqlType::integer(), false);
-        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt])?;
+        let v1 = ActiveVersion::initial(&VTableId::new_for_test(), &[c1_cdt]);
 
         let action = AlterTableAction::DropColumn {
             column_name: ColumnName::factory("c404"),
