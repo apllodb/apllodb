@@ -1,8 +1,6 @@
 mod sql_test;
 
-use apllodb_server::{
-    test_support::test_setup, SqlState, Record, RecordIndex, SchemaIndex,
-};
+use apllodb_server::{test_support::test_setup, Record, RecordIndex, SchemaIndex, SqlState};
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
 use sql_test::{SqlTest, Step, StepRes, Steps};

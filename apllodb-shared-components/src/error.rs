@@ -66,6 +66,23 @@ impl ApllodbError {
         Self::new(SqlState::DataException, desc, None)
     }
 
+    /// Constructor of [SqlState::SyntaxErrorOrAccessRuleViolationSyntaxError](crate::SqlState::SyntaxErrorOrAccessRuleViolationSyntaxError).
+    pub fn syntax_error(
+        desc: impl ToString,
+        source: Box<dyn Error + Sync + Send + 'static>,
+    ) -> Self {
+        Self::new(
+            SqlState::SyntaxErrorOrAccessRuleViolationSyntaxError,
+            desc,
+            Some(source),
+        )
+    }
+
+    /// Constructor of [SqlState::DataExceptionNumericValueOutOfRange](crate::SqlState::DataExceptionNumericValueOutOfRange).
+    pub fn data_exception_numeric_value_out_of_range(desc: impl ToString) -> Self {
+        Self::new(SqlState::DataExceptionNumericValueOutOfRange, desc, None)
+    }
+
     /// Constructor of [SqlState::DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion).
     pub fn data_exception_illegal_conversion(desc: impl ToString) -> Self {
         Self::new(SqlState::DataExceptionIllegalConversion, desc, None)

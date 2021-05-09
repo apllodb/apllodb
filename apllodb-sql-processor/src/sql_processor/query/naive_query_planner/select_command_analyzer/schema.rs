@@ -165,14 +165,10 @@ impl SelectCommandAnalyzer {
                     .then(|| field_name_candidate.field_name)
             })
             .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::NameErrorNotFound,
-                    format!(
-                        "`{}` does not match any of FROM items: {:?}",
-                        index, from_item_correlations
-                    ),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "`{}` does not match any of FROM items: {:?}",
+                    index, from_item_correlations
+                ))
             })
     }
 

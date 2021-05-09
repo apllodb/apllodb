@@ -5,7 +5,7 @@ use apllodb_immutable_schema_engine_infra::test_support::{
     sqlite_database_cleaner::SqliteDatabaseCleaner, test_setup,
 };
 use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, DatabaseName, Session, SessionWithoutDb, SqlType,
+    ApllodbError, ApllodbResult, DatabaseName, Session, SessionWithoutDb, SqlState, SqlType,
 };
 use apllodb_storage_engine_interface::{
     ColumnConstraints, ColumnDataType, ColumnDefinition, StorageEngine, TableConstraintKind,
@@ -67,7 +67,7 @@ async fn test_wait_lock() -> ApllodbResult<()> {
         // (Since SQLite's transaction is neither OCC nor MVCC, tx1 is made wait here before transaction commit.)
         Err(e) => assert_eq!(
             ApllodbError::from(e).kind(),
-            &SqlState::DeadlockDetected
+            &SqlState::TransactionRollbackDeadlock
         ),
         Ok(_) => panic!("should rollback"),
     }

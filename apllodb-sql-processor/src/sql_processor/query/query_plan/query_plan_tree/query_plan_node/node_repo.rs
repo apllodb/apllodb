@@ -3,7 +3,7 @@ use std::{
     sync::{Mutex, RwLock},
 };
 
-use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState};
 
 use crate::correlation::correlation_name::CorrelationName;
 
@@ -27,29 +27,22 @@ impl QueryPlanNodeRepository {
         id
     }
 
-    /// # Failures
+    /// # Panics
     ///
-    /// - [UndefinedObject](apllodb-shared-components::SqlState::UndefinedObject) when:
-    ///    - no node has been created.
-    pub(crate) fn latest_node_id(&self) -> ApllodbResult<QueryPlanNodeId> {
+    /// - no node has been created.
+    pub(crate) fn latest_node_id(&self) -> QueryPlanNodeId {
         self.hmap
             .read()
             .unwrap()
             .iter()
             .max_by(|(a_id, _), (b_id, _)| a_id.cmp(b_id))
             .map(|(id, _)| *id)
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::UndefinedObject,
-                    "no QueryPlanNode exists (already removed?)",
-                    None,
-                )
-            })
+            .expect("no QueryPlanNode exists (already removed?)")
     }
 
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb-shared-components::SqlState::UndefinedObject) when:
+    /// - [UndefinedObject](apllodb-shared-components::SqlState::NameErrorNotFound) when:
     ///    - no matching node is found.
     pub(crate) fn find_correlation_node(
         &self,
@@ -66,24 +59,21 @@ impl QueryPlanNodeRepository {
             })
             .ok_or_else(|| {
                 ApllodbError::new(
-                    SqlState::UndefinedObject,
+                    SqlState::NameErrorNotFound,
                     "no QueryPlanNode exists (already removed?)",
                     None,
                 )
             })
     }
 
-    /// # Failures
+    /// # Panics
     ///
-    /// - [UndefinedObject](apllodb-shared-components::SqlState::UndefinedObject) when:
-    ///    - node with id does not exist.
-    pub(crate) fn remove(&self, id: QueryPlanNodeId) -> ApllodbResult<QueryPlanNode> {
-        self.hmap.write().unwrap().remove(&id).ok_or_else(|| {
-            ApllodbError::new(
-                SqlState::UndefinedObject,
-                format!("QueryPlanNode:{:?} does not exist (already removed?)", id),
-                None,
-            )
-        })
+    /// when node with id does not exist.
+    pub(crate) fn remove(&self, id: QueryPlanNodeId) -> QueryPlanNode {
+        self.hmap
+            .write()
+            .unwrap()
+            .remove(&id)
+            .unwrap_or_else(|| panic!("QueryPlanNode:{:?} does not exist (already removed?)", id))
     }
 }

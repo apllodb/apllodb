@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use apllodb_server::{SqlState, ApllodbResult, Records};
+use apllodb_server::{ApllodbResult, Records, SqlState};
 
 #[allow(dead_code)]
 pub enum StepRes {

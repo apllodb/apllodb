@@ -188,6 +188,7 @@ pub enum SqlState {
     TransactionRollbackTriggeredActionException,
     TransactionRollbackDeadlock,
     SyntaxErrorOrAccessRuleViolation,
+    SyntaxErrorOrAccessRuleViolationSyntaxError,
     WithCheckOptionViolation,
     ReservedForISO9579,
     IoError,
@@ -863,6 +864,9 @@ impl SqlState {
             }
             SyntaxErrorOrAccessRuleViolation => {
                 SqlStateDetail::new(class42.clone(), "000", "(no subclass)")
+            }
+            SyntaxErrorOrAccessRuleViolationSyntaxError => {
+                SqlStateDetail::new(class42.clone(), "I00", "syntax error")
             }
             WithCheckOptionViolation => {
                 SqlStateDetail::new(class44.clone(), "000", "(no subclass)")

@@ -1,6 +1,6 @@
 mod sql_test;
 
-use apllodb_server::{test_support::test_setup, SqlState, RecordIndex, SchemaIndex};
+use apllodb_server::{test_support::test_setup, RecordIndex, SchemaIndex, SqlState};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]

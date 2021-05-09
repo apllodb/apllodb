@@ -3,7 +3,7 @@ mod sqltest;
 mod step;
 
 use apllodb_server::{ApllodbCommandSuccess, ApllodbServer};
-use apllodb_shared_components::{SqlState, DatabaseName, Session, SessionWithDb};
+use apllodb_shared_components::{DatabaseName, Session, SessionWithDb, SqlState};
 pub use sql_test_session_ab::{SessionAb, SqlTestSessionAb};
 pub use sqltest::SqlTest;
 pub use step::{step_res::StepRes, steps::Steps, Step};

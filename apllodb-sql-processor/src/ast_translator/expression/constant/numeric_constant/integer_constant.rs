@@ -1,6 +1,4 @@
-use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, NnSqlValue, SqlValue,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, NnSqlValue, SqlState, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
@@ -26,14 +24,10 @@ impl AstTranslator {
                     .map(|i| SqlValue::NotNull(NnSqlValue::BigInt(i)))
             })
             .map_err(|e| {
-                ApllodbError::new(
-                    SqlState::NumericValueOutOfRange,
-                    format!(
-                        "integer value `{}` could not be parsed as i64 (max supported size)",
-                        s
-                    ),
-                    Some(Box::new(e)),
-                )
+                ApllodbError::data_exception_numeric_value_out_of_range(format!(
+                    "integer value `{}` could not be parsed as i64 (max supported size)",
+                    s
+                ))
             })
     }
 }
@@ -42,9 +36,7 @@ impl AstTranslator {
 mod test {
     use pretty_assertions::assert_eq;
 
-    use apllodb_shared_components::{
-        SqlState, ApllodbResult, NnSqlValue, SqlType, SqlValue,
-    };
+    use apllodb_shared_components::{ApllodbResult, NnSqlValue, SqlState, SqlType, SqlValue};
     use apllodb_sql_parser::apllodb_ast;
 
     use super::AstTranslator;
@@ -157,7 +149,7 @@ mod test {
                 *AstTranslator::integer_constant(input_ast_integer_constant)
                     .unwrap_err()
                     .kind(),
-                SqlState::NumericValueOutOfRange
+                SqlState::DataExceptionNumericValueOutOfRange
             );
         }
     }

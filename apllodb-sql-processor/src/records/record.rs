@@ -4,7 +4,7 @@ use crate::field::aliased_field_name::AliasedFieldName;
 
 use super::{record_index::RecordIndex, record_schema::RecordSchema};
 use apllodb_shared_components::{
-    SqlState, ApllodbResult, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
+    ApllodbResult, RPos, Schema, SchemaIndex, SqlConvertible, SqlState, SqlValue,
 };
 use apllodb_storage_engine_interface::Row;
 
