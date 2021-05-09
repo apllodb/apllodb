@@ -55,6 +55,11 @@ impl ApllodbError {
     pub fn name_error_not_found(desc: impl ToString) -> Self {
         Self::new(SqlState::NameErrorNotFound, desc, None)
     }
+
+    /// Constructor of [SqlState::NameErrorAmbiguous](crate::SqlState::NameErrorAmbiguous).
+    pub fn name_error_ambiguous(desc: impl ToString) -> Self {
+        Self::new(SqlState::NameErrorAmbiguous, desc, None)
+    }
 }
 
 impl Error for ApllodbError {
