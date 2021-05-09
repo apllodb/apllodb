@@ -42,7 +42,7 @@ impl QueryPlanNodeRepository {
 
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb-shared-components::SqlState::NameErrorNotFound) when:
+    /// - [NameErrorNotFound](apllodb-shared-components::SqlState::NameErrorNotFound) when:
     ///    - no matching node is found.
     pub(crate) fn find_correlation_node(
         &self,
