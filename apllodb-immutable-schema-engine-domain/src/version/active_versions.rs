@@ -76,10 +76,10 @@ impl ActiveVersions {
         if errors_per_versions
             .iter()
             .map(|(_, e)| e.kind())
-            .all(|k| matches!(k, SqlState::UndefinedColumn))
+            .all(|k| matches!(k, SqlState::NameErrorNotFound))
         {
             Err(ApllodbError::new(
-                SqlState::UndefinedColumn,
+                SqlState::NameErrorNotFound,
                 format!(
                     "at least 1 column does not exist in any version: {:?}",
                     errors_per_versions,

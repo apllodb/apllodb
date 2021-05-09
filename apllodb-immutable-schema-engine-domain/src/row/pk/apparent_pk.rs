@@ -1,7 +1,7 @@
 use crate::vtable::VTable;
 use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, BooleanExpression, ComparisonFunction,
-    Expression, LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
+    ApllodbError, ApllodbResult, BooleanExpression, ComparisonFunction, Expression,
+    LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlState, SqlValue,
 };
 use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, Row, RowSchema, TableName};
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ impl ApparentPrimaryKey {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - `column_name` is not in this PK.
     pub fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&NnSqlValue> {
         let target_sql_value = self
@@ -30,11 +30,10 @@ impl ApparentPrimaryKey {
             .iter()
             .find_map(|(cn, sql_value)| (*cn == column_name).then(|| *sql_value))
             .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::UndefinedColumn,
-                    format!("undefined column name in PK: `{:?}`", column_name),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "undefined column name in PK: `{:?}`",
+                    column_name
+                ))
             })?;
         Ok(target_sql_value)
     }
@@ -43,7 +42,7 @@ impl ApparentPrimaryKey {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - `column_name` is not in this PK.
     pub fn get<T: SqlConvertible>(&self, column_name: &ColumnName) -> ApllodbResult<T> {
         let sql_value = self.get_sql_value(column_name)?;

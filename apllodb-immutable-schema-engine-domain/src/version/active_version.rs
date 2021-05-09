@@ -1,6 +1,6 @@
 use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
 use crate::{entity::Entity, vtable::id::VTableId};
-use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SqlValue};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState, SqlValue};
 use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -73,7 +73,7 @@ impl ActiveVersion {
     ///
     /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
     ///   - If no column would exist after the specified action.
-    /// - [UndefinedColumn](variant.UndefinedColumn.html)
+    /// - [NameErrorNotFound](variant.NameErrorNotFound.html)
     ///   - If column to alter does not exist.
     pub fn create_next(&self, action: &AlterTableAction) -> ApllodbResult<Self> {
         match action {
@@ -130,7 +130,7 @@ impl ActiveVersion {
     /// - [NotNullViolation](apllodb_shared_components::SqlState::NotNullViolation) when:
     ///   - Not inserting into a NOT NULL column.
     ///   - Inserting NULL to column with NOT NULL constraint.
-    /// - [InvalidColumnReference](apllodb-shared-components::SqlState::InvalidColumnReference) when:
+    /// - [NameErrorNotFound](apllodb-shared-components::SqlState::NameErrorNotFound) when:
     ///   - `column_values` includes any column not defined in this version.
     /// - [CheckViolation](apllodb_shared_components::SqlState::CheckViolation) when:
     ///   - Column value does not satisfy CHECK constraint.
@@ -165,14 +165,10 @@ impl ActiveVersion {
         // Check if all columns in `column_values` are included in version's definition.
         for cn in column_values.keys() {
             if !version_column_names.contains(&cn) {
-                return Err(ApllodbError::new(
-                    SqlState::InvalidColumnReference,
-                    format!(
-                        "inserted column `{:?}` is not defined in version `{:?}`",
-                        cn, self
-                    ),
-                    None,
-                ));
+                return Err(ApllodbError::name_error_not_found(format!(
+                    "inserted column `{:?}` is not defined in version `{:?}`",
+                    cn, self
+                )));
             }
         }
 
@@ -213,7 +209,7 @@ impl ActiveVersion {
             .map(|_| ())
             .ok_or_else(|| {
                 ApllodbError::new(
-                    SqlState::UndefinedColumn,
+                    SqlState::NameErrorNotFound,
                     format!(
                         "column `{:?}` does not exist in current version",
                         column_name
@@ -228,7 +224,7 @@ impl ActiveVersion {
 mod tests {
     use super::ActiveVersion;
     use crate::vtable::id::VTableId;
-    use apllodb_shared_components::{SqlState, ApllodbResult, SqlType};
+    use apllodb_shared_components::{ApllodbResult, SqlState, SqlType};
     use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 
     #[test]
@@ -278,7 +274,7 @@ mod tests {
         };
         match v1.create_next(&action) {
             Err(e) => match e.kind() {
-                SqlState::UndefinedColumn => Ok(()),
+                SqlState::NameErrorNotFound => Ok(()),
                 _ => panic!("unexpected error kind: {}", e),
             },
             Ok(_) => panic!("should be error"),

@@ -12,7 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, Schema, SchemaIndex, SqlType, SqlValue,
+    ApllodbError, ApllodbResult, Schema, SchemaIndex, SqlState, SqlType, SqlValue,
 };
 use apllodb_storage_engine_interface::{
     ColumnDataType, ColumnName, Row, RowSchema, Rows, TableName,
@@ -38,7 +38,7 @@ impl Attributes {
 
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - schema has unregistered ColumnName.
     fn into_row(mut self, schema: &RowSchema) -> ApllodbResult<Row> {
         let sql_values: Vec<SqlValue> = schema
@@ -47,7 +47,7 @@ impl Attributes {
             .map(|tc| {
                 self.0.remove(tc.as_column_name()).ok_or_else(|| {
                     ApllodbError::new(
-                        SqlState::UndefinedColumn,
+                        SqlState::NameErrorNotFound,
                         format!(
                             "column `{}` does not exist in this Attributes",
                             tc.as_column_name().as_str()

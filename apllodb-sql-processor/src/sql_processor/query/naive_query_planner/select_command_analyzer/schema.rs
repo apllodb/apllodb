@@ -10,7 +10,7 @@ use crate::{
     field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
     records::record_schema::RecordSchema,
 };
-use apllodb_shared_components::{SqlState, SchemaName};
+use apllodb_shared_components::{SchemaName, SqlState};
 use apllodb_storage_engine_interface::ColumnName;
 
 use super::SelectCommandAnalyzer;
@@ -121,9 +121,7 @@ impl SelectCommandAnalyzer {
     ///
     /// # Failures
     ///
-    /// - [InvalidColumnReference](apllodb_shared_components::SqlState::InvalidColumnReference) when:
-    ///   - `from_item_correlations` is empty.
-    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - none of `from_item_correlations` has field named `ast_column_reference.column_name`
     ///   - `ast_column_reference` has a correlation but it is not any of `from_item_correlations`.
     pub(super) fn field_name(
@@ -131,14 +129,7 @@ impl SelectCommandAnalyzer {
         from_item_correlations: &[AliasedCorrelationName],
     ) -> ApllodbResult<FieldName> {
         if from_item_correlations.is_empty() {
-            Err(ApllodbError::new(
-                SqlState::InvalidColumnReference,
-                format!(
-                    "no FROM item. cannot detect where `{}` field is from",
-                    index
-                ),
-                None,
-            ))
+            unreachable!("SQL parser must handle this case")
         } else if let Some(corr) = index.prefix() {
             Self::field_name_with_prefix(corr, index.attr(), from_item_correlations)
         } else {
@@ -148,7 +139,7 @@ impl SelectCommandAnalyzer {
 
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - `ast_correlation` does not match any of `from_item_correlations`.
     fn field_name_with_prefix(
         prefix: &str,
@@ -175,7 +166,7 @@ impl SelectCommandAnalyzer {
             })
             .ok_or_else(|| {
                 ApllodbError::new(
-                    SqlState::UndefinedColumn,
+                    SqlState::NameErrorNotFound,
                     format!(
                         "`{}` does not match any of FROM items: {:?}",
                         index, from_item_correlations
@@ -211,7 +202,7 @@ mod tests {
     use crate::{
         correlation::aliased_correlation_name::AliasedCorrelationName, field::field_name::FieldName,
     };
-    use apllodb_shared_components::{SqlState, SchemaIndex};
+    use apllodb_shared_components::{SchemaIndex, SqlState};
     use pretty_assertions::assert_eq;
 
     #[derive(new)]
@@ -226,16 +217,6 @@ mod tests {
         let test_data: Vec<TestDatum> = vec![
             TestDatum::new(
                 SchemaIndex::from("c"),
-                vec![],
-                Err(SqlState::InvalidColumnReference),
-            ),
-            TestDatum::new(
-                SchemaIndex::from("t.c"),
-                vec![],
-                Err(SqlState::InvalidColumnReference),
-            ),
-            TestDatum::new(
-                SchemaIndex::from("c"),
                 vec![AliasedCorrelationName::factory_tn("t")],
                 Ok(FieldName::factory("t", "c")),
             ),
@@ -247,7 +228,7 @@ mod tests {
             TestDatum::new(
                 SchemaIndex::from("t1.c"),
                 vec![AliasedCorrelationName::factory_tn("t2")],
-                Err(SqlState::UndefinedColumn),
+                Err(SqlState::NameErrorNotFound),
             ),
             TestDatum::new(
                 SchemaIndex::from("c"),
@@ -267,7 +248,7 @@ mod tests {
             TestDatum::new(
                 SchemaIndex::from("x.c"),
                 vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
-                Err(SqlState::UndefinedColumn),
+                Err(SqlState::NameErrorNotFound),
             ),
         ];
 
