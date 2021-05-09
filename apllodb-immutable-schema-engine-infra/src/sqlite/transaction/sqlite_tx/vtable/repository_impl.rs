@@ -20,8 +20,8 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, VTable},
 };
 use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, BooleanExpression, ComparisonFunction,
-    Expression, SqlValue,
+    ApllodbError, ApllodbResult, BooleanExpression, ComparisonFunction, Expression, SqlState,
+    SqlValue,
 };
 use apllodb_storage_engine_interface::{
     Row, RowSchema, RowSelectionQuery, Rows, SingleTableCondition,
@@ -155,7 +155,7 @@ impl VTableRepositoryImpl {
                 Ok(RowSelectionPlan::VrrProbe(vrr_entries))
             }
             Err(e) => match e.kind() {
-                SqlState::FeatureNotSupported | SqlState::UndefinedPrimaryKey => {
+                SqlState::FeatureNotSupported => {
                     Err(ApllodbError::feature_not_supported("for storage-engine selection, only expression like `pk_col = 123` is supported currently"))
                 }
                 _ => Err(e)
@@ -165,10 +165,9 @@ impl VTableRepositoryImpl {
 
     /// # Failures
     ///
-    /// - [UndefinedPrimaryKey](apllodb_shared_components::SqlState::UndefinedPrimaryKey) when:
-    ///   - `condition` is not like: `pk_col = 123`
-    ///   - TODO support: `pk_col1 = 123 AND pk_col2 = 456`
     /// - [FeatureNotSupported](apllodb_shared_components::SqlState::FeatureNotSupported) when:
+    ///   - `condition` is not like: `pk_col = 123`
+    ///     - TODO support: `pk_col1 = 123 AND pk_col2 = 456`
     ///   - PK contains multiple columns.
     ///   - `condition` is like: `pk_col1 = 123 AND pk_col2 = 456`
     fn try_condition_into_apk(
@@ -186,7 +185,9 @@ impl VTableRepositoryImpl {
             ))
         }?;
 
-        let err = ApllodbError::new(SqlState::UndefinedPrimaryKey, "", None);
+        let err = ApllodbError::feature_not_supported(
+            "storage-engine selection supports onlu single PK match currently",
+        );
 
         let expr = condition.as_expression();
         match expr {
