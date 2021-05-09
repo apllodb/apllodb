@@ -58,11 +58,7 @@ impl QueryPlanNodeRepository {
                     .flatten()
             })
             .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::NameErrorNotFound,
-                    "no QueryPlanNode exists (already removed?)",
-                    None,
-                )
+                ApllodbError::name_error_not_found("no QueryPlanNode exists (already removed?)")
             })
     }
 

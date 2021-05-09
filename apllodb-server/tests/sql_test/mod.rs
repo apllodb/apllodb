@@ -17,7 +17,7 @@ async fn session_with_db(server: &ApllodbServer, database_name: DatabaseName) ->
         .await
         .map_or_else(
             |e| {
-                assert_eq!(e.err.kind(), &SqlState::DuplicateDatabase);
+                assert_eq!(e.err.kind(), &SqlState::NameErrorDuplicate);
                 e.session
             },
             |success| match success {

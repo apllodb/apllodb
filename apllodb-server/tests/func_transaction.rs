@@ -226,7 +226,7 @@ async fn test_too_long_lock_wait_regarded_as_deadlock() {
             SessionAb::B,
             Step::new(
                 "INSERT INTO people (id, age) VALUES (1, 25)",
-                StepRes::Err(SqlState::DeadlockDetected),
+                StepRes::Err(SqlState::TransactionRollbackDeadlock),
             ),
         )
         .run()

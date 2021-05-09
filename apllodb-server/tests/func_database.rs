@@ -22,7 +22,7 @@ async fn test_create_database() {
         ))
         .add_step(Step::new(
             format!("CREATE DATABASE {}", db_name.as_str()),
-            StepRes::Err(SqlState::DuplicateDatabase),
+            StepRes::Err(SqlState::NameErrorDuplicate),
         ))
         .run_with_manual_db_control()
         .await;
@@ -36,7 +36,7 @@ async fn test_use_database() {
     SqlTest::default()
         .add_step(Step::new(
             format!("USE DATABASE {}", db_name.as_str()),
-            StepRes::Err(SqlState::UndefinedObject),
+            StepRes::Err(SqlState::NameErrorNotFound),
         ))
         .add_step(Step::new(
             format!("CREATE DATABASE {}", db_name.as_str()),
@@ -64,7 +64,7 @@ async fn test_create_database_session_ab() {
             SessionAb::B,
             Step::new(
                 format!("CREATE DATABASE {}", db_name.as_str()),
-                StepRes::Err(SqlState::DuplicateDatabase),
+                StepRes::Err(SqlState::NameErrorDuplicate),
             ),
         )
         .run_with_manual_db_control()
