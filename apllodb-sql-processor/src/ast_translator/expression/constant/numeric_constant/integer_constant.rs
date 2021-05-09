@@ -6,7 +6,7 @@ use crate::ast_translator::AstTranslator;
 impl AstTranslator {
     /// # Failures
     ///
-    /// - [NumericValueOutOfRange](apllodb_shared_components::SqlState::NumericValueOutOfRange) when:
+    /// - [DataExceptionNumericValueOutOfRange](apllodb_shared_components::SqlState::DataExceptionNumericValueOutOfRange) when:
     ///   - `ast_integer_constant` is out of range of `i64`.
     pub(crate) fn integer_constant(
         ast_integer_constant: apllodb_ast::IntegerConstant,
