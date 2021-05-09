@@ -66,6 +66,11 @@ impl ApllodbError {
         Self::new(SqlState::DataExceptionIllegalOperation, desc, None)
     }
 
+    /// Constructor of [SqlState::IntegrityConstraintNotNullViolation](crate::SqlState::IntegrityConstraintNotNullViolation).
+    pub fn integrity_constraint_not_null_violation(desc: impl ToString) -> Self {
+        Self::new(SqlState::IntegrityConstraintNotNullViolation, desc, None)
+    }
+
     /// Constructor of [SqlState::NameErrorNotFound](crate::SqlState::NameErrorNotFound).
     pub fn name_error_not_found(desc: impl ToString) -> Self {
         Self::new(SqlState::NameErrorNotFound, desc, None)

@@ -133,6 +133,7 @@ pub enum SqlState {
     DataExceptionIllegalOperation,
     IntegrityConstraintViolation,
     IntegrityConstraintViolationRestrictViolation,
+    IntegrityConstraintNotNullViolation,
     InvalidCursorState,
     InvalidTransactionState,
     InvalidTransactionStateActiveSQLtransaction,
@@ -698,6 +699,9 @@ impl SqlState {
             }
             IntegrityConstraintViolationRestrictViolation => {
                 SqlStateDetail::new(class23.clone(), "001", "restrict violation")
+            }
+            IntegrityConstraintNotNullViolation => {
+                SqlStateDetail::new(class23.clone(), "I00", "not null violation")
             }
             InvalidCursorState => SqlStateDetail::new(class24.clone(), "000", "(no subclass)"),
             InvalidTransactionState => SqlStateDetail::new(class25.clone(), "000", "(no subclass)"),

@@ -146,13 +146,11 @@ impl ActiveVersion {
             .filter(|cdt| !cdt.nullable());
         for not_null_column_name in version_not_null_columns.map(|cdt| cdt.column_name()) {
             if !column_values.contains_key(not_null_column_name) {
-                return Err(ApllodbError::new(
-                    SqlState::NotNullViolation,
+                return Err(ApllodbError::integrity_constraint_not_null_violation(
                     format!(
                         "column `{:?}` (NOT NULL) must be included in INSERT command",
                         not_null_column_name
                     ),
-                    None,
                 ));
             }
         }
