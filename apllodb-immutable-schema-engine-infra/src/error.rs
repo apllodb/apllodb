@@ -48,7 +48,7 @@ impl From<sqlx::Error> for InfraError {
                 // SQLite's error codes: <https://www.sqlite.org/rescode.html#primary_result_code_list>
                 match db_err.code().unwrap_or_default().to_string().as_str() {
                     // FIXME SQLITE_BUSY does not always indicate a deadlock.
-                    // test_latter_tx_is_waited(), for example, should not end up in DeadlockDetected error.
+                    // test_latter_tx_is_waited(), for example, should not end up in TransactionRollbackDeadlock error.
                     "5" => Self(ApllodbError::transaction_rollback_deadlock(
                         "deadlock detected",
                     )),

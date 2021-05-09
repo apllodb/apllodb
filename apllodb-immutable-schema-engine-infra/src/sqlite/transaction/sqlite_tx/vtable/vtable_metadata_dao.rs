@@ -118,7 +118,7 @@ CREATE TABLE {} (
 
     /// # Failures
     ///
-    /// - [DeadlockDetected](apllodb_shared_components::SqlState::DeadlockDetected) when:
+    /// - [TransactionRollbackDeadlock](apllodb_shared_components::SqlState::TransactionRollbackDeadlock) when:
     ///   - transaction lock to metadata table takes too long time.
     /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - `table` is already created.
