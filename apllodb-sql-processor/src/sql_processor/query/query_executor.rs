@@ -51,31 +51,27 @@ impl<Engine: StorageEngine> QueryExecutor<Engine> {
     ) -> ApllodbSessionResult<(Records, SessionWithTx)> {
         let executor = PlanNodeExecutor::new(self.context.clone());
 
-        match self.context.node_repo.remove(node_id) {
-            Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
-            Ok(node) => match node.kind {
-                QueryPlanNodeKind::Leaf(node_leaf) => {
-                    executor.run_leaf(session, node_leaf.op).await
+        let node = self.context.node_repo.remove(node_id);
+        match node.kind {
+            QueryPlanNodeKind::Leaf(node_leaf) => executor.run_leaf(session, node_leaf.op).await,
+            QueryPlanNodeKind::Unary(node_unary) => {
+                let (left_input, session) =
+                    self.run_dfs_post_order(session, node_unary.left).await?;
+                match executor.run_unary(node_unary.op, left_input) {
+                    Ok(records) => Ok((records, session)),
+                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
                 }
-                QueryPlanNodeKind::Unary(node_unary) => {
-                    let (left_input, session) =
-                        self.run_dfs_post_order(session, node_unary.left).await?;
-                    match executor.run_unary(node_unary.op, left_input) {
-                        Ok(records) => Ok((records, session)),
-                        Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
-                    }
+            }
+            QueryPlanNodeKind::Binary(node_binary) => {
+                let (left_input, session) =
+                    self.run_dfs_post_order(session, node_binary.left).await?;
+                let (right_input, session) =
+                    self.run_dfs_post_order(session, node_binary.right).await?;
+                match executor.run_binary(node_binary.op, left_input, right_input) {
+                    Ok(records) => Ok((records, session)),
+                    Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
                 }
-                QueryPlanNodeKind::Binary(node_binary) => {
-                    let (left_input, session) =
-                        self.run_dfs_post_order(session, node_binary.left).await?;
-                    let (right_input, session) =
-                        self.run_dfs_post_order(session, node_binary.right).await?;
-                    match executor.run_binary(node_binary.op, left_input, right_input) {
-                        Ok(records) => Ok((records, session)),
-                        Err(e) => Err(ApllodbSessionError::new(e, Session::from(session))),
-                    }
-                }
-            },
+            }
         }
     }
 }

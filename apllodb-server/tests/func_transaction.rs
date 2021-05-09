@@ -1,7 +1,7 @@
 mod sql_test;
 
 use apllodb_server::test_support::test_setup;
-use apllodb_shared_components::ApllodbErrorKind;
+use apllodb_shared_components::SqlState;
 use sql_test::{SessionAb, SqlTest, SqlTestSessionAb, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -15,7 +15,7 @@ async fn test_begin() {
         .add_step(Step::new("BEGIN", StepRes::Ok))
         .add_step(Step::new(
             "BEGIN",
-            StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+            StepRes::Err(SqlState::InvalidTransactionState),
         ))
         .run()
         .await;
@@ -30,7 +30,7 @@ async fn test_commit() {
         .add_step(Step::new("COMMIT", StepRes::Ok))
         .add_step(Step::new(
             "COMMIT",
-            StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+            StepRes::Err(SqlState::InvalidTransactionState),
         ))
         .run()
         .await;
@@ -45,7 +45,7 @@ async fn test_abort() {
         .add_step(Step::new("ABORT", StepRes::Ok))
         .add_step(Step::new(
             "ABORT",
-            StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
+            StepRes::Err(SqlState::InvalidTransactionState),
         ))
         .run()
         .await;
@@ -102,10 +102,7 @@ async fn test_begin_session_ab() {
         .add_step(SessionAb::B, Step::new("BEGIN", StepRes::Ok))
         .add_step(
             SessionAb::A,
-            Step::new(
-                "BEGIN",
-                StepRes::Err(ApllodbErrorKind::InvalidTransactionState),
-            ),
+            Step::new("BEGIN", StepRes::Err(SqlState::InvalidTransactionState)),
         )
         .run()
         .await;
@@ -129,7 +126,7 @@ async fn test_transaction_ddl_isolation() {
             SessionAb::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
-                StepRes::Err(ApllodbErrorKind::UndefinedTable),
+                StepRes::Err(SqlState::NameErrorNotFound),
             ),
         )
         .add_step(SessionAb::A, Step::new("COMMIT", StepRes::Ok))
@@ -138,7 +135,7 @@ async fn test_transaction_ddl_isolation() {
             SessionAb::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
-                StepRes::Err(ApllodbErrorKind::UndefinedTable),
+                StepRes::Err(SqlState::NameErrorNotFound),
             ),
         )
         .add_step(SessionAb::B, Step::new("ABORT", StepRes::Ok))
@@ -229,7 +226,7 @@ async fn test_too_long_lock_wait_regarded_as_deadlock() {
             SessionAb::B,
             Step::new(
                 "INSERT INTO people (id, age) VALUES (1, 25)",
-                StepRes::Err(ApllodbErrorKind::DeadlockDetected),
+                StepRes::Err(SqlState::TransactionRollbackDeadlock),
             ),
         )
         .run()
@@ -255,7 +252,7 @@ async fn test_latter_tx_is_waited() {
             SessionAb::A,
             Step::new(
                 "INSERT INTO people (id, age) VALUES (1, 25)",
-                StepRes::Err(ApllodbErrorKind::UniqueViolation),
+                StepRes::Err(SqlState::IntegrityConstraintUniqueViolation),
             ),
         )
         .add_step(SessionAb::B, Step::new("COMMIT", StepRes::Ok))

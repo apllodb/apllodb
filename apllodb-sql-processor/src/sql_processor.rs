@@ -6,9 +6,7 @@ pub(crate) mod success;
 
 use std::sync::Arc;
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, Session,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbSessionError, ApllodbSessionResult, Session};
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,
@@ -30,9 +28,9 @@ pub struct SqlProcessor<Engine: StorageEngine> {
 impl<Engine: StorageEngine> SqlProcessor<Engine> {
     /// # Failures
     ///
-    /// - [InvalidDatabaseDefinition](apllodb-shared-components::ApllodbErrorKind::InvalidDatabaseDefinition) when:
+    /// - [ConnectionExceptionDatabaseNotOpen](apllodb-shared-components::SqlState::ConnectionExceptionDatabaseNotOpen) when:
     ///   - requesting an operation that uses an open database with [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
-    /// - [FeatureNotSupported](apllodb-shared-components::ApllodbErrorKind::FeatureNotSupported) when:
+    /// - [FeatureNotSupported](apllodb-shared-components::SqlState::FeatureNotSupported) when:
     ///   - the sql should be processed properly but apllodb currently doesn't
     pub async fn run(
         &self,
@@ -44,11 +42,13 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
         match parser.parse(sql) {
             Err(e) => Err(
                 ApllodbSessionError::new(
-                ApllodbError::new(
-                ApllodbErrorKind::SyntaxError,
-                format!("failed to parse SQL: {}", sql),
-                Some(Box::new(e)),
-            ), session)),
+                    ApllodbError::syntax_error(
+                        format!("failed to parse SQL: {}", sql),
+                        Box::new(e),
+                    ),
+                    session
+                )
+            ),
             Ok(ApllodbAst(command)) => match session {
                 Session::WithTx(sess) => match command {
                     apllodb_ast::Command::CommitTransactionCommandVariant => {
@@ -85,19 +85,15 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                     apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
                         Err(
                             ApllodbSessionError::new(
-                                ApllodbError::new(
-                            ApllodbErrorKind::FeatureNotSupported,
+                                ApllodbError::feature_not_supported(
                             format!("cannot process the following SQL (database: {:?}, transaction: open): {}", sess.get_db_name(), sql),
-                            None,
                         ), Session::from(sess)))
                     }
                     apllodb_ast::Command::BeginTransactionCommandVariant => {
                         Err(
                             ApllodbSessionError::new(
-                            ApllodbError::new(
-                            ApllodbErrorKind::InvalidTransactionState,
+                            ApllodbError::invalid_transaction_state(
                             format!("transaction is already open (database: {:?}, transaction: open): {}",  sess.get_db_name(), sql),
-                            None,
                         ), Session::from(sess)
                     ))
                     }
@@ -124,20 +120,16 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                     apllodb_ast::Command::CreateDatabaseCommandVariant(_) | apllodb_ast::Command::UseDatabaseCommandVariant(_) => {
                         Err(
                             ApllodbSessionError::new(
-                            ApllodbError::new(
-                            ApllodbErrorKind::FeatureNotSupported,
+                            ApllodbError::feature_not_supported(
                             format!("cannot process the following SQL (database: {:?}, transaction: none): {}", sess.database_name(), sql),
-                            None,
                         ), Session::from(sess)))
                     }
 
                     apllodb_ast::Command::CommitTransactionCommandVariant |apllodb_ast::Command::AbortTransactionCommandVariant => {
                         Err(
                             ApllodbSessionError::new(
-                                ApllodbError::new(
-                            ApllodbErrorKind::InvalidTransactionState,
+                                ApllodbError::invalid_transaction_state(
                             format!("transaction is not open (database: {:?}, transaction: none): {}", sess.database_name(), sql),
-                            None,
                         ), Session::from(sess)))
                     }
                 },
@@ -178,10 +170,8 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                     | apllodb_ast::Command::UpdateCommandVariant(_)
                     | apllodb_ast::Command::SelectCommandVariant(_) => Err(
                         ApllodbSessionError::new(
-                        ApllodbError::new(
-                        ApllodbErrorKind::InvalidDatabaseDefinition,
+                        ApllodbError::connection_exception_database_not_open(
                         format!("this command requires open database: {}", sql),
-                        None,
                     ), Session::from(sess))),
                 },
             },

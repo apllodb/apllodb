@@ -18,7 +18,7 @@ pub trait VersionRepository {
 
     /// # Failures
     ///
-    /// - [UniqueViolation](apllodb_shared_components::ApllodbErrorKind::UniqueViolation) when:
+    /// - [IntegrityConstraintUniqueViolation](apllodb_shared_components::SqlState::IntegrityConstraintUniqueViolation) when:
     ///   - record with the same `apparent_pk` already exists.
     async fn insert(
         &self,

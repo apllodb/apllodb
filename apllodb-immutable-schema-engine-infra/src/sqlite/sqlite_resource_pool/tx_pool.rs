@@ -3,7 +3,7 @@ use std::{
     {cell::RefCell, rc::Rc},
 };
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SessionId};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SessionId};
 use generational_arena::{Arena, Index};
 
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
@@ -20,15 +20,14 @@ pub(crate) struct SqliteTxPool {
 impl SqliteTxPool {
     /// # Failures
     ///
-    /// - [InvalidTransactionState](apllodb-shared-components::ApllodbErrorKind::InvalidTransactionState) when:
+    /// - [InvalidTransactionState](apllodb-shared-components::SqlState::InvalidTransactionState) when:
     ///   - this session seems not to open any transaction.
     pub(crate) fn get_tx(&self, sid: &SessionId) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
         let err = || {
-            ApllodbError::new(
-                ApllodbErrorKind::InvalidTransactionState,
-                format!("session `{:?}` does not open any transaction", sid),
-                None,
-            )
+            ApllodbError::invalid_transaction_state(format!(
+                "session `{:?}` does not open any transaction",
+                sid
+            ))
         };
 
         let tx_idx = *self.sess_tx.get(sid).ok_or_else(err)?;
@@ -39,15 +38,14 @@ impl SqliteTxPool {
 
     /// # Failures
     ///
-    /// - [InvalidTransactionState](apllodb-shared-components::ApllodbErrorKind::InvalidTransactionState) when:
+    /// - [InvalidTransactionState](apllodb-shared-components::SqlState::InvalidTransactionState) when:
     ///   - this session seems not to open any transaction.
     pub(crate) fn remove_tx(&mut self, sid: &SessionId) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
         let err = || {
-            ApllodbError::new(
-                ApllodbErrorKind::InvalidTransactionState,
-                format!("session `{:?}` does not open any transaction", sid),
-                None,
-            )
+            ApllodbError::invalid_transaction_state(format!(
+                "session `{:?}` does not open any transaction",
+                sid
+            ))
         };
 
         let tx_idx = self.sess_tx.remove(sid).ok_or_else(err)?;
@@ -58,7 +56,7 @@ impl SqliteTxPool {
 
     /// # Failures
     ///
-    /// - [InvalidTransactionState](apllodb-shared-components::ApllodbErrorKind::InvalidTransactionState) when:
+    /// - [InvalidTransactionState](apllodb-shared-components::SqlState::InvalidTransactionState) when:
     ///   - this session seems to open another transaction.
     pub(crate) fn insert_tx(
         &mut self,
@@ -67,11 +65,10 @@ impl SqliteTxPool {
     ) -> ApllodbResult<()> {
         let tx_idx = self.tx_arena.insert(tx);
         if self.sess_tx.insert(*sid, tx_idx).is_some() {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTransactionState,
-                format!("session `{:?}` already opens another transaction", sid),
-                None,
-            ))
+            Err(ApllodbError::invalid_transaction_state(format!(
+                "session `{:?}` already opens another transaction",
+                sid
+            )))
         } else {
             Ok(())
         }

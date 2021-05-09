@@ -1,7 +1,7 @@
 use std::{fmt::Display, hash::Hash};
 
 use crate::{
-    error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
+    error::{ApllodbError, ApllodbResult},
     SqlConvertible,
 };
 use serde::{Deserialize, Serialize};
@@ -97,7 +97,7 @@ impl NnSqlValue {
     ///
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion) when:
     ///   - Any value of `T` cannot be typed as this SqlValue's SqlType (E.g. `T = i64`, `SqlType = SmallInt`).
     pub fn unpack<T>(&self) -> ApllodbResult<T>
     where
@@ -146,38 +146,32 @@ impl NnSqlValue {
                 let (self_b, other_b) = (self.unpack::<bool>()?, other.unpack::<bool>()?);
                 Ok(SqlCompareResult::from(self_b.cmp(&other_b)))
             }
-            (_, _) => Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
-                format!(
-                    "`self` and `other` are not in comparable type - self: {:?}, other: {:?}",
-                    self, other
-                ),
-                None,
-            )),
+            (_, _) => Err(ApllodbError::data_exception_illegal_comparison(format!(
+                "`self` and `other` are not in comparable type - self: {:?}, other: {:?}",
+                self, other
+            ))),
         }
     }
 
     /// # Failures
     ///
-    /// - [InvalidParameterValue](apllodb_shared_components::ApllodbErrorKind::InvalidParameterValue) when:
+    /// - [DataExceptionIllegalOperation](apllodb_shared_components::SqlState::DataExceptionIllegalOperation) when:
     ///   - inner value cannot negate
     pub(crate) fn negate(self) -> ApllodbResult<Self> {
         match self {
             NnSqlValue::SmallInt(v) => Ok(Self::SmallInt(-v)),
             NnSqlValue::Integer(v) => Ok(Self::Integer(-v)),
             NnSqlValue::BigInt(v) => Ok(Self::BigInt(-v)),
-            NnSqlValue::Text(_) | NnSqlValue::Boolean(_) => Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidParameterValue,
-                format!("{} cannot negate", self),
-                None,
-            )),
+            NnSqlValue::Text(_) | NnSqlValue::Boolean(_) => Err(
+                ApllodbError::data_exception_illegal_operation(format!("{} cannot negate", self)),
+            ),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, ApllodbResult, NnSqlValue};
+    use crate::{ApllodbResult, NnSqlValue, SqlState};
 
     #[test]
     fn test_unpack_loosely() -> ApllodbResult<()> {
@@ -187,18 +181,18 @@ mod tests {
 
         assert_eq!(
             NnSqlValue::Integer(-1).unpack::<i16>().unwrap_err().kind(),
-            &ApllodbErrorKind::DatatypeMismatch
+            &SqlState::DataExceptionIllegalConversion
         );
         assert_eq!(NnSqlValue::Integer(-1).unpack::<i32>()?, -1);
         assert_eq!(NnSqlValue::Integer(-1).unpack::<i64>()?, -1);
 
         assert_eq!(
             NnSqlValue::BigInt(-1).unpack::<i16>().unwrap_err().kind(),
-            &ApllodbErrorKind::DatatypeMismatch
+            &SqlState::DataExceptionIllegalConversion
         );
         assert_eq!(
             NnSqlValue::BigInt(-1).unpack::<i32>().unwrap_err().kind(),
-            &ApllodbErrorKind::DatatypeMismatch
+            &SqlState::DataExceptionIllegalConversion
         );
         assert_eq!(NnSqlValue::BigInt(-1).unpack::<i64>()?, -1);
 

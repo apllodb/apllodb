@@ -17,7 +17,7 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///
     /// # Failures
     ///
-    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
+    /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - Table `table_name` is already visible to this transaction.
     async fn create(&self, vtable: &VTable) -> ApllodbResult<()>;
 
@@ -25,7 +25,7 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table specified by `vtable_id` is not visible to this transaction.
     async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable>;
 
@@ -33,7 +33,7 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table specified by `vtable.id` is not visible to this transaction.
     async fn update(&self, vtable: &VTable) -> ApllodbResult<()>;
 

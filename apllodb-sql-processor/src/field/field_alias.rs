@@ -9,7 +9,7 @@ impl FieldAlias {
     /// Constructor.
     ///
     /// # Failures
-    /// - [NameTooLong](apllodb_shared_components::ApllodbErrorKind::NameTooLong) when:
+    /// - [NameTooLong](apllodb_shared_components::SqlState::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub(crate) fn new(name: impl ToString) -> ApllodbResult<Self> {
         let sn = ShortName::new(name)?;

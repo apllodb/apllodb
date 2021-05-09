@@ -1,4 +1,4 @@
-use crate::error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult};
+use crate::error::{ApllodbError, ApllodbResult};
 use serde::{Deserialize, Serialize};
 
 /// Short (64 chars in UTF-8 at maximum) object name used for table names, column names, and so on.
@@ -12,7 +12,7 @@ impl ShortName {
     /// (since it should be assured by tokenizer).
     ///
     /// # Failures
-    /// - [NameTooLong](apllodb-shared-components::ApllodbErrorKind::NameTooLong) when:
+    /// - [NameTooLong](apllodb-shared-components::SqlState::NameTooLong) when:
     ///   - `name` length is longer than 64 (counted as UTF-8 character).
     pub fn new(name: impl ToString) -> ApllodbResult<Self> {
         let name = name.to_string();
@@ -27,15 +27,11 @@ impl ShortName {
 
     fn validate_length(name: &str) -> ApllodbResult<()> {
         if name.chars().count() > 64 {
-            Err(ApllodbError::new(
-                ApllodbErrorKind::NameTooLong,
-                format!(
-                    "ShortName `{}` is too long ({} > 64)",
-                    name,
-                    name.chars().count()
-                ),
-                None,
-            ))
+            Err(ApllodbError::name_error_too_long(format!(
+                "ShortName `{}` is too long ({} > 64)",
+                name,
+                name.chars().count()
+            )))
         } else {
             Ok(())
         }
@@ -45,7 +41,7 @@ impl ShortName {
 #[cfg(test)]
 mod tests {
     use super::ShortName;
-    use crate::error::kind::ApllodbErrorKind;
+    use crate::error::sqlstate::SqlState;
 
     #[test]
     fn test_success() {
@@ -66,7 +62,7 @@ mod tests {
         for name in &names {
             match ShortName::new(name) {
                 Err(e) => match e.kind() {
-                    ApllodbErrorKind::NameTooLong => {}
+                    SqlState::NameErrorTooLong => {}
                     x => panic!("{} : unexpected error: {:?}", name, x),
                 },
                 Ok(_) => panic!("{} : should be an error", name),

@@ -1,6 +1,4 @@
-use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, NnSqlValue, SqlValue,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, NnSqlValue, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
@@ -8,7 +6,7 @@ use crate::ast_translator::AstTranslator;
 impl AstTranslator {
     /// # Failures
     ///
-    /// - [NumericValueOutOfRange](apllodb_shared_components::ApllodbErrorKind::NumericValueOutOfRange) when:
+    /// - [DataExceptionNumericValueOutOfRange](apllodb_shared_components::SqlState::DataExceptionNumericValueOutOfRange) when:
     ///   - `ast_integer_constant` is out of range of `i64`.
     pub(crate) fn integer_constant(
         ast_integer_constant: apllodb_ast::IntegerConstant,
@@ -25,15 +23,11 @@ impl AstTranslator {
                 s.parse::<i64>()
                     .map(|i| SqlValue::NotNull(NnSqlValue::BigInt(i)))
             })
-            .map_err(|e| {
-                ApllodbError::new(
-                    ApllodbErrorKind::NumericValueOutOfRange,
-                    format!(
-                        "integer value `{}` could not be parsed as i64 (max supported size)",
-                        s
-                    ),
-                    Some(Box::new(e)),
-                )
+            .map_err(|_e| {
+                ApllodbError::data_exception_numeric_value_out_of_range(format!(
+                    "integer value `{}` could not be parsed as i64 (max supported size)",
+                    s
+                ))
             })
     }
 }
@@ -42,9 +36,7 @@ impl AstTranslator {
 mod test {
     use pretty_assertions::assert_eq;
 
-    use apllodb_shared_components::{
-        ApllodbErrorKind, ApllodbResult, NnSqlValue, SqlType, SqlValue,
-    };
+    use apllodb_shared_components::{ApllodbResult, NnSqlValue, SqlState, SqlType, SqlValue};
     use apllodb_sql_parser::apllodb_ast;
 
     use super::AstTranslator;
@@ -157,7 +149,7 @@ mod test {
                 *AstTranslator::integer_constant(input_ast_integer_constant)
                     .unwrap_err()
                     .kind(),
-                ApllodbErrorKind::NumericValueOutOfRange
+                SqlState::DataExceptionNumericValueOutOfRange
             );
         }
     }

@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display, sync::PoisonError};
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind};
+use apllodb_shared_components::ApllodbError;
 use serde::{Deserialize, Serialize};
 
 /// Glue error from implementation details into [ApllodbError](apllodb-shared-components::ApllodbError).
@@ -25,12 +25,11 @@ impl From<InfraError> for ApllodbError {
     }
 }
 
-impl<T> From<PoisonError<T>> for InfraError {
+impl<T: Sync + Send + 'static> From<PoisonError<T>> for InfraError {
     fn from(e: PoisonError<T>) -> Self {
-        Self(ApllodbError::new(
-            ApllodbErrorKind::SystemError,
-            format!("a thread get poisoned: {}", e),
-            None,
+        Self(ApllodbError::system_error(
+            "a thread get poisoned",
+            Box::new(e),
         ))
     }
 }
@@ -38,10 +37,9 @@ impl<T> From<PoisonError<T>> for InfraError {
 impl From<sqlx::Error> for InfraError {
     fn from(e: sqlx::Error) -> Self {
         let default = |sqlx_err| {
-            Self(ApllodbError::new(
-                ApllodbErrorKind::IoError,
+            Self(ApllodbError::system_error(
                 "backend sqlx raised an error",
-                Some(Box::new(sqlx_err)),
+                Box::new(sqlx_err),
             ))
         };
 
@@ -50,21 +48,15 @@ impl From<sqlx::Error> for InfraError {
                 // SQLite's error codes: <https://www.sqlite.org/rescode.html#primary_result_code_list>
                 match db_err.code().unwrap_or_default().to_string().as_str() {
                     // FIXME SQLITE_BUSY does not always indicate a deadlock.
-                    // test_latter_tx_is_waited(), for example, should not end up in DeadlockDetected error.
-                    "5" => Self(ApllodbError::new(
-                        ApllodbErrorKind::DeadlockDetected,
+                    // test_latter_tx_is_waited(), for example, should not end up in TransactionRollbackDeadlock error.
+                    "5" => Self(ApllodbError::transaction_rollback_deadlock(
                         "deadlock detected",
-                        Some(Box::new(e)),
                     )),
-                    "14" => Self(ApllodbError::new(
-                        ApllodbErrorKind::UndefinedObject,
+                    "14" => Self(ApllodbError::name_error_not_found(
                         "failed to open database file",
-                        Some(Box::new(e)),
                     )),
-                    "1555" => Self(ApllodbError::new(
-                        ApllodbErrorKind::UniqueViolation,
+                    "1555" => Self(ApllodbError::integrity_constraint_unique_violation(
                         "duplicate value on primary key",
-                        Some(Box::new(e)),
                     )),
                     _ => default(e),
                 }

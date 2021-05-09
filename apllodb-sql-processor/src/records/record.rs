@@ -4,7 +4,7 @@ use crate::field::aliased_field_name::AliasedFieldName;
 
 use super::{record_index::RecordIndex, record_schema::RecordSchema};
 use apllodb_shared_components::{
-    ApllodbErrorKind, ApllodbResult, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
+    ApllodbResult, RPos, Schema, SchemaIndex, SqlConvertible, SqlState, SqlValue,
 };
 use apllodb_storage_engine_interface::Row;
 
@@ -26,7 +26,7 @@ impl Record {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb-shared-components::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](apllodb-shared-components::SqlState::NameErrorNotFound) when:
     ///   - Specified field does not exist in this record.
     pub fn get<T: SqlConvertible>(&self, index: &RecordIndex) -> ApllodbResult<Option<T>> {
         self.row.get(self.pos(index)?)
@@ -64,7 +64,7 @@ impl Record {
         self.get_sql_value(&SchemaIndex::from(joined_name))
             .map_or_else(
                 |e| {
-                    if matches!(e.kind(), ApllodbErrorKind::InvalidName) {
+                    if matches!(e.kind(), SqlState::NameErrorNotFound) {
                         None
                     } else {
                         Some(Err(e))

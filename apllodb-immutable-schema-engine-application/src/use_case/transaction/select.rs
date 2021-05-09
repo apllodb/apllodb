@@ -45,7 +45,7 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes + 'usecase> TxUseCase<Types>
 
     /// # Failures
     ///
-    /// - [FeatureNotSupported](apllodb_shared_components::ApllodbErrorKind::FeatureNotSupported) when:
+    /// - [FeatureNotSupported](apllodb_shared_components::SqlState::FeatureNotSupported) when:
     ///   - any column_values' Expression is not a ConstantVariant.
     async fn run_core(
         vtable_repo: &Types::VTableRepo,

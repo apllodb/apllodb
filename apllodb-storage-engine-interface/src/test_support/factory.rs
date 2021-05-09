@@ -50,7 +50,7 @@ impl Rows {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](apllodb_shared_components::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Specified field does not exist in this record.
     pub fn projection(self, indexes: &HashSet<SchemaIndex>) -> ApllodbResult<Self> {
         let new_schema = self.as_schema().projection(indexes)?;

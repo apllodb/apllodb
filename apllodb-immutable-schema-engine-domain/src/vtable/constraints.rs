@@ -43,7 +43,7 @@ impl TableWideConstraints {
     ///
     /// # Failures
     ///
-    /// - [InvalidTableDefinition](apllodb_shared_components::ApllodbErrorKind::InvalidTableDefinition) when:
+    /// - [DdlError](apllodb_shared_components::SqlState::DdlError) when:
     ///   - [PrimaryKey](crate::TableWideConstraintKind::PrimaryKey) or
     ///     [Unique](crate::TableWideConstraintKind::Unique) in `table_constraints` are applied to an unavailable column.
     pub(crate) fn new(
@@ -63,7 +63,7 @@ impl TableWideConstraints {
 #[cfg(test)]
 mod tests {
     use super::TableWideConstraints;
-    use apllodb_shared_components::{ApllodbErrorKind, ApllodbResult, SqlType};
+    use apllodb_shared_components::{ApllodbResult, SqlState, SqlType};
     use apllodb_storage_engine_interface::{
         ColumnConstraints, ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind,
         TableConstraints,
@@ -139,7 +139,7 @@ mod tests {
         for (table_constraints, column_definitions) in testset {
             match TableWideConstraints::new(&table_constraints, &column_definitions) {
                 Err(e) => match e.kind() {
-                    ApllodbErrorKind::InvalidTableDefinition => {
+                    SqlState::DdlError => {
                         println!("{:?}", e);
                     }
                     _ => panic!("unexpected error kind: {}", e),

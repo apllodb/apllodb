@@ -3,7 +3,7 @@ mod int;
 mod text;
 
 use crate::{
-    error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
+    error::{ApllodbError, ApllodbResult},
     NnSqlValue,
 };
 use std::any::type_name;
@@ -15,7 +15,7 @@ pub trait SqlConvertible: Sized {
 
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion) when:
     ///   - the type implementing SqlConvertible is not convertible from i16
     fn try_from_i16(_: &i16) -> ApllodbResult<Self> {
         Self::default_err("i16")
@@ -23,7 +23,7 @@ pub trait SqlConvertible: Sized {
 
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion) when:
     ///   - the type implementing SqlConvertible is not convertible from i32
     fn try_from_i32(_: &i32) -> ApllodbResult<Self> {
         Self::default_err("i32")
@@ -31,7 +31,7 @@ pub trait SqlConvertible: Sized {
 
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion) when:
     ///   - the type implementing SqlConvertible is not convertible from i64
     fn try_from_i64(_: &i64) -> ApllodbResult<Self> {
         Self::default_err("i64")
@@ -39,7 +39,7 @@ pub trait SqlConvertible: Sized {
 
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion) when:
     ///   - the type implementing SqlConvertible is not convertible from String
     fn try_from_string(_: &str) -> ApllodbResult<Self> {
         Self::default_err("String")
@@ -47,7 +47,7 @@ pub trait SqlConvertible: Sized {
 
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion) when:
     ///   - the type implementing SqlConvertible is not convertible from bool
     fn try_from_bool(_: &bool) -> ApllodbResult<Self> {
         Self::default_err("bool")
@@ -55,10 +55,10 @@ pub trait SqlConvertible: Sized {
 
     #[doc(hidden)]
     fn default_err(from_type: &str) -> ApllodbResult<Self> {
-        Err(ApllodbError::new(
-            ApllodbErrorKind::DatatypeMismatch,
-            format!("cannot convert {} -> {}", from_type, type_name::<Self>()),
-            None,
-        ))
+        Err(ApllodbError::data_exception_illegal_conversion(format!(
+            "cannot convert {} -> {}",
+            from_type,
+            type_name::<Self>()
+        )))
     }
 }

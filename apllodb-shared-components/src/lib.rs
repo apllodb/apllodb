@@ -16,7 +16,6 @@ pub(crate) mod value;
 pub use crate::{
     database::database_name::DatabaseName,
     error::{
-        kind::ApllodbErrorKind,
         session_error::{ApllodbSessionError, ApllodbSessionResult},
         sqlstate::SqlState,
         ApllodbError, ApllodbResult,
