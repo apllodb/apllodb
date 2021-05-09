@@ -146,14 +146,10 @@ impl NnSqlValue {
                 let (self_b, other_b) = (self.unpack::<bool>()?, other.unpack::<bool>()?);
                 Ok(SqlCompareResult::from(self_b.cmp(&other_b)))
             }
-            (_, _) => Err(ApllodbError::new(
-                SqlState::DataExceptionIllegalConversion,
-                format!(
-                    "`self` and `other` are not in comparable type - self: {:?}, other: {:?}",
-                    self, other
-                ),
-                None,
-            )),
+            (_, _) => Err(ApllodbError::data_exception_illegal_comparison(format!(
+                "`self` and `other` are not in comparable type - self: {:?}, other: {:?}",
+                self, other
+            ))),
         }
     }
 
@@ -177,7 +173,7 @@ impl NnSqlValue {
 
 #[cfg(test)]
 mod tests {
-    use crate::{SqlState, ApllodbResult, NnSqlValue};
+    use crate::{ApllodbResult, NnSqlValue, SqlState};
 
     #[test]
     fn test_unpack_loosely() -> ApllodbResult<()> {

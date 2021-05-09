@@ -188,6 +188,7 @@ pub enum SqlState {
     NameError,
     NameErrorNotFound,
     NameErrorAmbiguous,
+    NameErrorTooLong,
 }
 
 impl SqlState {
@@ -843,8 +844,9 @@ impl SqlState {
             ReservedForISO9579 => SqlStateDetail::new(classHZ.clone(), "???", ""),
             IoError => SqlStateDetail::new(classIO.clone(), "000", "(no subclass)"),
             NameError => SqlStateDetail::new(classNM.clone(), "000", "(no subclass)"),
-            NameErrorNotFound => SqlStateDetail::new(classNM.clone(), "001", "not found"),
-            NameErrorAmbiguous => SqlStateDetail::new(classNM.clone(), "002", "ambiguous"),
+            NameErrorNotFound => SqlStateDetail::new(classNM.clone(), "001", "not found by name"),
+            NameErrorAmbiguous => SqlStateDetail::new(classNM.clone(), "002", "ambiguous name"),
+            NameErrorTooLong => SqlStateDetail::new(classNM.clone(), "003", "too long name"),
         }
     }
 }

@@ -27,15 +27,11 @@ impl ShortName {
 
     fn validate_length(name: &str) -> ApllodbResult<()> {
         if name.chars().count() > 64 {
-            Err(ApllodbError::new(
-                SqlState::NameTooLong,
-                format!(
-                    "ShortName `{}` is too long ({} > 64)",
-                    name,
-                    name.chars().count()
-                ),
-                None,
-            ))
+            Err(ApllodbError::name_error_too_long(format!(
+                "ShortName `{}` is too long ({} > 64)",
+                name,
+                name.chars().count()
+            )))
         } else {
             Ok(())
         }
