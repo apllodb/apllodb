@@ -39,7 +39,7 @@ mod apllodb_server;
 // re-export from apllodb-shared-components
 pub use crate::apllodb_server::{response::success::ApllodbCommandSuccess, ApllodbServer};
 pub use apllodb_shared_components::{
-    ApllodbErrorKind, ApllodbResult, ApllodbSessionResult, SchemaIndex, Session,
+    SqlState, ApllodbResult, ApllodbSessionResult, SchemaIndex, Session,
 };
 pub use apllodb_sql_processor::{Record, RecordIndex, Records};
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SessionId};
+use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SessionId};
 use generational_arena::{Arena, Index};
 
 use crate::sqlite::database::SqliteDatabase;
@@ -14,12 +14,12 @@ pub(crate) struct SqliteDatabasePool {
 impl SqliteDatabasePool {
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
+    /// - [UndefinedObject](apllodb-shared-components::SqlState::UndefinedObject) when:
     ///   - this session seems not to open any database.
     pub(crate) fn get_db(&self, sid: &SessionId) -> ApllodbResult<&SqliteDatabase> {
         let err = || {
             ApllodbError::new(
-                ApllodbErrorKind::UndefinedObject,
+                SqlState::UndefinedObject,
                 format!("session `{:?}` does not opens any database", sid),
                 None,
             )
@@ -33,13 +33,13 @@ impl SqliteDatabasePool {
 
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb-shared-components::ApllodbErrorKind::UndefinedObject) when:
+    /// - [UndefinedObject](apllodb-shared-components::SqlState::UndefinedObject) when:
     ///   - this session seems not to open any database.
     #[allow(dead_code)]
     pub(crate) fn remove_db(&mut self, sid: &SessionId) -> ApllodbResult<SqliteDatabase> {
         let err = || {
             ApllodbError::new(
-                ApllodbErrorKind::UndefinedObject,
+                SqlState::UndefinedObject,
                 format!("session `{:?}` does not open any database", sid),
                 None,
             )
@@ -53,13 +53,13 @@ impl SqliteDatabasePool {
 
     /// # Failures
     ///
-    /// - [DuplicateDatabase](apllodb-shared-components::ApllodbErrorKind::DuplicateDatabase) when:
+    /// - [DuplicateDatabase](apllodb-shared-components::SqlState::DuplicateDatabase) when:
     ///   - this session seems to open another database.
     pub(crate) fn insert_db(&mut self, sid: &SessionId, db: SqliteDatabase) -> ApllodbResult<()> {
         let db_idx = self.db_arena.insert(db);
         if self.sess_db.insert(*sid, db_idx).is_some() {
             Err(ApllodbError::new(
-                ApllodbErrorKind::DuplicateDatabase,
+                SqlState::DuplicateDatabase,
                 format!("session `{:?}` already opens another database", sid),
                 None,
             ))

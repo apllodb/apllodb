@@ -1,12 +1,12 @@
 use std::fmt::Debug;
 
-use apllodb_server::{ApllodbErrorKind, ApllodbResult, Records};
+use apllodb_server::{SqlState, ApllodbResult, Records};
 
 #[allow(dead_code)]
 pub enum StepRes {
     OkQuery(Box<dyn Fn(Records) -> ApllodbResult<()>>),
     Ok,
-    Err(ApllodbErrorKind),
+    Err(SqlState),
 }
 
 impl Debug for StepRes {

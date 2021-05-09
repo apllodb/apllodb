@@ -1,7 +1,7 @@
 use std::{fmt::Display, hash::Hash};
 
 use crate::{
-    error::{kind::ApllodbErrorKind, ApllodbError, ApllodbResult},
+    error::{kind::SqlState, ApllodbError, ApllodbResult},
     SqlConvertible,
 };
 use serde::{Deserialize, Serialize};
@@ -97,7 +97,7 @@ impl NnSqlValue {
     ///
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::ApllodbErrorKind::DatatypeMismatch) when:
+    /// - [DatatypeMismatch](crate::SqlState::DatatypeMismatch) when:
     ///   - Any value of `T` cannot be typed as this SqlValue's SqlType (E.g. `T = i64`, `SqlType = SmallInt`).
     pub fn unpack<T>(&self) -> ApllodbResult<T>
     where
@@ -147,7 +147,7 @@ impl NnSqlValue {
                 Ok(SqlCompareResult::from(self_b.cmp(&other_b)))
             }
             (_, _) => Err(ApllodbError::new(
-                ApllodbErrorKind::DatatypeMismatch,
+                SqlState::DatatypeMismatch,
                 format!(
                     "`self` and `other` are not in comparable type - self: {:?}, other: {:?}",
                     self, other
@@ -159,7 +159,7 @@ impl NnSqlValue {
 
     /// # Failures
     ///
-    /// - [InvalidParameterValue](apllodb_shared_components::ApllodbErrorKind::InvalidParameterValue) when:
+    /// - [InvalidParameterValue](apllodb_shared_components::SqlState::InvalidParameterValue) when:
     ///   - inner value cannot negate
     pub(crate) fn negate(self) -> ApllodbResult<Self> {
         match self {
@@ -167,7 +167,7 @@ impl NnSqlValue {
             NnSqlValue::Integer(v) => Ok(Self::Integer(-v)),
             NnSqlValue::BigInt(v) => Ok(Self::BigInt(-v)),
             NnSqlValue::Text(_) | NnSqlValue::Boolean(_) => Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidParameterValue,
+                SqlState::InvalidParameterValue,
                 format!("{} cannot negate", self),
                 None,
             )),
@@ -177,7 +177,7 @@ impl NnSqlValue {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ApllodbErrorKind, ApllodbResult, NnSqlValue};
+    use crate::{SqlState, ApllodbResult, NnSqlValue};
 
     #[test]
     fn test_unpack_loosely() -> ApllodbResult<()> {
@@ -187,18 +187,18 @@ mod tests {
 
         assert_eq!(
             NnSqlValue::Integer(-1).unpack::<i16>().unwrap_err().kind(),
-            &ApllodbErrorKind::DatatypeMismatch
+            &SqlState::DatatypeMismatch
         );
         assert_eq!(NnSqlValue::Integer(-1).unpack::<i32>()?, -1);
         assert_eq!(NnSqlValue::Integer(-1).unpack::<i64>()?, -1);
 
         assert_eq!(
             NnSqlValue::BigInt(-1).unpack::<i16>().unwrap_err().kind(),
-            &ApllodbErrorKind::DatatypeMismatch
+            &SqlState::DatatypeMismatch
         );
         assert_eq!(
             NnSqlValue::BigInt(-1).unpack::<i32>().unwrap_err().kind(),
-            &ApllodbErrorKind::DatatypeMismatch
+            &SqlState::DatatypeMismatch
         );
         assert_eq!(NnSqlValue::BigInt(-1).unpack::<i64>()?, -1);
 

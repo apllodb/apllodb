@@ -31,7 +31,7 @@ impl VersionRepository for VersionRepositoryImpl {
     ///
     /// # Failures
     ///
-    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
+    /// - [DuplicateTable](apllodb_shared_components::SqlState::DuplicateTable) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, version: &ActiveVersion) -> ApllodbResult<()> {

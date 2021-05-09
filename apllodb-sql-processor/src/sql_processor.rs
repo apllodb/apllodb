@@ -7,7 +7,7 @@ pub(crate) mod success;
 use std::sync::Arc;
 
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbSessionError, ApllodbSessionResult, Session,
+    ApllodbError, SqlState, ApllodbSessionError, ApllodbSessionResult, Session,
 };
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
@@ -30,9 +30,9 @@ pub struct SqlProcessor<Engine: StorageEngine> {
 impl<Engine: StorageEngine> SqlProcessor<Engine> {
     /// # Failures
     ///
-    /// - [InvalidDatabaseDefinition](apllodb-shared-components::ApllodbErrorKind::InvalidDatabaseDefinition) when:
+    /// - [InvalidDatabaseDefinition](apllodb-shared-components::SqlState::InvalidDatabaseDefinition) when:
     ///   - requesting an operation that uses an open database with [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
-    /// - [FeatureNotSupported](apllodb-shared-components::ApllodbErrorKind::FeatureNotSupported) when:
+    /// - [FeatureNotSupported](apllodb-shared-components::SqlState::FeatureNotSupported) when:
     ///   - the sql should be processed properly but apllodb currently doesn't
     pub async fn run(
         &self,
@@ -45,7 +45,7 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
             Err(e) => Err(
                 ApllodbSessionError::new(
                 ApllodbError::new(
-                ApllodbErrorKind::SyntaxError,
+                SqlState::SyntaxError,
                 format!("failed to parse SQL: {}", sql),
                 Some(Box::new(e)),
             ), session)),
@@ -86,7 +86,7 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                         Err(
                             ApllodbSessionError::new(
                                 ApllodbError::new(
-                            ApllodbErrorKind::FeatureNotSupported,
+                            SqlState::FeatureNotSupported,
                             format!("cannot process the following SQL (database: {:?}, transaction: open): {}", sess.get_db_name(), sql),
                             None,
                         ), Session::from(sess)))
@@ -95,7 +95,7 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                         Err(
                             ApllodbSessionError::new(
                             ApllodbError::new(
-                            ApllodbErrorKind::InvalidTransactionState,
+                            SqlState::InvalidTransactionState,
                             format!("transaction is already open (database: {:?}, transaction: open): {}",  sess.get_db_name(), sql),
                             None,
                         ), Session::from(sess)
@@ -125,7 +125,7 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                         Err(
                             ApllodbSessionError::new(
                             ApllodbError::new(
-                            ApllodbErrorKind::FeatureNotSupported,
+                            SqlState::FeatureNotSupported,
                             format!("cannot process the following SQL (database: {:?}, transaction: none): {}", sess.database_name(), sql),
                             None,
                         ), Session::from(sess)))
@@ -135,7 +135,7 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                         Err(
                             ApllodbSessionError::new(
                                 ApllodbError::new(
-                            ApllodbErrorKind::InvalidTransactionState,
+                            SqlState::InvalidTransactionState,
                             format!("transaction is not open (database: {:?}, transaction: none): {}", sess.database_name(), sql),
                             None,
                         ), Session::from(sess)))
@@ -179,7 +179,7 @@ impl<Engine: StorageEngine> SqlProcessor<Engine> {
                     | apllodb_ast::Command::SelectCommandVariant(_) => Err(
                         ApllodbSessionError::new(
                         ApllodbError::new(
-                        ApllodbErrorKind::InvalidDatabaseDefinition,
+                        SqlState::InvalidDatabaseDefinition,
                         format!("this command requires open database: {}", sql),
                         None,
                     ), Session::from(sess))),

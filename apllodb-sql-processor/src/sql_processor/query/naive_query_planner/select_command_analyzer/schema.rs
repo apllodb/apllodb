@@ -10,7 +10,7 @@ use crate::{
     field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
     records::record_schema::RecordSchema,
 };
-use apllodb_shared_components::{ApllodbErrorKind, SchemaName};
+use apllodb_shared_components::{SqlState, SchemaName};
 use apllodb_storage_engine_interface::ColumnName;
 
 use super::SelectCommandAnalyzer;
@@ -121,9 +121,9 @@ impl SelectCommandAnalyzer {
     ///
     /// # Failures
     ///
-    /// - [InvalidColumnReference](apllodb_shared_components::ApllodbErrorKind::InvalidColumnReference) when:
+    /// - [InvalidColumnReference](apllodb_shared_components::SqlState::InvalidColumnReference) when:
     ///   - `from_item_correlations` is empty.
-    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
     ///   - none of `from_item_correlations` has field named `ast_column_reference.column_name`
     ///   - `ast_column_reference` has a correlation but it is not any of `from_item_correlations`.
     pub(super) fn field_name(
@@ -132,7 +132,7 @@ impl SelectCommandAnalyzer {
     ) -> ApllodbResult<FieldName> {
         if from_item_correlations.is_empty() {
             Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidColumnReference,
+                SqlState::InvalidColumnReference,
                 format!(
                     "no FROM item. cannot detect where `{}` field is from",
                     index
@@ -148,7 +148,7 @@ impl SelectCommandAnalyzer {
 
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
     ///   - `ast_correlation` does not match any of `from_item_correlations`.
     fn field_name_with_prefix(
         prefix: &str,
@@ -175,7 +175,7 @@ impl SelectCommandAnalyzer {
             })
             .ok_or_else(|| {
                 ApllodbError::new(
-                    ApllodbErrorKind::UndefinedColumn,
+                    SqlState::UndefinedColumn,
                     format!(
                         "`{}` does not match any of FROM items: {:?}",
                         index, from_item_correlations
@@ -211,14 +211,14 @@ mod tests {
     use crate::{
         correlation::aliased_correlation_name::AliasedCorrelationName, field::field_name::FieldName,
     };
-    use apllodb_shared_components::{ApllodbErrorKind, SchemaIndex};
+    use apllodb_shared_components::{SqlState, SchemaIndex};
     use pretty_assertions::assert_eq;
 
     #[derive(new)]
     struct TestDatum {
         index: SchemaIndex,
         from_item_correlations: Vec<AliasedCorrelationName>,
-        expected_result: Result<FieldName, ApllodbErrorKind>,
+        expected_result: Result<FieldName, SqlState>,
     }
 
     #[test]
@@ -227,12 +227,12 @@ mod tests {
             TestDatum::new(
                 SchemaIndex::from("c"),
                 vec![],
-                Err(ApllodbErrorKind::InvalidColumnReference),
+                Err(SqlState::InvalidColumnReference),
             ),
             TestDatum::new(
                 SchemaIndex::from("t.c"),
                 vec![],
-                Err(ApllodbErrorKind::InvalidColumnReference),
+                Err(SqlState::InvalidColumnReference),
             ),
             TestDatum::new(
                 SchemaIndex::from("c"),
@@ -247,7 +247,7 @@ mod tests {
             TestDatum::new(
                 SchemaIndex::from("t1.c"),
                 vec![AliasedCorrelationName::factory_tn("t2")],
-                Err(ApllodbErrorKind::UndefinedColumn),
+                Err(SqlState::UndefinedColumn),
             ),
             TestDatum::new(
                 SchemaIndex::from("c"),
@@ -267,7 +267,7 @@ mod tests {
             TestDatum::new(
                 SchemaIndex::from("x.c"),
                 vec![AliasedCorrelationName::factory_tn("t").with_alias("a")],
-                Err(ApllodbErrorKind::UndefinedColumn),
+                Err(SqlState::UndefinedColumn),
             ),
         ];
 

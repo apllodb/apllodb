@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlType};
+use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SqlType};
 use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
 #[derive(Debug)]
@@ -125,7 +125,7 @@ CREATE TABLE {tname} (
             .find(|v| v.id() == version_id)
             .ok_or_else(|| {
                 ApllodbError::new(
-                    ApllodbErrorKind::UndefinedTable,
+                    SqlState::UndefinedTable,
                     format!(
                         "table `{:?}` not found (or every version is inactive)",
                         vtable_id.table_name()
@@ -137,7 +137,7 @@ CREATE TABLE {tname} (
 
     /// # Failures
     ///
-    /// - [SerializationError](apllodb_shared_components::ApllodbErrorKind::SerializationError) when:
+    /// - [SerializationError](apllodb_shared_components::SqlState::SerializationError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
     pub(in crate::sqlite) async fn insert(&self, version: &ActiveVersion) -> ApllodbResult<()> {
         let model = VersionMetadataModel::from(version);
@@ -165,8 +165,8 @@ CREATE TABLE {tname} (
             .execute(&sql)
             .await
             .map_err(|e| match e.kind() {
-                ApllodbErrorKind::UniqueViolation => ApllodbError::new(
-                    ApllodbErrorKind::DuplicateTable,
+                SqlState::UniqueViolation => ApllodbError::new(
+                    SqlState::DuplicateTable,
                     format!(
                         "table `{:?}`, version `{:?}` is already created",
                         &model.table_name, &model.version_number

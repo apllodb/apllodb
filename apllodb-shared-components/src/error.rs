@@ -46,7 +46,7 @@ impl ApllodbError {
         }
     }
 
-    /// Constructor of [ApllodbErrorKind::FeatureNotSupported](crate::ApllodbErrorKind::FeatureNotSupported).
+    /// Constructor of [SqlState::FeatureNotSupported](crate::SqlState::FeatureNotSupported).
     pub fn feature_not_supported(desc: impl ToString) -> Self {
         Self::new(SqlState::FeatureNotSupported, desc, None)
     }

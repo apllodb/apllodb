@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult};
 use apllodb_storage_engine_interface::{
     ColumnName, RowProjectionQuery, RowSchema, TableColumnName,
 };
@@ -71,7 +71,7 @@ impl RowProjectionResult {
             for q_cn in pk_query_columns.iter().chain(non_pk_query_columns.iter()) {
                 if !available_columns.contains(&q_cn) {
                     return Err(ApllodbError::new(
-                        ApllodbErrorKind::UndefinedColumn,
+                        SqlState::UndefinedColumn,
                         format!("undefined column `{:?}` is queried", q_cn),
                         None,
                     ));
@@ -161,7 +161,7 @@ impl RowProjectionResult {
             .map(columns_from_result_in_version)
             .ok_or_else(|| {
                 ApllodbError::new(
-                    ApllodbErrorKind::InvalidVersion,
+                    SqlState::InvalidVersion,
                     format!("invalid version `{:?}` is queried", version_id),
                     None,
                 )

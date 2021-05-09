@@ -29,9 +29,9 @@ pub trait Schema {
     ///
     /// # Failures
     ///
-    /// - [InvalidName](crate::ApllodbErrorKind::InvalidName) when:
+    /// - [NameErrorNotFound](crate::SqlState::NameErrorNotFound) when:
     ///   - no field matches to this Index.
-    /// - [AmbiguousColumn](crate::ApllodbErrorKind::AmbiguousColumn) when:
+    /// - [AmbiguousColumn](crate::SqlState::AmbiguousColumn) when:
     ///   - more than 1 of fields match to this Index.
     fn index(&self, idx: &SchemaIndex) -> ApllodbResult<(RPos, Self::Name)> {
         let matching_pair: Vec<(RPos, Self::Name)> = self
@@ -49,13 +49,13 @@ pub trait Schema {
             matching_pair.first().cloned().ok_or_else(|| unreachable!())
         } else if matching_pair.is_empty() {
             Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidName,
+                SqlState::NameErrorNotFound,
                 format!("no field matches to: {}", idx),
                 None,
             ))
         } else {
             Err(ApllodbError::new(
-                ApllodbErrorKind::AmbiguousColumn,
+                SqlState::AmbiguousColumn,
                 format!("more than 1 fields match to: {}", idx),
                 None,
             ))

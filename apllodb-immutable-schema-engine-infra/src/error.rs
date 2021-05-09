@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display, sync::PoisonError};
 
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind};
+use apllodb_shared_components::{ApllodbError, SqlState};
 use serde::{Deserialize, Serialize};
 
 /// Glue error from implementation details into [ApllodbError](apllodb-shared-components::ApllodbError).
@@ -28,7 +28,7 @@ impl From<InfraError> for ApllodbError {
 impl<T> From<PoisonError<T>> for InfraError {
     fn from(e: PoisonError<T>) -> Self {
         Self(ApllodbError::new(
-            ApllodbErrorKind::SystemError,
+            SqlState::SystemError,
             format!("a thread get poisoned: {}", e),
             None,
         ))
@@ -39,7 +39,7 @@ impl From<sqlx::Error> for InfraError {
     fn from(e: sqlx::Error) -> Self {
         let default = |sqlx_err| {
             Self(ApllodbError::new(
-                ApllodbErrorKind::IoError,
+                SqlState::IoError,
                 "backend sqlx raised an error",
                 Some(Box::new(sqlx_err)),
             ))
@@ -52,17 +52,17 @@ impl From<sqlx::Error> for InfraError {
                     // FIXME SQLITE_BUSY does not always indicate a deadlock.
                     // test_latter_tx_is_waited(), for example, should not end up in DeadlockDetected error.
                     "5" => Self(ApllodbError::new(
-                        ApllodbErrorKind::DeadlockDetected,
+                        SqlState::DeadlockDetected,
                         "deadlock detected",
                         Some(Box::new(e)),
                     )),
                     "14" => Self(ApllodbError::new(
-                        ApllodbErrorKind::UndefinedObject,
+                        SqlState::UndefinedObject,
                         "failed to open database file",
                         Some(Box::new(e)),
                     )),
                     "1555" => Self(ApllodbError::new(
-                        ApllodbErrorKind::UniqueViolation,
+                        SqlState::UniqueViolation,
                         "duplicate value on primary key",
                         Some(Box::new(e)),
                     )),

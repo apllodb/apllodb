@@ -1,6 +1,6 @@
 mod sql_test;
 
-use apllodb_server::{test_support::test_setup, ApllodbErrorKind, RecordIndex, SchemaIndex};
+use apllodb_server::{test_support::test_setup, SqlState, RecordIndex, SchemaIndex};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -14,7 +14,7 @@ async fn test_select_with_various_field_spec() {
     struct TestDatum {
         sql: &'static str,
         index: SchemaIndex,
-        expected_result: Result<(), ApllodbErrorKind>,
+        expected_result: Result<(), SqlState>,
     }
 
     let test_data = vec![
@@ -31,17 +31,17 @@ async fn test_select_with_various_field_spec() {
         TestDatum {
             sql: "SELECT id FROM people",
             index: SchemaIndex::from("xxx"),
-            expected_result: Err(ApllodbErrorKind::InvalidName),
+            expected_result: Err(SqlState::NameErrorNotFound),
         },
         TestDatum {
             sql: "SELECT id FROM people",
             index: SchemaIndex::from("people.xxx"),
-            expected_result: Err(ApllodbErrorKind::InvalidName),
+            expected_result: Err(SqlState::NameErrorNotFound),
         },
         TestDatum {
             sql: "SELECT id FROM people",
             index: SchemaIndex::from("xxx.id"),
-            expected_result: Err(ApllodbErrorKind::InvalidName),
+            expected_result: Err(SqlState::NameErrorNotFound),
         },
         TestDatum {
             sql: "SELECT people.id FROM people",

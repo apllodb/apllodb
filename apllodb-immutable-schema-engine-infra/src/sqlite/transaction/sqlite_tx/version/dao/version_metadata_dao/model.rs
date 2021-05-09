@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::id::VTableId,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Schema, SchemaIndex,
+    ApllodbError, SqlState, ApllodbResult, Schema, SchemaIndex,
 };
 use apllodb_storage_engine_interface::{ColumnDataType, Row, RowSchema, TableName};
 
@@ -39,7 +39,7 @@ impl VersionMetadataModel {
     pub(super) fn from_row(schema: &RowSchema, row: Row) -> ApllodbResult<Self> {
         let col_not_found = || {
             ApllodbError::new(
-                ApllodbErrorKind::SystemError,
+                SqlState::SystemError,
                 "wrong _version_metadata table's column",
                 None,
             )
@@ -83,7 +83,7 @@ impl VersionMetadataModel {
             )
         } else {
             Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidVersion,
+                SqlState::InvalidVersion,
                 format!("not an active version: {:?}", self),
                 None,
             ))
@@ -107,7 +107,7 @@ impl VersionMetadataModel {
     }
     fn serialization_err(e: serde_yaml::Error) -> ApllodbError {
         ApllodbError::new(
-            ApllodbErrorKind::SerializationError,
+            SqlState::SerializationError,
             "failed to serialize a value in _version_metadata table",
             Some(Box::new(e)),
         )
@@ -121,7 +121,7 @@ impl VersionMetadataModel {
     }
     fn deserialization_err(e: serde_yaml::Error) -> ApllodbError {
         ApllodbError::new(
-            ApllodbErrorKind::DeserializationError,
+            SqlState::DeserializationError,
             "failed to deserialize a value in _version_metadata table",
             Some(Box::new(e)),
         )

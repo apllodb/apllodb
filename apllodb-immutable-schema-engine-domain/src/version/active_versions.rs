@@ -1,5 +1,5 @@
 use super::active_version::ActiveVersion;
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, SqlValue};
+use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SqlValue};
 use apllodb_storage_engine_interface::ColumnName;
 use std::collections::HashMap;
 
@@ -25,12 +25,12 @@ impl ActiveVersions {
 
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
+    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
     ///   - No version is active (table must be already DROPped).
     pub fn current_version(&self) -> ApllodbResult<&ActiveVersion> {
         self.0.first().ok_or_else(|| {
             ApllodbError::new(
-                ApllodbErrorKind::UndefinedTable,
+                SqlState::UndefinedTable,
                 "no active version found",
                 None,
             )
@@ -46,7 +46,7 @@ impl ActiveVersions {
     ///
     /// # Failures
     ///
-    /// - [IntegrityConstraintViolation](apllodb_shared_components::ApllodbErrorKind::IntegrityConstraintViolation) when:
+    /// - [IntegrityConstraintViolation](apllodb_shared_components::SqlState::IntegrityConstraintViolation) when:
     ///   - No active version can accept the column value.
     pub fn version_to_insert(
         &self,
@@ -54,7 +54,7 @@ impl ActiveVersions {
     ) -> ApllodbResult<&ActiveVersion> {
         if self.0.is_empty() {
             return Err(ApllodbError::new(
-                ApllodbErrorKind::UndefinedTable,
+                SqlState::UndefinedTable,
                 "no active version found",
                 None,
             ));
@@ -76,10 +76,10 @@ impl ActiveVersions {
         if errors_per_versions
             .iter()
             .map(|(_, e)| e.kind())
-            .all(|k| matches!(k, ApllodbErrorKind::UndefinedColumn))
+            .all(|k| matches!(k, SqlState::UndefinedColumn))
         {
             Err(ApllodbError::new(
-                ApllodbErrorKind::UndefinedColumn,
+                SqlState::UndefinedColumn,
                 format!(
                     "at least 1 column does not exist in any version: {:?}",
                     errors_per_versions,
@@ -88,7 +88,7 @@ impl ActiveVersions {
             ))
         } else {
             Err(ApllodbError::new(
-                ApllodbErrorKind::IntegrityConstraintViolation,
+                SqlState::IntegrityConstraintViolation,
                 format!(
                     "all versions reject INSERTing {:#?}: {:#?}",
                     non_pk_column_values, errors_per_versions,

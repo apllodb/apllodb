@@ -4,7 +4,7 @@ use crate::sqlite::transaction::sqlite_tx::{
     version::dao::version_metadata_dao::VersionMetadataDao,
     vtable::vtable_metadata_dao::VTableMetadataDao,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbErrorKind, ApllodbResult, DatabaseName};
+use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, DatabaseName};
 use sqlx::{migrate::MigrateDatabase, Connection};
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
@@ -20,7 +20,7 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
-    /// - [DuplicateDatabase](apllodb_shared_components::ApllodbErrorKind::DuplicateDatabase) when:
+    /// - [DuplicateDatabase](apllodb_shared_components::SqlState::DuplicateDatabase) when:
     ///   - specified database already exists
     pub(crate) async fn create_database(name: DatabaseName) -> ApllodbResult<()> {
         let path = Self::sqlite_db_path(&name);
@@ -31,7 +31,7 @@ impl SqliteDatabase {
             .map_err(InfraError::from)?
         {
             Err(ApllodbError::new(
-                ApllodbErrorKind::DuplicateDatabase,
+                SqlState::DuplicateDatabase,
                 format!("database {:?} already exists", name),
                 None,
             ))
@@ -57,9 +57,9 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb_shared_components::ApllodbErrorKind::UndefinedObject) when:
+    /// - [UndefinedObject](apllodb_shared_components::SqlState::UndefinedObject) when:
     ///   - database named `name` has not been created yet.
-    /// - [IoError](apllodb_shared_components::ApllodbErrorKind::IoError) when:
+    /// - [IoError](apllodb_shared_components::SqlState::IoError) when:
     ///   - sqlx raises an error.
     pub(crate) async fn use_database(name: DatabaseName) -> ApllodbResult<Self> {
         let pool = Self::connect_existing_sqlite(&name).await?;

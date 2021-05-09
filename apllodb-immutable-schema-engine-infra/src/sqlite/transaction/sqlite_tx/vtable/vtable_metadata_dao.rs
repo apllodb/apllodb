@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, Schema, SchemaIndex, SqlType,
+    ApllodbError, SqlState, ApllodbResult, Schema, SchemaIndex, SqlType,
 };
 use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
@@ -60,9 +60,9 @@ CREATE TABLE {} (
 
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::ApllodbErrorKind::UndefinedTable) when:
+    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
     ///   - `table` is not visible from this transaction.
-    /// - [DeserializationError](apllodb_shared_components::ApllodbErrorKind::DeserializationError) when:
+    /// - [DeserializationError](apllodb_shared_components::SqlState::DeserializationError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
     pub(in crate::sqlite::transaction::sqlite_tx) async fn select(
         &self,
@@ -93,7 +93,7 @@ CREATE TABLE {} (
             .next()
             .ok_or_else(|| {
                 ApllodbError::new(
-                    ApllodbErrorKind::UndefinedTable,
+                    SqlState::UndefinedTable,
                     format!(
                         "table `{:?}`'s metadata is not visible from this transaction",
                         vtable_id.table_name()
@@ -107,7 +107,7 @@ CREATE TABLE {} (
         let table_wide_constraints: TableWideConstraints =
             serde_yaml::from_str(&table_wide_constraints_str).map_err(|e| {
                 ApllodbError::new(
-                    ApllodbErrorKind::DeserializationError,
+                    SqlState::DeserializationError,
                     format!(
                         "failed to deserialize table `{:?}`'s metadata: `{:?}`",
                         vtable_id.table_name(),
@@ -123,18 +123,18 @@ CREATE TABLE {} (
 
     /// # Failures
     ///
-    /// - [DeadlockDetected](apllodb_shared_components::ApllodbErrorKind::DeadlockDetected) when:
+    /// - [DeadlockDetected](apllodb_shared_components::SqlState::DeadlockDetected) when:
     ///   - transaction lock to metadata table takes too long time.
-    /// - [DuplicateTable](apllodb_shared_components::ApllodbErrorKind::DuplicateTable) when:
+    /// - [DuplicateTable](apllodb_shared_components::SqlState::DuplicateTable) when:
     ///   - `table` is already created.
-    /// - [SerializationError](apllodb_shared_components::ApllodbErrorKind::SerializationError) when:
+    /// - [SerializationError](apllodb_shared_components::SqlState::SerializationError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).
     async fn insert_into_vtable_metadata(&self, vtable: &VTable) -> ApllodbResult<()> {
         let table_wide_constraints = vtable.table_wide_constraints();
         let table_wide_constraints_str =
             serde_yaml::to_string(table_wide_constraints).map_err(|e| {
                 ApllodbError::new(
-                    ApllodbErrorKind::SerializationError,
+                    SqlState::SerializationError,
                     format!(
                         "failed to serialize `{:?}`'s table wide constraints: `{:?}`",
                         vtable.table_name(),
@@ -160,8 +160,8 @@ CREATE TABLE {} (
             .execute(&sql)
             .await
             .map_err(|e| match e.kind() {
-                ApllodbErrorKind::UniqueViolation => ApllodbError::new(
-                    ApllodbErrorKind::DuplicateTable,
+                SqlState::UniqueViolation => ApllodbError::new(
+                    SqlState::DuplicateTable,
                     format!("table `{:?}` is already created", vtable.table_name()),
                     Some(Box::new(e)),
                 ),

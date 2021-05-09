@@ -1,4 +1,4 @@
-use apllodb_shared_components::{find_dup_slow, ApllodbError, ApllodbErrorKind, ApllodbResult};
+use apllodb_shared_components::{find_dup_slow, ApllodbError, SqlState, ApllodbResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -22,7 +22,7 @@ impl TableConstraints {
     /// Constructor.
     ///
     /// # Failures
-    /// - [InvalidTableDefinition](apllodb_shared_components::ApllodbErrorKind::InvalidTableDefinition) when:
+    /// - [InvalidTableDefinition](apllodb_shared_components::SqlState::InvalidTableDefinition) when:
     ///   - No [PrimaryKey](crate::TableConstraintKind::PrimaryKey) is specified.
     ///   - Multiple [PrimaryKey](crate::TableConstraintKind::PrimaryKey)s appear.
     ///   - More than 1 [PrimaryKey](crate::TableConstraintKind::PrimaryKey) /
@@ -52,7 +52,7 @@ impl TableConstraints {
             })
             .ok_or_else(|| {
                 ApllodbError::new(
-                    ApllodbErrorKind::InvalidTableDefinition,
+                    SqlState::InvalidTableDefinition,
                     "PRIMARY KEY is not specified",
                     None,
                 )
@@ -72,7 +72,7 @@ impl TableConstraints {
 
         if pk_constraints_count > 1 {
             Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTableDefinition,
+                SqlState::InvalidTableDefinition,
                 "more than 1 PRIMARY KEY found",
                 None,
             ))
@@ -99,7 +99,7 @@ impl TableConstraints {
 
         if let Some(colset) = find_dup_slow(pk_unique_column_sets.iter()) {
             Err(ApllodbError::new(
-                ApllodbErrorKind::InvalidTableDefinition,
+                SqlState::InvalidTableDefinition,
                 format!(
                     "more than 1 PRIMARY KEY / UNIQUE are applied to the same column set: `{:?}`",
                     colset
@@ -145,7 +145,7 @@ mod tests {
     }
 
     use super::{super::table_constraint_kind::TableConstraintKind, TableConstraints};
-    use apllodb_shared_components::ApllodbErrorKind;
+    use apllodb_shared_components::SqlState;
 
     #[test]
     fn test_success() {
@@ -189,7 +189,7 @@ mod tests {
         for constraints in testset {
             match TableConstraints::new(constraints) {
                 Err(e) => match e.kind() {
-                    ApllodbErrorKind::InvalidTableDefinition => {
+                    SqlState::InvalidTableDefinition => {
                         println!("{:?}", e);
                     }
                     _ => panic!("unexpected error kind: {}", e),

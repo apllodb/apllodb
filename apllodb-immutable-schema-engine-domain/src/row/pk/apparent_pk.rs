@@ -1,6 +1,6 @@
 use crate::vtable::VTable;
 use apllodb_shared_components::{
-    ApllodbError, ApllodbErrorKind, ApllodbResult, BooleanExpression, ComparisonFunction,
+    ApllodbError, SqlState, ApllodbResult, BooleanExpression, ComparisonFunction,
     Expression, LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
 };
 use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, Row, RowSchema, TableName};
@@ -22,7 +22,7 @@ impl ApparentPrimaryKey {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
     ///   - `column_name` is not in this PK.
     pub fn get_sql_value(&self, column_name: &ColumnName) -> ApllodbResult<&NnSqlValue> {
         let target_sql_value = self
@@ -31,7 +31,7 @@ impl ApparentPrimaryKey {
             .find_map(|(cn, sql_value)| (*cn == column_name).then(|| *sql_value))
             .ok_or_else(|| {
                 ApllodbError::new(
-                    ApllodbErrorKind::UndefinedColumn,
+                    SqlState::UndefinedColumn,
                     format!("undefined column name in PK: `{:?}`", column_name),
                     None,
                 )
@@ -43,7 +43,7 @@ impl ApparentPrimaryKey {
     ///
     /// # Failures
     ///
-    /// - [UndefinedColumn](apllodb_shared_components::ApllodbErrorKind::UndefinedColumn) when:
+    /// - [UndefinedColumn](apllodb_shared_components::SqlState::UndefinedColumn) when:
     ///   - `column_name` is not in this PK.
     pub fn get<T: SqlConvertible>(&self, column_name: &ColumnName) -> ApllodbResult<T> {
         let sql_value = self.get_sql_value(column_name)?;
