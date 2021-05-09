@@ -1,4 +1,4 @@
-use super::{kind::ApllodbErrorKind, ApllodbError};
+use super::ApllodbError;
 use std::io;
 
 impl From<io::Error> for ApllodbError {
