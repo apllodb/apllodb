@@ -56,7 +56,7 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb_shared_components::SqlState::UndefinedObject) when:
+    /// - [ConnectionExceptionDatabaseNotOpen](apllodb_shared_components::SqlState::ConnectionExceptionDatabaseNotOpen) when:
     ///   - database named `name` has not been created yet.
     /// - [IoError](apllodb_shared_components::SqlState::IoError) when:
     ///   - sqlx raises an error.
