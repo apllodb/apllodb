@@ -93,10 +93,9 @@ impl VersionMetadataModel {
         self.is_active
     }
     fn serialization_err(e: serde_yaml::Error) -> ApllodbError {
-        ApllodbError::new(
-            SqlState::SerializationError,
+        ApllodbError::system_error(
             "failed to serialize a value in _version_metadata table",
-            Some(Box::new(e)),
+            Box::new(e),
         )
     }
 
@@ -107,10 +106,9 @@ impl VersionMetadataModel {
         serde_yaml::from_str(&yml).map_err(Self::deserialization_err)
     }
     fn deserialization_err(e: serde_yaml::Error) -> ApllodbError {
-        ApllodbError::new(
-            SqlState::DeserializationError,
+        ApllodbError::system_error(
             "failed to deserialize a value in _version_metadata table",
-            Some(Box::new(e)),
+            Box::new(e),
         )
     }
 }
