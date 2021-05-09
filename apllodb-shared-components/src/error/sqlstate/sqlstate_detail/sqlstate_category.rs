@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub(in super::super) enum SqlStateCategory {
+pub enum SqlStateCategory {
     S,
     W,
     N,

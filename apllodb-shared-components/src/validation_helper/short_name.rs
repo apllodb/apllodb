@@ -41,7 +41,7 @@ impl ShortName {
 #[cfg(test)]
 mod tests {
     use super::ShortName;
-    use crate::error::kind::SqlState;
+    use crate::error::sqlstate::SqlState;
 
     #[test]
     fn test_success() {
@@ -62,7 +62,7 @@ mod tests {
         for name in &names {
             match ShortName::new(name) {
                 Err(e) => match e.kind() {
-                    SqlState::NameTooLong => {}
+                    SqlState::NameErrorTooLong => {}
                     x => panic!("{} : unexpected error: {:?}", name, x),
                 },
                 Ok(_) => panic!("{} : should be an error", name),

@@ -11,6 +11,7 @@ use self::sqlstate_detail::{SqlStateCategory, SqlStateClass, SqlStateDetail};
 /// Errors for specific SQL part (`SQL/JRT`, for example) are omitted.
 ///
 /// See: <https://en.wikipedia.org/wiki/SQLSTATE>
+#[allow(missing_docs)]
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 pub enum SqlState {
     SuccessfulCompletion,
