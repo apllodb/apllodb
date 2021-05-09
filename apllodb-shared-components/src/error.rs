@@ -111,6 +111,11 @@ impl ApllodbError {
         Self::new(SqlState::NameErrorTooLong, desc, None)
     }
 
+    /// Constructor of [SqlState::InvalidTransactionState](crate::SqlState::InvalidTransactionState).
+    pub fn invalid_transaction_state(desc: impl ToString) -> Self {
+        Self::new(SqlState::InvalidTransactionState, desc, None)
+    }
+
     /// Constructor of [SqlState::TransactionRollbackDeadlock](crate::SqlState::TransactionRollbackDeadlock).
     pub fn transaction_rollback_deadlock(desc: impl ToString) -> Self {
         Self::new(SqlState::TransactionRollbackDeadlock, desc, None)

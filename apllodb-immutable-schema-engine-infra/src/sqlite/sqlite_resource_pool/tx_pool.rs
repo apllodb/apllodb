@@ -3,7 +3,7 @@ use std::{
     {cell::RefCell, rc::Rc},
 };
 
-use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SessionId};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SessionId, SqlState};
 use generational_arena::{Arena, Index};
 
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;
@@ -24,11 +24,10 @@ impl SqliteTxPool {
     ///   - this session seems not to open any transaction.
     pub(crate) fn get_tx(&self, sid: &SessionId) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
         let err = || {
-            ApllodbError::new(
-                SqlState::InvalidTransactionState,
-                format!("session `{:?}` does not open any transaction", sid),
-                None,
-            )
+            ApllodbError::invalid_transaction_state(format!(
+                "session `{:?}` does not open any transaction",
+                sid
+            ))
         };
 
         let tx_idx = *self.sess_tx.get(sid).ok_or_else(err)?;
@@ -43,11 +42,10 @@ impl SqliteTxPool {
     ///   - this session seems not to open any transaction.
     pub(crate) fn remove_tx(&mut self, sid: &SessionId) -> ApllodbResult<Rc<RefCell<SqliteTx>>> {
         let err = || {
-            ApllodbError::new(
-                SqlState::InvalidTransactionState,
-                format!("session `{:?}` does not open any transaction", sid),
-                None,
-            )
+            ApllodbError::invalid_transaction_state(format!(
+                "session `{:?}` does not open any transaction",
+                sid
+            ))
         };
 
         let tx_idx = self.sess_tx.remove(sid).ok_or_else(err)?;
@@ -67,11 +65,10 @@ impl SqliteTxPool {
     ) -> ApllodbResult<()> {
         let tx_idx = self.tx_arena.insert(tx);
         if self.sess_tx.insert(*sid, tx_idx).is_some() {
-            Err(ApllodbError::new(
-                SqlState::InvalidTransactionState,
-                format!("session `{:?}` already opens another transaction", sid),
-                None,
-            ))
+            Err(ApllodbError::invalid_transaction_state(format!(
+                "session `{:?}` already opens another transaction",
+                sid
+            )))
         } else {
             Ok(())
         }
