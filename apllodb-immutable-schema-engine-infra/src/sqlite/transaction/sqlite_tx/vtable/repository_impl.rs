@@ -56,7 +56,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     ///
     /// - [IoError](apllodb_shared_components::SqlState::IoError) when:
     ///   - sqlx raises an error.
-    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table `table_name` is not visible to this transaction.
     async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable> {
         self.vtable_metadata_dao().select(&vtable_id).await
@@ -64,7 +64,7 @@ impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
 
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table `table_name` is not visible to this transaction.
     /// - [IoError](apllodb_shared_components::SqlState::IoError) when:
     ///   - sqlx raises an error.

@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::vtable::{
     constraints::TableWideConstraints, id::VTableId, VTable,
 };
 use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, Schema, SchemaIndex, SqlType,
+    ApllodbError, ApllodbResult, Schema, SchemaIndex, SqlState, SqlType,
 };
 use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
@@ -60,7 +60,7 @@ CREATE TABLE {} (
 
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - `table` is not visible from this transaction.
     /// - [DeserializationError](apllodb_shared_components::SqlState::DeserializationError) when:
     ///   - Somehow failed to deserialize part of [VTable](foobar.html).
@@ -92,14 +92,10 @@ CREATE TABLE {} (
         let table_wide_constraints_str: String = rows
             .next()
             .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::UndefinedTable,
-                    format!(
-                        "table `{:?}`'s metadata is not visible from this transaction",
-                        vtable_id.table_name()
-                    ),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "table `{:?}`'s metadata is not visible from this transaction",
+                    vtable_id.table_name()
+                ))
             })
             .and_then(|row| row.get(pos_table_wide_constraints))?
             .expect("must be NOT NULL");

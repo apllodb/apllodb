@@ -11,7 +11,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::{id::VTableId, repository::VTableRepository, VTable},
 };
 use apllodb_shared_components::{
-    ApllodbError, SqlState, ApllodbResult, DatabaseName, Expression, SqlValue,
+    ApllodbError, ApllodbResult, DatabaseName, Expression, SqlState, SqlValue,
 };
 use apllodb_storage_engine_interface::{
     ColumnName, Row, RowProjectionQuery, RowSchema, Rows, TableName,
@@ -44,11 +44,11 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> UpdateUseCaseInput<'usecase,
                 Expression::ConstantVariant(_) => {}
                 Expression::UnaryOperatorVariant(_, _) => {}
                 Expression::SchemaIndexVariant(_) | Expression::BooleanExpressionVariant(_) => {
-                    return Err(ApllodbError::new(SqlState::FeatureNotSupported,
-                        format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
-                        column_name, expr
-                    ),
-                    None
+                    return Err(
+                        ApllodbError::feature_not_supported(
+                            format!("trying to UpdateAll `{:?}={:?}` while expr of `UpdateAll INTO ... VALUES (expr ...)`. `expr` can only be a constant", 
+                            column_name, expr
+                        ),
                     ))
                 }
             }

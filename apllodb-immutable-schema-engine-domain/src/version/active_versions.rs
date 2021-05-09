@@ -1,5 +1,5 @@
 use super::active_version::ActiveVersion;
-use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SqlValue};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState, SqlValue};
 use apllodb_storage_engine_interface::ColumnName;
 use std::collections::HashMap;
 
@@ -25,16 +25,12 @@ impl ActiveVersions {
 
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - No version is active (table must be already DROPped).
     pub fn current_version(&self) -> ApllodbResult<&ActiveVersion> {
-        self.0.first().ok_or_else(|| {
-            ApllodbError::new(
-                SqlState::UndefinedTable,
-                "no active version found",
-                None,
-            )
-        })
+        self.0
+            .first()
+            .ok_or_else(|| ApllodbError::name_error_not_found("no active version found"))
     }
 
     /// Returns the versions to select from.
@@ -53,10 +49,8 @@ impl ActiveVersions {
         non_pk_column_values: &HashMap<ColumnName, SqlValue>,
     ) -> ApllodbResult<&ActiveVersion> {
         if self.0.is_empty() {
-            return Err(ApllodbError::new(
-                SqlState::UndefinedTable,
+            return Err(ApllodbError::name_error_not_found(
                 "no active version found",
-                None,
             ));
         }
 
@@ -78,23 +72,15 @@ impl ActiveVersions {
             .map(|(_, e)| e.kind())
             .all(|k| matches!(k, SqlState::NameErrorNotFound))
         {
-            Err(ApllodbError::new(
-                SqlState::NameErrorNotFound,
-                format!(
-                    "at least 1 column does not exist in any version: {:?}",
-                    errors_per_versions,
-                ),
-                None,
-            ))
+            Err(ApllodbError::name_error_not_found(format!(
+                "at least 1 column does not exist in any version: {:?}",
+                errors_per_versions,
+            )))
         } else {
-            Err(ApllodbError::new(
-                SqlState::IntegrityConstraintViolation,
-                format!(
-                    "all versions reject INSERTing {:#?}: {:#?}",
-                    non_pk_column_values, errors_per_versions,
-                ),
-                None,
-            ))
+            Err(ApllodbError::data_exception(format!(
+                "all versions reject INSERTing {:#?}: {:#?}",
+                non_pk_column_values, errors_per_versions,
+            )))
         }
     }
 }

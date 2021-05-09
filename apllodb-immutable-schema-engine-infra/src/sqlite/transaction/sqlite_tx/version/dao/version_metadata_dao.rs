@@ -125,7 +125,7 @@ CREATE TABLE {tname} (
             .find(|v| v.id() == version_id)
             .ok_or_else(|| {
                 ApllodbError::new(
-                    SqlState::UndefinedTable,
+                    SqlState::NameErrorNotFound,
                     format!(
                         "table `{:?}` not found (or every version is inactive)",
                         vtable_id.table_name()

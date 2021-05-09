@@ -102,10 +102,7 @@ async fn test_begin_session_ab() {
         .add_step(SessionAb::B, Step::new("BEGIN", StepRes::Ok))
         .add_step(
             SessionAb::A,
-            Step::new(
-                "BEGIN",
-                StepRes::Err(SqlState::InvalidTransactionState),
-            ),
+            Step::new("BEGIN", StepRes::Err(SqlState::InvalidTransactionState)),
         )
         .run()
         .await;
@@ -129,7 +126,7 @@ async fn test_transaction_ddl_isolation() {
             SessionAb::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
-                StepRes::Err(SqlState::UndefinedTable),
+                StepRes::Err(SqlState::NameErrorNotFound),
             ),
         )
         .add_step(SessionAb::A, Step::new("COMMIT", StepRes::Ok))
@@ -138,7 +135,7 @@ async fn test_transaction_ddl_isolation() {
             SessionAb::B,
             Step::new(
                 "INSERT INTO t (id) VALUES (2)",
-                StepRes::Err(SqlState::UndefinedTable),
+                StepRes::Err(SqlState::NameErrorNotFound),
             ),
         )
         .add_step(SessionAb::B, Step::new("ABORT", StepRes::Ok))

@@ -202,14 +202,10 @@ impl ActiveVersion {
             .find(|cdt| cdt.column_name() == column_name)
             .map(|_| ())
             .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::NameErrorNotFound,
-                    format!(
-                        "column `{:?}` does not exist in current version",
-                        column_name
-                    ),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "column `{:?}` does not exist in current version",
+                    column_name
+                ))
             })
     }
 }

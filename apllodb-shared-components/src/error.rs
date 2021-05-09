@@ -51,6 +51,11 @@ impl ApllodbError {
         Self::new(SqlState::FeatureNotSupported, desc, None)
     }
 
+    /// Constructor of [SqlState::DataException](crate::SqlState::DataException).
+    pub fn data_exception(desc: impl ToString) -> Self {
+        Self::new(SqlState::DataException, desc, None)
+    }
+
     /// Constructor of [SqlState::DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion).
     pub fn data_exception_illegal_conversion(desc: impl ToString) -> Self {
         Self::new(SqlState::DataExceptionIllegalConversion, desc, None)

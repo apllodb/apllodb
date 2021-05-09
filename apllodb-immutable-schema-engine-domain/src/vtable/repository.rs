@@ -25,7 +25,7 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table specified by `vtable_id` is not visible to this transaction.
     async fn read(&self, vtable_id: &VTableId) -> ApllodbResult<VTable>;
 
@@ -33,7 +33,7 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///
     /// # Failures
     ///
-    /// - [UndefinedTable](apllodb_shared_components::SqlState::UndefinedTable) when:
+    /// - [NameErrorNotFound](apllodb_shared_components::SqlState::NameErrorNotFound) when:
     ///   - Table specified by `vtable.id` is not visible to this transaction.
     async fn update(&self, vtable: &VTable) -> ApllodbResult<()>;
 
