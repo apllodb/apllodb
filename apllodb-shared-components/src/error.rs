@@ -81,6 +81,11 @@ impl ApllodbError {
         Self::new(SqlState::NameErrorAmbiguous, desc, None)
     }
 
+    /// Constructor of [SqlState::NameErrorDuplicate](crate::SqlState::NameErrorDuplicate).
+    pub fn name_error_duplicate(desc: impl ToString) -> Self {
+        Self::new(SqlState::NameErrorDuplicate, desc, None)
+    }
+
     /// Constructor of [SqlState::NameErrorTooLong](crate::SqlState::NameErrorTooLong).
     pub fn name_error_too_long(desc: impl ToString) -> Self {
         Self::new(SqlState::NameErrorTooLong, desc, None)

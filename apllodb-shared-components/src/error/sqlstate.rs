@@ -190,6 +190,7 @@ pub enum SqlState {
     NameError,
     NameErrorNotFound,
     NameErrorAmbiguous,
+    NameErrorDuplicate,
     NameErrorTooLong,
     DdlError,
 }
@@ -853,7 +854,8 @@ impl SqlState {
             NameError => SqlStateDetail::new(classNM.clone(), "000", "(no subclass)"),
             NameErrorNotFound => SqlStateDetail::new(classNM.clone(), "001", "not found by name"),
             NameErrorAmbiguous => SqlStateDetail::new(classNM.clone(), "002", "ambiguous name"),
-            NameErrorTooLong => SqlStateDetail::new(classNM.clone(), "003", "too long name"),
+            NameErrorDuplicate => SqlStateDetail::new(classNM.clone(), "003", "duplicate name"),
+            NameErrorTooLong => SqlStateDetail::new(classNM.clone(), "004", "too long name"),
             DdlError => SqlStateDetail::new(classSC.clone(), "000", "(no subclass)"),
         }
     }

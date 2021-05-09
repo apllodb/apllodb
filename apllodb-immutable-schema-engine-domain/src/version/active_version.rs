@@ -71,7 +71,7 @@ impl ActiveVersion {
     ///
     /// # Failures
     ///
-    /// - [InvalidTableDefinition](variant.InvalidTableDefinition.html)
+    /// - [DdlError](variant.DdlError.html)
     ///   - If no column would exist after the specified action.
     /// - [NameErrorNotFound](variant.NameErrorNotFound.html)
     ///   - If column to alter does not exist.
@@ -186,14 +186,10 @@ impl ActiveVersion {
             .iter()
             .any(|cdt| cdt.column_name() == column_name)
         {
-            Err(ApllodbError::new(
-                SqlState::DuplicateColumn,
-                format!(
-                    "column `{:?}` already exists in current version",
-                    column_name
-                ),
-                None,
-            ))
+            Err(ApllodbError::name_error_duplicate(format!(
+                "column `{:?}` already exists in current version",
+                column_name
+            )))
         } else {
             Ok(())
         }

@@ -22,7 +22,7 @@ impl TableConstraints {
     /// Constructor.
     ///
     /// # Failures
-    /// - [InvalidTableDefinition](apllodb_shared_components::SqlState::InvalidTableDefinition) when:
+    /// - [DdlError](apllodb_shared_components::SqlState::DdlError) when:
     ///   - No [PrimaryKey](crate::TableConstraintKind::PrimaryKey) is specified.
     ///   - Multiple [PrimaryKey](crate::TableConstraintKind::PrimaryKey)s appear.
     ///   - More than 1 [PrimaryKey](crate::TableConstraintKind::PrimaryKey) /
@@ -175,7 +175,7 @@ mod tests {
         for constraints in testset {
             match TableConstraints::new(constraints) {
                 Err(e) => match e.kind() {
-                    SqlState::InvalidTableDefinition => {
+                    SqlState::DdlError => {
                         println!("{:?}", e);
                     }
                     _ => panic!("unexpected error kind: {}", e),
