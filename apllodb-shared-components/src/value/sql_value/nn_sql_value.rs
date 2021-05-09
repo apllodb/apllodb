@@ -1,7 +1,7 @@
 use std::{fmt::Display, hash::Hash};
 
 use crate::{
-    error::{sqlstate::SqlState, ApllodbError, ApllodbResult},
+    error::{ApllodbError, ApllodbResult},
     SqlConvertible,
 };
 use serde::{Deserialize, Serialize};

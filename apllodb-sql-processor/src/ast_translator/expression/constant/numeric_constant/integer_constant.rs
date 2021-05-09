@@ -1,4 +1,4 @@
-use apllodb_shared_components::{ApllodbError, ApllodbResult, NnSqlValue, SqlState, SqlValue};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, NnSqlValue, SqlValue};
 use apllodb_sql_parser::apllodb_ast;
 
 use crate::ast_translator::AstTranslator;
@@ -23,7 +23,7 @@ impl AstTranslator {
                 s.parse::<i64>()
                     .map(|i| SqlValue::NotNull(NnSqlValue::BigInt(i)))
             })
-            .map_err(|e| {
+            .map_err(|_e| {
                 ApllodbError::data_exception_numeric_value_out_of_range(format!(
                     "integer value `{}` could not be parsed as i64 (max supported size)",
                     s

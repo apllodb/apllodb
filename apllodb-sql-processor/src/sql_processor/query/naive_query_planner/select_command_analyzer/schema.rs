@@ -10,7 +10,7 @@ use crate::{
     field::{aliased_field_name::AliasedFieldName, field_name::FieldName},
     records::record_schema::RecordSchema,
 };
-use apllodb_shared_components::{SchemaName, SqlState};
+use apllodb_shared_components::SchemaName;
 use apllodb_storage_engine_interface::ColumnName;
 
 use super::SelectCommandAnalyzer;

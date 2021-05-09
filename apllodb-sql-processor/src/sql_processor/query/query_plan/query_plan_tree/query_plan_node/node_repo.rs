@@ -3,7 +3,7 @@ use std::{
     sync::{Mutex, RwLock},
 };
 
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 
 use crate::correlation::correlation_name::CorrelationName;
 

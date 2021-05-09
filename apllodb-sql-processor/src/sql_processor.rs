@@ -6,9 +6,7 @@ pub(crate) mod success;
 
 use std::sync::Arc;
 
-use apllodb_shared_components::{
-    ApllodbError, ApllodbSessionError, ApllodbSessionResult, Session, SqlState,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbSessionError, ApllodbSessionResult, Session};
 use apllodb_sql_parser::{apllodb_ast, ApllodbAst, ApllodbSqlParser};
 use apllodb_storage_engine_interface::{
     StorageEngine, WithDbMethods, WithTxMethods, WithoutDbMethods,

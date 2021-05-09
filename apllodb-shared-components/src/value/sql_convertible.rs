@@ -3,7 +3,7 @@ mod int;
 mod text;
 
 use crate::{
-    error::{sqlstate::SqlState, ApllodbError, ApllodbResult},
+    error::{ApllodbError, ApllodbResult},
     NnSqlValue,
 };
 use std::any::type_name;

@@ -5,7 +5,7 @@ pub(crate) mod sql_value_hash_key;
 use std::{fmt::Display, hash::Hash};
 
 use crate::error::ApllodbResult;
-use crate::{ApllodbError, SqlState};
+use crate::ApllodbError;
 use serde::{Deserialize, Serialize};
 
 use self::{nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult};

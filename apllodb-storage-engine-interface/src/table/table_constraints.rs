@@ -1,4 +1,4 @@
-use apllodb_shared_components::{find_dup_slow, ApllodbError, ApllodbResult, SqlState};
+use apllodb_shared_components::{find_dup_slow, ApllodbError, ApllodbResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 

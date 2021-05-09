@@ -1,4 +1,4 @@
-use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression, SqlState};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Expression};
 use apllodb_storage_engine_interface::{RowSelectionQuery, SingleTableCondition, TableName};
 use serde::{Deserialize, Serialize};
 
