@@ -80,6 +80,11 @@ impl ApllodbError {
     pub fn name_error_too_long(desc: impl ToString) -> Self {
         Self::new(SqlState::NameErrorTooLong, desc, None)
     }
+
+    /// Constructor of [SqlState::DdlError](crate::SqlState::DdlError).
+    pub fn ddl_error(desc: impl ToString) -> Self {
+        Self::new(SqlState::DdlError, desc, None)
+    }
 }
 
 impl Error for ApllodbError {

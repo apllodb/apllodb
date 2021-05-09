@@ -190,6 +190,7 @@ pub enum SqlState {
     NameErrorNotFound,
     NameErrorAmbiguous,
     NameErrorTooLong,
+    DdlError,
 }
 
 impl SqlState {
@@ -291,9 +292,10 @@ impl SqlState {
         let class44 = Arc::new(SqlStateClass::new("44", "with check option violation"));
         let classHZ = Arc::new(SqlStateClass::new("HZ", "Reserved for ISO9579 (RDA)"));
 
-        // apllodb's original error class
+        // apllodb's original error class (class must starts from [I-Z])
         let classIO = Arc::new(SqlStateClass::new("IO", "io error"));
         let classNM = Arc::new(SqlStateClass::new("NM", "general name error"));
+        let classSC = Arc::new(SqlStateClass::new("SC", "DDL error"));
 
         match self {
             SuccessfulCompletion => SqlStateDetail::new(class00.clone(), "000", "(no subclass)"),
@@ -848,6 +850,7 @@ impl SqlState {
             NameErrorNotFound => SqlStateDetail::new(classNM.clone(), "001", "not found by name"),
             NameErrorAmbiguous => SqlStateDetail::new(classNM.clone(), "002", "ambiguous name"),
             NameErrorTooLong => SqlStateDetail::new(classNM.clone(), "003", "too long name"),
+            DdlError => SqlStateDetail::new(classSC.clone(), "000", "(no subclass)"),
         }
     }
 }

@@ -1,4 +1,4 @@
-use apllodb_shared_components::{find_dup_slow, ApllodbError, SqlState, ApllodbResult};
+use apllodb_shared_components::{find_dup_slow, ApllodbError, ApllodbResult, SqlState};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -50,13 +50,7 @@ impl TableConstraints {
                 TableConstraintKind::PrimaryKey { .. } => Some(()),
                 _ => None,
             })
-            .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::InvalidTableDefinition,
-                    "PRIMARY KEY is not specified",
-                    None,
-                )
-            })
+            .ok_or_else(|| ApllodbError::ddl_error("PRIMARY KEY is not specified"))
     }
 
     fn validate_multiple_pks(constraints: &[TableConstraintKind]) -> ApllodbResult<()> {
@@ -71,11 +65,7 @@ impl TableConstraints {
             .count();
 
         if pk_constraints_count > 1 {
-            Err(ApllodbError::new(
-                SqlState::InvalidTableDefinition,
-                "more than 1 PRIMARY KEY found",
-                None,
-            ))
+            Err(ApllodbError::ddl_error("more than 1 PRIMARY KEY found"))
         } else {
             Ok(())
         }
@@ -98,14 +88,10 @@ impl TableConstraints {
             .collect();
 
         if let Some(colset) = find_dup_slow(pk_unique_column_sets.iter()) {
-            Err(ApllodbError::new(
-                SqlState::InvalidTableDefinition,
-                format!(
-                    "more than 1 PRIMARY KEY / UNIQUE are applied to the same column set: `{:?}`",
-                    colset
-                ),
-                None,
-            ))
+            Err(ApllodbError::ddl_error(format!(
+                "more than 1 PRIMARY KEY / UNIQUE are applied to the same column set: `{:?}`",
+                colset
+            )))
         } else {
             Ok(())
         }
