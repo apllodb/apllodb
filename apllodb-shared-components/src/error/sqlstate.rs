@@ -57,6 +57,7 @@ pub enum SqlState {
     ConnectionExceptionConnectionFailure,
     ConnectionExceptionTransactionResolutionUnknown,
     ConnectionExceptionDatabaseNotOpen,
+    ConnectionExceptionDatabaseAlreadyOpen,
     TriggeredActionException,
     FeatureNotSupported,
     FeatureNotSupportedMultipleServerTransactions,
@@ -459,6 +460,9 @@ impl SqlState {
             }
             ConnectionExceptionDatabaseNotOpen => {
                 SqlStateDetail::new(class08.clone(), "I00", "database not open")
+            }
+            ConnectionExceptionDatabaseAlreadyOpen => {
+                SqlStateDetail::new(class08.clone(), "I01", "database already open")
             }
             TriggeredActionException => {
                 SqlStateDetail::new(class09.clone(), "000", "(no subclass)")

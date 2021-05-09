@@ -51,15 +51,13 @@ impl SqliteDatabasePool {
 
     /// # Failures
     ///
-    /// - [DuplicateDatabase](apllodb-shared-components::SqlState::DuplicateDatabase) when:
+    /// - [ConnectionExceptionDatabaseAlreadyOpen](apllodb-shared-components::SqlState::ConnectionExceptionDatabaseAlreadyOpen) when:
     ///   - this session seems to open another database.
     pub(crate) fn insert_db(&mut self, sid: &SessionId, db: SqliteDatabase) -> ApllodbResult<()> {
         let db_idx = self.db_arena.insert(db);
         if self.sess_db.insert(*sid, db_idx).is_some() {
-            Err(ApllodbError::new(
-                SqlState::DuplicateDatabase,
+            Err(ApllodbError::connection_exception_database_already_open(
                 format!("session `{:?}` already opens another database", sid),
-                None,
             ))
         } else {
             Ok(())

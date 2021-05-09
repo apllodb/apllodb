@@ -56,6 +56,11 @@ impl ApllodbError {
         Self::new(SqlState::ConnectionExceptionDatabaseNotOpen, desc, None)
     }
 
+    /// Constructor of [SqlState::ConnectionExceptionDatabaseAlreadyOpen](crate::SqlState::ConnectionExceptionDatabaseAlreadyOpen).
+    pub fn connection_exception_database_already_open(desc: impl ToString) -> Self {
+        Self::new(SqlState::ConnectionExceptionDatabaseAlreadyOpen, desc, None)
+    }
+
     /// Constructor of [SqlState::DataException](crate::SqlState::DataException).
     pub fn data_exception(desc: impl ToString) -> Self {
         Self::new(SqlState::DataException, desc, None)
