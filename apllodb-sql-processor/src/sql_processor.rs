@@ -28,7 +28,7 @@ pub struct SqlProcessor<Engine: StorageEngine> {
 impl<Engine: StorageEngine> SqlProcessor<Engine> {
     /// # Failures
     ///
-    /// - [InvalidDatabaseDefinition](apllodb-shared-components::SqlState::InvalidDatabaseDefinition) when:
+    /// - [ConnectionExceptionDatabaseNotOpen](apllodb-shared-components::SqlState::ConnectionExceptionDatabaseNotOpen) when:
     ///   - requesting an operation that uses an open database with [SessionWithoutDb](apllodb-shared-components::SessionWithoutDb).
     /// - [FeatureNotSupported](apllodb-shared-components::SqlState::FeatureNotSupported) when:
     ///   - the sql should be processed properly but apllodb currently doesn't
