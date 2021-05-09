@@ -42,7 +42,7 @@ impl ActiveVersions {
     ///
     /// # Failures
     ///
-    /// - [IntegrityConstraintViolation](apllodb_shared_components::SqlState::IntegrityConstraintViolation) when:
+    /// - [DataException](apllodb_shared_components::SqlState::DataException) when:
     ///   - No active version can accept the column value.
     pub fn version_to_insert(
         &self,
