@@ -181,6 +181,7 @@ pub enum SqlState {
     SyntaxErrorOrAccessRuleViolation,
     WithCheckOptionViolation,
     ReservedForISO9579,
+    IoError,
 }
 
 impl SqlState {
@@ -281,6 +282,9 @@ impl SqlState {
         ));
         let class44 = Arc::new(SqlStateClass::new("44", "with check option violation"));
         let classHZ = Arc::new(SqlStateClass::new("HZ", "Reserved for ISO9579 (RDA)"));
+
+        // apllodb's original error class
+        let classIO = Arc::new(SqlStateClass::new("IO", "io error"));
 
         match self {
             SuccessfulCompletion => SqlStateDetail::new(class00.clone(), "000", "(no subclass)"),
@@ -821,6 +825,7 @@ impl SqlState {
                 SqlStateDetail::new(class44.clone(), "000", "(no subclass)")
             }
             ReservedForISO9579 => SqlStateDetail::new(classHZ.clone(), "???", ""),
+            IoError => SqlStateDetail::new(classIO.clone(), "000", "(no subclass)"),
         }
     }
 }
