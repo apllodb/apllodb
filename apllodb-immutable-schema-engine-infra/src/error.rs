@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display, sync::PoisonError};
 
-use apllodb_shared_components::{ApllodbError, SqlState};
+use apllodb_shared_components::ApllodbError;
 use serde::{Deserialize, Serialize};
 
 /// Glue error from implementation details into [ApllodbError](apllodb-shared-components::ApllodbError).

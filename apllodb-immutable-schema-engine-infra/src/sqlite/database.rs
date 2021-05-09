@@ -4,7 +4,7 @@ use crate::sqlite::transaction::sqlite_tx::{
     version::dao::version_metadata_dao::VersionMetadataDao,
     vtable::vtable_metadata_dao::VTableMetadataDao,
 };
-use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, DatabaseName};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName, SqlState};
 use sqlx::{migrate::MigrateDatabase, Connection};
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
@@ -30,11 +30,10 @@ impl SqliteDatabase {
             .await
             .map_err(InfraError::from)?
         {
-            Err(ApllodbError::new(
-                SqlState::DuplicateDatabase,
-                format!("database {:?} already exists", name),
-                None,
-            ))
+            Err(ApllodbError::name_error_duplicate(format!(
+                "database {:?} already exists",
+                name
+            )))
         } else {
             log::debug!("creates new database file: {}", path);
 
