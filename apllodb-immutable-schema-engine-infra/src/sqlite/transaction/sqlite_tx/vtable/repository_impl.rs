@@ -43,7 +43,7 @@ impl VTableRepositoryImpl {
 impl VTableRepository<SqliteTypes> for VTableRepositoryImpl {
     /// # Failures
     ///
-    /// - [DuplicateTable](apllodb_shared_components::SqlState::DuplicateTable) when:
+    /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - Table `table_name` is already visible to this transaction.
     /// - Errors from [TableDao::create()](foobar.html).
     async fn create(&self, vtable: &VTable) -> ApllodbResult<()> {

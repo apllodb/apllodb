@@ -120,7 +120,7 @@ CREATE TABLE {} (
     ///
     /// - [DeadlockDetected](apllodb_shared_components::SqlState::DeadlockDetected) when:
     ///   - transaction lock to metadata table takes too long time.
-    /// - [DuplicateTable](apllodb_shared_components::SqlState::DuplicateTable) when:
+    /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - `table` is already created.
     /// - [SystemError](apllodb_shared_components::SqlState::SystemError) when:
     ///   - Somehow failed to serialize part of [VTable](foobar.html).

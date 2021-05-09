@@ -17,7 +17,7 @@ pub trait VTableRepository<Types: ImmutableSchemaAbstractTypes> {
     ///
     /// # Failures
     ///
-    /// - [DuplicateTable](apllodb_shared_components::SqlState::DuplicateTable) when:
+    /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - Table `table_name` is already visible to this transaction.
     async fn create(&self, vtable: &VTable) -> ApllodbResult<()>;
 
