@@ -1,9 +1,8 @@
-
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
-pub(super) enum SqlStateCategory {
+pub(in super::super) enum SqlStateCategory {
     S,
     W,
     N,

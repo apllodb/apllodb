@@ -1,10 +1,10 @@
 mod sqlstate_detail;
 
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
-use self::sqlstate_detail::{SqlStateClass, SqlStateDetail};
+use self::sqlstate_detail::{SqlStateCategory, SqlStateClass, SqlStateDetail};
 
 /// SQLSTATE.
 ///
@@ -184,6 +184,16 @@ pub enum SqlState {
 }
 
 impl SqlState {
+    /// 5 bytes characters called "SQLSTATE".
+    pub fn sqlstate(&self) -> String {
+        self.detail().sqlstate()
+    }
+
+    /// See [SqlStateCategory](sqlstate_detail::SqlStateCategory)
+    pub fn category(&self) -> SqlStateCategory {
+        self.detail().category()
+    }
+
     fn detail(&self) -> SqlStateDetail {
         use SqlState::*;
 
@@ -812,5 +822,20 @@ impl SqlState {
             }
             ReservedForISO9579 => SqlStateDetail::new(classHZ.clone(), "???", ""),
         }
+    }
+}
+
+impl Display for SqlState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let detail = self.detail();
+
+        write!(
+            f,
+            r#"SQLSTATE: "{}", Category: "{}", ClassText: "{}", SubclassText: "{}""#,
+            detail.sqlstate(),
+            detail.category(),
+            &detail.class.class_text,
+            &detail.subclass_text,
+        )
     }
 }
