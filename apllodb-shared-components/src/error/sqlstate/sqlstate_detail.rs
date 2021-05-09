@@ -1,8 +1,6 @@
 mod sqlstate_category;
 mod sqlstate_class;
 
-use std::sync::Arc;
-
 use serde::{Deserialize, Serialize};
 
 pub(super) use self::sqlstate_category::SqlStateCategory;
@@ -10,13 +8,13 @@ pub(super) use self::sqlstate_class::SqlStateClass;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub(super) struct SqlStateDetail {
-    pub(super) class: Arc<SqlStateClass>,
+    pub(super) class: SqlStateClass,
     pub(super) subclass: String,
     pub(super) subclass_text: String,
 }
 
 impl SqlStateDetail {
-    pub(super) fn new(class: Arc<SqlStateClass>, subclass: &str, subclass_text: &str) -> Self {
+    pub(super) fn new(class: SqlStateClass, subclass: &str, subclass_text: &str) -> Self {
         Self {
             class,
             subclass: subclass.to_string(),
