@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SessionId};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SessionId, SqlState};
 use generational_arena::{Arena, Index};
 
 use crate::sqlite::database::SqliteDatabase;
@@ -14,15 +14,14 @@ pub(crate) struct SqliteDatabasePool {
 impl SqliteDatabasePool {
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb-shared-components::SqlState::UndefinedObject) when:
+    /// - [ConnectionExceptionDatabaseNotOpen](apllodb-shared-components::SqlState::ConnectionExceptionDatabaseNotOpen) when:
     ///   - this session seems not to open any database.
     pub(crate) fn get_db(&self, sid: &SessionId) -> ApllodbResult<&SqliteDatabase> {
         let err = || {
-            ApllodbError::new(
-                SqlState::UndefinedObject,
-                format!("session `{:?}` does not opens any database", sid),
-                None,
-            )
+            ApllodbError::connection_exception_database_not_open(format!(
+                "session `{:?}` does not opens any database",
+                sid
+            ))
         };
 
         let db_idx = *self.sess_db.get(sid).ok_or_else(err)?;
@@ -33,16 +32,15 @@ impl SqliteDatabasePool {
 
     /// # Failures
     ///
-    /// - [UndefinedObject](apllodb-shared-components::SqlState::UndefinedObject) when:
+    /// - [ConnectionExceptionDatabaseNotOpen](apllodb-shared-components::SqlState::ConnectionExceptionDatabaseNotOpen) when:
     ///   - this session seems not to open any database.
     #[allow(dead_code)]
     pub(crate) fn remove_db(&mut self, sid: &SessionId) -> ApllodbResult<SqliteDatabase> {
         let err = || {
-            ApllodbError::new(
-                SqlState::UndefinedObject,
-                format!("session `{:?}` does not open any database", sid),
-                None,
-            )
+            ApllodbError::connection_exception_database_not_open(format!(
+                "session `{:?}` does not open any database",
+                sid
+            ))
         };
 
         let db_idx = self.sess_db.remove(sid).ok_or_else(err)?;
