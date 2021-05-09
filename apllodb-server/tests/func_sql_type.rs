@@ -56,7 +56,7 @@ async fn test_integer() {
                 let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i16>(&index).unwrap_err().kind(),
-                    &SqlState::DatatypeMismatch
+                    &SqlState::DataExceptionIllegalConversion
                 );
                 assert_eq!(r.get::<i32>(&index).unwrap().unwrap(), i32::MAX);
                 assert_eq!(r.get::<i64>(&index).unwrap().unwrap(), i32::MAX as i64);
@@ -87,11 +87,11 @@ async fn test_big_int() {
                 let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i16>(&index).unwrap_err().kind(),
-                    &SqlState::DatatypeMismatch
+                    &SqlState::DataExceptionIllegalConversion
                 );
                 assert_eq!(
                     r.get::<i32>(&index).unwrap_err().kind(),
-                    &SqlState::DatatypeMismatch
+                    &SqlState::DataExceptionIllegalConversion
                 );
                 assert_eq!(r.get::<i64>(&index).unwrap().unwrap(), i64::MAX);
                 Ok(())
@@ -124,7 +124,7 @@ async fn test_text() {
                 let r = records.next().unwrap();
                 assert_eq!(
                     r.get::<i64>(&index).unwrap_err().kind(),
-                    &SqlState::DatatypeMismatch
+                    &SqlState::DataExceptionIllegalConversion
                 );
                 assert_eq!(
                     r.get::<String>(&index).unwrap().unwrap(),

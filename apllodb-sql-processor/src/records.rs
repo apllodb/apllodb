@@ -58,7 +58,7 @@ impl Records {
 
     /// Filter records that satisfy the given `condition`.
     pub(crate) fn selection(self, condition: &Condition) -> ApllodbResult<Self> {
-        match condition.eval_as_constant() {
+        match condition.eval_as_boolean_constant() {
             Ok(b) => {
                 if b {
                     Ok(self)

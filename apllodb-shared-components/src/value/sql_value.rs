@@ -29,7 +29,7 @@ use self::{nn_sql_value::NnSqlValue, sql_compare_result::SqlCompareResult};
 ///
 /// ## Failures on comparison
 ///
-/// Comparing non-**comparable** values and ordered comparison to non-**ordered** values cause [SqlState::DatatypeMismatch](crate::SqlState::DatatypeMismatch).
+/// Comparing non-**comparable** values and ordered comparison to non-**ordered** values cause [SqlState::DataExceptionIllegalComparison](crate::SqlState::DataExceptionIllegalComparison).
 ///
 /// ## Comparison with NULL
 ///
@@ -115,7 +115,7 @@ impl SqlValue {
     ///
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::SqlState::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalComparison](crate::SqlState::DataExceptionIllegalComparison) when:
     ///   - `self` and `other` have different top-level variant of [SqlType](crate::SqlType).
     ///
     /// # Examples
@@ -143,7 +143,7 @@ impl SqlValue {
     ///     matches!(
     ///         v_integer.sql_compare(&v_text)
     ///             .expect_err("comparing totally different types").kind(),
-    ///         SqlState::DatatypeMismatch
+    ///         SqlState::DataExceptionIllegalComparison
     ///     );
     ///
     ///     Ok(())
@@ -162,21 +162,17 @@ impl SqlValue {
     ///
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::SqlState::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalEvaluation](crate::SqlState::DataExceptionIllegalEvaluation) when:
     ///   - this SqlValue cannot be evaluated as SQL BOOLEAN
     pub fn to_bool(&self) -> ApllodbResult<bool> {
         match self {
             SqlValue::Null => Ok(false), // NULL is always evaluated as FALSE
             SqlValue::NotNull(nn_sql_value) => match nn_sql_value {
                 NnSqlValue::Boolean(b) => Ok(*b),
-                _ => Err(ApllodbError::new(
-                    SqlState::DatatypeMismatch,
-                    format!(
-                        "{:?} cannot be evaluated as BOOLEAN",
-                        nn_sql_value.sql_type()
-                    ),
-                    None,
-                )),
+                _ => Err(ApllodbError::data_exception_illegal_evaluation(format!(
+                    "{:?} cannot be evaluated as BOOLEAN",
+                    nn_sql_value.sql_type()
+                ))),
             },
         }
     }

@@ -51,6 +51,21 @@ impl ApllodbError {
         Self::new(SqlState::FeatureNotSupported, desc, None)
     }
 
+    /// Constructor of [SqlState::DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion).
+    pub fn data_exception_illegal_conversion(desc: impl ToString) -> Self {
+        Self::new(SqlState::DataExceptionIllegalConversion, desc, None)
+    }
+
+    /// Constructor of [SqlState::DataExceptionIllegalComparison](crate::SqlState::DataExceptionIllegalComparison).
+    pub fn data_exception_illegal_comparison(desc: impl ToString) -> Self {
+        Self::new(SqlState::DataExceptionIllegalComparison, desc, None)
+    }
+
+    /// Constructor of [SqlState::DataExceptionIllegalEvaluation](crate::SqlState::DataExceptionIllegalEvaluation).
+    pub fn data_exception_illegal_evaluation(desc: impl ToString) -> Self {
+        Self::new(SqlState::DataExceptionIllegalEvaluation, desc, None)
+    }
+
     /// Constructor of [SqlState::NameErrorNotFound](crate::SqlState::NameErrorNotFound).
     pub fn name_error_not_found(desc: impl ToString) -> Self {
         Self::new(SqlState::NameErrorNotFound, desc, None)

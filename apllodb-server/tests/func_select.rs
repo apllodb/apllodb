@@ -158,10 +158,10 @@ async fn test_selection() {
             ),
         )
         .add_step(
-            // DatatypeMismatch
+            // DataExceptionIllegalConversion
             Step::new(
                 "SELECT id, age FROM people WHERE 1",
-                StepRes::Err(SqlState::DatatypeMismatch),
+                StepRes::Err(SqlState::DataExceptionIllegalConversion),
             ),
         )
         .run()

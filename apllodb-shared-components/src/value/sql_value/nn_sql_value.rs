@@ -97,7 +97,7 @@ impl NnSqlValue {
     ///
     /// # Failures
     ///
-    /// - [DatatypeMismatch](crate::SqlState::DatatypeMismatch) when:
+    /// - [DataExceptionIllegalConversion](crate::SqlState::DataExceptionIllegalConversion) when:
     ///   - Any value of `T` cannot be typed as this SqlValue's SqlType (E.g. `T = i64`, `SqlType = SmallInt`).
     pub fn unpack<T>(&self) -> ApllodbResult<T>
     where
@@ -147,7 +147,7 @@ impl NnSqlValue {
                 Ok(SqlCompareResult::from(self_b.cmp(&other_b)))
             }
             (_, _) => Err(ApllodbError::new(
-                SqlState::DatatypeMismatch,
+                SqlState::DataExceptionIllegalConversion,
                 format!(
                     "`self` and `other` are not in comparable type - self: {:?}, other: {:?}",
                     self, other
@@ -187,18 +187,18 @@ mod tests {
 
         assert_eq!(
             NnSqlValue::Integer(-1).unpack::<i16>().unwrap_err().kind(),
-            &SqlState::DatatypeMismatch
+            &SqlState::DataExceptionIllegalConversion
         );
         assert_eq!(NnSqlValue::Integer(-1).unpack::<i32>()?, -1);
         assert_eq!(NnSqlValue::Integer(-1).unpack::<i64>()?, -1);
 
         assert_eq!(
             NnSqlValue::BigInt(-1).unpack::<i16>().unwrap_err().kind(),
-            &SqlState::DatatypeMismatch
+            &SqlState::DataExceptionIllegalConversion
         );
         assert_eq!(
             NnSqlValue::BigInt(-1).unpack::<i32>().unwrap_err().kind(),
-            &SqlState::DatatypeMismatch
+            &SqlState::DataExceptionIllegalConversion
         );
         assert_eq!(NnSqlValue::BigInt(-1).unpack::<i64>()?, -1);
 

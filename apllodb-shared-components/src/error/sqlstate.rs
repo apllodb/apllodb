@@ -127,6 +127,9 @@ pub enum SqlState {
     DataExceptionArrayDataRightTruncation,
     DataExceptionInvalidRepeatArgumentInASampleClause,
     DataExceptionInvalidSampleSize,
+    DataExceptionIllegalConversion,
+    DataExceptionIllegalComparison,
+    DataExceptionIllegalEvaluation,
     IntegrityConstraintViolation,
     IntegrityConstraintViolationRestrictViolation,
     InvalidCursorState,
@@ -676,6 +679,15 @@ impl SqlState {
             ),
             DataExceptionInvalidSampleSize => {
                 SqlStateDetail::new(class22.clone(), "02H", "invalid sample size")
+            }
+            DataExceptionIllegalConversion => {
+                SqlStateDetail::new(class22.clone(), "I00", "illegal data conversion")
+            }
+            DataExceptionIllegalComparison => {
+                SqlStateDetail::new(class22.clone(), "I01", "illegal data comparison")
+            }
+            DataExceptionIllegalEvaluation => {
+                SqlStateDetail::new(class22.clone(), "I02", "illegal data evaluation")
             }
             IntegrityConstraintViolation => {
                 SqlStateDetail::new(class23.clone(), "000", "(no subclass)")
