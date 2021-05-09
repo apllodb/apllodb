@@ -28,10 +28,7 @@ impl ActiveVersion {
     }
 
     /// Create v_1.
-    pub fn initial(
-        vtable_id: &VTableId,
-        non_pk_column_data_types: &[ColumnDataType],
-    ) -> ApllodbResult<Self> {
+    pub fn initial(vtable_id: &VTableId, non_pk_column_data_types: &[ColumnDataType]) -> Self {
         Self::new(
             vtable_id,
             &VersionNumber::initial(),
@@ -47,14 +44,14 @@ impl ActiveVersion {
         version_number: &VersionNumber,
         non_pk_column_data_types: &[ColumnDataType],
         version_constraints: VersionConstraints,
-    ) -> ApllodbResult<Self> {
+    ) -> Self {
         let id = VersionId::new(vtable_id, version_number);
 
-        Ok(Self(Version {
+        Self(Version {
             id,
             column_data_types: non_pk_column_data_types.to_vec(),
             constraints: version_constraints,
-        }))
+        })
     }
 
     /// Ref to columns and their data types.

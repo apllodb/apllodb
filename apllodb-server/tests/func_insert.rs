@@ -20,7 +20,7 @@ async fn test_error_on_dup_pk() {
         ))
         .add_step(Step::new(
             "INSERT INTO people (id, age) VALUES (1, 20)",
-            StepRes::Err(SqlState::UniqueViolation),
+            StepRes::Err(SqlState::IntegrityConstraintUniqueViolation),
         ))
         .add_step(Step::new(
             "INSERT INTO people (id, age) VALUES (2, 20), (3, 30)",
@@ -28,7 +28,7 @@ async fn test_error_on_dup_pk() {
         ))
         .add_step(Step::new(
             "INSERT INTO people (id, age) VALUES (4, 40), (4, 44)",
-            StepRes::Err(SqlState::UniqueViolation),
+            StepRes::Err(SqlState::IntegrityConstraintUniqueViolation),
         ))
         .run()
         .await;

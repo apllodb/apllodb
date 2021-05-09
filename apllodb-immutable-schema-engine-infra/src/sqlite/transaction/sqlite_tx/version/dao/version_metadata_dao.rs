@@ -8,7 +8,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{ApllodbError, SqlState, ApllodbResult, SqlType};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState, SqlType};
 use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, TableName};
 
 #[derive(Debug)]
@@ -105,10 +105,10 @@ CREATE TABLE {tname} (
             .map(|row| VersionMetadataModel::from_row(&schema, row))
             .collect::<ApllodbResult<_>>()?;
 
-        models
+        Ok(models
             .into_iter()
             .map(|m| m.to_active_version(vtable_id))
-            .collect()
+            .collect())
     }
 
     // TODO 消す
@@ -124,14 +124,10 @@ CREATE TABLE {tname} (
             .into_iter()
             .find(|v| v.id() == version_id)
             .ok_or_else(|| {
-                ApllodbError::new(
-                    SqlState::NameErrorNotFound,
-                    format!(
-                        "table `{:?}` not found (or every version is inactive)",
-                        vtable_id.table_name()
-                    ),
-                    None,
-                )
+                ApllodbError::name_error_not_found(format!(
+                    "table `{:?}` not found (or every version is inactive)",
+                    vtable_id.table_name()
+                ))
             })
     }
 
@@ -165,14 +161,12 @@ CREATE TABLE {tname} (
             .execute(&sql)
             .await
             .map_err(|e| match e.kind() {
-                SqlState::UniqueViolation => ApllodbError::new(
-                    SqlState::DuplicateTable,
-                    format!(
+                SqlState::IntegrityConstraintUniqueViolation => {
+                    ApllodbError::name_error_duplicate(format!(
                         "table `{:?}`, version `{:?}` is already created",
                         &model.table_name, &model.version_number
-                    ),
-                    Some(Box::new(e)),
-                ),
+                    ))
+                }
                 _ => e,
             })?;
 

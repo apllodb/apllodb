@@ -35,14 +35,6 @@ impl From<&ActiveVersion> for VersionMetadataModel {
 
 impl VersionMetadataModel {
     pub(super) fn from_row(schema: &RowSchema, row: Row) -> ApllodbResult<Self> {
-        let col_not_found = || {
-            ApllodbError::new(
-                SqlState::SystemError,
-                "wrong _version_metadata table's column",
-                None,
-            )
-        };
-
         let (pos_table_name, _) = schema.index(&SchemaIndex::from(CNAME_TABLE_NAME))?;
         let (pos_version_number, _) = schema.index(&SchemaIndex::from(CNAME_VERSION_NUMBER))?;
         let (pos_column_data_types, _) =
@@ -51,14 +43,11 @@ impl VersionMetadataModel {
             schema.index(&SchemaIndex::from(CNAME_VERSION_CONSTRAINTS))?;
         let (pos_is_active, _) = schema.index(&SchemaIndex::from(CNAME_IS_ACTIVE))?;
 
-        let table_name: String = row.get(pos_table_name)?.ok_or_else(col_not_found)?;
-        let version_number: i64 = row.get(pos_version_number)?.ok_or_else(col_not_found)?;
-        let column_data_types: String =
-            row.get(pos_column_data_types)?.ok_or_else(col_not_found)?;
-        let version_constraints: String = row
-            .get(pos_version_constraints)?
-            .ok_or_else(col_not_found)?;
-        let is_active: bool = row.get(pos_is_active)?.ok_or_else(col_not_found)?;
+        let table_name: String = row.get(pos_table_name)?.unwrap();
+        let version_number: i64 = row.get(pos_version_number)?.unwrap();
+        let column_data_types: String = row.get(pos_column_data_types)?.unwrap();
+        let version_constraints: String = row.get(pos_version_constraints)?.unwrap();
+        let is_active: bool = row.get(pos_is_active)?.unwrap();
 
         Ok(Self {
             table_name: TableName::new(table_name)?,

@@ -252,7 +252,7 @@ async fn test_latter_tx_is_waited() {
             SessionAb::A,
             Step::new(
                 "INSERT INTO people (id, age) VALUES (1, 25)",
-                StepRes::Err(SqlState::UniqueViolation),
+                StepRes::Err(SqlState::IntegrityConstraintUniqueViolation),
             ),
         )
         .add_step(SessionAb::B, Step::new("COMMIT", StepRes::Ok))

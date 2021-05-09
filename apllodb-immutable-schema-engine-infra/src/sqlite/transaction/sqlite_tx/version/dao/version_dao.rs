@@ -46,14 +46,10 @@ impl Attributes {
             .iter()
             .map(|tc| {
                 self.0.remove(tc.as_column_name()).ok_or_else(|| {
-                    ApllodbError::new(
-                        SqlState::NameErrorNotFound,
-                        format!(
-                            "column `{}` does not exist in this Attributes",
-                            tc.as_column_name().as_str()
-                        ),
-                        None,
-                    )
+                    ApllodbError::name_error_not_found(format!(
+                        "column `{}` does not exist in this Attributes",
+                        tc.as_column_name().as_str()
+                    ))
                 })
             })
             .collect::<ApllodbResult<_>>()?;
