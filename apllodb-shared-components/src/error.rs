@@ -76,6 +76,11 @@ impl ApllodbError {
         Self::new(SqlState::IntegrityConstraintNotNullViolation, desc, None)
     }
 
+    /// Constructor of [SqlState::IntegrityConstraintUniqueViolation](crate::SqlState::IntegrityConstraintUniqueViolation).
+    pub fn integrity_constraint_unique_violation(desc: impl ToString) -> Self {
+        Self::new(SqlState::IntegrityConstraintUniqueViolation, desc, None)
+    }
+
     /// Constructor of [SqlState::NameErrorNotFound](crate::SqlState::NameErrorNotFound).
     pub fn name_error_not_found(desc: impl ToString) -> Self {
         Self::new(SqlState::NameErrorNotFound, desc, None)
@@ -96,9 +101,22 @@ impl ApllodbError {
         Self::new(SqlState::NameErrorTooLong, desc, None)
     }
 
+    /// Constructor of [SqlState::TransactionRollbackDeadlock](crate::SqlState::TransactionRollbackDeadlock).
+    pub fn transaction_rollback_deadlock(desc: impl ToString) -> Self {
+        Self::new(SqlState::TransactionRollbackDeadlock, desc, None)
+    }
+
     /// Constructor of [SqlState::DdlError](crate::SqlState::DdlError).
     pub fn ddl_error(desc: impl ToString) -> Self {
         Self::new(SqlState::DdlError, desc, None)
+    }
+
+    /// Constructor of [SqlState::SystemError](crate::SqlState::SystemError).
+    pub fn system_error(
+        desc: impl ToString,
+        source: Box<dyn Error + Sync + Send + 'static>,
+    ) -> Self {
+        Self::new(SqlState::SystemError, desc, Some(source))
     }
 }
 

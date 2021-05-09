@@ -134,6 +134,7 @@ pub enum SqlState {
     IntegrityConstraintViolation,
     IntegrityConstraintViolationRestrictViolation,
     IntegrityConstraintNotNullViolation,
+    IntegrityConstraintUniqueViolation,
     InvalidCursorState,
     InvalidTransactionState,
     InvalidTransactionStateActiveSQLtransaction,
@@ -183,6 +184,7 @@ pub enum SqlState {
     TransactionRollbackIntegrityConstraintViolation,
     TransactionRollbackStatementCompletionUnknown,
     TransactionRollbackTriggeredActionException,
+    TransactionRollbackDeadlock,
     SyntaxErrorOrAccessRuleViolation,
     WithCheckOptionViolation,
     ReservedForISO9579,
@@ -193,6 +195,7 @@ pub enum SqlState {
     NameErrorDuplicate,
     NameErrorTooLong,
     DdlError,
+    SystemError,
 }
 
 impl SqlState {
@@ -298,6 +301,7 @@ impl SqlState {
         let classIO = Arc::new(SqlStateClass::new("IO", "io error"));
         let classNM = Arc::new(SqlStateClass::new("NM", "general name error"));
         let classSC = Arc::new(SqlStateClass::new("SC", "DDL error"));
+        let classSY = Arc::new(SqlStateClass::new("SY", "general system error"));
 
         match self {
             SuccessfulCompletion => SqlStateDetail::new(class00.clone(), "000", "(no subclass)"),
@@ -704,6 +708,9 @@ impl SqlState {
             IntegrityConstraintNotNullViolation => {
                 SqlStateDetail::new(class23.clone(), "I00", "not null violation")
             }
+            IntegrityConstraintUniqueViolation => {
+                SqlStateDetail::new(class23.clone(), "I01", "unique violation")
+            }
             InvalidCursorState => SqlStateDetail::new(class24.clone(), "000", "(no subclass)"),
             InvalidTransactionState => SqlStateDetail::new(class25.clone(), "000", "(no subclass)"),
             InvalidTransactionStateActiveSQLtransaction => {
@@ -843,6 +850,9 @@ impl SqlState {
             TransactionRollbackTriggeredActionException => {
                 SqlStateDetail::new(class40.clone(), "004", "triggered action exception")
             }
+            TransactionRollbackDeadlock => {
+                SqlStateDetail::new(class40.clone(), "I00", "deadlock detected")
+            }
             SyntaxErrorOrAccessRuleViolation => {
                 SqlStateDetail::new(class42.clone(), "000", "(no subclass)")
             }
@@ -857,6 +867,7 @@ impl SqlState {
             NameErrorDuplicate => SqlStateDetail::new(classNM.clone(), "003", "duplicate name"),
             NameErrorTooLong => SqlStateDetail::new(classNM.clone(), "004", "too long name"),
             DdlError => SqlStateDetail::new(classSC.clone(), "000", "(no subclass)"),
+            SystemError => SqlStateDetail::new(classSY.clone(), "000", "(no subclass)"),
         }
     }
 }
