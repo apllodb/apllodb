@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 /// SQLSTATE.
+///
+/// See: <https://en.wikipedia.org/wiki/SQLSTATE>
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, new)]
 pub struct SqlState(String);
 

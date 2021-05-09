@@ -7,14 +7,17 @@ use serde::{Deserialize, Serialize};
 #[allow(missing_docs)]
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum ApllodbErrorKind {
-    // Section: Class 02 - No Data (this is also a warning class per the SQL standard)
+    // Class 00 - successful completion
+
+    // Class 01 - warning
+
+    // Class 02 - no data
     NoData,
     NoAdditionalDynamicResultSetsReturned,
 
-    // Section: Class 03 - SQL Statement Not Yet Complete
-    SqlStatementNotYetComplete,
+    // Class 07 - dynamic SQL error
 
-    // Section: Class 08 - Connection Exception
+    // Class 08 - connection exception
     ConnectionException,
     ConnectionDoesNotExist,
     ConnectionFailure,
@@ -23,37 +26,62 @@ pub enum ApllodbErrorKind {
     TransactionResolutionUnknown,
     ProtocolViolation,
 
-    // Section: Class 09 - Triggered Action Exception
+    // Class 09 - triggered action exception
     TriggeredActionException,
 
-    // Section: Class 0A - Feature Not Supported
+    // Class 0A - feature not supported
     FeatureNotSupported,
 
-    // Section: Class 0B - Invalid Transaction Initiation
-    InvalidTransactionInitiation,
+    // Class 0D - invalid target typ specification
 
-    // Section: Class 0F - Locator Exception
+    // Class 0D - invalid target type specification
+
+    // Class 0E - invalid schema name list specification
+
+    // Class 0F - locator exception
     LocatorException,
     InvalidLocatorSpecification,
 
-    // Section: Class 0L - Invalid Grantor
+    // Class 0K - resignal when handler not active
+
+    // Class 0L - invalid grantor
     InvalidGrantor,
     InvalidGrantOperation,
 
-    // Section: Class 0P - Invalid Role Specification
+    // Class 0M - invalid SQL-invoked procedure reference
+
+    // Class 0N - SQL/XML mapping error
+
+    // Class 0P - invalid role specification
     InvalidRoleSpecification,
 
-    // Section: Class 0Z - Diagnostics Exception
+    // Class 0S - invalid transform group name specification
+
+    // Class 0T - target table disagrees with cursor specification
+
+    // Class 0U - attempt to assign to non-updatable column
+
+    // Class 0V - attempt to assign to ordering column
+
+    // Class 0W - prohibited statement encountered during trigger execution
+
+    // Class 0X - invalid foreign server specification
+
+    // Class 0Y - pass-through specific condition
+
+    // Class 0Z - diagnostics exception
     DiagnosticsException,
     StackedDiagnosticsAccessedWithoutActiveHandler,
 
-    // Section: Class 20 - Case Not Found
+    // Class 10 - XQuery error
+
+    // Class 20 - case not found for case statement
     CaseNotFound,
 
-    // Section: Class 21 - Cardinality Violation
+    // Class 21 - cardinality violation
     CardinalityViolation,
 
-    // Section: Class 22 - Data Exception
+    // Class 22 - data exception
     DataException,
     ArraySubscriptError,
     CharacterNotInRepertoire,
@@ -122,7 +150,7 @@ pub enum ApllodbErrorKind {
     TooManyJsonObjectMembers,
     SqlJsonScalarRequired,
 
-    // Section: Class 23 - Integrity Constraint Violation
+    // Class 23 - integrity constraint violation
     IntegrityConstraintViolation,
     RestrictViolation,
     NotNullViolation,
@@ -131,10 +159,10 @@ pub enum ApllodbErrorKind {
     CheckViolation,
     ExclusionViolation,
 
-    // Section: Class 24 - Invalid Cursor State
+    // Class 24 - invalid cursor state
     InvalidCursorState,
 
-    // Section: Class 25 - Invalid Transaction State
+    // Class 25 - invalid transaction ttate
     InvalidTransactionState,
     ActiveSqlTransaction,
     BranchTransactionAlreadyActive,
@@ -148,41 +176,55 @@ pub enum ApllodbErrorKind {
     InFailedSqlTransaction,
     IdleInTransactionSessionTimeout,
 
-    // Section: Class 26 - Invalid SQL Statement Name
+    // Class 26 - invalid SQL statement name
     InvalidSqlStatementName,
 
-    // Section: Class 27 - Triggered Data Change Violation
+    // Class 27 - triggered data change violation
     TriggeredDataChangeViolation,
 
-    // Section: Class 28 - Invalid Authorization Specification
+    // Class 28 - invalid authorization specification
     InvalidAuthorizationSpecification,
     InvalidPassword,
 
-    // Section: Class 2B - Dependent Privilege Descriptors Still Exist
+    // Class 2B - dependent privilege descriptors still exist
     DependentPrivilegeDescriptorsStillExist,
     DependentObjectsStillExist,
 
-    // Section: Class 2D - Invalid Transaction Termination
+    // Class 2C - invalid character set name
+
+    // Class 2D - invalid transaction termination
     InvalidTransactionTermination,
 
-    // Section: Class 2F - SQL Routine Exception
+    // Class 2E - invalid connection name
+
+    // Class 2F - SQL routine exception
     SqlRoutineException,
     SqlFunctionExecutedNoReturnStatement,
     SqlModifyingSqlDataNotPermitted,
     SqlProhibitedSqlStatementAttempted,
     SqlReadingSqlDataNotPermitted,
 
-    // Section: Class 34 - Invalid Cursor Name
+    // Class 2H - invalid collation name
+
+    // Class 30 - invalid SQL statement identifier
+
+    // Class 33 - invalid SQL descriptor name
+
+    // Class 34 - invalid cursor name
     InvalidCursorName,
 
-    // Section: Class 38 - External Routine Exception
+    // Class 35 - invalid condition number
+
+    // Class 36 - cursor sensitivity exception
+
+    // Class 38 - external routine exception
     ExternalRoutineException,
     ExternalContainingSqlNotPermitted,
     ExternalModifyingSqlDataNotPermitted,
     ExternalProhibitedSqlStatementAttempted,
     ExternalReadingSqlDataNotPermitted,
 
-    // Section: Class 39 - External Routine Invocation Exception
+    // Class 39 - external routine invocation exception
     ExternalRoutineInvocationException,
     ExternalInvalidSqlstateReturned,
     ExternalNullValueNotAllowed,
@@ -190,24 +232,26 @@ pub enum ApllodbErrorKind {
     ExternalSrfProtocolViolated,
     ExternalEventTriggerProtocolViolated,
 
-    // Section: Class 3B - Savepoint Exception
+    // Class 3B - savepoint exception
     SavepointException,
     InvalidSavepointSpecification,
 
-    // Section: Class 3D - Invalid Catalog Name
+    // Class 3C - ambiguous cursor name
+
+    // Class 3D - invalid catalog name
     InvalidCatalogName,
 
-    // Section: Class 3F - Invalid Schema Name
+    // Class 3F - invalid schema name
     InvalidSchemaName,
 
-    // Section: Class 40 - Transaction Rollback
+    // Class 40 - transaction rollback
     TransactionRollback,
     TransactionIntegrityConstraintViolation,
     SerializationFailure,
     StatementCompletionUnknown,
     DeadlockDetected,
 
-    // Section: Class 42 - Syntax Error or Access Rule Violation
+    // Class 42 - syntax error or access rule violation
     /// never use this one;
     SyntaxErrorOrAccessRuleViolation,
     SyntaxError,
@@ -254,10 +298,22 @@ pub enum ApllodbErrorKind {
     InvalidTableDefinition,
     InvalidObjectDefinition,
 
-    // Section: Class 44 - WITH CHECK OPTION Violation
+    // Class 44 - with check option violation
     WithCheckOptionViolation,
 
-    // Section: Class 58 (non-standard; partially same as PostgreSWL) - System Errors
+    // Class 45 - unhandled user-defined exception
+
+    // Class 46 - OLB-specific error, Java DDL
+
+    // Class HW - datalink exception
+
+    // Class HV - FDW-specific condition
+
+    // Class HY - CLI-specific condition
+
+    // Class HZ - Reserved for ISO9579 (RDA)
+
+    // Class 58 (non-standard; partially same as PostgreSWL) - System Errors
     SystemError,
     IoError,
     DeserializationError,
