@@ -212,6 +212,7 @@ impl SqlState {
         self.detail().category()
     }
 
+    #[allow(non_snake_case)]
     fn detail(&self) -> SqlStateDetail {
         use SqlState::*;
 
