@@ -182,6 +182,9 @@ pub enum SqlState {
     WithCheckOptionViolation,
     ReservedForISO9579,
     IoError,
+    NameError,
+    NameErrorNotFound,
+    NameErrorAmbiguous,
 }
 
 impl SqlState {
@@ -285,6 +288,7 @@ impl SqlState {
 
         // apllodb's original error class
         let classIO = Arc::new(SqlStateClass::new("IO", "io error"));
+        let classNM = Arc::new(SqlStateClass::new("NM", "general name error"));
 
         match self {
             SuccessfulCompletion => SqlStateDetail::new(class00.clone(), "000", "(no subclass)"),
@@ -826,6 +830,9 @@ impl SqlState {
             }
             ReservedForISO9579 => SqlStateDetail::new(classHZ.clone(), "???", ""),
             IoError => SqlStateDetail::new(classIO.clone(), "000", "(no subclass)"),
+            NameError => SqlStateDetail::new(classNM.clone(), "000", "(no subclass)"),
+            NameErrorNotFound => SqlStateDetail::new(classNM.clone(), "001", "not found"),
+            NameErrorAmbiguous => SqlStateDetail::new(classNM.clone(), "002", "ambiguous"),
         }
     }
 }

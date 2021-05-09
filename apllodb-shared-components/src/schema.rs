@@ -4,7 +4,7 @@ pub(crate) mod schema_name;
 
 use std::collections::HashSet;
 
-use crate::{ApllodbError, ApllodbErrorKind, ApllodbResult, RPos};
+use crate::{ApllodbError, ApllodbResult, RPos};
 
 use self::{schema_index::SchemaIndex, schema_name::SchemaName};
 
