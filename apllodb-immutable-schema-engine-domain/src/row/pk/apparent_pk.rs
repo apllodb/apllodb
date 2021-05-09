@@ -1,7 +1,7 @@
 use crate::vtable::VTable;
 use apllodb_shared_components::{
     ApllodbError, ApllodbResult, BooleanExpression, ComparisonFunction, Expression,
-    LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlState, SqlValue,
+    LogicalFunction, NnSqlValue, RPos, Schema, SchemaIndex, SqlConvertible, SqlValue,
 };
 use apllodb_storage_engine_interface::{ColumnDataType, ColumnName, Row, RowSchema, TableName};
 use serde::{Deserialize, Serialize};

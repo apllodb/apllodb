@@ -1,4 +1,4 @@
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 use apllodb_storage_engine_interface::{
     ColumnDataType, ColumnDefinition, ColumnName, TableConstraintKind,
 };

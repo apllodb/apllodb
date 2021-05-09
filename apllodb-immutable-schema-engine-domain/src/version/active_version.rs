@@ -1,6 +1,6 @@
 use super::{constraints::VersionConstraints, version_number::VersionNumber, Version, VersionId};
 use crate::{entity::Entity, vtable::id::VTableId};
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState, SqlValue};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlValue};
 use apllodb_storage_engine_interface::{AlterTableAction, ColumnDataType, ColumnName};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

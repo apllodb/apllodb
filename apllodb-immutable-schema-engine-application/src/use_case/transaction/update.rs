@@ -10,9 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     row_selection_plan::RowSelectionPlan,
     vtable::{id::VTableId, repository::VTableRepository, VTable},
 };
-use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, DatabaseName, Expression, SqlState, SqlValue,
-};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName, Expression, SqlValue};
 use apllodb_storage_engine_interface::{
     ColumnName, Row, RowProjectionQuery, RowSchema, Rows, TableName,
 };

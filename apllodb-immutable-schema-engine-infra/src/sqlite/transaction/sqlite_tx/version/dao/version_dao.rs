@@ -12,7 +12,7 @@ use apllodb_immutable_schema_engine_domain::{
     version::{active_version::ActiveVersion, id::VersionId},
 };
 use apllodb_shared_components::{
-    ApllodbError, ApllodbResult, Schema, SchemaIndex, SqlState, SqlType, SqlValue,
+    ApllodbError, ApllodbResult, Schema, SchemaIndex, SqlType, SqlValue,
 };
 use apllodb_storage_engine_interface::{
     ColumnDataType, ColumnName, Row, RowSchema, Rows, TableName,

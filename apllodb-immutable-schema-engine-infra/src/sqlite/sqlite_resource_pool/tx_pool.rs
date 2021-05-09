@@ -3,7 +3,7 @@ use std::{
     {cell::RefCell, rc::Rc},
 };
 
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SessionId, SqlState};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, SessionId};
 use generational_arena::{Arena, Index};
 
 use crate::sqlite::transaction::sqlite_tx::SqliteTx;

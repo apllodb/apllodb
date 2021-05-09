@@ -4,7 +4,7 @@ use crate::sqlite::transaction::sqlite_tx::{
     version::dao::version_metadata_dao::VersionMetadataDao,
     vtable::vtable_metadata_dao::VTableMetadataDao,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName, SqlState};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, DatabaseName};
 use sqlx::{migrate::MigrateDatabase, Connection};
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
@@ -20,7 +20,7 @@ impl SqliteDatabase {
     ///
     /// # Failures
     ///
-    /// - [DuplicateDatabase](apllodb_shared_components::SqlState::DuplicateDatabase) when:
+    /// - [NameErrorDuplicate](apllodb_shared_components::SqlState::NameErrorDuplicate) when:
     ///   - specified database already exists
     pub(crate) async fn create_database(name: DatabaseName) -> ApllodbResult<()> {
         let path = Self::sqlite_db_path(&name);

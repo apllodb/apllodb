@@ -10,7 +10,7 @@ use apllodb_immutable_schema_engine_domain::{
     vtable::id::VTableId,
     vtable::VTable,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult, SqlState};
+use apllodb_shared_components::{ApllodbError, ApllodbResult};
 
 use crate::sqlite::sqlite_types::{SqliteTypes, VrrEntries, VrrEntry};
 

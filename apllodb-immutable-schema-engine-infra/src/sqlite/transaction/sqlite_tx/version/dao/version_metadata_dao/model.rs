@@ -9,7 +9,7 @@ use apllodb_immutable_schema_engine_domain::{
     },
     vtable::id::VTableId,
 };
-use apllodb_shared_components::{ApllodbError, ApllodbResult, Schema, SchemaIndex, SqlState};
+use apllodb_shared_components::{ApllodbError, ApllodbResult, Schema, SchemaIndex};
 use apllodb_storage_engine_interface::{ColumnDataType, Row, RowSchema, TableName};
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
