@@ -50,6 +50,11 @@ impl ApllodbError {
     pub fn feature_not_supported(desc: impl ToString) -> Self {
         Self::new(SqlState::FeatureNotSupported, desc, None)
     }
+
+    /// Constructor of [SqlState::NameErrorNotFound](crate::SqlState::NameErrorNotFound).
+    pub fn name_error_not_found(desc: impl ToString) -> Self {
+        Self::new(SqlState::NameErrorNotFound, desc, None)
+    }
 }
 
 impl Error for ApllodbError {

@@ -48,11 +48,10 @@ pub trait Schema {
         if matching_pair.len() == 1 {
             matching_pair.first().cloned().ok_or_else(|| unreachable!())
         } else if matching_pair.is_empty() {
-            Err(ApllodbError::new(
-                SqlState::NameErrorNotFound,
-                format!("no field matches to: {}", idx),
-                None,
-            ))
+            Err(ApllodbError::name_error_not_found(format!(
+                "no field matches to: {}",
+                idx
+            )))
         } else {
             Err(ApllodbError::new(
                 SqlState::AmbiguousColumn,

@@ -1,4 +1,4 @@
-use crate::error::{kind::SqlState, ApllodbError, ApllodbResult};
+use crate::error::{sqlstate::SqlState, ApllodbError, ApllodbResult};
 use serde::{Deserialize, Serialize};
 
 /// Short (64 chars in UTF-8 at maximum) object name used for table names, column names, and so on.
