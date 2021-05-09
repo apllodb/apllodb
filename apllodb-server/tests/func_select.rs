@@ -156,10 +156,10 @@ async fn test_selection() {
             ),
         )
         .add_step(
-            // DataExceptionIllegalConversion
+            // DataExceptionIllegalOperation
             Step::new(
                 "SELECT id, age FROM people WHERE 1",
-                StepRes::Err(SqlState::DataExceptionIllegalConversion),
+                StepRes::Err(SqlState::DataExceptionIllegalOperation),
             ),
         )
         .run()
