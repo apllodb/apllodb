@@ -94,6 +94,18 @@ fn test_create_table_accepted() {
                 ],
             ),
         ),
+        // https://github.com/eukarya-inc/apllodb/issues/253
+        (
+            "CREATE TABLE t (id integer)",
+            CreateTableCommand::factory(
+                "t",
+                vec![TableElement::factory_coldef(ColumnDefinition::factory(
+                    "id",
+                    DataType::integer(),
+                    vec![],
+                ))],
+            ),
+        ),
     ];
 
     let parser = ApllodbSqlParser::default();
