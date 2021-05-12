@@ -70,7 +70,7 @@ jobs:
       RUSTC_WRAPPER: sccache
       SCCACHE_CACHE_SIZE: 2G
       SCCACHE_DIR: /home/runner/.cache/sccache
-      CACHE_RESET_KEY: 20210508144317
+      CACHE_RESET_KEY: 20210512-01
     steps:
       - uses: actions/checkout@v2
 
