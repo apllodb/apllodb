@@ -324,7 +324,7 @@ impl PestParserImpl {
 
     fn parse_character_type(mut params: FnParseParams) -> ApllodbSqlParserResult<CharacterType> {
         let s = self_as_str(&mut params);
-        match s {
+        match s.to_ascii_uppercase().as_str() {
             "TEXT" => Ok(CharacterType::TextVariant),
             x => {
                 eprintln!("Unexpected data type parsed: {}", x);
