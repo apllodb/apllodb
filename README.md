@@ -15,11 +15,51 @@ Also, we have plan to develop the following unique features:
 - Ambiguous data ("about 100 years ago", for example) and query toward them.
 - Algebraic data type as SQL types.
 
+## Getting Started
+
+Here shows how to build & run `apllodb-cli` and execute simple SQLs.
+
+You are supposed to have installed [Cargo](https://github.com/rust-lang/cargo).
+
+```bash
+git clone git@github.com:eukarya-inc/apllodb.git
+
+cd apllodb
+cargo build
+
+./target/debug/apllodb-cli
+🚀🌙 SQL>   # Press Ctrl-D to exit
+```
+
+```sql
+🚀🌙 SQL> create database my_db;
+🚀🌙 SQL> use database my_db;
+
+🚀🌙 SQL> create table t (id INTEGER, name TEXT, primary key (id));
+  -- Oophs! You need open transaction even for DDL.
+
+🚀🌙 SQL> begin;
+🚀🌙 SQL> create table t (id INTEGER, name TEXT, primary key (id));
+🚀🌙 SQL> select id, name from t;
+
+0 records in total
+
+🚀🌙 SQL> insert into t (id, name) values (1, "name 1");
+🚀🌙 SQL> insert into t (id, name) values (2, "name 2");
+🚀🌙 SQL> select id, name from t;
+t.id: 2 t.name: "name 2"
+t.id: 1 t.name: "name 1"
+
+2 records in total
+
+🚀🌙 SQL> commit;
+```
+
 ## Development
 
 This repository is a [multi-package project](https://doc.rust-lang.org/edition-guide/rust-2018/cargo-and-crates-io/cargo-workspaces-for-multi-package-projects.html).
 
-You are supposed to have installed [Cargo](https://github.com/rust-lang/cargo) and [cargo-make](https://github.com/sagiegurari/cargo-make).
+Many useful tasks for development are defined in `Makefile.toml`. Install [cargo-make](https://github.com/sagiegurari/cargo-make) to participate in apllodb's development.
 
 ```bash
 # (clone repository)
