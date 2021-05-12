@@ -96,14 +96,21 @@ fn test_create_table_accepted() {
         ),
         // https://github.com/eukarya-inc/apllodb/issues/253
         (
-            "CREATE TABLE t (id integer)",
+            "CREATE TABLE t (id integer, c text)",
             CreateTableCommand::factory(
                 "t",
-                vec![TableElement::factory_coldef(ColumnDefinition::factory(
-                    "id",
-                    DataType::integer(),
-                    vec![],
-                ))],
+                vec![
+                    TableElement::factory_coldef(ColumnDefinition::factory(
+                        "id",
+                        DataType::integer(),
+                        vec![],
+                    )),
+                    TableElement::factory_coldef(ColumnDefinition::factory(
+                        "c",
+                        DataType::text(),
+                        vec![],
+                    )),
+                ],
             ),
         ),
     ];
