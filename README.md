@@ -35,11 +35,11 @@ cargo build
 🚀🌙 SQL> create database my_db;
 🚀🌙 SQL> use database my_db;
 
-🚀🌙 SQL> create table t (id INTEGER, name TEXT, primary key (id));
+🚀🌙 SQL> create table t (id integer, name text, primary key (id));
   -- Oophs! You need open transaction even for DDL.
 
 🚀🌙 SQL> begin;
-🚀🌙 SQL> create table t (id INTEGER, name TEXT, primary key (id));
+🚀🌙 SQL> create table t (id integer, name text, primary key (id));
 🚀🌙 SQL> select id, name from t;
 
 0 records in total
