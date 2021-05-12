@@ -305,7 +305,7 @@ impl PestParserImpl {
 
     fn parse_integer_type(mut params: FnParseParams) -> ApllodbSqlParserResult<IntegerType> {
         let s = self_as_str(&mut params);
-        match s {
+        match s.to_ascii_uppercase().as_str() {
             "SMALLINT" => Ok(IntegerType::SmallIntVariant),
             "INTEGER" => Ok(IntegerType::IntegerVariant),
             "BIGINT" => Ok(IntegerType::BigIntVariant),
