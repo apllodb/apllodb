@@ -1,6 +1,6 @@
 mod sql_test;
 
-use apllodb_server::test_support::test_setup;
+use apllodb_server::{test_support::test_setup, SqlState};
 use sql_test::{SqlTest, Step, StepRes, Steps};
 
 #[ctor::ctor]
@@ -32,6 +32,13 @@ async fn test_alter_table_add_column() {
             "INSERT INTO people (id, age) VALUES (3, 30)",
             StepRes::Ok,
         ))
+        .add_step(
+            // https://github.com/eukarya-inc/apllodb/issues/191
+            Step::new(
+                "INSERT INTO people (id, age, c1) VALUES (4, 40, NULL)",
+                StepRes::Err(SqlState::IntegrityConstraintNotNullViolation),
+            ),
+        )
         .run()
         .await;
 }
