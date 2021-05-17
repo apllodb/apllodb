@@ -76,7 +76,14 @@ impl Step {
 
                 match &self.expected {
                     StepRes::Err(kind) => {
-                        assert_eq!(kind, e.kind());
+                        assert_eq!(
+                            kind,
+                            e.kind(),
+                            "\nexpected {:?} but got {:?} (got error detail follows)\n{:#?}\n",
+                            kind,
+                            e.kind(),
+                            e
+                        );
                     }
                     _ => panic!(
                         "unexpected error {} on ApllodbServer::command() - step: {:#?}",
