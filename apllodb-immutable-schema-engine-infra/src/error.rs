@@ -55,6 +55,9 @@ impl From<sqlx::Error> for InfraError {
                     "14" => Self(ApllodbError::name_error_not_found(
                         "failed to open database file",
                     )),
+                    "1299" => Self(ApllodbError::integrity_constraint_not_null_violation(
+                        "NOT NULL violation in internal SQLite",
+                    )),
                     "1555" => Self(ApllodbError::integrity_constraint_unique_violation(
                         "duplicate value on primary key",
                     )),
