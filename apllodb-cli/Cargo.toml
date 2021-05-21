@@ -16,7 +16,7 @@ log = "0.4"
 
 clap = "2.33"
 
-rustyline = "8.1"
+rustyline = "8.2"
 
 dirs = "3.0"
 
