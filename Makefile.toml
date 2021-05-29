@@ -91,7 +91,7 @@ git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
 script = ['''
 #!/usr/bin/env bash -eux
 f=$(mktemp)
-git ls-files |xargs perl -Mutf8 -CSD -wnle '/[\p{Han}\p{Hiragana}\p{Katakana}]/ and print;' > $f
+git ls-files |xargs perl -Mutf8 -CSD -wnle '/[\p{Han}\p{Hiragana}\p{Katakana}]/ and print;' |grep -v 'allow(check-japanese)' > $f
 
 if [ $(cat $f |wc -l) -ne 0 ]; then
   cat $f
