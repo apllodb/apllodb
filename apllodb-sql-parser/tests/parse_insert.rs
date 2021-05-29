@@ -38,13 +38,13 @@ fn test_insert_accepted() {
             ),
         ),
         (
-            r#"INSERT INTO t (c) VALUES ("abcあいう🍣 '@\")"#,
+            r#"INSERT INTO t (c) VALUES ("abc🍣 '@\")"#,
             InsertCommand::factory(
                 "t",
                 None,
                 vec!["c"],
                 vec![InsertValue::factory(vec![Expression::factory_text(
-                    r#"abcあいう🍣 '@\"#,
+                    r#"abc🍣 '@\"#,
                 )])],
             ),
         ),

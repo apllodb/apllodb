@@ -74,9 +74,9 @@ accepted_parameterized_tests! {
     with_digits: AcceptedTestParameter("a1"),
     with_full_width_digits: AcceptedTestParameter("a１"),
 
-    hiragana: AcceptedTestParameter("あいうえお"),
-    katakana: AcceptedTestParameter("アイウエオ"),
-    kanji: AcceptedTestParameter("一二三"),
+    hiragana: AcceptedTestParameter("あいうえお"),  // allow(check-japanese)
+    katakana: AcceptedTestParameter("アイウエオ"),  // allow(check-japanese)
+    kanji: AcceptedTestParameter("一二三"),  // allow(check-japanese)
 
     emoji: AcceptedTestParameter("🥺🥰😡🍣🍺"),
 

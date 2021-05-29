@@ -103,7 +103,8 @@ impl TableConstraints {
     }
 }
 
-// TODO テストは書いているが、まだバリデーション条件考えきれてもいないし、いじめ方も足りないので、テストは全体的に見直す
+// TODO Needs more consideration about tests
+// Validation specification isn't fixed.
 #[cfg(test)]
 mod tests {
     macro_rules! t_pk {

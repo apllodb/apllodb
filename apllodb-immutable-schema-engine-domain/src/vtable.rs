@@ -64,7 +64,7 @@ impl VTable {
     }
 
     pub fn alter(&self, _action: &AlterTableAction) -> ApllodbResult<()> {
-        // TODO TableWideConstraints に影響のある操作だった場合に、自分自身を変更する
+        // TODO alter VTable itself when `ALTER` command affects to TableWideConstraints
 
         Ok(())
     }

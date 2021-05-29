@@ -147,7 +147,7 @@ async fn test_transaction_ddl_isolation() {
         .run()
         .await;
 
-    // TODO ALTER 実装ができたら non-repeatable read のテストを追加
+    // TODO Adds tests on non-repeatable read after ALTER implementation
 }
 
 #[async_std::test]
@@ -208,7 +208,7 @@ async fn test_transaction_dml_isolation() {
         .run()
         .await;
 
-    // TODO UPDATE 実装ができたら non-repeatable read のテストを追加
+    // TODO Adds tests on non-repeatable read after UPDATE implementation
 }
 
 #[async_std::test]

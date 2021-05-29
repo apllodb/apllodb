@@ -111,7 +111,7 @@ CREATE TABLE {tname} (
             .collect())
     }
 
-    // TODO 消す
+    // TODO remove in favor of select_active_versions()
     pub(in crate::sqlite) async fn select_active_version(
         &self,
         vtable_id: &VTableId,

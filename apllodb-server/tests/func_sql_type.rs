@@ -112,7 +112,7 @@ async fn test_text() {
         .add_step(Step::new(
             format!(
                 r#"INSERT INTO t (c) VALUES ("{}")"#,
-                r#"abcあいうえお🍺@'\"#
+                r#"abc🍺@'\"#
             ),
             StepRes::Ok,
         ))
@@ -128,7 +128,7 @@ async fn test_text() {
                 );
                 assert_eq!(
                     r.get::<String>(&index).unwrap().unwrap(),
-                    r#"abcあいうえお🍺@'\"#
+                    r#"abc🍺@'\"#
                 );
                 Ok(())
             })),

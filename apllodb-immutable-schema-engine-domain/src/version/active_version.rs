@@ -106,8 +106,8 @@ impl ActiveVersion {
                     .cloned()
                     .collect();
 
-                // TODO self.constraints のバージョン制約が column_to_drop を含んでいた場合の対処。
-                // たぶん、errorを返すんだと思う。
+                // TODO what to do if self.constraints (version constraints) include column_to_drop?
+                // (maybe return some error)
 
                 let id = VersionId::new(self.vtable_id(), &self.number().next());
 

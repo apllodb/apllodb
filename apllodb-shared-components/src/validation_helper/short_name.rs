@@ -45,7 +45,7 @@ mod tests {
 
     #[test]
     fn test_success() {
-        let names = vec!["a".repeat(64), "あ".repeat(64), "💪".repeat(64)];
+        let names = vec!["a".repeat(64), "💪".repeat(64)];
 
         for name in &names {
             match ShortName::new(name) {
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_failure_too_long_name() {
-        let names = vec!["a".repeat(65), "あ".repeat(65), "💪".repeat(65)];
+        let names = vec!["a".repeat(65), "💪".repeat(65)];
 
         for name in &names {
             match ShortName::new(name) {
