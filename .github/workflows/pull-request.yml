@@ -21,6 +21,9 @@ jobs:
           - stable
           - 1.51.0  # MSRV
         make:
+          - name: check-japanese
+            task: check-japanese
+            rust-free: true
           - name: format
             task: format
           - name: lint

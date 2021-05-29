@@ -87,6 +87,19 @@ git ls-files |grep -E '.rs$' |(! xargs grep 'unimplemented!')
 git ls-files |grep -E '.rs$' |(! xargs grep 'todo!')
 ''']
 
+[tasks.check-japanese]
+script = ['''
+#!/usr/bin/env bash -eux
+f=$(mktemp)
+git ls-files |xargs perl -Mutf8 -CSD -wnle '/[\p{Han}\p{Hiragana}\p{Katakana}]/ and print;' > $f
+
+if [ $(cat $f |wc -l) -ne 0 ]; then
+  cat $f
+  echo 'ERROR: Some files include Japanese text. To welcome contribution from all over the world, we decided to use only English 💪'
+  false
+fi
+''']
+
 [tasks.check-trash]
 script = ['''
 #!/usr/bin/env bash -eux
