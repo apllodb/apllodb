@@ -14,8 +14,6 @@ pub trait VersionRepository {
     /// Deactivate a version.
     async fn deactivate(&self, version_id: &VersionId) -> ApllodbResult<()>;
 
-    // TODO ここに version scan が現れ、 VerRowIter の型パラメータが入るのが自然
-
     /// # Failures
     ///
     /// - [IntegrityConstraintUniqueViolation](apllodb_shared_components::SqlState::IntegrityConstraintUniqueViolation) when:

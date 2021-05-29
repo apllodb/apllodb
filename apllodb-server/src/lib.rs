@@ -26,7 +26,7 @@
 //! - with very complex (so that people cannot write by hand) valid SQLs.
 //!   - "SELECT country.country_name_eng, SUM(CASE WHEN call.id IS NOT NULL THEN 1 ELSE 0 END) AS calls, AVG(ISNULL(DATEDIFF(SECOND, call.start_time, call.end_time),0)) AS avg_difference FROM country LEFT JOIN city ON city.country_id = country.id LEFT JOIN customer ON city.id = customer.city_id LEFT JOIN call ON call.customer_id = customer.id GROUP BY country.id, country.country_name_eng ORDER BY calls DESC, country.id ASC;"
 //! - with arbitrary string inputs (most of them are invalid for SQL).
-//!   - E.g. `"as\0😤鬱 sfs　㌀"`
+//!   - E.g. `"as\0😤 sfs　"`
 //! - with arbitrary SQL values that each SQL datatype allows.
 //!
 //! In short, `fuzz/` tests crash-safety with large number of complex SQL commands & SQL values.

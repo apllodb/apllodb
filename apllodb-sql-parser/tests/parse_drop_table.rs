@@ -16,7 +16,7 @@ fn test_drop_table_accepted() {
         ("DROP TABLE t", DropTableCommand::factory("t")),
         ("DROP TABLE t;", DropTableCommand::factory("t")),
         ("  DROP\tTABLE\nt ", DropTableCommand::factory("t")),
-        ("DROP TABLE 机", DropTableCommand::factory("机")),
+        ("DROP TABLE 机", DropTableCommand::factory("机")),  // allow(check-japanese)
         ("DROP TABLE 🍙", DropTableCommand::factory("🍙")),
     ];
 

@@ -77,7 +77,7 @@ impl SelectCommandAnalyzer {
                 "constant in select field is not supported currently",
             )),
             Expression::UnaryOperatorVariant(_, _) | Expression::BooleanExpressionVariant(_) => {
-                // TODO このレイヤーで計算しちゃいたい
+                // TODO Better to shrink expression in this layer.
                 Err(ApllodbError::feature_not_supported(
                     "unary/binary operation in select field is not supported currently",
                 ))

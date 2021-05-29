@@ -47,9 +47,10 @@ impl<'usecase, Types: ImmutableSchemaAbstractTypes> TxUseCase<Types>
 
         let active_versions = vtable_repo.active_versions(&vtable).await?;
         let current_version = active_versions.current_version()?;
-        let next_version = current_version.create_next(input.action)?; // TODO こいつの中で、PKの一部のカラムをDROPさせることは一旦UnsupportedErrorにする（他のDBMSは対応していた）
+        let next_version = current_version.create_next(input.action)?; // TODO At first, DROPping any column included in PK should be UnsupportedError (although other DBMSs can).
 
-        // TODO naviテーブルに、これからinactivateされるVersionNumberが書かれていることの対処を考える
+        // TODO `ALTER TABLE` may inactivate target version (auto-upgrade).
+        // Needs to do something to navi table (update to new VersionNumber?).
         vtable_repo.update(&vtable).await?;
         version_repo.create(&next_version).await?;
 
