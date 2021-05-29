@@ -40,6 +40,9 @@ jobs:
         exclude:
           - rust: nightly
             make:
+              name: check-japanese
+          - rust: nightly
+            make:
               name: format
           - rust: 1.51.0
             make:
