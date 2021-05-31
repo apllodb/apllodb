@@ -41,6 +41,9 @@ jobs:
           - rust: nightly
             make:
               name: check-japanese
+          - rust: 1.51.0
+            make:
+              name: check-japanese
           - rust: nightly
             make:
               name: format
