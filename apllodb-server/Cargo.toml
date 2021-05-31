@@ -2,6 +2,7 @@
 authors = ["Sho Nakatani <lay.sakura@gmail.com>"]
 edition = "2018"
 name = "apllodb-server"
+license = "MIT OR Apache-2.0"
 version = "0.1.0"
 
 [features]
