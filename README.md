@@ -36,7 +36,7 @@ cargo build
 🚀🌙 SQL> use database my_db;
 
 🚀🌙 SQL> create table t (id integer, name text, primary key (id));
-  -- Oophs! You need open transaction even for DDL.
+  -- Oops! You need open transaction even for DDL.
 
 🚀🌙 SQL> begin;
 🚀🌙 SQL> create table t (id integer, name text, primary key (id));
@@ -54,6 +54,62 @@ t.id: 1 t.name: "name 1"
 
 🚀🌙 SQL> commit;
 ```
+
+## Try Immutable Schema
+
+Current core feature of apllodb is **Immutable Schema**.
+Immutable Schema consists of Immutable **DDL** and Immutable **DML**.
+
+With Immutable DDL, any kind of `ALTER TABLE` or `DROP TABLE` succeed without modifying existing records.
+For example, if `t` has 1 or more records,
+
+```sql
+ALTER TABLE t ADD COLUMN c_new INTEGER NOT NULL;
+```
+
+would cause error in many RDMBSs because existing records cannot be NULL but this ALTER does not specify default value for `c_new`.
+
+Immutable Schema preserves existing records in an old **version** and creates new version.
+
+```sql
+ t (version1)
+| id | c_old |
+|----|-------|
+|  1 | "a"   |
+|  2 | "b"   |
+
+ALTER TABLE t ADD COLUMN c_new INTEGER NOT NULL;
+
+ t (version1)    t (version2) 
+| id | c_old |  | id | c_old | c_new |
+|----|-------|  |----|-------|-------|
+|  1 | "a"   |
+|  2 | "b"   |
+
+INSERT INTO t (id, c_old, c_new) VALUES (3, "c", 42);
+
+ t (version1)    t (version2) 
+| id | c_old |  | id | c_old | c_new |
+|----|-------|  |----|-------|-------|
+|  1 | "a"   |  |  3 |   "c" |    42 |
+|  2 | "b"   |
+
+INSERT INTO t (id, c_old) VALUES (4, "d");
+
+ t (version1)    t (version2) 
+| id | c_old |  | id | c_old | c_new |
+|----|-------|  |----|-------|-------|
+|  1 | "a"   |  |  3 |   "c" |    42 |
+|  2 | "b"   |
+|  4 | "d"   |
+```
+
+As the above example shows, DML like `INSERT` automatically choose appropriate version to modify.
+
+To learn more about Immutable Schema, check [this slide](https://docs.google.com/presentation/d/1C6YsUNfMb4cioc2KWMwO2-85IpNfq558-IjxJh6LvPg/edit?usp=sharing) ([Japanese version](https://docs.google.com/presentation/d/1pV287_Q5LDbY9GWn3lK1iJdFz9rTnMsbmQ0a98YUY90/edit?usp=sharing)).
+
+Currently, both Immutable DDL and Immutable DML are under development and some SQLs do not work as expected.
+[doc/immutable-ddl-demo.sql](doc/immutable-ddl-demo.sql) is a working example of Immutable DDL. Try it by copy-and-paste to `apllodb-cli`.
 
 ## Development
 
