@@ -1,10 +1,13 @@
-name: pull_request
+name: ci
 
 on:
   pull_request:
     types:
       - opened
       - synchronize
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -37,6 +40,7 @@ jobs:
             task: doc
           - name: coverage
             task: coverage
+            install-grcov: true
         exclude:
           - rust: nightly
             make:
@@ -141,6 +145,17 @@ jobs:
           mv -f /tmp/cargo-make/${CARGO_MAKE_FILE_BASE}/cargo-make $HOME/.local/bin/cargo-make
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Install grcov
+        if: ${{ matrix.make.install-grcov }}
+        env:
+          BASE_URL: https://github.com/mozilla/grcov/releases/download
+          GRCOV_VERSION: 0.8.0
+        run: |
+          GRCOV_FILE_BASE=grcov-linux-x86_64
+          curl -L "${BASE_URL}/v${GRCOV_VERSION}/${GRCOV_FILE_BASE}.tar.bz2" --output /tmp/grcov.tar.bz2
+          tar xvf /tmp/grcov.tar.bz2 --directory=$HOME/.local/bin/
+          grcov --version
+
       - name: Start sccache server
         run: sccache --start-server
 
@@ -155,6 +170,13 @@ jobs:
 
       - name: Stop sccache server
         run: sccache --stop-server || true
+
+      - name: Upload lcov to codecov
+        if: ${{ matrix.make.install-grcov }}
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_SECRET }}
+          files: ./lcov.info
 
   slack-notify:
     if: always()
