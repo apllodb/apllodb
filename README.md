@@ -2,7 +2,7 @@
 
 ![MSRV](https://img.shields.io/badge/rustc-1.51+-lightgray.svg)
 [![ci](https://github.com/apllodb/apllodb/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/apllodb/apllodb/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/apllodb/apllodb/branch/main/graph/badge.svg?token=XXXX)](https://codecov.io/gh/apllodb/apllodb)
+[![codecov](https://codecov.io/gh/apllodb/apllodb/branch/main/graph/badge.svg?token=621C0ARVUD)](https://codecov.io/gh/apllodb/apllodb)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/apllodb/apllodb/blob/main/LICENSE-MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](https://github.com/apllodb/apllodb/blob/main/LICENSE-APACHE)
 
