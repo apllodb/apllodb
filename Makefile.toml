@@ -2,6 +2,9 @@
 skip_core_tasks = true
 default_to_workspace = false
 
+[env]
+PROJ_NAME = "apllodb"
+
 [tasks.format]
 script = ['''
 #!/usr/bin/env bash -eux
@@ -40,44 +43,18 @@ cargo doc --no-deps --all-features
 ''']
 
 [tasks.coverage]
-# see: https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html#test-coverage
 script = ['''
 #!/usr/bin/env bash -eux
-export RUSTFLAGS='-Zinstrument-coverage'
-export RUSTDOCFLAGS='-Zinstrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins'
-export LLVM_PROFILE_FILE='apllodb-coverage-%m.profraw'
+rm -rf target/debug/deps/${PROJ_NAME}-*
 
-cargo install rustfilt cargo-binutils
-cargo test --workspace --all-targets --all-features
+export CARGO_INCREMENTAL=0
+export RUSTFLAGS="-Zinstrument-coverage"
+export LLVM_PROFILE_FILE="${PROJ_NAME}-%p-%m.profraw"
 
-cargo profdata -- merge -sparse apllodb-coverage-*.profraw -o apllodb-coverage.profdata
+cargo +nightly build --workspace --verbose
+cargo +nightly test --workspace --verbose
 
-cargo cov -- report --use-color --ignore-filename-regex='/.cargo/registry' \
-  $( \
-    for file in $( \
-      cargo test --tests --no-run --message-format=json \
-        | jq -r "select(.profile.test == true) | .filenames[]" \
-        | grep -v dSYM - \
-    ); \
-    do \
-      printf "%s %s " -object $file; \
-    done \
-  ) \
-  --instr-profile=apllodb-coverage.profdata --summary-only
-
-cargo cov -- show --use-color --ignore-filename-regex='/.cargo/registry' --show-instantiations --show-line-counts-or-regions --Xdemangler=rustfilt \
-  $( \
-    for file in $( \
-      cargo test --tests --no-run --message-format=json \
-        | jq -r "select(.profile.test == true) | .filenames[]" \
-        | grep -v dSYM - \
-    ); \
-    do \
-      printf "%s %s " -object $file; \
-    done \
-  ) \
-  --instr-profile=apllodb-coverage.profdata --summary-only
-
+grcov . -s . --binary-path ./target/debug/ -t lcov --branch --ignore-not-existing -o lcov.info
 ''']
 
 [tasks.check-easy-panic]
