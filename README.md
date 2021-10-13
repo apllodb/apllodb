@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/apllodb/apllodb/blob/main/LICENSE-MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](https://github.com/apllodb/apllodb/blob/main/LICENSE-APACHE)
 
-![apllodb logo](./doc/apllodb_logo.svg)
+![apllodb logo](./doc/apllodb_logo_white.png)
 
 apllodb is a RDBMS purely written in Rust.
 
